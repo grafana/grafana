@@ -18,12 +18,13 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository, useGetRepositoryStatusQuery } from './api';
+import { Repository } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList();
+
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
@@ -91,7 +92,6 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                     </TextLink>
                   );
                 }
-
                 break;
 
               case 'local':
@@ -106,7 +106,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title} {name && <StatusBadge name={name} />}
+                    {item.spec?.title} <StatusBadge repo={item} name={name} />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>{item.spec?.description}</Card.Description>
@@ -121,8 +121,6 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   {healthy && <SyncRepository repository={item} />}
                 </Card.Actions>
                 <Card.SecondaryActions>
-                  {/* <IconButton key="comment-alt" name="comment-alt" tooltip="Tooltip content" />
-                  <IconButton key="copy" name="copy" tooltip="Tooltip content" /> */}
                   <DeleteRepositoryButton name={name} />
                 </Card.SecondaryActions>
               </Card>
@@ -136,10 +134,12 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
   );
 }
 
-function StatusBadge({ name }: { name: string }) {
-  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
-
-  const state = statusQuery.data?.status?.sync?.state;
+interface StatusBadgeProps {
+  repo: Repository;
+  name: string;
+}
+function StatusBadge({ repo, name }: StatusBadgeProps) {
+  const state = repo.status?.sync?.state;
 
   if (!state) {
     return null;

@@ -1,10 +1,10 @@
 import { RepositorySpec } from '../api';
 
-export function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string) {
+export function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string, comment?: string) {
   if (!spec || spec.type !== 'github' || !ref) {
     return '';
   }
-  return `https://github.com/${spec.github?.owner}/${spec.github?.repository}/compare/${spec.github?.branch}...${ref}?quick_pull=1&labels=grafana&title=Update dashboard ${dashboardName}`;
+  return `https://github.com/${spec.github?.owner}/${spec.github?.repository}/compare/${spec.github?.branch}...${ref}?quick_pull=1&labels=grafana&title=Update dashboard ${dashboardName}&body=${encodeURI(comment || '')}`;
 }
 
 /**
