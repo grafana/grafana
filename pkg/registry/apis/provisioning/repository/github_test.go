@@ -72,8 +72,11 @@ func TestParseWebhooks(t *testing.T) {
 				URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
 			},
 		}},
-		{"push", "ignored", provisioning.WebhookResponse{
-			Code: http.StatusAccepted, // parsed but nothing required
+		{"push", "nothing_relevant", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{ // we want to always push a sync job
+				Action: provisioning.JobActionSync,
+			},
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
