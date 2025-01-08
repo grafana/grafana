@@ -1,5 +1,6 @@
 import { PanelPlugin, PanelProps } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -8,7 +9,11 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { panelLinksBehavior } from './PanelMenuBehavior';
+import { PanelNotices } from './PanelNotices';
 import { PanelTimeRange } from './PanelTimeRange';
+import { AngularDeprecation } from './angular/AngularDeprecation';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
@@ -48,6 +53,18 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const libPanelModel = new PanelModel(libPanel.model);
 
+    const titleItems: SceneObject[] = [];
+    if (config.featureToggles.angularDeprecationUI) {
+      titleItems.push(new AngularDeprecation());
+    }
+    titleItems.push(
+      new VizPanelLinks({
+        rawLinks: libPanelModel.links,
+        menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+      })
+    );
+    titleItems.push(new PanelNotices());
+
     const vizPanelState: VizPanelState = {
       title: libPanelModel.title,
       options: libPanelModel.options ?? {},
@@ -56,6 +73,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       pluginVersion: libPanelModel.pluginVersion,
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
+      titleItems: titleItems,
       $data: createPanelDataProvider(libPanelModel),
     };
 
