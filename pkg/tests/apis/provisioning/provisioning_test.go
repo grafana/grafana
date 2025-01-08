@@ -352,8 +352,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
 			resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
-			require.NoError(collect, err)
-			require.Equal(collect, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+			if assert.NoError(collect, err) {
+				assert.Equal(collect, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+			}
 		}, time.Second*2, time.Millisecond*20)
 	})
 
