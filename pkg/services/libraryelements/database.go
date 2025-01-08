@@ -326,7 +326,6 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		if err != nil {
 			return []model.LibraryElementDTO{}, err
 		}
-		// libraryElement.das
 		var updatedModel json.RawMessage
 		if libraryElement.Kind == int64(model.PanelElement) {
 			updatedModel, err = l.addUidToLibraryPanel(libraryElement.Model, libraryElement.UID)
