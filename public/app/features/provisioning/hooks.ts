@@ -9,9 +9,9 @@ import {
   useCreateRepositoryFilesWithPathMutation,
   useCreateRepositoryMutation,
   useListRepositoryQuery,
-  usePutRepositoryFilesWithPathMutation,
+  useReplaceRepositoryFilesWithPathMutation,
   RepositorySpec,
-  PutRepositoryFilesWithPathArg,
+  ReplaceRepositoryFilesWithPathArg,
   useReplaceRepositoryMutation,
 } from './api';
 
@@ -45,10 +45,10 @@ export function useRepositoryList(options: ListOptions = {}): [Repository[] | un
 
 export function useCreateOrUpdateRepositoryFile(name?: string) {
   const [create, createRequest] = useCreateRepositoryFilesWithPathMutation();
-  const [update, updateRequest] = usePutRepositoryFilesWithPathMutation();
+  const [update, updateRequest] = useReplaceRepositoryFilesWithPathMutation();
 
   const updateOrCreate = useCallback(
-    (data: PutRepositoryFilesWithPathArg) => {
+    (data: ReplaceRepositoryFilesWithPathArg) => {
       const actions = name ? update : create;
       return actions(data);
     },
