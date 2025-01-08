@@ -202,7 +202,7 @@ describe('v0 dashboard API', () => {
 
         expect(result.uid).toBe('adh59cn');
         expect(result.version).toBe(0);
-        expect(result.url).toBe('/d/adh59cn');
+        expect(result.url).toBe('/d/adh59cn/new-dashboard-saved');
       });
 
       it('should provide dashboard URL with app sub url configured', async () => {
