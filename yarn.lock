@@ -3868,7 +3868,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.35.0, @grafana/scenes@npm:^5.35.0":
+"@grafana/scenes@npm:5.35.0":
   version: 5.35.0
   resolution: "@grafana/scenes@npm:5.35.0"
   dependencies:
@@ -3888,6 +3888,29 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
   checksum: 10/deab041b4a3b3f99ed595e58f795aa06519020f85289a9544145e0b8969be6f826e470d98dc4981da9809bf9129f0fa11e26e3f8395fbe50923d51c85554b5ed
+  languageName: node
+  linkType: hard
+
+"@grafana/scenes@npm:5.36.3":
+  version: 5.36.3
+  resolution: "@grafana/scenes@npm:5.36.3"
+  dependencies:
+    "@floating-ui/react": "npm:^0.26.16"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    react-grid-layout: "npm:^1.3.4"
+    react-use: "npm:^17.5.0"
+    react-virtualized-auto-sizer: "npm:^1.0.24"
+    uuid: "npm:^9.0.0"
+  peerDependencies:
+    "@grafana/data": ">=10.4"
+    "@grafana/e2e-selectors": ">=10.4"
+    "@grafana/runtime": ">=10.4"
+    "@grafana/schema": ">=10.4"
+    "@grafana/ui": ">=10.4"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10/8bc404091311b55f5316d567fc41789659fd221d38b4472ad5fa65afa224c9127e11a51daec2c07eccf941ec2eae58c0690dc312726139fdef3cf44ceb1460c9
   languageName: node
   linkType: hard
 
@@ -17627,7 +17650,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^5.35.0"
+    "@grafana/scenes": "npm:5.36.3"
     "@grafana/scenes-react": "npm:^5.35.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
