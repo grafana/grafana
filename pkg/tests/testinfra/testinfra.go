@@ -331,6 +331,14 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = featureSection.NewKey("enable", strings.Join(opts.EnableFeatureToggles, " "))
 		require.NoError(t, err)
 	}
+	if len(opts.DisableFeatureToggles) > 0 {
+		featureSection, err := cfg.NewSection("feature_toggles")
+		require.NoError(t, err)
+		for _, toggle := range opts.DisableFeatureToggles {
+			_, err = featureSection.NewKey(toggle, "false")
+			require.NoError(t, err)
+		}
+	}
 	if opts.NGAlertAdminConfigPollInterval != 0 {
 		ngalertingSection, err := cfg.NewSection("unified_alerting")
 		require.NoError(t, err)
@@ -490,6 +498,7 @@ func SQLiteIntegrationTest(t *testing.T) {
 type GrafanaOpts struct {
 	EnableCSP                             bool
 	EnableFeatureToggles                  []string
+	DisableFeatureToggles                 []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
 	NGAlertSchedulerBaseInterval          time.Duration
