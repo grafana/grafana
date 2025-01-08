@@ -162,10 +162,17 @@ func (z *Zanzana) start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to read GRPC server config: %w", err)
 	}
-	if len(authCfg.AllowedAudiences) == 0 {
-		authCfg.AllowedAudiences = []string{zanzanaAudience}
+
+	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
+		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
+			SigningKeysURL: authCfg.SigningKeysURL,
+		},
+		VerifierConfig: authnlib.VerifierConfig{
+			AllowedAudiences: []string{zanzanaAudience},
+		},
 	}
-	authenticator, err := grpcutils.NewGrpcAuthenticator(authCfg, tracer)
+
+	authenticator, err := authnlib.NewGrpcAuthenticator(&grpcAuthCfg, authnlib.WithIDTokenAuthOption(true))
 	if err != nil {
 		return fmt.Errorf("failed to setup authentication: %w", err)
 	}
