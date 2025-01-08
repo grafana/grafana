@@ -138,6 +138,14 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 		return s.moduleHash(ctx, parent, childFSBase)
 	}
 
+	// Only CDN plugins are supported for SRI checks.
+	// CDN plugins have the version as part of the URL, which acts as a cache-buster.
+	// Needed due to: https://github.com/grafana/plugin-tools/pull/1426
+	// FS plugins build before this change will have SRI mismatch issues.
+	if p.Class != plugins.ClassCDN {
+		return "", nil
+	}
+
 	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)
 	if err != nil {
 		return "", fmt.Errorf("read plugin manifest: %w", err)
