@@ -93,9 +93,9 @@ jobs:
           issue_number: ${{ github.event.issue.number }}
           openai_api_key: ${{ env.AUTOTRIAGER_OPENAI_API_KEY }}
           add_labels: true
-          labels_file: ${{ github.workspace }}/.github/auto-triager/labels.txt
-          types_file: ${{ github.workspace }}/.github/auto-triager/types.txt
-          prompt_file: ${{ github.workspace }}/.github/auto-triager/prompt.txt
+          labels_file: ${{ github.workspace }}/.github/workflows/auto-triager/labels.txt
+          types_file: ${{ github.workspace }}/.github/workflows/auto-triager/types.txt
+          prompt_file: ${{ github.workspace }}/.github/workflows/auto-triager/prompt.txt
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
