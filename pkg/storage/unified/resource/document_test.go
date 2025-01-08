@@ -33,7 +33,6 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"resource": "playlists",
 			"name": "test1"
 		},
-		"kind": "playlists",
 		"rv": 10,
 		"title": "test playlist unified storage",
 		"title_sort": "test playlist unified storage",
