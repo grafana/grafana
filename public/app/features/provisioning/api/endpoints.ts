@@ -1,3 +1,5 @@
+import { Subscription } from 'rxjs';
+
 import { ScopedResourceClient } from '../../apiserver/client';
 
 import { baseAPI as api } from './baseAPI';
@@ -9,7 +11,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       listJob: build.query<ListJobResponse, ListJobArg | void>({
-        query: (queryArg) => ({
+        query: () => ({
           url: `/jobs`,
         }),
         providesTags: ['Job'],
@@ -24,21 +26,22 @@ const injectedRtkApi = api
         providesTags: ['Job'],
       }),
       listRepository: build.query<ListRepositoryResponse, ListRepositoryArg | void>({
-        query: (queryArg) => ({
+        query: () => ({
           url: `/repositories`,
         }),
         async onCacheEntryAdded(arg, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
-          const client = new ScopedResourceClient<Repository, RepositoryStatus>({
+          const client = new ScopedResourceClient<RepositorySpec, RepositoryStatus>({
             group: 'provisioning.grafana.app',
             version: 'v0alpha1',
             resource: 'repositories',
           });
-          let subscription: any;
+          let subscription: Subscription | null = null;
           try {
             // wait for the initial query to resolve before proceeding
-            await cacheDataLoaded;
+            const response = await cacheDataLoaded;
+            const resourceVersion = response.data.metadata?.resourceVersion;
 
-            subscription = client.watch().subscribe((event) => {
+            subscription = client.watch(undefined, resourceVersion).subscribe((event) => {
               updateCachedData((draft: RepositoryList) => {
                 if (!draft.items) {
                   draft.items = [];
@@ -49,11 +52,9 @@ const injectedRtkApi = api
                 );
 
                 if (event.type === 'ADDED') {
-                  // Add the new item if it doesn't already exist in the draft
-                  if (existingIndex === -1) {
-                    //@ts-expect-error TODO Fix types
-                    draft.items.push(event.object);
-                  }
+                  // Add the new item
+                  //@ts-expect-error TODO Fix types
+                  draft.items.push(event.object);
                 } else if (event.type === 'MODIFIED') {
                   // Update the existing item if it exists
                   if (existingIndex !== -1) {
@@ -68,14 +69,16 @@ const injectedRtkApi = api
                 }
               });
             });
-          } catch {
+          } catch (error) {
             // no-op in case `cacheEntryRemoved` resolves before `cacheDataLoaded`,
             // in which case `cacheDataLoaded` will throw
+            console.error('Error in onCacheEntryAdded:', error);
           }
           // cacheEntryRemoved will resolve when the cache subscription is no longer active
           await cacheEntryRemoved;
           // perform cleanup steps once the `cacheEntryRemoved` promise resolves
-          subscription.unsubscribe();
+
+          subscription?.unsubscribe();
         },
         providesTags: ['Repository'],
       }),

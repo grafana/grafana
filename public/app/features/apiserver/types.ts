@@ -8,7 +8,7 @@
  *
  */
 
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
 
 /** The object type and version */
 export interface TypeMeta<K = string> {
@@ -172,14 +172,14 @@ export interface MetaStatus {
 }
 
 export interface ResourceEvent<T = object, S = object, K = string> {
-  type: "ADDED" | "DELETED" | "MODIFIED";
-  object: Resource<T,S,K>;
+  type: 'ADDED' | 'DELETED' | 'MODIFIED';
+  object: Resource<T, S, K>;
 }
 
 export interface ResourceClient<T = object, S = object, K = string> {
   create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
   get(name: string): Promise<Resource<T, S, K>>;
-  watch(name?: string): Observable<ResourceEvent<T, S, K>>;
+  watch(name?: string, resourceVersion?: string): Observable<ResourceEvent<T, S, K>>;
   subresource<S>(name: string, path: string): Promise<S>;
   list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;

@@ -1,4 +1,4 @@
-import { Observable, Subscriber, map, switchMap, from } from 'rxjs';
+import { Observable, Subscriber, map, switchMap, from, filter, retry, catchError } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -37,42 +37,105 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(name?: string): Observable<ResourceEvent<T, S, K>> {
-    return getBackendSrv()
-      .fetch<ReadableStream<Uint8Array>>({
-        url: name ? `${this.url}/${name}` : this.url,
-        params: {
-          watch: true,
-          // resource version??
-        },
-        responseType: 'stream',
+  public watch(name?: string, resourceVersion?: string): Observable<ResourceEvent<T, S, K>> {
+    return this.createWatchRequest(name, resourceVersion).pipe(
+      switchMap((response) => this.handleWatchStream(response)),
+      retry({ count: 3, delay: 1000 }),
+      catchError((error) => {
+        console.error('Watch stream error:', error);
+        throw error;
       })
-      .pipe(
-        switchMap((result) => {
-          console.log('result', result);
-          return fromReadableStream(result.data).pipe(
-            switchMap((b) => {
-              const buff = new TextDecoder().decode(b);
-              const parts = buff.split('\n'); // NOT RIGHT... need streaming parser???
+    );
+  }
 
-              const events: any[] = [];
-              for (let p of parts) {
-                if (p.startsWith('{') && p.endsWith('}')) {
-                  events.push(JSON.parse(p));
-                } else {
-                  console.log('SKIP', p);
-                }
-              }
+  private createWatchRequest(name?: string, resourceVersion?: string) {
+    return getBackendSrv().fetch<ReadableStream<Uint8Array>>({
+      url: name ? `${this.url}/${name}` : this.url,
+      params: {
+        watch: true,
+        resourceVersion,
+      },
+      responseType: 'stream',
+    });
+  }
 
-              console.log('READ', parts.length, { buff, events });
-              return from(events);
-            })
-          );
-        })
-      ).pipe(map(v => {
-        console.log("SENT", v.object.metadata.name, v.object.metadata.resourceVersion, v);
-        return v
-      }));
+  private handleWatchStream(result: { data: ReadableStream<Uint8Array> }): Observable<ResourceEvent<T, S, K>> {
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    return fromReadableStream(result.data).pipe(
+      map((chunk) => decoder.decode(chunk, { stream: true })),
+      map((text) => {
+        buffer += text;
+        const events: Array<ResourceEvent<T, S, K>> = [];
+
+        // Find complete JSON objects in the buffer
+        let startIndex = buffer.indexOf('{');
+        while (startIndex !== -1) {
+          try {
+            const endIndex = this.findJsonEnd(buffer, startIndex);
+            if (endIndex === -1) {
+              break;
+            }
+
+            const jsonStr = buffer.substring(startIndex, endIndex + 1);
+            const event = JSON.parse(jsonStr) as ResourceEvent<T, S, K>;
+            events.push(event);
+
+            // Remove processed data from buffer
+            buffer = buffer.substring(endIndex + 1);
+            startIndex = buffer.indexOf('{');
+          } catch (e) {
+            // If JSON.parse fails, move to next potential object
+            buffer = buffer.substring(startIndex + 1);
+            startIndex = buffer.indexOf('{');
+          }
+        }
+
+        return events;
+      }),
+      filter((events) => events.length > 0),
+      switchMap((events) => from(events))
+    );
+  }
+
+  private findJsonEnd(str: string, startIndex: number): number {
+    let brackets = 0;
+    let inString = false;
+    let escapeNext = false;
+
+    for (let i = startIndex; i < str.length; i++) {
+      const char = str[i];
+
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+
+      if (char === '\\' && inString) {
+        escapeNext = true;
+        continue;
+      }
+
+      if (char === '"' && !escapeNext) {
+        inString = !inString;
+        continue;
+      }
+
+      if (!inString) {
+        if (char === '{') {
+          brackets++;
+        }
+        if (char === '}') {
+          brackets--;
+          if (brackets === 0) {
+            return i;
+          }
+        }
+      }
+    }
+
+    return -1;
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {
