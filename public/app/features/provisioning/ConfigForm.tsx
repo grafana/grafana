@@ -45,10 +45,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       },
     };
   }
-  return {
-    ...specToData(repository),
-    token: '',
-  };
+  return specToData(repository);
 }
 
 export interface ConfigFormProps {

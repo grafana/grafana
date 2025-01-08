@@ -54,10 +54,7 @@ const transformedContent = content
   })
 
   // Modify any 'List...Arg>' to 'List...Arg | void>'
-  .replace(/(List[A-Za-z0-9]+Arg)>/g, '$1 | void>')
-
-  // Add headers for content-type in patch endpoints
-  .replace(/(method: 'PATCH',)/g, "$1\n\t\t\t\theaders: { 'Content-Type': 'application/merge-patch+json' },");
+  .replace(/(List[A-Za-z0-9]+Arg)>/g, '$1 | void>');
 
 // Write the transformed content back to a new file
 fs.writeFileSync(outputFilePath, transformedContent);
