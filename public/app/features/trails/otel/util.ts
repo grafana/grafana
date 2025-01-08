@@ -1,4 +1,5 @@
 import { MetricFindValue } from '@grafana/data';
+import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
 import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
@@ -129,7 +130,13 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
 
     // add the other OTEL resource filters
     for (let i = 0; i < otelFilters?.length; i++) {
-      const labelName = otelFilters[i].key;
+      let labelName = otelFilters[i].key;
+
+      // when adding an otel resource filter with utfb
+      if (!isValidLegacyName(labelName)) {
+        labelName = `'${labelName}'`;
+      }
+
       const op = otelFilters[i].operator;
       const labelValue = otelFilters[i].value;
 
@@ -299,8 +306,15 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
   );
   // here we start to add the attributes to the group left
   if (attributes.length > 0) {
+    // loop through attributes to check for utf8
+    const utf8Attributes = attributes.map((a)=>{
+      if(!isValidLegacyName(a)){
+        return `'${a}'`;
+      }
+      return a;
+    })
     // update the group left variable that contains all the filtered resource attributes
-    otelGroupLeft.setState({ value: attributes.join(',') });
+    otelGroupLeft.setState({ value: utf8Attributes.join(',') });
     // get the new otel join query that includes the group left attributes
     const resourceObject = getOtelResourcesObject(trail);
     const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
