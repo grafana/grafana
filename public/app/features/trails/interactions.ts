@@ -128,6 +128,9 @@ type Interactions = {
   },
   deployment_environment_migrated: {},
   otel_experience_used: {},
+  otel_experience_toggled: {
+    value: ('on'| 'off')
+  }
 };
 
 const PREFIX = 'grafana_explore_metrics_';
