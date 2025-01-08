@@ -6,13 +6,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -33,8 +38,30 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	db, cfg := db.InitTestDBWithCfg(t)
-	statsService := &sqlStatsService{db: db}
-	populateDB(t, db, cfg)
+	orgSvc := populateDB(t, db, cfg)
+	dashSvc := &dashboards.FakeDashboardService{}
+	emptyJson := simplejson.New()
+	emptyJsonBytes, err := emptyJson.ToDB()
+	require.NoError(t, err)
+	largerJson := simplejson.NewFromAny(map[string]string{"key": "value"})
+	largerJsonBytes, err := largerJson.ToDB()
+	require.NoError(t, err)
+	dashSvc.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{{Data: largerJson}, {Data: emptyJson}}, nil)
+	dashSvc.On("GetAllDashboardsByOrgId", mock.Anything, int64(2)).Return([]*dashboards.Dashboard{}, nil)
+	dashSvc.On("GetAllDashboardsByOrgId", mock.Anything, int64(3)).Return([]*dashboards.Dashboard{}, nil)
+	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 1}).Return([]*dashboards.DashboardTagCloudItem{{Term: "test"}}, nil)
+	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 2}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
+	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 3}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
+
+	folderService := &foldertest.FakeService{}
+	folderService.ExpectedFolders = []*folder.Folder{{ID: 1}, {ID: 2}, {ID: 3}}
+
+	statsService := &sqlStatsService{
+		db:        db,
+		dashSvc:   dashSvc,
+		orgSvc:    orgSvc,
+		folderSvc: folderService,
+	}
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
 		query := stats.GetSystemStatsQuery{}
@@ -48,6 +75,11 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.LibraryVariables)
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
+		assert.Equal(t, int64(3), result.Orgs)
+		assert.Equal(t, int64(2), result.Dashboards)
+		assert.Equal(t, int64(9), result.Folders) // will return 3 folders for each org
+		assert.Equal(t, int64(len(largerJsonBytes)+len(emptyJsonBytes)), result.DashboardBytesTotal)
+		assert.Equal(t, int64(len(largerJsonBytes)), result.DashboardBytesMax)
 		assert.NotNil(t, result.DatabaseCreatedTime)
 		assert.Equal(t, db.GetDialect().DriverName(), result.DatabaseDriver)
 	})
@@ -78,12 +110,15 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 
 	t.Run("Get admin stats should not result in error", func(t *testing.T) {
 		query := stats.GetAdminStatsQuery{}
-		_, err := statsService.GetAdminStats(context.Background(), &query)
+		stats, err := statsService.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
+		assert.Equal(t, int64(1), stats.Tags)
+		assert.Equal(t, int64(2), stats.Dashboards)
+		assert.Equal(t, int64(3), stats.Orgs)
 	})
 }
 
-func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
+func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 	t.Helper()
 
 	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
@@ -151,16 +186,6 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
 	}
 	err = orgService.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
-}
 
-func TestIntegration_GetAdminStats(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	db, cfg := db.InitTestDBWithCfg(t)
-	statsService := ProvideService(cfg, db)
-
-	query := stats.GetAdminStatsQuery{}
-	_, err := statsService.GetAdminStats(context.Background(), &query)
-	require.NoError(t, err)
+	return orgService
 }
