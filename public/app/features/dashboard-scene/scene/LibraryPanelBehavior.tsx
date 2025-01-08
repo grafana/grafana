@@ -8,14 +8,14 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
-import {VizPanelLinks, VizPanelLinksMenu} from "./PanelLinks";
-import { panelLinksBehavior } from "./PanelMenuBehavior";
-import { PanelNotices } from "./PanelNotices";
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { panelLinksBehavior } from './PanelMenuBehavior';
+import { PanelNotices } from './PanelNotices';
 import { PanelTimeRange } from './PanelTimeRange';
-import { AngularDeprecation } from "./angular/AngularDeprecation";
+import { AngularDeprecation } from './angular/AngularDeprecation';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
-import { config } from "@grafana/runtime";
+import { config } from '@grafana/runtime';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
