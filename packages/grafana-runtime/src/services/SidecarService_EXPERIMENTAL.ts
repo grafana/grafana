@@ -95,13 +95,23 @@ export class SidecarService_EXPERIMENTAL {
     }
 
     this.mainLocationService.getLocationObservable().subscribe((location) => {
+      this.mainOnAllowedRoute = ALLOW_ROUTES.some((prefix) => location.pathname.match(prefix));
+
+      // Sidecar isn't open, so we don't care about the location changes more.
       if (!this.activePluginId) {
         return;
       }
-      this.mainOnAllowedRoute = ALLOW_ROUTES.some((prefix) => location.pathname.match(prefix));
 
+      // Sidecar is open, but we are on a path where sidecar should not be shown.
       if (!this.mainOnAllowedRoute) {
         this.closeApp();
+        return;
+      }
+
+      // Sidecar should be open, but it is based on a new location. This can happen when something manually pushes new
+      // location with the sidecar state. For example redirect after login to the original URL does that.
+      if (!this.mainLocationWhenOpened) {
+        this.mainLocationWhenOpened = location.pathname;
         return;
       }
 
