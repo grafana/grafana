@@ -117,15 +117,11 @@ export const getContentItems = (
 
     const v = fields[i].values[dataIdx];
 
-    if (v == null && field.config.noValue == null) {
+    if ((v == null && field.config.noValue == null) || (hideZeros && v === 0)) {
       continue;
     }
 
     const display = field.display!(v); // super expensive :(
-
-    if (hideZeros && !Number.isNaN(display.numeric) && display.numeric === 0) {
-      continue;
-    }
 
     // sort NaN and non-numeric to bottom (regardless of sort order)
     const numeric = !Number.isNaN(display.numeric)
