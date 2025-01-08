@@ -268,17 +268,17 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
-					"explain": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Explain the score (if possible)",
-							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
-						},
-					},
 					"score": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When using \"real\" search, this is the score",
 							Type:        []string{"number"},
 							Format:      "double",
+						},
+					},
+					"explain": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Explain the score (if possible)",
+							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
