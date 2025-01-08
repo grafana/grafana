@@ -321,6 +321,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
+		// nolint:staticcheck
 		f, err := l.folderService.Get(c, &folder.GetFolderQuery{OrgID: signedInUser.GetOrgID(), ID: &libraryElement.FolderID, SignedInUser: signedInUser})
 		if err != nil {
 			return []model.LibraryElementDTO{}, err
