@@ -1,16 +1,19 @@
 import { useState } from 'react';
 
-import { Dropdown, IconButton, Menu } from '@grafana/ui';
+import { ConfirmModal, Dropdown, IconButton, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier, GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG, featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { GrafanaRuleGroupExporter } from '../../components/export/GrafanaRuleGroupExporter';
 import { EditRuleGroupModal } from '../../components/rules/EditRuleGroupModal';
 import { ReorderCloudGroupModal } from '../../components/rules/ReorderRuleGroupModal';
+import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
+import { useAsync } from '../../hooks/useAsync';
 import { useFolder } from '../../hooks/useFolder';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSourceByUID } from '../../utils/datasource';
 import { isFederatedRuleGroup } from '../../utils/rules';
 
 const { useGetGrafanaRulerGroupQuery, useGetRuleGroupForNamespaceQuery } = alertRuleApi;
@@ -37,10 +40,15 @@ export function RuleGroupActionsMenu({ groupIdentifier }: RuleGroupActionsMenuPr
   }
 }
 
+type DataSourceActionState = 'edit' | 'reorder' | 'delete';
+
 function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionMenuProps) {
   const { canEditRules } = useRulesAccess();
   const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: groupIdentifier.rulesSource.uid });
 
+  const [actionState, setActionState] = useState<DataSourceActionState | undefined>(undefined);
+
+  const [deleteRuleGroup] = useDeleteRuleGroup();
   const { data: rulerRuleGroup } = useGetRuleGroupForNamespaceQuery(
     {
       namespace: groupIdentifier.namespace.name,
@@ -56,23 +64,86 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
     return null;
   }
 
+  const [{ execute: deleteGroup }] = useAsync(async () => {
+    await deleteRuleGroup.execute({
+      namespaceName: groupIdentifier.namespace.name,
+      groupName: groupIdentifier.groupName,
+      dataSourceName: groupIdentifier.rulesSource.name,
+    });
+  });
+
   const canEdit = !isFederated && canEditRules(groupIdentifier.rulesSource.name);
+  const rulesSource = getRulesDataSourceByUID(groupIdentifier.rulesSource.uid);
+
+  if (!rulesSource) {
+    // This should never happen
+    return null;
+  }
 
   return (
-    <Dropdown
-      overlay={
-        <Menu>
-          {canEdit && (
-            <Menu.Item label={t('alerting.group-actions.edit', 'Edit')} icon="pen" data-testid="edit-group-action" />
-          )}
-          {canEdit && <Menu.Item label={t('alerting.group-actions.reorder', 'Re-order rules')} icon="flip" />}
-          <Menu.Divider />
-          {canEdit && <Menu.Item label={t('alerting.group-actions.delete', 'Delete')} icon="trash-alt" destructive />}
-        </Menu>
-      }
-    >
-      <IconButton name="ellipsis-h" aria-label={t('alerting.group-actions.actions-trigger', 'Rule group actions')} />
-    </Dropdown>
+    <>
+      <Dropdown
+        overlay={
+          <Menu>
+            {canEdit && (
+              <Menu.Item
+                label={t('alerting.group-actions.edit', 'Edit')}
+                icon="pen"
+                data-testid="edit-group-action"
+                onClick={() => setActionState('edit')}
+              />
+            )}
+            {canEdit && (
+              <Menu.Item
+                label={t('alerting.group-actions.reorder', 'Re-order rules')}
+                icon="flip"
+                onClick={() => setActionState('reorder')}
+              />
+            )}
+            <Menu.Divider />
+            {canEdit && (
+              <Menu.Item
+                label={t('alerting.group-actions.delete', 'Delete')}
+                icon="trash-alt"
+                destructive
+                onClick={() => setActionState('delete')}
+              />
+            )}
+          </Menu>
+        }
+      >
+        <IconButton name="ellipsis-h" aria-label={t('alerting.group-actions.actions-trigger', 'Rule group actions')} />
+      </Dropdown>
+      {actionState === 'edit' && rulerRuleGroup && (
+        <EditRuleGroupModal
+          namespace={{
+            name: groupIdentifier.namespace.name,
+            groups: [],
+            rulesSource,
+          }}
+          group={rulerRuleGroup}
+          onClose={() => setActionState(undefined)}
+        />
+      )}
+      {actionState === 'reorder' && rulerRuleGroup && (
+        <ReorderCloudGroupModal
+          group={rulerRuleGroup}
+          groupIdentifier={groupIdentifier}
+          onClose={() => setActionState(undefined)}
+          rulerConfig={dataSourceInfo.rulerConfig}
+        />
+      )}
+      {rulerRuleGroup && (
+        <ConfirmModal
+          isOpen={actionState === 'delete'}
+          title="Delete group"
+          body={<div>Are you sure you want to delete this group?</div>}
+          onConfirm={deleteGroup}
+          onDismiss={() => setActionState(undefined)}
+          confirmText="Delete"
+        />
+      )}
+    </>
   );
 }
 
@@ -140,6 +211,13 @@ function GrafanaGroupsActionMenu({ groupIdentifier }: GrafanaGroupsActionMenuPro
           groupIdentifier={groupIdentifier}
           onClose={() => setActionState(undefined)}
           rulerConfig={GRAFANA_RULER_CONFIG}
+        />
+      )}
+      {actionState === 'export' && (
+        <GrafanaRuleGroupExporter
+          folderUid={folderUid}
+          groupName={groupIdentifier.groupName}
+          onClose={() => setActionState(undefined)}
         />
       )}
     </>
