@@ -11,6 +11,7 @@ import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
+import { captureRequests, serializeRequests } from './mocks/server/events';
 import { setupDataSources } from './testSetup/datasources';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -42,6 +43,7 @@ describe('RuleEditor grafana managed rules', () => {
   });
 
   it('can create new grafana managed alert', async () => {
+    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
     const dataSources = {
       default: mockDataSource(
         {
@@ -50,7 +52,7 @@ describe('RuleEditor grafana managed rules', () => {
           uid: PROMETHEUS_DATASOURCE_UID,
           isDefault: true,
         },
-        { alerting: false }
+        { alerting: true, module: 'core:plugin/prometheus' }
       ),
     };
 
@@ -69,5 +71,8 @@ describe('RuleEditor grafana managed rules', () => {
     await user.click(ui.buttons.saveAndExit.get());
 
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
   });
 });
