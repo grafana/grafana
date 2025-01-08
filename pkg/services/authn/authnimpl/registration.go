@@ -83,7 +83,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabled(context.Background(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		hasEnabledProviders := cfg.SAMLAuthEnabled || cfg.LDAPAuthEnabled
+		hasEnabledProviders := authnSvc.IsClientEnabled(authn.ClientSAML) || authnSvc.IsClientEnabled(authn.ClientLDAP)
 		if !hasEnabledProviders {
 			oauthInfos := socialService.GetOAuthInfoProviders()
 			for _, provider := range oauthInfos {

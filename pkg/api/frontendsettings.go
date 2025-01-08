@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -363,7 +364,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		hasEnabledProviders := hs.Cfg.SAMLAuthEnabled || hs.Cfg.LDAPAuthEnabled || hs.samlEnabled()
+		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientSAML)
+
 		if !hasEnabledProviders {
 			oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 			for _, provider := range oauthInfos {
