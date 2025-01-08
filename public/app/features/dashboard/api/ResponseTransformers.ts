@@ -297,29 +297,17 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 }
 
 function getDefaultDatasourceType() {
-  const datasources = config.datasources;
-  // find default datasource in datasources
-  const dsList = Object.values(datasources);
-  let dsType = dsList.find((ds) => ds.isDefault)?.type;
-  if (!dsType) {
-    dsType = getDefaultDataSourceRef()?.type ?? 'grafana';
-  }
-
-  return dsType;
+  // if there is no default datasource, return 'grafana' as default
+  return getDefaultDataSourceRef()?.type ?? 'grafana';
 }
 
 export function getDefaultDatasource(): DataSourceRef {
-  const dsList = Object.values(config.datasources);
-  const defaultDsSettings = dsList.find((ds) => ds.isDefault);
-
-  const defaultDs = defaultDsSettings
-    ? { type: defaultDsSettings.type, uid: defaultDsSettings.uid, apiVersion: defaultDsSettings.apiVersion }
-    : (getDefaultDataSourceRef() ?? { type: 'grafana', uid: 'grafana' });
+  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: 'grafana' };
 
   return {
-    apiVersion: defaultDs.apiVersion,
-    type: defaultDs.type,
-    uid: defaultDs.uid,
+    apiVersion: configDefaultDS.apiVersion,
+    type: configDefaultDS.type,
+    uid: configDefaultDS.uid,
   };
 }
 
