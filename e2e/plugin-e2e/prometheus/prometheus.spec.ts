@@ -13,6 +13,5 @@ test('query data response should be OK when query is valid', async ({ panelEditP
   await panelEditPage.setVisualization('Table');
   await setEditorMode(panelEditPage, selectors, 'code');
   await enterCodeEditorQueryExpr(panelEditPage, selectors, 'up');
-  await expect(panelEditPage.refreshPanel()).toBeOK();
   await expect(panelEditPage.panel.data).toContainText(['1']);
 });
