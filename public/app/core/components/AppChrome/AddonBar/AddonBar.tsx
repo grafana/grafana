@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FlexItem } from '@grafana/experimental';
@@ -15,6 +16,8 @@ import { NewsContainer } from '../News/NewsContainer';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TopNavBarMenu } from '../TopBar/TopNavBarMenu';
 
+import { HelpPane } from './HelpPane';
+
 export const ADDON_BAR_WIDTH = 48;
 
 export function AddonBar() {
@@ -28,7 +31,7 @@ export function AddonBar() {
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
 
   const onToggleAddonBar = () => {
-    chrome.update({ addonBar: !state.addonBar });
+    chrome.update({ addonBar: !state.addonBar, addonBarPane: undefined });
   };
 
   if (!state.addonBar) {
@@ -38,6 +41,21 @@ export function AddonBar() {
       </button>
     );
   }
+
+  const onShowHelpPane = () => {
+    if (state.addonBarPane?.id === 'help') {
+      chrome.update({ addonBarPane: undefined });
+      return;
+    }
+
+    chrome.update({
+      addonBarPane: {
+        title: 'Get help',
+        id: 'help',
+        content: <HelpPane />,
+      },
+    });
+  };
 
   return (
     <div className={styles.addonBar}>
@@ -52,12 +70,17 @@ export function AddonBar() {
         </Dropdown>
       )}
       <FlexItem grow={1} />
-      <QuickAdd />
+      <LineSeparator />
+      <AddonBarItem>
+        <QuickAdd />
+      </AddonBarItem>
       {unifiedHistoryEnabled && <HistoryContainer />}
       {enrichedHelpNode && (
-        <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-          <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
-        </Dropdown>
+        // <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
+        <AddonBarItem active={state.addonBarPane?.id === 'help'}>
+          <ToolbarButton iconOnly icon="question-circle" aria-label="Help" onClick={onShowHelpPane} />
+        </AddonBarItem>
+        // </Dropdown>
       )}
       {config.newsFeedEnabled && <NewsContainer />}
       <ToolbarButton
@@ -71,6 +94,16 @@ export function AddonBar() {
       </button>
     </div>
   );
+}
+
+function LineSeparator() {
+  const styles = useStyles2(getStyles);
+  return <div className={styles.line}></div>;
+}
+
+function AddonBarItem({ active, children }: { active?: boolean; children: React.ReactNode }) {
+  const styles = useStyles2(getStyles);
+  return <div className={cx(styles.item, active && styles.itemActive)}>{children}</div>;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -92,6 +125,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       padding: theme.spacing(0.5),
       paddingBottom: theme.spacing(6),
+      gap: theme.spacing(1),
     }),
     toggleButton: css({
       position: 'absolute',
@@ -143,6 +177,25 @@ function getStyles(theme: GrafanaTheme2) {
         right: 0,
         scale: 1.05,
         background: theme.colors.secondary.shade,
+      },
+    }),
+    line: css({
+      width: '100%',
+      height: '1px',
+      background: theme.colors.border.weak,
+    }),
+    item: css({}),
+    itemActive: css({
+      position: 'relative',
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        transform: 'translateX(-50%)',
+        width: theme.spacing(0.5),
       },
     }),
   };

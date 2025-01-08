@@ -29,6 +29,14 @@ export interface AppChromeState {
     href: ReturnToPreviousProps['href'];
   };
   addonBar?: boolean;
+  addonBarPane?: AddonBarPane;
+}
+
+export interface AddonBarPane {
+  title: string;
+  id: string;
+  actions?: React.ReactNode;
+  content: React.ReactNode;
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -56,6 +64,7 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
+    addonBar: true,
   });
 
   public headerHeightObservable = this.state

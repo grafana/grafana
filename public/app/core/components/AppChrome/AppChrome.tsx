@@ -11,8 +11,10 @@ import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
+import { KioskMode } from 'app/types';
 
 import { ADDON_BAR_WIDTH, AddonBar } from './AddonBar/AddonBar';
+import { ADDON_BAR_PANE_WIDTH, AddonBarPane } from './AddonBar/AddonBarPane';
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
@@ -37,6 +39,8 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
   );
+  const addonBarVisible = state.addonBar || state.kioskMode === KioskMode.Full;
+
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -82,7 +86,7 @@ export function AppChrome({ children }: Props) {
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
   return (
-    <div className={cx(styles.addonBarWrapper, state.addonBar && styles.addonBarWrapperOpen)}>
+    <div className={cx(styles.addonBarWrapper, addonBarVisible && styles.addonBarWrapperOpen)}>
       <div
         className={classNames('main-view', {
           'main-view--chrome-hidden': state.chromeless,
@@ -128,11 +132,13 @@ export function AppChrome({ children }: Props) {
               className={cx(styles.pageContainer, {
                 [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
                 [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+                [styles.pageContainerAddonPane]: Boolean(state.addonBarPane),
               })}
               id="pageContent"
             >
               {children}
             </main>
+            {state.addonBarPane && <AddonBarPane pane={state.addonBarPane} />}
           </div>
         </div>
         {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
@@ -141,7 +147,7 @@ export function AppChrome({ children }: Props) {
           <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
         )}
       </div>
-      <AddonBar />
+      {!state.kioskMode && <AddonBar />}
     </div>
   );
 }
@@ -214,6 +220,9 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     }),
     pageContainerMenuDockedScopes: css({
       paddingLeft: `calc(${MENU_WIDTH} * 2)`,
+    }),
+    pageContainerAddonPane: css({
+      paddingRight: ADDON_BAR_PANE_WIDTH + 1,
     }),
     pageContainer: css({
       label: 'page-container',
