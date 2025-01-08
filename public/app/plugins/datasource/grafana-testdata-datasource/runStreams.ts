@@ -1,5 +1,5 @@
 import { defaults } from 'lodash';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -18,6 +18,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 
 import { getRandomLine } from './LogIpsum';
 import { TestDataDataQuery, StreamingQuery } from './dataquery';
@@ -44,6 +45,8 @@ export function runStream(
       return runFetchStream(target, query, req);
     case 'traces':
       return runTracesStream(target, query, req);
+    case 'watch':
+      return runWatchStream(target, query, req);
   }
   throw new Error(`Unknown Stream Type: ${query.type}`);
 }
@@ -172,6 +175,57 @@ export function runLogsStream(
     return () => {
       console.log('unsubscribing to stream ' + streamId);
       clearTimeout(timeoutId);
+    };
+  });
+}
+
+export function runWatchStream(
+  target: TestDataDataQuery,
+  query: StreamingQuery,
+  req: DataQueryRequest<TestDataDataQuery>
+): Observable<DataQueryResponse> {
+  const uid = req.targets[0].datasource?.uid;
+  if (!uid) {
+    return throwError(() => new Error('expected datasource uid'));
+  }
+
+  return new Observable<DataQueryResponse>((subscriber) => {
+    const streamId = `watch-${req.panelId || 'explore'}-${target.refId}`;
+    const data = new CircularDataFrame({
+      append: 'tail',
+      capacity: req.maxDataPoints || 1000,
+    });
+    data.refId = target.refId;
+    data.name = target.alias || 'Logs ' + target.refId;
+    data.addField({ name: 'line', type: FieldType.string });
+    data.addField({ name: 'time', type: FieldType.time });
+
+    const sub = getBackendSrv()
+      .watch({
+        url: `api/datasources/uid/${uid}/resources/stream`,
+        params: {
+          count: 10000000, // big number
+          format: 'json',
+          sleep: '100ms',
+          flush: 90, // 90% (eg, sometimes send two at once)
+        },
+      })
+      .subscribe((line) => {
+        console.log('LINE', line);
+
+        data.fields[0].values.push(getRandomLine());
+        data.fields[1].values.push(Date.now());
+
+        subscriber.next({
+          data: [data],
+          key: streamId,
+          state: LoadingState.Streaming,
+        });
+      });
+
+    return () => {
+      console.log('unsubscribing to stream ' + streamId);
+      sub.unsubscribe();
     };
   });
 }

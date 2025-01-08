@@ -109,15 +109,15 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	buffer := 0
-	if query.Has("buffer") {
-		buffer, err = strconv.Atoi(query.Get("buffer"))
+	flush := 100 // flush 100% of the time
+	if query.Has("flush") {
+		flush, err = strconv.Atoi(query.Get("flush"))
 		if err != nil {
-			writeError(http.StatusBadRequest, "invalid buffer value")
+			writeError(http.StatusBadRequest, "invalid flush value")
 			return
 		}
-		if buffer > 10 || buffer < 0 {
-			writeError(http.StatusBadRequest, "expecting buffer between 0-10")
+		if flush > 100 || flush < 0 {
+			writeError(http.StatusBadRequest, "expecting flush between 0-100")
 			return
 		}
 	}
@@ -155,7 +155,7 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		// This may send multiple lines in one chunk
-		if buffer < rand.Intn(10) {
+		if flush > rand.Intn(100) {
 			rw.(http.Flusher).Flush()
 		}
 		time.Sleep(sleepDuration)

@@ -21,8 +21,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   const hasUnsavedFolderChange = Boolean(dashboard.meta.hasUnsavedFolderChange);
   const [errorIsHandled, setErrorIsHandled] = useState(false);
 
-  console.log('SaveDashboardDrawer', options);
-
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({
       saveTimerange: Boolean(options.saveTimerange),
@@ -60,8 +58,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     if (showDiff) {
       return <SaveDashboardDiff diff={data.diff} oldValue={previous} newValue={data.clone} />;
     }
-
-  console.log('renderSaveBody', data);
 
     if (isNew || isCopy) {
       return (
@@ -122,13 +118,11 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
         <TabsBar>
           <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
           {data.hasChanges && (
-            <Tab label={'ChangesXXX'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+            <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
           )}
         </TabsBar>
       }
     >
-
-<div>HELLO</div>
       {renderSaveBody()}
 
       {config.featureToggles.showDashboardValidationWarnings && <DashboardValidation dashboard={dashboard} />}

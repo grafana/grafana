@@ -17,6 +17,7 @@ const types = [
   { value: 'logs', label: 'Logs' },
   { value: 'fetch', label: 'Fetch' },
   { value: 'traces', label: 'Traces' },
+  { value: 'watch', label: 'Watch' },
 ];
 
 export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {

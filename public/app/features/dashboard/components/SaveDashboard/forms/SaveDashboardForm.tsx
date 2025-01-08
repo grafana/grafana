@@ -44,8 +44,6 @@ export const SaveDashboardForm = ({
   const [message, setMessage] = useState(options.message);
   const styles = useStyles2(getStyles);
 
-  console.log('SaveDashboardForm', saveModel);
-
   return (
     <form
       onSubmit={async (event) => {
