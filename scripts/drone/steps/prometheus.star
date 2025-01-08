@@ -18,7 +18,6 @@ def prometheus_devenv_step():
         "image": images["docker"],
         "commands": [
             "apk add --update make bash go",
-            "docker network connect host $(hostname)"
             "make devenv sources=prometheus",
         ],
         "volumes": [
