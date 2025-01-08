@@ -283,8 +283,8 @@ export const LogsPanel = ({
      * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
      * when new data is received. See https://github.com/grafana/grafana/pull/37634
      */
-    if (isAscending && data.request?.app === CoreApp.Dashboard) {
-      scrollElement.scrollTo(0, logsContainerRef.current.offsetHeight);
+    if (data.request?.app === CoreApp.Dashboard || data.request?.app === CoreApp.PanelEditor) {
+      scrollElement.scrollTo(0, isAscending ? logsContainerRef.current.scrollHeight : 0);
     }
   }, [data.request?.app, isAscending, scrollElement, logRows]);
 
@@ -469,7 +469,8 @@ export const LogsPanel = ({
               onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
               logRowMenuIconsBefore={isReactNodeArray(logRowMenuIconsBefore) ? logRowMenuIconsBefore : undefined}
               logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
-              renderPreview
+              // Ascending order causes scroll to stick to the bottom, so previewing is futile
+              renderPreview={isAscending ? false : true}
             />
           </InfiniteScroll>
           {showCommonLabels && isAscending && renderCommonLabels()}
