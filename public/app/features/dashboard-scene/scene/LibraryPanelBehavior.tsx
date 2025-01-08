@@ -8,9 +8,14 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
-import { VizPanelLinks } from "./PanelLinks";
+import {VizPanelLinks, VizPanelLinksMenu} from "./PanelLinks";
+import { panelLinksBehavior } from "./PanelMenuBehavior";
+import { PanelNotices } from "./PanelNotices";
 import { PanelTimeRange } from './PanelTimeRange';
+import { AngularDeprecation } from "./angular/AngularDeprecation";
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
+
+import { config } from "@grafana/runtime";
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -19,7 +24,6 @@ export interface LibraryPanelBehaviorState extends SceneObjectState {
   name: string;
   isLoaded?: boolean;
   _loadedPanel?: LibraryPanel;
-  titleItems?: SceneObject[]
 }
 
 export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorState> {
@@ -50,13 +54,19 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const libPanelModel = new PanelModel(libPanel.model);
 
-    if (libPanelModel.links) {
-      this.state.titleItems?.forEach(titleItem => {
-        if (titleItem instanceof VizPanelLinks) {
-          titleItem.setState({rawLinks: libPanelModel.links ?? []})
-        }
-      })
+    const titleItems: SceneObject[] = [];
+    if (config.featureToggles.angularDeprecationUI) {
+      titleItems.push(new AngularDeprecation());
     }
+
+    titleItems.push(
+      new VizPanelLinks({
+        rawLinks: libPanelModel.links,
+        menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+      })
+    );
+
+    titleItems.push(new PanelNotices());
 
     const vizPanelState: VizPanelState = {
       title: libPanelModel.title,
@@ -66,6 +76,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       pluginVersion: libPanelModel.pluginVersion,
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
+      titleItems: titleItems,
       $data: createPanelDataProvider(libPanelModel),
     };
 
