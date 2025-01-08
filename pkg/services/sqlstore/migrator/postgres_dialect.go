@@ -74,7 +74,7 @@ func (db *PostgresDialect) SQLType(c *Column) string {
 	case DB_NVarchar:
 		res = DB_Varchar
 	case DB_Uuid:
-		res = DB_Uuid
+		return DB_Uuid // do not add the length options
 	case DB_Blob, DB_TinyBlob, DB_MediumBlob, DB_LongBlob:
 		return DB_Bytea
 	case DB_Double:
