@@ -2,6 +2,8 @@ package provisioning
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"math/rand"
 	"os"
@@ -10,9 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,14 +47,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
 	})
-	helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
-		client := github.NewMockClient(ttc)
-		client.On("IsAuthenticated", mock.Anything).Maybe().Return(true)
-		client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-		client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-		// Don't need DeleteWebhook or EditWebhook, because they require that ListWebhooks returns a slice with elements.
-		return client
-	}
 
 	// Scope create+get
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -92,7 +86,41 @@ func TestIntegrationProvisioning(t *testing.T) {
 		},
 	})
 
+	cleanSlate := func(t *testing.T) {
+		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
+			client := github.NewMockClient(ttc)
+			client.On("IsAuthenticated", mock.Anything).Maybe().Return(nil)
+			client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
+			client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.WebhookConfig{}, nil)
+			client.On("RepoExists", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+			client.On("BranchExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(true, nil)
+			client.On("GetBranch", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(github.Branch{Sha: "testing"}, nil)
+			client.On("GetTree", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, false, nil)
+			client.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+			return client
+		}
+
+		deleteAll := func(client *apis.K8sResourceClient) error {
+			list, err := client.Resource.List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return err
+			}
+			for _, resource := range list.Items {
+				if err := client.Resource.Delete(ctx, resource.GetName(), metav1.DeleteOptions{}); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+
+		require.NoError(t, deleteAll(dashboardClient), "deleting all dashboards")
+		require.NoError(t, deleteAll(folderClient), "deleting all folders")
+		require.NoError(t, deleteAll(client), "deleting all repositories")
+	}
+
 	t.Run("Check discovery client", func(t *testing.T) {
+		cleanSlate(t)
+
 		disco := helper.NewDiscoveryClient()
 		resources, err := disco.ServerResourcesForGroupVersion("provisioning.grafana.app/v0alpha1")
 		require.NoError(t, err)
@@ -211,6 +239,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("Check basic create and get", func(t *testing.T) {
+		cleanSlate(t)
+
 		createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 
 		// Load the samples
@@ -262,9 +292,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"owner": "grafana",
 					"pullRequestLinter": true,
 					"repository": "git-ui-sync-demo",
-					"token": "github_pat_dummy",
-					"webhookSecret": "dummyWebhookSecret",
-					"webhookURL": "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
+					"token": "github_pat_dummy"
 				},
 				"title": "Github Example",
 				"type": "github"
@@ -314,31 +342,107 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("creating repository creates folder", func(t *testing.T) {
-		// Just make sure the folder doesn't exist in advance.
-		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
-		}
+		cleanSlate(t)
 
-		_, err = client.Resource.Update(ctx,
+		_, err := client.Resource.Update(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
 
-		resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
+			if assert.NoError(collect, err) {
+				assert.Equal(collect, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+			}
+		}, time.Second*2, time.Millisecond*20)
+	})
+
+	t.Run("creating GitHub repository syncs from branch selected", func(t *testing.T) {
+		cleanSlate(t)
+
+		var githubClient *github.MockClient
+		helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
+			if githubClient != nil {
+				return githubClient
+			}
+			githubClient = github.NewMockClient(ttc)
+
+			isCtx := mock.Anything // mock.IsType(context.Background())
+			owner := "grafana"
+			repo := "git-ui-sync-demo"
+			branch := "dummy-branch"
+			sha := "24a55f601e33048d2267943279fc7f1b39b35e58"
+
+			// Ensuring we pass Test
+			githubClient.On("IsAuthenticated", isCtx).Return(nil)
+			githubClient.On("RepoExists", isCtx, owner, repo).Return(true, nil)
+			githubClient.On("BranchExists", isCtx, owner, repo, branch).Return(true, nil)
+
+			// Ensuring we can set up the webhook (even if it doesn't really... do anything here)
+			githubClient.On("CreateWebhook", isCtx, owner, repo, mock.Anything /* cfg */).Return(github.WebhookConfig{ID: 123}, nil)
+
+			// Ensuring we can successfully sync two files
+			githubClient.On("GetBranch", isCtx, owner, repo, branch).Return(github.Branch{Name: branch, Sha: sha}, nil)
+			githubClient.On("GetTree", isCtx, owner, repo, sha /* ref */, mock.IsType(false) /* recursive */).
+				Return([]github.RepositoryContent{
+					mockRepositoryContent("README.md", "# Hello, World!"),
+					mockRepositoryContent("dashboard.json", string(helper.LoadFile("testdata/all-panels.json"))),
+					mockRepositoryContent("subdir/dashboard2.yaml", string(helper.LoadFile("testdata/text-options.json"))),
+				}, /* truncated */ false /* err */, nil)
+			githubClient.On("GetContents", isCtx /* ctx */, owner, repo, "dashboard.json" /* filePath */, sha /* ref */).
+				Return(mockRepositoryContent("dashboard.json", string(helper.LoadFile("testdata/all-panels.json"))) /* content */, nil /* dirContent */, nil /* err */)
+			githubClient.On("GetContents", isCtx /* ctx */, owner, repo, "subdir/dashboard2.yaml" /* filePath */, sha /* ref */).
+				Return(mockRepositoryContent("subdir/dashboard2.yaml", string(helper.LoadFile("testdata/text-options.json"))) /* content */, nil /* dirContent */, nil /* err */)
+			return githubClient
+		}
+
+		_, err := client.Resource.Update(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
+			metav1.UpdateOptions{},
+		)
 		require.NoError(t, err)
-		require.Equal(t, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list, err := jobClient.Resource.List(ctx, metav1.ListOptions{})
+			if assert.NoError(collect, err) {
+				for _, elem := range list.Items {
+					state := mustNestedString(elem.Object, "status", "state")
+					if elem.GetLabels()["repository"] == "github-example" {
+						if state == string(provisioning.JobStateFinished) {
+							continue // doesn't matter
+						}
+						require.NotEqual(t, provisioning.JobStateError, state, "no jobs may error, but %s did", elem.GetName())
+						collect.Errorf("there are still remaining github-example jobs: %v", elem)
+						return
+					}
+				}
+			}
+
+			repo, err := client.Resource.Get(ctx, "github-example", metav1.GetOptions{})
+			if assert.NoError(collect, err) {
+				assert.Equal(collect, true, mustNested(repo.Object, "status", "health", "healthy"))
+				assert.Equal(collect, "success", mustNestedString(repo.Object, "status", "sync", "state"))
+			}
+		}, time.Second*5, time.Millisecond*20)
+
+		// By now, we should have synced, meaning we have data to read in the local Grafana instance!
+
+		found, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "can list values")
+
+		names := []string{}
+		for _, v := range found.Items {
+			names = append(names, v.GetName())
+		}
+		require.Contains(t, names, "dashboard-R-GC4gTF44qh", "should contain dashboard.json's contents")
+		require.Contains(t, names, "dashboard2-1jw3H-Mqm75v", "should contain dashboard2.yaml's contents")
 	})
 
 	t.Run("safe path usages", func(t *testing.T) {
-		// Just make sure the folder doesn't exist in advance.
-		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
-		}
+		cleanSlate(t)
 
-		_, err = client.Resource.Update(ctx,
+		_, err := client.Resource.Update(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
 			metav1.UpdateOptions{},
 		)
@@ -371,21 +475,12 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("import all-panels from local-repository", func(t *testing.T) {
-		// Just make sure the folder doesn't exist in advance.
-		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
-		}
+		cleanSlate(t)
 
 		const repo = "local-tmp"
-		err = client.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
-		}
-
 		// Create the repository.
 		repoPath := path.Join(provisioningPath, repo, randomAsciiStr(10))
-		err = os.MkdirAll(repoPath, 0700)
+		err := os.MkdirAll(repoPath, 0700)
 		require.NoError(t, err, "should be able to create repo path")
 		localTmp := helper.LoadYAMLOrJSONFile("testdata/local-tmp.yaml")
 		require.NoError(t, unstructured.SetNestedField(localTmp.Object, repoPath, "spec", "local", "path"))
@@ -401,7 +496,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.NoError(t, err, "valid path should be fine")
 
 		// But the dashboard shouldn't exist yet
-		_, err = dashboardClient.Resource.Get(ctx, "n1jR8vnnz", metav1.GetOptions{})
+		const allPanels = "all-panels-5Y4ReX6LwL7d"
+		_, err = dashboardClient.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 		require.Error(t, err, "no all-panels dashboard should exist")
 
 		// Now, we import it, such that it may exist
@@ -442,12 +538,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 		for _, v := range found.Items {
 			names = append(names, v.GetName())
 		}
-		require.Equal(t, []string{"all-panels-5Y4ReX6LwL7d"}, names, "all-panels dashboard should now exist")
+		require.Contains(t, names, allPanels, "all-panels dashboard should now exist")
 	})
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, _ := unstructured.NestedString(obj, fields...)
+	return v
+}
+
+func mustNested(obj map[string]interface{}, fields ...string) interface{} {
+	v, _, _ := unstructured.NestedFieldNoCopy(obj, fields...)
 	return v
 }
 
@@ -461,3 +562,52 @@ func randomAsciiStr(n int) string {
 	}
 	return b.String()
 }
+
+func mockRepositoryContent(path string, content string) github.RepositoryContent {
+	hash := sha256.Sum256([]byte(content))
+
+	return mockContent{
+		isDir:       strings.HasSuffix(path, "/"),
+		fileContent: content,
+		isSymlink:   false,
+		path:        path,
+		sha:         hex.EncodeToString(hash[:]),
+		size:        int64(len(content)),
+	}
+}
+
+type mockContent struct {
+	isDir          bool
+	fileContent    string
+	fileContentErr error
+	isSymlink      bool
+	path           string
+	sha            string
+	size           int64
+}
+
+func (c mockContent) IsDirectory() bool {
+	return c.isDir
+}
+
+func (c mockContent) GetFileContent() (string, error) {
+	return c.fileContent, c.fileContentErr
+}
+
+func (c mockContent) IsSymlink() bool {
+	return c.isSymlink
+}
+
+func (c mockContent) GetPath() string {
+	return c.path
+}
+
+func (c mockContent) GetSHA() string {
+	return c.path
+}
+
+func (c mockContent) GetSize() int64 {
+	return c.size
+}
+
+var _ github.RepositoryContent = mockContent{}
