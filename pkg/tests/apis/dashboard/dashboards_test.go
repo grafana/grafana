@@ -81,8 +81,11 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, obj.GetUID(), updated.GetUID())
 		require.Less(t, obj.GetResourceVersion(), updated.GetResourceVersion())
 
-		// Delete the object
-		err = client.Resource.Delete(ctx, created, metav1.DeleteOptions{})
+		// Delete the object, skipping the provisioned dashboard check
+		zeroInt64 := int64(0)
+		err = client.Resource.Delete(ctx, created, metav1.DeleteOptions{
+			GracePeriodSeconds: &zeroInt64,
+		})
 		require.NoError(t, err)
 
 		// Now it is not in the list

@@ -656,19 +656,22 @@ func TestDeleteDashboard(t *testing.T) {
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
 		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.Anything).Return(nil, nil).Once()
-		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, metav1.DeleteOptions{
+			GracePeriodSeconds: nil,
+		}, mock.Anything).Return(nil).Once()
 
 		err := service.DeleteDashboard(ctx, 1, "uid", 1)
 		require.NoError(t, err)
 		k8sClientMock.AssertExpectations(t)
 	})
 
-	t.Run("If UID is not passed in, it should retrieve that first", func(t *testing.T) {
+	t.Run("When UID is not passed in for provisioned dashboards, should retrieve that first and set grace period to zero", func(t *testing.T) {
 		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		zeroInt64 := int64(0)
 		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.Anything).Return(nil, nil).Once()
-		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, metav1.DeleteOptions{
+			GracePeriodSeconds: &zeroInt64,
+		}, mock.Anything).Return(nil).Once()
 		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -694,7 +697,7 @@ func TestDeleteDashboard(t *testing.T) {
 			},
 			TotalHits: 1,
 		}, nil)
-		err := service.DeleteDashboard(ctx, 1, "", 1)
+		err := service.DeleteProvisionedDashboard(ctx, 1, 1)
 		require.NoError(t, err)
 		k8sClientMock.AssertExpectations(t)
 		k8sClientMock.searcher.AssertExpectations(t)

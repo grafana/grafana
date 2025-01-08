@@ -492,14 +492,14 @@ func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID i
 		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
 	}
 
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		// deletes in unistore are soft deletes, so we can just delete in the same way
+		return dr.deleteDashboardThroughK8s(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgID, UID: dashboardUID}, true)
+	}
+
 	provisionedData, _ := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
 	if provisionedData != nil && provisionedData.ID != 0 {
 		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
-	}
-
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-		// deletes in unistore are soft deletes, so we can just delete in the same way
-		return dr.deleteDashboardThroughK8s(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgID, UID: dashboardUID})
 	}
 
 	return dr.dashboardStore.SoftDeleteDashboard(ctx, orgID, dashboardUID)
@@ -533,6 +533,12 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 	ctx, span := tracer.Start(ctx, "dashboards.service.deleteDashboard")
 	defer span.End()
 
+	cmd := &dashboards.DeleteDashboardCommand{OrgID: orgId, ID: dashboardId, UID: dashboardUID}
+
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		return dr.deleteDashboardThroughK8s(ctx, cmd, validateProvisionedDashboard)
+	}
+
 	if validateProvisionedDashboard {
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(ctx, dashboardId)
 		if err != nil {
@@ -542,12 +548,6 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		if provisionedData != nil {
 			return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
 		}
-	}
-
-	cmd := &dashboards.DeleteDashboardCommand{OrgID: orgId, ID: dashboardId, UID: dashboardUID}
-
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-		return dr.deleteDashboardThroughK8s(ctx, cmd)
 	}
 
 	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
@@ -1218,7 +1218,7 @@ func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context
 	return nil
 }
 
-func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {
+func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand, validateProvisionedDashboard bool) error {
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := dr.getK8sContext(ctx)
@@ -1245,7 +1245,16 @@ func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, c
 		cmd.UID = result.UID
 	}
 
-	err = client.Delete(newCtx, cmd.UID, v1.DeleteOptions{})
+	// use a grace period of 0 to indicate to skip the check of deleting provisioned dashboards
+	var gracePeriod *int64
+	if !validateProvisionedDashboard {
+		noGracePeriod := int64(0)
+		gracePeriod = &noGracePeriod
+	}
+
+	err = client.Delete(newCtx, cmd.UID, v1.DeleteOptions{
+		GracePeriodSeconds: gracePeriod,
+	})
 	if err != nil {
 		return err
 	}
