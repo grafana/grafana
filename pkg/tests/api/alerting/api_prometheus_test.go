@@ -27,6 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
+// Declare respModel at the function level
+var respModel apimodels.UpdateRuleGroupResponse
+
 func TestIntegrationPrometheusRules(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
@@ -146,7 +149,6 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
-		// nolint:gosec
 		resp, err := http.Post(u, "application/json", &buf)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -157,7 +159,6 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-		var respModel apimodels.UpdateRuleGroupResponse
 		require.NoError(t, json.Unmarshal(b, &respModel))
 		require.Len(t, respModel.Created, len(rules.Rules))
 	}
@@ -441,7 +442,6 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-		var respModel apimodels.UpdateRuleGroupResponse
 		require.NoError(t, json.Unmarshal(b, &respModel))
 		require.Len(t, respModel.Created, len(rules.Rules))
 	}
@@ -453,9 +453,12 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		"groups": [{
 			"name": "anotherrulegroup",
 			"file": "default",
+			"folderUid": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"uid": "%s",
+				"folderUid": "default",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
@@ -469,6 +472,8 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
+				"uid": "%s",
+				"folderUid": "default",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
@@ -486,7 +491,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 			"inactive": 2
 		}
 	}
-}`, dashboardUID)
+}`, respModel.Created[0], dashboardUID, respModel.Created[1], dashboardUID)
 	expectedFilteredByJSON := fmt.Sprintf(`
 {
 	"status": "success",
@@ -494,9 +499,12 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		"groups": [{
 			"name": "anotherrulegroup",
 			"file": "default",
+			"folderUid": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"uid": "%s",
+				"folderUid": "default",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
@@ -519,7 +527,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 			"inactive": 1
 		}
 	}
-}`, dashboardUID)
+}`, respModel.Created[0], dashboardUID)
 	expectedNoneJSON := `
 {
 	"status": "success",

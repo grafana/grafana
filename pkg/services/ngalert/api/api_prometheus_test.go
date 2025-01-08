@@ -315,9 +315,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"query": "vector(1)",
 				"alerts": [{
 					"labels": {
@@ -378,10 +381,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus",
@@ -440,10 +446,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
