@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, PluginType, UrlQueryMap } from '@grafana/data';
-import { config, featureEnabled } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
-import { isInstallControlsEnabled } from '../helpers';
+import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
@@ -65,7 +65,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
           pluginId={plugin.id}
           versions={plugin.details?.versions}
           installedVersion={plugin.installedVersion}
-          disableInstallation={shouldDisableInstallation(plugin)}
+          disableInstallation={shouldDisablePluginInstall(plugin)}
         />
       </div>
     );
@@ -199,20 +199,3 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
-
-function shouldDisableInstallation(plugin: CatalogPlugin) {
-  if (
-    plugin.type === PluginType.renderer ||
-    plugin.type === PluginType.secretsmanager ||
-    (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
-    !plugin.isPublished ||
-    plugin.isCore ||
-    plugin.isDisabled ||
-    plugin.isProvisioned ||
-    !isInstallControlsEnabled()
-  ) {
-    return true;
-  }
-
-  return false;
-}
