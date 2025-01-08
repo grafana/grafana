@@ -31,10 +31,10 @@ export function AddonBar() {
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
 
   const onToggleAddonBar = () => {
-    chrome.update({ addonBar: !state.addonBar, addonBarPane: undefined });
+    chrome.update({ addonBarDocked: !state.addonBarDocked, addonBarPane: undefined });
   };
 
-  if (!state.addonBar) {
+  if (!state.addonBarDocked) {
     return (
       <button type="button" className={cx(styles.toggleButton, styles.expandButton)} onClick={onToggleAddonBar}>
         <Icon name="angle-left" size="xl" />
@@ -69,6 +69,18 @@ export function AddonBar() {
           />
         </Dropdown>
       )}
+      <div style={{ marginBottom: '32px' }}></div>
+      {state.addonApps.map((app) => (
+        <AddonBarItem active={state.addonBarPane?.id === app.id} key={app.id}>
+          <ToolbarButton
+            tooltip={app.title}
+            iconOnly
+            icon={app.icon}
+            aria-label={app.title}
+            onClick={() => chrome.openAddon(app.id)}
+          />
+        </AddonBarItem>
+      ))}
       <FlexItem grow={1} />
       <LineSeparator />
       <AddonBarItem>
@@ -150,7 +162,8 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     profileButton: css({
-      padding: theme.spacing(0, 0.5),
+      padding: 0,
+      justifyContent: 'center',
       img: {
         borderRadius: theme.shape.radius.circle,
         height: '24px',

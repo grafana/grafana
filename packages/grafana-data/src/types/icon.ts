@@ -231,6 +231,7 @@ export const availableIconsIndex = {
   stopwatch: true,
   'stopwatch-slash': true,
   sync: true,
+  'focus-target': true,
   'sync-slash': true,
   table: true,
   'table-collapse-all': true,

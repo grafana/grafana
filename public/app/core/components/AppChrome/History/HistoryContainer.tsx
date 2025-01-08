@@ -51,6 +51,7 @@ export function HistoryContainer() {
       <ToolbarButton
         onClick={onToggleShowHistoryDrawer}
         iconOnly
+        tooltip="History"
         icon="history"
         aria-label={t('nav.history-container.drawer-tittle', 'History')}
       />

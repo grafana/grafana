@@ -31,7 +31,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     const rowOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: 'Row options',
-        id: 'row-options',
+        id: '',
         isOpenDefault: true,
       })
         .addItem(

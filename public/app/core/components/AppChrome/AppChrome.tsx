@@ -39,7 +39,7 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
   );
-  const addonBarVisible = state.addonBar || state.kioskMode === KioskMode.Full;
+  const addonBarVisible = state.addonBarDocked || state.kioskMode === KioskMode.Full;
 
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -104,7 +104,7 @@ export function AppChrome({ children }: Props) {
               className={cx(
                 styles.topNav,
                 menuDockedAndOpen && styles.topNavMenuDocked,
-                state.addonBar && styles.topNavWithAddonBar
+                state.addonBarDocked && styles.topNavWithAddonBar
               )}
             >
               <SingleTopBar
@@ -138,7 +138,7 @@ export function AppChrome({ children }: Props) {
             >
               {children}
             </main>
-            {state.addonBarPane && <AddonBarPane pane={state.addonBarPane} />}
+            {state.addonBarPane && state.addonBarPane.content}
           </div>
         </div>
         {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}

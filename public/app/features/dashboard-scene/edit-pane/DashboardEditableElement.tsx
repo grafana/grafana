@@ -22,7 +22,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     const dashboardOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: 'Dashboard options',
-        id: 'dashboard-options',
+        id: '',
         isOpenDefault: true,
       })
         .addItem(

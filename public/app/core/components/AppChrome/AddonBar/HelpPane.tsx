@@ -6,6 +6,8 @@ import { FlexItem } from '@grafana/experimental';
 import { Box, Card, Stack, useStyles2, Text } from '@grafana/ui';
 import GrotCompleted from '@grafana/ui/src/components/EmptyState/grot-completed.svg';
 
+import { AddonBarPane } from './AddonBarPane';
+
 export function HelpPane() {
   const styles = useStyles2(getStyles);
   //   const navIndex = useSelector((s) => s.navIndex);
@@ -13,47 +15,49 @@ export function HelpPane() {
   //   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
 
   return (
-    <Box padding={1} grow={1}>
-      <Stack direction={'column'} grow={1} gap={1} height={'100%'}>
-        <Text variant="bodySmall" italic>
-          Recommended topics
-        </Text>
-        <Stack direction={'column'} gap={0.5}>
-          <Card href="link" isCompact>
-            <Card.Heading>Dashboard docs</Card.Heading>
-          </Card>
-          <Card href="link" isCompact>
-            <Card.Heading>Adding panels</Card.Heading>
-          </Card>
-          <Card href="link" isCompact>
-            <Card.Heading>Configuring visualizations</Card.Heading>
-          </Card>
-          <Card href="link" isCompact>
-            <Card.Heading>Template variables</Card.Heading>
-          </Card>
+    <AddonBarPane title="Get help">
+      <Box paddingX={2} grow={1}>
+        <Stack direction={'column'} grow={1} gap={1} height={'100%'}>
+          <Text variant="bodySmall" italic>
+            Recommended topics
+          </Text>
+          <Stack direction={'column'} gap={0.5}>
+            <Card href="link" isCompact>
+              <Card.Heading>Dashboard docs</Card.Heading>
+            </Card>
+            <Card href="link" isCompact>
+              <Card.Heading>Adding panels</Card.Heading>
+            </Card>
+            <Card href="link" isCompact>
+              <Card.Heading>Configuring visualizations</Card.Heading>
+            </Card>
+            <Card href="link" isCompact>
+              <Card.Heading>Template variables</Card.Heading>
+            </Card>
+          </Stack>
+          <div className={styles.divider} />
+          <Text variant="bodySmall" italic>
+            Other topics
+          </Text>
+          <Stack direction={'column'} gap={0.5}>
+            <Card href="link" isCompact>
+              <Card.Heading>Support bundles</Card.Heading>
+            </Card>
+            <Card href="link" isCompact>
+              <Card.Heading>Grafana docs</Card.Heading>
+            </Card>
+            <Card href="link" isCompact>
+              <Card.Heading>Keyboard shortcuts</Card.Heading>
+            </Card>
+          </Stack>
+          <FlexItem grow={1} />
+          <Stack direction={'row'} gap={0.5} alignItems={'center'}>
+            <SVG src={GrotCompleted} width={40} />
+            <input autoFocus className={styles.input} type="text" placeholder="Ask a question" />
+          </Stack>
         </Stack>
-        <div className={styles.divider} />
-        <Text variant="bodySmall" italic>
-          Other topics
-        </Text>
-        <Stack direction={'column'} gap={0.5}>
-          <Card href="link" isCompact>
-            <Card.Heading>Support bundles</Card.Heading>
-          </Card>
-          <Card href="link" isCompact>
-            <Card.Heading>Grafana docs</Card.Heading>
-          </Card>
-          <Card href="link" isCompact>
-            <Card.Heading>Keyboard shortcuts</Card.Heading>
-          </Card>
-        </Stack>
-        <FlexItem grow={1} />
-        <Stack direction={'row'} gap={0.5} alignItems={'center'}>
-          <SVG src={GrotCompleted} width={40} />
-          <input autoFocus className={styles.input} type="text" placeholder="Ask a question" />
-        </Stack>
-      </Stack>
-    </Box>
+      </Box>
+    </AddonBarPane>
   );
 }
 

@@ -82,7 +82,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           tooltip="Enable kiosk mode"
         /> */}
         {!contextSrv.user.isSignedIn && <SignInLink />}
-        {profileNode && !state.addonBar && (
+        {profileNode && !state.addonBarDocked && (
           <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
             <ToolbarButton
               className={styles.profileButton}

@@ -27,7 +27,7 @@ export class VizPanelEditableElement implements EditableDashboardElement {
     const panelOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: 'Panel options',
-        id: 'panel-options',
+        id: '',
         isOpenDefault: true,
       })
         .addItem(

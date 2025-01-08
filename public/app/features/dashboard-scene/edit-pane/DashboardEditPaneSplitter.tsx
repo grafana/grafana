@@ -1,18 +1,21 @@
-import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useEffect } from 'react';
+import { css } from '@emotion/css';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
+import { DeclareAddonApp } from 'app/core/components/AppChrome/AddonBar/DeclareAddonApp';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
-import { DashboardEditPaneRenderer } from './DashboardEditPane';
-import { useEditPaneCollapsed } from './shared';
+import { DashboardContentPane } from './DashboardContentPane';
+import { DashboardSettingsPane } from './DashboardSettingsPane';
+import { SelectedObjectPane } from './SelectedObjectPane';
+import { useEditableElement } from './useEditableElement';
 
 interface Props {
   dashboard: DashboardScene;
@@ -23,83 +26,140 @@ interface Props {
 
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
+  const { chrome } = useGrafana();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
-  const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const { selectionContext, selectedObject } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const editableElement = useEditableElement(selectedObject?.resolve())!;
 
-  if (!config.featureToggles.dashboardNewLayouts) {
-    return (
-      <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
-        <div className={styles.canvasWrappperOld}>
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+
+    editPane.enableSelection();
+
+    return () => {
+      editPane.disableSelection();
+    };
+  }, [editPane, isEditing]);
+
+  useEffect(() => {
+    if (editableElement) {
+      chrome.openAddon('selected-object');
+    }
+    return () => chrome.openAddon('selected-object');
+  }, [chrome, editableElement]);
+
+  return (
+    <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+      <ElementSelectionContext.Provider value={selectionContext}>
+        <DeclareAddonApp
+          id="dashboard-filters"
+          title="Filters pane"
+          icon="filter"
+          type="context"
+          props={{ dashboard }}
+          component={DashboardContentPane}
+        />
+        <DeclareAddonApp
+          id="dashboard-content-outline"
+          title="Content outline"
+          icon="list-ui-alt"
+          type="context"
+          props={{ dashboard }}
+          component={DashboardContentPane}
+        />
+        {isEditing && (
+          <DeclareAddonApp
+            id="dashboard-settings"
+            title="Dashboard settings"
+            icon="cog"
+            type="context"
+            props={{ dashboard }}
+            component={DashboardSettingsPane}
+          />
+        )}
+        {editableElement && (
+          <DeclareAddonApp
+            id="selected-object"
+            title={editableElement.getTypeName()}
+            icon="focus-target"
+            type="context"
+            props={{ editableElement }}
+            component={SelectedObjectPane}
+          />
+        )}
+        <div className={styles.canvasWrappperOld} onPointerDown={() => editPane.clearSelection()}>
           <NavToolbarActions dashboard={dashboard} />
           <div className={styles.controlsWrapperSticky}>{controls}</div>
           <div className={styles.body}>{body}</div>
         </div>
-      </NativeScrollbar>
-    );
-  }
-
-  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
-    useSnappingSplitter({
-      direction: 'row',
-      dragPosition: 'end',
-      initialSize: 0.8,
-      handleSize: 'sm',
-      collapsed: isCollapsed,
-
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
-    });
-
-  useEffect(() => {
-    setIsCollapsed(splitterState.collapsed);
-  }, [splitterState.collapsed, setIsCollapsed]);
-
-  const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
-  const containerStyle: CSSProperties = {};
-
-  if (!isEditing) {
-    primaryProps.style.flexGrow = 1;
-    primaryProps.style.width = '100%';
-    primaryProps.style.minWidth = 'unset';
-    containerStyle.overflow = 'unset';
-  }
-
-  const onBodyRef = (ref: HTMLDivElement) => {
-    dashboard.onSetScrollRef(ref);
-  };
-
-  return (
-    <div {...containerProps} style={containerStyle}>
-      <div
-        {...primaryProps}
-        className={cx(primaryProps.className, styles.canvasWithSplitter)}
-        onPointerDown={() => editPane.clearSelection()}
-      >
-        <NavToolbarActions dashboard={dashboard} />
-        <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
-        <div className={styles.bodyWrapper}>
-          <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
-            <ElementSelectionContext.Provider value={selectionContext}>{body}</ElementSelectionContext.Provider>
-          </div>
-        </div>
-      </div>
-      {isEditing && (
-        <>
-          <div {...splitterProps} data-edit-pane-splitter={true} />
-          <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
-            <DashboardEditPaneRenderer
-              editPane={editPane}
-              isCollapsed={splitterState.collapsed}
-              onToggleCollapse={onToggleCollapse}
-            />
-          </div>
-        </>
-      )}
-    </div>
+      </ElementSelectionContext.Provider>
+    </NativeScrollbar>
   );
+
+  // const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
+  //   useSnappingSplitter({
+  //     direction: 'row',
+  //     dragPosition: 'end',
+  //     initialSize: 0.8,
+  //     handleSize: 'sm',
+  //     collapsed: isCollapsed,
+
+  //     paneOptions: {
+  //       collapseBelowPixels: 250,
+  //       snapOpenToPixels: 400,
+  //     },
+  //   });
+
+  // useEffect(() => {
+  //   setIsCollapsed(splitterState.collapsed);
+  // }, [splitterState.collapsed, setIsCollapsed]);
+
+  // const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  // const containerStyle: CSSProperties = {};
+
+  // if (!isEditing) {
+  //   primaryProps.style.flexGrow = 1;
+  //   primaryProps.style.width = '100%';
+  //   primaryProps.style.minWidth = 'unset';
+  //   containerStyle.overflow = 'unset';
+  // }
+
+  // const onBodyRef = (ref: HTMLDivElement) => {
+  //   dashboard.onSetScrollRef(ref);
+  // };
+
+  // return (
+  //   <div {...containerProps} style={containerStyle}>
+  //     <div
+  //       {...primaryProps}
+  //       className={cx(primaryProps.className, styles.canvasWithSplitter)}
+  //       onPointerDown={() => editPane.clearSelection()}
+  //     >
+  //       <NavToolbarActions dashboard={dashboard} />
+  //       <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
+  //       <div className={styles.bodyWrapper}>
+  //         <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
+  //           <ElementSelectionContext.Provider value={selectionContext}>{body}</ElementSelectionContext.Provider>
+  //         </div>
+  //       </div>
+  //     </div>
+  //     {isEditing && (
+  //       <>
+  //         <div {...splitterProps} data-edit-pane-splitter={true} />
+  //         <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
+  //           <DashboardEditPaneRenderer
+  //             editPane={editPane}
+  //             isCollapsed={splitterState.collapsed}
+  //             onToggleCollapse={onToggleCollapse}
+  //           />
+  //         </div>
+  //       </>
+  //     )}
+  //   </div>
+  // );
 }
 
 function getStyles(theme: GrafanaTheme2, headerHeight: number) {
@@ -133,7 +193,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       gap: '8px',
       boxSizing: 'border-box',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2, 2, 2),
+      padding: theme.spacing(0.2, 2, 2, 2),
     }),
     bodyEditing: css({
       position: 'absolute',

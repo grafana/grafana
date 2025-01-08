@@ -28,14 +28,23 @@ export interface AppChromeState {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
   };
-  addonBar?: boolean;
+  addonBarDocked?: boolean;
   addonBarPane?: AddonBarPane;
+  addonApps: AddonAppDefinition[];
+}
+
+export interface AddonAppDefinition<T = {}> {
+  id: string;
+  title: string;
+  icon: string;
+  component: React.ComponentType<T>;
+  type: 'context' | 'global';
+  props: T;
 }
 
 export interface AddonBarPane {
   title: string;
   id: string;
-  actions?: React.ReactNode;
   content: React.ReactNode;
 }
 
@@ -64,7 +73,8 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
-    addonBar: true,
+    addonBarDocked: true,
+    addonApps: [],
   });
 
   public headerHeightObservable = this.state
@@ -182,6 +192,40 @@ export class AppChromeService {
     }
 
     return false;
+  }
+
+  public addAddonApp(app: AddonAppDefinition) {
+    const current = this.state.getValue();
+    const addonApps = [...current.addonApps];
+    addonApps.push(app);
+    this.update({ addonApps });
+  }
+
+  public removeAddonApp(id: string) {
+    const current = this.state.getValue();
+    const addonApps = current.addonApps.filter((app) => app.id !== id);
+    this.update({ addonApps, addonBarPane: current.addonBarPane?.id === id ? undefined : current.addonBarPane });
+  }
+
+  public openAddon(id: string) {
+    const current = this.state.getValue();
+    const addonApp = current.addonApps.find((app) => app.id === id);
+    if (!addonApp) {
+      return;
+    }
+
+    if (current.addonBarPane?.id === addonApp.id) {
+      this.update({ addonBarPane: undefined });
+      return;
+    }
+
+    this.update({
+      addonBarPane: {
+        title: addonApp.title,
+        id: addonApp.id,
+        content: <addonApp.component {...addonApp.props} />,
+      },
+    });
   }
 
   public useState() {
