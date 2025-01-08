@@ -1435,7 +1435,7 @@
           "Repository"
         ],
         "description": "connect PUT requests to files of Repository",
-        "operationId": "putRepositoryFilesWithPath",
+        "operationId": "replaceRepositoryFilesWithPath",
         "parameters": [
           {
             "name": "ref",

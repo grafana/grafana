@@ -10,14 +10,14 @@ import {
   useCreateRepositoryMutation,
   useListRepositoryQuery,
   usePutRepositoryFilesWithPathMutation,
-  useUpdateRepositoryMutation,
   RepositorySpec,
   PutRepositoryFilesWithPathArg,
+  useReplaceRepositoryMutation,
 } from './api';
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
-  const [update, updateRequest] = useUpdateRepositoryMutation();
+  const [update, updateRequest] = useReplaceRepositoryMutation();
 
   const updateOrCreate = useCallback(
     (data: RepositorySpec) => {
