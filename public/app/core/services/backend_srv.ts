@@ -142,7 +142,6 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  // Look for each line
   lines(options: BackendSrvRequest): Observable<string> {
     return new Observable((observer) => {
       let done = false;
