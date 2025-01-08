@@ -20,4 +20,4 @@ else
   ./scripts/grafana-server/wait-for-grafana
 fi
 
-PORT=3001 HOST=127.0.0.1 yarn playwright test e2e/plugin-e2e/prometheus/prometheus.spec.ts
+PORT=3001 HOST=localhost yarn playwright test
