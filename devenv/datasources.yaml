@@ -55,7 +55,7 @@ datasources:
     uid: gdev-prometheus
     type: prometheus
     access: proxy
-    url: http://prometheus:9090
+    url: http://devenv-prometheus:9090
     basicAuth: true #username: admin, password: admin
     basicAuthUser: admin
     jsonData:
