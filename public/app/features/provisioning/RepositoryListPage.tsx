@@ -23,7 +23,7 @@ import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
 export default function RepositoryListPage() {
-  const [items, isLoading] = useRepositoryList();
+  const [items, isLoading] = useRepositoryList({ watch: true });
 
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">

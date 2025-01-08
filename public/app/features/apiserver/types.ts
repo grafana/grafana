@@ -152,6 +152,9 @@ export interface ListOptions {
 
   // Limit the response count
   limit?: number;
+
+  // Watch for changes
+  watch?: boolean;
 }
 
 export interface MetaStatus {

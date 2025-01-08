@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -73,8 +72,14 @@ func TestParseWebhooks(t *testing.T) {
 				URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
 			},
 		}},
-		{"push", "ignored", provisioning.WebhookResponse{
-			Code: http.StatusOK, // parsed but nothing required
+		{"push", "different_branch", provisioning.WebhookResponse{
+			Code: http.StatusOK, // we don't care about a branch that isn't the one we configured
+		}},
+		{"push", "nothing_relevant", provisioning.WebhookResponse{
+			Code: http.StatusAccepted,
+			Job: &provisioning.JobSpec{ // we want to always push a sync job
+				Action: provisioning.JobActionSync,
+			},
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
@@ -100,7 +105,6 @@ func TestParseWebhooks(t *testing.T) {
 				},
 			},
 		},
-		logger: slog.Default().With("logger", "github-repository"),
 	}
 
 	for _, tt := range tests {

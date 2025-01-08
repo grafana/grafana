@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 
@@ -11,11 +10,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type historySubresource struct {
 	repoGetter RepoGetter
-	logger     *slog.Logger
 }
 
 func (h *historySubresource) New() runtime.Object {
@@ -50,7 +49,8 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 }
 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := h.logger.With("repository_name", name)
+	logger := slogctx.From(ctx).With("logger", "history-subresource")
+	ctx = slogctx.To(ctx, logger)
 	repo, err := h.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find repository", "error", err)
@@ -60,8 +60,6 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ref := query.Get("ref")
-		logger = logger.With("ref", ref)
-		ctx := r.Context()
 
 		var filePath string
 		prefix := fmt.Sprintf("/%s/history/", name)
@@ -70,9 +68,10 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 			filePath = r.URL.Path[idx+len(prefix):]
 		}
 
-		logger = logger.With("path", filePath)
+		logger := logger.With("ref", ref, "path", filePath)
+		ctx := slogctx.To(r.Context(), logger)
 
-		commits, err := repo.History(ctx, logger, filePath, ref)
+		commits, err := repo.History(ctx, filePath, ref)
 		if err != nil {
 			logger.DebugContext(ctx, "failed to get history", "error", err)
 			responder.Error(err)

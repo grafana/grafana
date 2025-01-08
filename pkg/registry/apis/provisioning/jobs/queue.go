@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/slogctx"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,12 +24,10 @@ func NewJobQueue(capacity int) JobQueue {
 		jobs:      []provisioning.Job{},
 		watchSet:  NewWatchSet(),
 		versioner: &storage.APIObjectVersioner{},
-		logger:    slog.Default().With("logger", "job-queue"),
 	}
 }
 
 type jobStore struct {
-	logger   *slog.Logger
 	capacity int
 	worker   Worker
 
@@ -105,16 +103,19 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 
 // Reads the queue until no jobs remain
 func (s *jobStore) drainPending() {
+	logger := slogctx.From(context.Background()).With("logger", "job-store")
+	ctx := slogctx.To(context.Background(), logger)
+
 	var err error
 	for {
 		time.Sleep(time.Microsecond * 200)
-		ctx := context.Background()
 
 		job := s.Checkout(ctx, nil)
 		if job == nil {
 			return // done
 		}
-		logger := s.logger.With("job", job.GetName(), "namespace", job.GetNamespace())
+		logger := logger.With("job", job.GetName(), "namespace", job.GetNamespace())
+		ctx := slogctx.To(ctx, logger)
 
 		started := time.Now()
 		var status *provisioning.JobStatus
