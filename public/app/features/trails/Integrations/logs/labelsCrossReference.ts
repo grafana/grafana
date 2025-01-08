@@ -1,8 +1,8 @@
 import { filter, firstValueFrom, map } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { RelatedLogsScene } from '../../RelatedLogs/RelatedLogsScene';
 import { VAR_FILTERS } from '../../shared';
@@ -32,7 +32,7 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
   return createMetricsLogsConnector({
     async getDataSources(): Promise<FoundLokiDataSource[]> {
       const expr = getLokiQueryExpr();
-      const lokiDataSources = getDatasourceSrv().getList({ logs: true, type: 'loki' });
+      const lokiDataSources = getDataSourceSrv().getList({ logs: true, type: 'loki' });
       const lokiDataSourcesWithRelatedLogs: FoundLokiDataSource[] = [];
       const queryRunners = lokiDataSources.map((ds) => {
         const sqr = new SceneQueryRunner({
