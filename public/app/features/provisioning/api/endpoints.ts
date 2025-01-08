@@ -80,22 +80,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      updateRepository: build.mutation<UpdateRepositoryResponse, UpdateRepositoryArg>({
-        query: (queryArg) => ({
-          url: `/repositories/${queryArg.name}`,
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/merge-patch+json' },
-          body: queryArg.body,
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-            force: queryArg.force,
-          },
-        }),
-        invalidatesTags: ['Repository'],
-      }),
       createRepositoryExport: build.mutation<CreateRepositoryExportResponse, CreateRepositoryExportArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/export`,
@@ -203,22 +187,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      updateRepositoryStatus: build.mutation<UpdateRepositoryStatusResponse, UpdateRepositoryStatusArg>({
-        query: (queryArg) => ({
-          url: `/repositories/${queryArg.name}/status`,
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/merge-patch+json' },
-          body: queryArg.body,
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-            force: queryArg.force,
-          },
-        }),
-        invalidatesTags: ['Repository'],
-      }),
       createRepositorySync: build.mutation<CreateRepositorySyncResponse, CreateRepositorySyncArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/sync`,
@@ -293,16 +261,6 @@ export type DeleteRepositoryArg = {
   propagationPolicy?: string;
   body: DeleteOptions;
 };
-export type UpdateRepositoryResponse = Repository;
-export type UpdateRepositoryArg = {
-  name: string;
-  pretty?: string;
-  dryRun?: string;
-  fieldManager?: string;
-  fieldValidation?: string;
-  force?: boolean;
-  body: Patch;
-};
 export type CreateRepositoryExportResponse = Job;
 export type CreateRepositoryExportArg = {
   name: string;
@@ -374,16 +332,6 @@ export type ReplaceRepositoryStatusArg = {
   fieldManager?: string;
   fieldValidation?: string;
   body: Repository;
-};
-export type UpdateRepositoryStatusResponse = Repository;
-export type UpdateRepositoryStatusArg = {
-  name: string;
-  pretty?: string;
-  dryRun?: string;
-  fieldManager?: string;
-  fieldValidation?: string;
-  force?: boolean;
-  body: Patch;
 };
 export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
@@ -590,7 +538,6 @@ export type DeleteOptions = {
   preconditions?: Preconditions;
   propagationPolicy?: string;
 };
-export type Patch = object;
 export type LintIssue = {
   message: string;
   rule: string;
@@ -647,7 +594,6 @@ export const {
   useGetRepositoryQuery,
   useReplaceRepositoryMutation,
   useDeleteRepositoryMutation,
-  useUpdateRepositoryMutation,
   useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
   useGetRepositoryFilesWithPathQuery,
@@ -658,7 +604,6 @@ export const {
   useGetRepositoryHistoryWithPathQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
-  useUpdateRepositoryStatusMutation,
   useCreateRepositorySyncMutation,
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,

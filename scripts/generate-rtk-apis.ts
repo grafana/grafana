@@ -59,7 +59,8 @@ function filterEndpoints(name: string) {
     !name.toLowerCase().includes('forallnamespaces') &&
     !name.toLowerCase().includes('getapiresources') &&
     !name.toLowerCase().includes('watch') &&
-    !name.toLowerCase().includes('collection')
+    !name.toLowerCase().includes('collection') &&
+    !name.toLowerCase().includes('update')
   );
 }
 
