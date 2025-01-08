@@ -117,6 +117,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.NoError(t, deleteAll(folderClient), "deleting all folders")
 		require.NoError(t, deleteAll(client), "deleting all repositories")
 	}
+	cleanSlate(t)
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		cleanSlate(t)
@@ -373,6 +374,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 			repo := "git-ui-sync-demo"
 			branch := "dummy-branch"
 			sha := "24a55f601e33048d2267943279fc7f1b39b35e58"
+
+			// Possible remnants of cleanSlate
+			githubClient.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 
 			// Ensuring we pass Test
 			githubClient.On("IsAuthenticated", isCtx).Return(nil)
