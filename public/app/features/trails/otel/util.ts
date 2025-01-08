@@ -3,6 +3,7 @@ import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
+import { reportChangeInLabelFilters } from '../interactions';
 import { getOtelExperienceToggleState } from '../services/store';
 import {
   VAR_DATASOURCE_EXPR,
@@ -558,6 +559,7 @@ export function manageOtelAndMetricFilters(
       otelFiltersVariable.setState({
         filters: [...otelFiltersVariable.state.filters, newFilter],
       });
+      reportChangeInLabelFilters(newStateFilters, prevStateFilters, true);
     } else {
       // add to metric filters
       filtersVariable.setState({
@@ -575,6 +577,7 @@ export function manageOtelAndMetricFilters(
       otelFiltersVariable.setState({
         filters: otelFiltersVariable.state.filters.filter((f) => f.key !== removedFilter.key),
       });
+      reportChangeInLabelFilters(newStateFilters, prevStateFilters, true);
     } else {
       // remove from metric filters
       filtersVariable.setState({
@@ -609,6 +612,7 @@ export function manageOtelAndMetricFilters(
           return f;
         }),
       });
+      reportChangeInLabelFilters(newStateFilters, prevStateFilters, true);
     } else {
       // add to metric filters
       filtersVariable.setState({
