@@ -14,5 +14,6 @@ SELECT
     AND {{ .Ident "group" }} = {{ .Arg .Group }}
     AND {{ .Ident "resource" }} = {{ .Arg .Resource }}
     AND {{ .Ident "resource_version" }} > {{ .Arg .SinceResourceVersion }}
+    AND {{ .Ident "resource_version" }} <= {{ .Arg .MaxResourceVersion }}
     ORDER BY {{ .Ident "resource_version" }} ASC
 ;

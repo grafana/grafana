@@ -124,16 +124,8 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Resource:             "res",
 						Group:                "group",
 						SinceResourceVersion: 1234,
+						MaxResourceVersion:   2345,
 						Response:             new(historyPollResponse),
-					},
-				},
-			},
-
-			sqlResourceUpdateRV: {
-				{
-					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
 					},
 				},
 			},
@@ -153,15 +145,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							},
 						},
 						Response: NewReadResponse(),
-					},
-				},
-			},
-
-			sqlResourceHistoryUpdateRV: {
-				{
-					Name: "single path",
-					Data: &sqlResourceUpdateRVRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
 					},
 				},
 			},
@@ -205,37 +188,23 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
-			sqlResourceVersionGet: {
+			sqlResourceVersionHead: {
 				{
 					Name: "single path",
-					Data: &sqlResourceVersionGetRequest{
+					Data: &sqlResourceVersionHeadRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "resource",
 						Group:       "group",
 						Response:    new(resourceVersionResponse),
-						ReadOnly:    false,
 					},
 				},
 			},
-
-			sqlResourceVersionUpdate: {
-				{
-					Name: "increment resource version",
-					Data: &sqlResourceVersionUpsertRequest{
-						SQLTemplate:     mocks.NewTestingSQLTemplate(),
-						Resource:        "resource",
-						Group:           "group",
-						ResourceVersion: int64(12354),
-					},
-				},
-			},
-
-			sqlResourceVersionInsert: {
+			sqlResourceVersionList: {
 				{
 					Name: "single path",
-					Data: &sqlResourceVersionUpsertRequest{
-						SQLTemplate:     mocks.NewTestingSQLTemplate(),
-						ResourceVersion: int64(12354),
+					Data: &sqlResourceVersionListRequest{
+						SQLTemplate:          mocks.NewTestingSQLTemplate(),
+						groupResourceVersion: new(groupResourceVersion),
 					},
 				},
 			},
@@ -263,6 +232,61 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Namespace:   "default",
 						Folder:      "folder",
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+			},
+			sqlResourceLockInsert: {
+				{
+					Name: "insert",
+					Data: &sqlResourceLockInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+					},
+				},
+			},
+			sqlResourceLockCount: {
+				{
+					Name: "count",
+					Data: &sqlResourceLockCountRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "gp",
+						Resource:    "rs",
+						Response:    new(lockCountResponse),
+					},
+				},
+			},
+			sqlResourceLockGet: {
+				{
+					Name: "get",
+					Data: &sqlResourceLockGetRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
+						Response: new(resourceVersionResponse),
+					},
+				},
+			},
+			sqlResourceLockDelete: {
+				{
+					Name: "unlock",
+					Data: &sqlResourceLockInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "ns",
+							Group:     "gp",
+							Resource:  "rs",
+							Name:      "nm",
+						},
 					},
 				},
 			},

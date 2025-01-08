@@ -11,6 +11,14 @@ By default it runs in-process within Grafana, but it can also be run as a standa
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
 
+### Resource Version
+
+The resource version is the mechanism used to allow the [efficient detection of change](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes). Unified Storage aims to provide similar semantics for the resource version. Behind the scene, the resource version is powered by ETCDs which offers very strict ordering guarantees.
+
+... TODO
+
+
+
 ## Running Unified Storage
 
 ### Playlists: baseline configuration
