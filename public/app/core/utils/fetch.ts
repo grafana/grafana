@@ -138,7 +138,7 @@ export async function parseResponseBody<T>(
         return await response.json();
 
       case 'stream':
-        return Promise.resolve(response.body) as Promise<T>
+        return Promise.resolve(response.body) as Promise<T>;
 
       case 'text':
         // this specifically returns a Promise<string>
