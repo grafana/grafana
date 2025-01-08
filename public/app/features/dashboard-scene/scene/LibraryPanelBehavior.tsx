@@ -1,5 +1,5 @@
 import { PanelPlugin, PanelProps } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
+import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -8,6 +8,7 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
+import { VizPanelLinks } from "./PanelLinks";
 import { PanelTimeRange } from './PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
@@ -18,6 +19,7 @@ export interface LibraryPanelBehaviorState extends SceneObjectState {
   name: string;
   isLoaded?: boolean;
   _loadedPanel?: LibraryPanel;
+  titleItems?: SceneObject[]
 }
 
 export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorState> {
@@ -47,6 +49,14 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
 
     const libPanelModel = new PanelModel(libPanel.model);
+
+    if (libPanelModel.links) {
+      this.state.titleItems?.forEach(titleItem => {
+        if (titleItem instanceof VizPanelLinks) {
+          titleItem.setState({rawLinks: libPanelModel.links ?? []})
+        }
+      })
+    }
 
     const vizPanelState: VizPanelState = {
       title: libPanelModel.title,
