@@ -159,451 +159,451 @@ environment:
 image_pull_secrets:
 - gcr
 - gar
-kind: pipeline
-name: pr-test-frontend
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.3
-  name: identify-runner
-- commands:
-  - yarn install --immutable || yarn install --immutable
-  depends_on: []
-  image: node:22.11.0-alpine
-  name: yarn-install
-- commands:
-  - apk add --update git bash
-  - yarn betterer ci
-  depends_on:
-  - yarn-install
-  image: node:22.11.0-alpine
-  name: betterer-frontend
-- commands:
-  - echo $(/usr/bin/github-app-external-token) > /github-app/token
-  environment:
-    GITHUB_APP_ID:
-      from_secret: github-app-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: github-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: github-app-private-key
-  failure: ignore
-  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
-  name: github-app-generate-token
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - apk add --update curl jq bash
-  - GITHUB_TOKEN=$(cat /github-app/token)
-  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
-  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    ../grafana-enterprise
-  - cd ../grafana-enterprise
-  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
-    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
-    else git checkout main; fi
-  - cd ../
-  - ln -s src grafana
-  - cd ./grafana-enterprise
-  - ./build.sh
-  depends_on:
-  - github-app-generate-token
-  failure: ignore
-  image: alpine/git:2.40.1
-  name: clone-enterprise
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - yarn run ci:test-frontend
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: node:22.11.0-alpine
-  name: test-frontend
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    - pkg/**
-    - packaging/**
-    - go.sum
-    - go.mod
-    include: []
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: github-app
-  temp: {}
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: pr-lint-frontend
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $(/usr/bin/github-app-external-token) > /github-app/token
-  environment:
-    GITHUB_APP_ID:
-      from_secret: github-app-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: github-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: github-app-private-key
-  failure: ignore
-  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
-  name: github-app-generate-token
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - apk add --update curl jq bash
-  - GITHUB_TOKEN=$(cat /github-app/token)
-  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
-  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    ../grafana-enterprise
-  - cd ../grafana-enterprise
-  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
-    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
-    else git checkout main; fi
-  - cd ../
-  - ln -s src grafana
-  - cd ./grafana-enterprise
-  - ./build.sh
-  depends_on:
-  - github-app-generate-token
-  failure: ignore
-  image: alpine/git:2.40.1
-  name: clone-enterprise
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.3
-  name: identify-runner
-- commands:
-  - yarn install --immutable || yarn install --immutable
-  depends_on: []
-  image: node:22.11.0-alpine
-  name: yarn-install
-- commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run typecheck
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: node:22.11.0-alpine
-  name: lint-frontend
-- commands:
-  - |-
-    make i18n-extract || (echo "
-    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
-  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
-    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
-    \"\nTranslation extraction has not been committed. Please run 'make i18n-extract',
-    commit the changes and push again.\"\n                exit 1\n            fi\n
-    \           "
-  depends_on:
-  - yarn-install
-  image: node:22-bookworm
-  name: verify-i18n
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    - pkg/**
-    - packaging/**
-    - go.sum
-    - go.mod
-    include: []
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: github-app
-  temp: {}
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: pr-test-backend
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $(/usr/bin/github-app-external-token) > /github-app/token
-  environment:
-    GITHUB_APP_ID:
-      from_secret: github-app-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: github-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: github-app-private-key
-  failure: ignore
-  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
-  name: github-app-generate-token
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - apk add --update curl jq bash
-  - GITHUB_TOKEN=$(cat /github-app/token)
-  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
-  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    ../grafana-enterprise
-  - cd ../grafana-enterprise
-  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
-    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
-    else git checkout main; fi
-  - cd ../
-  - ln -s src grafana
-  - cd ./grafana-enterprise
-  - ./build.sh
-  depends_on:
-  - github-app-generate-token
-  failure: ignore
-  image: alpine/git:2.40.1
-  name: clone-enterprise
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.3
-  name: identify-runner
-- commands:
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - apk add --update make
-  - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
-  image: golang:1.23.1-alpine
-  name: verify-gen-cue
-- commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - apk add --update make
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: golang:1.23.1-alpine
-  name: verify-gen-jsonnet
-- commands:
-  - apk add --update make
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: golang:1.23.1-alpine
-  name: wire-install
-- commands:
-  - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
-  depends_on:
-  - wire-install
-  image: golang:1.23.1-alpine
-  name: test-backend
-- commands:
-  - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  image: golang:1.23.1-alpine
-  name: test-backend-integration
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    include:
-    - Makefile
-    - pkg/**
-    - packaging/**
-    - .drone.yml
-    - conf/**
-    - go.sum
-    - go.mod
-    - public/app/plugins/**/plugin.json
-    - docs/sources/setup-grafana/configure-grafana/feature-toggles/**
-    - devenv/**
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: github-app
-  temp: {}
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: pr-lint-backend
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.20.3
-  name: identify-runner
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
-  - echo $(/usr/bin/github-app-external-token) > /github-app/token
-  environment:
-    GITHUB_APP_ID:
-      from_secret: github-app-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: github-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: github-app-private-key
-  failure: ignore
-  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
-  name: github-app-generate-token
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - apk add --update curl jq bash
-  - GITHUB_TOKEN=$(cat /github-app/token)
-  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
-  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    ../grafana-enterprise
-  - cd ../grafana-enterprise
-  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
-    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
-    else git checkout main; fi
-  - cd ../
-  - ln -s src grafana
-  - cd ./grafana-enterprise
-  - ./build.sh
-  depends_on:
-  - github-app-generate-token
-  failure: ignore
-  image: alpine/git:2.40.1
-  name: clone-enterprise
-  volumes:
-  - name: github-app
-    path: /github-app
-- commands:
-  - apk add --update make
-  - make gen-go
-  depends_on: []
-  image: golang:1.23.1-alpine
-  name: wire-install
-- commands:
-  - go run scripts/modowners/modowners.go check go.mod
-  image: golang:1.23.1-alpine
-  name: validate-modfile
-- commands:
-  - apk add --update make
-  - make swagger-validate
-  image: golang:1.23.1-alpine
-  name: validate-openapi-spec
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    include:
-    - .golangci.toml
-    - Makefile
-    - pkg/**
-    - packaging/**
-    - .drone.yml
-    - conf/**
-    - go.sum
-    - go.mod
-    - public/app/plugins/**/plugin.json
-    - devenv/**
-    - .bingo/**
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: github-app
-  temp: {}
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
+#kind: pipeline
+#name: pr-test-frontend
+#node:
+#  type: no-parallel
+#platform:
+#  arch: amd64
+#  os: linux
+#services: []
+#steps:
+#- commands:
+#  - echo $DRONE_RUNNER_NAME
+#  image: alpine:3.20.3
+#  name: identify-runner
+#- commands:
+#  - yarn install --immutable || yarn install --immutable
+#  depends_on: []
+#  image: node:22.11.0-alpine
+#  name: yarn-install
+#- commands:
+#  - apk add --update git bash
+#  - yarn betterer ci
+#  depends_on:
+#  - yarn-install
+#  image: node:22.11.0-alpine
+#  name: betterer-frontend
+#- commands:
+#  - echo $(/usr/bin/github-app-external-token) > /github-app/token
+#  environment:
+#    GITHUB_APP_ID:
+#      from_secret: github-app-app-id
+#    GITHUB_APP_INSTALLATION_ID:
+#      from_secret: github-app-installation-id
+#    GITHUB_APP_PRIVATE_KEY:
+#      from_secret: github-app-private-key
+#  failure: ignore
+#  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+#  name: github-app-generate-token
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - apk add --update curl jq bash
+#  - GITHUB_TOKEN=$(cat /github-app/token)
+#  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+#    | jq .head.repo.fork)
+#  - if [ "$is_fork" != false ]; then return 1; fi
+#  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+#    ../grafana-enterprise
+#  - cd ../grafana-enterprise
+#  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+#    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+#    else git checkout main; fi
+#  - cd ../
+#  - ln -s src grafana
+#  - cd ./grafana-enterprise
+#  - ./build.sh
+#  depends_on:
+#  - github-app-generate-token
+#  failure: ignore
+#  image: alpine/git:2.40.1
+#  name: clone-enterprise
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - yarn run ci:test-frontend
+#  depends_on:
+#  - yarn-install
+#  environment:
+#    TEST_MAX_WORKERS: 50%
+#  image: node:22.11.0-alpine
+#  name: test-frontend
+#trigger:
+#  event:
+#  - pull_request
+#  paths:
+#    exclude:
+#    - docs/**
+#    - '*.md'
+#    - pkg/**
+#    - packaging/**
+#    - go.sum
+#    - go.mod
+#    include: []
+#type: docker
+#volumes:
+#- host:
+#    path: /var/run/docker.sock
+#  name: docker
+#- name: github-app
+#  temp: {}
+#---
+#clone:
+#  retries: 3
+#depends_on: []
+#environment:
+#  EDITION: oss
+#image_pull_secrets:
+#- gcr
+#- gar
+#kind: pipeline
+#name: pr-lint-frontend
+#node:
+#  type: no-parallel
+#platform:
+#  arch: amd64
+#  os: linux
+#services: []
+#steps:
+#- commands:
+#  - echo $(/usr/bin/github-app-external-token) > /github-app/token
+#  environment:
+#    GITHUB_APP_ID:
+#      from_secret: github-app-app-id
+#    GITHUB_APP_INSTALLATION_ID:
+#      from_secret: github-app-installation-id
+#    GITHUB_APP_PRIVATE_KEY:
+#      from_secret: github-app-private-key
+#  failure: ignore
+#  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+#  name: github-app-generate-token
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - apk add --update curl jq bash
+#  - GITHUB_TOKEN=$(cat /github-app/token)
+#  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+#    | jq .head.repo.fork)
+#  - if [ "$is_fork" != false ]; then return 1; fi
+#  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+#    ../grafana-enterprise
+#  - cd ../grafana-enterprise
+#  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+#    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+#    else git checkout main; fi
+#  - cd ../
+#  - ln -s src grafana
+#  - cd ./grafana-enterprise
+#  - ./build.sh
+#  depends_on:
+#  - github-app-generate-token
+#  failure: ignore
+#  image: alpine/git:2.40.1
+#  name: clone-enterprise
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - echo $DRONE_RUNNER_NAME
+#  image: alpine:3.20.3
+#  name: identify-runner
+#- commands:
+#  - yarn install --immutable || yarn install --immutable
+#  depends_on: []
+#  image: node:22.11.0-alpine
+#  name: yarn-install
+#- commands:
+#  - yarn run prettier:check
+#  - yarn run lint
+#  - yarn run typecheck
+#  depends_on:
+#  - yarn-install
+#  environment:
+#    TEST_MAX_WORKERS: 50%
+#  image: node:22.11.0-alpine
+#  name: lint-frontend
+#- commands:
+#  - |-
+#    make i18n-extract || (echo "
+#    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
+#  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+#    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+#    \"\nTranslation extraction has not been committed. Please run 'make i18n-extract',
+#    commit the changes and push again.\"\n                exit 1\n            fi\n
+#    \           "
+#  depends_on:
+#  - yarn-install
+#  image: node:22-bookworm
+#  name: verify-i18n
+#trigger:
+#  event:
+#  - pull_request
+#  paths:
+#    exclude:
+#    - docs/**
+#    - '*.md'
+#    - pkg/**
+#    - packaging/**
+#    - go.sum
+#    - go.mod
+#    include: []
+#type: docker
+#volumes:
+#- host:
+#    path: /var/run/docker.sock
+#  name: docker
+#- name: github-app
+#  temp: {}
+#---
+#clone:
+#  retries: 3
+#depends_on: []
+#environment:
+#  EDITION: oss
+#image_pull_secrets:
+#- gcr
+#- gar
+#kind: pipeline
+#name: pr-test-backend
+#node:
+#  type: no-parallel
+#platform:
+#  arch: amd64
+#  os: linux
+#services: []
+#steps:
+#- commands:
+#  - echo $(/usr/bin/github-app-external-token) > /github-app/token
+#  environment:
+#    GITHUB_APP_ID:
+#      from_secret: github-app-app-id
+#    GITHUB_APP_INSTALLATION_ID:
+#      from_secret: github-app-installation-id
+#    GITHUB_APP_PRIVATE_KEY:
+#      from_secret: github-app-private-key
+#  failure: ignore
+#  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+#  name: github-app-generate-token
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - apk add --update curl jq bash
+#  - GITHUB_TOKEN=$(cat /github-app/token)
+#  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+#    | jq .head.repo.fork)
+#  - if [ "$is_fork" != false ]; then return 1; fi
+#  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+#    ../grafana-enterprise
+#  - cd ../grafana-enterprise
+#  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+#    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+#    else git checkout main; fi
+#  - cd ../
+#  - ln -s src grafana
+#  - cd ./grafana-enterprise
+#  - ./build.sh
+#  depends_on:
+#  - github-app-generate-token
+#  failure: ignore
+#  image: alpine/git:2.40.1
+#  name: clone-enterprise
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - echo $DRONE_RUNNER_NAME
+#  image: alpine:3.20.3
+#  name: identify-runner
+#- commands:
+#  - '# It is required that code generated from Thema/CUE be committed and in sync
+#    with its inputs.'
+#  - '# The following command will fail if running code generators produces any diff
+#    in output.'
+#  - apk add --update make
+#  - CODEGEN_VERIFY=1 make gen-cue
+#  depends_on: []
+#  image: golang:1.23.1-alpine
+#  name: verify-gen-cue
+#- commands:
+#  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+#  - '# The following command will fail if running code generators produces any diff
+#    in output.'
+#  - apk add --update make
+#  - CODEGEN_VERIFY=1 make gen-jsonnet
+#  depends_on: []
+#  image: golang:1.23.1-alpine
+#  name: verify-gen-jsonnet
+#- commands:
+#  - apk add --update make
+#  - make gen-go
+#  depends_on:
+#  - verify-gen-cue
+#  image: golang:1.23.1-alpine
+#  name: wire-install
+#- commands:
+#  - apk add --update build-base shared-mime-info shared-mime-info-lang
+#  - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+#  depends_on:
+#  - wire-install
+#  image: golang:1.23.1-alpine
+#  name: test-backend
+#- commands:
+#  - apk add --update build-base
+#  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+#    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+#    | grep -o '\(.*\)/' | sort -u)
+#  depends_on:
+#  - wire-install
+#  image: golang:1.23.1-alpine
+#  name: test-backend-integration
+#trigger:
+#  event:
+#  - pull_request
+#  paths:
+#    exclude:
+#    - docs/**
+#    - '*.md'
+#    include:
+#    - Makefile
+#    - pkg/**
+#    - packaging/**
+#    - .drone.yml
+#    - conf/**
+#    - go.sum
+#    - go.mod
+#    - public/app/plugins/**/plugin.json
+#    - docs/sources/setup-grafana/configure-grafana/feature-toggles/**
+#    - devenv/**
+#type: docker
+#volumes:
+#- host:
+#    path: /var/run/docker.sock
+#  name: docker
+#- name: github-app
+#  temp: {}
+#---
+#clone:
+#  retries: 3
+#depends_on: []
+#environment:
+#  EDITION: oss
+#image_pull_secrets:
+#- gcr
+#- gar
+#kind: pipeline
+#name: pr-lint-backend
+#node:
+#  type: no-parallel
+#platform:
+#  arch: amd64
+#  os: linux
+#services: []
+#steps:
+#- commands:
+#  - echo $DRONE_RUNNER_NAME
+#  image: alpine:3.20.3
+#  name: identify-runner
+#- commands:
+#  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+#  depends_on: []
+#  environment:
+#    CGO_ENABLED: 0
+#  image: golang:1.23.1-alpine
+#  name: compile-build-cmd
+#- commands:
+#  - echo $(/usr/bin/github-app-external-token) > /github-app/token
+#  environment:
+#    GITHUB_APP_ID:
+#      from_secret: github-app-app-id
+#    GITHUB_APP_INSTALLATION_ID:
+#      from_secret: github-app-installation-id
+#    GITHUB_APP_PRIVATE_KEY:
+#      from_secret: github-app-private-key
+#  failure: ignore
+#  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+#  name: github-app-generate-token
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - apk add --update curl jq bash
+#  - GITHUB_TOKEN=$(cat /github-app/token)
+#  - is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+#    | jq .head.repo.fork)
+#  - if [ "$is_fork" != false ]; then return 1; fi
+#  - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+#    ../grafana-enterprise
+#  - cd ../grafana-enterprise
+#  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+#    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+#    else git checkout main; fi
+#  - cd ../
+#  - ln -s src grafana
+#  - cd ./grafana-enterprise
+#  - ./build.sh
+#  depends_on:
+#  - github-app-generate-token
+#  failure: ignore
+#  image: alpine/git:2.40.1
+#  name: clone-enterprise
+#  volumes:
+#  - name: github-app
+#    path: /github-app
+#- commands:
+#  - apk add --update make
+#  - make gen-go
+#  depends_on: []
+#  image: golang:1.23.1-alpine
+#  name: wire-install
+#- commands:
+#  - go run scripts/modowners/modowners.go check go.mod
+#  image: golang:1.23.1-alpine
+#  name: validate-modfile
+#- commands:
+#  - apk add --update make
+#  - make swagger-validate
+#  image: golang:1.23.1-alpine
+#  name: validate-openapi-spec
+#trigger:
+#  event:
+#  - pull_request
+#  paths:
+#    exclude:
+#    - docs/**
+#    - '*.md'
+#    include:
+#    - .golangci.toml
+#    - Makefile
+#    - pkg/**
+#    - packaging/**
+#    - .drone.yml
+#    - conf/**
+#    - go.sum
+#    - go.mod
+#    - public/app/plugins/**/plugin.json
+#    - devenv/**
+#    - .bingo/**
+#type: docker
+#volumes:
+#- host:
+#    path: /var/run/docker.sock
+#  name: docker
+#- name: github-app
+#  temp: {}
+#---
+#clone:
+#  retries: 3
+#depends_on: []
+#environment:
+#  EDITION: oss
+#image_pull_secrets:
+#- gcr
+#- gar
 kind: pipeline
 name: pr-build-e2e
 node:
