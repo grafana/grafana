@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
-import { Stack, Text, LinkButton, Box, TextLink, useStyles2 } from '@grafana/ui';
+import { Stack, Text, LinkButton, Box, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -54,31 +54,11 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const shouldRenderLinks = Boolean(plugin.details?.links?.length || repositoryLink);
 
-  const styles = useStyles2(getStyles);
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={width} data-testid="plugin-details-panel">
       <Box padding={2} borderColor="medium" borderStyle="solid">
         <Stack direction="column" gap={2}>
-          {plugin.isInstalled && plugin.installedVersion && (
-            <Stack wrap direction="column" gap={0.5}>
-              <Text color="secondary">
-                <Trans i18nKey="plugins.details.labels.installedVersion">Installed version: </Trans>
-              </Text>
-              <div className={styles.pluginVersionDetails}>{plugin.installedVersion}</div>
-            </Stack>
-          )}
-          <Stack wrap direction="column" gap={0.5}>
-            <Text color="secondary">
-              <Trans i18nKey="plugins.details.labels.latestVersion">Latest version: </Trans>
-            </Text>
-            <div className={styles.pluginVersionDetails}>
-              {plugin.latestVersion || getLatestCompatibleVersion(plugin.details?.versions)?.version}
-            </div>
-          </Stack>
           {pluginExtentionsInfo.map((infoItem, index) => {
-            if (infoItem.label === 'Version') {
-              return null;
-            }
             return (
               <Stack key={index} wrap direction="column" gap={0.5}>
                 <Text color="secondary">{infoItem.label + ':'}</Text>
