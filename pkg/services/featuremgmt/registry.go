@@ -1371,9 +1371,10 @@ var (
 		{
 			Name:            "alertingApiServer",
 			Description:     "Register Alerting APIs with the K8s API server",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Expression:      "true",
 		},
 		{
 			Name:        "cloudWatchRoundUpEndTime",
@@ -1487,12 +1488,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:              "improvedExternalSessionHandling",
-			Description:       "Enable improved support for external sessions in Grafana",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			Name:        "improvedExternalSessionHandling",
+			Description: "Enable improved support for OAuth and SAML external sessions in Grafana",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:        "useSessionStorageForRedirection",
