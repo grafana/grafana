@@ -3,7 +3,9 @@ package sql
 import (
 	"testing"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
@@ -263,6 +265,55 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						Namespace:   "default",
 						Folder:      "folder",
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+			},
+			sqlResourceBlobInsert: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						Now: time.UnixMilli(1704056400000).UTC(),
+						Info: &utils.BlobInfo{
+							UID:  "abc",
+							Hash: "xxx",
+							Size: 1234,
+						},
+						ContentType: "text/plain",
+						Value:       []byte("abcdefg"),
+					},
+				},
+			},
+
+			sqlResourceBlobQuery: {
+				{
+					Name: "basic",
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+							Name:      "name",
+						},
+						UID: "abc",
+					},
+				},
+				{
+					Name: "resource", // NOTE: this returns multiple values
+					Data: &sqlResourceBlobQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "x",
+							Group:     "g",
+							Resource:  "r",
+						},
 					},
 				},
 			},
