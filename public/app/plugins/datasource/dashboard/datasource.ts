@@ -1,4 +1,4 @@
-import { Observable, debounceTime, defer, finalize, first, map, of } from 'rxjs';
+import { Observable, defer, finalize, first, map, of, skip } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -118,7 +118,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     return (source: Observable<DataQueryResponse>) => {
       return requestId.includes(MIXED_REQUEST_PREFIX)
         ? source.pipe(
-            debounceTime(200),
+            // Scene QueryRunner has ReplaySubject on the result and first value will be previous
+            //   result with state of DONE. Therefore we need to skip the first value
+            skip(1),
             first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
           )
         : source;
