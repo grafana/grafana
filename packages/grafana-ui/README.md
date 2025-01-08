@@ -16,4 +16,4 @@ See [package source](https://github.com/grafana/grafana/tree/main/packages/grafa
 
 ## Development
 
-For development purposes we suggest using `yarn link` that will create symlink to @grafana/ui lib. To do so navigate to `packages/grafana-ui` and run `yarn link`. Then, navigate to your project and run `yarn link @grafana/ui` to use the linked version of the lib. To unlink follow the same procedure, but use `yarn unlink` instead.
+For development purposes we suggest using `yarn link` that will create symlink to @grafana/ui lib. To do so navigate to `packages/grafana-ui` and run `YARN_IGNORE_PATH=1 yarn link`. Then, navigate to your project and run `yarn link "@grafana/ui"` to use the linked version of the lib. To unlink follow the same procedure, but use `yarn unlink` instead.

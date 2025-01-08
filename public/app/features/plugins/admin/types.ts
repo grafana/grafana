@@ -257,6 +257,7 @@ export enum PluginTabLabels {
   USAGE = 'Usage',
   IAM = 'IAM',
   CHANGELOG = 'Changelog',
+  PLUGINDETAILS = 'Plugin details',
 }
 
 export enum PluginTabIds {
@@ -267,6 +268,7 @@ export enum PluginTabIds {
   USAGE = 'usage',
   IAM = 'iam',
   CHANGELOG = 'changelog',
+  PLUGINDETAILS = 'right-panel',
 }
 
 export enum RequestStatus {
