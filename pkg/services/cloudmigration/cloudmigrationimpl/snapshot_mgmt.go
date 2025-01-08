@@ -277,7 +277,7 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDashboardAndFolderCommands")
 	defer span.End()
 
-	dashs, err := s.store.GetAllDashboardsByOrgId(ctx, signedInUser.GetOrgID())
+	dashs, err := s.dashboardService.GetAllDashboardsByOrgId(ctx, signedInUser.GetOrgID())
 	if err != nil {
 		return nil, nil, err
 	}
