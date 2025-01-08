@@ -11,10 +11,60 @@ import {
 } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { getPanelQueries, ResponseTransformers } from './ResponseTransformers';
+import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    datasources: [
+      {
+        uid: 'xyz-prom',
+        name: 'PromTest',
+        type: 'prometheus',
+        meta: {
+          id: 1,
+          name: 'PromTest',
+          type: 'prometheus',
+          uid: 'xyz-prom',
+        },
+        isDefault: true,
+      },
+      {
+        uid: 'grafana',
+        name: '-- Grafana --',
+        type: 'grafana',
+        meta: {
+          id: 1,
+          name: '-- Grafana --',
+          type: 'grafana',
+          uid: 'grafana',
+        },
+        isDefault: false,
+      },
+    ],
+    bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
+      settings: {
+        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
+        defaultDatasource: 'grafana',
+      },
+    },
+  },
+}));
+
 describe('ResponseTransformers', () => {
+  describe('getDefaultDataSource', () => {
+    it('should return prometheus as default', () => {
+      expect(getDefaultDatasource()).toEqual({
+        apiVersion: undefined,
+        uid: 'xyz-prom',
+        type: 'prometheus',
+      });
+    });
+  });
+
   describe('v1 -> v2 transformation', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
       const dashboardV1: DashboardDataDTO = {
