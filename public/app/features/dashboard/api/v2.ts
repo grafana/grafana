@@ -19,7 +19,7 @@ import { SaveDashboardCommand, SaveDashboardCommandV2 } from '../components/Save
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 
-export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO> {
+export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO> {
   private client: ResourceClient<DashboardV2Spec>;
 
   constructor(private convertToV1: boolean) {

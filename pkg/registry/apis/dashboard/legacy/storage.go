@@ -246,6 +246,7 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
+// TODO: this needs to be implemented
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not yet (filter)")
 }

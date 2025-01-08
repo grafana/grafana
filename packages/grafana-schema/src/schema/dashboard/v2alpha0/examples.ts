@@ -26,7 +26,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
-        builtIn: true,
+        builtIn: false,
         query: {
           kind: 'prometheus',
           spec: {
@@ -37,7 +37,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'prometheus',
           uid: 'uid',
         },
-        filter: { ids: [] },
+        filter: { ids: [1] },
         enable: true,
         hide: false,
         iconColor: 'rgba(0, 211, 255, 1)',
@@ -47,6 +47,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
@@ -62,18 +63,17 @@ export const handyTestingSchema: DashboardV2Spec = {
             scenarioId: 'annotations',
           },
         },
-        filter: { ids: [] },
         hide: true,
       },
     },
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: false,
         iconColor: 'yellow',
         name: 'Disabled',
@@ -87,11 +87,11 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: true,
         hide: true,
         iconColor: 'dark-purple',
@@ -279,12 +279,10 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'DatasourceVariable',
       spec: {
-        allValue: undefined,
         current: {
           text: 'text1',
           value: 'value1',
         },
-        defaultOptionEnabled: true,
         description: 'A datasource variable',
         hide: 'dontHide',
         includeAll: false,
@@ -345,7 +343,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           },
         ],
         query: '1m,5m,10m',
-        refresh: 'onDashboardLoad',
+        refresh: 'onTimeRangeChanged',
         skipUrlSync: false,
       },
     },
