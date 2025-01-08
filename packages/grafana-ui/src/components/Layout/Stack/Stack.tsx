@@ -14,10 +14,9 @@ interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTM
   justifyContent?: ResponsiveProp<JustifyContent>;
   direction?: ResponsiveProp<Direction>;
   wrap?: ResponsiveProp<Wrap>;
-  children?: React.ReactNode;
 }
 
-export const Stack = React.forwardRef<HTMLDivElement, StackProps>((props, ref) => {
+export const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<StackProps>>((props, ref) => {
   const {
     gap = 1,
     alignItems,
