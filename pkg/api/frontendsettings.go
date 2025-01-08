@@ -369,6 +369,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			for _, provider := range oauthInfos {
 				if provider.Enabled {
 					hasEnabledProviders = true
+					break
 				}
 			}
 		}
