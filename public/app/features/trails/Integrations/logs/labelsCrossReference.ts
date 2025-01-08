@@ -11,27 +11,12 @@ import { getTrailFor } from '../../utils';
 import { createMetricsLogsConnector, type FoundLokiDataSource } from './base';
 
 export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => {
-  const getLokiQueryExpr = (): string => {
-    const trail = getTrailFor(scene);
-    const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
-
-    if (!(filtersVariable instanceof AdHocFiltersVariable)) {
-      return '';
-    }
-
-    const { filters } = filtersVariable.state;
-    const labelValuePairs = filters.length ? filters.map((filter) => `${filter.key}="${filter.value}"`) : [];
-
-    if (!labelValuePairs.length) {
-      return '';
-    }
-
-    return `{${labelValuePairs.join(',')}}`;
-  };
-
   return createMetricsLogsConnector({
     async getDataSources(): Promise<FoundLokiDataSource[]> {
-      const expr = getLokiQueryExpr();
+      // To establish if a data source has related logs, we run a query against each Loki data source
+      // using the currently-applied filters. If the query returns a single log line, we consider the
+      // data source to have related logs.
+      const expr = this.getLokiQueryExpr();
       const lokiDataSources = getDataSourceSrv().getList({ logs: true, type: 'loki' });
       const lokiDataSourcesWithRelatedLogs: FoundLokiDataSource[] = [];
       const queryRunners = lokiDataSources.map((ds) => {
@@ -42,7 +27,7 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
           },
           queries: [
             {
-              refId: `LabelXRef-${ds.uid}`,
+              refId: `LabelCrossReference-${ds.uid}`,
               expr,
               maxLines: 1,
             },
@@ -52,7 +37,7 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
         sqr.subscribeToState((newState) => {
           if (newState.data?.state === 'Done') {
             const hasLogs = Boolean(
-              newState.data.series.at(0)?.fields.some((field) => field.name === 'labels' && field.values.length > 0)
+              newState.data.series[0]?.fields.some((field) => field.name === 'labels' && field.values.length > 0)
             );
             if (hasLogs) {
               lokiDataSourcesWithRelatedLogs.push(ds);
@@ -63,12 +48,13 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
         return sqr;
       });
 
+      // Wait for all queries to complete
       await Promise.all(
         queryRunners.map((runner) =>
           firstValueFrom(
             runner.getResultsStream().pipe(
               filter((result) => result.data.state !== LoadingState.Loading),
-              map(() => undefined)
+              map(() => undefined) // ignore the result, because we only care that the request has completed
             )
           )
         )
@@ -76,6 +62,19 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
 
       return lokiDataSourcesWithRelatedLogs;
     },
-    getLokiQueryExpr,
+    getLokiQueryExpr(): string {
+      const trail = getTrailFor(scene);
+      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+
+      if (!(filtersVariable instanceof AdHocFiltersVariable) || !filtersVariable.state.filters.length) {
+        return '';
+      }
+
+      const labelValuePairs = filtersVariable.state.filters.map(
+        (filter) => `${filter.key}${filter.operator}"${filter.value}"`
+      );
+
+      return `{${labelValuePairs.join(',')}}`; // e.g. `{environment="dev",region="us-west-1"}`
+    },
   });
 };
