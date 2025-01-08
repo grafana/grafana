@@ -468,6 +468,9 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 			OrgId:      dashboard.OrgID,
 			FolderUIDs: []string{dashboard.UID},
 		})
+		if err != nil {
+			return err
+		}
 
 		uids := make([]string, len(dashs))
 		for i, dash := range dashs {
