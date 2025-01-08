@@ -19,7 +19,6 @@ import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
-import { BookmarksPage } from '../core/components/Bookmarks/BookmarksPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
@@ -203,11 +202,15 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/extensions',
       navId: 'extensions',
-      component: isDevEnv
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
-          )
-        : () => <Navigate replace to="/admin" />,
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
+      component:
+        isDevEnv || config.featureToggles.enableExtensionsAdminPage
+          ? SafeDynamicImport(
+              () =>
+                import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+            )
+          : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/access',
@@ -367,13 +370,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         : () => <Navigate replace to="/admin" />,
     },
     {
-      path: '/admin/storage/:path/*',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
-      ),
-    },
-    {
       path: '/admin/stats',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
@@ -441,6 +437,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/snapshots',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SnapshotsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
@@ -526,7 +523,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/bookmarks',
-      component: () => <BookmarksPage />,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+      ),
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),

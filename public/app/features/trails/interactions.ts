@@ -85,6 +85,13 @@ type Interactions = {
       | 'open_from_embedded'
     );
   };
+  // User clicks on one of the action buttons associated with related logs
+  related_logs_action_clicked: {
+    action: (
+      // Opens Explore Logs
+      | 'open_explore_logs'
+    );
+  };
   // User selects a metric
   metric_selected: {
     from: (
@@ -111,7 +118,14 @@ type Interactions = {
       | 'close'
     )
   };
+  sorting_changed: {
+      // type of sorting
+      sortBy: string
+  };
   wasm_not_supported: {},
+  missing_otel_labels_by_truncating_job_and_instance: {
+    metric?: string;
+  },
 };
 
 const PREFIX = 'grafana_explore_metrics_';

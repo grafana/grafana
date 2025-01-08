@@ -17,16 +17,16 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
@@ -147,6 +147,11 @@ jest.mock('@grafana/runtime', () => ({
   },
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+}));
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  setWeekStart: jest.fn(),
 }));
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);

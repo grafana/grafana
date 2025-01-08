@@ -10,9 +10,9 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/compon
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { overrideRuleTooltipDescription } from 'app/features/dashboard/components/PanelEditor/state/getOptionOverrides';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import * as utils from '../utils/utils';
@@ -146,7 +146,7 @@ describe('PanelOptions', () => {
     it('Can update', async () => {
       const {} = setup();
 
-      await userEvent.click(screen.getByLabelText('Remove label'));
+      await userEvent.click(screen.getByLabelText('Remove property'));
 
       expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });

@@ -11,8 +11,8 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  CustomScrollbar,
   LoadingPlaceholder,
+  ScrollContainer,
   useStyles2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -35,7 +35,7 @@ import {
 } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -219,40 +219,38 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
   return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-      <div className={styles.container}>
-        {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-        {havePreviousResults && (
-          <section>
-            {props.options.viewMode === ViewMode.Stat && (
-              <BigValue
-                width={props.width}
-                height={props.height}
-                graphMode={BigValueGraphMode.None}
-                textMode={BigValueTextMode.Auto}
-                justifyMode={BigValueJustifyMode.Auto}
-                theme={config.theme2}
-                value={{ text: `${rules.length}`, numeric: rules.length }}
-              />
-            )}
-            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
-              <GroupedModeView rules={rules} options={parsedOptions} />
-            )}
-            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
-              <UngroupedModeView
-                rules={rules}
-                options={parsedOptions}
-                handleInstancesLimit={handleInstancesLimit}
-                limitInstances={limitInstances}
-                hideViewRuleLinkText={hideViewRuleLinkText}
-              />
-            )}
-          </section>
-        )}
-        {/* loading moved here to avoid twitching  */}
-        {renderLoading && <LoadingPlaceholder text="Loading..." />}
-      </div>
-    </CustomScrollbar>
+    <ScrollContainer minHeight="100%">
+      {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+      {havePreviousResults && (
+        <section>
+          {props.options.viewMode === ViewMode.Stat && (
+            <BigValue
+              width={props.width}
+              height={props.height}
+              graphMode={BigValueGraphMode.None}
+              textMode={BigValueTextMode.Auto}
+              justifyMode={BigValueJustifyMode.Auto}
+              theme={config.theme2}
+              value={{ text: `${rules.length}`, numeric: rules.length }}
+            />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
+            <GroupedModeView rules={rules} options={parsedOptions} />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
+            <UngroupedModeView
+              rules={rules}
+              options={parsedOptions}
+              handleInstancesLimit={handleInstancesLimit}
+              limitInstances={limitInstances}
+              hideViewRuleLinkText={hideViewRuleLinkText}
+            />
+          )}
+        </section>
+      )}
+      {/* loading moved here to avoid twitching  */}
+      {renderLoading && <LoadingPlaceholder text="Loading..." />}
+    </ScrollContainer>
   );
 }
 
@@ -325,7 +323,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   }
 
-  // Remove rules having 0 instances
+  // Remove rules having 0 instances unless explicitly configured
   // AlertInstances filters instances and we need to prevent situation
   // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
@@ -339,7 +337,12 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
           alertingRule.alerts ?? []
         )
       : [];
-    if (filteredAlerts.length) {
+    if (
+      filteredAlerts.length ||
+      (alertingRule?.state === PromAlertingRuleState.Inactive &&
+        options.showInactiveAlerts &&
+        !options.alertInstanceLabelFilter.length)
+    ) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
       rules.push(rule);
@@ -355,10 +358,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 0, 0.25, 0),
     lineHeight: theme.typography.body.lineHeight,
     marginBottom: 0,
-  }),
-  container: css({
-    overflowY: 'auto',
-    height: '100%',
   }),
   alertRuleList: css({
     display: 'flex',

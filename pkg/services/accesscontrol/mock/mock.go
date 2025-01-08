@@ -270,14 +270,6 @@ func (m *Mock) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol
 	return nil
 }
 
-func (m *Mock) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
-	return false, nil
-}
-
-func (m *Mock) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
-	return nil, nil
-}
-
 // WithoutResolvers implements fullAccessControl.
 func (m *Mock) WithoutResolvers() accesscontrol.AccessControl {
 	return m

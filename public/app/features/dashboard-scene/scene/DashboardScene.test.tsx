@@ -28,29 +28,15 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { PanelTimeRange } from './PanelTimeRange';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './row-actions/RowActions';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
-jest.mock('../saving/getDashboardChangesFromScene', () => ({
-  // It compares the initial and changed save models and returns the differences
-  // By default we assume there are differences to have the dirty state test logic tested
-  getDashboardChangesFromScene: jest.fn(() => ({
-    changedSaveModel: {},
-    initialSaveModel: {},
-    diffs: [],
-    diffCount: 0,
-    hasChanges: true,
-    hasTimeChanges: false,
-    isNew: false,
-    hasVariableValueChanges: false,
-  })),
-}));
 jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -182,6 +168,7 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBe(false);
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.title).toEqual('Updated title');
+        expect(scene.state.meta.version).toEqual(2);
       });
 
       it('Should start the detect changes worker', () => {
@@ -652,6 +639,7 @@ describe('DashboardScene', () => {
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
           panelId: 1,
+          panelName: 'Panel A',
           panelPluginId: 'table',
         });
       });
@@ -667,6 +655,7 @@ describe('DashboardScene', () => {
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
           panelId: 1,
+          panelName: 'Panel A',
           panelPluginId: 'table',
         });
       });

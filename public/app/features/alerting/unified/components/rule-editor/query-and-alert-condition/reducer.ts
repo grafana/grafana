@@ -2,12 +2,14 @@ import { createAction, createReducer, original } from '@reduxjs/toolkit';
 
 import {
   DataQuery,
+  ReducerID,
+  RelativeTimeRange,
   getDataSourceRef,
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
-  RelativeTimeRange,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
@@ -15,10 +17,12 @@ import { defaultCondition } from 'app/features/expressions/utils/expressionTypes
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../../Analytics';
-import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { getDefaultQueries } from '../../../utils/rule-form';
+import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { getDefaultQueries, getInstantFromDataQuery } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
+
+import { SimpleConditionIdentifier } from './SimpleCondition';
 
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
@@ -60,7 +64,9 @@ export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: 
 export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
 export const resetToSimpleCondition = createAction('resetToSimpleCondition');
-
+export const optimizeReduceExpression = createAction<{ updatedQueries: AlertQuery[]; expressionQueries: AlertQuery[] }>(
+  'optimizeReduceExpression'
+);
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
 );
@@ -224,6 +230,71 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(rewireExpressions, (state, { payload }) => {
       state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
+    })
+    .addCase(optimizeReduceExpression, (state, { payload }) => {
+      const { updatedQueries, expressionQueries } = payload;
+
+      if (updatedQueries.length !== 1) {
+        // we only optimize when we have one data query
+        return;
+      }
+
+      //sometimes we dont have data source in the model yet
+      const getDataSourceSettingsForFirstQuery = getDataSourceSrv().getInstanceSettings(
+        updatedQueries[0].datasourceUid
+      );
+
+      if (!getDataSourceSettingsForFirstQuery) {
+        return;
+      }
+      const type = getDataSourceSettingsForFirstQuery?.type;
+
+      const firstQueryIsPromOrLoki = type === DataSourceType.Prometheus || type === DataSourceType.Loki;
+
+      const isInstant = getInstantFromDataQuery(updatedQueries[0].model, type);
+
+      const shouldRemoveReducer =
+        firstQueryIsPromOrLoki && updatedQueries.length === 1 && isInstant && expressionQueries.length === 2;
+
+      const onlyOneExpressionNotReducer =
+        expressionQueries.length === 1 &&
+        'type' in expressionQueries[0].model &&
+        expressionQueries[0].model.type !== ExpressionQueryType.reduce;
+
+      // we only add the reduce expression if we have one data query and one expression query. For other cases we don't do anything,
+      // and let the user add the reducer manually.
+      const shouldAddReduceExpression =
+        firstQueryIsPromOrLoki && updatedQueries.length === 1 && !isInstant && onlyOneExpressionNotReducer;
+
+      if (shouldRemoveReducer) {
+        const reduceExpressionIndex = state.queries.findIndex(
+          (query) => isExpressionQuery(query.model) && query.model.type === ExpressionQueryType.reduce
+        );
+
+        if (reduceExpressionIndex === 1) {
+          // means the reduce expression is the second query
+          state.queries.splice(reduceExpressionIndex, 1);
+          state.queries[1].model.expression = SimpleConditionIdentifier.queryId;
+        }
+      }
+      if (shouldAddReduceExpression) {
+        // add reducer to the second position
+        // we only update the refid and the model to point to the reducer expression
+        state.queries[1].model.expression = SimpleConditionIdentifier.reducerId;
+        // insert in second position the reducer expression
+        state.queries.splice(1, 0, {
+          datasourceUid: ExpressionDatasourceUID,
+          model: expressionDatasource.newQuery({
+            type: ExpressionQueryType.reduce,
+            reducer: ReducerID.last,
+            conditions: [{ ...defaultCondition, query: { params: [] } }],
+            expression: SimpleConditionIdentifier.queryId,
+            refId: SimpleConditionIdentifier.reducerId,
+          }),
+          refId: SimpleConditionIdentifier.reducerId,
+          queryType: 'expression',
+        });
+      }
     })
     .addCase(updateExpressionType, (state, action) => {
       state.queries = state.queries.map((query) => {

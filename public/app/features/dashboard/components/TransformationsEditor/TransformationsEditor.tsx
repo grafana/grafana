@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, createRef, RefObject } from 'react';
 import * as React from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -17,16 +17,16 @@ import {
   Button,
   ConfirmModal,
   Container,
-  CustomScrollbar,
   Themeable,
   withTheme,
   IconButton,
   ButtonGroup,
+  ScrollContainer,
 } from '@grafana/ui';
 import config from 'app/core/config';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
@@ -60,6 +60,7 @@ interface State {
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
+  ref: RefObject<HTMLDivElement>;
 
   constructor(props: TransformationsEditorProps) {
     super(props);
@@ -78,6 +79,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       selectedFilter: VIEW_ALL_VALUE,
       showIllustrations: true,
     };
+    this.ref = createRef<HTMLDivElement>();
   }
 
   onSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -151,6 +153,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
         this.setState({ scrollTop: currentShowPicker ? kindOfZero : Number.MAX_SAFE_INTEGER });
       }
+    }
+
+    if (prevState.scrollTop !== this.state.scrollTop) {
+      this.ref.current?.scrollTo({ top: this.state.scrollTop });
     }
   }
 
@@ -459,7 +465,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     }
 
     return (
-      <CustomScrollbar scrollTop={this.state.scrollTop} autoHeightMin="100%">
+      <ScrollContainer ref={this.ref} minHeight="100%">
         <Container padding="lg">
           <div data-testid={selectors.components.TransformTab.content}>
             {!hasTransforms && config.featureToggles.transformationsRedesign && this.renderEmptyMessage()}
@@ -467,7 +473,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             {this.renderTransformsPicker()}
           </div>
         </Container>
-      </CustomScrollbar>
+      </ScrollContainer>
     );
   }
 }

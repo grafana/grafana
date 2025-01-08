@@ -125,11 +125,6 @@ func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetO
 	return iamv0.GetOpenAPIDefinitions
 }
 
-func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// no custom API routes
-	return nil
-}
-
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.authorizer
 }

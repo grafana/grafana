@@ -216,13 +216,11 @@ describe('getQueryHints()', () => {
     const datasource = mock as PrometheusDatasource;
 
     let hints = getQueryHints('foo', series, datasource);
-    expect(hints!.length).toBe(6);
+    expect(hints!.length).toBe(3);
     const hintsString = JSON.stringify(hints);
     expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
     expect(hintsString).toContain('ADD_HISTOGRAM_COUNT');
-    expect(hintsString).toContain('ADD_HISTOGRAM_SUM');
-    expect(hintsString).toContain('ADD_HISTOGRAM_FRACTION');
-    expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
+    expect(hintsString).toContain('ADD_HISTOGRAM_QUANTILE');
   });
 
   it('returns no hints for native histogram when there are native histogram functions in the query', () => {

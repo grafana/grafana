@@ -51,12 +51,7 @@ import {
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
-import {
-  formatTraceQLMetrics,
-  formatTraceQLResponse,
-  transformFromOTLP as transformFromOTEL,
-  transformTrace,
-} from './resultTransformer';
+import { formatTraceQLResponse, transformFromOTLP as transformFromOTEL, transformTrace } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
@@ -354,7 +349,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
             });
-            subQueries.push(this.handleTraceQlMetricsQuery(options, queryValue));
+            subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql));
           } else {
             reportInteraction('grafana_traces_traceql_queried', {
               datasourceType: 'tempo',
@@ -593,32 +588,29 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   };
 
-  handleTraceQlMetricsQuery = (
+  handleTraceQlMetricsQuery(
     options: DataQueryRequest<TempoQuery>,
-    queryValue: string
-  ): Observable<DataQueryResponse> => {
-    const requestData = {
-      query: queryValue,
-      start: options.range.from.unix(),
-      end: options.range.to.unix(),
-      step: options.targets[0].step,
-    };
-
-    if (!requestData.step) {
-      delete requestData.step;
+    targets: TempoQuery[]
+  ): Observable<DataQueryResponse> {
+    const validTargets = targets
+      .filter((t) => t.query)
+      .map(
+        (t): TempoQuery => ({ ...t, query: this.applyVariables(t, options.scopedVars).query, queryType: 'traceql' })
+      );
+    if (!validTargets.length) {
+      return EMPTY;
     }
 
-    return this._request('/api/metrics/query_range', requestData).pipe(
+    const request = { ...options, targets: validTargets };
+    return super.query(request).pipe(
       map((response) => {
-        return {
-          data: formatTraceQLMetrics(queryValue, response.data),
-        };
+        return response;
       }),
       catchError((err) => {
         return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
       })
     );
-  };
+  }
 
   handleMetricsSummaryQuery = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
     reportInteraction('grafana_traces_metrics_summary_queried', {

@@ -5,18 +5,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/stretchr/testify/require"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
-	utilversion "k8s.io/apiserver/pkg/util/version"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	clientrest "k8s.io/client-go/rest"
+	utilversion "k8s.io/component-base/version"
 	"k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
+
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // TestAggregatorPostStartHooks tests that the kube-aggregator server has the expected default post start hooks enabled.
@@ -41,7 +42,7 @@ func TestAggregatorPostStartHooks(t *testing.T) {
 	cfg.GenericConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(*storagebackend.NewDefaultConfig("memory", nil), make(map[string]any))
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(*storagebackend.NewDefaultConfig("memory", nil))
 	require.NoError(t, err)
 	cfg.GenericConfig.RESTOptionsGetter = restOptionsGetter
 

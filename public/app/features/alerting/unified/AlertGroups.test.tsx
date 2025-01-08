@@ -2,18 +2,12 @@ import { render, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
-import {
-  grantUserPermissions,
-  mockAlertGroup,
-  mockAlertmanagerAlert,
-  mockDataSource,
-  MockDataSourceSrv,
-} from './mocks';
+import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert, mockDataSource } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';
 
@@ -43,11 +37,9 @@ const ui = {
   group: byTestId('alert-group'),
   groupCollapseToggle: byTestId('alert-group-collapse-toggle'),
   groupTable: byTestId('alert-group-table'),
-  row: byTestId('row'),
   collapseToggle: byTestId(selectors.components.AlertRules.toggle),
   silenceButton: byText('Silence'),
   sourceButton: byText('See alert rule'),
-  matcherInput: byTestId('search-query-input'),
   groupByContainer: byTestId('group-by-container'),
   groupByInput: byRole('combobox', { name: /group by label keys/i }),
   clearButton: byRole('button', { name: 'Clear filters' }),
@@ -65,7 +57,7 @@ describe('AlertGroups', () => {
   });
 
   beforeEach(() => {
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    setupDataSources(dataSources.am);
   });
 
   afterEach(() => {

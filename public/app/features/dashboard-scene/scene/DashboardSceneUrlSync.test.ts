@@ -3,8 +3,8 @@ import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -52,8 +52,6 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.kioskMode).toBe(undefined);
       scene.urlSync?.updateFromUrl({ kiosk: '' });
       expect(scene.state.kioskMode).toBe(KioskMode.Full);
-      scene.urlSync?.updateFromUrl({ kiosk: 'tv' });
-      expect(scene.state.kioskMode).toBe(KioskMode.TV);
       scene.urlSync?.updateFromUrl({ kiosk: 'true' });
       expect(scene.state.kioskMode).toBe(KioskMode.Full);
     });
@@ -62,8 +60,6 @@ describe('DashboardSceneUrlSync', () => {
       const scene = buildTestScene();
 
       expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
-      scene.setState({ kioskMode: KioskMode.TV });
-      expect(scene.urlSync?.getUrlState().kiosk).toBe(KioskMode.TV);
       scene.setState({ kioskMode: KioskMode.Full });
       expect(scene.urlSync?.getUrlState().kiosk).toBe('');
     });

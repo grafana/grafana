@@ -57,7 +57,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                   </Trans>
                 )}
               </a>
-              <span className={styles.urlsDivider}>•</span>
+              <span className={styles.urlsDivider}>{'•'}</span>
               <a
                 className={cx('external-link', styles.url)}
                 href={generatePublicDashboardConfigUrl(dash.dashboardUid, dash.slug)}

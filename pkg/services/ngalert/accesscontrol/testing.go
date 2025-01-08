@@ -7,7 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+var _ accesscontrol.AccessControl = &recordingAccessControlFake{}
+
 type recordingAccessControlFake struct {
+	accesscontrol.AccessControl
 	Disabled           bool
 	EvaluateRecordings []struct {
 		Permissions map[string][]string
@@ -26,22 +29,3 @@ func (a *recordingAccessControlFake) Evaluate(_ context.Context, ur identity.Req
 	}
 	return a.Callback(ur, evaluator)
 }
-
-func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (a *recordingAccessControlFake) WithoutResolvers() accesscontrol.AccessControl {
-	panic("unimplemented")
-}
-
-func (a *recordingAccessControlFake) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
-	return false, nil
-}
-
-func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
-	return nil, nil
-}
-
-var _ accesscontrol.AccessControl = &recordingAccessControlFake{}

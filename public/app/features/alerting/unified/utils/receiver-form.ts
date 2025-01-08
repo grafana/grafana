@@ -151,6 +151,13 @@ function grafanaChannelConfigToFormChannelValues(
     disableResolveMessage: channel.disableResolveMessage,
   };
 
+  notifier?.options.forEach((option) => {
+    if (option.secure && values.settings[option.propertyName]) {
+      values.secureSettings[option.propertyName] = values.settings[option.propertyName];
+      delete values.settings[option.propertyName];
+    }
+  });
+
   return values;
 }
 

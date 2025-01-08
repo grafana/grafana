@@ -1,15 +1,9 @@
 import { isArray, pick, reduce } from 'lodash';
 
-import {
-  AlertmanagerGroup,
-  MatcherOperator,
-  ObjectMatcher,
-  Route,
-  RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { Label, normalizeMatchers, unquoteWithUnescape } from './matchers';
+import { Label, isLabelMatch, matchLabelsSet, normalizeMatchers, unquoteWithUnescape } from './matchers';
 
 // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
 // So we cannot use null as an indicator of no match
@@ -50,16 +44,6 @@ export function matchLabels(matchers: ObjectMatcher[], labels: Label[]): Matchin
   });
 
   return { matches, labelsMatch };
-}
-
-// Compare set of matchers to set of label
-export function matchLabelsSet(matchers: ObjectMatcher[], labels: Label[]): boolean {
-  for (const matcher of matchers) {
-    if (!isLabelMatchInSet(matcher, labels)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 export interface AlertInstanceMatch {
@@ -228,59 +212,6 @@ export function computeInheritedTree<T extends Route>(parent: T): T {
   };
 }
 
-type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
-const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
-  [MatcherOperator.equal]: (lv, mv) => lv === mv,
-  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  // At the time of writing, Alertmanager compiles to another (anchored) Regular Expression,
-  // so we should also anchor our UI matches for consistency with this behaviour
-  // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
-  [MatcherOperator.regex]: (lv, mv) => {
-    const re = new RegExp(`^(?:${mv})$`);
-    return re.test(lv);
-  },
-  [MatcherOperator.notRegex]: (lv, mv) => {
-    const re = new RegExp(`^(?:${mv})$`);
-    return !re.test(lv);
-  },
-};
-
-function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  let labelValue = ''; // matchers that have no labels are treated as empty string label values
-  const labelForMatcher = Object.fromEntries(labels)[matcherKey];
-  if (labelForMatcher) {
-    labelValue = labelForMatcher;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  return matchFunction(labelValue, matcherValue);
-}
-
-// ⚠️ DO NOT USE THIS FUNCTION FOR ROUTE SELECTION ALGORITHM
-// for route selection algorithm, always compare a single matcher to the entire label set
-// see "matchLabelsSet"
-function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
-  const [labelKey, labelValue] = label;
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  if (labelKey !== matcherKey) {
-    return false;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  return matchFunction(labelValue, matcherValue);
-}
-
 // recursive function to rename receivers in all routes (notification policies)
 function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
   const updated: Route = {
@@ -298,10 +229,4 @@ function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
   return updated;
 }
 
-export {
-  findMatchingAlertGroups,
-  findMatchingRoutes,
-  getInheritedProperties,
-  isLabelMatchInSet,
-  renameReceiverInRoute,
-};
+export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, renameReceiverInRoute };

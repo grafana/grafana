@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
-import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
+import { AdHocVariableFilter, GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
+import { config, isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   PanelBuilders,
@@ -22,28 +22,30 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
   SceneTimeRange,
-  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
+import { getSelectedScopes } from 'app/features/scopes';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
-import { limitOtelMatchTerms } from '../otel/util';
+import { setOtelExperienceToggleState } from '../services/store';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
+  RefreshMetricsEvent,
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
+import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
@@ -104,7 +106,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
-    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+    onReferencedVariableValueChanged: () => {
       // In all cases, we want to reload the metric names
       this._debounceRefreshMetricNames();
     },
@@ -194,7 +196,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     );
 
     this._subs.add(
-      trail.subscribeToState(({ useOtelExperience }, oldState) => {
+      trail.subscribeToState(() => {
         // users will most likely not switch this off but for now,
         // update metric names when changing useOtelExperience
         this._debounceRefreshMetricNames();
@@ -202,12 +204,20 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     );
 
     this._subs.add(
-      trail.subscribeToState(({ showPreviews }, oldState) => {
+      trail.subscribeToState(() => {
         // move showPreviews into the settings
         // build layout when toggled
         this.buildLayout();
       })
     );
+
+    if (config.featureToggles.enableScopesInMetricsExplore) {
+      this._subs.add(
+        trail.subscribeToEvent(RefreshMetricsEvent, () => {
+          this._debounceRefreshMetricNames();
+        })
+      );
+    }
 
     this._debounceRefreshMetricNames();
   }
@@ -220,45 +230,39 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       return;
     }
 
-    const matchTerms: string[] = [];
+    const filters: AdHocVariableFilter[] = [];
 
     const filtersVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
-    const hasFilters = filtersVar instanceof AdHocFiltersVariable && filtersVar.getValue()?.valueOf();
-    if (hasFilters) {
-      matchTerms.push(sceneGraph.interpolate(trail, '${filters}'));
+    const adhocFilters = filtersVar instanceof AdHocFiltersVariable ? (filtersVar?.state.filters ?? []) : [];
+    if (adhocFilters.length > 0) {
+      filters.push(...adhocFilters);
     }
 
     const metricSearchRegex = createPromRegExp(trail.state.metricSearch);
     if (metricSearchRegex) {
-      matchTerms.push(`__name__=~"${metricSearchRegex}"`);
+      filters.push({
+        key: '__name__',
+        operator: '=~',
+        value: metricSearchRegex,
+      });
     }
 
-    let noOtelMetrics = false;
-    let missingOtelTargets = false;
-
-    if (trail.state.useOtelExperience) {
-      const jobsList = trail.state.otelTargets?.jobs;
-      const instancesList = trail.state.otelTargets?.instances;
-      // no targets have this combination of filters so there are no metrics that can be joined
-      // show no metrics
-      if (jobsList && jobsList.length > 0 && instancesList && instancesList.length > 0) {
-        const otelMatches = limitOtelMatchTerms(matchTerms, jobsList, instancesList, missingOtelTargets);
-
-        missingOtelTargets = otelMatches.missingOtelTargets;
-
-        matchTerms.push(otelMatches.jobsRegex);
-        matchTerms.push(otelMatches.instancesRegex);
-      } else {
-        noOtelMetrics = true;
-      }
-    }
-
-    const match = `{${matchTerms.join(',')}}`;
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
     this.setState({ metricNamesLoading: true, metricNamesError: undefined, metricNamesWarning: undefined });
 
     try {
-      const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
+      const jobsList = trail.state.useOtelExperience ? (trail.state.otelTargets?.jobs ?? []) : [];
+      const instancesList = trail.state.useOtelExperience ? (trail.state.otelTargets?.instances ?? []) : [];
+
+      const response = await getMetricNames(
+        datasourceUid,
+        timeRange,
+        getSelectedScopes(),
+        filters,
+        jobsList,
+        instancesList,
+        MAX_METRIC_NAMES
+      );
       const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
       let metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
@@ -281,21 +285,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         : undefined;
 
       // if there are no otel targets for otel resources, there will be no labels
-      if (noOtelMetrics) {
+      if (trail.state.useOtelExperience && (jobsList.length === 0 || instancesList.length === 0)) {
         metricNames = [];
         metricNamesWarning = undefined;
       }
 
-      if (missingOtelTargets) {
+      if (response.missingOtelTargets) {
         metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`;
       }
 
       let bodyLayout = this.state.body;
 
-      let rootGroupNode = this.state.rootGroup;
-
       // generate groups based on the search metrics input
-      rootGroupNode = await this.generateGroups(filteredMetricNames);
+      let rootGroupNode = await this.generateGroups(filteredMetricNames);
 
       this.setState({
         metricNames,
@@ -364,9 +366,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
       const oldPanel = this.previewCache[metricName];
 
-      const panel = oldPanel || { name: metricName, index, loaded: false };
-
-      metricsMap[metricName] = panel;
+      metricsMap[metricName] = oldPanel || { name: metricName, index, loaded: false };
     }
 
     try {
@@ -487,6 +487,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     const trail = getTrailFor(this);
     const useOtelExperience = trail.state.useOtelExperience;
 
+    setOtelExperienceToggleState(!useOtelExperience);
     trail.setState({ useOtelExperience: !useOtelExperience });
   };
 
@@ -624,7 +625,10 @@ function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
     .setDescription(description)
-    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
+    .setHeaderActions([
+      new SelectMetricAction({ metric, title: 'Select' }),
+      new AddToExplorationButton({ labelName: metric }),
+    ])
     .setOption('content', '')
     .build();
 }

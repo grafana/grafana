@@ -9,7 +9,7 @@ import { t } from 'app/core/internationalization';
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { isPrivateLabelKey } from '../../../utils/labels';
 import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
@@ -56,12 +56,7 @@ export type LabelsSubformValues = {
 export interface LabelsSubFormProps {
   dataSourceName: string;
   initialLabels: Array<{ key: string; value: string }>;
-  onClose: (
-    labelsToUodate?: Array<{
-      key: string;
-      value: string;
-    }>
-  ) => void;
+  onClose: (labelsToUodate?: KBObjectArray) => void;
 }
 
 export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: LabelsSubFormProps) {

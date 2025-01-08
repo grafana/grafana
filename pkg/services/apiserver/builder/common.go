@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // TODO: this (or something like it) belongs in grafana-app-sdk,
@@ -38,9 +39,6 @@ type APIGroupBuilder interface {
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
-	// Get the API routes for each version
-	GetAPIRoutes() *APIRoutes
-
 	// Optionally add an authorization hook
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
@@ -59,11 +57,22 @@ type APIGroupValidation interface {
 	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
 }
 
+type APIGroupRouteProvider interface {
+	// Support direct HTTP routes from an APIGroup
+	GetAPIRoutes() *APIRoutes
+}
+
+type APIGroupPostStartHookProvider interface {
+	// GetPostStartHooks returns a list of functions that will be called after the server has started
+	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
+}
+
 type APIGroupOptions struct {
 	Scheme           *runtime.Scheme
 	OptsGetter       generic.RESTOptionsGetter
 	DualWriteBuilder grafanarest.DualWriteBuilder
 	MetricsRegister  prometheus.Registerer
+	StorageOptions   apistore.StorageOptionsRegister
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly

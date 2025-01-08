@@ -1,10 +1,12 @@
 import { MetricFindValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
 import {
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
+  VAR_MISSING_OTEL_TARGETS,
   VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
@@ -120,6 +122,9 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
 
     // start with the deployment environment
     let allFilters = `deployment_environment${op}"${val}"`;
+    if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+      allFilters = `deployment_environment${op}'${val}'`;
+    }
     let allLabels = 'deployment_environment';
 
     // add the other OTEL resource filters
@@ -128,7 +133,11 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
       const op = otelFilters[i].operator;
       const labelValue = otelFilters[i].value;
 
-      allFilters += `,${labelName}${op}"${labelValue}"`;
+      if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+        allFilters += `,${labelName}${op}'${labelValue}'`;
+      } else {
+        allFilters += `,${labelName}${op}"${labelValue}"`;
+      }
 
       const addLabelToGroupLeft = labelName !== 'job' && labelName !== 'instance';
 
@@ -153,28 +162,29 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
  * @param matchTerms __name__ and other Prom filters
  * @param jobsList list of jobs in target_info
  * @param instancesList list of instances in target_info
- * @param missingOtelTargets flag to indicate truncated job and instance filters
  * @returns
  */
 export function limitOtelMatchTerms(
   matchTerms: string[],
   jobsList: string[],
-  instancesList: string[],
-  missingOtelTargets: boolean
+  instancesList: string[]
 ): { missingOtelTargets: boolean; jobsRegex: string; instancesRegex: string } {
+  let missingOtelTargets = false;
   const charLimit = 2000;
 
   let initialCharAmount = matchTerms.join(',').length;
 
   // start to add values to the regex and start quote
-  let jobsRegex = 'job=~"';
-  let instancesRegex = 'instance=~"';
+  let jobsRegex = `job=~'`;
+  let instancesRegex = `instance=~'`;
 
   // iterate through the jobs and instances,
   // count the chars as they are added,
   // stop before the total count reaches 2000
   // show a warning that there are missing OTel targets and
   // the user must select more OTel resource attributes
+  const jobCheck: { [key: string]: boolean } = {};
+  const instanceCheck: { [key: string]: boolean } = {};
   for (let i = 0; i < jobsList.length; i++) {
     // use or character for the count
     const orChars = i === 0 ? 0 : 2;
@@ -192,17 +202,20 @@ export function limitOtelMatchTerms(
         jobsRegex += `${jobsList[i]}`;
         instancesRegex += `${instancesList[i]}`;
       } else {
-        jobsRegex += `|${jobsList[i]}`;
-        instancesRegex += `|${instancesList[i]}`;
+        // check to make sure we aren't duplicating job or instance
+        jobsRegex += jobCheck[jobsList[i]] ? '' : `|${jobsList[i]}`;
+        instancesRegex += instanceCheck[instancesList[i]] ? '' : `|${instancesList[i]}`;
       }
+      jobCheck[jobsList[i]] = true;
+      instanceCheck[instancesList[i]] = true;
     } else {
       missingOtelTargets = true;
       break;
     }
   }
   // complete the quote after values have been added
-  jobsRegex += '"';
-  instancesRegex += '"';
+  jobsRegex += `'`;
+  instancesRegex += `'`;
 
   return {
     missingOtelTargets,
@@ -240,7 +253,12 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
   }
   const otelGroupLeft = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
   const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
-  if (!(otelGroupLeft instanceof ConstantVariable) || !(otelJoinQueryVariable instanceof ConstantVariable)) {
+  const missingOtelTargetsVariable = sceneGraph.lookupVariable(VAR_MISSING_OTEL_TARGETS, trail);
+  if (
+    !(otelGroupLeft instanceof ConstantVariable) ||
+    !(otelJoinQueryVariable instanceof ConstantVariable) ||
+    !(missingOtelTargetsVariable instanceof ConstantVariable)
+  ) {
     return;
   }
   // Remove the group left
@@ -273,7 +291,12 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     excludeFilterKeys = excludeFilterKeys.concat(['job', 'instance']);
   }
   const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
-  const attributes = await getFilteredResourceAttributes(datasourceUid, timeRange, metric, excludeFilterKeys);
+  const { attributes, missingOtelTargets } = await getFilteredResourceAttributes(
+    datasourceUid,
+    timeRange,
+    metric,
+    excludeFilterKeys
+  );
   // here we start to add the attributes to the group left
   if (attributes.length > 0) {
     // update the group left variable that contains all the filtered resource attributes
@@ -284,4 +307,21 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     // update the join query that is interpolated in all queries
     otelJoinQueryVariable.setState({ value: otelJoinQuery });
   }
+  // used to show a warning in label breakdown that the user must select more OTel resource attributes
+  missingOtelTargetsVariable.setState({ value: missingOtelTargets });
+}
+
+/**
+ * Returns the option value that is like 'prod'.
+ * If there are no options, returns null.
+ *
+ * @param options
+ * @returns
+ */
+export function getProdOrDefaultOption(options: Array<{ value: string; label: string }>): string | null {
+  if (options.length === 0) {
+    return null;
+  }
+
+  return options.find((option) => option.value.toLowerCase().indexOf('prod') > -1)?.value ?? options[0].value;
 }

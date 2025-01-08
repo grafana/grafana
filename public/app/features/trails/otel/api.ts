@@ -1,9 +1,11 @@
-import { RawTimeRange } from '@grafana/data';
+import { RawTimeRange, Scope } from '@grafana/data';
 import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
+
+import { callSuggestionsApi } from '../utils';
 
 import { OtelResponse, LabelResponse, OtelTargetType } from './types';
-import { sortResources } from './util';
+import { limitOtelMatchTerms, sortResources } from './util';
 
 const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; // name is handled by metric search metrics bar
 /**
@@ -45,9 +47,7 @@ export async function getOtelResources(
   const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
 
   // exclude __name__ or deployment_environment or previously chosen filters
-  const resources = response.data?.filter((resource) => !allExcludedFilters.includes(resource)).map((el: string) => el);
-
-  return resources;
+  return response.data?.filter((resource) => !allExcludedFilters.includes(resource)).map((el: string) => el);
 }
 
 /**
@@ -56,7 +56,7 @@ export async function getOtelResources(
  *
  * @param dataSourceUid
  * @param timeRange
- * @param expr
+ * @param filters
  * @returns
  */
 export async function totalOtelResources(
@@ -99,12 +99,10 @@ export async function totalOtelResources(
     }
   });
 
-  const otelTargets: OtelTargetType = {
+  return {
     jobs,
     instances,
   };
-
-  return otelTargets;
 }
 
 /**
@@ -115,14 +113,9 @@ export async function totalOtelResources(
  *
  * @param dataSourceUid
  * @param timeRange
- * @param expr
  * @returns
  */
-export async function isOtelStandardization(
-  dataSourceUid: string,
-  timeRange: RawTimeRange,
-  expr?: string
-): Promise<boolean> {
+export async function isOtelStandardization(dataSourceUid: string, timeRange: RawTimeRange): Promise<boolean> {
   const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/query`;
 
   const start = getPrometheusTime(timeRange.from, false);
@@ -138,9 +131,27 @@ export async function isOtelStandardization(
   const response = await getBackendSrv().get<OtelResponse>(url, paramsTargets, 'explore-metrics-otel-check-standard');
 
   // the response should be not greater than zero if it is standard
-  const checkStandard = !(response.data.result.length > 0);
+  return !(response.data.result.length > 0);
+}
 
-  return checkStandard;
+/**
+ * Query the DS for deployment environment label values.
+ *
+ * @param dataSourceUid
+ * @param timeRange
+ * @param scopes
+ * @returns string[], values for the deployment_environment label
+ */
+export async function getDeploymentEnvironments(
+  dataSourceUid: string,
+  timeRange: RawTimeRange,
+  scopes: Scope[]
+): Promise<string[]> {
+  if (!config.featureToggles.enableScopesInMetricsExplore) {
+    return getDeploymentEnvironmentsWithoutScopes(dataSourceUid, timeRange);
+  }
+
+  return getDeploymentEnvironmentsWithScopes(dataSourceUid, timeRange, scopes);
 }
 
 /**
@@ -150,7 +161,10 @@ export async function isOtelStandardization(
  * @param timeRange
  * @returns string[], values for the deployment_environment label
  */
-export async function getDeploymentEnvironments(dataSourceUid: string, timeRange: RawTimeRange): Promise<string[]> {
+export async function getDeploymentEnvironmentsWithoutScopes(
+  dataSourceUid: string,
+  timeRange: RawTimeRange
+): Promise<string[]> {
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
 
@@ -168,9 +182,39 @@ export async function getDeploymentEnvironments(dataSourceUid: string, timeRange
   );
 
   // exclude __name__ or deployment_environment or previously chosen filters
-  const resources = response.data;
+  return response.data;
+}
 
-  return resources;
+/**
+ * Query the DS for deployment environment label values.
+ *
+ * @param dataSourceUid
+ * @param timeRange
+ * @param scopes
+ * @returns string[], values for the deployment_environment label
+ */
+export async function getDeploymentEnvironmentsWithScopes(
+  dataSourceUid: string,
+  timeRange: RawTimeRange,
+  scopes: Scope[]
+): Promise<string[]> {
+  const response = await callSuggestionsApi(
+    dataSourceUid,
+    timeRange,
+    scopes,
+    [
+      {
+        key: '__name__',
+        operator: '=',
+        value: 'target_info',
+      },
+    ],
+    'deployment_environment',
+    undefined,
+    'explore-metrics-otel-resources-deployment-env'
+  );
+  // exclude __name__ or deployment_environment or previously chosen filters
+  return response.data.data;
 }
 
 /**
@@ -198,14 +242,16 @@ export async function getFilteredResourceAttributes(
   // OTel metrics require unique identifies for the resource. Job+instance is the unique identifier.
   // If there are none, we cannot join on a target_info resource
   if (metricResources.jobs.length === 0 || metricResources.instances.length === 0) {
-    return [];
+    return { attributes: [], missingOtelTargets: false };
   }
 
   // The URL for the labels endpoint
   const url = `/api/datasources/uid/${datasourceUid}/resources/api/v1/labels`;
 
   // The match param for the metric to get all possible labels for this metric
-  const metricMatchParam = `${metric}{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
+  const metricMatchTerms = limitOtelMatchTerms([], metricResources.jobs, metricResources.instances);
+
+  let metricMatchParam = `${metric}{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
 
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
@@ -228,7 +274,7 @@ export async function getFilteredResourceAttributes(
   const metricLabels = metricResponse.data ?? [];
 
   // only get the resource attributes filtered by job and instance values present on the metric
-  const targetInfoMatchParam = `target_info{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
+  let targetInfoMatchParam = `target_info{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
 
   const targetInfoParams: Record<string, string | number> = {
     start,
@@ -259,5 +305,5 @@ export async function getFilteredResourceAttributes(
   // return a string array
   const resourceAttributes = sortedResourceAttributes.map((el) => el.text);
 
-  return resourceAttributes;
+  return { attributes: resourceAttributes, missingOtelTargets: metricMatchTerms.missingOtelTargets };
 }

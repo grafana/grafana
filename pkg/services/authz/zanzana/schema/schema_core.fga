@@ -1,0 +1,22 @@
+module core
+
+type user
+
+type service-account
+
+type render
+
+type anonymous
+
+type role
+  relations
+    define assignee: [user, service-account, anonymous, team#member, role#assignee]
+
+type team
+  relations
+    define admin: [user, service-account]
+    define member: [user, service-account] or admin
+
+    define get: [role#assignee] or member
+    define update: [role#assignee] or admin
+    define delete: [role#assignee] or admin

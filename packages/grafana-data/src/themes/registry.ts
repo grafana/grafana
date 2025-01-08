@@ -1,5 +1,6 @@
 import { Registry, RegistryItem } from '../utils/Registry';
 
+import { createColors } from './createColors';
 import { createTheme } from './createTheme';
 import { GrafanaTheme2 } from './types';
 
@@ -35,8 +36,7 @@ const themeRegistry = new Registry<ThemeRegistryItem>(() => {
     { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
     { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
     { id: 'light', name: 'Light', build: () => createTheme({ colors: { mode: 'light' } }) },
-    { id: 'blue-night', name: 'Blue night', build: createBlueNight, isExtra: true },
-    { id: 'midnight', name: 'Midnight', build: createMidnight, isExtra: true },
+    { id: 'debug', name: 'Debug', build: createDebug, isExtra: true },
   ];
 });
 
@@ -47,47 +47,80 @@ function getSystemPreferenceTheme() {
 }
 
 /**
- * Just a temporary placeholder for a possible new theme
+ * a very ugly theme that is useful for debugging and checking if the theme is applied correctly
+ * borders are red,
+ * backgrounds are blue,
+ * text is yellow,
+ * and grafana loves you <3
+ * (also corners are rounded, action states (hover, focus, selected) are purple)
  */
-function createMidnight(): GrafanaTheme2 {
-  const whiteBase = '204, 204, 220';
+function createDebug(): GrafanaTheme2 {
+  const baseDarkColors = createColors({
+    mode: 'dark',
+  });
 
   return createTheme({
-    name: 'Midnight',
+    name: 'Debug',
     colors: {
       mode: 'dark',
       background: {
-        canvas: '#000000',
-        primary: '#000000',
-        secondary: '#181818',
+        canvas: '#000033',
+        primary: '#000044',
+        secondary: '#000055',
+      },
+      text: {
+        primary: '#bbbb00',
+        secondary: '#888800',
+        disabled: '#444400',
+        link: '#dddd00',
+        maxContrast: '#ffff00',
       },
       border: {
-        weak: `rgba(${whiteBase}, 0.17)`,
-        medium: `rgba(${whiteBase}, 0.25)`,
-        strong: `rgba(${whiteBase}, 0.35)`,
+        weak: '#ff000044',
+        medium: '#ff000088',
+        strong: '#ff0000ff',
+      },
+      primary: {
+        ...baseDarkColors.primary,
+        border: '#ff000088',
+        text: '#cccc00',
+        contrastText: '#ffff00',
+        shade: '#9900dd',
+      },
+      secondary: {
+        ...baseDarkColors.secondary,
+        border: '#ff000088',
+        text: '#cccc00',
+        contrastText: '#ffff00',
+        shade: '#9900dd',
+      },
+      info: {
+        ...baseDarkColors.info,
+        shade: '#9900dd',
+      },
+      warning: {
+        ...baseDarkColors.warning,
+        shade: '#9900dd',
+      },
+      success: {
+        ...baseDarkColors.success,
+        shade: '#9900dd',
+      },
+      error: {
+        ...baseDarkColors.error,
+        shade: '#9900dd',
+      },
+      action: {
+        hover: '#9900dd',
+        focus: '#6600aa',
+        selected: '#440088',
       },
     },
-  });
-}
-
-/**
- * Just a temporary placeholder for a possible new theme
- */
-function createBlueNight(): GrafanaTheme2 {
-  return createTheme({
-    name: 'Blue night',
-    colors: {
-      mode: 'dark',
-      background: {
-        canvas: '#15161d',
-        primary: '#15161d',
-        secondary: '#1d1f2e',
-      },
-      border: {
-        weak: `#2e304f`,
-        medium: `#2e304f`,
-        strong: `#2e304f`,
-      },
+    shape: {
+      borderRadius: 8,
+    },
+    spacing: {
+      gridSize: 10,
     },
   });
 }

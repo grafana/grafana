@@ -75,16 +75,16 @@ function splitQueriesByStreamShard(
       subquerySubscription = null;
     }
 
-    if (shouldStop) {
-      subscriber.complete();
-      return;
-    }
-
     const done = () => {
-      mergedResponse.state = LoadingState.Done;
+      mergedResponse.state = shouldStop ? LoadingState.Error : LoadingState.Done;
       subscriber.next(mergedResponse);
       subscriber.complete();
     };
+
+    if (shouldStop) {
+      done();
+      return;
+    }
 
     const nextRequest = () => {
       const nextGroup =

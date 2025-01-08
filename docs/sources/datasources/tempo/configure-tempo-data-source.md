@@ -154,21 +154,7 @@ Trace to logs can also be used with other tracing data sources, such as Jaeger a
 
 ![Trace to logs settings](/media/docs/grafana/data-sources/tempo/tempo-data-source-trace-to-logs.png)
 
-There are two ways to configure the trace to logs feature:
-
-- Use a simplified configuration with default query, or
-- Configure a custom query where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
-
-### Use a simple configuration
-
-1. Select the target data source from the drop-down list.
-
-   You can also click **Open advanced data source picker** to see more options, including adding a data source.
-
-1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
-1. Select which tags to use in the logs query.
-   The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful, for example, if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` (the span attribute) to `http_status` (the data source field). "Data source" in this context can refer to Loki, or another log data source.
-1. Optional: If your logs consistently trace or span IDs, you can use one or both of the **Filter by trace ID** and **Filter by span ID** settings.
+You can configure a custom query where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
 
 ### Configure a custom query
 
@@ -323,7 +309,9 @@ You can configure the **Hide search** setting to hide the search query option in
 
 ### TraceID query
 
-The **TraceID query** setting modifies how TraceID queries are run. The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. This setting is disabled by default.
+The **TraceID query** setting modifies how TraceID queries are run.
+The time range can be used when there are performance issues or timeouts since it narrows down the search to the defined range.
+This setting is disabled by default.
 
 You can configure this setting as follows:
 
@@ -394,8 +382,8 @@ datasources:
         query: 'method="$${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
@@ -414,8 +402,8 @@ datasources:
         hide: false
       traceQuery:
         timeShiftEnabled: true
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
       spanBar:
         type: 'Tag'
         tag: 'http.path'

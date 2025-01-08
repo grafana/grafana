@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_Read_FullMethodName   = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName = "/resource.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName   = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName  = "/resource.ResourceStore/Watch"
+	ResourceStore_Read_FullMethodName    = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName  = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName  = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName  = "/resource.ResourceStore/Delete"
+	ResourceStore_Restore_FullMethodName = "/resource.ResourceStore/Restore"
+	ResourceStore_List_FullMethodName    = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName   = "/resource.ResourceStore/Watch"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -40,6 +41,7 @@ type ResourceStoreClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Restore(ctx context.Context, in *RestoreRequest, opts ...grpc.CallOption) (*RestoreResponse, error)
 	// The results *may* include values that should not be returned to the user
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
@@ -92,6 +94,16 @@ func (c *resourceStoreClient) Delete(ctx context.Context, in *DeleteRequest, opt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, ResourceStore_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceStoreClient) Restore(ctx context.Context, in *RestoreRequest, opts ...grpc.CallOption) (*RestoreResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RestoreResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_Restore_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +166,7 @@ type ResourceStoreServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Restore(context.Context, *RestoreRequest) (*RestoreResponse, error)
 	// The results *may* include values that should not be returned to the user
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
@@ -179,6 +192,9 @@ func (UnimplementedResourceStoreServer) Update(context.Context, *UpdateRequest) 
 }
 func (UnimplementedResourceStoreServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedResourceStoreServer) Restore(context.Context, *RestoreRequest) (*RestoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Restore not implemented")
 }
 func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
@@ -270,6 +286,24 @@ func _ResourceStore_Delete_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ResourceStore_Restore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).Restore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_Restore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).Restore(ctx, req.(*RestoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ResourceStore_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRequest)
 	if err := dec(in); err != nil {
@@ -333,6 +367,10 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ResourceStore_Delete_Handler,
 		},
 		{
+			MethodName: "Restore",
+			Handler:    _ResourceStore_Restore_Handler,
+		},
+		{
 			MethodName: "List",
 			Handler:    _ResourceStore_List_Handler,
 		},
@@ -348,9 +386,10 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ResourceIndex_Search_FullMethodName  = "/resource.ResourceIndex/Search"
-	ResourceIndex_History_FullMethodName = "/resource.ResourceIndex/History"
-	ResourceIndex_Origin_FullMethodName  = "/resource.ResourceIndex/Origin"
+	ResourceIndex_Search_FullMethodName   = "/resource.ResourceIndex/Search"
+	ResourceIndex_GetStats_FullMethodName = "/resource.ResourceIndex/GetStats"
+	ResourceIndex_History_FullMethodName  = "/resource.ResourceIndex/History"
+	ResourceIndex_Origin_FullMethodName   = "/resource.ResourceIndex/Origin"
 )
 
 // ResourceIndexClient is the client API for ResourceIndex service.
@@ -360,7 +399,9 @@ const (
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexClient interface {
-	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error)
+	// Get the resource stats
+	GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error)
 	// Show resource history (and trash)
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -375,10 +416,20 @@ func NewResourceIndexClient(cc grpc.ClientConnInterface) ResourceIndexClient {
 	return &resourceIndexClient{cc}
 }
 
-func (c *resourceIndexClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *resourceIndexClient) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SearchResponse)
+	out := new(ResourceSearchResponse)
 	err := c.cc.Invoke(ctx, ResourceIndex_Search_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceIndexClient) GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResourceStatsResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_GetStats_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +463,9 @@ func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opt
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexServer interface {
-	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+	Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error)
+	// Get the resource stats
+	GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error)
 	// Show resource history (and trash)
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -423,8 +476,11 @@ type ResourceIndexServer interface {
 type UnimplementedResourceIndexServer struct {
 }
 
-func (UnimplementedResourceIndexServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+func (UnimplementedResourceIndexServer) Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedResourceIndexServer) GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
 }
 func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
@@ -445,7 +501,7 @@ func RegisterResourceIndexServer(s grpc.ServiceRegistrar, srv ResourceIndexServe
 }
 
 func _ResourceIndex_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchRequest)
+	in := new(ResourceSearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -457,7 +513,25 @@ func _ResourceIndex_Search_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: ResourceIndex_Search_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).Search(ctx, req.(*SearchRequest))
+		return srv.(ResourceIndexServer).Search(ctx, req.(*ResourceSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceIndex_GetStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceIndexServer).GetStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceIndex_GetStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceIndexServer).GetStats(ctx, req.(*ResourceStatsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -508,6 +582,10 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _ResourceIndex_Search_Handler,
+		},
+		{
+			MethodName: "GetStats",
+			Handler:    _ResourceIndex_GetStats_Handler,
 		},
 		{
 			MethodName: "History",

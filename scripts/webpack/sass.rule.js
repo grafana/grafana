@@ -34,6 +34,10 @@ module.exports = function (options) {
         loader: 'sass-loader',
         options: {
           sourceMap: options.sourceMap,
+          sassOptions: {
+            // silencing these warnings since we're planning to remove sass when angular is gone
+            silenceDeprecations: ['import', 'global-builtin'],
+          },
         },
       },
     ],

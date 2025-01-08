@@ -1,36 +1,63 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { getLatestCompatibleVersion } from '../helpers';
 import { Version } from '../types';
 
+import { VersionInstallButton } from './VersionInstallButton';
+
 interface Props {
+  pluginId: string;
   versions?: Version[];
   installedVersion?: string;
 }
 
-export const VersionList = ({ versions = [], installedVersion }: Props) => {
+export const VersionList = ({ pluginId, versions = [], installedVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
+
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  useEffect(() => {
+    setIsInstalling(false);
+  }, [installedVersion]);
 
   if (versions.length === 0) {
     return <p>No version history was found.</p>;
   }
+
+  const onInstallClick = () => {
+    setIsInstalling(true);
+  };
 
   return (
     <table className={styles.table}>
       <thead>
         <tr>
           <th>Version</th>
+          <th></th>
           <th>Last updated</th>
           <th>Grafana Dependency</th>
         </tr>
       </thead>
       <tbody>
         {versions.map((version) => {
+          let tooltip: string | undefined = undefined;
           const isInstalledVersion = installedVersion === version.version;
+          const canInstall = version.angularDetected ? config.angularSupportEnabled : true;
+
+          if (!canInstall) {
+            tooltip = 'This plugin version is AngularJS type which is not supported';
+          }
+
+          if (!version.isCompatible) {
+            tooltip = 'This plugin version is not compatible with the current Grafana version';
+          }
+
           return (
             <tr key={version.version}>
               {/* Version number */}
@@ -41,6 +68,19 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
               ) : (
                 <td>{version.version}</td>
               )}
+
+              {/* Install button */}
+              <td>
+                <VersionInstallButton
+                  pluginId={pluginId}
+                  version={version}
+                  latestCompatibleVersion={latestCompatibleVersion?.version}
+                  installedVersion={installedVersion}
+                  onConfirmInstallation={onInstallClick}
+                  disabled={isInstalledVersion || isInstalling || !canInstall || !version.isCompatible || !canInstall}
+                  tooltip={tooltip}
+                />
+              </td>
 
               {/* Last updated */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
@@ -60,6 +100,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(2, 4, 3),
   }),
+  currentVersion: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  spinner: css({
+    marginLeft: theme.spacing(1),
+  }),
   table: css({
     tableLayout: 'fixed',
     width: '100%',
@@ -69,8 +115,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     th: {
       fontSize: theme.typography.h5.fontSize,
     },
-  }),
-  currentVersion: css({
-    fontWeight: theme.typography.fontWeightBold,
+    td: {
+      wordBreak: 'break-word',
+    },
+    'tbody tr:nth-child(odd)': {
+      background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
+    },
   }),
 });
