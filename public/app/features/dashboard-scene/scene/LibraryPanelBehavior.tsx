@@ -1,4 +1,5 @@
 import { PanelPlugin, PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
@@ -14,8 +15,6 @@ import { PanelNotices } from './PanelNotices';
 import { PanelTimeRange } from './PanelTimeRange';
 import { AngularDeprecation } from './angular/AngularDeprecation';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
-
-import { config } from '@grafana/runtime';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -58,14 +57,12 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     if (config.featureToggles.angularDeprecationUI) {
       titleItems.push(new AngularDeprecation());
     }
-
     titleItems.push(
       new VizPanelLinks({
         rawLinks: libPanelModel.links,
         menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
       })
     );
-
     titleItems.push(new PanelNotices());
 
     const vizPanelState: VizPanelState = {
