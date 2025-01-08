@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 
-import { SpanFiltersTags } from '../../../features/explore/TraceView/components/TracePageHeader/SpanFilters/Tags';
+import { SpanFiltersTags } from '../../../features/explore/TraceView/components/TracePageHeader/SpanFilters/SpanFiltersTags';
 import { defaultTagFilter, SearchProps } from '../../../features/explore/TraceView/useSearch';
 import { transformDataFrames } from '../../../features/explore/TraceView/utils/transform';
 

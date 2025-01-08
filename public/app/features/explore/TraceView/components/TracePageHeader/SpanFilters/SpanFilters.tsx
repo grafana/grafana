@@ -26,7 +26,7 @@ import { Trace } from '../../types';
 import NextPrevResult from '../SearchBar/NextPrevResult';
 import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
 
-import { SpanFiltersTags } from './Tags';
+import { SpanFiltersTags } from './SpanFiltersTags';
 
 export type SpanFilterProps = {
   trace: Trace;
@@ -161,10 +161,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
           <SearchBarInput
             onChange={(v) => {
-              setSpanFiltersSearch({ ...search, query: v });
-              if (v === '') {
-                setShowSpanFilterMatchesOnly(false);
-              }
+              setSpanFiltersSearch({ ...search, query: v, matchesOnly: v !== '' });
             }}
             value={search.query || ''}
           />
