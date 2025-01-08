@@ -141,7 +141,11 @@ export function reportExploreMetrics<E extends keyof Interactions, P extends Int
 }
 
 /** Detect the single change in filters and report the event, assuming it came from manipulating the adhoc filter */
-export function reportChangeInLabelFilters(newFilters: AdHocVariableFilter[], oldFilters: AdHocVariableFilter[], otel?: boolean) {
+export function reportChangeInLabelFilters(
+  newFilters: AdHocVariableFilter[],
+  oldFilters: AdHocVariableFilter[],
+  otel?: boolean
+) {
   if (newFilters.length === oldFilters.length) {
     for (const oldFilter of oldFilters) {
       for (const newFilter of newFilters) {
@@ -151,7 +155,7 @@ export function reportChangeInLabelFilters(newFilters: AdHocVariableFilter[], ol
               label: oldFilter.key,
               action: 'changed',
               cause: 'adhoc_filter',
-              otel_resource_attribute: otel ?? false
+              otel_resource_attribute: otel ?? false,
             });
           }
         }

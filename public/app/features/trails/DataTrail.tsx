@@ -84,7 +84,7 @@ export interface DataTrailState extends SceneObjectState {
   startButtonClicked?: boolean; // from original landing page
   afterFirstDSChange?: boolean; // when starting there is always a DS var change from variable dependency
   resettingOtel?: boolean; // when switching OTel off from the switch
-  isUpdatingOtel?: boolean
+  isUpdatingOtel?: boolean;
   // moved into settings
   showPreviews?: boolean;
 
@@ -364,7 +364,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // 1. Set deployment variable values
       // 2. update all other variables and state
       // 3. the first check 'startButtonClicked' button should turn it off but pass later if the toggle is turned on
-      if (hasOtelResources && nonPromotedOtelResources && !(this.state.startButtonClicked)) {
+      if (hasOtelResources && nonPromotedOtelResources && !this.state.startButtonClicked) {
         updateOtelData(
           this,
           datasourceUid,
@@ -430,7 +430,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         otelJoinQuery: '',
         afterFirstDSChange: true,
         initialOtelCheckComplete: true,
-        isUpdatingOtel:false,
+        isUpdatingOtel: false,
       });
     } else {
       // partial reset when a user turns off the otel experience
@@ -440,7 +440,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         useOtelExperience: false,
         afterFirstDSChange: true,
         initialOtelCheckComplete: true,
-        isUpdatingOtel:false,
+        isUpdatingOtel: false,
       });
     }
   }
@@ -494,7 +494,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     const reportOtelExperience = useRef(false);
     // only report otel experience once
     if (useOtelExperience && !reportOtelExperience.current) {
-      reportExploreMetrics('otel_experience_used',{});
+      reportExploreMetrics('otel_experience_used', {});
       reportOtelExperience.current = true;
     }
 

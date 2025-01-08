@@ -529,7 +529,7 @@ describe('DataTrail', () => {
     beforeEach(() => {
       trail = new DataTrail({
         useOtelExperience: true,
-        nonPromotedOtelResources,        
+        nonPromotedOtelResources,
         // before checking, things should be hidden
         initialOtelCheckComplete: false,
       });
@@ -539,7 +539,7 @@ describe('DataTrail', () => {
     });
 
     it('clicking start button should start with OTel off and showing var filters', () => {
-      trail.setState({startButtonClicked: true});
+      trail.setState({ startButtonClicked: true });
       const otelResourcesHide = getOtelResourcesVar(trail).state.hide;
       const varFiltersHide = getFilterVar().state.hide;
       expect(otelResourcesHide).toBe(VariableHide.hideVariable);
