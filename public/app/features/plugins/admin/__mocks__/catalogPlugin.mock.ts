@@ -22,6 +22,7 @@ export default {
   isPublished: true,
   isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
+  latestVersion: '4.2.2',
   name: 'Zabbix',
   orgName: 'Alexander Zobnin',
   popularity: 0.2093,
