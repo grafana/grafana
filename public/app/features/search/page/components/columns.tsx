@@ -18,7 +18,7 @@ import { formatDate, formatDuration } from 'app/core/internationalization/dates'
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { QueryResponse, SearchResultMeta } from '../../service';
+import { QueryResponse, SearchResultMeta } from '../../service/types';
 import { getIconForKind } from '../../service/utils';
 import { SelectionChecker, SelectionToggle } from '../selection';
 

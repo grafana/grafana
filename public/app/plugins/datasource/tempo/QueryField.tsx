@@ -178,4 +178,6 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
   }
 }
 
-export const TempoQueryField = withTheme2(TempoQueryFieldComponent);
+const TempoQueryField = withTheme2(TempoQueryFieldComponent);
+
+export default TempoQueryField;

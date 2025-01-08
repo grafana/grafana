@@ -28,12 +28,13 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-function setupDashboardScene(state: DashboardSceneState): DashboardScene {
+function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
   return new DashboardScene(state);
 }
 
@@ -84,6 +85,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
       $data: new DashboardDataLayerSet({ annotationLayers }),
+      id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
       preload: true,
@@ -139,9 +141,18 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           children: [
             new DashboardGridItem({
               body: new VizPanel({
-                key: 'test-panel-uid',
+                key: 'panel-1',
                 pluginId: 'timeseries',
                 title: 'Test Panel',
+                titleItems: [
+                  new VizPanelLinks({
+                    rawLinks: [
+                      { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+                      { title: 'Test Link 2', url: 'http://test2.com' },
+                    ],
+                    menu: new VizPanelLinksMenu({}),
+                  }),
+                ],
                 description: 'Test Description',
                 hoverHeader: true,
                 hoverHeaderOffset: 10,
@@ -318,7 +329,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
     // check annotation layer 3 with no datasource has the default datasource defined as type
-    expect(result.annotations?.[2].spec.query.kind).toBe('loki');
+    expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
 });
 

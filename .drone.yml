@@ -117,14 +117,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - yarn storybook --quiet
   depends_on:
   - yarn-install
   detach: true
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: start-storybook
 - commands:
   - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
@@ -175,14 +175,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: betterer-frontend
 - commands:
   - echo $(/usr/bin/github-app-external-token) > /github-app/token
@@ -193,6 +193,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -228,7 +229,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: test-frontend
 trigger:
   event:
@@ -276,6 +277,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -312,7 +314,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -322,7 +324,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: lint-frontend
 - commands:
   - |-
@@ -335,7 +337,7 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  image: node:20-bookworm
+  image: node:22-bookworm
   name: verify-i18n
 trigger:
   event:
@@ -383,6 +385,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -521,6 +524,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -618,6 +622,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -662,7 +667,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq bash
@@ -673,7 +678,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: build-frontend-packages
 - failure: ignore
   image: grafana/drone-downstream
@@ -737,7 +742,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: build-test-plugins
 - commands:
   - apk add --update tar bash
@@ -865,7 +870,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: node:20-bookworm
+  image: node:22-bookworm
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -955,7 +960,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: build-storybook
   when:
     paths:
@@ -1017,18 +1022,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -1062,6 +1055,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -1156,27 +1150,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -1243,7 +1216,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -1267,9 +1239,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -1302,7 +1271,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - pip3 install codespell
@@ -1315,7 +1284,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1415,6 +1384,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -1494,18 +1464,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -1539,6 +1497,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -1628,17 +1587,6 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-benchmark-integration-tests
-- commands:
-  - apk add --update build-base
-  - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
-  - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
-  depends_on:
-  - wire-install
-  environment:
-    GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
   image: golang:1.23.1-alpine
   name: mysql-8.0-benchmark-integration-tests
@@ -1653,9 +1601,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -1688,7 +1633,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - pip3 install codespell
@@ -1701,7 +1646,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1764,14 +1709,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -1779,7 +1724,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: test-frontend
 trigger:
   branch: main
@@ -1822,7 +1767,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -1832,7 +1777,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: lint-frontend
 - commands:
   - |-
@@ -1845,7 +1790,7 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  image: node:20-bookworm
+  image: node:22-bookworm
   name: verify-i18n
 trigger:
   branch: main
@@ -2034,14 +1979,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - yarn storybook --quiet
   depends_on:
   - yarn-install
   detach: true
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: start-storybook
 - commands:
   - npx wait-on@7.2.0 -t 1m http://$HOST:$PORT
@@ -2096,6 +2041,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -2140,7 +2086,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq
@@ -2151,7 +2097,7 @@ steps:
   - yarn install --mode=update-lockfile
   depends_on:
   - yarn-install
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: update-package-json-version
 - commands:
   - apk add --update jq bash
@@ -2163,7 +2109,7 @@ steps:
   - update-package-json-version
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: build-frontend-packages
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
@@ -2218,7 +2164,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: build-test-plugins
 - commands:
   - apk add --update tar bash
@@ -2346,7 +2292,7 @@ steps:
     HOST: grafana-server
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
-  image: node:20-bookworm
+  image: node:22-bookworm
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -2436,7 +2382,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: build-storybook
   when:
     paths:
@@ -2486,7 +2432,7 @@ steps:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: publish-frontend-metrics
   when:
     repo:
@@ -2528,7 +2474,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: release-canary-npm-packages
   when:
     paths:
@@ -2609,18 +2555,6 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
 - commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
@@ -2711,27 +2645,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -2798,7 +2711,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -2818,9 +2730,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -2936,14 +2845,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -2951,7 +2860,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: test-frontend
 trigger:
   branch:
@@ -2992,7 +2901,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -3002,7 +2911,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: lint-frontend
 - commands:
   - |-
@@ -3015,7 +2924,7 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  image: node:20-bookworm
+  image: node:22-bookworm
   name: verify-i18n
 trigger:
   branch:
@@ -3195,18 +3104,6 @@ services:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
 - commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
-- commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
     MYSQL_DATABASE: grafana_tests
@@ -3296,27 +3193,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -3383,7 +3259,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -3401,9 +3276,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -3794,6 +3666,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -3826,6 +3699,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: github-app
+  temp: {}
 ---
 clone:
   retries: 3
@@ -3854,7 +3729,7 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - ./bin/build artifacts npm retrieve --tag ${DRONE_TAG}
@@ -3878,7 +3753,7 @@ steps:
     NPM_TOKEN:
       from_secret: npm_token
   failure: ignore
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: release-npm-packages
 trigger:
   event:
@@ -3913,138 +3788,12 @@ steps:
     1\n                else\n                    sleep 60\n                fi\n            done\n
     \           "
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: verify-grafanacom
 trigger:
   event:
   - promote
   target: verify-grafanacom-artifacts
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: verify-linux-packages
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
-  - 'echo "Step 1: Updating package lists..."'
-  - apt-get update >/dev/null 2>&1
-  - 'echo "Step 2: Installing prerequisites..."'
-  - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
-    wget >/dev/null 2>&1
-  - 'echo "Step 3: Adding Grafana GPG key..."'
-  - mkdir -p /etc/apt/keyrings/
-  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
-    > /dev/null
-  - 'echo "Step 4: Adding Grafana repository..."'
-  - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
-    main" | tee -a /etc/apt/sources.list.d/grafana.list
-  - 'echo "Step 5: Installing Grafana..."'
-  - for i in $(seq 1 60); do
-  - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=$version >/dev/null 2>&1; then'
-  - '        echo "Command succeeded on attempt $i"'
-  - '        break'
-  - '    else'
-  - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 60 ]; then'
-  - '            echo ''All attempts failed'''
-  - '            exit 1'
-  - '        fi'
-  - '        echo "Waiting 30 seconds before next attempt..."'
-  - '        sleep 30'
-  - '    fi'
-  - done
-  - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
-  - '    echo "Successfully verified Grafana version $version"'
-  - else
-  - '    echo "Failed to verify Grafana version $version"'
-  - '    exit 1'
-  - fi
-  - echo "Verification complete."
-  depends_on: []
-  environment: {}
-  image: ubuntu:22.04
-  name: verify-linux-DEB-packages
-- commands:
-  - 'echo "Step 1: Updating package lists..."'
-  - dnf check-update -y >/dev/null 2>&1 || true
-  - 'echo "Step 2: Installing prerequisites..."'
-  - dnf install -y dnf-utils >/dev/null 2>&1
-  - 'echo "Step 3: Adding Grafana GPG key..."'
-  - rpm --import https://rpm.grafana.com/gpg.key
-  - 'echo "Step 4: Configuring Grafana repository..."'
-  - |-
-    echo -e '[grafana]
-    name=grafana
-    baseurl=https://rpm.grafana.com
-    repo_gpgcheck=0
-    enabled=1
-    gpgcheck=0
-    gpgkey=https://rpm.grafana.com/gpg.key
-    sslverify=1
-    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-    ' > /etc/yum.repos.d/grafana.repo
-  - 'echo "Step 5: Checking RPM repository..."'
-  - export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")
-  - dnf list available grafana-$version
-  - if [ $? -eq 0 ]; then
-  - '    echo "Grafana package found in repository. Installing from repo..."'
-  - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
-  - '        echo "Command succeeded on attempt $i"'
-  - '        break'
-  - '    else'
-  - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 60 ]; then'
-  - '            echo ''All attempts failed'''
-  - '            exit 1'
-  - '        fi'
-  - '        echo "Waiting 30 seconds before next attempt..."'
-  - '        sleep 30'
-  - '    fi'
-  - done
-  - '    echo "Verifying GPG key..."'
-  - '    rpm --import https://rpm.grafana.com/gpg.key'
-  - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
-  - else
-  - '    echo "Grafana package version $version not found in repository."'
-  - '    dnf repolist'
-  - '    dnf list available grafana*'
-  - '    exit 1'
-  - fi
-  - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "$verison"; then
-  - '    echo "Successfully verified Grafana version $version"'
-  - else
-  - '    echo "Failed to verify Grafana version $version"'
-  - '    exit 1'
-  - fi
-  - echo "Verification complete."
-  depends_on: []
-  environment: {}
-  image: rockylinux:9
-  name: verify-linux-RPM-packages
-trigger:
-  event:
-  - promote
-  target: verify-linux-packages
 type: docker
 volumes:
 - host:
@@ -4120,109 +3869,6 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - commands:
-  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
-  - 'echo "Step 1: Updating package lists..."'
-  - apt-get update >/dev/null 2>&1
-  - 'echo "Step 2: Installing prerequisites..."'
-  - DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common
-    wget >/dev/null 2>&1
-  - 'echo "Step 3: Adding Grafana GPG key..."'
-  - mkdir -p /etc/apt/keyrings/
-  - wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg
-    > /dev/null
-  - 'echo "Step 4: Adding Grafana repository..."'
-  - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
-    main" | tee -a /etc/apt/sources.list.d/grafana.list
-  - 'echo "Step 5: Installing Grafana..."'
-  - for i in $(seq 1 60); do
-  - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=$version >/dev/null 2>&1; then'
-  - '        echo "Command succeeded on attempt $i"'
-  - '        break'
-  - '    else'
-  - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 60 ]; then'
-  - '            echo ''All attempts failed'''
-  - '            exit 1'
-  - '        fi'
-  - '        echo "Waiting 30 seconds before next attempt..."'
-  - '        sleep 30'
-  - '    fi'
-  - done
-  - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
-  - '    echo "Successfully verified Grafana version $version"'
-  - else
-  - '    echo "Failed to verify Grafana version $version"'
-  - '    exit 1'
-  - fi
-  - echo "Verification complete."
-  depends_on:
-  - publish-linux-packages-deb
-  environment: {}
-  image: ubuntu:22.04
-  name: verify-linux-DEB-packages
-- commands:
-  - 'echo "Step 1: Updating package lists..."'
-  - dnf check-update -y >/dev/null 2>&1 || true
-  - 'echo "Step 2: Installing prerequisites..."'
-  - dnf install -y dnf-utils >/dev/null 2>&1
-  - 'echo "Step 3: Adding Grafana GPG key..."'
-  - rpm --import https://rpm.grafana.com/gpg.key
-  - 'echo "Step 4: Configuring Grafana repository..."'
-  - |-
-    echo -e '[grafana]
-    name=grafana
-    baseurl=https://rpm.grafana.com
-    repo_gpgcheck=0
-    enabled=1
-    gpgcheck=0
-    gpgkey=https://rpm.grafana.com/gpg.key
-    sslverify=1
-    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-    ' > /etc/yum.repos.d/grafana.repo
-  - 'echo "Step 5: Checking RPM repository..."'
-  - export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")
-  - dnf list available grafana-$version
-  - if [ $? -eq 0 ]; then
-  - '    echo "Grafana package found in repository. Installing from repo..."'
-  - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
-  - '        echo "Command succeeded on attempt $i"'
-  - '        break'
-  - '    else'
-  - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 60 ]; then'
-  - '            echo ''All attempts failed'''
-  - '            exit 1'
-  - '        fi'
-  - '        echo "Waiting 30 seconds before next attempt..."'
-  - '        sleep 30'
-  - '    fi'
-  - done
-  - '    echo "Verifying GPG key..."'
-  - '    rpm --import https://rpm.grafana.com/gpg.key'
-  - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
-  - else
-  - '    echo "Grafana package version $version not found in repository."'
-  - '    dnf repolist'
-  - '    dnf list available grafana*'
-  - '    exit 1'
-  - fi
-  - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "$verison"; then
-  - '    echo "Successfully verified Grafana version $version"'
-  - else
-  - '    echo "Failed to verify Grafana version $version"'
-  - '    exit 1'
-  - fi
-  - echo "Verification complete."
-  depends_on:
-  - publish-linux-packages-rpm
-  environment: {}
-  image: rockylinux:9
-  name: verify-linux-RPM-packages
-- commands:
   - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
   depends_on:
   - publish-linux-packages-deb
@@ -4242,7 +3888,7 @@ steps:
     \           "
   depends_on:
   - publish-grafanacom
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: verify-grafanacom
 trigger:
   event:
@@ -4666,14 +4312,14 @@ steps:
 - commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -4681,7 +4327,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:20.9.0-alpine
+  image: node:22.11.0-alpine
   name: test-frontend
 trigger:
   cron:
@@ -5052,6 +4698,7 @@ steps:
       from_secret: github-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: github-app-private-key
+  failure: ignore
   image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   name: github-app-generate-token
   volumes:
@@ -5144,6 +4791,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: github-app
+  path: /github-app
 ---
 clone:
   retries: 3
@@ -5171,18 +4820,6 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- commands:
-  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  environment:
-    MYSQL_DATABASE: grafana_tests
-    MYSQL_PASSWORD: password
-    MYSQL_ROOT_PASSWORD: rootpass
-    MYSQL_USER: grafana
-  image: mysql:5.7.39
-  name: mysql57
-  volumes:
-  - name: mysql57
-    path: /var/lib/mysql
 - commands:
   - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
   environment:
@@ -5266,27 +4903,6 @@ steps:
   image: golang:1.23.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql57:3306 -timeout 120s
-  image: jwilder/dockerize:0.6.1
-  name: wait-for-mysql-5.7
-- commands:
-  - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
-  - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
-  depends_on:
-  - wire-install
-  - wait-for-mysql-5.7
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql57
-  image: golang:1.23.1-alpine
-  name: mysql-5.7-integration-tests
-- commands:
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
@@ -5353,7 +4969,6 @@ steps:
   environment:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
-  failure: ignore
   image: golang:1.23.1-alpine
   name: remote-alertmanager-integration-tests
 trigger:
@@ -5366,9 +4981,6 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 - name: postgres
-  temp:
-    medium: memory
-- name: mysql57
   temp:
     medium: memory
 - name: mysql80
@@ -5661,8 +5273,8 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:27-cli
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.23.1-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20-bookworm
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22.11.0-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22-bookworm
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.20.3
@@ -5672,7 +5284,6 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir-alpine:r316-55f47f8
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM memcached:1.6.9-alpine
@@ -5700,8 +5311,8 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL docker:27-cli
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.23.1-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL node:20.9.0-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL node:20-bookworm
+  - trivy --exit-code 1 --severity HIGH,CRITICAL node:22.11.0-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL node:22-bookworm
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.20.3
@@ -5711,7 +5322,6 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir-alpine:r316-55f47f8
-  - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL memcached:1.6.9-alpine
@@ -5969,6 +5579,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b164dd562488c482f2e670688fca02ae20dcd2e7841ec80c95838472842b4b5e
+hmac: 341dbe9d2f9c6d2ee70026e495921ea4670550729350047ec0c680094497cc44
 
 ...
