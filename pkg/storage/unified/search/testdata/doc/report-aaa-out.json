@@ -5,7 +5,6 @@
     "resource": "dashboards",
     "name": "aaa"
   },
-  "kind": "dashboards",
   "rv": 1234,
   "title": "Test AAA",
   "title_sort": "test aaa",
