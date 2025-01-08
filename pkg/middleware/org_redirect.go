@@ -36,7 +36,7 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
 			} else {
-				http.Error(ctx.Resp, "Not found", http.StatusNotFound)
+				http.Redirect(ctx.Resp, ctx.Req, "/", http.StatusTemporaryRedirect)
 			}
 
 			return
