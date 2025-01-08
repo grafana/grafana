@@ -20,10 +20,10 @@ var (
 
 // DataKeyStorage is the interface for wiring and dependency injection.
 type DataKeyStorage interface {
-	CreateDataKey(ctx context.Context, dataKey *EncryptionDataKey) error
-	GetDataKey(ctx context.Context, namespace, uid string) (*EncryptionDataKey, error)
-	GetCurrentDataKey(ctx context.Context, namespace, label string) (*EncryptionDataKey, error)
-	GetAllDataKeys(ctx context.Context, namespace string) ([]*EncryptionDataKey, error)
+	CreateDataKey(ctx context.Context, dataKey *SecretDataKey) error
+	GetDataKey(ctx context.Context, namespace, uid string) (*SecretDataKey, error)
+	GetCurrentDataKey(ctx context.Context, namespace, label string) (*SecretDataKey, error)
+	GetAllDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error)
 	DisableDataKeys(ctx context.Context, namespace string) error
 	DeleteDataKey(ctx context.Context, namespace, uid string) error
 
@@ -54,8 +54,8 @@ func ProvideDataKeyStorageStorage(db db.DB, cfg *setting.Cfg, features featuremg
 	return store, nil
 }
 
-func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid string) (*EncryptionDataKey, error) {
-	dataKey := &EncryptionDataKey{
+func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid string) (*SecretDataKey, error) {
+	dataKey := &SecretDataKey{
 		UID:       uid,
 		Namespace: namespace,
 	}
@@ -78,8 +78,8 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 	return dataKey, nil
 }
 
-func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*EncryptionDataKey, error) {
-	dataKey := &EncryptionDataKey{
+func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*SecretDataKey, error) {
+	dataKey := &SecretDataKey{
 		Label:     label,
 		Namespace: namespace,
 		Active:    true,
@@ -103,9 +103,9 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 	return dataKey, nil
 }
 
-func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*EncryptionDataKey, error) {
-	result := make([]*EncryptionDataKey, 0)
-	cond := &EncryptionDataKey{
+func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error) {
+	result := make([]*SecretDataKey, 0)
+	cond := &SecretDataKey{
 		Namespace: namespace,
 	}
 
@@ -116,7 +116,7 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 	return result, err
 }
 
-func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *EncryptionDataKey) error {
+func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *SecretDataKey) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}
@@ -135,13 +135,13 @@ func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *Encry
 }
 
 func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace string) error {
-	cond := &EncryptionDataKey{
+	cond := &SecretDataKey{
 		Namespace: namespace,
 		Active:    true,
 	}
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.UseBool("active").Update(&EncryptionDataKey{Active: false}, cond)
+		_, err := sess.UseBool("active").Update(&SecretDataKey{Active: false}, cond)
 		return err
 	})
 }
@@ -151,7 +151,7 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 		return fmt.Errorf("data key id is missing")
 	}
 
-	cond := &EncryptionDataKey{
+	cond := &SecretDataKey{
 		Namespace: namespace,
 		UID:       uid,
 	}
@@ -169,8 +169,8 @@ func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 	providers map[encryption.ProviderID]encryption.Provider,
 	currProvider encryption.ProviderID,
 ) error {
-	keys := make([]*EncryptionDataKey, 0)
-	cond := &EncryptionDataKey{
+	keys := make([]*SecretDataKey, 0)
+	cond := &SecretDataKey{
 		Namespace: namespace,
 	}
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -222,7 +222,7 @@ func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 		var statement string
 		// Only need to name the columns once, omit them after that for efficiency's sake
 		if i == 0 {
-			statement = fmt.Sprintf("SELECT '%s' AS %s, '%s' AS %s, x'%s' AS %s",
+			statement = fmt.Sprintf("SELECT '%s' AS %s, '%s' AS %s, '%s' AS %s",
 				k.UID, "uid",
 				encryption.KeyLabel(k.Scope, currProvider), "label",
 				encryptedData, "encrypted_data",
@@ -235,23 +235,25 @@ func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 			)
 		}
 
-		selectStatements = append(selectStatements, statement)
+		selectStatements[i] = statement
 	}
 
+	// TODO this looks different depending on which database is being used, need to handle all cases
 	rawSql := fmt.Sprintf(`
-		"WITH updates AS ( 
+		WITH updates AS ( 
 			%s 
 		) 
 		UPDATE %s 
 		JOIN updates ON %s.uid = updates.uid 
 		SET %s.label = updates.label, 
 			%s.encrypted_data = updates.encrypted_data, 
-			%s.provider = %s, 
-			%s.updated = %s"
-	`, strings.Join(selectStatements, " UNION ALL "), TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, currProvider, TableNameDataKey, time.Now().UTC().String())
+			%s.provider = '%s', 
+			%s.updated = '%s'
+	`, strings.Join(selectStatements, " UNION ALL "), TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, TableNameDataKey, currProvider, TableNameDataKey, time.Now().UTC().Format("2006-01-02 15:04:05"))
 
+	fmt.Println(rawSql)
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.SQL(rawSql).Exec()
+		_, err := sess.Exec(rawSql)
 		return err
 	}); err != nil {
 		return err

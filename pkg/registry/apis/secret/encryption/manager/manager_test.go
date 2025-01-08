@@ -109,7 +109,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	ctx := context.Background()
 	namespace := "test-namespace"
 
-	dataKey := &secret.EncryptionDataKey{
+	dataKey := &secret.SecretDataKey{
 		UID:           util.GenerateShortUID(),
 		Label:         "test1",
 		Active:        true,
@@ -146,7 +146,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("creating an inactive DEK", func(t *testing.T) {
-		k := &secret.EncryptionDataKey{
+		k := &secret.SecretDataKey{
 			UID:           util.GenerateShortUID(),
 			Namespace:     namespace,
 			Active:        false,

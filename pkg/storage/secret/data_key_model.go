@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 )
 
-// EncryptionDataKey does not have a mirrored K8s resource
-type EncryptionDataKey struct {
+// SecretDataKey does not have a mirrored K8s resource
+type SecretDataKey struct {
 	UID           string                `xorm:"pk 'uid'"`
 	Active        bool                  `xorm:"active"`
 	Namespace     string                `xorm:"namespace"`

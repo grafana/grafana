@@ -266,7 +266,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	// 3. Store its encrypted value into the DB.
 	id := util.GenerateShortUID()
 
-	dbDataKey := secret.EncryptionDataKey{
+	dbDataKey := secret.SecretDataKey{
 		Active:        true,
 		UID:           id,
 		Namespace:     namespace,
@@ -474,7 +474,7 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 // Look at the comments inline for further details.
 // You can also take a look at the issue below for more context:
 // https://github.com/grafana/grafana-enterprise/issues/4252
-func (s *EncryptionManager) cacheDataKey(dataKey *secret.EncryptionDataKey, decrypted []byte) {
+func (s *EncryptionManager) cacheDataKey(dataKey *secret.SecretDataKey, decrypted []byte) {
 	// First, we cache the data key by id, because cache "by id" is
 	// only used by decrypt operations, so no risk of corrupting data.
 	entry := &dataKeyCacheEntry{
