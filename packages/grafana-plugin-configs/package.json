@@ -22,5 +22,5 @@
     "webpack": "5.97.1",
     "webpack-bundle-analyzer": "^4.10.2"
   },
-  "packageManager": "yarn@4.5.3"
+  "packageManager": "yarn@4.6.0"
 }
