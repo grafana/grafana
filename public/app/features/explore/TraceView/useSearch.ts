@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { InterpolateFunction } from '@grafana/data';
@@ -50,7 +50,14 @@ export const defaultFilters = {
  * @param spans
  */
 export function useSearch(spans?: TraceSpan[], initialFilters?: SearchProps) {
-  const [search, setSearch] = useState<SearchProps>(merge(defaultFilters, initialFilters ?? {}));
+  const [search, setSearch] = useState<SearchProps>(merge({ ...defaultFilters }, initialFilters ?? {}));
+
+  useEffect(() => {
+    if (initialFilters) {
+      setSearch(merge({ ...defaultFilters }, initialFilters));
+    }
+  }, [initialFilters]);
+
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
     return spans && filterSpans(search, spans);
   }, [search, spans]);
