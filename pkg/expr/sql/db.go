@@ -38,7 +38,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		case types.Float64:
 			field = data.NewField(col.Name, nil, []*float64{})
 		// StringType represents all string types, including VARCHAR and BLOB.
-		case types.Text:
+		case types.Text, types.LongText:
 			field = data.NewField(col.Name, nil, []*string{})
 		case types.Timestamp:
 			field = data.NewField(col.Name, nil, []*time.Time{})
@@ -94,7 +94,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 					}
 					f.Fields[i].Append(&v)
 				}
-			case types.Text:
+			case types.Text, types.LongText:
 				if val == nil {
 					f.Fields[i].Append((*string)(nil))
 				} else {
