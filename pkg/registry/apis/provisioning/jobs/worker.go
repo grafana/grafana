@@ -111,7 +111,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		// Sync the repository
 		ref, syncError := replicator.Sync(ctx)
 		status = &provisioning.SyncStatus{
-			State:    provisioning.JobStateFinished,
+			State:    provisioning.JobStateSuccess,
 			JobID:    job.GetName(),
 			Hash:     ref,
 			Started:  started.UnixMilli(),
@@ -169,6 +169,6 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	}
 
 	return &provisioning.JobStatus{
-		State: provisioning.JobStateFinished,
+		State: provisioning.JobStateSuccess,
 	}, nil
 }

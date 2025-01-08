@@ -72,6 +72,9 @@ func TestParseWebhooks(t *testing.T) {
 				URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
 			},
 		}},
+		{"push", "different_branch", provisioning.WebhookResponse{
+			Code: http.StatusOK, // we don't care about a branch that isn't the one we configured
+		}},
 		{"push", "nothing_relevant", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
 			Job: &provisioning.JobSpec{ // we want to always push a sync job

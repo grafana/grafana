@@ -117,6 +117,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.NoError(t, deleteAll(folderClient), "deleting all folders")
 		require.NoError(t, deleteAll(client), "deleting all repositories")
 	}
+	cleanSlate(t)
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		cleanSlate(t)
@@ -374,6 +375,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 			branch := "dummy-branch"
 			sha := "24a55f601e33048d2267943279fc7f1b39b35e58"
 
+			// Possible remnants of cleanSlate
+			githubClient.On("DeleteWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+
 			// Ensuring we pass Test
 			githubClient.On("IsAuthenticated", isCtx).Return(nil)
 			githubClient.On("RepoExists", isCtx, owner, repo).Return(true, nil)
@@ -409,7 +413,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				for _, elem := range list.Items {
 					state := mustNestedString(elem.Object, "status", "state")
 					if elem.GetLabels()["repository"] == "github-example" {
-						if state == string(provisioning.JobStateFinished) {
+						if state == string(provisioning.JobStateSuccess) {
 							continue // doesn't matter
 						}
 						require.NotEqual(t, provisioning.JobStateError, state, "no jobs may error, but %s did", elem.GetName())
@@ -526,7 +530,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 			state, _, err := unstructured.NestedString(job.Object, "status", "state")
 			require.NoError(t, err)
-			if state == string(provisioning.JobStateFinished) || state == string(provisioning.JobStateError) {
+			if provisioning.JobState(state).Finished() {
 				break
 			}
 		}
