@@ -86,20 +86,29 @@ interface RuleGroupListItemProps {
   namespaceName: string;
 }
 function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: RuleGroupListItemProps) {
+  const groupIdentifier: DataSourceRuleGroupIdentifier = useMemo(
+    () => ({
+      rulesSource: rulesSourceIdentifier,
+      namespace: { name: namespaceName },
+      groupName: group.name,
+      groupOrigin: 'datasource',
+    }),
+    [rulesSourceIdentifier, namespaceName, group.name]
+  );
+
   const rulesWithGroupId = useMemo(() => {
     return group.rules.map((rule) => {
-      const groupIdentifier: DataSourceRuleGroupIdentifier = {
-        rulesSource: rulesSourceIdentifier,
-        namespace: { name: namespaceName },
-        groupName: group.name,
-        groupOrigin: 'datasource',
-      };
       return { rule, groupIdentifier };
     });
-  }, [group, namespaceName, rulesSourceIdentifier]);
+  }, [groupIdentifier, group.rules]);
 
   return (
-    <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      isOpen={false}
+      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
+    >
       {rulesWithGroupId.map(({ rule, groupIdentifier }) => (
         <DataSourceRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />
       ))}
