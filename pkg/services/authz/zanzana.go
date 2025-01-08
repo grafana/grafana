@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/dskit/services"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
@@ -24,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const zanzanaAudience = "zanzana"
 
 // ProvideZanzana used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
@@ -37,7 +41,27 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 	var client zanzana.Client
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
-		conn, err := grpc.NewClient(cfg.Zanzana.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+		grpcClientCfg := authnlib.GrpcClientConfig{
+			TokenClientConfig: &authnlib.TokenExchangeConfig{
+				Token:            clientCfg.Token,
+				TokenExchangeURL: clientCfg.TokenExchangeURL,
+			},
+			TokenRequest: &authnlib.TokenExchangeRequest{
+				Namespace: clientCfg.TokenNamespace,
+				Audiences: []string{zanzanaAudience},
+			},
+		}
+		clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to setup client authentication: %w", err)
+		}
+
+		conn, err := grpc.NewClient(cfg.Zanzana.Addr,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
@@ -134,9 +158,19 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	// FIXME(kalleep): For now we use noopAuthenticator but we should create an authenticator that can be shared
-	// between different services.
-	z.handle, err = grpcserver.ProvideService(z.cfg, z.features, noopAuthenticator{}, tracer, prometheus.DefaultRegisterer)
+	authCfg, err := grpcutils.ReadGrpcServerConfig(z.cfg)
+	if err != nil {
+		return fmt.Errorf("failed to read GRPC server config: %w", err)
+	}
+	if len(authCfg.AllowedAudiences) == 0 {
+		authCfg.AllowedAudiences = []string{zanzanaAudience}
+	}
+	authenticator, err := grpcutils.NewGrpcAuthenticator(authCfg, tracer)
+	if err != nil {
+		return fmt.Errorf("failed to setup authentication: %w", err)
+	}
+
+	z.handle, err = grpcserver.ProvideService(z.cfg, z.features, authenticator, tracer, prometheus.DefaultRegisterer)
 	if err != nil {
 		return fmt.Errorf("failed to create zanzana grpc server: %w", err)
 	}
@@ -173,10 +207,4 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
-}
-
-type noopAuthenticator struct{}
-
-func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
-	return ctx, nil
 }
