@@ -277,7 +277,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       {isEditingGroup && (
         <EditRuleGroupModal
           namespace={namespace}
-          group={group}
+          group={{
+            name: group.name,
+            interval: group.interval,
+            rules: group.rules.map((r) => r.rulerRule).filter((rule) => rule !== undefined),
+          }}
           onClose={() => closeEditModal()}
           folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
           folderUid={folderUID}

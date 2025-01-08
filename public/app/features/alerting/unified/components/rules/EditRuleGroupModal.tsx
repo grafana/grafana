@@ -8,7 +8,7 @@ import { Alert, Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, us
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import {
   useMoveRuleGroup,
@@ -170,7 +170,7 @@ export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: Rul
 
 export interface ModalProps {
   namespace: CombinedRuleNamespace;
-  group: CombinedRuleGroup;
+  group: RulerRuleGroupDTO;
   onClose: (saved?: boolean) => void;
   intervalEditOnly?: boolean;
   folderUrl?: string;
@@ -264,9 +264,7 @@ export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
     notifyApp.error('There are errors in the form. Correct the errors and retry.');
   };
 
-  const rulesWithoutRecordingRules = compact(
-    group.rules.map((r) => r.rulerRule).filter((rule) => !isGrafanaOrDataSourceRecordingRule(rule))
-  );
+  const rulesWithoutRecordingRules = compact(group.rules.filter((rule) => !isGrafanaOrDataSourceRecordingRule(rule)));
   const hasSomeNoRecordingRules = rulesWithoutRecordingRules.length > 0;
   const modalTitle =
     intervalEditOnly || isGrafanaManagedGroup ? 'Edit evaluation group' : 'Edit namespace or evaluation group';
