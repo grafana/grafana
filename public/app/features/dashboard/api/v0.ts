@@ -1,5 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   ResourceClient,
@@ -66,6 +67,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
+        slug: kbn.slugifyForUrl(v.spec.title),
       })
     );
 
