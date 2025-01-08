@@ -648,6 +648,16 @@ export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
 	fiscalYearStartMonth: 0,
 });
 
+export interface RepeatOptions {
+	repeatVariable: string;
+	repeatDirection?: "h" | "v";
+	maxPerRow?: number;
+}
+
+export const defaultRepeatOptions = (): RepeatOptions => ({
+	repeatVariable: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -655,6 +665,7 @@ export interface GridLayoutItemSpec {
 	height: number;
 	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
 	element: ElementReference;
+	repeatOptions?: RepeatOptions;
 }
 
 export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({

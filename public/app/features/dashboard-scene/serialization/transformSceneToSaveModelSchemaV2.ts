@@ -107,7 +107,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     layout: {
       kind: 'GridLayout',
       spec: {
-        items: getGridLayoutItems(oldDash),
+        items: getGridLayoutItems(oldDash, isSnapshot),
       },
     },
     // EOF layout
@@ -142,16 +142,16 @@ function getLiveNow(state: DashboardSceneState) {
 
 function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): GridLayoutItemKind[] {
   const body = state.body;
-  const elements: GridLayoutItemKind[] = [];
+  let elements: GridLayoutItemKind[] = [];
   if (body instanceof DefaultGridLayoutManager) {
     for (const child of body.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
         // TODO: handle panel repeater scenario
-        // if (child.state.variableName) {
-        //   panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
-        // } else {
-        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
-        // }
+        if (child.state.variableName) {
+          elements = elements.concat(panelRepeaterToPanels(child, isSnapshot));
+        } else {
+          elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
+        }
       }
 
       // TODO: OLD transformer code
@@ -164,6 +164,8 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
       // }
     }
   }
+  console.log('elements', elements);
+
   return elements;
 }
 
@@ -365,6 +367,60 @@ function createElements(panels: PanelKind[]): Record<string, PanelKind> {
     },
     {} as Record<string, PanelKind>
   );
+}
+
+function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
+  // if (!isSnapshot) {
+  //   // TODO: implement
+  // } else {
+  //   // TODO: handle library panel repeater
+
+  if (repeater.state.repeatedPanels) {
+    const itemHeight = repeater.state.itemHeight ?? 10;
+    const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
+    const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+    const w = 24 / columnCount;
+    const h = itemHeight;
+    const panels = repeater.state.repeatedPanels!.map((panel, index) => {
+      let x = 0,
+        y = 0;
+      if (repeater.state.repeatDirection === 'v') {
+        x = repeater.state.x!;
+        y = index * h;
+      } else {
+        x = (index % columnCount) * w;
+        y = repeater.state.y! + Math.floor(index / columnCount) * h;
+      }
+
+      const gridPos = { x, y, w, h };
+
+      const result: GridLayoutItemKind = {
+        kind: 'GridLayoutItem',
+        spec: {
+          x: gridPos.x,
+          y: gridPos.y,
+          width: gridPos.w,
+          height: gridPos.h,
+          repeatOptions: {
+            repeatVariable: repeater.state.variableName!,
+            maxPerRow: repeater.getMaxPerRow(),
+            repeatDirection: repeater.state.repeatDirection,
+          },
+
+          element: {
+            kind: 'ElementReference',
+            name: panel.state.key!,
+          },
+        },
+      };
+
+      return result;
+    });
+
+    return panels;
+  }
+
+  return [];
 }
 
 function getVariables(oldDash: DashboardSceneState) {

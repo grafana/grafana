@@ -243,10 +243,13 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
           key: `grid-item-${panel.spec.id}`,
           x: element.spec.x,
           y: element.spec.y,
-          width: element.spec.width,
+          width: element.spec.repeatOptions?.repeatDirection === 'h' ? 24 : element.spec.width,
           height: element.spec.height,
           itemHeight: element.spec.height,
           body: vizPanel,
+          variableName: element.spec.repeatOptions?.repeatVariable,
+          repeatDirection: element.spec.repeatOptions?.repeatDirection,
+          maxPerRow: element.spec.repeatOptions?.maxPerRow,
         });
       } else {
         throw new Error(`Unknown element kind: ${element.kind}`);
