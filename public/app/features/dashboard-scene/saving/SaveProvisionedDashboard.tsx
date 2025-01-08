@@ -32,13 +32,13 @@ type FormData = {
   folder: { uid?: string; title?: string; repository?: string };
 };
 
-function getDefaultValues(meta: DashboardMeta) {
+function getDefaultValues(meta: DashboardMeta, repository = '') {
   const anno = meta.k8s?.annotations;
   const timestamp = Date.now();
   const ref = `dashboard/${timestamp}`;
   const pathName = meta.slug || `new-dashboard-${timestamp}`;
   let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
-  const repo = anno?.[AnnoKeyRepoName] ?? '';
+  const repo = anno?.[AnnoKeyRepoName] ?? repository;
   const idx = path.indexOf('#');
   if (idx > 0) {
     path = path.substring(0, idx);
@@ -75,8 +75,11 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   const { saveProvisioned } = drawer.useState();
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const prURL = usePullRequestParam();
-  const defaultValues = getDefaultValues(meta);
   const isNew = !meta.k8s?.annotations?.[AnnoKeyRepoPath];
+  const folderRepository = useFolderRepository(meta.folderUid);
+  const repositoryConfig = folderRepository?.spec;
+  const repo = folderRepository?.metadata?.name;
+  const defaultValues = getDefaultValues(meta, repo);
   const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
   const {
     register,
@@ -93,12 +96,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       workflow: WorkflowOption.PullRequest,
     },
   });
-  const [title, ref, workflow, path] = watch(['title', 'ref', 'workflow', 'path']);
-  const folderRepository = useFolderRepository(meta.folderUid);
-  const repositoryConfig = folderRepository?.spec;
-  const repo = folderRepository?.metadata?.name;
+  const [title, ref, workflow, path, comment] = watch(['title', 'ref', 'workflow', 'path', 'comment']);
   const isGitHub = repositoryConfig?.type === 'github';
-  const href = createPRLink(repositoryConfig, title, ref);
+  const href = createPRLink(repositoryConfig, title, ref, comment);
   const { isDirty } = dashboard.state;
   const navigate = useNavigate();
 
@@ -183,6 +183,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                     <FolderPicker
                       onChange={(uid?: string, title?: string, repository?: string) => {
                         onChange({ uid, title, repository });
+                        if (repository) {
+                          setValue('repo', repository);
+                        }
                         dashboard.setState({
                           meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
                         });

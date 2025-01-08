@@ -15,7 +15,7 @@ type FakeProvisioningV0alpha1 struct {
 }
 
 func (c *FakeProvisioningV0alpha1) Repositories(namespace string) v0alpha1.RepositoryInterface {
-	return &FakeRepositories{c, namespace}
+	return newFakeRepositories(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

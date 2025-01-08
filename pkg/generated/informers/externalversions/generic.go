@@ -5,7 +5,7 @@
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"

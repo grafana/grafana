@@ -120,6 +120,24 @@ func (_m *FakeDashboardService) DeleteDashboard(ctx context.Context, dashboardId
 	return r0
 }
 
+// DeleteAllDashboards provides a mock function with given fields: ctx, orgID
+func (_m *FakeDashboardService) DeleteAllDashboards(ctx context.Context,  orgID int64) error {
+	ret := _m.Called(ctx, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDashboard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, orgID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FindDashboards provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardService) FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	ret := _m.Called(ctx, query)
