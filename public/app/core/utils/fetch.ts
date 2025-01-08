@@ -132,7 +132,7 @@ export async function parseResponseBody<T>(
         // Return the raw body -- useful for streaming
         // TODO refactor this function to remove the type assertions
         return Promise.resolve(response.body) as Promise<T>;
-  
+
       case 'json':
         // An empty string is not a valid JSON.
         // Sometimes (unfortunately) our APIs declare their Content-Type as JSON, however they return an empty body.

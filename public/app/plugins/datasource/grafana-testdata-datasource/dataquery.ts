@@ -39,7 +39,7 @@ export enum TestDataQueryType {
 export interface StreamingQuery {
   bands?: number;
   noise: number;
-  speed: number; 
+  speed: number;
   spread: number;
   type: 'signal' | 'logs' | 'fetch' | 'traces' | 'watch';
   url?: string;

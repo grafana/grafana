@@ -152,7 +152,7 @@ export class BackendSrv implements BackendService {
       hideFromInspector: true,
     }).pipe(
       map((result) => {
-        let data: Observable<string> = of()
+        let data: Observable<string> = of();
         if (result.ok && result.data) {
           const lines = new Subject<string>();
           const reader = result.data.getReader();

@@ -180,7 +180,6 @@ export interface BackendSrv {
   watch(options: BackendSrvRequest): Observable<FetchResponse<Observable<string>>>;
 }
 
-
 let singletonInstance: BackendSrv;
 
 /**
