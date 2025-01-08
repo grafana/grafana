@@ -533,7 +533,7 @@
       "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
     },
     "silences": {
-      "affected-instances": "Åƒƒęčŧęđ äľęřŧ řūľę įŉşŧäŉčęş",
+      "affected-instances": "Åƒƒęčŧęđ äľęřŧ įŉşŧäŉčęş",
       "only-firing-instances": "Øŉľy äľęřŧ įŉşŧäŉčęş įŉ ŧĥę ƒįřįŉģ şŧäŧę äřę đįşpľäyęđ.",
       "preview-affected-instances": "Přęvįęŵ ŧĥę äľęřŧ įŉşŧäŉčęş äƒƒęčŧęđ þy ŧĥįş şįľęŉčę."
     },
@@ -1781,6 +1781,22 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "mőřę"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "Cőŉƒįřm",
+        "message": "Ÿőū äřę äþőūŧ ŧő đįşäþľę ŧĥę ľőģş ƒįľŧęř męŉū. Ŧő řę-ęŉäþľę įŧ, şęľęčŧ ŧęχŧ įŉ ä ľőģ ľįŉę ŵĥįľę ĥőľđįŉģ ŧĥę äľŧ ĸęy.",
+        "title": "Đįşäþľę męŉū"
+      },
+      "disable-popover-message": {
+        "shortcut": "äľŧ+şęľęčŧ ŧő ęŉäþľę äģäįŉ"
+      }
+    },
+    "popover-menu": {
+      "copy": "Cőpy şęľęčŧįőŉ",
+      "disable-menu": "Đįşäþľę męŉū",
+      "line-contains": "Åđđ äş ľįŉę čőŉŧäįŉş ƒįľŧęř",
+      "line-contains-not": "Åđđ äş ľįŉę đőęş ŉőŧ čőŉŧäįŉ ƒįľŧęř"
     }
   },
   "migrate-to-cloud": {
@@ -2031,7 +2047,7 @@
       "title": "Åľęřŧįŉģ"
     },
     "alerting-admin": {
-      "subtitle": "Mäŉäģę Åľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉş",
+      "subtitle": "Mäŉäģę Åľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉş äŉđ ęŉäþľę řęčęįvįŉģ Ğřäƒäŉä-mäŉäģęđ äľęřŧş",
       "title": "Ŝęŧŧįŉģş"
     },
     "alerting-am-routes": {

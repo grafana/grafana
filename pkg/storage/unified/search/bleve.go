@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -413,7 +414,11 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		}
 	}
 
-	queries = append(queries, newTextQuery(req))
+	// Add a text query
+	if req.Query != "" && req.Query != "*" {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+		queries = append(queries, bleve.NewFuzzyQuery(req.Query))
+	}
 
 	if access != nil {
 		// TODO AUTHZ!!!!
@@ -581,19 +586,27 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 		}
 
 		for i, f := range fields {
-			if f.Name == resource.SEARCH_FIELD_ID {
+			var v any
+			switch f.Name {
+			case resource.SEARCH_FIELD_ID:
 				row.Cells[i] = []byte(match.ID)
-				continue
-			}
 
-			// QUICK QUICK... more options yes
-			v := match.Fields[f.Name]
-			if v != nil {
-				// Encode the value to protobuf
-				row.Cells[i], err = encoders[i](v)
-				if err != nil {
-					return nil, fmt.Errorf("error encoding (row:%d/col:%d) %v %w", rowID, i, v, err)
+			case resource.SEARCH_FIELD_SCORE:
+				row.Cells[i], err = encoders[i](match.Score)
+
+			case resource.SEARCH_FIELD_EXPLAIN:
+				if match.Expl != nil {
+					row.Cells[i], err = json.Marshal(match.Expl)
 				}
+			default:
+				v := match.Fields[f.Name]
+				if v != nil {
+					// Encode the value to protobuf
+					row.Cells[i], err = encoders[i](v)
+				}
+			}
+			if err != nil {
+				return nil, fmt.Errorf("error encoding (row:%d/col:%d) %v %w", rowID, i, v, err)
 			}
 		}
 	}
@@ -643,13 +656,4 @@ func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Fa
 		}
 	}
 	return f
-}
-
-func newTextQuery(req *resource.ResourceSearchRequest) query.Query {
-	if req.Query == "" || req.Query == "*" {
-		return bleve.NewMatchAllQuery()
-	}
-	// TODO: wildcard query?
-	// return bleve.NewWildcardQuery(req.Query)
-	return bleve.NewFuzzyQuery(req.Query)
 }

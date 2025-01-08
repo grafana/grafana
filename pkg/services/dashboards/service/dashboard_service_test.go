@@ -305,6 +305,11 @@ func (m *mockResourceInterface) Delete(ctx context.Context, name string, options
 	return args.Error(0)
 }
 
+func (m *mockResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	args := m.Called(ctx, options, listOptions)
+	return args.Error(0)
+}
+
 func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *mockDashK8sCli, *mockResourceInterface) {
 	k8sClientMock := new(mockDashK8sCli)
 	k8sResourceMock := new(mockResourceInterface)
@@ -510,6 +515,58 @@ func TestGetAllDashboards(t *testing.T) {
 	})
 }
 
+func TestGetAllDashboardsByOrgId(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{}, nil).Once()
+		dashboard, err := service.GetAllDashboardsByOrgId(context.Background(), 1)
+		require.NoError(t, err)
+		require.NotNil(t, dashboard)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+
+		dashboardUnstructured := unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name": "uid",
+			},
+			"spec": map[string]any{
+				"test":    "test",
+				"version": int64(1),
+				"title":   "testing slugify",
+			},
+		}}
+
+		dashboardExpected := dashboards.Dashboard{
+			UID:     "uid", // uid is the name of the k8s object
+			Title:   "testing slugify",
+			Slug:    "testing-slugify", // slug is taken from title
+			OrgID:   1,                 // orgID is populated from the query
+			Version: 1,                 // default to version 1
+			Data:    simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "uid", "version": int64(1)}),
+		}
+
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
+
+		dashes, err := service.GetAllDashboardsByOrgId(ctx, 1)
+		require.NoError(t, err)
+		require.NotNil(t, dashes)
+		k8sClientMock.AssertExpectations(t)
+		// make sure the conversion is working
+		require.True(t, reflect.DeepEqual(dashes, []*dashboards.Dashboard{&dashboardExpected}))
+	})
+}
+
 func TestSaveDashboard(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	defer fakeStore.AssertExpectations(t)
@@ -641,6 +698,33 @@ func TestDeleteDashboard(t *testing.T) {
 		require.NoError(t, err)
 		k8sClientMock.AssertExpectations(t)
 		k8sClientMock.searcher.AssertExpectations(t)
+	})
+}
+
+func TestDeleteAllDashboards(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("DeleteAllDashboards", mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteAllDashboards(context.Background(), 1)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sResourceMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+		require.NoError(t, err)
+		k8sClientMock.AssertExpectations(t)
 	})
 }
 
