@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, DataQuery, Panel, VariableModel } from '@grafana/schema';
+import { AnnotationQuery, DataQuery, DataSourceRef, Panel, VariableModel } from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -15,6 +15,7 @@ import {
 import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
+  AnnoKeyDashboardGnetId,
   AnnoKeyDashboardId,
   AnnoKeyFolder,
   AnnoKeySlug,
@@ -75,6 +76,7 @@ export function ensureV2Response(
     preload: dashboard.preload || dashboardDefaults.preload,
     liveNow: dashboard.liveNow,
     editable: dashboard.editable,
+    revision: dashboard.revision,
     timeSettings: {
       from: dashboard.time?.from || timeSettingsDefaults.from,
       to: dashboard.time?.to || timeSettingsDefaults.to,
@@ -108,6 +110,7 @@ export function ensureV2Response(
         [AnnoKeyFolder]: accessAndMeta.folderUid,
         [AnnoKeySlug]: accessAndMeta.slug,
         [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+        [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
       },
     },
     spec,
@@ -176,6 +179,8 @@ export function ensureV1Response(
         preload: spec.preload,
         liveNow: spec.liveNow,
         editable: spec.editable,
+        gnetId: dashboard.metadata.annotations?.[AnnoKeyDashboardGnetId],
+        revision: spec.revision,
         time: {
           from: spec.timeSettings.from,
           to: spec.timeSettings.to,
@@ -223,7 +228,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
   for (const p of panels) {
     const queries = getPanelQueries(
       (p.targets as unknown as DataQuery[]) || [],
-      p.datasource?.type || getDefaultDatasourceType()
+      p.datasource || getDefaultDatasource()
     );
 
     const transformations = getPanelTransformations(p.transformations || []);
@@ -291,7 +296,19 @@ function getDefaultDatasourceType() {
   return Object.values(datasources).find((ds) => ds.isDefault)!.type;
 }
 
-function getPanelQueries(targets: DataQuery[], panelDatasourceType: string): PanelQueryKind[] {
+function getDefaultDatasource(): DataSourceRef {
+  const datasources = config.datasources;
+
+  // find default datasource in datasources
+  const defaultDs = Object.values(datasources).find((ds) => ds.isDefault)!;
+  return {
+    apiVersion: defaultDs.apiVersion,
+    type: defaultDs.type,
+    uid: defaultDs.uid,
+  };
+}
+
+export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
     const q: PanelQueryKind = {
@@ -299,10 +316,9 @@ function getPanelQueries(targets: DataQuery[], panelDatasourceType: string): Pan
       spec: {
         refId: t.refId,
         hidden: t.hide ?? false,
-        // TODO[schema v2]: ds coming from panel ?!?!!?! AAAAAAAAAAAAA! Send help!
-        datasource: t.datasource ? t.datasource : undefined,
+        datasource: t.datasource ? t.datasource : panelDatasource,
         query: {
-          kind: t.datasource?.type || panelDatasourceType,
+          kind: t.datasource?.type || panelDatasource.type!,
           spec: {
             ...query,
           },

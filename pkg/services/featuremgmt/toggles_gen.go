@@ -287,10 +287,6 @@ const (
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
 
-	// FlagPrometheusConfigOverhaulAuth
-	// Update the Prometheus configuration page with the new auth component
-	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
@@ -382,6 +378,10 @@ const (
 	// FlagKubernetesCliDashboards
 	// Use the k8s client to retrieve dashboards internally
 	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
+
+	// FlagKubernetesRestore
+	// Allow restoring objects in k8s
+	FlagKubernetesRestore = "kubernetesRestore"
 
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
@@ -796,7 +796,7 @@ const (
 	FlagAlertingQueryAndExpressionsStepMode = "alertingQueryAndExpressionsStepMode"
 
 	// FlagImprovedExternalSessionHandling
-	// Enable improved support for external sessions in Grafana
+	// Enable improved support for OAuth and SAML external sessions in Grafana
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
 
 	// FlagUseSessionStorageForRedirection
