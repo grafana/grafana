@@ -368,6 +368,7 @@ func TestService_getUserPermissions(t *testing.T) {
 				tracer:         tracing.NewNoopTracerService(),
 				idCache:        localcache.New(longCacheTTL, longCleanupInterval),
 				permCache:      cacheService,
+				sf:             new(singleflight.Group),
 				basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
 				teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 			}

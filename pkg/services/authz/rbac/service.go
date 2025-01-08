@@ -255,32 +255,42 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 		return cached.(map[string]bool), nil
 	}
 
-	basicRoles, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
+	res, err, _ := s.sf.Do(userPermKey+"_getUserPermissions", func() (interface{}, error) {
+		basicRoles, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
+		if err != nil {
+			return nil, err
+		}
+
+		teamIDs, err := s.getUserTeams(ctx, ns, userIdentifiers)
+		if err != nil {
+			return nil, err
+		}
+
+		userPermQuery := store.PermissionsQuery{
+			UserID:        userIdentifiers.ID,
+			Action:        action,
+			TeamIDs:       teamIDs,
+			Role:          basicRoles.Role,
+			IsServerAdmin: basicRoles.IsAdmin,
+		}
+
+		permissions, err := s.store.GetUserPermissions(ctx, ns, userPermQuery)
+		if err != nil {
+			return nil, err
+		}
+		scopeMap := getScopeMap(permissions)
+
+		s.permCache.Set(userPermKey, scopeMap, 0)
+		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
+
+		return scopeMap, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	teamIDs, err := s.getUserTeams(ctx, ns, userIdentifiers)
-	if err != nil {
-		return nil, err
-	}
-
-	userPermQuery := store.PermissionsQuery{
-		UserID:        userIdentifiers.ID,
-		Action:        action,
-		TeamIDs:       teamIDs,
-		Role:          basicRoles.Role,
-		IsServerAdmin: basicRoles.IsAdmin,
-	}
-
-	permissions, err := s.store.GetUserPermissions(ctx, ns, userPermQuery)
-	if err != nil {
-		return nil, err
-	}
-	scopeMap := getScopeMap(permissions)
-	s.permCache.Set(userPermKey, scopeMap, 0)
-	span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
-	return scopeMap, nil
+	return res.(map[string]bool), nil
 }
 
 func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string) (map[string]bool, error) {
@@ -292,13 +302,21 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 		return cached.(map[string]bool), nil
 	}
 
-	permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, Role: "Viewer"})
+	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
+		permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, Role: "Viewer"})
+		if err != nil {
+			return nil, err
+		}
+		scopeMap := getScopeMap(permissions)
+		s.permCache.Set(anonPermKey, scopeMap, 0)
+		return scopeMap, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
-	scopeMap := getScopeMap(permissions)
-	s.permCache.Set(anonPermKey, scopeMap, 0)
-	return scopeMap, nil
+
+	return res.(map[string]bool), nil
 }
 
 func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
