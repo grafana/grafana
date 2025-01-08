@@ -164,7 +164,6 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
       // }
     }
   }
-  console.log('elements', elements);
 
   return elements;
 }
@@ -401,10 +400,11 @@ function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = false):
           y: gridPos.y,
           width: gridPos.w,
           height: gridPos.h,
-          repeatOptions: {
-            repeatVariable: repeater.state.variableName!,
+          repeat: {
+            mode: 'variable',
+            value: repeater.state.variableName!,
             maxPerRow: repeater.getMaxPerRow(),
-            repeatDirection: repeater.state.repeatDirection,
+            direction: repeater.state.repeatDirection,
           },
 
           element: {

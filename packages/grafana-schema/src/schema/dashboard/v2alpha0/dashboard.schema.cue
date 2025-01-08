@@ -455,9 +455,13 @@ TimeSettingsSpec: {
   nowDelay?: string // v1: timepicker.nowDelay
 }
 
+RepeatMode: "variable" | "label" | "frame"
+
+
 RepeatOptions: {
-  repeatVariable: string
-  repeatDirection?: "h" | "v"
+  mode: RepeatMode
+  value: string
+  direction?: "h" | "v"
   maxPerRow?: int
 }
 
@@ -467,7 +471,7 @@ GridLayoutItemSpec: {
   width: int
   height: int
   element: ElementReference // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
-  repeatOptions?: RepeatOptions
+  repeat?: RepeatOptions
 }
 
 GridLayoutItemKind: {

@@ -84,8 +84,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  console.log('panels', panels);
-
   const controlsState = state.controls?.state;
 
   const refreshPicker = controlsState?.refreshPicker;
@@ -311,7 +309,6 @@ function vizPanelDataToPanel(
 }
 
 export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = false): Panel[] {
-  console.log('panelRepeaterToPanels', repeater);
   if (!isSnapshot) {
     return [gridItemToPanel(repeater)];
   } else {
@@ -322,7 +319,6 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
     }
 
     if (repeater.state.repeatedPanels) {
-      console.log('repeater.state.repeatedPanels', repeater.state.repeatedPanels);
       const itemHeight = repeater.state.itemHeight ?? 10;
       const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
       const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
