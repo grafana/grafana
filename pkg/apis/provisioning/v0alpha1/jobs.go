@@ -47,11 +47,15 @@ const (
 	JobStateWorking JobState = "working"
 
 	// Finished with success
-	JobStateFinished JobState = "success"
+	JobStateSuccess JobState = "success"
 
 	// Finished with errors
 	JobStateError JobState = "error"
 )
+
+func (j JobState) Finished() bool {
+	return j == JobStateSuccess || j == JobStateError
+}
 
 type JobSpec struct {
 	Action JobAction `json:"action"`

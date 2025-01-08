@@ -1,5 +1,5 @@
 {
-  "ref": "refs/heads/main",
+  "ref": "refs/heads/something-not-main",
   "commits": [
     {
       "message": "Update README.md\n\ntest message",

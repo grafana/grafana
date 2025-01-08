@@ -409,7 +409,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				for _, elem := range list.Items {
 					state := mustNestedString(elem.Object, "status", "state")
 					if elem.GetLabels()["repository"] == "github-example" {
-						if state == string(provisioning.JobStateFinished) {
+						if state == string(provisioning.JobStateSuccess) {
 							continue // doesn't matter
 						}
 						require.NotEqual(t, provisioning.JobStateError, state, "no jobs may error, but %s did", elem.GetName())
@@ -526,7 +526,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 			state, _, err := unstructured.NestedString(job.Object, "status", "state")
 			require.NoError(t, err)
-			if state == string(provisioning.JobStateFinished) || state == string(provisioning.JobStateError) {
+			if provisioning.JobState(state).Finished() {
 				break
 			}
 		}

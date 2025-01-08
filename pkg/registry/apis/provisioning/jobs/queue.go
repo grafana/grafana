@@ -134,7 +134,7 @@ func (s *jobStore) drainPending() {
 					Errors: []string{err.Error()},
 				}
 			} else if status.State == "" {
-				status.State = provisioning.JobStateFinished
+				status.State = provisioning.JobStateSuccess
 			}
 			logger.DebugContext(ctx, "job processing finished", "status", status.State)
 		}
