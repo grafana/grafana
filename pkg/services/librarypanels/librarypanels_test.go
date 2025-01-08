@@ -753,7 +753,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore))
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	fStore := folderimpl.ProvideStore(sc.sqlStore)
+	fStore := folderimpl.ProvideStore(sc.sqlStore, features)
 	s := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
 		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
@@ -837,7 +837,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		fStore := folderimpl.ProvideStore(sqlStore)
+		fStore := folderimpl.ProvideStore(sqlStore, features)
 
 		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
 			features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())

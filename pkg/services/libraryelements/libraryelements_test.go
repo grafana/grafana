@@ -334,7 +334,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	store := folderimpl.ProvideStore(sc.sqlStore)
+	store := folderimpl.ProvideStore(sc.sqlStore, features)
 	s := folderimpl.ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
 		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	t.Logf("Creating folder with title and UID %q", title)
@@ -471,7 +471,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		)
 		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)
-		fStore := folderimpl.ProvideStore(sqlStore)
+		fStore := folderimpl.ProvideStore(sqlStore, features)
 		folderSrv := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore,
 			features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 		service := LibraryElementService{

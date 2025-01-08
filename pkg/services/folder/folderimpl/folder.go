@@ -137,6 +137,10 @@ func (s *Service) DBMigration(db db.DB) {
 	s.log.Debug("syncing dashboard and folder tables finished")
 }
 
+func (s *Service) FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	return s.store.FindFolders(ctx, query)
+}
+
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")

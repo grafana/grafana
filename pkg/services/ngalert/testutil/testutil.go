@@ -28,7 +28,7 @@ import (
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-	fStore := folderimpl.ProvideStore(db)
+	fStore := folderimpl.ProvideStore(db, features)
 	return folderimpl.ProvideService(fStore, ac, bus, dashboardStore, folderStore, db,
 		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 }

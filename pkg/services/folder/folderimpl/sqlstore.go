@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
@@ -23,15 +25,16 @@ import (
 const DEFAULT_BATCH_SIZE = 999
 
 type FolderStoreImpl struct {
-	db  db.DB
-	log log.Logger
+	db       db.DB
+	log      log.Logger
+	features featuremgmt.FeatureToggles
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderStoreImpl)(nil)
 
-func ProvideStore(db db.DB) *FolderStoreImpl {
-	return &FolderStoreImpl{db: db, log: log.New("folder-store")}
+func ProvideStore(db db.DB, features featuremgmt.FeatureToggles) *FolderStoreImpl {
+	return &FolderStoreImpl{db: db, log: log.New("folder-store"), features: features}
 }
 
 func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -535,6 +538,10 @@ func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFr
 	}
 
 	return folders, nil
+}
+
+func (ss *FolderStoreImpl) FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	return database.FindDashboardsAndFolders(ctx, query, ss.db, ss.features)
 }
 
 func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {

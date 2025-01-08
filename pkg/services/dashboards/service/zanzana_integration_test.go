@@ -57,7 +57,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		quotaService := quotatest.New(false, nil)
 		tagService := tagimpl.ProvideService(db)
 		folderStore := folderimpl.ProvideDashboardFolderStore(db)
-		fStore := folderimpl.ProvideStore(db)
+		fStore := folderimpl.ProvideStore(db, features)
 		dashboardStore, err := database.ProvideDashboardStore(db, cfg, features, tagService)
 		require.NoError(t, err)
 
@@ -91,7 +91,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		createDashboards(t, service, 100, "test-a")
 		createDashboards(t, service, 100, "test-b")
 
-		folderImplStore := folderimpl.ProvideStore(db)
+		folderImplStore := folderimpl.ProvideStore(db, features)
 		folderService := folderimpl.ProvideService(
 			folderImplStore,
 			ac,

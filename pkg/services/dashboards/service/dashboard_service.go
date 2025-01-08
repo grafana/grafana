@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1029,6 +1030,10 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		return finalResults, nil
 	}
 
+	// This is the key part which ensures all queries for folders go through folder service.
+	if (query.Type == searchstore.TypeFolder) || (query.Type == searchstore.TypeAlertFolder) {
+		return dr.folderService.FindFolders(ctx, query)
+	}
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 

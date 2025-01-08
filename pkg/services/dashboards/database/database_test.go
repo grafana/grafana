@@ -857,7 +857,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore, features)
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
 		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
@@ -975,7 +975,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore, features)
 
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
 		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())

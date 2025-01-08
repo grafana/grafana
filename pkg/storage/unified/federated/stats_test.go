@@ -39,7 +39,8 @@ func TestDirectSQLStats(t *testing.T) {
 	db, cfg := db.InitTestDBWithCfg(t)
 	ctx := context.Background()
 
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
+	features := featuremgmt.WithFeatures()
+	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	fakeGuardian := &guardian.FakeDashboardGuardian{
 		CanSaveValue: true,
@@ -48,9 +49,9 @@ func TestDirectSQLStats(t *testing.T) {
 	}
 	guardian.MockDashboardGuardian(fakeGuardian)
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db)
+	fStore := folderimpl.ProvideStore(db, features)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		folderimpl.ProvideDashboardFolderStore(db), db, featuremgmt.WithFeatures(),
+		folderimpl.ProvideDashboardFolderStore(db), db, features,
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	// create parent folder
