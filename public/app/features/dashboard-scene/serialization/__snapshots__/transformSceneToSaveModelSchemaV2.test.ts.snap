@@ -12,7 +12,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "-- Grafana --",
         },
         "enable": true,
-        "filter": undefined,
         "hide": false,
         "iconColor": "red",
         "name": "query1",
@@ -27,7 +26,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "abcdef",
         },
         "enable": true,
-        "filter": undefined,
         "hide": true,
         "iconColor": "blue",
         "name": "query2",
@@ -42,7 +40,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "Loki",
         },
         "enable": true,
-        "filter": undefined,
         "hide": true,
         "iconColor": "green",
         "name": "query3",
@@ -212,7 +209,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "DatasourceVariable",
       "spec": {
-        "allValue": undefined,
         "current": {
           "text": "text1",
           "value": "value1",
