@@ -1235,6 +1235,11 @@ export const versionedComponents = {
       '11.2.0': 'data-testid entity-not-found',
     },
   },
+  Portal: {
+    container: {
+      '11.4.1': 'data-testid portal-container',
+    },
+  },
 } satisfies VersionedSelectorGroup;
 
 export type VersionedComponents = typeof versionedComponents;
