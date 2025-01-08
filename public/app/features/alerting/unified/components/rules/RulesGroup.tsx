@@ -6,7 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
+import {
+  CombinedRuleGroup,
+  CombinedRuleNamespace,
+  RuleGroupIdentifier,
+  RuleGroupIdentifierV2,
+  RulesSource,
+} from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
@@ -14,7 +20,12 @@ import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  getDatasourceAPIUid,
+  getRulesSourceName,
+  isCloudRulesSource,
+} from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
 import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../../utils/rules';
@@ -199,6 +210,23 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     }
   }
 
+  const groupIdentifier: RuleGroupIdentifierV2 = folder
+    ? {
+        groupName: group.name,
+        namespace: { uid: folder.uid },
+        groupOrigin: 'grafana',
+      }
+    : {
+        rulesSource: {
+          uid: getDatasourceAPIUid(rulesSourceName),
+          name: rulesSourceName,
+          ruleSourceType: 'datasource',
+        },
+        groupName: group.name,
+        namespace: { name: namespace.name },
+        groupOrigin: 'datasource',
+      };
+
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
     <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
@@ -272,11 +300,15 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       )}
       {isReorderingGroup && dsFeatures?.rulerConfig && (
         <ReorderCloudGroupModal
-          group={group}
+          group={{
+            name: group.name,
+            interval: group.interval,
+            rules: group.rules.map((r) => r.rulerRule).filter((rule) => rule !== undefined),
+          }}
+          groupIdentifier={groupIdentifier}
           folderUid={folderUID}
-          namespace={namespace}
           onClose={() => setIsReorderingGroup(false)}
-          rulerConfig={dsFeatures.rulerConfig}
+          rulerConfig={dsFeatures?.rulerConfig}
         />
       )}
       <ConfirmModal

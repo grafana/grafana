@@ -40,7 +40,7 @@ type RulerRuleWithUID = { uid: string } & RulerRuleDTO;
 
 export const ReorderCloudGroupModal = (props: ModalProps) => {
   const styles = useStyles2(getStyles);
-  const { group, groupIdentifier, onClose, folderUid } = props;
+  const { group, groupIdentifier, onClose } = props;
   const [operations, setOperations] = useState<Array<[number, number]>>([]);
 
   const [reorderRulesInGroup, reorderState] = useReorderRuleForRuleGroup();
