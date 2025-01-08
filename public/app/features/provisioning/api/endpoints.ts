@@ -105,7 +105,10 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      putRepositoryFilesWithPath: build.mutation<PutRepositoryFilesWithPathResponse, PutRepositoryFilesWithPathArg>({
+      replaceRepositoryFilesWithPath: build.mutation<
+        ReplaceRepositoryFilesWithPathResponse,
+        ReplaceRepositoryFilesWithPathArg
+      >({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/${queryArg.path}`,
           method: 'PUT',
@@ -281,8 +284,8 @@ export type GetRepositoryFilesWithPathArg = {
   path: string;
   ref?: string;
 };
-export type PutRepositoryFilesWithPathResponse = ResourceWrapper;
-export type PutRepositoryFilesWithPathArg = {
+export type ReplaceRepositoryFilesWithPathResponse = ResourceWrapper;
+export type ReplaceRepositoryFilesWithPathArg = {
   name: string;
   path: string;
   ref?: string;
@@ -597,7 +600,7 @@ export const {
   useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
   useGetRepositoryFilesWithPathQuery,
-  usePutRepositoryFilesWithPathMutation,
+  useReplaceRepositoryFilesWithPathMutation,
   useCreateRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
