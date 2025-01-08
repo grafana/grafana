@@ -12,17 +12,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Run Vale spellcheck
-        run: >-
-          vale --config ./.vale.ini --filter '.Name == "Grafana.Spelling"' docs/sources |
-          /bin/reviewdog
-          --conf /etc/vale/.reviewdog.yml
-          --fail-on-error
-          --reporter github-pr-review &&
-          vale --config ./.vale.ini --filter '.Name == "Grafana.WordList"' docs/sources |
-          /bin/reviewdog
-          --conf /etc/vale/.reviewdog.yml
-          --fail-on-error
-          --reporter github-pr-review
+        run: |
+          (cd /etc/vale && vale sync)
+          vale --filter '.Name == "Grafana.WordList"' --output=/etc/vale/rdjsonl.tmpl docs/sources | \
+            /bin/reviewdog \
+              --conf /etc/vale/.reviewdog.yml \
+              --fail-on-error \
+              --f=rdjsonl \
+              --name=vale \
+              --reporter github-pr-review
+          vale --filter '.Name == "Grafana.Spelling"' --output=/etc/vale/rdjsonl.tmpl docs/sources | \
+            /bin/reviewdog \
+              --conf /etc/vale/.reviewdog.yml \
+              --fail-on-error \
+              --f=rdjsonl \
+              --name=vale \
+              --reporter github-pr-review
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
