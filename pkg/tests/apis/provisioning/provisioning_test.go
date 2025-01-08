@@ -551,13 +551,6 @@ func mustNested(obj map[string]interface{}, fields ...string) interface{} {
 	return v
 }
 
-func mustJSON(t *testing.T, obj any) string {
-	t.Helper()
-	body, err := json.Marshal(obj)
-	require.NoError(t, err)
-	return string(body)
-}
-
 func randomAsciiStr(n int) string {
 	const alphabet string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := strings.Builder{}
