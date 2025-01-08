@@ -337,20 +337,18 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 		resources[i].SnapshotUID = snapshotUid
 	}
 
-	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
-		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			_, err := sess.Insert(resources)
-			if err != nil {
-				return err
-			}
-			return nil
-		})
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(resources)
 		if err != nil {
-			return fmt.Errorf("creating resources: %w", err)
+			return err
 		}
-
 		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("creating resources: %w", err)
+	}
+
+	return nil
 }
 
 // UpdateSnapshotResources updates a migration resource for a snapshot, using snapshot_uid + resource_uid as a lookup
@@ -385,16 +383,16 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	}
 
 	// Prepare a sql statement for all of the OK statuses
-	var okUpdateStatement statement
+	var okUpdateStatement *statement
 	if len(okIds) > 0 {
-		okUpdateStatement = statement{
+		okUpdateStatement = &statement{
 			sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(okIds)-1)),
 			args: append([]any{cloudmigration.ItemStatusOK, snapshotUid}, okIds...),
 		}
 	}
 
 	// Prepare however many sql statements are necessary for the error statuses
-	errorStatements := []statement{}
+	errorStatements := make([]statement, 0, len(errorIds))
 	for k, ids := range errorIds {
 		errorStatements = append(errorStatements, statement{
 			sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=?, error_code=?, error_string=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(ids)-1)),
@@ -403,9 +401,16 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	}
 
 	// Execute the minimum number of required statements!
+
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			for _, q := range append(errorStatements, okUpdateStatement) {
+			if okUpdateStatement != nil {
+				if _, err := sess.Exec(append([]any{okUpdateStatement.sql}, okUpdateStatement.args...)...); err != nil {
+					return err
+				}
+			}
+
+			for _, q := range errorStatements {
 				if _, err := sess.Exec(append([]any{q.sql}, q.args...)...); err != nil {
 					return err
 				}
