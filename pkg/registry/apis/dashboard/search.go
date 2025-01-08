@@ -306,11 +306,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// The ids filter
 	ids, ok := queryParams["uid"]
 	if ok {
-		searchRequest.Options.Fields = []*resource.Requirement{{
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = []*resource.Requirement{}
+		}
+		idFilter := []*resource.Requirement{{
 			Key:      "_id",
 			Operator: "=",
 			Values:   ids,
 		}}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, idFilter...)
 	}
 
 	// Run the query

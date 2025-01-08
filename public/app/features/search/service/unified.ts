@@ -75,6 +75,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const starsUIDS = await getBackendSrv().get('api/user/stars');
     if (starsUIDS?.length) {
       return this.doSearchQuery({
+        ...query,
         uid: starsUIDS,
         query: query.query ?? '*',
       });
