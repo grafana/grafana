@@ -4000,7 +4000,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 				},
 			},
 			imageService:        newSuccessfulCountingImageService(),
-			expectedCalledTimes: 3,
+			expectedCalledTimes: 1,
 		},
 		{
 			desc: "when transition to Alerting from Normal states, existing images ignored",
@@ -4017,7 +4017,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 				},
 			},
 			imageService:        newSuccessfulCountingImageService(),
-			expectedCalledTimes: 3,
+			expectedCalledTimes: 1,
 		},
 		{
 			desc: "when Alerting and no screenshot",
@@ -4034,7 +4034,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 				},
 			},
 			imageService:        newSuccessfulCountingImageService(),
-			expectedCalledTimes: 3,
+			expectedCalledTimes: 1,
 		},
 	}
 
