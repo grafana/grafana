@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2, RawTimeRange, urlUtil, VariableHide } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
@@ -40,7 +40,7 @@ import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
-import { reportChangeInLabelFilters } from './interactions';
+import { reportChangeInLabelFilters, reportExploreMetrics } from './interactions';
 import { migrateOtelDeploymentEnvironment } from './migrations/otelDeploymentEnvironment';
 import { getDeploymentEnvironments, getNonPromotedOtelResources, totalOtelResources } from './otel/api';
 import { OtelTargetType } from './otel/types';
@@ -490,6 +490,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       const datasourceHelper = model.datasourceHelper;
       limitAdhocProviders(model, limitedFilterVariable, datasourceHelper);
     }, [model, useOtelExperience]);
+
+    const reportOtelExperience = useRef(false);
+    // only report otel experience once
+    if (useOtelExperience && !reportOtelExperience.current) {
+      reportExploreMetrics('otel_experience_used',{});
+      reportOtelExperience.current = true;
+    }
 
     return (
       <div className={styles.container}>

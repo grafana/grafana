@@ -127,6 +127,7 @@ type Interactions = {
     metric?: string;
   },
   deployment_environment_migrated: {},
+  otel_experience_used: {},
 };
 
 const PREFIX = 'grafana_explore_metrics_';
