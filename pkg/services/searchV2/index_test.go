@@ -72,7 +72,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -432,9 +432,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       2,
-		uid:      "2",
-		folderID: 1,
+		id:        2,
+		uid:       "2",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 1",
 			Nested: []*entity.EntitySummary{
@@ -444,9 +445,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       3,
-		uid:      "3",
-		folderID: 1,
+		id:        3,
+		uid:       "3",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 2",
 			Nested: []*entity.EntitySummary{
