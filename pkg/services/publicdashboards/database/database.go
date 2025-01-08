@@ -270,11 +270,11 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int6
 	return affectedRows, err
 }
 
-func (d *PublicDashboardStoreImpl) FindByFolder(ctx context.Context, orgId int64, folderUid string) ([]*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) FindByDashboardUids(ctx context.Context, orgId int64, uids []string) ([]*PublicDashboard, error) {
 	var pubdashes []*PublicDashboard
 
 	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return sess.SQL("SELECT * from dashboard_public WHERE (dashboard_uid, org_id) IN (SELECT uid, org_id FROM dashboard WHERE org_id = ? AND folder_uid = ?)", orgId, folderUid).Find(&pubdashes)
+		return sess.Table("dashboard_public").In("dashboard_uid", uids).Where("org_id = ?", orgId).Find(&pubdashes)
 	})
 	if err != nil {
 		return nil, err

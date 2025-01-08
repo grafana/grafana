@@ -463,11 +463,23 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 	ctx, span := tracer.Start(ctx, "publicdashboards.DeleteByDashboard")
 	defer span.End()
 	if dashboard.IsFolder {
-		// get all pubdashes for the folder
-		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
+		// get all dashboards in the folder
+		dashs, err := pd.dashboardService.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+			OrgId:      dashboard.OrgID,
+			FolderUIDs: []string{dashboard.UID},
+		})
+
+		uids := make([]string, len(dashs))
+		for i, dash := range dashs {
+			uids[i] = dash.UID
+		}
+
+		// get all associated public dashboards
+		pubdashes, err := pd.store.FindByDashboardUids(ctx, dashboard.OrgID, uids)
 		if err != nil {
 			return err
 		}
+
 		// delete each pubdash
 		for _, pubdash := range pubdashes {
 			err = pd.serviceWrapper.Delete(ctx, pubdash.Uid)

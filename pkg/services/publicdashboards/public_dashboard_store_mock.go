@@ -214,25 +214,25 @@ func (_m *FakePublicDashboardStore) FindByDashboardUid(ctx context.Context, orgI
 	return r0, r1
 }
 
-// FindByFolder provides a mock function with given fields: ctx, orgId, folderUid
-func (_m *FakePublicDashboardStore) FindByFolder(ctx context.Context, orgId int64, folderUid string) ([]*models.PublicDashboard, error) {
-	ret := _m.Called(ctx, orgId, folderUid)
+// FindByDashboardUids provides a mock function with given fields: ctx, orgId, uids
+func (_m *FakePublicDashboardStore) FindByDashboardUids(ctx context.Context, orgId int64, uids []string) ([]*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, orgId, uids)
 
 	var r0 []*models.PublicDashboard
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) ([]*models.PublicDashboard, error)); ok {
-		return rf(ctx, orgId, folderUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []string) ([]*models.PublicDashboard, error)); ok {
+		return rf(ctx, orgId, uids)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) []*models.PublicDashboard); ok {
-		r0 = rf(ctx, orgId, folderUid)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []string) []*models.PublicDashboard); ok {
+		r0 = rf(ctx, orgId, uids)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.PublicDashboard)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = rf(ctx, orgId, folderUid)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, []string) error); ok {
+		r1 = rf(ctx, orgId, uids)
 	} else {
 		r1 = ret.Error(1)
 	}
