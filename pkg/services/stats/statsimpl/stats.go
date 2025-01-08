@@ -462,13 +462,11 @@ func addToStats(base stats.UserStats, role org.RoleType, count int64) stats.User
 
 func getStatsRequester(orgId int64) *identity.StaticRequester {
 	return &identity.StaticRequester{
-		Type:           claims.TypeServiceAccount,
-		UserID:         1,
-		OrgID:          orgId,
-		Name:           "admin",
-		Login:          "admin",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
+		Type:   claims.TypeServiceAccount,
+		UserID: 1,
+		OrgID:  orgId,
+		Name:   "stats-requester",
+		Login:  "stats-requester",
 		Permissions: map[int64]map[string][]string{
 			orgId: {
 				"*": {"*"},
