@@ -114,7 +114,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
 
 export async function parseResponseBody<T>(
   response: Response,
-  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob'
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'body'
 ): Promise<T> {
   if (responseType) {
     switch (responseType) {
@@ -128,6 +128,11 @@ export async function parseResponseBody<T>(
         // TODO refactor this function to remove the type assertions
         return response.blob() as Promise<T>;
 
+      case 'body':
+        // Return the raw body -- useful for streaming
+        // TODO refactor this function to remove the type assertions
+        return Promise.resolve(response.body) as Promise<T>;
+  
       case 'json':
         // An empty string is not a valid JSON.
         // Sometimes (unfortunately) our APIs declare their Content-Type as JSON, however they return an empty body.
@@ -135,7 +140,6 @@ export async function parseResponseBody<T>(
           console.warn(`${response.url} returned an invalid JSON`);
           return {} as T;
         }
-
         return await response.json();
 
       case 'text':

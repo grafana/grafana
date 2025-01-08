@@ -80,6 +80,7 @@ const (
 	TestDataQueryTypeSimulation                   TestDataQueryType = "simulation"
 	TestDataQueryTypeSlowQuery                    TestDataQueryType = "slow_query"
 	TestDataQueryTypeStreamingClient              TestDataQueryType = "streaming_client"
+	TestDataQueryTypeStreamingHTTP                TestDataQueryType = "streaming_http"
 	TestDataQueryTypeTableStatic                  TestDataQueryType = "table_static"
 	TestDataQueryTypeTrace                        TestDataQueryType = "trace"
 	TestDataQueryTypeUsa                          TestDataQueryType = "usa"

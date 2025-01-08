@@ -68,7 +68,7 @@ export type BackendSrvRequest = {
    *
    * By default values are json parsed from text
    */
-  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob';
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'body';
 
   /**
    * The credentials read-only property of the Request interface indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.
@@ -173,7 +173,13 @@ export interface BackendSrv {
    * Observable http request interface
    */
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>>;
+
+  /**
+   * Return a new event for each line
+   */
+  watch(options: BackendSrvRequest): Observable<FetchResponse<Observable<string>>>;
 }
+
 
 let singletonInstance: BackendSrv;
 
