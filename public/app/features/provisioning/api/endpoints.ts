@@ -1,3 +1,7 @@
+import { Subscription } from 'rxjs';
+
+import { ScopedResourceClient } from '../../apiserver/client';
+
 import { baseAPI as api } from './baseAPI';
 export const addTagTypes = ['Job', 'Repository'] as const;
 const injectedRtkApi = api
@@ -7,7 +11,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       listJob: build.query<ListJobResponse, ListJobArg | void>({
-        query: (queryArg) => ({
+        query: () => ({
           url: `/jobs`,
         }),
         providesTags: ['Job'],
@@ -22,9 +26,60 @@ const injectedRtkApi = api
         providesTags: ['Job'],
       }),
       listRepository: build.query<ListRepositoryResponse, ListRepositoryArg | void>({
-        query: (queryArg) => ({
+        query: () => ({
           url: `/repositories`,
         }),
+        async onCacheEntryAdded(arg, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }) {
+          const client = new ScopedResourceClient<RepositorySpec, RepositoryStatus>({
+            group: 'provisioning.grafana.app',
+            version: 'v0alpha1',
+            resource: 'repositories',
+          });
+          let subscription: Subscription | null = null;
+          try {
+            // wait for the initial query to resolve before proceeding
+            const response = await cacheDataLoaded;
+            const resourceVersion = response.data.metadata?.resourceVersion;
+
+            subscription = client.watch(undefined, resourceVersion).subscribe((event) => {
+              updateCachedData((draft: RepositoryList) => {
+                if (!draft.items) {
+                  draft.items = [];
+                }
+
+                const existingIndex = draft.items.findIndex(
+                  (item) => item.metadata?.name === event.object.metadata.name
+                );
+
+                if (event.type === 'ADDED') {
+                  // Add the new item
+                  //@ts-expect-error TODO Fix types
+                  draft.items.push(event.object);
+                } else if (event.type === 'MODIFIED') {
+                  // Update the existing item if it exists
+                  if (existingIndex !== -1) {
+                    //@ts-expect-error TODO Fix types
+                    draft.items[existingIndex] = event.object;
+                  }
+                } else if (event.type === 'DELETED') {
+                  // Remove the item if it exists
+                  if (existingIndex !== -1) {
+                    draft.items.splice(existingIndex, 1);
+                  }
+                }
+              });
+            });
+          } catch (error) {
+            // no-op in case `cacheEntryRemoved` resolves before `cacheDataLoaded`,
+            // in which case `cacheDataLoaded` will throw
+            console.error('Error in onCacheEntryAdded:', error);
+          }
+          // cacheEntryRemoved will resolve when the cache subscription is no longer active
+          await cacheEntryRemoved;
+          // perform cleanup steps once the `cacheEntryRemoved` promise resolves
+
+          subscription?.unsubscribe();
+        },
         providesTags: ['Repository'],
       }),
       createRepository: build.mutation<CreateRepositoryResponse, CreateRepositoryArg>({
