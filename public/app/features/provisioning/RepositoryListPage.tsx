@@ -1,5 +1,4 @@
-import { ReactNode, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+import { ReactNode, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import {
@@ -17,34 +16,15 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { ScopedResourceClient } from '../apiserver/client';
-
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository, RepositorySpec } from './api';
-import { RepositoryStatus } from './api/types';
+import { Repository } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
-
 export default function RepositoryListPage() {
-  const obs = useMemo(() => {
-    const client = new ScopedResourceClient<RepositorySpec, RepositoryStatus>({
-      group: 'provisioning.grafana.app',
-      version: 'v0alpha1',
-      resource: 'repositories',
-    });
-    return client.watch();
-  }, []);
-  const xxx = useObservable(obs);
-  console.log('event', {
-    type: xxx?.type,
-    name: xxx?.object.metadata.name,
-    resourceVersion: xxx?.object.metadata.resourceVersion,
-    obj: xxx,
-  });
-
   const [items, isLoading] = useRepositoryList();
+
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
