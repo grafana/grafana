@@ -23,7 +23,7 @@ export type ApiMachineryError = {
   kind: 'Status';
   apiVersion: string;
   code: number;
-  details: {
+  details?: {
     uid: string;
     name?: string;
     group?: string;
@@ -38,16 +38,5 @@ export type ApiMachineryError = {
 };
 
 export function isApiMachineryError(error: unknown): error is FetchError<ApiMachineryError> {
-  return (
-    isFetchError(error) &&
-    get(error.data, 'kind') === 'Status' &&
-    get(error.data, 'status') === 'Failure' &&
-    'details' in error.data &&
-    typeof error.data.details === 'object' &&
-    'uid' in error.data.details
-  );
-}
-
-export function matchesApiMachineryError(error: unknown, uid: string) {
-  return isApiMachineryError(error) && error.data.details.uid === uid;
+  return isFetchError(error) && get(error.data, 'kind') === 'Status' && get(error.data, 'status') === 'Failure';
 }
