@@ -83,16 +83,24 @@ interface GrafanaRuleGroupListItemProps {
   namespaceName: string;
 }
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
-  const groupIdentifier: GrafanaRuleGroupIdentifier = {
-    groupName: group.name,
-    namespace: {
-      uid: group.folderUid,
-    },
-    groupOrigin: 'grafana',
-  };
+  const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
+    () => ({
+      groupName: group.name,
+      namespace: {
+        uid: group.folderUid,
+      },
+      groupOrigin: 'grafana',
+    }),
+    [group.name, group.folderUid]
+  );
 
   return (
-    <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      isOpen={false}
+      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
+    >
       {group.rules.map((rule) => {
         return (
           <GrafanaRuleLoader

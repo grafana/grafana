@@ -13,34 +13,24 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
-import {
-  CombinedRuleGroup,
-  CombinedRuleNamespace,
-  RuleGroupIdentifier,
-  RulerDataSourceConfig,
-} from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RuleGroupIdentifier, RuleGroupIdentifierV2, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { useReorderRuleForRuleGroup } from '../../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading } from '../../hooks/useAsync';
 import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
 import { fetchRulerRulesAction } from '../../state/actions';
-import { isCloudRulesSource } from '../../utils/datasource';
+import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { hashRulerRule } from '../../utils/rule-id';
-import {
-  isAlertingRulerRule,
-  isGrafanaRulerRule,
-  isRecordingRulerRule,
-  rulesSourceToDataSourceName,
-} from '../../utils/rules';
+import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../utils/rules';
 
 interface ModalProps {
-  namespace: CombinedRuleNamespace;
-  group: CombinedRuleGroup;
+  group: RulerRuleGroupDTO;
+  groupIdentifier: RuleGroupIdentifierV2;
   onClose: () => void;
   folderUid?: string;
   rulerConfig: RulerDataSourceConfig;
@@ -50,18 +40,20 @@ type RulerRuleWithUID = { uid: string } & RulerRuleDTO;
 
 export const ReorderCloudGroupModal = (props: ModalProps) => {
   const styles = useStyles2(getStyles);
-  const { group, namespace, onClose, folderUid } = props;
+  const { group, groupIdentifier, onClose, folderUid } = props;
   const [operations, setOperations] = useState<Array<[number, number]>>([]);
 
   const [reorderRulesInGroup, reorderState] = useReorderRuleForRuleGroup();
   const isUpdating = isLoading(reorderState);
 
+  const namespace =
+    groupIdentifier.groupOrigin === 'grafana' ? groupIdentifier.namespace.uid : groupIdentifier.namespace.name;
   // The list of rules might have been filtered before we get to this reordering modal
   // We need to grab the full (unfiltered) list
   const { currentData: ruleGroup, isLoading: loadingRules } = alertRuleApi.endpoints.getRuleGroupForNamespace.useQuery(
     {
       rulerConfig: props.rulerConfig,
-      namespace: folderUid ?? namespace.name,
+      namespace: namespace,
       group: group.name,
     },
     { refetchOnMountOrArgChange: true }
@@ -101,19 +93,19 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
   );
 
   const updateRulesOrder = useCallback(async () => {
-    const dataSourceName = rulesSourceToDataSourceName(namespace.rulesSource);
+    const dataSourceName = getGroupOriginName(groupIdentifier);
 
     const ruleGroupIdentifier: RuleGroupIdentifier = {
       dataSourceName,
       groupName: group.name,
-      namespaceName: folderUid ?? namespace.name,
+      namespaceName: namespace,
     };
 
     await reorderRulesInGroup.execute(ruleGroupIdentifier, operations);
     // TODO: Remove once RTKQ is more prevalently used
     await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
     onClose();
-  }, [namespace.rulesSource, namespace.name, group.name, folderUid, reorderRulesInGroup, operations, onClose]);
+  }, [namespace, group.name, reorderRulesInGroup, operations, onClose, groupIdentifier]);
 
   // assign unique but stable identifiers to each (alerting / recording) rule
   const rulesWithUID: RulerRuleWithUID[] = rulesList.map((rulerRule) => ({
@@ -125,7 +117,7 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
     <Modal
       className={styles.modal}
       isOpen={true}
-      title={<ModalHeader namespace={namespace} group={group} />}
+      title={<ModalHeader namespace={namespace} group={group.name} />}
       onDismiss={onClose}
       onClickBackdrop={onClose}
     >
@@ -203,8 +195,8 @@ const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListI
 };
 
 interface ModalHeaderProps {
-  namespace: CombinedRuleNamespace;
-  group: CombinedRuleGroup;
+  namespace: string;
+  group: string;
 }
 
 const ModalHeader = ({ namespace, group }: ModalHeaderProps) => {
@@ -213,7 +205,7 @@ const ModalHeader = ({ namespace, group }: ModalHeaderProps) => {
   return (
     <div className={styles.header}>
       <Icon name="folder" />
-      {isCloudRulesSource(namespace.rulesSource) && (
+      {/* {isCloudRulesSource(namespace.rulesSource) && (
         <Tooltip content={namespace.rulesSource.name} placement="top">
           <img
             alt={namespace.rulesSource.meta.name}
@@ -221,10 +213,10 @@ const ModalHeader = ({ namespace, group }: ModalHeaderProps) => {
             src={namespace.rulesSource.meta.info.logos.small}
           />
         </Tooltip>
-      )}
-      <span>{namespace.name}</span>
+      )} */}
+      <span>{namespace}</span>
       <Icon name="angle-right" />
-      <span>{group.name}</span>
+      <span>{group}</span>
     </div>
   );
 };
