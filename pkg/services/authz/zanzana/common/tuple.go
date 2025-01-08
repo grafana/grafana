@@ -43,19 +43,19 @@ const (
 	RelationCreate string = "create"
 	RelationDelete string = "delete"
 
-	RelationGetPermissions    string = "get_permissions"
-	RelationUpdatePermissions string = "update_permissions"
+	RelationGetPermissions string = "get_permissions"
+	RelationSetPermissions string = "set_permissions"
 
 	RelationFolderResourceSetView  string = "resource_" + RelationSetView
 	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceGet               string = "resource_" + RelationGet
-	RelationFolderResourceUpdate            string = "resource_" + RelationUpdate
-	RelationFolderResourceCreate            string = "resource_" + RelationCreate
-	RelationFolderResourceDelete            string = "resource_" + RelationDelete
-	RelationFolderResourceGetPermissions    string = "resource_" + RelationGetPermissions
-	RelationFolderResourceUpdatePermissions string = "resource_" + RelationUpdatePermissions
+	RelationFolderResourceGet            string = "resource_" + RelationGet
+	RelationFolderResourceUpdate         string = "resource_" + RelationUpdate
+	RelationFolderResourceCreate         string = "resource_" + RelationCreate
+	RelationFolderResourceDelete         string = "resource_" + RelationDelete
+	RelationFolderResourceGetPermissions string = "resource_" + RelationGetPermissions
+	RelationFolderResourceSetPermissions string = "resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -65,7 +65,7 @@ var RelationsGroupResource = []string{
 	RelationCreate,
 	RelationDelete,
 	RelationGetPermissions,
-	RelationUpdatePermissions,
+	RelationSetPermissions,
 }
 
 // RelationsResource are relations that can be added on type "resource".
@@ -74,7 +74,7 @@ var RelationsResource = []string{
 	RelationUpdate,
 	RelationDelete,
 	RelationGetPermissions,
-	RelationUpdatePermissions,
+	RelationSetPermissions,
 }
 
 // RelationsFolderResource are relations that can be added on type "folder" for child resources.
@@ -84,7 +84,7 @@ var RelationsFolderResource = []string{
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
 	RelationFolderResourceGetPermissions,
-	RelationFolderResourceUpdatePermissions,
+	RelationFolderResourceSetPermissions,
 }
 
 // RelationsFolder are relations that can be added on type "folder".
@@ -95,31 +95,31 @@ var RelationsFolder = append(
 	RelationCreate,
 	RelationDelete,
 	RelationGetPermissions,
-	RelationUpdatePermissions,
+	RelationSetPermissions,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.
 var VerbMapping = map[string]string{
-	utils.VerbGet:               RelationGet,
-	utils.VerbList:              RelationGet,
-	utils.VerbWatch:             RelationGet,
-	utils.VerbCreate:            RelationCreate,
-	utils.VerbUpdate:            RelationUpdate,
-	utils.VerbPatch:             RelationUpdate,
-	utils.VerbDelete:            RelationDelete,
-	utils.VerbDeleteCollection:  RelationDelete,
-	utils.VerbGetPermissions:    RelationGet,
-	utils.VerbUpdatePermissions: RelationDelete,
+	utils.VerbGet:              RelationGet,
+	utils.VerbList:             RelationGet,
+	utils.VerbWatch:            RelationGet,
+	utils.VerbCreate:           RelationCreate,
+	utils.VerbUpdate:           RelationUpdate,
+	utils.VerbPatch:            RelationUpdate,
+	utils.VerbDelete:           RelationDelete,
+	utils.VerbDeleteCollection: RelationDelete,
+	utils.VerbGetPermissions:   RelationGet,
+	utils.VerbSetPermissions:   RelationDelete,
 }
 
 // RelationToVerbMapping is mapping a zanzana relation to k8s verb.
 var RelationToVerbMapping = map[string]string{
-	RelationGet:               utils.VerbGet,
-	RelationCreate:            utils.VerbCreate,
-	RelationUpdate:            utils.VerbUpdate,
-	RelationDelete:            utils.VerbDelete,
-	RelationGetPermissions:    utils.VerbGetPermissions,
-	RelationUpdatePermissions: utils.VerbUpdatePermissions,
+	RelationGet:            utils.VerbGet,
+	RelationCreate:         utils.VerbCreate,
+	RelationUpdate:         utils.VerbUpdate,
+	RelationDelete:         utils.VerbDelete,
+	RelationGetPermissions: utils.VerbGetPermissions,
+	RelationSetPermissions: utils.VerbSetPermissions,
 }
 
 func IsGroupResourceRelation(relation string) bool {

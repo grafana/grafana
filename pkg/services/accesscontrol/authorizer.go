@@ -52,16 +52,16 @@ func NewLegacyAccessClient(ac AccessControl, opts ...ResourceAuthorizerOptions) 
 
 	defaultMapping := func(r string) map[string]string {
 		return map[string]string{
-			utils.VerbGet:               fmt.Sprintf("%s:read", r),
-			utils.VerbList:              fmt.Sprintf("%s:read", r),
-			utils.VerbWatch:             fmt.Sprintf("%s:read", r),
-			utils.VerbCreate:            fmt.Sprintf("%s:create", r),
-			utils.VerbUpdate:            fmt.Sprintf("%s:write", r),
-			utils.VerbPatch:             fmt.Sprintf("%s:write", r),
-			utils.VerbDelete:            fmt.Sprintf("%s:delete", r),
-			utils.VerbDeleteCollection:  fmt.Sprintf("%s:delete", r),
-			utils.VerbGetPermissions:    fmt.Sprintf("%s.permissions:read", r),
-			utils.VerbUpdatePermissions: fmt.Sprintf("%s.permissions:write", r),
+			utils.VerbGet:              fmt.Sprintf("%s:read", r),
+			utils.VerbList:             fmt.Sprintf("%s:read", r),
+			utils.VerbWatch:            fmt.Sprintf("%s:read", r),
+			utils.VerbCreate:           fmt.Sprintf("%s:create", r),
+			utils.VerbUpdate:           fmt.Sprintf("%s:write", r),
+			utils.VerbPatch:            fmt.Sprintf("%s:write", r),
+			utils.VerbDelete:           fmt.Sprintf("%s:delete", r),
+			utils.VerbDeleteCollection: fmt.Sprintf("%s:delete", r),
+			utils.VerbGetPermissions:   fmt.Sprintf("%s.permissions:read", r),
+			utils.VerbSetPermissions:   fmt.Sprintf("%s.permissions:write", r),
 		}
 	}
 

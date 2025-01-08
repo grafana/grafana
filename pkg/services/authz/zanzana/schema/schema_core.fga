@@ -22,4 +22,4 @@ type team
     define delete: [user, service-account, team#member, role#assignee] or admin
 
     define get_permissions: [user, service-account, team#member, role#assignee] or admin
-    define update_permissions: [user, service-account, team#member, role#assignee] or admin
+    define set_permissions: [user, service-account, team#member, role#assignee] or admin

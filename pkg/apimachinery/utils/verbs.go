@@ -21,6 +21,6 @@ const (
 	VerbDeleteCollection = "deletecollection"
 	// VerbGetPermissions is used when fetching resource specific permissions
 	VerbGetPermissions = "get_permissions"
-	// VerbUpdatePermissions is used when updating resource specific permissions
-	VerbUpdatePermissions = "update_permissions"
+	// VerbSetPermissions is used when setting resource specific permissions
+	VerbSetPermissions = "set_permissions"
 )
