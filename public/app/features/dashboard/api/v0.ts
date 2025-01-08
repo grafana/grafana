@@ -1,4 +1,6 @@
+import { locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   ResourceClient,
@@ -7,6 +9,7 @@ import {
   AnnoKeyFolder,
   Resource,
 } from 'app/features/apiserver/types';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
@@ -60,13 +63,21 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
+    const url = locationUtil.assureBaseUrl(
+      getDashboardUrl({
+        uid: v.metadata.name,
+        currentQueryParams: '',
+        slug: kbn.slugifyForUrl(v.spec.title),
+      })
+    );
+
     return {
       uid: v.metadata.name,
       version: v.spec.version ?? 0,
       id: v.spec.id ?? 0,
       status: 'success',
+      url,
       slug: '',
-      url: '',
     };
   }
 
