@@ -143,18 +143,22 @@ export class BackendSrv implements BackendService {
   }
 
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
+    const controller = new AbortController();
+    const requestId = options.requestId ?? `chunked-${Date.now()}`;
     return new Observable((observer) => {
-      let done = false;
+      let disconnect = false;
       const sub = this.fetch<ReadableStream<Uint8Array>>({
         ...options,
+        requestId,
         responseType: 'body',
         showErrorAlert: false,
         showSuccessAlert: false,
         hideFromInspector: true,
+        abortSignal: controller.signal,
       }).subscribe((result) => {
         const reader = result.data.getReader();
         async function process() {
-          while (!done) {
+          while (!disconnect) {
             try {
               const chunk = await reader.read();
               observer.next({
@@ -162,18 +166,17 @@ export class BackendSrv implements BackendService {
                 data: chunk.value,
               });
               if (chunk.done) {
-                done = true;
                 break;
               }
             } catch (err) {
               console.warn('error while reading chunked stream', options.url, err);
               reader.cancel('error');
-              done = true;
               observer.error(err);
             }
           }
-          if (!done) {
+          if (disconnect) {
             // this happens when we unsubscribe before the connection is done
+            console.info('cancel reading', result.url);
             reader.cancel('disconnected');
           }
           observer.complete();
@@ -183,7 +186,10 @@ export class BackendSrv implements BackendService {
 
       return function unsubscribe() {
         sub.unsubscribe();
-        done = true;
+        disconnect = true;
+
+        console.log('calling abort!');
+        controller.abort('unsubscribe');
       };
     });
   }

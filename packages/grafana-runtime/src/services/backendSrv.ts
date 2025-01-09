@@ -71,6 +71,12 @@ export type BackendSrvRequest = {
   responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'body';
 
   /**
+   * Used to cancel an open connection
+   * https://developer.mozilla.org/en-US/docs/Web/API/AbortController
+   */
+  abortSignal?: AbortSignal;
+
+  /**
    * The credentials read-only property of the Request interface indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.
    */
   credentials?: RequestCredentials;
