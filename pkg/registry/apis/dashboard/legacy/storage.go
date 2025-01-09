@@ -331,11 +331,11 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 }
 
 func (a *dashboardSqlAccess) RepositoryList(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
-	return nil, fmt.Errorf("not implemented yet...")
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (a *dashboardSqlAccess) RepositoryStats(context.Context, *resource.RepositoryStatsRequest) (*resource.RepositoryStatsResponse, error) {
-	return nil, fmt.Errorf("not implemented yet...")
+	return nil, fmt.Errorf("not implemented")
 }
 
 // GetStats implements ResourceServer.

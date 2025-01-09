@@ -134,7 +134,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.A
 
 // History implements ResourceIndexServer.
 func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
-	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
+	return nil, fmt.Errorf("not implemented yet... likely should not be the search server")
 }
 
 func (s *searchSupport) RepositoryList(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error) {
@@ -152,7 +152,7 @@ func (s *searchSupport) RepositoryList(ctx context.Context, req *RepositoryListR
 }
 
 func (s *searchSupport) RepositoryStats(context.Context, *RepositoryStatsRequest) (*RepositoryStatsResponse, error) {
-	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
+	return nil, fmt.Errorf("not implemented yet... requires iterating kinds")
 }
 
 // Search implements ResourceIndexServer.
