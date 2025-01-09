@@ -18,8 +18,9 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper := bleve.NewDocumentStaticMapping()
 
 	nameMapping := &mapping.FieldMapping{
-		Type:  "text",
-		Index: true,
+		Analyzer: keyword.Name,
+		Type:     "text",
+		Index:    true,
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
 
@@ -77,9 +78,6 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		DocValues:          true,
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY, repoMapping)
-
-	// TODO: we use the static mapper. why set dynamic to true?
-	mapper.Dynamic = true
 
 	return mapper
 }
