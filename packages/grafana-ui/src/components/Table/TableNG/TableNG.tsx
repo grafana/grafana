@@ -41,7 +41,7 @@ interface TableColumn extends Column<TableRow> {
 interface HeaderCellProps {
   column: Column<any>;
   field: Field;
-  onSort: (columnKey: string, direction: SortDirection) => void;
+  onSort: (columnKey: string, direction: SortDirection, isMultiSort: boolean) => void;
   direction: SortDirection | undefined;
   justifyContent?: Property.JustifyContent;
 }
@@ -173,8 +173,9 @@ export function TableNG(props: TableNGProps) {
       });
     }
 
-    const handleSort = () => {
-      onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
+    const handleSort = (event: React.MouseEvent<HTMLButtonElement>) => {
+      const isMultiSort = event.shiftKey;
+      onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
     };
 
     useLayoutEffect(() => {
@@ -202,7 +203,7 @@ export function TableNG(props: TableNGProps) {
     );
   };
 
-  const handleSort = (columnKey: string, direction: SortDirection) => {
+  const handleSort = (columnKey: string, direction: SortDirection, isMultiSort: boolean) => {
     let currentSortColumn: SortColumn | undefined;
 
     const updatedSortColumns = sortColumnsRef.current.filter((column) => {
@@ -219,8 +220,13 @@ export function TableNG(props: TableNGProps) {
       sortColumnsRef.current = updatedSortColumns;
     } else {
       // new sort column or changed direction
-      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
-      sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
+      if (isMultiSort) {
+        setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+        sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
+      } else {
+        setSortColumns([{ columnKey, direction }]);
+        sortColumnsRef.current = [{ columnKey, direction }];
+      }
     }
   };
 
