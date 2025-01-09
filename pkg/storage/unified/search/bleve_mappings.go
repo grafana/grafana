@@ -18,10 +18,8 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper := bleve.NewDocumentStaticMapping()
 
 	nameMapping := &mapping.FieldMapping{
-		Name:     resource.SEARCH_FIELD_NAME,
-		Type:     "text",
-		Analyzer: keyword.Name,
-		Index:    true,
+		Type:  "text",
+		Index: true,
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
 
