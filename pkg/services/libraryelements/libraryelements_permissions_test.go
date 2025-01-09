@@ -362,7 +362,7 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 			permissions: map[string][]string{
 				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Other_folder")},
 			},
-			status: http.StatusNotFound,
+			status: http.StatusForbidden,
 		},
 	}
 	for _, testCase := range getCases {
