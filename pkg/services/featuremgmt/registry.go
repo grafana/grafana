@@ -1371,9 +1371,10 @@ var (
 		{
 			Name:            "alertingApiServer",
 			Description:     "Register Alerting APIs with the K8s API server",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Expression:      "true",
 		},
 		{
 			Name:        "cloudWatchRoundUpEndTime",
@@ -1548,8 +1549,9 @@ var (
 		{
 			Name:        "userStorageAPI",
 			Description: "Enables the user storage API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
