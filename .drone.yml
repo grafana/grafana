@@ -874,7 +874,7 @@ steps:
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
-  - yarn e2e:playwright e2e/plugin-e2e/prometheus/prometheus.spec.ts
+  - yarn e2e:playwright playwright e2e/plugin-e2e/prometheus/prometheus.spec.ts
   depends_on:
   - grafana-server
   - build-test-plugins
@@ -2309,7 +2309,7 @@ steps:
 - commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
-  - yarn e2e:playwright
+  - yarn e2e:playwright playwright e2e/plugin-e2e/prometheus/prometheus.spec.ts
   depends_on:
   - grafana-server
   - build-test-plugins
@@ -5605,6 +5605,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 71f8579c4d999fedf9d1d87ca90e43ce73762d541bdafde3bc052ea988fa00ee
+hmac: 0e40444bdcb830658072b5b3e842a20434b48934be39d338e259dda78efcc9d2
 
 ...
