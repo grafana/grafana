@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { Dropdown, Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types/store';
 
 import { HistoryContainer } from '../History/HistoryContainer';
@@ -70,6 +71,20 @@ export function AddonBar() {
     });
   };
 
+  const onToggleHistory = () => {
+    if (state.addonBarPane?.id === 'history') {
+      chrome.update({ addonBarPane: undefined });
+      return;
+    }
+
+    chrome.update({
+      addonBarPane: {
+        id: 'history',
+        content: <HistoryContainer />,
+      },
+    });
+  };
+
   const transientApps = state.addonApps.filter((app) => app.isApp);
   const contextApps = state.addonApps.filter((app) => !app.isApp);
 
@@ -113,7 +128,17 @@ export function AddonBar() {
       <AddonBarItem active={state.addonBarPane?.id === 'create'}>
         <ToolbarButton tooltip="Add / create" iconOnly icon={'plus'} aria-label="New" onClick={onShowCreate} />
       </AddonBarItem>
-      {unifiedHistoryEnabled && <HistoryContainer />}
+      {unifiedHistoryEnabled && (
+        <AddonBarItem active={state.addonBarPane?.id === 'history'}>
+          <ToolbarButton
+            onClick={onToggleHistory}
+            iconOnly
+            tooltip="History"
+            icon="history"
+            aria-label={t('nav.history-container.drawer-tittle', 'History')}
+          />
+        </AddonBarItem>
+      )}
       {enrichedHelpNode && (
         // <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
         <AddonBarItem active={state.addonBarPane?.id === 'help'}>
