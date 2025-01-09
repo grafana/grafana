@@ -1,13 +1,25 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { AlertManagerCortexConfig, Route } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
-import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
+import { FormAmRoute } from '../../types/amroutes';
+import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
+import {
+  InsertPosition,
+  addRouteToReferenceRoute,
+  cleanRouteIDs,
+  mergePartialAmRouteWithRouteTree,
+  omitRouteFromRouteTree,
+} from '../../utils/routeTree';
 
-export const updateRouteAction = createAction<{
-  newRoute: Route;
-  oldRoute: Route;
-}>('routes/update');
+export const updateRouteAction = createAction<{ update: Partial<FormAmRoute>; alertmanager: string }>('routes/update');
+export const deleteRouteAction = createAction<{ id: string }>('routes/delete');
+export const addRouteAction = createAction<{
+  selectedAlertmanager: string;
+  partialRoute: Partial<FormAmRoute>;
+  referenceRouteIdentifier: string;
+  insertPosition: InsertPosition;
+}>('routes/add');
 
 const initialState: AlertManagerCortexConfig = {
   alertmanager_config: {},
@@ -20,20 +32,51 @@ const initialState: AlertManagerCortexConfig = {
  */
 export const routesReducer = createReducer(initialState, (builder) => {
   builder
-    // update routes tree
+    // update an existing route
     .addCase(updateRouteAction, (draft, { payload }) => {
-      const { newRoute, oldRoute } = payload;
-      const { _metadata, ...oldRouteStripped } = oldRoute;
-      const { _metadata: newMetadata, ...newRouteStripped } = newRoute;
+      const { update, alertmanager } = payload;
+      const { alertmanager_config } = draft;
 
-      const latestRouteFromConfig = draft.alertmanager_config.route;
-
-      const configChangedInMeantime = JSON.stringify(oldRouteStripped) !== JSON.stringify(latestRouteFromConfig);
-
-      if (configChangedInMeantime) {
-        throw new Error('configuration modification conflict', { cause: ERROR_NEWER_CONFIGURATION });
+      if (!alertmanager_config.route) {
+        return;
       }
 
-      draft.alertmanager_config.route = newRouteStripped;
+      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(alertmanager_config.route);
+      const newRouteTree = mergePartialAmRouteWithRouteTree(alertmanager, update, rootRouteWithIdentifiers);
+      alertmanager_config.route = cleanRouteIDs(newRouteTree);
+    })
+    // delete a route
+    .addCase(deleteRouteAction, (draft, { payload }) => {
+      const { id } = payload;
+      const { alertmanager_config } = draft;
+
+      // if we don't even have a root route, we bail
+      if (!alertmanager_config.route) {
+        return;
+      }
+
+      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(alertmanager_config.route);
+      const updatedPolicyTree = omitRouteFromRouteTree(id, rootRouteWithIdentifiers);
+      draft.alertmanager_config.route = cleanRouteIDs(updatedPolicyTree);
+    })
+    // add a new route to given position
+    .addCase(addRouteAction, (draft, { payload }) => {
+      const { partialRoute, referenceRouteIdentifier, insertPosition, selectedAlertmanager } = payload;
+      const { alertmanager_config } = draft;
+
+      if (!alertmanager_config.route) {
+        return;
+      }
+
+      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(alertmanager_config.route);
+      const updatedPolicyTree = addRouteToReferenceRoute(
+        selectedAlertmanager,
+        partialRoute,
+        referenceRouteIdentifier,
+        rootRouteWithIdentifiers,
+        insertPosition
+      );
+
+      draft.alertmanager_config.route = cleanRouteIDs(updatedPolicyTree);
     });
 });

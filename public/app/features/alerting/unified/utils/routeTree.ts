@@ -45,8 +45,8 @@ export const mergePartialAmRouteWithRouteTree = (
 
 // remove a route from the policy tree, returns a new tree
 // make sure to omit the "id" because Prometheus / Loki / Mimir will reject the payload
-export const omitRouteFromRouteTree = (findRoute: RouteWithID, routeTree: RouteWithID): RouteWithID => {
-  if (findRoute.id === routeTree.id) {
+export const omitRouteFromRouteTree = (id: string, routeTree: RouteWithID): RouteWithID => {
+  if (id === routeTree.id) {
     throw new Error('You cant remove the root policy');
   }
 
@@ -54,7 +54,7 @@ export const omitRouteFromRouteTree = (findRoute: RouteWithID, routeTree: RouteW
     return {
       ...currentRoute,
       routes: currentRoute.routes?.reduce((acc: RouteWithID[] = [], route) => {
-        if (route.id === findRoute.id) {
+        if (route.id === id) {
           return acc;
         }
 
@@ -73,17 +73,17 @@ export type InsertPosition = 'above' | 'below' | 'child';
 export const addRouteToReferenceRoute = (
   alertManagerSourceName: string,
   partialFormRoute: Partial<FormAmRoute>,
-  referenceRoute: RouteWithID,
+  referenceRouteIdentifier: string,
   routeTree: RouteWithID,
   position: InsertPosition
 ): RouteWithID => {
   const newRoute = formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree);
 
   return produce(routeTree, (draftTree) => {
-    const [routeInTree, parentRoute, positionInParent] = findRouteInTree(draftTree, referenceRoute);
+    const [routeInTree, parentRoute, positionInParent] = findRouteInTree(draftTree, referenceRouteIdentifier);
 
     if (routeInTree === undefined || parentRoute === undefined || positionInParent === undefined) {
-      throw new Error(`could not find reference route "${referenceRoute.id}" in tree`);
+      throw new Error(`could not find reference route "${referenceRouteIdentifier}" in tree`);
     }
 
     // if user wants to insert new child policy, append to the bottom of children
@@ -111,7 +111,7 @@ type RouteMatch = Route | undefined;
 
 export function findRouteInTree(
   routeTree: RouteWithID,
-  referenceRoute: RouteWithID
+  referenceRouteIdentifier: string
 ): [matchingRoute: RouteMatch, parentRoute: RouteMatch, positionInParent: number | undefined] {
   let matchingRoute: RouteMatch;
   let matchingRouteParent: RouteMatch;
@@ -123,7 +123,7 @@ export function findRouteInTree(
       return;
     }
 
-    if (currentRoute.id === referenceRoute.id) {
+    if (currentRoute.id === referenceRouteIdentifier) {
       matchingRoute = currentRoute;
       matchingRouteParent = parentRoute;
       matchingRoutePositionInParent = index;

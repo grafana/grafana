@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { FC, useCallback, useMemo, useState } from 'react';
 
-import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
+import { Alert, Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -22,10 +22,11 @@ type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosit
 type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
 
 const useAddPolicyModal = (
-  handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => void,
+  handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => Promise<void>,
   loading: boolean
 ): AddModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState<Error | undefined>();
   const [insertPosition, setInsertPosition] = useState<InsertPosition | undefined>(undefined);
   const [referenceRoute, setReferenceRoute] = useState<RouteWithID>();
 
@@ -53,13 +54,14 @@ const useAddPolicyModal = (
           closeOnEscape={true}
           title="Add notification policy"
         >
+          {error && <Alert title="Something went wrong">{stringifyErrorLike(error)}</Alert>}
           <AmRoutesExpandedForm
             defaults={{
               groupBy: referenceRoute?.group_by,
             }}
             onSubmit={(newRoute) => {
               if (referenceRoute && insertPosition) {
-                handleAdd(newRoute, referenceRoute, insertPosition);
+                handleAdd(newRoute, referenceRoute, insertPosition).catch(setError);
               }
             }}
             actionButtons={
@@ -75,7 +77,7 @@ const useAddPolicyModal = (
           />
         </Modal>
       ),
-    [handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal]
+    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -83,13 +85,13 @@ const useAddPolicyModal = (
 
 const useEditPolicyModal = (
   alertManagerSourceName: string,
-  handleSave: (route: Partial<FormAmRoute>) => void,
-  loading: boolean,
-  error?: Error
+  handleSave: (route: Partial<FormAmRoute>) => Promise<void>,
+  loading: boolean
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
+  const [error, setError] = useState<Error | undefined>();
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
@@ -120,7 +122,7 @@ const useEditPolicyModal = (
               // TODO *sigh* this alertmanagersourcename should come from context or something
               // passing it down all the way here is a code smell
               alertManagerSourceName={alertManagerSourceName}
-              onSubmit={handleSave}
+              onSubmit={(values) => handleSave(values).catch(setError)}
               route={route}
               actionButtons={
                 <Modal.ButtonRow>

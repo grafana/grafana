@@ -14,7 +14,7 @@ describe('findRouteInTree', () => {
       routes: [{ id: 'route-1' }, needle, { id: 'route-3', routes: [{ id: 'route-4' }] }],
     };
 
-    expect(findRouteInTree(root, { id: 'route-2' })).toStrictEqual([needle, root, 1]);
+    expect(findRouteInTree(root, 'route-2')).toStrictEqual([needle, root, 1]);
   });
 
   it('should return undefined for unknown route', () => {
@@ -23,15 +23,15 @@ describe('findRouteInTree', () => {
       routes: [{ id: 'route-1' }],
     };
 
-    expect(findRouteInTree(root, { id: 'none' })).toStrictEqual([undefined, undefined, undefined]);
+    expect(findRouteInTree(root, 'none')).toStrictEqual([undefined, undefined, undefined]);
   });
 });
 
 describe('addRouteToReferenceRoute', () => {
-  const targetRoute = { id: 'route-3' };
+  const targetRouteIdentifier = 'route-3';
   const root: RouteWithID = {
     id: 'route-1',
-    routes: [{ id: 'route-2' }, targetRoute],
+    routes: [{ id: 'route-2' }, { id: targetRouteIdentifier }],
   };
 
   const newRoute: Partial<FormAmRoute> = {
@@ -40,21 +40,25 @@ describe('addRouteToReferenceRoute', () => {
   };
 
   it('should be able to add above', () => {
-    expect(addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, targetRoute, root, 'above')).toMatchSnapshot();
+    expect(
+      addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, targetRouteIdentifier, root, 'above')
+    ).toMatchSnapshot();
   });
 
   it('should be able to add below', () => {
-    expect(addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, targetRoute, root, 'below')).toMatchSnapshot();
+    expect(
+      addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, targetRouteIdentifier, root, 'below')
+    ).toMatchSnapshot();
   });
 
   it('should be able to add as child', () => {
-    expect(addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, targetRoute, root, 'child')).toMatchSnapshot();
+    expect(
+      addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, targetRouteIdentifier, root, 'child')
+    ).toMatchSnapshot();
   });
 
   it('should throw if target route does not exist', () => {
-    expect(() =>
-      addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, { id: 'unknown' }, root, 'child')
-    ).toThrow();
+    expect(() => addRouteToReferenceRoute(GRAFANA_DATASOURCE_NAME, newRoute, 'unknown', root, 'child')).toThrow();
   });
 });
 
@@ -69,7 +73,7 @@ describe('omitRouteFromRouteTree', () => {
       ],
     };
 
-    expect(omitRouteFromRouteTree({ id: 'route-4' }, tree)).toEqual({
+    expect(omitRouteFromRouteTree('route-4', tree)).toEqual({
       id: 'route-1',
       receiver: 'root',
       routes: [
@@ -85,7 +89,7 @@ describe('omitRouteFromRouteTree', () => {
     };
 
     expect(() => {
-      omitRouteFromRouteTree(tree, { id: 'route-1' });
+      omitRouteFromRouteTree(tree.id, { id: 'route-1' });
     }).toThrow();
   });
 });

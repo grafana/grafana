@@ -185,6 +185,7 @@ export function quoteWithEscapeIfRequired(input: string) {
 
 export const encodeMatcher = ({ name, operator, value }: MatcherFieldValue) => {
   const encodedLabelName = quoteWithEscapeIfRequired(name);
+  // @TODO why not use quoteWithEscapeIfRequired?
   const encodedLabelValue = quoteWithEscape(value);
 
   return `${encodedLabelName}${operator}${encodedLabelValue}`;
