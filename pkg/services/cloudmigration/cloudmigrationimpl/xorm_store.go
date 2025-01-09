@@ -215,19 +215,15 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 
 		// If local resources are set, it means we have to create them for the first time
 		if len(update.LocalResourcesToCreate) > 0 {
-			start := time.Now()
 			if err := ss.CreateSnapshotResources(ctx, update.UID, update.LocalResourcesToCreate); err != nil {
 				return err
 			}
-			fmt.Printf("time to create %d local resources: %s\n", len(update.LocalResourcesToCreate), time.Since(start).String())
 		}
 		// If cloud resources are set, it means we have to update our resource local state
 		if len(update.CloudResourcesToUpdate) > 0 {
-			start := time.Now()
 			if err := ss.UpdateSnapshotResources(ctx, update.UID, update.CloudResourcesToUpdate); err != nil {
 				return err
 			}
-			fmt.Printf("time to update %d local resources: %s\n", len(update.CloudResourcesToUpdate), time.Since(start).String())
 		}
 
 		return nil
