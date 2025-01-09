@@ -588,7 +588,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                       }
                     />
                     <div>
-                      <Badge text={'New'} color={'blue'} className={styles.badgeStyle}></Badge>
+                      <Badge text={
+                        <Trans i18nKey="trails.metric-select.new-badge">
+                          New
+                        </Trans>
+                      } color={'blue'} className={styles.badgeStyle}></Badge>
                     </div>
                   </div>
                 </>
