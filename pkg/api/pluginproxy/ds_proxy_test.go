@@ -119,6 +119,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				Path:      "api/rbac-restricted",
 				ReqAction: "test-app.settings:read",
 			},
+			{
+				Path: "encodedPath",
+				URL:  "http://encoded.com",
+			},
 		}
 
 		ds := &datasources.DataSource{
@@ -233,6 +237,16 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.cfg)
 
 			assert.Equal(t, "https://example.com/api/v1/some-route/", req.URL.String())
+		})
+
+		t.Run("When matching proxy path is already encoded", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/our%20devices")
+			require.NoError(t, err)
+			proxy.matchedRoute = routes[9]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.cfg)
+
+			assert.Equal(t, "http://encoded.com/our%20devices", req.URL.String())
 		})
 
 		t.Run("Validating request", func(t *testing.T) {

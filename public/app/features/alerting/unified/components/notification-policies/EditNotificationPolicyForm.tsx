@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { ReactNode, useState } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {

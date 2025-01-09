@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 

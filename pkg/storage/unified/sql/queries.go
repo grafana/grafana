@@ -5,7 +5,9 @@ import (
 	"embed"
 	"fmt"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -27,23 +29,28 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete          = mustTemplate("resource_delete.sql")
-	sqlResourceInsert          = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate          = mustTemplate("resource_update.sql")
-	sqlResourceRead            = mustTemplate("resource_read.sql")
-	sqlResourceList            = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList     = mustTemplate("resource_history_list.sql")
-	sqlResourceUpdateRV        = mustTemplate("resource_update_rv.sql")
-	sqlResourceHistoryRead     = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryUpdateRV = mustTemplate("resource_history_update_rv.sql")
-	sqlResourceHistoryInsert   = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll     = mustTemplate("resource_history_poll.sql")
+	sqlResourceDelete            = mustTemplate("resource_delete.sql")
+	sqlResourceInsert            = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate            = mustTemplate("resource_update.sql")
+	sqlResourceRead              = mustTemplate("resource_read.sql")
+	sqlResourceStats             = mustTemplate("resource_stats.sql")
+	sqlResourceList              = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList       = mustTemplate("resource_history_list.sql")
+	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
+	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
+	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
+	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
 	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
 	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
 	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+
+	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
+	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
 )
 
 // TxOptions.
@@ -69,6 +76,20 @@ type sqlResourceRequest struct {
 
 func (r sqlResourceRequest) Validate() error {
 	return nil // TODO
+}
+
+type sqlStatsRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Folder    string
+	MinCount  int
+}
+
+func (r sqlStatsRequest) Validate() error {
+	if r.Folder != "" && r.Namespace == "" {
+		return fmt.Errorf("folder constraint requires a namespace")
+	}
+	return nil
 }
 
 type historyPollResponse struct {
@@ -174,6 +195,45 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 		ResourceVersion: r.Response.ResourceVersion,
 		Value:           r.Response.Value,
 	}, nil
+}
+
+// update resource history
+
+type sqlResourceHistoryUpdateRequest struct {
+	sqltemplate.SQLTemplate
+	WriteEvent resource.WriteEvent
+	OldUID     string
+	NewUID     string
+}
+
+func (r sqlResourceHistoryUpdateRequest) Validate() error {
+	return nil // TODO
+}
+
+type sqlResourceBlobInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Now         time.Time
+	Info        *utils.BlobInfo
+	Key         *resource.ResourceKey
+	Value       []byte
+	ContentType string
+}
+
+func (r sqlResourceBlobInsertRequest) Validate() error {
+	if len(r.Value) < 1 {
+		return fmt.Errorf("missing body")
+	}
+	return nil
+}
+
+type sqlResourceBlobQueryRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resource.ResourceKey
+	UID string
+}
+
+func (r sqlResourceBlobQueryRequest) Validate() error {
+	return nil
 }
 
 // update RV

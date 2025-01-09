@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -77,4 +78,12 @@ func ApplySourceFromError(errorMessage error, err error) error {
 		return errorsource.SourceError(sourceError.Source(), errorMessage, false)
 	}
 	return errorMessage
+}
+
+func CreateResponseErrorFromStatusCode(statusCode int, status string, body []byte) error {
+	statusErr := fmt.Errorf("request failed, status: %s, body: %s", status, string(body))
+	if backend.ErrorSourceFromHTTPStatus(statusCode) == backend.ErrorSourceDownstream {
+		return backend.DownstreamError(statusErr)
+	}
+	return backend.PluginError(statusErr)
 }

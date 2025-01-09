@@ -50,7 +50,7 @@ const getSelectContainerStyles = (theme: GrafanaTheme2, focused: boolean, disabl
         flexWrap: 'wrap',
         alignItems: 'stretch',
         justifyContent: 'space-between',
-        minHeight: '32px',
+        minHeight: theme.spacing(theme.components.height.md),
         height: 'auto',
         maxWidth: '100%',
 

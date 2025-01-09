@@ -4,10 +4,10 @@ import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { notFoundToNullOrThrow } from '../../api/util';
 import {
-  updateRuleGroupAction,
   moveRuleGroupAction,
   renameRuleGroupAction,
   reorderRulesInRuleGroupAction,
+  updateRuleGroupAction,
 } from '../../reducers/ruler/ruleGroups';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { useAsync } from '../useAsync';

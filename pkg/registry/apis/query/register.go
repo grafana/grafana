@@ -98,8 +98,9 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
 	legacy service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-	if !(features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagQueryService,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
@@ -162,11 +163,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return query.GetOpenAPIDefinitions
-}
-
-// Register additional routes with the server
-func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {

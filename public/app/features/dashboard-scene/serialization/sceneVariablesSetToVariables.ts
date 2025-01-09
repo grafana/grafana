@@ -326,12 +326,15 @@ export function sceneVariablesSetToSchemaV2Variables(
           regex: variable.state.regex,
           refresh: 'onDashboardLoad',
           pluginId: variable.state.pluginId,
-          defaultOptionEnabled: !!variable.state.defaultOptionEnabled,
           multi: variable.state.isMulti || false,
-          allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
         },
       };
+
+      if (variable.state.allValue !== undefined) {
+        datasourceVariable.spec.allValue = variable.state.allValue;
+      }
+
       variables.push(datasourceVariable);
     } else if (sceneUtils.isConstantVariable(variable)) {
       const constantVariable: ConstantVariableKind = {

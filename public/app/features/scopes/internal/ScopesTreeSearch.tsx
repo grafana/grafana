@@ -46,6 +46,7 @@ export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpda
       value={inputState.value}
       className={styles.input}
       data-testid="scopes-tree-search"
+      escapeRegex={false}
       onChange={(value) => {
         setInputState({ value, isDirty: true });
       }}

@@ -380,6 +380,7 @@ def rgm_promotion_pipeline():
             name = "rgm-promotion",
             trigger = promotion_trigger,
             steps = steps,
+            volumes = github_app_step_volumes(),
         ),
     ]
 

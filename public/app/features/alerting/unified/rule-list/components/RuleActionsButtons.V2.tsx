@@ -11,7 +11,7 @@ import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/s
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { useDispatch } from 'app/types';
-import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
+import { Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
@@ -24,7 +24,7 @@ import { createRelativeUrl } from '../../utils/url';
 interface Props {
   rule: RulerRuleDTO;
   promRule: Rule;
-  groupIdentifier: RuleGroupIdentifier;
+  groupIdentifier: RuleGroupIdentifierV2;
   /**
    * Should we show the buttons in a "compact" state?
    * i.e. without text and using smaller button sizes
@@ -34,7 +34,7 @@ interface Props {
 
 // For now this is just a copy of RuleActionsButtons.tsx but with the View button removed.
 // This is only done to keep the new list behind a feature flag and limit changes in the existing components
-export const RuleActionsButtons = ({ compact, rule, promRule, groupIdentifier }: Props) => {
+export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }: Props) {
   const dispatch = useDispatch();
 
   const redirectToListView = compact ? false : true;
@@ -46,7 +46,6 @@ export const RuleActionsButtons = ({ compact, rule, promRule, groupIdentifier }:
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
   >(undefined);
 
-  const { namespaceName, groupName, dataSourceName } = groupIdentifier;
   const { hasActiveFilters } = useRulesFilter();
 
   const isProvisioned = isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance);
@@ -58,11 +57,9 @@ export const RuleActionsButtons = ({ compact, rule, promRule, groupIdentifier }:
   const buttons: JSX.Element[] = [];
   const buttonSize = compact ? 'sm' : 'md';
 
-  const identifier = ruleId.fromRulerRule(dataSourceName, namespaceName, groupName, rule);
+  const identifier = ruleId.fromRulerRuleAndGroupIdentifierV2(groupIdentifier, rule);
 
   if (canEditRule) {
-    const identifier = ruleId.fromRulerRule(dataSourceName, namespaceName, groupName, rule);
-
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
     buttons.push(
@@ -109,6 +106,6 @@ export const RuleActionsButtons = ({ compact, rule, promRule, groupIdentifier }:
       )}
     </Stack>
   );
-};
+}
 
 export const ActionsLoader = () => <Skeleton width={50} height={16} />;
