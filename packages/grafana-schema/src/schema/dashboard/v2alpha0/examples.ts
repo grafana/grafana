@@ -375,7 +375,6 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
         description: 'A group by variable',
         hide: 'dontHide',
-        includeAll: false,
         label: 'Group By Variable',
         multi: false,
         name: 'groupByVar',

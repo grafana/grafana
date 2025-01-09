@@ -1093,7 +1093,6 @@ export interface GroupByVariableSpec {
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
-	includeAll: boolean;
 	allValue?: string;
 	label?: string;
 	hide: VariableHide;
@@ -1106,7 +1105,6 @@ export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	current: { text: "", value: "", },
 	options: [],
 	multi: false,
-	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
 });
