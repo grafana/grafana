@@ -14,7 +14,7 @@ function toComboboxOption(value: string): ComboboxOption {
 export interface LabelFilterItemProps {
   defaultOp: string;
   item: Partial<QueryBuilderLabelFilter>;
-  onChange: (value: QueryBuilderLabelFilter) => void;
+  onChange: (value: Partial<QueryBuilderLabelFilter>) => void;
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<ComboboxOption[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<ComboboxOption[]>;
   onDelete: () => void;
@@ -91,8 +91,11 @@ export function LabelFilterItemCombobox({
   );
 
   if (isMultiSelect()) {
-    throw new Error('multi select is not supported with combobox yet');
-    return <div>multi select is not supported with combobox yet</div>;
+    if (process.env.NODE_ENV === 'development') {
+      return <div>LabelFilterItemCombobox doesn't support multiselect, this should not have been called</div>;
+    }
+
+    return null;
   }
 
   return (
@@ -112,9 +115,6 @@ export function LabelFilterItemCombobox({
               ...item,
               op: item.op ?? defaultOp,
               label: change.value,
-
-              // PR TODO: optional?
-              value: item.value ?? '',
             });
           }}
           invalid={invalidLabel}
@@ -131,10 +131,7 @@ export function LabelFilterItemCombobox({
             onChange({
               ...item,
               op: change.value,
-              // PR TODO: optional?
-              value: (isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0]) ?? '',
-              // PR TODO: optional?
-              label: item.label ?? '',
+              value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
             });
           }}
         />
@@ -155,8 +152,6 @@ export function LabelFilterItemCombobox({
               ...item,
               value: change.value,
               op: item.op ?? defaultOp,
-              // PR TODO: optional?
-              label: item.label ?? '',
             });
           }}
           invalid={invalidValue}

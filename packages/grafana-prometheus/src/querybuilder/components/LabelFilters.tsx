@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilters.tsx
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { EditorField, EditorFieldGroup, EditorList } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
@@ -59,11 +59,12 @@ export function LabelFilters({
 
   const hasLabelFilter = items.some((item) => item.label && item.value);
 
-  const editorList = () => {
+  const FilterItemComponent = useMemo(() => {
     const anyIsMulti = items.some((item) => item.op === '=~' || item.op === '!~');
-    const FilterItemComponent =
-      config.featureToggles.prometheusUsesCombobox && !anyIsMulti ? LabelFilterItemCombobox : LabelFilterItem;
+    return config.featureToggles.prometheusUsesCombobox && !anyIsMulti ? LabelFilterItemCombobox : LabelFilterItem;
+  }, [items]);
 
+  const editorList = () => {
     return (
       <EditorList
         items={items}
