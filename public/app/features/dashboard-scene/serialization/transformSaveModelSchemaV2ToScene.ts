@@ -59,6 +59,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsNew,
+  AnnoKeyDashboardIsSnapshot,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -140,6 +141,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
+    isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),
@@ -184,7 +186,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       weekStart: dashboard.timeSettings.weekStart,
       UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
     }),
-    $variables: getVariables(dashboard),
+    $variables: getVariables(dashboard, meta.isSnapshot ?? false),
     $behaviors: [
       new behaviors.CursorSync({
         sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
@@ -220,7 +222,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     }),
   });
 
-  dashboardScene.setInitialSaveModel(dto.spec);
+  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
 
   return dashboardScene;
 }
@@ -399,15 +401,12 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   });
 }
 
-function getVariables(dashboard: DashboardV2Spec): SceneVariableSet | undefined {
+function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
   if (dashboard.variables.length) {
-    if (false) {
-      // FIXME: isSnapshot is not added to the schema yet
-      //if (dashboard.meta?.isSnapshot) {
-      // in the old model we use .meta.isSnapshot but meta is not persisted
-      // variables = createVariablesForSnapshot(dashboard);
+    if (isSnapshot) {
+      variables = createVariablesForSnapshot(dashboard);
     } else {
       variables = createVariablesForDashboard(dashboard);
     }

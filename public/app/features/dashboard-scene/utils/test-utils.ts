@@ -22,10 +22,12 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
+  const loadSnapshotMock = (spy || jest.fn()).mockResolvedValue(rsp);
   // disabling type checks since this is a test util
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
+    loadSnapshot: loadSnapshotMock,
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
 }

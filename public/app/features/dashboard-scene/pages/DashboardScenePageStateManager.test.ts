@@ -8,6 +8,7 @@ import {
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -26,6 +27,10 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
 describe('DashboardScenePageStateManager v1', () => {
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
+
+    setBackendSrv({
+      get: jest.fn(),
+    } as unknown as BackendSrv);
   });
 
   describe('when fetching/loading a dashboard', () => {
@@ -379,21 +384,16 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     it('should use DashboardScene creator to initialize the snapshot scene', async () => {
-      const getDashSpy = jest.fn();
-      setupDashboardAPI(
-        {
-          access: {},
-          apiVersion: 'v2alpha1',
-          kind: 'DashboardWithAccessInfo',
-          metadata: {
-            name: 'fake-dash',
-            creationTimestamp: '',
-            resourceVersion: '1',
-          },
-          spec: { ...defaultDashboardV2Spec() },
+      jest.spyOn(getDashboardSnapshotSrv(), 'getSnapshot').mockResolvedValue({
+        // getSnapshot will return v1 dashboard
+        // but ResponseTransformer in DashboardLoaderSrv will convert it to v2
+        dashboard: {
+          uid: 'fake-dash',
+          title: 'Fake dashboard',
+          schemaVersion: 40,
         },
-        getDashSpy
-      );
+        meta: { isSnapshot: true },
+      });
 
       const loader = new DashboardScenePageStateManagerV2({});
       await loader.loadSnapshot('fake-slug');
