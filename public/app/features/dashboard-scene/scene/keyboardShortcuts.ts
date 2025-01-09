@@ -50,6 +50,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     }),
   });
 
+  // keybindings.addBinding({
+  //   key: 'esc',
+  //   onTrigger: () => {
+  //     console.log('esc from dash');
+  //   },
+  // });
+
   // Panel share
   if (config.featureToggles.newDashboardSharingComponent) {
     keybindings.addBinding({
