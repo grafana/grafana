@@ -4422,6 +4422,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "23"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "24"]
     ],
+    "public/app/features/explore/TraceView/components/TracePageHeader/SpanFilters/SpanFiltersTags.tsx:5381": [
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "3"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "4"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "5"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "6"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "7"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "8"]
+    ],
     "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/ViewingLayer.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
