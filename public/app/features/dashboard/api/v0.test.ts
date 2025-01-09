@@ -88,12 +88,14 @@ const saveDashboardResponse = {
   },
 };
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: () => mockDashboardDto,
     put: jest.fn().mockResolvedValue(saveDashboardResponse),
     post: jest.fn().mockResolvedValue(saveDashboardResponse),
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     buildInfo: {
       version: '11.5.0-test-version-string',
     },
