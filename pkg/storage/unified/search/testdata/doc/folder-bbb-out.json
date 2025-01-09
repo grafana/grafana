@@ -5,7 +5,7 @@
     "resource": "dashboards",
     "name": "bbb"
   },
-  "kind": "dashboards",
+  "name": "bbb",
   "rv": 1234,
   "title": "test-bbb",
   "title_sort": "test-bbb",

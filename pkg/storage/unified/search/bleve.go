@@ -487,6 +487,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
+
 		if len(req.Values[0]) == 1 {
 			q := query.NewMatchQuery(req.Values[0])
 			q.FieldVal = prefix + req.Key

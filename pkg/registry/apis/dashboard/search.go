@@ -303,6 +303,20 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
+	// The names filter
+	names, ok := queryParams["name"]
+	if ok {
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = []*resource.Requirement{}
+		}
+		namesFilter := []*resource.Requirement{{
+			Key:      "name",
+			Operator: "in",
+			Values:   names,
+		}}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
+	}
+
 	// Run the query
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
