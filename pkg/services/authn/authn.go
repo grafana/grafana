@@ -96,6 +96,8 @@ type SSOClientConfig interface {
 	IsSingleLogoutEnabled() bool
 	// IsSkipOrgRoleSyncEnabled returns true if the client has enabled skipping org role sync
 	IsSkipOrgRoleSyncEnabled() bool
+	// IsAllowAssignGrafanaAdminEnabled returns true if the client has enabled assigning grafana admin
+	IsAllowAssignGrafanaAdminEnabled() bool
 }
 
 type Service interface {

@@ -11,10 +11,11 @@ import (
 var _ authn.SSOClientConfig = new(FakeSSOClientConfig)
 
 type FakeSSOClientConfig struct {
-	ExpectedName                     string
-	ExpectedIsAutoLoginEnabled       bool
-	ExpectedIsSingleLogoutEnabled    bool
-	ExpectedIsSkipOrgRoleSyncEnabled bool
+	ExpectedName                             string
+	ExpectedIsAutoLoginEnabled               bool
+	ExpectedIsSingleLogoutEnabled            bool
+	ExpectedIsSkipOrgRoleSyncEnabled         bool
+	ExpectedIsAllowAssignGrafanaAdminEnabled bool
 }
 
 func (f *FakeSSOClientConfig) GetDisplayName() string {
@@ -31,6 +32,10 @@ func (f *FakeSSOClientConfig) IsSingleLogoutEnabled() bool {
 
 func (f *FakeSSOClientConfig) IsSkipOrgRoleSyncEnabled() bool {
 	return f.ExpectedIsSkipOrgRoleSyncEnabled
+}
+
+func (f *FakeSSOClientConfig) IsAllowAssignGrafanaAdminEnabled() bool {
+	return f.ExpectedIsAllowAssignGrafanaAdminEnabled
 }
 
 var (

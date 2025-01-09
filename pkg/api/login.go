@@ -412,6 +412,14 @@ func (hs *HTTPServer) samlSkipOrgRoleSyncEnabled() bool {
 	return hs.samlEnabled() && config.IsSkipOrgRoleSyncEnabled()
 }
 
+func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled() bool {
+	config, ok := hs.authnService.GetClientConfig(authn.ClientSAML)
+	if !ok {
+		return false
+	}
+	return hs.samlEnabled() && config.IsAllowAssignGrafanaAdminEnabled()
+}
+
 func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
@@ -464,8 +472,7 @@ func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string) bo
 	}
 	switch authModule {
 	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
-		client := authn.ClientWithPrefix(strings.TrimPrefix(authModule, "oauth_"))
-		config, ok := hs.authnService.GetClientConfig(client)
+		config, ok := hs.authnService.GetClientConfig(oauthModuleToAuthnClient(authModule))
 		if !ok {
 			return false
 		}
@@ -486,11 +493,15 @@ func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, oauthInfo
 	case loginservice.JWTModule:
 		return cfg.JWTAuth.AllowAssignGrafanaAdmin
 	case loginservice.SAMLAuthModule:
-		return cfg.SAMLRoleValuesGrafanaAdmin != ""
+		return hs.samlAllowAssignGrafanaAdminEnabled()
 	case loginservice.LDAPAuthModule:
 		return true
 	default:
-		return oauthInfo != nil && oauthInfo.AllowAssignGrafanaAdmin
+		config, ok := hs.authnService.GetClientConfig(oauthModuleToAuthnClient(authModule))
+		if !ok {
+			return false
+		}
+		return config.IsAllowAssignGrafanaAdminEnabled()
 	}
 }
 
@@ -503,8 +514,11 @@ func (hs *HTTPServer) isProviderEnabled(cfg *setting.Cfg, authModule string) boo
 	case loginservice.JWTModule:
 		return cfg.JWTAuth.Enabled
 	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
-		client := authn.ClientWithPrefix(strings.TrimPrefix(authModule, "oauth_"))
-		return hs.authnService.IsClientEnabled(client)
+		return hs.authnService.IsClientEnabled(oauthModuleToAuthnClient(authModule))
 	}
 	return false
+}
+
+func oauthModuleToAuthnClient(authModule string) string {
+	return authn.ClientWithPrefix(strings.TrimPrefix(authModule, "oauth_"))
 }

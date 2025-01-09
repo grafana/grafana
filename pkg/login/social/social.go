@@ -125,6 +125,10 @@ func (o *OAuthInfo) IsSkipOrgRoleSyncEnabled() bool {
 	return o.SkipOrgRoleSync
 }
 
+func (o *OAuthInfo) IsAllowAssignGrafanaAdminEnabled() bool {
+	return o.AllowAssignGrafanaAdmin
+}
+
 type BasicUserInfo struct {
 	Id             string
 	Name           string
