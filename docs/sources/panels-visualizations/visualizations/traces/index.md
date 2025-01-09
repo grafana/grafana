@@ -171,12 +171,11 @@ You should now see a list of matching traces in the table visualization. While s
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
-* **Find in trace**: Set the initial value for the span search to focus on spans relevant to your query.
+* **Find in trace** - Set the initial value to focus on spans relevant to your query.
 * **Show matches only** - Toggle the switch on to display only spans that match the defined filter criteria. This helps simplify trace interpretation.
 * **Show critical path only** - Toggle the switch on to highlight only the spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency.
-* **Service name** and **Service name operator**: Define a specific service or pattern to narrow the analysis to spans related to particular services.
-* **Span name** and **Span name operator**: Filter spans by name or pattern to focus on specific span types or processes.
-* **Min duration** and **Max duration**: Set duration thresholds to exclude spans outside the desired time range, aiding in performance optimization.
-* **Tags**: Add one or more tags to further refine the filtering criteria, ensuring only relevant spans are displayed.
+* **Service name** and **Service name operator** - Define a specific service or pattern to narrow analysis to spans related to particular services.
+* **Span name** and **Span name operator** - Filter spans by name or pattern to focus on specific span types or processes.
+* **Min duration** and **Max duration** - Set duration thresholds to exclude spans outside the desired time range.
+* **Tags** - Add one or more tags to further refine the filtering criteria so only relevant spans are displayed.
 
-Note that you must refresh the visualization for most span filter changes to take effect. This ensures the latest filters are applied to the displayed data.
