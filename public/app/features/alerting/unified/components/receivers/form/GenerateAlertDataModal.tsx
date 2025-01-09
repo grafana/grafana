@@ -122,7 +122,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
               </Stack>
             </Card>
           </>
-          <div className={styles.onSubmitWrapper}></div>
+          <div className={styles.onSubmitWrapper} />
           {alerts.length > 0 && (
             <Stack direction="column" gap={1}>
               <h5> Review alert data to add to the payload:</h5>

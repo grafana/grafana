@@ -43,7 +43,7 @@ interface DataSourceLoaderProps {
 }
 
 export function GrafanaDataSourceLoader() {
-  return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true}></DataSourceSection>;
+  return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true} />;
 }
 
 export function DataSourceLoader({ uid, name }: DataSourceLoaderProps) {
