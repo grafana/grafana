@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -119,6 +120,11 @@ func (s *KeeperRest) Create(
 
 	createdKeeper, err := s.storage.Create(ctx, kp)
 	if err != nil {
+		var kErr *contracts.ErrKeeperInvalidSecureValues
+		if errors.As(err, &kErr) {
+			return nil, apierrors.NewInvalid(kp.GroupVersionKind().GroupKind(), kp.Name, kErr.ErrorList())
+		}
+
 		return nil, fmt.Errorf("failed to create keeper: %w", err)
 	}
 

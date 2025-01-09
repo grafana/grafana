@@ -41,7 +41,12 @@ func (s *keeperStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keepe
 		return nil, fmt.Errorf("failed to create row: %w", err)
 	}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Validate before inserting that any `secureValues` referenced exist.
+		if err := s.validateSecureValuesExist(sess, keeper); err != nil {
+			return err
+		}
+
 		if _, err := sess.Insert(row); err != nil {
 			return fmt.Errorf("failed to insert row: %w", err)
 		}
@@ -97,7 +102,13 @@ func (s *keeperStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Ke
 	}
 
 	currentRow := &keeperDB{Name: newKeeper.Name, Namespace: newKeeper.Namespace}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Validate before updating that any `secureValues` referenced exist.
+		if err := s.validateSecureValuesExist(sess, newKeeper); err != nil {
+			return err
+		}
+
 		found, err := sess.Get(currentRow)
 		if err != nil {
 			return fmt.Errorf("failed to get row: %w", err)
@@ -198,4 +209,39 @@ func (s *keeperStorage) List(ctx context.Context, namespace xkube.Namespace, opt
 	return &secretv0alpha1.KeeperList{
 		Items: keepers,
 	}, nil
+}
+
+// validateSecureValuesExist checks that all secure values referenced by the keeper exist.
+func (s *keeperStorage) validateSecureValuesExist(sess *sqlstore.DBSession, keeper *secretv0alpha1.Keeper) error {
+	usedSecureValues := extractSecureValues(keeper)
+
+	if len(usedSecureValues) == 0 {
+		return nil
+	}
+
+	secureValueCond := &secureValueDB{Namespace: keeper.Namespace}
+	secureValueRows := make([]*secureValueDB, 0)
+
+	// SELECT * FROM secret_secure_value WHERE name IN (...) AND namespace = ? FOR UPDATE;
+	err := sess.Table(secureValueCond.TableName()).ForUpdate().In("name", usedSecureValues).Find(&secureValueRows, secureValueCond)
+	if err != nil {
+		return fmt.Errorf("check securevalues existence: %w", err)
+	}
+
+	if len(secureValueRows) == len(usedSecureValues) {
+		return nil
+	}
+
+	// We are guaranteed that the returned `secureValueRows` are a subset of `usedSecureValues`,
+	// so we don't need to check the other way around.
+	missing := make(map[string]struct{}, len(usedSecureValues))
+	for _, sv := range usedSecureValues {
+		missing[sv] = struct{}{}
+	}
+
+	for _, svRow := range secureValueRows {
+		delete(missing, svRow.Name)
+	}
+
+	return contracts.NewErrKeeperInvalidSecureValues(missing)
 }
