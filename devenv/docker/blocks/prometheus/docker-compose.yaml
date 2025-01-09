@@ -1,7 +1,7 @@
   prometheus:
     build: docker/blocks/prometheus
     ports:
-      - "9090:9090"
+      - "0.0.0.0:9090:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: >
