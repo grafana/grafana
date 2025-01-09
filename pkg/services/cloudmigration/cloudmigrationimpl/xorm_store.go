@@ -433,7 +433,7 @@ func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		offset := (page - 1) * limit
 		sess.Limit(limit, offset)
-		return sess.Find(&resources, &cloudmigration.CloudMigrationResource{
+		return sess.OrderBy("id ASC").Find(&resources, &cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
 		})
 	})

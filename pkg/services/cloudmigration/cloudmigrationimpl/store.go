@@ -16,11 +16,4 @@ type store interface {
 	UpdateSnapshot(ctx context.Context, snapshot cloudmigration.UpdateSnapshotCmd) error
 	GetSnapshotByUID(ctx context.Context, orgID int64, sessUid, id string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error)
-
-	// Deleted because were not used externally
-	// - DeleteSnapshot(ctx context.Context, snapshotUid string) error
-	// - CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error
-	// - GetSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error)
-	// - GetSnapshotResourceStats(ctx context.Context, snapshotUid string) (*cloudmigration.SnapshotResourceStats, error)
-	// - DeleteSnapshotResources(ctx context.Context, snapshotUid string) error
 }
