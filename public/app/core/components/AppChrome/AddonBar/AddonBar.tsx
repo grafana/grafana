@@ -13,9 +13,9 @@ import { useSelector } from 'app/types/store';
 import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
-import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TopNavBarMenu } from '../TopBar/TopNavBarMenu';
 
+import { CreatePane } from './CreatePane';
 import { HelpPane } from './HelpPane';
 
 export const ADDON_BAR_WIDTH = 48;
@@ -50,9 +50,22 @@ export function AddonBar() {
 
     chrome.update({
       addonBarPane: {
-        title: 'Get help',
         id: 'help',
         content: <HelpPane />,
+      },
+    });
+  };
+
+  const onShowCreate = () => {
+    if (state.addonBarPane?.id === 'create') {
+      chrome.update({ addonBarPane: undefined });
+      return;
+    }
+
+    chrome.update({
+      addonBarPane: {
+        id: 'create',
+        content: <CreatePane />,
       },
     });
   };
@@ -83,14 +96,20 @@ export function AddonBar() {
       ))}
       <FlexItem grow={1} />
       <LineSeparator />
-      <AddonBarItem>
-        <QuickAdd />
+      <AddonBarItem active={state.addonBarPane?.id === 'create'}>
+        <ToolbarButton tooltip="Add / create" iconOnly icon={'plus'} aria-label="New" onClick={onShowCreate} />
       </AddonBarItem>
       {unifiedHistoryEnabled && <HistoryContainer />}
       {enrichedHelpNode && (
         // <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
         <AddonBarItem active={state.addonBarPane?.id === 'help'}>
-          <ToolbarButton iconOnly icon="question-circle" aria-label="Help" onClick={onShowHelpPane} />
+          <ToolbarButton
+            tooltip="Help pane"
+            iconOnly
+            icon="question-circle"
+            aria-label="Help"
+            onClick={onShowHelpPane}
+          />
         </AddonBarItem>
         // </Dropdown>
       )}

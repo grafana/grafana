@@ -44,7 +44,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
     header: css({
-      padding: theme.spacing(1, 1.5),
+      padding: theme.spacing(1.5, 1.5, 1, 1.5),
       fontWeight: theme.typography.fontWeightMedium,
       fontSize: theme.typography.h5.fontSize,
       display: 'flex',

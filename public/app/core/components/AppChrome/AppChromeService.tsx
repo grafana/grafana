@@ -43,7 +43,6 @@ export interface AddonAppDefinition<T = {}> {
 }
 
 export interface AddonBarPane {
-  title: string;
   id: string;
   content: React.ReactNode;
 }
@@ -221,7 +220,6 @@ export class AppChromeService {
 
     this.update({
       addonBarPane: {
-        title: addonApp.title,
         id: addonApp.id,
         content: <addonApp.component {...addonApp.props} />,
       },
