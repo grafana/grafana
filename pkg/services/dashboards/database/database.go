@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -60,11 +59,15 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 		return nil, err
 	}
 
-	// fill out dashboard_uid and org_id for dashboard_tags
+	// fill out dashboard_uid and org_id for dashboard_tags and dashboard_provisioning
 	// need to run this at startup in case any downgrade happened after the initial migration
-	err = migrations.RunDashboardTagMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName())
+	err = migrations.RunDashboardUIDAndOrgIDMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName(), "dashboard_tag")
 	if err != nil {
 		s.log.Error("Failed to run dashboard_tag migrations", "err", err)
+	}
+	err = migrations.RunDashboardUIDAndOrgIDMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName(), "dashboard_provisioning")
+	if err != nil {
+		s.log.Error("Failed to run dashboard_provisioning migrations", "err", err)
 	}
 
 	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
@@ -125,15 +128,7 @@ func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 
 	var provisionedDashboard dashboards.DashboardProvisioning
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var dashboard dashboards.Dashboard
-		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return dashboards.ErrDashboardNotFound
-		}
-		exists, err = sess.Where("dashboard_id = ?", dashboard.ID).Get(&provisionedDashboard)
+		exists, err := sess.Where("dashboard_uid = ? AND org_id = ?", dashboardUID, orgID).Get(&provisionedDashboard)
 		if err != nil {
 			return err
 		}
@@ -156,25 +151,20 @@ func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name s
 	return result, err
 }
 
-func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *dashboards.Dashboard, provisioning *dashboards.DashboardProvisioning) error {
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
 
-	var result *dashboards.Dashboard
 	var err error
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
-		if err != nil {
-			return err
-		}
-
 		if provisioning.Updated == 0 {
-			provisioning.Updated = result.Updated.Unix()
+			provisioning.Updated = dash.Updated.Unix()
 		}
 
-		return saveProvisionedData(sess, provisioning, result)
+		return saveProvisionedData(sess, provisioning, dash)
 	})
-	return result, err
+
+	return err
 }
 
 func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
@@ -208,13 +198,12 @@ func (d *dashboardStore) UnprovisionDashboard(ctx context.Context, id int64) err
 	})
 }
 
-func (d *dashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
-	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteOrphanedProvisionedDashboards")
+func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) ([]*dashboards.DashboardProvisioning, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
 	defer span.End()
 
-	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		var result []*dashboards.DashboardProvisioning
-
+	var result []*dashboards.DashboardProvisioning
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		convertedReaderNames := make([]any, len(cmd.ReaderNames))
 		for index, readerName := range cmd.ReaderNames {
 			convertedReaderNames[index] = readerName
@@ -225,15 +214,10 @@ func (d *dashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context
 			return err
 		}
 
-		for _, deleteDashCommand := range result {
-			err := d.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{ID: deleteDashCommand.DashboardID})
-			if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return err
-			}
-		}
-
 		return nil
 	})
+
+	return result, err
 }
 
 func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
@@ -481,6 +465,8 @@ func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardPro
 
 	provisioning.ID = result.ID
 	provisioning.DashboardID = dashboard.ID
+	provisioning.DashboardUID = dashboard.UID
+	provisioning.OrgID = dashboard.OrgID
 
 	if exist {
 		_, err = sess.ID(result.ID).Update(provisioning)

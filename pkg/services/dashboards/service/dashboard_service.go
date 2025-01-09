@@ -148,7 +148,6 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx con
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
-	// TODO: make this go through the k8s cli too under the feature toggle. First get dashboard through unistore & then get provisioning data
 	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
 }
 
@@ -291,8 +290,19 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
-	// TODO: once we can search in unistore by id, go through k8s cli too
-	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
+	result, err := dr.dashboardStore.GetOrphanedProvisionedDashboards(ctx, cmd)
+	if err != nil {
+		return err
+	}
+
+	for _, deleteDashCommand := range result {
+		err := dr.DeleteProvisionedDashboard(ctx, deleteDashCommand.DashboardID, deleteDashCommand.OrgID)
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
@@ -359,15 +369,19 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
+	ctx = identity.WithRequester(ctx, dto.User)
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false)
 	if err != nil {
 		return nil, err
 	}
 
-	// dashboard
-	// TODO: make this go through the k8s cli too under the feature toggle. First save dashboard & then save provisioning data
-	dash, err := dr.dashboardStore.SaveProvisionedDashboard(ctx, *cmd, provisioning)
+	dash, err := dr.saveDashboard(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dr.dashboardStore.SaveProvisionedDashboard(ctx, dash, provisioning)
 	if err != nil {
 		return nil, err
 	}
@@ -384,6 +398,8 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	defer span.End()
 
 	dto.SignedInUser = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
+	ctx = identity.WithRequester(ctx, dto.SignedInUser)
+
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
 		dr.log.Error("failed to create folder for provisioned dashboards", "folder", dto.Title, "org", dto.OrgID, "err", err)
@@ -526,6 +542,7 @@ func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, das
 
 // DeleteProvisionedDashboard removes dashboard from the DB even if it is provisioned.
 func (dr *DashboardServiceImpl) DeleteProvisionedDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
+	ctx = identity.WithRequester(ctx, accesscontrol.BackgroundUser("dashboard_provisioning", orgId, org.RoleAdmin, provisionerPermissions))
 	return dr.deleteDashboard(ctx, dashboardId, "", orgId, false)
 }
 
@@ -583,7 +600,6 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 // UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
 // and provisioned dashboards are left behind but not deleted.
 func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
-	// TODO: once we can search by dashboard ID in unistore, go through k8s cli too
 	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 }
 

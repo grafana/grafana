@@ -277,22 +277,24 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 		if origin_name.String != "" {
 			ts := time.Unix(origin_ts.Int64, 0)
-
 			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
-			originPath, err := filepath.Rel(
-				resolvedPath,
-				origin_path.String,
-			)
-			if err != nil {
-				return nil, err
+			// if the reader cannot be found, it may be an orphaned provisioned dashboard
+			if resolvedPath != "" {
+				originPath, err := filepath.Rel(
+					resolvedPath,
+					origin_path.String,
+				)
+				if err != nil {
+					return nil, err
+				}
+				meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+					Name:      origin_name.String,
+					Path:      originPath,
+					Hash:      origin_hash.String,
+					Timestamp: &ts,
+				})
 			}
 
-			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name:      origin_name.String,
-				Path:      originPath,
-				Hash:      origin_hash.String,
-				Timestamp: &ts,
-			})
 		} else if plugin_id != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name: "plugin",

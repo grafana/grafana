@@ -372,6 +372,7 @@ func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []P
 	return &user.SignedInUser{
 		OrgID:   orgID,
 		OrgRole: role,
+		UserID:  1,
 		Login:   "grafana_" + name,
 		Permissions: map[int64]map[string][]string{
 			orgID: GroupScopesByAction(permissions),

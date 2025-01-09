@@ -54,14 +54,16 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			ExternalID: "/var/grafana.json",
 			Updated:    now.Unix(),
 		}
-
-		dash, err := dashboardStore.SaveProvisionedDashboard(context.Background(), saveDashboardCmd, provisioning)
-		require.Nil(t, err)
+		dash, err := dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
+		require.NoError(t, err)
 		require.NotNil(t, dash)
 		require.NotEqual(t, 0, dash.ID)
 		dashId := dash.ID
 
-		t.Run("Deleting orphaned provisioned dashboards", func(t *testing.T) {
+		err = dashboardStore.SaveProvisionedDashboard(context.Background(), dash, provisioning)
+		require.Nil(t, err)
+
+		t.Run("Getting orphaned provisioned dashboards", func(t *testing.T) {
 			saveCmd := dashboards.SaveDashboardCommand{
 				OrgID:     1,
 				IsFolder:  false,
@@ -71,13 +73,16 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 					"title": "another_dashboard",
 				}),
 			}
+			anotherDash, err := dashboardStore.SaveDashboard(context.Background(), saveCmd)
+			require.NoError(t, err)
+
 			provisioning := &dashboards.DashboardProvisioning{
 				Name:       "another_reader",
 				ExternalID: "/var/grafana.json",
 				Updated:    now.Unix(),
 			}
 
-			anotherDash, err := dashboardStore.SaveProvisionedDashboard(context.Background(), saveCmd, provisioning)
+			err = dashboardStore.SaveProvisionedDashboard(context.Background(), anotherDash, provisioning)
 			require.Nil(t, err)
 
 			query := &dashboards.GetDashboardsQuery{DashboardIDs: []int64{anotherDash.ID}}
@@ -86,14 +91,18 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			require.NotNil(t, queryResult)
 
 			deleteCmd := &dashboards.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
-
-			query = &dashboards.GetDashboardsQuery{DashboardIDs: []int64{dash.ID, anotherDash.ID}}
-			queryResult, err = dashboardStore.GetDashboards(context.Background(), query)
+			received, err := dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), deleteCmd)
 			require.Nil(t, err)
-
-			require.Equal(t, 1, len(queryResult))
-			require.Equal(t, dashId, queryResult[0].ID)
+			require.Equal(t, 1, len(received))
+			require.Equal(t, &dashboards.DashboardProvisioning{
+				ID:           2,
+				DashboardID:  3,
+				DashboardUID: anotherDash.UID,
+				OrgID:        anotherDash.OrgID,
+				Name:         provisioning.Name,
+				ExternalID:   provisioning.ExternalID,
+				Updated:      provisioning.Updated,
+			}, received[0])
 		})
 
 		t.Run("Can query for provisioned dashboards", func(t *testing.T) {

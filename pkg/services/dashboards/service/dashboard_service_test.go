@@ -133,7 +133,8 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
-				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -144,7 +145,8 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
-				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
+				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(nil).Once()
 
 				oldRefreshInterval := service.cfg.MinRefreshInterval
 				service.cfg.MinRefreshInterval = "5m"
@@ -656,22 +658,17 @@ func TestDeleteDashboard(t *testing.T) {
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
 		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, metav1.DeleteOptions{
-			GracePeriodSeconds: nil,
-		}, mock.Anything).Return(nil).Once()
+		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		err := service.DeleteDashboard(ctx, 1, "uid", 1)
 		require.NoError(t, err)
 		k8sClientMock.AssertExpectations(t)
 	})
 
-	t.Run("When UID is not passed in for provisioned dashboards, should retrieve that first and set grace period to zero", func(t *testing.T) {
+	t.Run("If UID is not passed in, it should retrieve that first", func(t *testing.T) {
 		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
-		zeroInt64 := int64(0)
 		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, metav1.DeleteOptions{
-			GracePeriodSeconds: &zeroInt64,
-		}, mock.Anything).Return(nil).Once()
+		k8sResourceMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		k8sClientMock.searcher.On("Search", mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
@@ -697,7 +694,7 @@ func TestDeleteDashboard(t *testing.T) {
 			},
 			TotalHits: 1,
 		}, nil)
-		err := service.DeleteProvisionedDashboard(ctx, 1, 1)
+		err := service.DeleteDashboard(ctx, 1, "", 1)
 		require.NoError(t, err)
 		k8sClientMock.AssertExpectations(t)
 		k8sClientMock.searcher.AssertExpectations(t)
