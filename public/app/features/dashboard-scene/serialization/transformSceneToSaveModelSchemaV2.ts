@@ -443,7 +443,7 @@ export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string
   }
 }
 
-function getDefaultDataSourceRef(): DataSourceRef | undefined {
+export function getDefaultDataSourceRef(): DataSourceRef | undefined {
   // we need to return the default datasource configured in the BootConfig
   const defaultDatasource = config.bootData.settings.defaultDatasource;
 
