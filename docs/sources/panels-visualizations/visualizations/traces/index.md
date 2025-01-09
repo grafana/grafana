@@ -179,4 +179,4 @@ The **Span filters** options control the initial state of the span filters when 
 * **Min duration** and **Max duration** - Set duration thresholds to exclude spans outside the desired time range.
 * **Tags** - Add one or more tags to further refine the filtering criteria so only relevant spans are displayed.
 
-The options support variable interpolation, where you can set the service name to a variable $var and the visualization will replace it with the value for the variable named $var in the span filters. This applies to the service name, span name, duration fields and tags.
+The options support variable interpolation, where you can set the service name to a variable `$var` and the visualization will replace it with the value for the variable named `$var` in the span filters. This applies to the service name, span name, duration fields and tags.
