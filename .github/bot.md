@@ -74,13 +74,13 @@ The commands workflow code can be found [here](https://github.com/grafana/grafan
 
 ### Categories/Labels definitions
 
-The categories or labels are defined in the [auto-triager repository](https://github.com/grafana/auto-triager/blob/main/fixtures/categoryLabels.txt). Also [types](https://github.com/grafana/auto-triager/blob/main/fixtures/typeLabels.txt) are defined there.
+The categories (or labels) and the types used to categorize issues are defined in this same repository [here](https://github.com/grafana/grafana/tree/main/.github/workflows/auto-triager) the [prompt](https://github.com/grafana/grafana/blob/main/.github/workflows/auto-triager/prompt.txt) that is passed to the LLM is also defined there.
 
 If you are adding a new category in the auto-triager repository you must define a team that owns the label in the
 [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json).
 
 If you remove a label from the [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json) and it doesn't have any other 
-team associated with it you must remove it from the [auto-triager repository](https://github.com/grafana/auto-triager/blob/main/fixtures/categoryLabels.txt)
+team associated with it you must remove it from the [labels file](https://github.com/grafana/grafana/blob/main/.github/workflows/auto-triager/labels.txt)
 
 ### Secrets
 
