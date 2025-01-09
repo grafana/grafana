@@ -307,10 +307,6 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		f, err = s.setFullpath(ctx, f, q.SignedInUser)
-	}
-
 	return f, err
 }
 
