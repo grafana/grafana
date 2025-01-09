@@ -1132,7 +1132,6 @@ func (fk8s *folderK8sHandler) getIdentityName(ctx context.Context, uid string) s
 
 	if ident.IsServiceAccount {
 		return ident.Name
-
 	}
 	return ident.Login
 }
