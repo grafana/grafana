@@ -133,6 +133,7 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 		newPath, err := getTarget(req.URL.Path)
+		s.logger.Debug("Resource call path", "newPath", newPath, "err", err)
 		if err != nil {
 			writeErrorResponse(rw, http.StatusBadRequest, err.Error())
 			return
@@ -146,6 +147,7 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 
 		service := dsInfo.Services[subDataSource]
 		serviceURL, err := url.Parse(service.URL)
+		s.logger.Debug("Resource call serviceURL", "serviceURL", serviceURL, "err", err)
 		if err != nil {
 			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
@@ -156,6 +158,7 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 
 		rw, err = s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
 		if err != nil {
+			s.logger.Debug("Resource call errored", "err", err, "rw", rw, "req", req)
 			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
 			return
 		}
