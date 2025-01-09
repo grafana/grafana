@@ -55,7 +55,9 @@ const stringComparer = (a: string, b: string): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
-  return a.localeCompare(b);
+  console.log({ a: typeof a, b: typeof b });
+  // Coerce all inputs to strings
+  return a.toString().localeCompare(b.toString());
 };
 
 const booleanComparer = (a: boolean, b: boolean): number => {
