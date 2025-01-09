@@ -169,7 +169,7 @@ You should now see a list of matching traces in the table visualization. While s
 
 ## Span filters
 
-The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize and streamline your trace analysis view for better clarity and efficiency.
+The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
 How to use **Span filters**:
 
