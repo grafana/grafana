@@ -10,6 +10,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -94,7 +95,18 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
+
 		channel := &inprocgrpc.Channel{}
+		// Put * as a namespace so we can properly authorize request with in-proc mode
+		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+			ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+				Rest: authnlib.AccessTokenClaims{
+					Namespace: "*",
+				},
+			}))
+			return ctx, nil
+		}))
+
 		openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 		authzv1.RegisterAuthzServiceServer(channel, srv)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
