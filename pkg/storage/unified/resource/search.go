@@ -43,9 +43,11 @@ type ResourceIndex interface {
 	// When working with federated queries, the additional indexes will be passed in explicitly
 	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
 
-	// Execute an origin query -- access control is not not checked for each item
-	// NOTE: this will likely be used for provisioning, or it will be removed
-	Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error)
+	// List within an response
+	RepositoryList(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error)
+
+	// Stats within a response
+	RepositoryStats(ctx context.Context, req *RepositoryStatsRequest) (*RepositoryStatsResponse, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)

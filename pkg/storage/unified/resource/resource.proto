@@ -470,54 +470,73 @@ message HistoryResponse {
   ErrorResult error = 4;
 }
 
-message OriginRequest {
+// List items within a resource type & repository name
+// Access control is managed above this request
+message RepositoryListRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
+  // All results exist within this resource namespace+name
+  ResourceKey key = 2;
+
+  // The name of the repository
+  string name = 3;
+
   // Maximum number of items to return
-  int64 limit = 2;
-
-  // Resource identifier
-  ResourceKey key = 3;
-
-  // List the deleted values (eg, show trash)
-  string origin = 4;
+  int64 limit = 4;
 }
 
-message ResourceOriginInfo {
+message RepositoryResourceInfo {
   // The resource
   ResourceKey key = 1;
 
-  // Size of the full resource body
-  int32 resource_size = 2;
+  // Repository name
+  string name = 2;
 
   // Hash for the resource
-  string resource_hash = 3;
-
-  // The origin name
-  string origin = 4;
-
-  // Path on the origin
-  string path = 5;
+  string path = 3;
 
   // Verification hash from the origin
-  string hash = 6;
+  string hash = 4;
 
   // Change time from the origin
-  int64 timestamp = 7;
+  int64 timestamp = 5;
 }
 
-message OriginResponse {
-  repeated ResourceOriginInfo items = 1;
+message RepositoryListResponse {
+  // Item iterator
+  repeated RepositoryResourceInfo items = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;
 
-  // ResourceVersion of the list response
-  int64 resource_version = 3;
+  // Error details
+  ErrorResult error = 3;
+}
+
+// Count the items that exist with
+message RepositoryStatsRequest {
+  // Namespace (tenant)
+  string namespace = 1;
+  
+  // The name of the repository
+  // (eventually empty to count across all repositories)
+  string repository = 2;
+}
+
+// Count the items that exist with
+message RepositoryStatsResponse {
+  message KindCount {
+    string group = 1;
+    string resource = 2;
+    int64 count = 3;
+  }
+
+  // Stats keyed by the repository name
+  map<string,KindCount> stats = 1;
 
   // Error details
-  ErrorResult error = 4;
+  ErrorResult error = 2;
 }
 
 message HealthCheckRequest {
@@ -609,7 +628,7 @@ message ResourceTableColumnDefinition {
   // Defines the column type.  In k8s, this will resolve into both the type and format fields
   ColumnType type = 2;
 
-  // The value is an arry of given type
+  // The value is an array of given type
   bool is_array = 3;
 
   // description is a human readable description of this column.
@@ -774,9 +793,16 @@ service ResourceIndex {
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
+}
 
-  // Used for efficient provisioning
-  rpc Origin(OriginRequest) returns (OriginResponse);
+// Query repository info from the search index.  
+// Results access control is based on access to the repository *not* the items
+service RepositoryIndex {
+  // Describe how many resources of each type exist within a repository
+  rpc RepositoryStats(RepositoryStatsRequest) returns (RepositoryStatsResponse);
+
+  // List the resources of a specific kind within a repository
+  rpc RepositoryList(RepositoryListRequest) returns (RepositoryListResponse);
 }
 
 service BlobStore {
