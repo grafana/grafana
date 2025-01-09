@@ -229,17 +229,21 @@ export function runWatchStream(
             .split('\n')
             .forEach((line) => {
               if (line?.length) {
-                const msg: StreamMessage = JSON.parse(line);
+                try {
+                  const msg: StreamMessage = JSON.parse(line);
 
-                data.fields[0].values.push(msg.time);
-                data.fields[1].values.push(msg.message);
-                data.fields[2].values.push(msg.value);
+                  data.fields[0].values.push(msg.time);
+                  data.fields[1].values.push(msg.message);
+                  data.fields[2].values.push(msg.value);
 
-                subscriber.next({
-                  data: [data],
-                  key: streamId,
-                  state: LoadingState.Streaming,
-                });
+                  subscriber.next({
+                    data: [data],
+                    key: streamId,
+                    state: LoadingState.Streaming,
+                  });
+                } catch (err) {
+                  console.warn('error parsing line', line, err);
+                }
               }
             });
         },
