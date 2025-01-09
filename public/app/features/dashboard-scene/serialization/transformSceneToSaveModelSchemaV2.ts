@@ -399,11 +399,7 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
     }
 
     if (repeater.state.repeatedPanels) {
-      const itemHeight = repeater.state.itemHeight ?? 10;
-      const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
-      const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
-      const w = 24 / columnCount;
-      const h = itemHeight;
+      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
       const panels = repeater.state.repeatedPanels!.map((panel, index) => {
         let x = 0,
           y = 0;
@@ -443,6 +439,14 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
     }
     return [];
   }
+}
+
+function calculateGridItemDimensions(repeater: DashboardGridItem) {
+  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const w = 24 / columnCount;
+  const h = repeater.state.itemHeight ?? 10;
+  return { h, w, columnCount };
 }
 
 function getVariables(oldDash: DashboardSceneState) {
