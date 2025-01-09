@@ -245,9 +245,12 @@ func (b *bleveIndex) Flush() (err error) {
 	return err
 }
 
-// Origin implements resource.DocumentIndex.
-func (b *bleveIndex) Origin(ctx context.Context, req *resource.OriginRequest) (*resource.OriginResponse, error) {
-	panic("unimplemented")
+func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
+	return nil, fmt.Errorf("not implemented yet...")
+}
+
+func (b *bleveIndex) RepositoryStats(context.Context, *resource.RepositoryStatsRequest) (*resource.RepositoryStatsResponse, error) {
+	return nil, fmt.Errorf("not implemented yet...")
 }
 
 // Search implements resource.DocumentIndex.

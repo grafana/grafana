@@ -95,7 +95,8 @@ type searchSupport struct {
 }
 
 var (
-	_ ResourceIndexServer = (*searchSupport)(nil)
+	_ ResourceIndexServer   = (*searchSupport)(nil)
+	_ RepositoryIndexServer = (*searchSupport)(nil)
 )
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
@@ -136,9 +137,22 @@ func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryRespo
 	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
 }
 
-// Origin implements ResourceIndexServer.
-func (s *searchSupport) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
-	return nil, fmt.Errorf("TBD.. rename to repository")
+func (s *searchSupport) RepositoryList(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error) {
+	idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
+		Group:     req.Key.Group,
+		Namespace: req.Key.Namespace,
+		Resource:  req.Key.Resource,
+	})
+	if err != nil {
+		return &RepositoryListResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+	return idx.RepositoryList(ctx, req)
+}
+
+func (s *searchSupport) RepositoryStats(context.Context, *RepositoryStatsRequest) (*RepositoryStatsResponse, error) {
+	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
 }
 
 // Search implements ResourceIndexServer.

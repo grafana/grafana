@@ -330,9 +330,12 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	return list, err
 }
 
-// Used for efficient provisioning
-func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
-	return nil, fmt.Errorf("not yet (origin)")
+func (a *dashboardSqlAccess) RepositoryList(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
+	return nil, fmt.Errorf("not implemented yet...")
+}
+
+func (a *dashboardSqlAccess) RepositoryStats(context.Context, *resource.RepositoryStatsRequest) (*resource.RepositoryStatsResponse, error) {
+	return nil, fmt.Errorf("not implemented yet...")
 }
 
 // GetStats implements ResourceServer.
