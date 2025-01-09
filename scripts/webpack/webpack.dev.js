@@ -37,7 +37,7 @@ module.exports = (env = {}) => {
     mode: 'development',
 
     entry: {
-      app: './public/app/index.ts',
+      app: ['./public/app/emotion.ts', './public/app/index.ts'],
       dark: './public/sass/grafana.dark.scss',
       light: './public/sass/grafana.light.scss',
     },
