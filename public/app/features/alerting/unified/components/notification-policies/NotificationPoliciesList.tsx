@@ -11,7 +11,7 @@ import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/
 import { ERROR_NEWER_CONFIGURATION } from 'app/features/alerting/unified/utils/k8s/errors';
 import { isErrorMatchingCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { computeInheritedTree } from 'app/features/alerting/unified/utils/notification-policies';
-import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 
@@ -119,13 +119,18 @@ export const NotificationPoliciesList = () => {
     if (!rootRoute) {
       return;
     }
-
     const newRouteTree = mergePartialAmRouteWithRouteTree(selectedAlertmanager ?? '', partialRoute, rootRoute);
-    await updateNotificationPolicyRoute.execute({ newRoute: newRouteTree, oldRoute: defaultPolicy });
-    handleActionResult({ error: updateNotificationPolicyRouteState.error, selectedAlertmanager });
+    await safeHandleAction(newRouteTree);
   }
 
-  function handleActionResult({ error, selectedAlertmanager }: { error?: Error; selectedAlertmanager?: string }) {
+  async function safeHandleAction(newRouteTree: Route) {
+    try {
+      await updateNotificationPolicyRoute.execute({ newRoute: newRouteTree, oldRoute: defaultPolicy });
+      handleActionResult({ error: updateNotificationPolicyRouteState.error, selectedAlertmanager });
+    } catch (error) {}
+  }
+
+  async function handleActionResult({ error, selectedAlertmanager }: { error?: Error; selectedAlertmanager?: string }) {
     if (!error) {
       appNotification.success('Updated notification policies');
     }
@@ -143,8 +148,7 @@ export const NotificationPoliciesList = () => {
       return;
     }
     const newRouteTree = omitRouteFromRouteTree(route, rootRoute);
-    await updateNotificationPolicyRoute.execute({ newRoute: newRouteTree, oldRoute: defaultPolicy });
-    handleActionResult({ error: updateNotificationPolicyRouteState.error, selectedAlertmanager });
+    await safeHandleAction(newRouteTree);
   }
 
   async function handleAdd(
@@ -163,8 +167,7 @@ export const NotificationPoliciesList = () => {
       rootRoute,
       insertPosition
     );
-    await updateNotificationPolicyRoute.execute({ newRoute: newRouteTree, oldRoute: defaultPolicy });
-    handleActionResult({ error: updateNotificationPolicyRouteState.error, selectedAlertmanager });
+    await safeHandleAction(newRouteTree);
   }
 
   const updatingTree = updateNotificationPolicyRouteState.status === 'loading';

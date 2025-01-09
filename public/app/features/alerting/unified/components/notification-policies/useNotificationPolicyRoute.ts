@@ -14,6 +14,7 @@ import {
 } from '../../openapi/routesApi.gen';
 import { updateRouteAction } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 import { getK8sNamespace, isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
@@ -73,6 +74,9 @@ export function useUpdateNotificationPolicyRoute({ alertmanager }: BaseAlertmana
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
+  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+  const [getAlertmanagerConfiguration] = useLazyGetAlertmanagerConfigurationQuery();
+
   const updateUsingK8sApi = useAsync(({ newRoute }: { newRoute: Route }) => {
     const namespace = getK8sNamespace();
     const { routes, _metadata, ...defaults } = newRoute;
@@ -102,6 +106,15 @@ export function useUpdateNotificationPolicyRoute({ alertmanager }: BaseAlertmana
 
   const updateRouteUsingConfigFileApi = useAsync(
     async ({ newRoute, oldRoute }: CreateUpdateRouteArgs & { oldRoute: Route }) => {
+      const { _metadata, ...oldRouteStripped } = oldRoute;
+      const lastConfig = await getAlertmanagerConfiguration(alertmanager).unwrap();
+      const latestRouteFromConfig = lastConfig.alertmanager_config.route;
+
+      const configChangedInMeantime = JSON.stringify(oldRouteStripped) !== JSON.stringify(latestRouteFromConfig);
+
+      if (configChangedInMeantime) {
+        throw new Error('configuration modification conflict', { cause: ERROR_NEWER_CONFIGURATION });
+      }
       const action = updateRouteAction({ newRoute, oldRoute });
       return produceNewAlertmanagerConfiguration(action);
     }
