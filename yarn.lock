@@ -2691,17 +2691,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.27.2":
-  version: 0.27.2
-  resolution: "@floating-ui/react@npm:0.27.2"
+"@floating-ui/react@npm:0.27.3":
+  version: 0.27.3
+  resolution: "@floating-ui/react@npm:0.27.3"
   dependencies:
     "@floating-ui/react-dom": "npm:^2.1.2"
-    "@floating-ui/utils": "npm:^0.2.8"
+    "@floating-ui/utils": "npm:^0.2.9"
     tabbable: "npm:^6.0.0"
   peerDependencies:
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
-  checksum: 10/c9ff0d7216cc7b51f066e8927852ba014bf51c79e48a1837f99760750df37fc3ed010dcdc89e57e673e2740e3bd2b91ccdcc6ccd13ec927950110a18b6b9cefa
+  checksum: 10/91eef58241b2225420fa73dfc501934463310489e08f2a0681b320e0c639c9ee59044ab66645f2901b74a88328208ff4cc4afabe93917a7a28f9d18037965cb6
   languageName: node
   linkType: hard
 
@@ -2719,10 +2719,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/utils@npm:^0.2.0, @floating-ui/utils@npm:^0.2.8":
-  version: 0.2.8
-  resolution: "@floating-ui/utils@npm:0.2.8"
-  checksum: 10/3e3ea3b2de06badc4baebdf358b3dbd77ccd9474a257a6ef237277895943db2acbae756477ec64de65a2a1436d94aea3107129a1feeef6370675bf2b161c1abc
+"@floating-ui/utils@npm:^0.2.0, @floating-ui/utils@npm:^0.2.8, @floating-ui/utils@npm:^0.2.9":
+  version: 0.2.9
+  resolution: "@floating-ui/utils@npm:0.2.9"
+  checksum: 10/0ca786347db3dd8d9034b86d1449fabb96642788e5900cc5f2aee433cd7b243efbcd7a165bead50b004ee3f20a90ddebb6a35296fc41d43cfd361b6f01b69ffb
   languageName: node
   linkType: hard
 
@@ -3485,7 +3485,7 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:11.5.0-pre"
-    "@leeoniya/ufuzzy": "npm:1.0.17"
+    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@rollup/plugin-node-resolve": "npm:16.0.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
@@ -3668,7 +3668,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
-    "@floating-ui/react": "npm:0.27.2"
+    "@floating-ui/react": "npm:0.27.3"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/experimental": "npm:2.1.6"
@@ -3678,7 +3678,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:11.5.0-pre"
     "@hello-pangea/dnd": "npm:17.0.0"
-    "@leeoniya/ufuzzy": "npm:1.0.17"
+    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
@@ -3969,14 +3969,14 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
-    "@floating-ui/react": "npm:0.27.2"
+    "@floating-ui/react": "npm:0.27.3"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@hello-pangea/dnd": "npm:17.0.0"
-    "@leeoniya/ufuzzy": "npm:1.0.17"
+    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@monaco-editor/react": "npm:4.6.0"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.20"
@@ -4675,10 +4675,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:1.0.17, @leeoniya/ufuzzy@npm:^1.0.16":
-  version: 1.0.17
-  resolution: "@leeoniya/ufuzzy@npm:1.0.17"
-  checksum: 10/8d4decc209dddae3b90908837f6064634e1d79af889fcfc799890e5598289238a348fabdff3a13a4efe22d1adf163334e746423324314a720fb4969b1b483769
+"@leeoniya/ufuzzy@npm:1.0.18, @leeoniya/ufuzzy@npm:^1.0.16":
+  version: 1.0.18
+  resolution: "@leeoniya/ufuzzy@npm:1.0.18"
+  checksum: 10/3d7e160a3a21cdcdf0c0b78893340b3231b905ab4787e63d39068ee0ad75cc71ae99572c2117cd3466e3d32bfe0290b97d4ccda9e522f7998b24a04c2c466a31
   languageName: node
   linkType: hard
 
@@ -9158,10 +9158,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/diff@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "@types/diff@npm:6.0.0"
-  checksum: 10/ad2dc8ca9e7594c7d06b60832ef1a51c717e39fd92434043be35a5a5a038f61ee7e1b9e89d1e2a49b8c4fa0f020166d1d41f7ccbd62f6cadc9ca1bd3e5df4e5b
+"@types/diff@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "@types/diff@npm:7.0.0"
+  checksum: 10/11464fe70a81a0d02fdaad4ff4b0a0a5ac71825fa32dde9a98a1a82b1cac50dda302fb1621bea71db6c254e00ce002ea14543cc3502ac44f012598ca2c0fbcae
   languageName: node
   linkType: hard
 
@@ -14633,6 +14633,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"diff@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "diff@npm:7.0.0"
+  checksum: 10/e9b8e48d054c9c0c093c65ce8e2637af94b35f2427001607b14e5e0589e534ea3413a7f91ebe6d7c5a1494ace49cb7c7c3972f442ddd96a4767ff091999a082e
+  languageName: node
+  linkType: hard
+
 "dir-glob@npm:^3.0.1":
   version: 3.0.1
   resolution: "dir-glob@npm:3.0.1"
@@ -17605,7 +17612,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.27.2"
+    "@floating-ui/react": "npm:0.27.3"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.6.0"
@@ -17635,7 +17642,7 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@hello-pangea/dnd": "npm:17.0.0"
     "@kusto/monaco-kusto": "npm:^10.0.0"
-    "@leeoniya/ufuzzy": "npm:1.0.17"
+    "@leeoniya/ufuzzy": "npm:1.0.18"
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
@@ -17681,7 +17688,7 @@ __metadata:
     "@types/d3-force": "npm:^3.0.0"
     "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/diff": "npm:^6.0.0"
+    "@types/diff": "npm:^7.0.0"
     "@types/eslint": "npm:9.6.1"
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/file-saver": "npm:2.0.7"
@@ -17767,7 +17774,7 @@ __metadata:
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
-    diff: "npm:^5.1.0"
+    diff: "npm:^7.0.0"
     esbuild: "npm:0.24.2"
     esbuild-loader: "npm:4.2.2"
     esbuild-plugin-browserslist: "npm:^0.15.0"
