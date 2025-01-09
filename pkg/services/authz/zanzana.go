@@ -45,9 +45,8 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
 		tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			// TODO: fix config reading in zanzana
-			Token:            "mytoken",
-			TokenExchangeURL: "qwerty",
+			Token:            cfg.Zanzana.Token,
+			TokenExchangeURL: cfg.Zanzana.TokenExchangeURL,
 		})
 		if err != nil {
 			return nil, err
@@ -184,9 +183,8 @@ func (z *Zanzana) start(ctx context.Context) error {
 			authnlib.VerifierConfig{
 				AllowedAudiences: []string{zanzanaAudience},
 			},
-			// TODO: fix reading proper config value (inside zanzana config)
 			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
-				SigningKeysURL: "qwerty",
+				SigningKeysURL: z.cfg.Zanzana.SigningKeysURL,
 			}),
 		),
 	)
