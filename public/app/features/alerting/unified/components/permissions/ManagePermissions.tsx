@@ -30,7 +30,7 @@ export const ManagePermissionsDrawer = ({
   const defaultTitle = t('alerting.manage-permissions.title', 'Manage permissions');
   return (
     <Drawer onClose={onClose} title={title || defaultTitle} subtitle={resourceName}>
-      <Permissions {...permissionsProps} canSetPermissions></Permissions>
+      <Permissions {...permissionsProps} canSetPermissions />
     </Drawer>
   );
 };

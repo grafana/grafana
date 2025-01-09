@@ -40,13 +40,13 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <div className={styles.firstAlertManagerLine}></div>
+        <div className={styles.firstAlertManagerLine} />
         <div className={styles.alertManagerName}>
           Alertmanager:
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
           {alertManagerName}
         </div>
-        <div className={styles.secondAlertManagerLine}></div>
+        <div className={styles.secondAlertManagerLine} />
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
         <ContactPointSelector alertManager={alertManagerName} onSelectContactPoint={onSelectContactPoint} />

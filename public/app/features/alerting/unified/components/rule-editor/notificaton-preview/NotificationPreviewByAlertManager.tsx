@@ -49,13 +49,13 @@ function NotificationPreviewByAlertManager({
     <div className={styles.alertManagerRow}>
       {!onlyOneAM && (
         <Stack direction="row" alignItems="center">
-          <div className={styles.firstAlertManagerLine}></div>
+          <div className={styles.firstAlertManagerLine} />
           <div className={styles.alertManagerName}>
             <Trans i18nKey="alerting.notification-preview.alertmanager">Alertmanager:</Trans>
             <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
             {alertManagerSource.name}
           </div>
-          <div className={styles.secondAlertManagerLine}></div>
+          <div className={styles.secondAlertManagerLine} />
         </Stack>
       )}
       <Stack gap={1} direction="column">
