@@ -551,6 +551,6 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
 replace (
-	github.com/grafana/grafana/pkg/codegen => ./pkg/codegen
-	github.com/grafana/grafana/pkg/plugins/codegen => ./pkg/plugins/codegen
+	github.com/grafana/grafana/pkg/codegen => ./pkg/codegen // @grafana/grafana-as-code
+	github.com/grafana/grafana/pkg/plugins/codegen => ./pkg/plugins/codegen // @grafana/grafana-as-code
 )
