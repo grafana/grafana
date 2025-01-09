@@ -249,6 +249,17 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(jj))
+
+		counts, err := index.RepositoryObjectCount(ctx, "repo-1")
+		require.NoError(t, err)
+		require.Equal(t, int64(2), counts["repo-1"])
+
+		counts, err = index.RepositoryObjectCount(ctx, "")
+		require.NoError(t, err)
+		require.Equal(t, map[string]int64{
+			"repo-1": 2,
+			"repo2":  1,
+		}, counts)
 	})
 
 	t.Run("build folders", func(t *testing.T) {

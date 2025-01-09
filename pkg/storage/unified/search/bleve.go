@@ -255,7 +255,7 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 		size = int(req.Limit)
 	}
 
-	found, err := b.index.Search(&bleve.SearchRequest{
+	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: &query.TermQuery{
 			Term:     req.Name,
 			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
@@ -326,8 +326,39 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 	return rsp, nil
 }
 
-func (b *bleveIndex) RepositoryStats(context.Context, *resource.RepositoryStatsRequest) (*resource.RepositoryStatsResponse, error) {
-	return nil, fmt.Errorf("not implemented yet")
+func (b *bleveIndex) RepositoryObjectCount(ctx context.Context, repo string) (map[string]int64, error) {
+	rsp := make(map[string]int64)
+	if repo == "" {
+		found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
+			Query: bleve.NewMatchAllQuery(),
+			Size:  0,
+			Facets: bleve.FacetsRequest{
+				"xxx": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		f, ok := found.Facets["xxx"]
+		if ok && f.Terms != nil {
+			for _, v := range f.Terms.Terms() {
+				rsp[v.Term] = int64(v.Count)
+			}
+		}
+	} else {
+		found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
+			Query: &query.TermQuery{
+				Term:     repo,
+				FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
+			},
+			Size: 0,
+		})
+		if err != nil {
+			return nil, err
+		}
+		rsp[repo] = int64(found.Total)
+	}
+	return rsp, nil
 }
 
 // Search implements resource.DocumentIndex.

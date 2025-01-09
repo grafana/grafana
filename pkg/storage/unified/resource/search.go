@@ -46,8 +46,8 @@ type ResourceIndex interface {
 	// List within an response
 	RepositoryList(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error)
 
-	// Stats within a response
-	RepositoryStats(ctx context.Context, req *RepositoryStatsRequest) (*RepositoryStatsResponse, error)
+	// Count the values in a repo -- when empty, all repos at once
+	RepositoryObjectCount(ctx context.Context, repo string) (map[string]int64, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
