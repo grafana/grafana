@@ -1803,14 +1803,29 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandling",
-        "resourceVersion": "1736255708514",
+        "resourceVersion": "1736440595516",
         "creationTimestamp": "2024-09-17T10:54:39Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-07 13:15:08.514525 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-09 16:36:35.516462 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enable improved support for OAuth and SAML external sessions in Grafana",
+        "description": "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "improvedExternalSessionHandlingSAML",
+        "resourceVersion": "1736440619329",
+        "creationTimestamp": "2025-01-09T16:33:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-09 16:36:59.329967 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
