@@ -145,9 +145,15 @@ func TestAzureSettings(t *testing.T) {
 			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("token_url", "URL_1")
 			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("client_authentication", "METHOD_1")
+			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("client_id", "ID_1")
 			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("client_secret", "SECRET_1")
+			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("managed_identity_client_id", "MANAGED_ID_1")
+			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("federated_credential_audience", "AUDIENCE_1")
 			require.NoError(t, err)
 
 			azureSection, err := cfg.Raw.NewSection("azure")
@@ -161,8 +167,11 @@ func TestAzureSettings(t *testing.T) {
 
 			assert.True(t, cfg.Azure.UserIdentityEnabled)
 			assert.Equal(t, "URL_1", cfg.Azure.UserIdentityTokenEndpoint.TokenUrl)
+			assert.Equal(t, "METHOD_1", cfg.Azure.UserIdentityTokenEndpoint.ClientAuthentication)
 			assert.Equal(t, "ID_1", cfg.Azure.UserIdentityTokenEndpoint.ClientId)
 			assert.Equal(t, "SECRET_1", cfg.Azure.UserIdentityTokenEndpoint.ClientSecret)
+			assert.Equal(t, "MANAGED_ID_1", cfg.Azure.UserIdentityTokenEndpoint.ManagedIdentityClientId)
+			assert.Equal(t, "AUDIENCE_1", cfg.Azure.UserIdentityTokenEndpoint.FederatedCredentialAudience)
 		})
 
 		t.Run("should not use token endpoint from Azure AD if not enabled", func(t *testing.T) {
@@ -174,9 +183,15 @@ func TestAzureSettings(t *testing.T) {
 			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("token_url", "URL_1")
 			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("client_authentication", "METHOD_1")
+			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("client_id", "ID_1")
 			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("client_secret", "SECRET_1")
+			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("managed_identity_client_id", "MANAGED_ID_1")
+			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("federated_credential_audience", "AUDIENCE_1")
 			require.NoError(t, err)
 
 			azureSection, err := cfg.Raw.NewSection("azure")
@@ -190,8 +205,11 @@ func TestAzureSettings(t *testing.T) {
 
 			assert.True(t, cfg.Azure.UserIdentityEnabled)
 			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.TokenUrl)
+			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.ClientAuthentication)
 			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.ClientId)
 			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.ClientSecret)
+			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.ManagedIdentityClientId)
+			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.FederatedCredentialAudience)
 		})
 
 		t.Run("should override Azure AD settings", func(t *testing.T) {
@@ -203,9 +221,15 @@ func TestAzureSettings(t *testing.T) {
 			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("token_url", "URL_1")
 			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("client_authentication", "METHOD_1")
+			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("client_id", "ID_1")
 			require.NoError(t, err)
 			_, err = azureAdSection.NewKey("client_secret", "SECRET_1")
+			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("managed_identity_client_id", "MANAGED_ID_1")
+			require.NoError(t, err)
+			_, err = azureAdSection.NewKey("federated_credential_audience", "AUDIENCE_1")
 			require.NoError(t, err)
 
 			azureSection, err := cfg.Raw.NewSection("azure")
@@ -214,9 +238,15 @@ func TestAzureSettings(t *testing.T) {
 			require.NoError(t, err)
 			_, err = azureSection.NewKey("user_identity_token_url", "URL_2")
 			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_client_authentication", "METHOD_2")
+			require.NoError(t, err)
 			_, err = azureSection.NewKey("user_identity_client_id", "ID_2")
 			require.NoError(t, err)
 			_, err = azureSection.NewKey("user_identity_client_secret", "SECRET_2")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_managed_identity_client_id", "MANAGED_ID_2")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_federated_credential_audience", "AUDIENCE_2")
 			require.NoError(t, err)
 
 			cfg.readAzureSettings()
@@ -225,8 +255,11 @@ func TestAzureSettings(t *testing.T) {
 
 			assert.True(t, cfg.Azure.UserIdentityEnabled)
 			assert.Equal(t, "URL_2", cfg.Azure.UserIdentityTokenEndpoint.TokenUrl)
+			assert.Equal(t, "METHOD_2", cfg.Azure.UserIdentityTokenEndpoint.ClientAuthentication)
 			assert.Equal(t, "ID_2", cfg.Azure.UserIdentityTokenEndpoint.ClientId)
 			assert.Equal(t, "SECRET_2", cfg.Azure.UserIdentityTokenEndpoint.ClientSecret)
+			assert.Equal(t, "MANAGED_ID_2", cfg.Azure.UserIdentityTokenEndpoint.ManagedIdentityClientId)
+			assert.Equal(t, "AUDIENCE_2", cfg.Azure.UserIdentityTokenEndpoint.FederatedCredentialAudience)
 		})
 
 		t.Run("should not use secret from Azure AD if client ID overridden", func(t *testing.T) {

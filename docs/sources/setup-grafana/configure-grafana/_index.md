@@ -1271,6 +1271,12 @@ Override token URL for Azure Active Directory.
 
 By default is the same as token URL configured for AAD authentication settings.
 
+### user_identity_client_authentication
+
+Override client authentication method for Azure Active Directory.
+
+By default is the same as client authentication method configured for AAD authentication settings
+
 ### user_identity_client_id
 
 Override ADD application ID which would be used to exchange users token to an access token for the datasource.
@@ -1282,6 +1288,18 @@ By default is the same as used in AAD authentication or can be set to another ap
 Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
+
+### user_identity_managed_identity_client_id
+
+Override the AAD managed identity client ID.
+
+By default is the same as used in AAD authentication or can be set to another managed identity (for OBO flow).
+
+### user_identity_federated_credential_audience
+
+Override the AAD federated credential audience.
+
+By default is the same as used in AAD authentication or can be set to another audience (for OBO flow).
 
 ### forward_settings_to_plugins
 
