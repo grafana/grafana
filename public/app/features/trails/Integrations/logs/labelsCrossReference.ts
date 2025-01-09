@@ -2,11 +2,11 @@ import { filter, firstValueFrom, map } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 
 import { RelatedLogsScene } from '../../RelatedLogs/RelatedLogsScene';
 import { VAR_FILTERS } from '../../shared';
-import { getTrailFor } from '../../utils';
+import { getTrailFor, isAdHocVariable } from '../../utils';
 
 import { createMetricsLogsConnector, type FoundLokiDataSource } from './base';
 
@@ -35,7 +35,7 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
           maxDataPoints: 1,
         });
         sqr.subscribeToState((newState) => {
-          if (newState.data?.state !== 'Done') {
+          if (newState.data?.state !== LoadingState.Done) {
             return;
           }
           const hasLogs = Boolean(
@@ -67,7 +67,7 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
       const trail = getTrailFor(scene);
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
 
-      if (!(filtersVariable instanceof AdHocFiltersVariable) || !filtersVariable.state.filters.length) {
+      if (!isAdHocVariable(filtersVariable) || !filtersVariable.state.filters.length) {
         return '';
       }
 
