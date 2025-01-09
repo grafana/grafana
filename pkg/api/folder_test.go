@@ -533,7 +533,7 @@ func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext
 func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
 
 func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
-	testuser := &user.User{ID: 99, UID: "fdxsqt7t5ryf4a", Login: "testuser"}
+	testuser := &user.SignedInUser{UserID: 99, UserUID: "fdxsqt7t5ryf4a", Login: "testuser"}
 
 	legacyFolder := folder.Folder{
 		UID:          "ady4yobv315a8e",
@@ -718,7 +718,7 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 						ExpectedResult: model.HitList{},
 					}
 					hs.userService = &usertest.FakeUserService{
-						ExpectedUser: testuser,
+						ExpectedSignedInUser: testuser,
 					}
 					hs.Features = featuremgmt.WithFeatures(
 						featuresArr...,
