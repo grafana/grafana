@@ -17,6 +17,14 @@ func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMap
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
+	nameMapping := &mapping.FieldMapping{
+		Name:     resource.SEARCH_FIELD_NAME,
+		Type:     "text",
+		Analyzer: keyword.Name,
+		Index:    true,
+	}
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
+
 	// for sorting by title
 	titleSortMapping := bleve.NewKeywordFieldMapping()
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_SORT, titleSortMapping)

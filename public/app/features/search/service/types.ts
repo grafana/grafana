@@ -17,7 +17,7 @@ export interface SearchQuery {
   tags?: string[];
   kind?: string[];
   panel_type?: string;
-  uid?: string[];
+  name?: string[];
   facet?: FacetField[];
   explain?: boolean;
   withAllowedActions?: boolean;

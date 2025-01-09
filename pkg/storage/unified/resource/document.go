@@ -53,6 +53,9 @@ type IndexableDocument struct {
 	// The resource key
 	Key *ResourceKey `json:"key"`
 
+	// The k8s name
+	Name string `json:"name,omitempty"`
+
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
 
@@ -162,6 +165,7 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	doc := &IndexableDocument{
 		Key:       key,
 		RV:        rv,
+		Name:      key.Name,
 		Title:     title,                  // We always want *something* to display
 		TitleSort: strings.ToLower(title), // Lowercase for case-insensitive sorting
 		Labels:    obj.GetLabels(),

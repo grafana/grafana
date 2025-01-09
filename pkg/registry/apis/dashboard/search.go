@@ -303,18 +303,18 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
-	// The ids filter
-	ids, ok := queryParams["uid"]
+	// The names filter
+	names, ok := queryParams["name"]
 	if ok {
 		if searchRequest.Options.Fields == nil {
 			searchRequest.Options.Fields = []*resource.Requirement{}
 		}
-		idFilter := []*resource.Requirement{{
-			Key:      "_id",
-			Operator: "=",
-			Values:   ids,
+		namesFilter := []*resource.Requirement{{
+			Key:      "name",
+			Operator: "in",
+			Values:   names,
 		}}
-		searchRequest.Options.Fields = append(searchRequest.Options.Fields, idFilter...)
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
 	// Run the query
