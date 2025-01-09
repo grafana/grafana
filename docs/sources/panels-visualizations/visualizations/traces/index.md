@@ -173,7 +173,7 @@ The **Span filters** options control the initial state of the span filters when 
 
 * **Find in trace**: Set the initial value for the span search to focus on spans relevant to your query.
 * **Show matches only** toggle: Display only spans that match the defined filter criteria, simplifying trace interpretation.
-* **Show critical path only**: Highlight only the spans in the critical path to identify performance bottlenecks and their impact on overall latency.
+* **Show critical path only** - Toggle the switch on to highlight only the spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency.
 * **Service name** and **Service name operator**: Define a specific service or pattern to narrow the analysis to spans related to particular services.
 * **Span name** and **Span name operator**: Filter spans by name or pattern to focus on specific span types or processes.
 * **Min duration** and **Max duration**: Set duration thresholds to exclude spans outside the desired time range, aiding in performance optimization.
