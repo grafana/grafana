@@ -1,7 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilterItem.tsx
 import { useCallback, useRef } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { Combobox, ComboboxOption } from '@grafana/ui';
@@ -21,7 +20,7 @@ export interface LabelFilterItemProps {
   onDelete: () => void;
   invalidLabel?: boolean;
   invalidValue?: boolean;
-  getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<ComboboxOption[]>;
   debounceDuration: number;
 }
 
@@ -76,27 +75,23 @@ export function LabelFilterItemCombobox({
     [item, onGetLabelNames]
   );
 
-  const labelValuesRef = useRef<PrevOptions>();
   const loadLabelValues = useCallback(
     async (query: string): Promise<Array<ComboboxOption<string>>> => {
-      const [prevItem, prevLabelValues] = labelValuesRef.current ?? [];
+      // If no query, just return all values
+      if (query === '') {
+        const values = await onGetLabelValues(item);
+        return values;
+      }
 
-      // PR TODO: incomplete logic not copied from LabelFilterItem.tsx.
-      // I think we need to:
-      // - when query is empty, call onGetLabelValues
-      // - when we have a query, call getLabelValuesAutofillSuggestions(query, item.label)
-
-      // This function is called on each key press, but the GetLabelNames API doesn't support filtering.
-      // We lazily request the label names and then cache it for the each time the user types.
-      const labelValues = prevItem === item && prevLabelValues ? prevLabelValues : await onGetLabelValues(item);
-      labelValuesRef.current = [item, labelValues];
-
-      return labelValues.filter((label) => label.value.includes(query));
+      // Otherwise use Prometheus API to filter values
+      const filteredValues = await getLabelValuesAutofillSuggestions(query, item.label);
+      return filteredValues;
     },
-    [item, onGetLabelValues]
+    [item, onGetLabelValues, getLabelValuesAutofillSuggestions]
   );
 
-  if (isMultiSelect() && itemValue) {
+  if (isMultiSelect()) {
+    throw new Error('multi select is not supported with combobox yet');
     return <div>multi select is not supported with combobox yet</div>;
   }
 
@@ -107,7 +102,6 @@ export function LabelFilterItemCombobox({
         <Combobox
           placeholder="Select label"
           data-testid={selectors.components.QueryBuilder.labelSelect}
-          // inputId="prometheus-dimensions-filter-item-key"
           width="auto"
           minWidth={4} // PR TODO: check this
           value={item.label ?? null}
@@ -150,7 +144,6 @@ export function LabelFilterItemCombobox({
         <Combobox
           placeholder="Select value"
           data-testid={selectors.components.QueryBuilder.valueSelect}
-          // inputId="prometheus-dimensions-filter-item-value"
           width="auto"
           minWidth={4} // PR TODO: check this
           // TODO: isMulti() check would be put back here

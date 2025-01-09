@@ -83,7 +83,7 @@ export function MetricsLabelsSection({
   const getLabelValuesAutocompleteSuggestions = (
     queryString?: string,
     labelName?: string
-  ): Promise<SelectableValue[]> => {
+  ): Promise<ComboboxOption[]> => {
     const forLabel = {
       label: labelName ?? '__name__',
       op: '=~',
@@ -100,14 +100,14 @@ export function MetricsLabelsSection({
       value: datasource.interpolateString(labelObject.value),
     }));
     const expr = promQueryModeller.renderLabels(interpolatedLabelsToConsider);
-    let response: Promise<SelectableValue[]>;
+    let response: Promise<ComboboxOption[]>;
     if (datasource.hasLabelsMatchAPISupport()) {
       response = getLabelValuesFromLabelValuesAPI(forLabel, expr);
     } else {
       response = getLabelValuesFromSeriesAPI(forLabel, expr);
     }
 
-    return response.then((response: SelectableValue[]) => {
+    return response.then((response: ComboboxOption[]) => {
       truncateResult(response);
       return response;
     });
@@ -121,7 +121,7 @@ export function MetricsLabelsSection({
   const getLabelValuesFromSeriesAPI = (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
-  ): Promise<SelectableValue[]> => {
+  ): Promise<ComboboxOption[]> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
@@ -147,7 +147,7 @@ export function MetricsLabelsSection({
   const getLabelValuesFromLabelValuesAPI = (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
-  ): Promise<SelectableValue[]> => {
+  ): Promise<ComboboxOption[]> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }

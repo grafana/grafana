@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 
 import { selectOptionInTest } from '../../test/helpers/selectOptionInTest';
 import { getLabelSelects } from '../testUtils';
@@ -11,137 +12,309 @@ import { getLabelSelects } from '../testUtils';
 import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, LabelFiltersProps } from './LabelFilters';
 
 describe('LabelFilters', () => {
-  it('truncates list of label names to 1000', async () => {
-    const manyMockValues = [...Array(1001).keys()].map((idx: number) => {
-      return { label: 'random_label' + idx };
+  describe('with select', () => {
+    beforeAll(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        prometheusUsesCombobox: false,
+      });
     });
 
-    setup({ onGetLabelNames: jest.fn().mockResolvedValue(manyMockValues) });
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
 
-    await openLabelNamesSelect();
+    it('truncates list of label names to 1000', async () => {
+      const manyMockValues = [...Array(1001).keys()].map((idx: number) => {
+        return { label: 'random_label' + idx };
+      });
 
-    await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(1000));
-  });
+      setup({ onGetLabelNames: jest.fn().mockResolvedValue(manyMockValues) });
 
-  it('renders empty input without labels', async () => {
-    setup();
-    expect(screen.getAllByText('Select label')).toHaveLength(1);
-    expect(screen.getAllByText('Select value')).toHaveLength(1);
-    expect(screen.getByText(/=/)).toBeInTheDocument();
-    expect(getAddButton()).toBeInTheDocument();
-  });
+      await openLabelNamesSelect();
 
-  it('renders multiple labels', async () => {
-    setup({
-      labelsFilters: [
+      await waitFor(() => expect(screen.getAllByTestId(selectors.components.Select.option)).toHaveLength(1000));
+    });
+
+    it('renders empty input without labels', async () => {
+      setup();
+      expect(screen.getAllByText('Select label')).toHaveLength(1);
+      expect(screen.getAllByText('Select value')).toHaveLength(1);
+      expect(screen.getByText(/=/)).toBeInTheDocument();
+      expect(getAddButton()).toBeInTheDocument();
+    });
+
+    it('renders multiple labels', async () => {
+      setup({
+        labelsFilters: [
+          { label: 'foo', op: '=', value: 'bar' },
+          { label: 'baz', op: '!=', value: 'qux' },
+          { label: 'quux', op: '=~', value: 'quuz' },
+        ],
+      });
+      expect(screen.getByText(/foo/)).toBeInTheDocument();
+      expect(screen.getByText(/bar/)).toBeInTheDocument();
+      expect(screen.getByText(/baz/)).toBeInTheDocument();
+      expect(screen.getByText(/qux/)).toBeInTheDocument();
+      expect(screen.getByText(/quux/)).toBeInTheDocument();
+      expect(screen.getByText(/quuz/)).toBeInTheDocument();
+      expect(getAddButton()).toBeInTheDocument();
+    });
+
+    it('renders multiple values for regex selectors', async () => {
+      setup({
+        labelsFilters: [
+          { label: 'bar', op: '!~', value: 'baz|bat|bau' },
+          { label: 'foo', op: '!~', value: 'fop|for|fos' },
+        ],
+      });
+      expect(screen.getByText(/bar/)).toBeInTheDocument();
+      expect(screen.getByText(/baz/)).toBeInTheDocument();
+      expect(screen.getByText(/bat/)).toBeInTheDocument();
+      expect(screen.getByText(/bau/)).toBeInTheDocument();
+      expect(screen.getByText(/foo/)).toBeInTheDocument();
+      expect(screen.getByText(/for/)).toBeInTheDocument();
+      expect(screen.getByText(/fos/)).toBeInTheDocument();
+      expect(getAddButton()).toBeInTheDocument();
+    });
+
+    it('adds new label', async () => {
+      const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
+      await userEvent.click(getAddButton());
+      expect(screen.getAllByText('Select label')).toHaveLength(1);
+      expect(screen.getAllByText('Select value')).toHaveLength(1);
+      const { name, value } = getLabelSelects(1);
+      await selectOptionInTest(name, 'baz');
+      await selectOptionInTest(value, 'qux');
+      expect(onChange).toHaveBeenCalledWith([
         { label: 'foo', op: '=', value: 'bar' },
-        { label: 'baz', op: '!=', value: 'qux' },
-        { label: 'quux', op: '=~', value: 'quuz' },
-      ],
+        { label: 'baz', op: '=', value: 'qux' },
+      ]);
     });
-    expect(screen.getByText(/foo/)).toBeInTheDocument();
-    expect(screen.getByText(/bar/)).toBeInTheDocument();
-    expect(screen.getByText(/baz/)).toBeInTheDocument();
-    expect(screen.getByText(/qux/)).toBeInTheDocument();
-    expect(screen.getByText(/quux/)).toBeInTheDocument();
-    expect(screen.getByText(/quuz/)).toBeInTheDocument();
-    expect(getAddButton()).toBeInTheDocument();
-  });
 
-  it('renders multiple values for regex selectors', async () => {
-    setup({
-      labelsFilters: [
-        { label: 'bar', op: '!~', value: 'baz|bat|bau' },
-        { label: 'foo', op: '!~', value: 'fop|for|fos' },
-      ],
+    it('removes label', async () => {
+      const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
+      await userEvent.click(screen.getByLabelText(/remove-foo/));
+      expect(onChange).toHaveBeenCalledWith([]);
     });
-    expect(screen.getByText(/bar/)).toBeInTheDocument();
-    expect(screen.getByText(/baz/)).toBeInTheDocument();
-    expect(screen.getByText(/bat/)).toBeInTheDocument();
-    expect(screen.getByText(/bau/)).toBeInTheDocument();
-    expect(screen.getByText(/foo/)).toBeInTheDocument();
-    expect(screen.getByText(/for/)).toBeInTheDocument();
-    expect(screen.getByText(/fos/)).toBeInTheDocument();
-    expect(getAddButton()).toBeInTheDocument();
-  });
 
-  it('adds new label', async () => {
-    const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
-    await userEvent.click(getAddButton());
-    expect(screen.getAllByText('Select label')).toHaveLength(1);
-    expect(screen.getAllByText('Select value')).toHaveLength(1);
-    const { name, value } = getLabelSelects(1);
-    await selectOptionInTest(name, 'baz');
-    await selectOptionInTest(value, 'qux');
-    expect(onChange).toHaveBeenCalledWith([
-      { label: 'foo', op: '=', value: 'bar' },
-      { label: 'baz', op: '=', value: 'qux' },
-    ]);
-  });
-
-  it('removes label', async () => {
-    const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
-    await userEvent.click(screen.getByLabelText(/remove-foo/));
-    expect(onChange).toHaveBeenCalledWith([]);
-  });
-
-  it('removes label but preserves a label with a value of empty string', async () => {
-    const { onChange } = setup({
-      labelsFilters: [
+    it('removes label but preserves a label with a value of empty string', async () => {
+      const { onChange } = setup({
+        labelsFilters: [
+          { label: 'lab', op: '=', value: 'bel' },
+          { label: 'foo', op: '=', value: 'bar' },
+          { label: 'le', op: '=', value: '' },
+        ],
+      });
+      await userEvent.click(screen.getByLabelText(/remove-foo/));
+      expect(onChange).toHaveBeenCalledWith([
         { label: 'lab', op: '=', value: 'bel' },
-        { label: 'foo', op: '=', value: 'bar' },
         { label: 'le', op: '=', value: '' },
-      ],
+      ]);
+      expect(screen.queryByText('bar')).toBeNull();
     });
-    await userEvent.click(screen.getByLabelText(/remove-foo/));
-    expect(onChange).toHaveBeenCalledWith([
-      { label: 'lab', op: '=', value: 'bel' },
-      { label: 'le', op: '=', value: '' },
-    ]);
-    expect(screen.queryByText('bar')).toBeNull();
+
+    it('renders empty input when labels are deleted from outside ', async () => {
+      const { rerender } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
+      expect(screen.getByText(/foo/)).toBeInTheDocument();
+      expect(screen.getByText(/bar/)).toBeInTheDocument();
+      rerender(
+        <LabelFilters
+          onChange={jest.fn()}
+          onGetLabelNames={jest.fn()}
+          getLabelValuesAutofillSuggestions={jest.fn()}
+          onGetLabelValues={jest.fn()}
+          labelsFilters={[]}
+          debounceDuration={300}
+        />
+      );
+      expect(screen.getAllByText('Select label')).toHaveLength(1);
+      expect(screen.getAllByText('Select value')).toHaveLength(1);
+      expect(screen.getByText(/=/)).toBeInTheDocument();
+      expect(getAddButton()).toBeInTheDocument();
+    });
+
+    it('does split regex in the middle of a label value when the value contains the char |', () => {
+      setup({ labelsFilters: [{ label: 'foo', op: '=~', value: 'boop|par' }] });
+
+      expect(screen.getByText('boop')).toBeInTheDocument();
+      expect(screen.getByText('par')).toBeInTheDocument();
+    });
+
+    it('does not split regex in between parentheses inside of a label value that contains the char |', () => {
+      setup({ labelsFilters: [{ label: 'foo', op: '=~', value: '(b|p)ar' }] });
+
+      expect(screen.getByText('(b|p)ar')).toBeInTheDocument();
+    });
+
+    it('shows error when filter with empty strings  and label filter is required', async () => {
+      setup({ labelsFilters: [{ label: '', op: '=', value: '' }], labelFilterRequired: true });
+      expect(screen.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeInTheDocument();
+    });
+
+    it('shows error when no filter and label filter is required', async () => {
+      setup({ labelsFilters: [], labelFilterRequired: true });
+      expect(screen.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeInTheDocument();
+    });
   });
 
-  it('renders empty input when labels are deleted from outside ', async () => {
-    const { rerender } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
-    expect(screen.getByText(/foo/)).toBeInTheDocument();
-    expect(screen.getByText(/bar/)).toBeInTheDocument();
-    rerender(
-      <LabelFilters
-        onChange={jest.fn()}
-        onGetLabelNames={jest.fn()}
-        getLabelValuesAutofillSuggestions={jest.fn()}
-        onGetLabelValues={jest.fn()}
-        labelsFilters={[]}
-        debounceDuration={300}
-      />
-    );
-    expect(screen.getAllByText('Select label')).toHaveLength(1);
-    expect(screen.getAllByText('Select value')).toHaveLength(1);
-    expect(screen.getByText(/=/)).toBeInTheDocument();
-    expect(getAddButton()).toBeInTheDocument();
-  });
+  describe('with combobox', () => {
+    beforeAll(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        prometheusUsesCombobox: true,
+      });
 
-  it('does split regex in the middle of a label value when the value contains the char |', () => {
-    setup({ labelsFilters: [{ label: 'foo', op: '=~', value: 'boop|par' }] });
+      const mockGetBoundingClientRect = jest.fn(() => ({
+        width: 120,
+        height: 120,
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+      }));
 
-    expect(screen.getByText('boop')).toBeInTheDocument();
-    expect(screen.getByText('par')).toBeInTheDocument();
-  });
+      Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+        value: mockGetBoundingClientRect,
+      });
+    });
 
-  it('does not split regex in between parentheses inside of a label value that contains the char |', () => {
-    setup({ labelsFilters: [{ label: 'foo', op: '=~', value: '(b|p)ar' }] });
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
 
-    expect(screen.getByText('(b|p)ar')).toBeInTheDocument();
-  });
+    it('renders empty input without labels', async () => {
+      setup();
+      expect(screen.getAllByPlaceholderText('Select label')).toHaveLength(1);
+      expect(screen.getAllByPlaceholderText('Select value')).toHaveLength(1);
+      expect(screen.getByDisplayValue(/=/)).toBeInTheDocument();
+      expect(getAddButton()).toBeInTheDocument();
+    });
 
-  it('shows error when filter with empty strings  and label filter is required', async () => {
-    setup({ labelsFilters: [{ label: '', op: '=', value: '' }], labelFilterRequired: true });
-    expect(screen.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeInTheDocument();
-  });
+    // Combobox does not support multi select yet
+    // it('renders multiple labels', async () => {
+    //   setup({
+    //     labelsFilters: [
+    //       { label: 'foo', op: '=', value: 'bar' },
+    //       { label: 'baz', op: '!=', value: 'qux' },
+    //       { label: 'quux', op: '=~', value: 'quuz' },
+    //     ],
+    //   });
+    //   expect(screen.getByText(/foo/)).toBeInTheDocument();
+    //   expect(screen.getByText(/bar/)).toBeInTheDocument();
+    //   expect(screen.getByText(/baz/)).toBeInTheDocument();
+    //   expect(screen.getByText(/qux/)).toBeInTheDocument();
+    //   expect(screen.getByText(/quux/)).toBeInTheDocument();
+    //   expect(screen.getByText(/quuz/)).toBeInTheDocument();
+    //   expect(getAddButton()).toBeInTheDocument();
+    // });
 
-  it('shows error when no filter and label filter is required', async () => {
-    setup({ labelsFilters: [], labelFilterRequired: true });
-    expect(screen.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeInTheDocument();
+    // Combobox does not support multi select yet
+    // it('renders multiple values for regex selectors', async () => {
+    //   setup({
+    //     labelsFilters: [
+    //       { label: 'bar', op: '!~', value: 'baz|bat|bau' },
+    //       // { label: 'foo', op: '!~', value: 'fop|for|fos' },
+    //     ],
+    //   });
+    //   expect(screen.getByText(/bar/)).toBeInTheDocument();
+    //   expect(screen.getByText(/baz/)).toBeInTheDocument();
+    //   expect(screen.getByText(/bat/)).toBeInTheDocument();
+    //   expect(screen.getByText(/bau/)).toBeInTheDocument();
+    //   // expect(screen.getByText(/foo/)).toBeInTheDocument();
+    //   // expect(screen.getByText(/for/)).toBeInTheDocument();
+    //   // expect(screen.getByText(/fos/)).toBeInTheDocument();
+    //   expect(getAddButton()).toBeInTheDocument();
+    // });
+
+    it('adds new label', async () => {
+      const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
+      await userEvent.click(getAddButton());
+
+      expect(screen.getAllByPlaceholderText('Select label')).toHaveLength(2);
+      expect(screen.getAllByPlaceholderText('Select value')).toHaveLength(2);
+
+      const nameCombobox = screen.getAllByPlaceholderText('Select label')[1];
+      await userEvent.click(nameCombobox);
+      const nameOption = await screen.findByRole('option', { name: 'baz' });
+      await userEvent.click(nameOption);
+
+      const valueCombobox = screen.getAllByPlaceholderText('Select value')[1];
+      await userEvent.click(valueCombobox);
+      const valueOption = await screen.findByRole('option', { name: 'qux' });
+      await userEvent.click(valueOption);
+
+      expect(onChange).toHaveBeenCalledWith([
+        { label: 'foo', op: '=', value: 'bar' },
+        { label: 'baz', op: '=', value: 'qux' },
+      ]);
+    });
+
+    it('removes label', async () => {
+      const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
+      await userEvent.click(screen.getByLabelText(/remove-foo/));
+      expect(onChange).toHaveBeenCalledWith([]);
+    });
+
+    it('removes label but preserves a label with a value of empty string', async () => {
+      const { onChange } = setup({
+        labelsFilters: [
+          { label: 'lab', op: '=', value: 'bel' },
+          { label: 'foo', op: '=', value: 'bar' },
+          { label: 'le', op: '=', value: '' },
+        ],
+      });
+      await userEvent.click(screen.getByLabelText(/remove-foo/));
+      expect(onChange).toHaveBeenCalledWith([
+        { label: 'lab', op: '=', value: 'bel' },
+        { label: 'le', op: '=', value: '' },
+      ]);
+      expect(screen.queryByText('bar')).toBeNull();
+    });
+
+    it('renders empty input when labels are deleted from outside ', async () => {
+      const { rerender } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
+
+      expect(screen.getByPlaceholderText('Select label')).toHaveValue('foo');
+      expect(screen.getByPlaceholderText('Select value')).toHaveValue('bar');
+
+      rerender(
+        <LabelFilters
+          onChange={jest.fn()}
+          onGetLabelNames={jest.fn()}
+          getLabelValuesAutofillSuggestions={jest.fn()}
+          onGetLabelValues={jest.fn()}
+          labelsFilters={[]}
+          debounceDuration={300}
+        />
+      );
+      expect(screen.getByPlaceholderText('Select label')).toHaveValue('');
+      expect(screen.getByPlaceholderText('Select value')).toHaveValue('');
+      expect(screen.getByDisplayValue(/=/)).toBeInTheDocument();
+
+      expect(getAddButton()).toBeInTheDocument();
+    });
+
+    it('does split regex in the middle of a label value when the value contains the char |', () => {
+      setup({ labelsFilters: [{ label: 'foo', op: '=~', value: 'boop|par' }] });
+
+      expect(screen.getByText('boop')).toBeInTheDocument();
+      expect(screen.getByText('par')).toBeInTheDocument();
+    });
+
+    it('does not split regex in between parentheses inside of a label value that contains the char |', () => {
+      setup({ labelsFilters: [{ label: 'foo', op: '=~', value: '(b|p)ar' }] });
+
+      expect(screen.getByText('(b|p)ar')).toBeInTheDocument();
+    });
+
+    it('shows error when filter with empty strings  and label filter is required', async () => {
+      setup({ labelsFilters: [{ label: '', op: '=', value: '' }], labelFilterRequired: true });
+      expect(screen.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeInTheDocument();
+    });
+
+    it('shows error when no filter and label filter is required', async () => {
+      setup({ labelsFilters: [], labelFilterRequired: true });
+      expect(screen.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeInTheDocument();
+    });
   });
 });
 

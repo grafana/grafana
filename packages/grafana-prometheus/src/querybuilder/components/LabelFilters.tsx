@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { ComboboxOption, InlineFieldRow, InlineLabel } from '@grafana/ui';
@@ -22,7 +21,7 @@ export interface LabelFiltersProps {
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<ComboboxOption[]>;
   /** If set to true, component will show error message until at least 1 filter is selected */
   labelFilterRequired?: boolean;
-  getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<ComboboxOption[]>;
   debounceDuration: number;
   variableEditor?: boolean;
 }
