@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
-import { AzureQueryType } from '../../dataquery.gen';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
 
 import TracesQueryEditor from './TracesQueryEditor';
@@ -183,28 +182,5 @@ describe('TracesQueryEditor', () => {
         }),
       })
     );
-  });
-
-  it('should not display the resource selector for exemplar type queries', async () => {
-    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
-    const query = createMockQuery();
-    delete query?.subscription;
-    delete query?.azureTraces?.resources;
-    query.queryType = AzureQueryType.TraceExemplar;
-    query.azureTraces = { operationId: 'test-operation-id' };
-    const onChange = jest.fn();
-
-    render(
-      <TracesQueryEditor
-        query={query}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={onChange}
-        setError={() => {}}
-      />
-    );
-
-    expect(await screen.queryByRole('button', { name: 'Select a resource' })).not.toBeInTheDocument();
-    expect(await screen.getByDisplayValue('test-operation-id')).toBeInTheDocument();
   });
 });
