@@ -177,7 +177,7 @@ export class BackendSrv implements BackendService {
           if (disconnect) {
             // this happens when we unsubscribe before the connection is done
             console.info('cancel reading', result.url);
-            reader.cancel('disconnected');
+            result.data.cancel('disconnect');
           }
           observer.complete();
         }
