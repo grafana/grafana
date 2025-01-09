@@ -375,11 +375,9 @@ export async function updateOtelData(
 
   const isEnabledInLocalStorage = getOtelExperienceToggleState();
 
-  // only update the variable state and hide if the otel experience is enabled
+  // We respect that if users have it turned off in local storage we keep it off unless the toggle is switched
   if (!isEnabledInLocalStorage) {
-    // show the var filters normally
-    // if the local storage OTel is turned off and someone clicks a link or opens a bookmark with OTel, we reset
-    trail.resetOtelExperience();
+    trail.resetOtelExperience(hasOtelResources, nonPromotedOtelResources);
   } else {
     // 1. Cases of how to add filters to the otelmetricsvar
     //  -- when we set these on instantiation, we need to check that we are not double setting them
@@ -500,7 +498,7 @@ export async function updateOtelData(
       nonPromotedOtelResources,
       initialOtelCheckComplete: true,
       resettingOtel: false,
-      afterFirstDSChange: true,
+      afterFirstOtelCheck: true,
       isUpdatingOtel: false,
     });
   } else {
@@ -509,7 +507,7 @@ export async function updateOtelData(
       otelTargets,
       otelJoinQuery,
       resettingOtel: false,
-      afterFirstDSChange: true,
+      afterFirstOtelCheck: true,
       isUpdatingOtel: false,
     });
   }

@@ -82,7 +82,7 @@ export interface DataTrailState extends SceneObjectState {
   nonPromotedOtelResources?: string[];
   initialOtelCheckComplete?: boolean; // updated after the first otel check
   startButtonClicked?: boolean; // from original landing page
-  afterFirstDSChange?: boolean; // when starting there is always a DS var change from variable dependency
+  afterFirstOtelCheck?: boolean; // when starting there is always a DS var change from variable dependency
   resettingOtel?: boolean; // when switching OTel off from the switch
   isUpdatingOtel?: boolean;
   // moved into settings
@@ -198,7 +198,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
 
-        if (this.state.afterFirstDSChange) {
+        if (this.state.afterFirstOtelCheck) {
           // we need a new check for OTel
           this.setState({ initialOtelCheckComplete: false });
           // clear out the OTel filters, do not clear out var filters
@@ -355,16 +355,34 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
       const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange, getSelectedScopes());
       const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
-      // get the non promoted resources
-      // THIS COULD BE THE FULL CHECK
+      // loading from the url with otel resources selected will result in turning on OTel experience
+      const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, this);
+      let previouslyUsedOtelResources = false;
+      if (otelResourcesVariable instanceof AdHocFiltersVariable) {
+        previouslyUsedOtelResources = otelResourcesVariable.state.filters.length > 0;
+      }
+
+      // Future refactor: non promoted resources could be the full check
       //   - remove hasOtelResources
       //   - remove deployment environments as a check
       const nonPromotedOtelResources = await getNonPromotedOtelResources(datasourceUid, timeRange);
-      // HERE WE START THE OTEL EXPERIENCE ENGINE
-      // 1. Set deployment variable values
-      // 2. update all other variables and state
-      // 3. the first check 'startButtonClicked' button should turn it off but pass later if the toggle is turned on
-      if (hasOtelResources && nonPromotedOtelResources && !this.state.startButtonClicked) {
+
+      // We only turn on otel experience when we update it the whole experience
+      // The conditions to use this function are
+      // 1. must be an otel data source
+      // 2. Do not trn it on if the start button was clicked
+      // 3. Url or bookmark has previous otel filters
+      // 4. We are restting OTel with the toggle switch
+      if (
+        hasOtelResources &&
+        nonPromotedOtelResources && // it is an otel data source
+        !this.state.startButtonClicked && // we are not starting from the start button
+        (previouslyUsedOtelResources || this.state.resettingOtel) // there are otel filters or we are restting
+      ) {
+        // HERE WE START THE OTEL EXPERIENCE ENGINE
+        // 1. Set deployment variable values
+        // 2. update all other variables and state
+        // 3. the first check 'startButtonClicked' button should turn it off but pass later if the toggle is turned on
         updateOtelData(
           this,
           datasourceUid,
@@ -428,7 +446,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         useOtelExperience: false,
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
-        afterFirstDSChange: true,
+        afterFirstOtelCheck: true,
         initialOtelCheckComplete: true,
         isUpdatingOtel: false,
       });
@@ -438,7 +456,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
         useOtelExperience: false,
-        afterFirstDSChange: true,
+        afterFirstOtelCheck: true,
         initialOtelCheckComplete: true,
         isUpdatingOtel: false,
       });
@@ -469,12 +487,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     useEffect(() => {
-      // do not check otel until the data source is loaded
-      if (model.datasourceHelper._metricsMetadata === undefined) {
-        return;
-      }
-      // check if the otel experience has been enabled
-      if (!useOtelExperience) {
+      if (!useOtelExperience && model.state.afterFirstOtelCheck) {
         // if the experience has been turned off, reset the otel variables
         model.resetOtelExperience();
       } else {

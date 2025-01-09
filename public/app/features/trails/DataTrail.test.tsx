@@ -528,7 +528,6 @@ describe('DataTrail', () => {
 
     beforeEach(() => {
       trail = new DataTrail({
-        useOtelExperience: true,
         nonPromotedOtelResources,
         // before checking, things should be hidden
         initialOtelCheckComplete: false,
@@ -537,7 +536,7 @@ describe('DataTrail', () => {
       activateFullSceneTree(trail);
       getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
     });
-
+    // default otel experience to off
     it('clicking start button should start with OTel off and showing var filters', () => {
       trail.setState({ startButtonClicked: true });
       const otelResourcesHide = getOtelResourcesVar(trail).state.hide;
@@ -565,9 +564,9 @@ describe('DataTrail', () => {
       // it should preserve var filters when it resets
     });
 
-    describe('after the initial OTel check the subscription to Otel and metrics var should update other variables', () => {
+    describe('when otel is on the subscription to Otel and metrics var should update other variables', () => {
       beforeEach(() => {
-        trail.setState({ initialOtelCheckComplete: true });
+        trail.setState({ initialOtelCheckComplete: true, useOtelExperience: true });
       });
 
       it('should automatically update the otel resources var when a non promoted resource has been selected from VAR_OTEL_AND_METRICS', () => {
@@ -599,12 +598,6 @@ describe('DataTrail', () => {
         getOtelAndMetricsVar(trail).setState({ filters: [{ key: 'promoted', operator: '=', value: 'resource' }] });
         expect(trail.state.history.state.steps[2].type).toBe('filters');
       });
-    });
-
-    // tests for the DS change with OTel here
-    describe('changing the DS when using OTel', () => {
-      // does not reset OTel if on initialization
-      // does reset otel after initialization before next check
     });
   });
 });
