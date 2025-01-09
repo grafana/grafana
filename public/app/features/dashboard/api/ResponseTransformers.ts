@@ -22,6 +22,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   transformCursorSynctoEnum,
@@ -226,6 +227,11 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 
   // iterate over panels
   for (const p of panels) {
+    // FIXME: for now we should skip row panels
+    if (p.type === 'row') {
+      continue;
+    }
+
     const queries = getPanelQueries(
       (p.targets as unknown as DataQuery[]) || [],
       p.datasource || getDefaultDatasource()
@@ -291,20 +297,23 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 }
 
 function getDefaultDatasourceType() {
-  const datasources = config.datasources;
-  // find default datasource in datasources
-  return Object.values(datasources).find((ds) => ds.isDefault)!.type;
+  // if there is no default datasource, return 'grafana' as default
+  return getDefaultDataSourceRef()?.type ?? 'grafana';
 }
 
-function getDefaultDatasource(): DataSourceRef {
-  const datasources = config.datasources;
+export function getDefaultDatasource(): DataSourceRef {
+  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
 
-  // find default datasource in datasources
-  const defaultDs = Object.values(datasources).find((ds) => ds.isDefault)!;
+  if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
+    // get api version from config
+    const dsInstance = config.bootData.settings.datasources[configDefaultDS.uid];
+    configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
+  }
+
   return {
-    apiVersion: defaultDs.apiVersion,
-    type: defaultDs.type,
-    uid: defaultDs.uid,
+    apiVersion: configDefaultDS.apiVersion,
+    type: configDefaultDS.type,
+    uid: configDefaultDS.uid,
   };
 }
 
@@ -407,7 +416,8 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         variables.push(dv);
         break;
       default:
-        throw new Error(`Variable transformation not implemented: ${v.type}`);
+        // do not throw error, just log it
+        console.error(`Variable transformation not implemented: ${v.type}`);
     }
   }
   return variables;

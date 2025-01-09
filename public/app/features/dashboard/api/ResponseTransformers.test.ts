@@ -9,12 +9,72 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { getPanelQueries, ResponseTransformers } from './ResponseTransformers';
+import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
+      settings: {
+        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
+        datasources: {
+          PromTest: {
+            uid: 'xyz-abc',
+            name: 'PromTest',
+            id: 'prometheus',
+            meta: {
+              id: 'prometheus',
+              name: 'PromTest',
+              type: 'datasource',
+            },
+            isDefault: true,
+            apiVersion: 'v2',
+          },
+          '-- Grafana --': {
+            uid: 'grafana',
+            name: '-- Grafana --',
+            id: 'grafana',
+            meta: {
+              id: 'grafana',
+              name: '-- Grafana --',
+              type: 'datasource',
+            },
+            isDefault: false,
+          },
+        },
+
+        defaultDatasource: 'PromTest',
+      },
+    },
+  },
+}));
+
 describe('ResponseTransformers', () => {
+  describe('getDefaultDataSource', () => {
+    it('should return prometheus as default', () => {
+      expect(getDefaultDatasource()).toEqual({
+        apiVersion: 'v2',
+        uid: 'PromTest',
+        type: 'prometheus',
+      });
+    });
+  });
+
+  describe('getDefaultDataSourceRef', () => {
+    it('should return prometheus as default', () => {
+      expect(getDefaultDataSourceRef()).toEqual({
+        uid: 'PromTest',
+        type: 'prometheus',
+      });
+    });
+  });
+
   describe('v1 -> v2 transformation', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
       const dashboardV1: DashboardDataDTO = {
