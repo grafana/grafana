@@ -352,7 +352,8 @@ func Test_GetUserByID(t *testing.T) {
 			userService := &usertest.FakeUserService{ExpectedUserProfileDTO: &user.UserProfileDTO{}}
 			authnService := &authntest.FakeService{
 				ExpectedClientConfig: &authntest.FakeSSOClientConfig{
-					ExpectedIsSkipOrgRoleSyncEnabled: tc.skipOrgRoleSync,
+					ExpectedIsSkipOrgRoleSyncEnabled:         tc.skipOrgRoleSync,
+					ExpectedIsAllowAssignGrafanaAdminEnabled: tc.allowAssignGrafanaAdmin,
 				},
 				EnabledClients: []string{},
 			}
@@ -360,7 +361,9 @@ func Test_GetUserByID(t *testing.T) {
 
 			switch tc.authModule {
 			case login.GenericOAuthModule:
-				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled, SkipOrgRoleSync: tc.skipOrgRoleSync}
+				if tc.authEnabled {
+					authnService.EnabledClients = []string{authn.ClientWithPrefix("generic_oauth")}
+				}
 			case login.JWTModule:
 				cfg.JWTAuth.Enabled = tc.authEnabled
 				cfg.JWTAuth.SkipOrgRoleSync = tc.skipOrgRoleSync
