@@ -1188,6 +1188,9 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 }
 
 func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, orgID int64, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+	if orgID == 0 {
+		orgID = 1
+	}
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := dr.getK8sContext(ctx)
@@ -1214,7 +1217,8 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	annotations[utils.AnnoKeyRepoName] = provisioning.Name
 	annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
 	annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
-	annotations[utils.AnnoKeyRepoTimestamp] = string(provisioning.Updated)
+	// TODO: make this work
+	//annotations[utils.AnnoKeyRepoTimestamp] = string(provisioning.Updated)
 	obj.SetAnnotations(annotations)
 
 	var out *unstructured.Unstructured
