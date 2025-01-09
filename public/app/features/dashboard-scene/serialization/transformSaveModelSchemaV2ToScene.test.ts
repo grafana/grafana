@@ -37,6 +37,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -314,6 +315,44 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanels.length).toBe(1);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  describe('When creating a snapshot dashboard scene', () => {
+    it('should initialize a dashboard scene with SnapshotVariables', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            'grafana.app/dashboard-is-snapshot': true,
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      // check variables were converted to snapshot variables
+      expect(scene.state.$variables?.state.variables).toHaveLength(8);
+      expect(scene.state.$variables?.getByName('customVar')).toBeInstanceOf(SnapshotVariable);
+      expect(scene.state.$variables?.getByName('adhocVar')).toBeInstanceOf(AdHocFiltersVariable);
+      expect(scene.state.$variables?.getByName('intervalVar')).toBeInstanceOf(SnapshotVariable);
+      // custom snapshot
+      const customSnapshot = scene.state.$variables?.getByName('customVar') as SnapshotVariable;
+      expect(customSnapshot.state.value).toBe('option1');
+      expect(customSnapshot.state.text).toBe('option1');
+      expect(customSnapshot.state.isReadOnly).toBe(true);
+      // adhoc snapshot
+      const adhocSnapshot = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      const adhocVariable = snapshot.spec.variables[7] as AdhocVariableKind;
+      expect(adhocSnapshot.state.filters).toEqual(adhocVariable.spec.filters);
+      expect(adhocSnapshot.state.readOnly).toBe(true);
+      // interval snapshot
+      const intervalSnapshot = scene.state.$variables?.getByName('intervalVar') as SnapshotVariable;
+      expect(intervalSnapshot.state.value).toBe('1m');
+      expect(intervalSnapshot.state.text).toBe('1m');
+      expect(intervalSnapshot.state.isReadOnly).toBe(true);
+    });
   });
 
   describe('meta', () => {

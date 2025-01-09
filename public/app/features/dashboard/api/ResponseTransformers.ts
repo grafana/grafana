@@ -17,6 +17,8 @@ import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
   AnnoKeyDashboardId,
+  AnnoKeyDashboardIsSnapshot,
+  AnnoKeyDashboardSnapshotOriginalUrl,
   AnnoKeyFolder,
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
@@ -56,17 +58,51 @@ export function ensureV2Response(
   const variables = getVariables(dashboard.templating?.list || []);
   const annotations = getAnnotations(dashboard.annotations?.list || []);
 
-  const accessAndMeta = isDashboardResource(dto)
-    ? {
-        ...dto.access,
-        created: dto.metadata.creationTimestamp,
-        createdBy: dto.metadata.annotations?.[AnnoKeyCreatedBy],
-        updatedBy: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
-        updated: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
-        folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
-        slug: dto.metadata.annotations?.[AnnoKeySlug],
-      }
-    : dto.meta;
+  let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
+  let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
+  let creationTimestamp;
+
+  if (isDashboardResource(dto)) {
+    accessMeta = dto.access;
+    annotationsMeta = {
+      [AnnoKeyCreatedBy]: dto.metadata.annotations?.[AnnoKeyCreatedBy],
+      [AnnoKeyUpdatedBy]: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
+      [AnnoKeyUpdatedTimestamp]: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+      [AnnoKeyFolder]: dto.metadata.annotations?.[AnnoKeyFolder],
+      [AnnoKeySlug]: dto.metadata.annotations?.[AnnoKeySlug],
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
+      [AnnoKeyDashboardIsSnapshot]: dto.metadata.annotations?.[AnnoKeyDashboardIsSnapshot],
+    };
+    creationTimestamp = dto.metadata.creationTimestamp;
+  } else {
+    accessMeta = {
+      url: dto.meta.url,
+      slug: dto.meta.slug,
+      canSave: dto.meta.canSave,
+      canEdit: dto.meta.canEdit,
+      canDelete: dto.meta.canDelete,
+      canShare: dto.meta.canShare,
+      canStar: dto.meta.canStar,
+      canAdmin: dto.meta.canAdmin,
+      annotationsPermissions: dto.meta.annotationsPermissions,
+    };
+    annotationsMeta = {
+      [AnnoKeyCreatedBy]: dto.meta.createdBy,
+      [AnnoKeyUpdatedBy]: dto.meta.updatedBy,
+      [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
+      [AnnoKeyFolder]: dto.meta.folderUid,
+      [AnnoKeySlug]: dto.meta.slug,
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
+      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
+    };
+    creationTimestamp = dto.meta.created;
+  }
+
+  if (annotationsMeta?.[AnnoKeyDashboardIsSnapshot]) {
+    annotationsMeta[AnnoKeyDashboardSnapshotOriginalUrl] = dashboard.snapshot?.originalUrl;
+  }
 
   const spec: DashboardV2Spec = {
     title: dashboard.title,
@@ -101,31 +137,13 @@ export function ensureV2Response(
     apiVersion: 'v2alpha1',
     kind: 'DashboardWithAccessInfo',
     metadata: {
-      creationTimestamp: accessAndMeta.created || '', // TODO verify this empty string is valid
+      creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
       name: dashboard.uid,
       resourceVersion: dashboard.version?.toString() || '0',
-      annotations: {
-        [AnnoKeyCreatedBy]: accessAndMeta.createdBy,
-        [AnnoKeyUpdatedBy]: accessAndMeta.updatedBy,
-        [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
-        [AnnoKeyFolder]: accessAndMeta.folderUid,
-        [AnnoKeySlug]: accessAndMeta.slug,
-        [AnnoKeyDashboardId]: dashboard.id ?? undefined,
-        [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      },
+      annotations: annotationsMeta,
     },
     spec,
-    access: {
-      url: accessAndMeta.url || '',
-      canAdmin: accessAndMeta.canAdmin,
-      canDelete: accessAndMeta.canDelete,
-      canEdit: accessAndMeta.canEdit,
-      canSave: accessAndMeta.canSave,
-      canShare: accessAndMeta.canShare,
-      canStar: accessAndMeta.canStar,
-      slug: accessAndMeta.slug,
-      annotationsPermissions: accessAndMeta.annotationsPermissions,
-    },
+    access: accessMeta,
   };
 }
 
