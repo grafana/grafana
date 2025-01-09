@@ -810,23 +810,21 @@ func TestIsExternallySynced(t *testing.T) {
 func TestIsProviderEnabled(t *testing.T) {
 	testcases := []struct {
 		name                string
-		oauthInfo           *social.OAuthInfo
 		provider            string
 		enabledAuthnClients []string
 		expected            bool
 	}{
-		// github
 		{
-			name:      "Github should return true if enabled",
-			oauthInfo: &social.OAuthInfo{Enabled: true},
-			provider:  loginservice.GithubAuthModule,
-			expected:  true,
+			name:                "Github should return true if enabled",
+			provider:            loginservice.GithubAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix(strings.TrimPrefix(loginservice.GithubAuthModule, "oauth_"))},
+			expected:            true,
 		},
 		{
-			name:      "Github should return false if not enabled",
-			oauthInfo: &social.OAuthInfo{Enabled: false},
-			provider:  loginservice.GithubAuthModule,
-			expected:  false,
+			name:                "Github should return false if not enabled",
+			provider:            loginservice.GithubAuthModule,
+			enabledAuthnClients: []string{},
+			expected:            false,
 		},
 		// saml
 		{
@@ -850,7 +848,7 @@ func TestIsProviderEnabled(t *testing.T) {
 					EnabledClients: tc.enabledAuthnClients,
 				},
 			}
-			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider, tc.oauthInfo))
+			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider))
 		})
 	}
 }

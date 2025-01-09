@@ -450,7 +450,7 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 // then isExternallySynced will be true for this one provider and false for the others
 func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
 	// provider enabled in config
-	if !hs.isProviderEnabled(cfg, authModule, oauthInfo) {
+	if !hs.isProviderEnabled(cfg, authModule) {
 		return false
 	}
 	// first check SAML, LDAP and JWT
@@ -492,19 +492,17 @@ func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, oauthInfo
 	}
 }
 
-func (hs *HTTPServer) isProviderEnabled(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
+func (hs *HTTPServer) isProviderEnabled(cfg *setting.Cfg, authModule string) bool {
 	switch authModule {
 	case loginservice.SAMLAuthModule:
-		return hs.samlEnabled()
+		return hs.authnService.IsClientEnabled(authn.ClientSAML)
 	case loginservice.LDAPAuthModule:
 		return cfg.LDAPAuthEnabled
 	case loginservice.JWTModule:
 		return cfg.JWTAuth.Enabled
 	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
-		if oauthInfo == nil {
-			return false
-		}
-		return oauthInfo.Enabled
+		client := authn.ClientWithPrefix(strings.TrimPrefix(authModule, "oauth_"))
+		return hs.authnService.IsClientEnabled(client)
 	}
 	return false
 }
