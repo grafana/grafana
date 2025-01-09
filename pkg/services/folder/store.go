@@ -51,5 +51,6 @@ type Store interface {
 	// GetDescendants returns all descendants of a folder
 	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*Folder, error)
 
+	// FindFolders returns the folders which match the conditions set by the query argument.
 	FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error)
 }

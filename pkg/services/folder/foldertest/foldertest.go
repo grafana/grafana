@@ -3,6 +3,7 @@ package foldertest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -54,4 +55,9 @@ func (s *FakeService) GetDescendantCounts(ctx context.Context, q *folder.GetDesc
 
 func (s *FakeService) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
+}
+
+func (s *FakeService) FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	// #TODO figure out what the implementation of this method should be for the fake service
+	return nil, nil
 }
