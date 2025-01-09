@@ -18,9 +18,9 @@ export class NoRelatedLogsScene extends SceneObjectBase<SceneObjectState> {
         </Text>
         <Text>
           <Trans i18nKey="explore-metrics.related-logs.relatedLogsUnavailable">
-            Related logs are not available for this metric. To see related logs, you can either:
+            No related logs found. To see related logs, you can either:
             <ul className={styles.list}>
-              <li>add a label filter to find logs with the same labels as the currently-selected metric</li>
+              <li>adjust the label filter to find logs with the same labels as the currently-selected metric</li>
               <li>
                 select a metric created by a{' '}
                 <TextLink external href="https://grafana.com/docs/loki/latest/alert/#recording-rules">

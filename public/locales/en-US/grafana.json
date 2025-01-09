@@ -1325,7 +1325,7 @@
     "related-logs": {
       "LrrDocsLink": "Loki Recording Rule",
       "openExploreLogs": "Open Explore Logs",
-      "relatedLogsUnavailable": "Related logs are not available for this metric. To see related logs, you can either:<1><0>add a label filter to find logs with the same labels as the currently-selected metric</0><1>select a metric created by a <2><0>Loki Recording Rule</0></2></1></1>",
+      "relatedLogsUnavailable": "No related logs found. To see related logs, you can either:<1><0>adjust the label filter to find logs with the same labels as the currently-selected metric</0><1>select a metric created by a <2><0>Loki Recording Rule</0></2></1></1>",
       "warnExperimentalFeature": "Related logs is an experimental feature."
     },
     "viewBy": "View by"
