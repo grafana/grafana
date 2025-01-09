@@ -246,11 +246,63 @@ func (b *bleveIndex) Flush() (err error) {
 }
 
 func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
-	return nil, fmt.Errorf("not implemented yet...")
+	if req.NextPageToken != "" {
+		return nil, fmt.Errorf("next page not implemented yet")
+	}
+
+	found, err := b.index.Search(&bleve.SearchRequest{
+		// Query: &query.TermQuery{
+		// 	Term:     req.Name,
+		// 	FieldVal: "repo.name", // dynamic??
+		// },
+		Query: bleve.NewMatchAllQuery(),
+		Fields: []string{
+			"_id",
+			"repo.name",
+			"repo.path",
+			"repo.hash",
+			"repo.timestamp",
+		},
+		Size: int(req.Limit),
+		From: 0, // TODO! next page token!!!
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	asString := func(v any) string {
+		if v == nil {
+			return ""
+		}
+		str, ok := v.(string)
+		if ok {
+			return str
+		}
+		return fmt.Sprintf("%v", v)
+	}
+
+	rsp := &resource.RepositoryListResponse{}
+	for _, hit := range found.Hits {
+		item := &resource.RepositoryResourceInfo{
+			Key:  &resource.ResourceKey{},
+			Name: req.Name, // necessary???
+			Hash: asString(hit.Fields["repo.hash"]),
+			Path: asString(hit.Fields["repo.path"]),
+			// time...
+		}
+
+		err := item.Key.ReadSearchID(hit.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		rsp.Items = append(rsp.Items, item)
+	}
+	return rsp, nil
 }
 
 func (b *bleveIndex) RepositoryStats(context.Context, *resource.RepositoryStatsRequest) (*resource.RepositoryStatsResponse, error) {
-	return nil, fmt.Errorf("not implemented yet...")
+	return nil, fmt.Errorf("not implemented yet")
 }
 
 // Search implements resource.DocumentIndex.

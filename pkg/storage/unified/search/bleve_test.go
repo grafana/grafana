@@ -3,9 +3,11 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,6 +83,12 @@ func TestBleveBackend(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 				},
 				Tags: []string{"aa", "bb"},
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-A",
+					Path:      "path/to/aaa.json",
+					Hash:      "xyz",
+					Timestamp: asTimePointer(100),
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
@@ -102,6 +110,12 @@ func TestBleveBackend(t *testing.T) {
 				Labels: map[string]string{
 					"region":                           "east",
 					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
+				},
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-A",
+					Path:      "path/to/bbb.json",
+					Hash:      "hijk",
+					Timestamp: asTimePointer(200),
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -198,6 +212,17 @@ func TestBleveBackend(t *testing.T) {
 			rsp.Results.Rows[0].Key.Name,
 			rsp.Results.Rows[1].Key.Name,
 		})
+
+		// Now look for repositories
+		found, err := index.RepositoryList(ctx, &resource.RepositoryListRequest{
+			Name:  "repo-A",
+			Limit: 100,
+		})
+		require.NoError(t, err)
+		jj, err := json.MarshalIndent(found, "", "  ")
+		require.NoError(t, err)
+		fmt.Printf("%s\n", string(jj))
+		require.Equal(t, `{}`, jj)
 	})
 
 	t.Run("build folders", func(t *testing.T) {
@@ -219,6 +244,12 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Title:     "zzz (folder)",
 				TitleSort: "zzz (folder)",
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-A",
+					Path:      "path/to/folder.json",
+					Hash:      "xxxx",
+					Timestamp: asTimePointer(300),
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
@@ -323,4 +354,12 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(disp))
 	})
+}
+
+func asTimePointer(milli int64) *time.Time {
+	if milli > 0 {
+		t := time.UnixMilli(milli)
+		return &t
+	}
+	return nil
 }
