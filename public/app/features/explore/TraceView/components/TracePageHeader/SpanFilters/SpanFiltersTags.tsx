@@ -4,7 +4,7 @@ import { useMount } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { HorizontalGroup, Input, Select, useStyles2 } from '@grafana/ui';
+import { Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { randomId, SearchProps, Tag } from '../../../useSearch';
 import { getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
@@ -99,30 +99,35 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
     <div>
       {search.tags?.map((tag, i) => (
         <div key={tag.id}>
-          <HorizontalGroup spacing={'xs'} width={'auto'}>
-            <Select
-              aria-label="Select tag key"
-              isClearable
-              key={tag.key}
-              onChange={(v) => onTagChange(tag, v)}
-              onOpenMenu={getTagKeys}
-              options={tagKeys || (tag.key ? [tag.key].map(toOption) : [])}
-              placeholder="Select tag"
-              value={tag.key || null}
-            />
-            <Select
-              aria-label="Select tag operator"
-              onChange={(v) => {
-                setSearch({
-                  ...search,
-                  tags: search.tags?.map((x) => {
-                    return x.id === tag.id ? { ...x, operator: v.value! } : x;
-                  }),
-                });
-              }}
-              options={[toOption('='), toOption('!='), toOption('=~'), toOption('!~')]}
-              value={tag.operator}
-            />
+          <Stack gap={0} width={'auto'} justifyContent={'flex-start'} alignItems={'center'}>
+            <div>
+              <Select
+                aria-label="Select tag key"
+                isClearable
+                key={tag.key}
+                onChange={(v) => onTagChange(tag, v)}
+                onOpenMenu={getTagKeys}
+                options={tagKeys || (tag.key ? [tag.key].map(toOption) : [])}
+                placeholder="Select tag"
+                value={tag.key || null}
+              />
+            </div>
+            <div>
+              <Select
+                aria-label="Select tag operator"
+                onChange={(v) => {
+                  setSearch({
+                    ...search,
+                    tags: search.tags?.map((x) => {
+                      return x.id === tag.id ? { ...x, operator: v.value! } : x;
+                    }),
+                  });
+                }}
+                options={[toOption('='), toOption('!='), toOption('=~'), toOption('!~')]}
+                value={tag.operator}
+              />
+            </div>
+
             <span className={styles.tagValues}>
               {(tag.operator === '=' || tag.operator === '!=') && (
                 <Select
@@ -179,7 +184,7 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
                 />
               </span>
             )}
-          </HorizontalGroup>
+          </Stack>
         </div>
       ))}
     </div>
