@@ -1,4 +1,4 @@
-const queryRunnerMock = jest.fn(); // this must be defined before imports for our `@grafana/scenes` to work
+const queryRunnerMock = jest.fn(); // this must be defined before imports so we can dynamically mock the implementation of `SceneQueryRunner`
 import { of } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
@@ -10,6 +10,23 @@ import { VAR_FILTERS } from '../../shared';
 import * as utils from '../../utils';
 
 import { createLabelsCrossReferenceConnector } from './labelsCrossReference';
+
+type Label = { key: string; operator: string; value: string };
+
+function setVariables(variables: Label[] | null) {
+  sceneGraphSpy.mockReturnValue(variables ? createMockAdHocVariable(variables) : null);
+}
+
+function setVariablesAndQueryResponse({
+  variables,
+  labelsInResponse,
+}: {
+  variables: Label[] | null;
+  labelsInResponse: boolean;
+}) {
+  setVariables(variables);
+  setQueryRunnerMockResults(labelsInResponse);
+}
 
 function setQueryRunnerMockResults(hasLogs: boolean) {
   const label = { arbitrary: 'labelValue' };
@@ -50,23 +67,6 @@ function setQueryRunnerMockResults(hasLogs: boolean) {
       return { unsubscribe: jest.fn() };
     }),
   }));
-}
-
-type Label = { key: string; operator: string; value: string };
-
-function setVariables(variables: Label[] | null) {
-  sceneGraphSpy.mockReturnValue(variables ? createMockAdHocVariable(variables) : null);
-}
-
-function setVariablesAndQueryResponse({
-  variables,
-  labelsInResponse,
-}: {
-  variables: Label[] | null;
-  labelsInResponse: boolean;
-}) {
-  setVariables(variables);
-  setQueryRunnerMockResults(labelsInResponse);
 }
 
 jest.mock('@grafana/scenes', () => {
