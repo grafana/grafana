@@ -267,7 +267,7 @@ func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext
 
 // getIdentityName returns name
 func (hs *HTTPServer) getIdentityName(ctx context.Context, orgID, id int64) string {
-	ctx, span := tracer.Start(ctx, "api.getUserLogin")
+	ctx, span := tracer.Start(ctx, "api.getIdentityName")
 	defer span.End()
 
 	// We use GetSignedInUser here instead of GetByID so both user and service accounts are resolved.
