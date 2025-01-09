@@ -85,6 +85,8 @@ export interface DataTrailState extends SceneObjectState {
   afterFirstOtelCheck?: boolean; // when starting there is always a DS var change from variable dependency
   resettingOtel?: boolean; // when switching OTel off from the switch
   isUpdatingOtel?: boolean;
+  addingLabelFromBreakdown?: boolean; // do not use the otel and metrics var subscription when adding label from the breakdown
+
   // moved into settings
   showPreviews?: boolean;
 
@@ -146,6 +148,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       );
     }
 
+    // This is for OTel consolidation filters
+    // whenever the otel and metric filter is updated,
+    // we need to add that filter to the correct otel resource var or var filter
+    // so the filter can be interpolated in the query correctly
     const otelAndMetricsFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, this);
     const otelFiltersVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
     if (
@@ -158,7 +164,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
           // identify the added, updated or removed variables and update the correct filter,
           // either the otel resource or the var filter
           // do not update on switching on otel experience or the initial check
-          if (this.state.useOtelExperience && this.state.initialOtelCheckComplete) {
+          // do not update when selecting a label from metric scene breakdown
+          if (this.state.useOtelExperience && this.state.initialOtelCheckComplete && !this.state.addingLabelFromBreakdown) {
             const nonPromotedOtelResources = this.state.nonPromotedOtelResources ?? [];
             manageOtelAndMetricFilters(
               newState.filters,
@@ -487,6 +494,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     useEffect(() => {
+      if (model.state.addingLabelFromBreakdown) {
+        return;
+      }
+
       if (!useOtelExperience && model.state.afterFirstOtelCheck) {
         // if the experience has been turned off, reset the otel variables
         model.resetOtelExperience();
