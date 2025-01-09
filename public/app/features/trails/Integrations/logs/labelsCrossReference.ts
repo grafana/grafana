@@ -35,13 +35,14 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
           maxDataPoints: 1,
         });
         sqr.subscribeToState((newState) => {
-          if (newState.data?.state === 'Done') {
-            const hasLogs = Boolean(
-              newState.data.series[0]?.fields.some((field) => field.name === 'labels' && field.values.length > 0)
-            );
-            if (hasLogs) {
-              lokiDataSourcesWithRelatedLogs.push(ds);
-            }
+          if (newState.data?.state !== 'Done') {
+            return;
+          }
+          const hasLogs = Boolean(
+            newState.data.series[0]?.fields.some((field) => field.name === 'labels' && field.values.length > 0)
+          );
+          if (hasLogs) {
+            lokiDataSourcesWithRelatedLogs.push(ds);
           }
         });
         sqr.activate();
