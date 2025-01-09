@@ -2521,15 +2521,14 @@
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
-        "installedVersion": "Installed version: ",
+        "installedVersion": "Installed Version",
         "lastCommitDate": "Last commit date:",
-        "latestVersion": "Latest version: ",
+        "latestVersion": "Latest Version",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
-        "updatedAt": "Last updated:",
-        "version": "Version"
+        "updatedAt": "Last updated:"
       }
     },
     "empty-state": {
