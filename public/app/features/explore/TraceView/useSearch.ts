@@ -1,4 +1,4 @@
-import { merge } from 'lodash';
+import { cloneDeep, merge } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -50,11 +50,11 @@ export const defaultFilters = {
  * @param spans
  */
 export function useSearch(spans?: TraceSpan[], initialFilters?: SearchProps) {
-  const [search, setSearch] = useState<SearchProps>(merge({ ...defaultFilters }, initialFilters ?? {}));
+  const [search, setSearch] = useState<SearchProps>(merge(cloneDeep(defaultFilters), initialFilters ?? {}));
 
   useEffect(() => {
     if (initialFilters) {
-      setSearch(merge({ ...defaultFilters }, initialFilters));
+      setSearch(merge(cloneDeep(defaultFilters), initialFilters));
     }
   }, [initialFilters]);
 
