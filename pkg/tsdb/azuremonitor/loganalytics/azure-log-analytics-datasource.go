@@ -625,6 +625,9 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		}()
 
 		if res.StatusCode/100 != 2 {
+			if res.StatusCode == 404 {
+				return AzureCorrelationAPIResponse{}, backend.DownstreamError(fmt.Errorf("requested trace not found by Application Insights indexing. Select the relevant Application Insights resource to search for the Operation ID directly"))
+			}
 			return AzureCorrelationAPIResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 		}
 		var data AzureCorrelationAPIResponse
