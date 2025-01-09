@@ -1629,10 +1629,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bsull/augurs@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@bsull/augurs@npm:0.7.0"
-  checksum: 10/7291b401f37fd2d120e97449eb2820a069ae744a04ba3f952fde20f31c80eeb221e0b8861d5853e62667ed6ed7b33f5028dbd442d491fe06183dd5a5ad6f725f
+"@bsull/augurs@npm:^0.8.0":
+  version: 0.8.1
+  resolution: "@bsull/augurs@npm:0.8.1"
+  checksum: 10/1bb9b019664db0d2f0487923886d08811aa32bd748c54849f27a1d75eba4e99b6d3b0023480e697b50a279123b2775383ba30fe9ca9339922ab90af88394c226
   languageName: node
   linkType: hard
 
@@ -17605,7 +17605,7 @@ __metadata:
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
     "@betterer/eslint": "npm:5.4.0"
-    "@bsull/augurs": "npm:^0.7.0"
+    "@bsull/augurs": "npm:^0.8.0"
     "@cypress/webpack-preprocessor": "npm:6.0.2"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
