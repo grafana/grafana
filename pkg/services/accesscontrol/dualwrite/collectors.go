@@ -414,8 +414,8 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 	}
 }
 
-func fixedRolePermissionsCollector(store db.DB) globalTupleCollector {
-	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
+func fixedRolePermissionsCollector(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context, _ int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		var query = `
 			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
 			FROM permission p
@@ -455,6 +455,18 @@ func fixedRolePermissionsCollector(store db.DB) globalTupleCollector {
 
 			if tuples[tuple.Object] == nil {
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			// For resource actions on folders we need to merge the tuples into one with combined
+			// group_resources.
+			if zanzana.IsFolderResourceTuple(tuple) {
+				key := tupleStringWithoutCondition(tuple)
+				if t, ok := tuples[tuple.Object][key]; ok {
+					zanzana.MergeFolderResourceTuples(t, tuple)
+				} else {
+					tuples[tuple.Object][key] = tuple
+				}
+				continue
 			}
 
 			tuples[tuple.Object][tuple.String()] = tuple
