@@ -8,10 +8,11 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
+
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
@@ -21,6 +22,7 @@ import (
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
+	RepositoryIndexClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -29,6 +31,7 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
+	RepositoryIndexClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -36,10 +39,11 @@ type resourceClient struct {
 func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
+		ResourceStoreClient:   NewResourceStoreClient(cc),
+		ResourceIndexClient:   NewResourceIndexClient(cc),
+		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BlobStoreClient:       NewBlobStoreClient(cc),
+		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
 }
 
@@ -51,6 +55,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
+		&RepositoryIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
@@ -72,10 +77,11 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
+		ResourceStoreClient:   NewResourceStoreClient(cc),
+		ResourceIndexClient:   NewResourceIndexClient(cc),
+		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BlobStoreClient:       NewBlobStoreClient(cc),
+		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
 }
 
