@@ -102,7 +102,7 @@ type IndexableDocument struct {
 	References ResourceReferences `json:"reference,omitempty"`
 
 	// When the resource is managed by an upstream repository
-	RepoInfo *utils.ResourceRepositoryInfo `json:"repository,omitempty"`
+	RepoInfo *utils.ResourceRepositoryInfo `json:"repo,omitempty"`
 }
 
 func (m *IndexableDocument) Type() string {
@@ -261,8 +261,11 @@ const SEARCH_FIELD_CREATED = "created"
 const SEARCH_FIELD_CREATED_BY = "createdBy"
 const SEARCH_FIELD_UPDATED = "updated"
 const SEARCH_FIELD_UPDATED_BY = "updatedBy"
-const SEARCH_FIELD_REPOSITORY = "repository"
-const SEARCH_FIELD_REPOSITORY_HASH = "repository_hash"
+
+const SEARCH_FIELD_REPOSITORY_NAME = "repo.name"
+const SEARCH_FIELD_REPOSITORY_PATH = "repo.path"
+const SEARCH_FIELD_REPOSITORY_HASH = "repo.hash"
+const SEARCH_FIELD_REPOSITORY_TIME = "repo.time"
 
 const SEARCH_FIELD_SCORE = "_score"     // the match score
 const SEARCH_FIELD_EXPLAIN = "_explain" // score explanation as JSON object

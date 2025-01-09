@@ -64,17 +64,34 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_FOLDER, folderMapping)
 
-	repoMapping := &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_REPOSITORY,
+	// Repositories
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY_NAME, &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_REPOSITORY_NAME,
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
-		DocValues:          true,
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY, repoMapping)
+	})
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY_PATH, &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_REPOSITORY_PATH,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+	})
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY_HASH, &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_REPOSITORY_HASH,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+	})
 
 	// TODO: we use the static mapper. why set dynamic to true?
 	mapper.Dynamic = true

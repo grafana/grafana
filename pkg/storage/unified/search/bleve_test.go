@@ -84,7 +84,7 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Tags: []string{"aa", "bb"},
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-A",
+					Name:      "repo1",
 					Path:      "path/to/aaa.json",
 					Hash:      "xyz",
 					Timestamp: asTimePointer(100),
@@ -112,7 +112,7 @@ func TestBleveBackend(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 				},
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-A",
+					Name:      "repo1",
 					Path:      "path/to/bbb.json",
 					Hash:      "hijk",
 					Timestamp: asTimePointer(200),
@@ -130,7 +130,8 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "ccc (dash)",
 				Folder:    "zzz",
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name: "r0",
+					Name: "repo2",
+					Path: "path/in/repo2.yaml",
 				},
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID: 12,
@@ -215,14 +216,39 @@ func TestBleveBackend(t *testing.T) {
 
 		// Now look for repositories
 		found, err := index.RepositoryList(ctx, &resource.RepositoryListRequest{
-			Name:  "repo-A",
+			Name:  "repo1",
 			Limit: 100,
 		})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(found, "", "  ")
 		require.NoError(t, err)
 		fmt.Printf("%s\n", string(jj))
-		require.Equal(t, `{}`, jj)
+		require.JSONEq(t, `{
+			"items": [
+				{
+					"key": {
+						"namespace": "ns",
+						"group": "dashboard.grafana.app",
+						"resource": "dashboards",
+						"name": "aaa"
+					},
+					"name": "repo1",
+					"path": "path/to/aaa.json",
+					"hash": "xyz"
+				},
+				{
+					"key": {
+						"namespace": "ns",
+						"group": "dashboard.grafana.app",
+						"resource": "dashboards",
+						"name": "bbb"
+					},
+					"name": "repo1",
+					"path": "path/to/bbb.json",
+					"hash": "hijk"
+				}
+			]
+		}`, string(jj))
 	})
 
 	t.Run("build folders", func(t *testing.T) {
@@ -245,7 +271,7 @@ func TestBleveBackend(t *testing.T) {
 				Title:     "zzz (folder)",
 				TitleSort: "zzz (folder)",
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-A",
+					Name:      "repo1",
 					Path:      "path/to/folder.json",
 					Hash:      "xxxx",
 					Timestamp: asTimePointer(300),

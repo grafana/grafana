@@ -251,17 +251,15 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 	}
 
 	found, err := b.index.Search(&bleve.SearchRequest{
-		// Query: &query.TermQuery{
-		// 	Term:     req.Name,
-		// 	FieldVal: "repo.name", // dynamic??
-		// },
-		Query: bleve.NewMatchAllQuery(),
+		Query: &query.TermQuery{
+			Term:     req.Name,
+			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
+		},
 		Fields: []string{
-			"_id",
-			"repo.name",
-			"repo.path",
-			"repo.hash",
-			"repo.timestamp",
+			resource.SEARCH_FIELD_REPOSITORY_NAME,
+			resource.SEARCH_FIELD_REPOSITORY_PATH,
+			resource.SEARCH_FIELD_REPOSITORY_HASH,
+			resource.SEARCH_FIELD_REPOSITORY_TIME,
 		},
 		Size: int(req.Limit),
 		From: 0, // TODO! next page token!!!
@@ -285,9 +283,9 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 	for _, hit := range found.Hits {
 		item := &resource.RepositoryResourceInfo{
 			Key:  &resource.ResourceKey{},
-			Name: req.Name, // necessary???
-			Hash: asString(hit.Fields["repo.hash"]),
-			Path: asString(hit.Fields["repo.path"]),
+			Name: asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_NAME]), // necessary???
+			Hash: asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
+			Path: asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
 			// time...
 		}
 
