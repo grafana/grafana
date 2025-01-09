@@ -276,6 +276,34 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
 }
 
 /**
+ * Adaptation of activateSceneObjectAndParentTree specific for PanelSearchLayout use case with
+ *   with panelSearch and panelsPerRow custom panel filtering logic.
+ *
+ * Activating the whole tree because dashboard does not react to variable updates such as panel repeats
+ */
+export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
+
+  if (so.parent) {
+    parentCancel = forceActivateFullSceneObjectTree(so.parent);
+  }
+
+  if (!so.isActive) {
+    cancel = so.activate();
+    return () => {
+      parentCancel?.();
+      cancel?.();
+    };
+  }
+
+  return () => {
+    parentCancel?.();
+    cancel?.();
+  };
+}
+
+/**
  * @deprecated use activateSceneObjectAndParentTree instead.
  * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
