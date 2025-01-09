@@ -815,10 +815,10 @@ export class LokiDatasource
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       if (typeof value === 'string') {
-        // // Don't escape line filters!
-        // if(['|=', '!=', '|~', '!~'].some(op => value.substring(0, 2) === op)){
-        //   return value;
-        // }
+        // Don't escape line filters!
+        if (['|=', '!=', '|~', '!~'].some((op) => value.substring(0, 2) === op)) {
+          return value;
+        }
       }
       return lokiRegularEscape(value);
     }
