@@ -65,7 +65,12 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
 }
 
 function PanelSearchHit({ panel }: { panel: VizPanel }) {
-  useEffect(() => activateSceneObjectAndParentTree(panel), [panel]);
+  useEffect(() => {
+    activateSceneObjectAndParentTree(panel);
+    if (panel.parent) {
+      activateSceneObjectAndParentTree(panel.parent);
+    }
+  }, [panel]);
 
   return <panel.Component model={panel} />;
 }
