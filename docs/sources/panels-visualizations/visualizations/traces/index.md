@@ -166,3 +166,46 @@ You should now see a list of matching traces in the table visualization. While s
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Span filters
+
+The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize and streamline your trace analysis view for better clarity and efficiency.
+
+How to use **Span filter**:
+
+* **Find in trace**: Set the initial value for the span search to focus on spans relevant to your query.
+* **Show matches only** toggle: Display only spans that match the defined filter criteria, simplifying trace interpretation.
+* **Show critical path only**: Highlight only the spans in the critical path to identify performance bottlenecks and their impact on overall latency.
+* **Service name** and **Service name operator**: Define a specific service or pattern to narrow the analysis to spans related to particular services.
+* **Span name** and **Span name operator**: Filter spans by name or pattern to focus on specific span types or processes.
+* **Min duration** and **Max duration**: Set duration thresholds to exclude spans outside the desired time range, aiding in performance optimization.
+* **Tags**: Add one or more tags to further refine the filtering criteria, ensuring only relevant spans are displayed.
+
+Note that you must refresh the visualization for most span filter changes to take effect. This ensures the latest filters are applied to the displayed data.
+
+When using the visualization through scenes apps, the `spanFilter` options can be programmatically defined to integrate span filtering into automated workflows or custom applications:
+
+```
+const panel = PanelBuilders
+  .traces()
+  .setOption('spanFilters', { serviceName: 'testService', matchesOnly: true });
+```
+
+The value object for `spanFilters` must conform to the SearchProps type:
+
+```
+export interface SearchProps {
+  serviceName?: string;
+  serviceNameOperator: string;
+  spanName?: string;
+  spanNameOperator: string;
+  from?: string;
+  fromOperator: string;
+  to?: string;
+  toOperator: string;
+  tags: Tag[];
+  query?: string;
+  matchesOnly: boolean;
+  criticalPathOnly: boolean;
+}
+```
