@@ -121,6 +121,10 @@ Show a separate stat for every row. If you select this option, then you can also
 - **Limit -** The maximum number of rows to display. Default is 5,000.
 - **Fields -** Select the fields display in the panel.
 
+### Sort
+
+Choose the sort direction (if any) the fields should be displayed.
+
 ## Bar gauge options
 
 Adjust how the bar gauge is displayed.
