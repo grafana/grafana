@@ -9,6 +9,8 @@ import (
 )
 
 func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType RenderType, renderKey string, opts Opts) (*RenderResult, error) {
+	logger := rs.log.FromContext(ctx)
+
 	// gives plugin some additional time to timeout and return possible errors.
 	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
@@ -40,7 +42,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 		AuthToken:         rs.Cfg.RendererAuthToken,
 		Encoding:          string(renderType),
 	}
-	rs.log.Debug("Calling renderer plugin", "req", req)
+	logger.Debug("Calling renderer plugin", "req", req)
 
 	rc, err := rs.plugin.Client()
 	if err != nil {
@@ -48,7 +50,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 	}
 	rsp, err := rc.Render(ctx, req)
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		rs.log.Info("Rendering timed out")
+		logger.Error("Rendering timed out")
 		return nil, ErrTimeout
 	}
 	if err != nil {
@@ -62,6 +64,8 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 }
 
 func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey string, opts CSVOpts) (*RenderCSVResult, error) {
+	logger := rs.log.FromContext(ctx)
+
 	// gives plugin some additional time to timeout and return possible errors.
 	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
@@ -88,7 +92,7 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 		Headers:   headers,
 		AuthToken: rs.Cfg.RendererAuthToken,
 	}
-	rs.log.Debug("Calling renderer plugin", "req", req)
+	logger.Debug("Calling renderer plugin", "req", req)
 
 	rc, err := rs.plugin.Client()
 	if err != nil {
@@ -98,7 +102,7 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 	rsp, err := rc.RenderCSV(ctx, req)
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			rs.log.Info("Rendering timed out")
+			logger.Error("Rendering timed out")
 			return nil, ErrTimeout
 		}
 
