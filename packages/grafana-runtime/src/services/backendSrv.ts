@@ -175,12 +175,12 @@ export interface BackendSrv {
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>>;
 
   /**
-   * Observe each line in the response.  This is useful when reading values from
+   * Observe each raw chunk in the response.  This is useful when reading values from
    * a long living HTTP connection like the kubernetes WATCH command.
    *
    * When the status is not OK, the full FetchResponse will be sent sent as an error
    */
-  lines(options: BackendSrvRequest): Observable<string>;
+  chunked(options: BackendSrvRequest): Observable<Uint8Array>;
 }
 
 let singletonInstance: BackendSrv;

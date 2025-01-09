@@ -206,9 +206,10 @@ export function runWatchStream(
     data.addField({ name: 'time', type: FieldType.time });
     data.addField({ name: 'message', type: FieldType.number });
     data.addField({ name: 'value', type: FieldType.number });
+    const decoder = new TextDecoder();
 
     const sub = getBackendSrv()
-      .lines({
+      .chunked({
         url: `api/datasources/uid/${uid}/resources/stream`,
         params: {
           count: 10000000, // big number
@@ -217,18 +218,25 @@ export function runWatchStream(
           flush: 85, // 85% (eg, sometimes send two at once)
         },
       })
-      .subscribe((line) => {
-        const msg: StreamMessage = JSON.parse(line);
+      .subscribe((chunk) => {
+        decoder
+          .decode(chunk)
+          .split('\n')
+          .forEach((line) => {
+            if (line?.length) {
+              const msg: StreamMessage = JSON.parse(line);
 
-        data.fields[0].values.push(msg.time);
-        data.fields[1].values.push(msg.message);
-        data.fields[2].values.push(msg.value);
+              data.fields[0].values.push(msg.time);
+              data.fields[1].values.push(msg.message);
+              data.fields[2].values.push(msg.value);
 
-        subscriber.next({
-          data: [data],
-          key: streamId,
-          state: LoadingState.Streaming,
-        });
+              subscriber.next({
+                data: [data],
+                key: streamId,
+                state: LoadingState.Streaming,
+              });
+            }
+          });
       });
 
     return () => {

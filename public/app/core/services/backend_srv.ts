@@ -142,7 +142,7 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  lines(options: BackendSrvRequest): Observable<string> {
+  chunked(options: BackendSrvRequest): Observable<Uint8Array> {
     return new Observable((observer) => {
       let done = false;
       const sub = this.fetch<ReadableStream<Uint8Array>>({
@@ -162,12 +162,7 @@ export class BackendSrv implements BackendService {
           while (!done) {
             const chunk = await reader.read();
             if (chunk.value) {
-              const buff = new TextDecoder().decode(chunk.value);
-              buff.split('\n').forEach((v) => {
-                if (v.length) {
-                  observer.next(v);
-                }
-              });
+              observer.next(chunk.value);
             }
             if (chunk.done) {
               break;
