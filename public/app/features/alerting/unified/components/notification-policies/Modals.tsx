@@ -1,7 +1,7 @@
 import { groupBy } from 'lodash';
 import { FC, useCallback, useMemo, useState } from 'react';
 
-import { Alert, Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
+import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -54,7 +54,7 @@ const useAddPolicyModal = (
           closeOnEscape={true}
           title="Add notification policy"
         >
-          {error && <Alert title="Something went wrong">{stringifyErrorLike(error)}</Alert>}
+          {error && <NotificationPoliciesErrorAlert error={stringifyErrorLike(error)} />}
           <AmRoutesExpandedForm
             defaults={{
               groupBy: referenceRoute?.group_by,
@@ -85,7 +85,7 @@ const useAddPolicyModal = (
 
 const useEditPolicyModal = (
   alertManagerSourceName: string,
-  handleSave: (route: Partial<FormAmRoute>) => Promise<void>,
+  handleUpdate: (route: Partial<FormAmRoute>) => Promise<void>,
   loading: boolean
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
@@ -122,7 +122,9 @@ const useEditPolicyModal = (
               // TODO *sigh* this alertmanagersourcename should come from context or something
               // passing it down all the way here is a code smell
               alertManagerSourceName={alertManagerSourceName}
-              onSubmit={(values) => handleSave(values).catch(setError)}
+              onSubmit={(values) => {
+                handleUpdate(values).catch(setError);
+              }}
               route={route}
               actionButtons={
                 <Modal.ButtonRow>
@@ -139,7 +141,9 @@ const useEditPolicyModal = (
           {!isDefaultPolicy && (
             <AmRoutesExpandedForm
               route={route}
-              onSubmit={handleSave}
+              onSubmit={(values) => {
+                handleUpdate(values).catch(setError);
+              }}
               actionButtons={
                 <Modal.ButtonRow>
                   <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
@@ -154,7 +158,7 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [alertManagerSourceName, error, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
+    [alertManagerSourceName, error, handleDismiss, handleUpdate, isDefaultPolicy, loading, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
