@@ -260,7 +260,7 @@ describe('utils', () => {
         TooltipDisplayMode.Multi,
         SortOrder.Ascending,
         undefined,
-        (val) => val !== '0'
+        true
       );
 
       expect(rows.length).toBe(1);
@@ -274,7 +274,7 @@ describe('utils', () => {
         TooltipDisplayMode.Multi,
         SortOrder.Ascending,
         undefined,
-        (val) => val !== '0'
+        true
       );
 
       expect(rows.length).toBe(1);
