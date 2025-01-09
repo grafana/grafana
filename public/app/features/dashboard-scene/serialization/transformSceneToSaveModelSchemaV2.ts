@@ -149,7 +149,7 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
       if (child instanceof DashboardGridItem) {
         // TODO: handle panel repeater scenario
         if (child.state.variableName) {
-          elements = elements.concat(panelRepeaterToPanels(child, isSnapshot));
+          elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
         } else {
           elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
         }
@@ -387,7 +387,7 @@ function createElements(panels: PanelKind[]): Record<string, PanelKind> {
   );
 }
 
-function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
+function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
   if (!isSnapshot) {
     return [gridItemToGridLayoutItemKind(repeater)];
   } else {

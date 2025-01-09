@@ -455,8 +455,7 @@ TimeSettingsSpec: {
   nowDelay?: string // v1: timepicker.nowDelay
 }
 
-RepeatMode: "variable" | "label" | "frame"
-
+RepeatMode: "variable" // other repeat modes will be added in the future: label, frame
 
 RepeatOptions: {
   mode: RepeatMode

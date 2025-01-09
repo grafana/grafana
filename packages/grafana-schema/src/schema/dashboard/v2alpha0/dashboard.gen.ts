@@ -648,19 +648,18 @@ export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
 	fiscalYearStartMonth: 0,
 });
 
-export type RepeatMode = "variable" | "label" | "frame";
-
-export const defaultRepeatMode = (): RepeatMode => ("variable");
+// other repeat modes will be added in the future: label, frame
+export const RepeatMode = "variable";
 
 export interface RepeatOptions {
-	mode: RepeatMode;
+	mode: "variable";
 	value: string;
 	direction?: "h" | "v";
 	maxPerRow?: number;
 }
 
 export const defaultRepeatOptions = (): RepeatOptions => ({
-	mode: "variable",
+	mode: RepeatMode,
 	value: "",
 });
 
