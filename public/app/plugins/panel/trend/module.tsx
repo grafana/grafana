@@ -24,7 +24,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
       },
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder, false, true);
+    commonOptionsBuilder.addTooltipOptions(builder, false, true, true);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setSuggestionsSupplier(new TrendSuggestionsSupplier());
