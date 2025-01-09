@@ -29,6 +29,7 @@ export interface AppChromeState {
     href: ReturnToPreviousProps['href'];
   };
   addonBarDocked?: boolean;
+  addonPaneDocked?: boolean;
   addonBarPane?: AddonBarPane;
   addonApps: AddonAppDefinition[];
 }
@@ -73,6 +74,7 @@ export class AppChromeService {
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
     addonBarDocked: true,
+    addonPaneDocked: true,
     addonApps: [],
   });
 
@@ -285,6 +287,10 @@ export class AppChromeService {
       this.update({ kioskMode: newKioskMode });
     }
   }
+
+  public onToggleDockAddonPane = () => {
+    this.update({ addonPaneDocked: !this.state.getValue().addonPaneDocked });
+  };
 
   public getKioskUrlValue(mode: KioskMode | null) {
     switch (mode) {

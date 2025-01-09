@@ -132,7 +132,7 @@ export function AppChrome({ children }: Props) {
               className={cx(styles.pageContainer, {
                 [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
                 [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-                [styles.pageContainerAddonPane]: Boolean(state.addonBarPane),
+                [styles.pageContainerAddonPane]: Boolean(state.addonBarPane && state.addonPaneDocked),
               })}
               id="pageContent"
             >

@@ -5,7 +5,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FlexItem } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types/store';
@@ -114,12 +114,12 @@ export function AddonBar() {
         // </Dropdown>
       )}
       {config.newsFeedEnabled && <NewsContainer />}
-      <ToolbarButton
+      {/* <ToolbarButton
         icon="monitor"
         className={styles.kioskToggle}
         onClick={chrome.onToggleKioskMode}
         tooltip="Enable kiosk mode"
-      />
+      /> */}
       <button type="button" className={styles.toggleButton} onClick={onToggleAddonBar}>
         <Icon name="angle-right" size="xl" />
       </button>

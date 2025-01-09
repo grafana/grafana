@@ -18,7 +18,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
-    id: 'Panel options',
+    id: '',
     isOpenDefault: true,
   });
 
@@ -68,18 +68,11 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         },
       })
     )
-    .addCategory(
-      new OptionsPaneCategoryDescriptor({
+    .addItem(
+      new OptionsPaneItemDescriptor({
         title: 'Panel links',
-        id: 'Panel links',
-        isOpenDefault: false,
-        itemsCount: links?.length,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: 'Panel links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
-        })
-      )
+        render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
+      })
     );
 
   if (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions) {

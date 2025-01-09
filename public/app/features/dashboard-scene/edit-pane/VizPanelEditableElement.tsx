@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 
+import { locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -14,6 +16,8 @@ import {
 } from '../panel-edit/getPanelFrameOptions';
 import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getEditPanelUrl } from '../utils/urlBuilders';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 export class VizPanelEditableElement implements EditableDashboardElement {
   public isEditableDashboardElement: true = true;
@@ -105,10 +109,18 @@ export class VizPanelEditableElement implements EditableDashboardElement {
     layout.removePanel(this.panel);
   };
 
+  public onEdit = () => {
+    const dashboard = getDashboardSceneFor(this.panel);
+    dashboard.state.editPane.clearSelection();
+    const panelId = getPanelIdForVizPanel(this.panel);
+    const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));
+    locationService.push(url);
+  };
+
   public renderActions(): React.ReactNode {
     return (
       <>
-        <Button size="sm" variant="secondary">
+        <Button size="sm" variant="secondary" onClick={this.onEdit}>
           <Trans i18nKey="panel.header-menu.edit">Edit</Trans>
         </Button>
         <Button size="sm" variant="secondary" icon="copy" />
