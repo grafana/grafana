@@ -1,4 +1,4 @@
-import { getDashboardUrl } from './urlBuilders';
+import { getDashboardUrl } from './getDashboardUrl';
 
 describe('dashboard utils', () => {
   it('Can getUrl', () => {

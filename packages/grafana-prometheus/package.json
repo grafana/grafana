@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.2",
+    "@floating-ui/react": "0.27.3",
     "@grafana/data": "11.5.0-pre",
     "@grafana/experimental": "2.1.6",
     "@grafana/faro-web-sdk": "1.12.2",
@@ -45,7 +45,7 @@
     "@grafana/schema": "11.5.0-pre",
     "@grafana/ui": "11.5.0-pre",
     "@hello-pangea/dnd": "17.0.0",
-    "@leeoniya/ufuzzy": "1.0.17",
+    "@leeoniya/ufuzzy": "1.0.18",
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
@@ -134,7 +134,7 @@
     "style-loader": "4.0.0",
     "testing-library-selector": "0.3.1",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4",
+    "typescript": "5.7.3",
     "webpack": "5.97.1",
     "webpack-cli": "6.0.1"
   },
