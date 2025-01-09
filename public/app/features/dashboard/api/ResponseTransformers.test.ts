@@ -9,6 +9,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
@@ -25,7 +26,7 @@ jest.mock('@grafana/runtime', () => ({
         datasources: {
           PromTest: {
             uid: 'xyz-abc',
-            name: 'xyz-prom',
+            name: 'PromTest',
             id: 'prometheus',
             meta: {
               id: 'prometheus',
@@ -59,7 +60,16 @@ describe('ResponseTransformers', () => {
     it('should return prometheus as default', () => {
       expect(getDefaultDatasource()).toEqual({
         apiVersion: 'v2',
-        uid: 'xyz-prom',
+        uid: 'PromTest',
+        type: 'prometheus',
+      });
+    });
+  });
+
+  describe('getDefaultDataSourceRef', () => {
+    it('should return prometheus as default', () => {
+      expect(getDefaultDataSourceRef()).toEqual({
+        uid: 'PromTest',
         type: 'prometheus',
       });
     });

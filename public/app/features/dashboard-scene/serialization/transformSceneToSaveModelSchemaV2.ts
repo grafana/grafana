@@ -452,7 +452,7 @@ export function getDefaultDataSourceRef(): DataSourceRef | undefined {
   const ds = dsList[defaultDatasource];
 
   if (ds) {
-    return { type: ds.meta.id, uid: ds.name, apiVersion: ds.apiVersion }; // in the datasource list from bootData "id" is the type
+    return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
   }
 
   return undefined;

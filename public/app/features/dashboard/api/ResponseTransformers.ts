@@ -302,7 +302,13 @@ function getDefaultDatasourceType() {
 }
 
 export function getDefaultDatasource(): DataSourceRef {
-  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: 'grafana' };
+  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
+
+  if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
+    // get api version from config
+    const dsInstance = config.bootData.settings.datasources[configDefaultDS.uid];
+    configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
+  }
 
   return {
     apiVersion: configDefaultDS.apiVersion,
