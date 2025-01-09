@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Button, Modal, ModalProps } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -63,7 +64,7 @@ export const useDeleteContactPointModal = (
             {isLoading ? 'Deleting...' : 'Yes, delete contact point'}
           </Button>
           <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isLoading}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </Button>
         </Modal.ButtonRow>
       </Modal>

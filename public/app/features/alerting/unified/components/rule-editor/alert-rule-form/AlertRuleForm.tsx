@@ -9,6 +9,7 @@ import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
@@ -265,7 +266,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         Save rule and exit
       </Button>
       <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
-        Cancel
+        <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
       </Button>
       {existing ? (
         <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
