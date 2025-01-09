@@ -52,13 +52,8 @@ func (api *API) getDashboardHelper(ctx context.Context, orgID int64, id int64, u
 }
 
 func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Only users and service accounts get starred dashboards", nil)
-	}
-
 	query := star.GetUserStarsQuery{
-		UserID: userID,
+		UserID: c.SignedInUser.UserID,
 	}
 
 	iuserstars, err := api.starService.GetByUser(c.Req.Context(), &query)
@@ -67,20 +62,8 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 	}
 
 	uids := []string{}
-	if len(iuserstars.UserStars) > 0 {
-		var uids []string
-		for uid := range iuserstars.UserStars {
-			uids = append(uids, uid)
-		}
-		starredDashboards, err := api.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
-		if err != nil {
-			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch dashboards", err)
-		}
-
-		uids = make([]string, len(starredDashboards))
-		for i, dash := range starredDashboards {
-			uids[i] = dash.UID
-		}
+	for uid := range iuserstars.UserStars {
+		uids = append(uids, uid)
 	}
 
 	return response.JSON(http.StatusOK, uids)
