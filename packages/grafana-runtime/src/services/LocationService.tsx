@@ -47,7 +47,6 @@ export class HistoryWrapper implements LocationService {
     this.locationObservable = new BehaviorSubject(this.history.location);
 
     this.history.listen((location) => {
-      console.log('listener', location);
       this.locationObservable.next(location);
     });
 

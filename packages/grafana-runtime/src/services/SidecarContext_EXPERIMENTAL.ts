@@ -24,7 +24,6 @@ export function useSidecar_EXPERIMENTAL() {
   const initialContext = useObservable(service.initialContextObservable, service.initialContext);
   const activePluginId = useObservable(service.activePluginIdObservable, service.activePluginId);
   const locationService = service.getLocationService();
-  console.log('activePluginId', activePluginId);
 
   return {
     activePluginId,
