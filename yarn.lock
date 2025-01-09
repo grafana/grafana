@@ -3619,16 +3619,16 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^1.11.0":
-  version: 1.14.3
-  resolution: "@grafana/plugin-e2e@npm:1.14.3"
+  version: 1.14.4
+  resolution: "@grafana/plugin-e2e@npm:1.14.4"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^11.5.0-215208"
+    "@grafana/e2e-selectors": "npm:^11.5.0-215942"
     semver: "npm:^7.5.4"
     uuid: "npm:^11.0.2"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/e2c99931a799526374e7e004c13704da3cf3cea221d8dc2038e5cc6e47a350a43c5f11cfd947fc6830c769c785c7f3505136948f889390fd306658335854177c
+  checksum: 10/96b187bcc5bf2c922cf6f08f929b332800a49856720da82904f2adf2f3dec13164ff0ad8af2187a9471b5e06a848682e2a022ddce3bd8d7a9098fb70fa65bdcb
   languageName: node
   linkType: hard
 
