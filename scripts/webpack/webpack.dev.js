@@ -37,7 +37,8 @@ module.exports = (env = {}) => {
     mode: 'development',
 
     entry: {
-      app: ['./public/app/emotion.ts', './public/app/index.ts'],
+      // the speedy-emotion script needs to run before emotion is loaded
+      app: ['./scripts/webpack/speedy-emotion.ts', './public/app/index.ts'],
       dark: './public/sass/grafana.dark.scss',
       light: './public/sass/grafana.light.scss',
     },
