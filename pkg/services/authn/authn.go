@@ -30,6 +30,7 @@ const (
 	ClientProxy        = "auth.client.proxy"
 	ClientSAML         = "auth.client.saml"
 	ClientPasswordless = "auth.client.passwordless"
+	ClientLDAP         = "ldap"
 )
 
 const (
