@@ -72,7 +72,7 @@
     "rollup-plugin-esbuild": "6.1.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "rollup-plugin-sourcemaps": "0.6.3",
-    "typescript": "5.5.4"
+    "typescript": "5.7.2"
   },
   "peerDependencies": {
     "react": "^18.0.0",
