@@ -427,10 +427,10 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		// Finding creator and last updater of the folder
 		updater, creator := anonString, anonString
 		if f.CreatedBy > 0 {
-			creator = hs.getUserLogin(ctx, f.CreatedBy)
+			creator = hs.getIdentityName(ctx, f.OrgID, f.CreatedBy)
 		}
 		if f.UpdatedBy > 0 {
-			updater = hs.getUserLogin(ctx, f.UpdatedBy)
+			updater = hs.getIdentityName(ctx, f.OrgID, f.UpdatedBy)
 		}
 
 		acMetadata, _ := hs.getFolderACMetadata(c, f)
