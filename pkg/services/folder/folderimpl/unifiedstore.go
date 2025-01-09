@@ -206,7 +206,11 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 		hits = append(hits, folder)
 	}
 
-	return util.Reverse(hits[1:]), nil
+	if len(hits) > 0 {
+		return util.Reverse(hits[1:]), nil
+	}
+
+	return hits, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
