@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -301,9 +300,9 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		writeParamSelectorSQL(&builder, params...)
 
 		// use permission filter if lib panel RBAC isn't enabled
-		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
-		}
+		// if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
+		// 	builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
+		// }
 
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
