@@ -142,7 +142,7 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  chunked(options: BackendSrvRequest): Observable<Uint8Array> {
+  chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
     return new Observable((observer) => {
       let done = false;
       const sub = this.fetch<ReadableStream<Uint8Array>>({
@@ -152,23 +152,28 @@ export class BackendSrv implements BackendService {
         showSuccessAlert: false,
         hideFromInspector: true,
       }).subscribe((result) => {
-        if (!result.ok) {
-          observer.error(result);
-          return;
-        }
-
         const reader = result.data.getReader();
         async function process() {
           while (!done) {
-            const chunk = await reader.read();
-            if (chunk.value) {
-              observer.next(chunk.value);
-            }
-            if (chunk.done) {
-              break;
+            try {
+              const chunk = await reader.read();
+              observer.next({
+                ...result,
+                data: chunk.value,
+              });
+              if (chunk.done) {
+                done = true;
+                break;
+              }
+            } catch (err) {
+              console.warn('error while reading chunked stream', options.url, err);
+              reader.cancel('error');
+              done = true;
+              observer.error(err);
             }
           }
           if (!done) {
+            // this happens when we unsubscribe before the connection is done
             reader.cancel('disconnected');
           }
           observer.complete();
@@ -176,7 +181,6 @@ export class BackendSrv implements BackendService {
         process(); // runs in background
       });
 
-      // This returned function will be called whenever the returned Observable from the fetch<T> function is unsubscribed/errored/completed/canceled.
       return function unsubscribe() {
         sub.unsubscribe();
         done = true;

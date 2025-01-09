@@ -214,29 +214,41 @@ export function runWatchStream(
         params: {
           count: 10000000, // big number
           format: 'json',
-          sleep: `${query.speed ?? 250}ms`,
-          flush: 85, // 85% (eg, sometimes send two at once)
+          speed: `${query.speed ?? 250}ms`,
+          flush: 85, // 85% (eg, sometimes send a few at a time)
         },
       })
-      .subscribe((chunk) => {
-        decoder
-          .decode(chunk)
-          .split('\n')
-          .forEach((line) => {
-            if (line?.length) {
-              const msg: StreamMessage = JSON.parse(line);
+      .subscribe({
+        next: (chunk) => {
+          if (!chunk.data || !chunk.ok) {
+            console.log('chunk missing data', chunk);
+            return;
+          }
+          decoder
+            .decode(chunk.data, { stream: true })
+            .split('\n')
+            .forEach((line) => {
+              if (line?.length) {
+                const msg: StreamMessage = JSON.parse(line);
 
-              data.fields[0].values.push(msg.time);
-              data.fields[1].values.push(msg.message);
-              data.fields[2].values.push(msg.value);
+                data.fields[0].values.push(msg.time);
+                data.fields[1].values.push(msg.message);
+                data.fields[2].values.push(msg.value);
 
-              subscriber.next({
-                data: [data],
-                key: streamId,
-                state: LoadingState.Streaming,
-              });
-            }
-          });
+                subscriber.next({
+                  data: [data],
+                  key: streamId,
+                  state: LoadingState.Streaming,
+                });
+              }
+            });
+        },
+        error: (err) => {
+          console.warn('error in stream', streamId, err);
+        },
+        complete: () => {
+          console.warn('complete stream', streamId);
+        },
       });
 
     return () => {

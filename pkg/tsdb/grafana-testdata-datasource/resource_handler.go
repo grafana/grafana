@@ -122,11 +122,11 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	sleepDuration := time.Millisecond * 10
-	if query.Has("sleep") {
-		sleepDuration, err = time.ParseDuration(query.Get("sleep"))
+	speed := time.Millisecond * 10
+	if query.Has("speed") {
+		speed, err = time.ParseDuration(query.Get("speed"))
 		if err != nil {
-			writeError(http.StatusBadRequest, "invalid sleep")
+			writeError(http.StatusBadRequest, "invalid speed")
 			return
 		}
 	}
@@ -158,7 +158,7 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 		if flush > rand.Intn(100) {
 			rw.(http.Flusher).Flush()
 		}
-		time.Sleep(sleepDuration)
+		time.Sleep(speed)
 	}
 }
 
