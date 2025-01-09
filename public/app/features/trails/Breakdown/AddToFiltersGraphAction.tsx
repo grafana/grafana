@@ -48,23 +48,27 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
       // this is different than the first non promoted labels on data trail.
       // in data trail we looks at all labels for all metrics.
       // In breakdown, we look at one metric.
-      // The metric may not have the label promoted so we have to compare 
+      // The metric may not have the label promoted so we have to compare
       // not the nonPromoted label collection we use in the parent datatrail
-      // but instead have to look at VAR_OTEL_GROUP_LEFT which are a collection of labels from 
+      // but instead have to look at VAR_OTEL_GROUP_LEFT which are a collection of labels from
       // target_info that ave not been promoted to the metric.
       // these metric specific non promoted labels are retrieved in the function getFilteredResourceAttributes
       // These attributes on on the metric that has been selected
-      trail.setState({addingLabelFromBreakdown:true});
+      trail.setState({ addingLabelFromBreakdown: true });
       // add to OTel resource var filters
       const otelResourcesVar = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
       const otelAndMetricsResourcesVar = sceneGraph.lookupVariable(VAR_OTEL_AND_METRIC_FILTERS, trail);
-      if (!(otelResourcesVar instanceof AdHocFiltersVariable && otelAndMetricsResourcesVar instanceof AdHocFiltersVariable)) {
+      if (
+        !(
+          otelResourcesVar instanceof AdHocFiltersVariable && otelAndMetricsResourcesVar instanceof AdHocFiltersVariable
+        )
+      ) {
         return;
       }
 
       otelResourcesVar.setState({ filters: [...otelResourcesVar.state.filters, filter] });
       otelAndMetricsResourcesVar.setState({ filters: [...otelAndMetricsResourcesVar.state.filters, filter] });
-      trail.setState({addingLabelFromBreakdown: false});
+      trail.setState({ addingLabelFromBreakdown: false });
     } else {
       // add to regular var filters
       trail.addFilterWithoutReportingInteraction(filter);

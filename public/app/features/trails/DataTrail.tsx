@@ -165,7 +165,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
           // either the otel resource or the var filter
           // do not update on switching on otel experience or the initial check
           // do not update when selecting a label from metric scene breakdown
-          if (this.state.useOtelExperience && this.state.initialOtelCheckComplete && !this.state.addingLabelFromBreakdown) {
+          if (
+            this.state.useOtelExperience &&
+            this.state.initialOtelCheckComplete &&
+            !this.state.addingLabelFromBreakdown
+          ) {
             const nonPromotedOtelResources = this.state.nonPromotedOtelResources ?? [];
             manageOtelAndMetricFilters(
               newState.filters,
