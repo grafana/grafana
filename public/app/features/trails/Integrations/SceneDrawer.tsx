@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObject, SceneObjectState } from '@grafana/scenes';
-import { Drawer, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { AddonBarPane } from 'app/core/components/AppChrome/AddonBar/AddonBarPane';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -12,11 +12,11 @@ import { ShowModalReactEvent } from 'app/types/events';
 export type SceneDrawerProps = {
   scene: SceneObject;
   title: string;
-  onDismiss: () => void;
+  id: string;
 };
 
 export function SceneDrawer(props: SceneDrawerProps) {
-  const { scene, title, onDismiss } = props;
+  const { scene, id } = props;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
 
@@ -24,10 +24,14 @@ export function SceneDrawer(props: SceneDrawerProps) {
     chrome.update({ addonBarPane: undefined });
   };
 
+  const onClose = () => {
+    chrome.removeAddonApp(id);
+  };
+
   const actions = (
     <>
-      <ToolbarButton icon="minus-circle" onClick={onMinimize} />
-      <ToolbarButton icon="times" onClick={onDismiss} />
+      <ToolbarButton icon="minus-circle" onClick={onMinimize} tooltip="Minimize" />
+      <ToolbarButton icon="times" onClick={onClose} tooltip="Close" />
     </>
   );
 
@@ -50,30 +54,27 @@ export class SceneDrawerAsScene extends SceneObjectBase<SceneDrawerAsSceneState>
   static Component({ model }: SceneComponentProps<SceneDrawerAsScene>) {
     const state = model.useState();
     const { chrome } = useGrafana();
+    const id = useId();
 
     useEffect(() => {
       chrome.addAddonApp({
-        id: 'scene-drawer',
+        id: id,
         title: 'Explore metrics',
         icon: 'compass',
         isApp: true,
-        props: state,
+        props: { ...state, id: id },
         //@ts-ignore
         component: SceneDrawer,
       });
 
-      const removeAddonApp = () => chrome.removeAddonApp('scene-drawer');
-
       chrome.update({
         addonBarPane: {
-          id: 'scene-drawer',
+          id: id,
           isApp: true,
-          content: <SceneDrawer {...state} onDismiss={removeAddonApp} />,
+          content: <SceneDrawer {...state} />,
         },
       });
-
-      return removeAddonApp;
-    }, [chrome, state]);
+    }, [chrome, state, id]);
 
     return null;
   }

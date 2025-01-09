@@ -26,9 +26,7 @@ export function AddonBarPane({ title, actions, children, isApp }: Props) {
     <div className={cx(styles.pane, addonBarDocked && styles.paneDocked, isApp && styles.paneApp)}>
       <div className={styles.header}>
         <div>{title}</div>
-
-        <div className={styles.headerActions}>{actions}</div>
-        <div className={styles.dockButtonWrapper}>
+        <div className={styles.headerActions}>
           <IconButton
             tooltip="Dock / undock pane"
             className={cx(styles.dockButton, addonBarDocked && styles.dockButtonDocked)}
@@ -36,6 +34,7 @@ export function AddonBarPane({ title, actions, children, isApp }: Props) {
             onClick={chrome.onToggleDockAddonPane}
             variant="secondary"
           />
+          {actions}
         </div>
       </div>
       <div className={styles.content}>{children}</div>

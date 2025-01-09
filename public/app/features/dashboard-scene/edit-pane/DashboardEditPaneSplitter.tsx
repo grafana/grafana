@@ -58,7 +58,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
           id="dashboard-filters"
           title="Filters pane"
           icon="filter"
-          type="context"
           props={{ dashboard }}
           component={DashboardContentPane}
         />
@@ -66,7 +65,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
           id="dashboard-content-outline"
           title="Content outline"
           icon="list-ui-alt"
-          type="context"
           props={{ dashboard }}
           component={DashboardContentPane}
         />
@@ -75,7 +73,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             id="dashboard-settings"
             title="Dashboard settings"
             icon="cog"
-            type="context"
             props={{ dashboard }}
             component={DashboardSettingsPane}
           />
@@ -85,7 +82,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             id="selected-object"
             title={editableElement.getTypeName()}
             icon="focus-target"
-            type="context"
             props={{ editableElement }}
             component={SelectedObjectPane}
           />
@@ -216,7 +212,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
         position: 'sticky',
         zIndex: theme.zIndex.activePanel,
         background: theme.colors.background.canvas,
-        top: headerHeight,
+        top: 0,
       },
     }),
   };
