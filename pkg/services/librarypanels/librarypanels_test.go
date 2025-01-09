@@ -695,7 +695,7 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 		Version:     1,
 		Meta: model.LibraryElementDTOMeta{
 			FolderName:          "General",
-			FolderUID:           "",
+			FolderUID:           res.FolderUID,
 			ConnectedDashboards: 0,
 			Created:             res.Meta.Created,
 			Updated:             res.Meta.Updated,
