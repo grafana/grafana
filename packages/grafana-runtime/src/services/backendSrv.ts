@@ -177,7 +177,7 @@ export interface BackendSrv {
   /**
    * Observe each raw chunk in the response.  This is useful when reading values from
    * a long living HTTP connection like the kubernetes WATCH command.
-   * 
+   *
    * Each chunk includes the full response headers and the `data` property is filled with the chunk.
    */
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>>;
