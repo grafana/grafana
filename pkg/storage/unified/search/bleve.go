@@ -250,6 +250,11 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
 
+	size := 1000000000 // big number
+	if req.Limit > 0 {
+		size = int(req.Limit)
+	}
+
 	found, err := b.index.Search(&bleve.SearchRequest{
 		Query: &query.TermQuery{
 			Term:     req.Name,
@@ -261,7 +266,14 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 			resource.SEARCH_FIELD_REPOSITORY_HASH,
 			resource.SEARCH_FIELD_REPOSITORY_TIME,
 		},
-		Size: int(req.Limit),
+		Sort: search.SortOrder{
+			&search.SortField{
+				Field: resource.SEARCH_FIELD_REPOSITORY_PATH,
+				Type:  search.SortFieldAsString,
+				Desc:  false,
+			},
+		},
+		Size: size,
 		From: 0, // TODO! next page token!!!
 	})
 	if err != nil {
@@ -279,17 +291,32 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 		return fmt.Sprintf("%v", v)
 	}
 
+	asTime := func(v any) int64 {
+		if v == nil {
+			return 0
+		}
+		intV, ok := v.(int64)
+		if ok {
+			return intV
+		}
+		str, ok := v.(string)
+		if ok {
+			t, _ := time.Parse(time.RFC3339, str)
+			return t.UnixMilli()
+		}
+		return 0
+	}
+
 	rsp := &resource.RepositoryListResponse{}
 	for _, hit := range found.Hits {
-		item := &resource.RepositoryResourceInfo{
-			Key:  &resource.ResourceKey{},
-			Name: asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_NAME]), // necessary???
-			Hash: asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
-			Path: asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
-			// time...
+		item := &resource.RepositoryListResponse_Item{
+			Object: &resource.ResourceKey{},
+			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
+			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
+			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
 		}
 
-		err := item.Key.ReadSearchID(hit.ID)
+		err := item.Object.ReadSearchID(hit.ID)
 		if err != nil {
 			return nil, err
 		}

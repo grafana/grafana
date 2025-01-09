@@ -486,26 +486,23 @@ message RepositoryListRequest {
   int64 limit = 4;
 }
 
-message RepositoryResourceInfo {
-  // The resource
-  ResourceKey key = 1;
-
-  // Repository name
-  string name = 2;
-
-  // Hash for the resource
-  string path = 3;
-
-  // Verification hash from the origin
-  string hash = 4;
-
-  // Change time from the origin
-  int64 timestamp = 5;
-}
-
 message RepositoryListResponse {
+  message Item {
+    // The resource object key
+    ResourceKey object = 1;
+  
+    // Hash for the resource
+    string path = 2;
+  
+    // Verification hash from the origin
+    string hash = 3;
+  
+    // Change time from the origin
+    int64 time = 5;
+  }
+
   // Item iterator
-  repeated RepositoryResourceInfo items = 1;
+  repeated Item items = 1;
 
   // More results exist... pass this in the next request
   string next_page_token = 2;

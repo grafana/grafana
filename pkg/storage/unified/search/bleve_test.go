@@ -87,7 +87,7 @@ func TestBleveBackend(t *testing.T) {
 					Name:      "repo-1",
 					Path:      "path/to/aaa.json",
 					Hash:      "xyz",
-					Timestamp: asTimePointer(100),
+					Timestamp: asTimePointer(1609462800000), // 2021
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -115,7 +115,7 @@ func TestBleveBackend(t *testing.T) {
 					Name:      "repo-1",
 					Path:      "path/to/bbb.json",
 					Hash:      "hijk",
-					Timestamp: asTimePointer(200),
+					Timestamp: asTimePointer(1640998800000), // 2022
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -226,26 +226,26 @@ func TestBleveBackend(t *testing.T) {
 		require.JSONEq(t, `{
 			"items": [
 				{
-					"key": {
+					"object": {
 						"namespace": "ns",
 						"group": "dashboard.grafana.app",
 						"resource": "dashboards",
 						"name": "aaa"
 					},
-					"name": "repo-1",
 					"path": "path/to/aaa.json",
-					"hash": "xyz"
+					"hash": "xyz",
+					"time": 1609462800000
 				},
 				{
-					"key": {
+					"object": {
 						"namespace": "ns",
 						"group": "dashboard.grafana.app",
 						"resource": "dashboards",
 						"name": "bbb"
 					},
-					"name": "repo-1",
 					"path": "path/to/bbb.json",
-					"hash": "hijk"
+					"hash": "hijk",
+					"time": 1640998800000
 				}
 			]
 		}`, string(jj))
