@@ -236,7 +236,7 @@
     "tracelib": "1.0.1",
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4",
+    "typescript": "5.7.2",
     "webpack": "5.97.1",
     "webpack-assets-manifest": "^5.1.0",
     "webpack-cli": "6.0.1",
