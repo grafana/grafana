@@ -44,10 +44,10 @@ type ResourceIndex interface {
 	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
 
 	// List within an response
-	RepositoryList(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error)
+	ListRepositoryObjects(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error)
 
-	// Count the values in a repo -- when empty, all repos at once
-	RepositoryObjectCount(ctx context.Context, repo string) (map[string]int64, error)
+	// Count the values in a repo
+	CountRepositoryObjects(ctx context.Context) (map[string]int64, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
@@ -148,7 +148,7 @@ func (s *searchSupport) RepositoryList(ctx context.Context, req *RepositoryListR
 			Error: AsErrorResult(err),
 		}, nil
 	}
-	return idx.RepositoryList(ctx, req)
+	return idx.ListRepositoryObjects(ctx, req)
 }
 
 func (s *searchSupport) RepositoryStats(context.Context, *RepositoryStatsRequest) (*RepositoryStatsResponse, error) {

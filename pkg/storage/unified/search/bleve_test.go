@@ -215,7 +215,7 @@ func TestBleveBackend(t *testing.T) {
 		})
 
 		// Now look for repositories
-		found, err := index.RepositoryList(ctx, &resource.RepositoryListRequest{
+		found, err := index.ListRepositoryObjects(ctx, &resource.RepositoryListRequest{
 			Name:  "repo-1",
 			Limit: 100,
 		})
@@ -250,11 +250,7 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(jj))
 
-		counts, err := index.RepositoryObjectCount(ctx, "repo-1")
-		require.NoError(t, err)
-		require.Equal(t, int64(2), counts["repo-1"])
-
-		counts, err = index.RepositoryObjectCount(ctx, "")
+		counts, err := index.CountRepositoryObjects(ctx)
 		require.NoError(t, err)
 		require.Equal(t, map[string]int64{
 			"repo-1": 2,

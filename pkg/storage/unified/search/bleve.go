@@ -245,7 +245,7 @@ func (b *bleveIndex) Flush() (err error) {
 	return err
 }
 
-func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
+func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
@@ -315,48 +315,32 @@ func (b *bleveIndex) RepositoryList(ctx context.Context, req *resource.Repositor
 			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
 			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
 		}
-
 		err := item.Object.ReadSearchID(hit.ID)
 		if err != nil {
 			return nil, err
 		}
-
 		rsp.Items = append(rsp.Items, item)
 	}
 	return rsp, nil
 }
 
-func (b *bleveIndex) RepositoryObjectCount(ctx context.Context, repo string) (map[string]int64, error) {
+func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) (map[string]int64, error) {
+	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
+		Query: bleve.NewMatchAllQuery(),
+		Size:  0,
+		Facets: bleve.FacetsRequest{
+			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000), // typically less then 5
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
 	rsp := make(map[string]int64)
-	if repo == "" {
-		found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-			Query: bleve.NewMatchAllQuery(),
-			Size:  0,
-			Facets: bleve.FacetsRequest{
-				"xxx": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000),
-			},
-		})
-		if err != nil {
-			return nil, err
+	f, ok := found.Facets["count"]
+	if ok && f.Terms != nil {
+		for _, v := range f.Terms.Terms() {
+			rsp[v.Term] = int64(v.Count)
 		}
-		f, ok := found.Facets["xxx"]
-		if ok && f.Terms != nil {
-			for _, v := range f.Terms.Terms() {
-				rsp[v.Term] = int64(v.Count)
-			}
-		}
-	} else {
-		found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-			Query: &query.TermQuery{
-				Term:     repo,
-				FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
-			},
-			Size: 0,
-		})
-		if err != nil {
-			return nil, err
-		}
-		rsp[repo] = int64(found.Total)
 	}
 	return rsp, nil
 }
