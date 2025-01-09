@@ -87,7 +87,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsExternal = true
 
 		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo)
+		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule)
 		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
 	}
 

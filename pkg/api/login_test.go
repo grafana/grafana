@@ -692,7 +692,6 @@ func TestIsExternallySynced(t *testing.T) {
 	testcases := []struct {
 		name                string
 		cfg                 *setting.Cfg
-		oauthInfo           *social.OAuthInfo
 		provider            string
 		enabledAuthnClients []string
 		authnClientConfig   authn.SSOClientConfig
@@ -700,32 +699,34 @@ func TestIsExternallySynced(t *testing.T) {
 	}{
 		// Same for all of the OAuth providers
 		{
-			name:      "AzureAD external user should return that it is externally synced",
-			cfg:       &setting.Cfg{},
-			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: false},
-			provider:  loginservice.AzureADAuthModule,
-			expected:  true,
+			name:                "AzureAD external user should return that it is externally synced",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.AzureADAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix("azuread")},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: true,
 		},
 		{
-			name:      "AzureAD external user should return that it is not externally synced when org role sync is set",
-			cfg:       &setting.Cfg{},
-			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: true},
-			provider:  loginservice.AzureADAuthModule,
-			expected:  false,
+			name:                "AzureAD external user should return that it is not externally synced when org role sync is set",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.AzureADAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix(strings.TrimPrefix(loginservice.AzureADAuthModule, "oauth_"))},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: true,
+			},
+			expected: false,
 		},
 		{
-			name:      "AzureAD external user should return that it is not externally synced when the provider is not enabled",
-			cfg:       &setting.Cfg{},
-			oauthInfo: &social.OAuthInfo{Enabled: false, SkipOrgRoleSync: false},
-			provider:  loginservice.AzureADAuthModule,
-			expected:  false,
-		},
-		{
-			name:      "AzureAD synced user should return that it is not externally synced when the provider is not enabled and nil",
-			cfg:       &setting.Cfg{},
-			oauthInfo: nil,
-			provider:  loginservice.AzureADAuthModule,
-			expected:  false,
+			name:                "AzureAD external user should return that it is not externally synced when the provider is not enabled",
+			cfg:                 &setting.Cfg{},
+			enabledAuthnClients: []string{},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			provider: loginservice.AzureADAuthModule,
+			expected: false,
 		},
 		// saml
 		{
@@ -802,7 +803,7 @@ func TestIsExternallySynced(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider, tc.oauthInfo))
+			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider))
 		})
 	}
 }

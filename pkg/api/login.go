@@ -448,7 +448,7 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
 // then isExternallySynced will be true for this one provider and false for the others
-func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
+func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string) bool {
 	// provider enabled in config
 	if !hs.isProviderEnabled(cfg, authModule) {
 		return false
@@ -464,10 +464,12 @@ func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string, oa
 	}
 	switch authModule {
 	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
-		if oauthInfo == nil {
+		client := authn.ClientWithPrefix(strings.TrimPrefix(authModule, "oauth_"))
+		config, ok := hs.authnService.GetClientConfig(client)
+		if !ok {
 			return false
 		}
-		return !oauthInfo.SkipOrgRoleSync
+		return !config.IsSkipOrgRoleSyncEnabled()
 	}
 	return true
 }
@@ -476,7 +478,7 @@ func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string, oa
 // Grafana admin role sync is available for JWT, OAuth providers and LDAP.
 // For JWT and OAuth providers there is an additional config option `allow_assign_grafana_admin` that has to be enabled for Grafana Admin role to be synced.
 func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, oauthInfo *social.OAuthInfo, authModule string) bool {
-	if !hs.isExternallySynced(cfg, authModule, oauthInfo) {
+	if !hs.isExternallySynced(cfg, authModule) {
 		return false
 	}
 
