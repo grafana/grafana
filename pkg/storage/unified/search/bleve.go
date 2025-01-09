@@ -618,7 +618,6 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resource.ResourceTableColumnDefinition, error) {
 	fields := []*resource.ResourceTableColumnDefinition{
 		standard.Field(resource.SEARCH_FIELD_ID),
-		standard.Field(resource.SEARCH_FIELD_NAME),
 		standard.Field(resource.SEARCH_FIELD_TITLE),
 		standard.Field(resource.SEARCH_FIELD_TAGS),
 		standard.Field(resource.SEARCH_FIELD_FOLDER),
