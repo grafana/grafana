@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useMount } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
@@ -32,7 +33,7 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
     return getTraceTagValues(trace, key).map(toOption);
   };
 
-  useEffect(() => {
+  useMount(() => {
     if (search.tags) {
       search.tags.forEach((tag) => {
         if (tag.key) {
@@ -43,8 +44,7 @@ export const SpanFiltersTags = ({ search, trace, setSearch, tagKeys, setTagKeys,
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   const onTagChange = (tag: Tag, v: SelectableValue<string>) => {
     setSearch({
