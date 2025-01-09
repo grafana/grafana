@@ -8,22 +8,24 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,26 +43,33 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 	var client zanzana.Client
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
-		clientCfg := grpcutils.ReadGrpcClientConfig(cfg)
-		grpcClientCfg := authnlib.GrpcClientConfig{
-			TokenClientConfig: &authnlib.TokenExchangeConfig{
-				Token:            clientCfg.Token,
-				TokenExchangeURL: clientCfg.TokenExchangeURL,
-			},
-			TokenRequest: &authnlib.TokenExchangeRequest{
-				Namespace: clientCfg.TokenNamespace,
-				Audiences: []string{zanzanaAudience},
-			},
-		}
-		clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientCfg)
+		tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			// TODO: fix config reading in zanzana
+			Token:            "mytoken",
+			TokenExchangeURL: "qwerty",
+		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to setup client authentication: %w", err)
+			return nil, err
+		}
+
+		authInterceptor := func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			token, err := tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
+				Namespace: "stack-id",
+				Audiences: []string{zanzanaAudience},
+			})
+			if err != nil {
+				return err
+			}
+
+			md := metadata.Pairs()
+			md.Set(authnlib.DefaultAccessTokenMetadataKey, token.Token)
+			ctx = metadata.NewOutgoingContext(ctx, md)
+			return invoker(ctx, method, req, reply, cc, opts...)
 		}
 
 		conn, err := grpc.NewClient(cfg.Zanzana.Addr,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
+			grpc.WithUnaryInterceptor(authInterceptor),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
@@ -158,26 +167,31 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	authCfg, err := grpcutils.ReadGrpcServerConfig(z.cfg)
-	if err != nil {
-		return fmt.Errorf("failed to read GRPC server config: %w", err)
-	}
+	authenticator := authnlib.NewAccessTokenAuthenticator(
+		authnlib.NewAccessTokenVerifier(
+			authnlib.VerifierConfig{
+				AllowedAudiences: []string{zanzanaAudience},
+			},
+			// TODO: fix reading proper config value (inside zanzana config)
+			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
+				SigningKeysURL: "qwerty",
+			}),
+		),
+	)
 
-	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
-		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
-			SigningKeysURL: authCfg.SigningKeysURL,
-		},
-		VerifierConfig: authnlib.VerifierConfig{
-			AllowedAudiences: []string{zanzanaAudience},
-		},
-	}
+	authfn := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return nil, fmt.Errorf("missing metadata")
+		}
+		c, err := authenticator.Authenticate(ctx, authnlib.NewGRPCTokenProvider(md))
+		if err != nil {
+			return nil, err
+		}
+		return claims.WithClaims(ctx, c), nil
+	})
 
-	authenticator, err := authnlib.NewGrpcAuthenticator(&grpcAuthCfg, authnlib.WithIDTokenAuthOption(true))
-	if err != nil {
-		return fmt.Errorf("failed to setup authentication: %w", err)
-	}
-
-	z.handle, err = grpcserver.ProvideService(z.cfg, z.features, authenticator, tracer, prometheus.DefaultRegisterer)
+	z.handle, err = grpcserver.ProvideService(z.cfg, z.features, authfn, tracer, prometheus.DefaultRegisterer)
 	if err != nil {
 		return fmt.Errorf("failed to create zanzana grpc server: %w", err)
 	}
