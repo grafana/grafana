@@ -364,7 +364,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientSAML)
+		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientLDAP)
 
 		if !hasEnabledProviders {
 			oauthInfos := hs.SocialService.GetOAuthInfoProviders()
