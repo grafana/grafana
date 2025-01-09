@@ -84,7 +84,7 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Tags: []string{"aa", "bb"},
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo1",
+					Name:      "repo-1",
 					Path:      "path/to/aaa.json",
 					Hash:      "xyz",
 					Timestamp: asTimePointer(100),
@@ -112,7 +112,7 @@ func TestBleveBackend(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 				},
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo1",
+					Name:      "repo-1",
 					Path:      "path/to/bbb.json",
 					Hash:      "hijk",
 					Timestamp: asTimePointer(200),
@@ -216,7 +216,7 @@ func TestBleveBackend(t *testing.T) {
 
 		// Now look for repositories
 		found, err := index.RepositoryList(ctx, &resource.RepositoryListRequest{
-			Name:  "repo1",
+			Name:  "repo-1",
 			Limit: 100,
 		})
 		require.NoError(t, err)
@@ -232,7 +232,7 @@ func TestBleveBackend(t *testing.T) {
 						"resource": "dashboards",
 						"name": "aaa"
 					},
-					"name": "repo1",
+					"name": "repo-1",
 					"path": "path/to/aaa.json",
 					"hash": "xyz"
 				},
@@ -243,7 +243,7 @@ func TestBleveBackend(t *testing.T) {
 						"resource": "dashboards",
 						"name": "bbb"
 					},
-					"name": "repo1",
+					"name": "repo-1",
 					"path": "path/to/bbb.json",
 					"hash": "hijk"
 				}
@@ -271,7 +271,7 @@ func TestBleveBackend(t *testing.T) {
 				Title:     "zzz (folder)",
 				TitleSort: "zzz (folder)",
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo1",
+					Name:      "repo-1",
 					Path:      "path/to/folder.json",
 					Hash:      "xxxx",
 					Timestamp: asTimePointer(300),
