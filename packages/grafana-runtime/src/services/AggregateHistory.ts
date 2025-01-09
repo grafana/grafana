@@ -1,6 +1,10 @@
 import * as H from 'history';
 import { BehaviorSubject, Observable } from 'rxjs';
 
+// For new URL() to correctly parse the url it needs to have domain and protocol so we add a dummy one. It does not
+// matter what it is as long as it is a valid URL as we use only pathname, search and hash from it.
+const dummyDomain = 'http://sidecar';
+
 /**
  * Given a full aggregated location with both main and secondary url in a single query param, returns a partial
  * location that is requested depending on the isMain flag.
@@ -18,7 +22,7 @@ function getPartialLocation(location: H.Location, param: string, isMain: boolean
   } else {
     if (paramsCopy.has(param)) {
       const url = paramsCopy.get(param);
-      const parsed = new URL('http://sidecar' + url);
+      const parsed = new URL(dummyDomain + url);
       return {
         pathname: parsed.pathname,
         search: parsed.search,
@@ -82,7 +86,7 @@ function partialLocationToFull(
  */
 function normalizeLocation(location: H.Path | H.LocationDescriptor<unknown>): H.Location {
   if (typeof location === 'string') {
-    const url = new URL('http://grafana' + location);
+    const url = new URL(dummyDomain + location);
     return {
       pathname: url.pathname,
       search: url.search,
