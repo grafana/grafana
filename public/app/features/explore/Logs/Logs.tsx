@@ -470,12 +470,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const newSortOrder =
         logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
       store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
-
       if (logsQueries) {
+        let hasLokiQueries = false;
         const newQueries = logsQueries.map((query) => {
           if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
             return query;
           }
+          hasLokiQueries = true;
 
           if (query.direction === LokiQueryDirection.Scan) {
             // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
@@ -489,7 +490,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           return query;
         });
 
-        dispatch(changeQueries({ exploreId, queries: newQueries }));
+        if (hasLokiQueries) {
+          dispatch(changeQueries({ exploreId, queries: newQueries }));
+        }
       }
 
       setLogsSortOrder(newSortOrder);
