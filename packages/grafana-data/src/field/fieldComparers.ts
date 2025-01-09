@@ -55,8 +55,8 @@ const stringComparer = (a: string, b: string): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
-  console.log({ a: typeof a, b: typeof b });
   // Coerce all inputs to strings
+  // TODO: Resolve this correctly in groupingToMatrix, which is hardcoding types to string.
   return a.toString().localeCompare(b.toString());
 };
 
