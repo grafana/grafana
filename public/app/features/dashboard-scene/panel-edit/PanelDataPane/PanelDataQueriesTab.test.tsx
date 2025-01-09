@@ -425,6 +425,22 @@ describe('PanelDataQueriesTab', () => {
           expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
         });
 
+        it('should update hoverHeader', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.setState({ title: '', hoverHeader: true });
+
+          panel.state.$data?.activate();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            timeRange: { from: '1h' },
+          });
+
+          expect(panel.state.hoverHeader).toBe(false);
+        });
+
         it('should update PanelTimeRange object on time options update', async () => {
           const { queriesTab, panel } = await setupScene('panel-1');
 
