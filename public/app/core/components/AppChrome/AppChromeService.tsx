@@ -39,12 +39,13 @@ export interface AddonAppDefinition<T = {}> {
   title: string;
   icon: string;
   component: React.ComponentType<T>;
-  type: 'context' | 'global';
+  isApp?: boolean;
   props: T;
 }
 
 export interface AddonBarPane {
   id: string;
+  isApp?: boolean;
   content: React.ReactNode;
 }
 
@@ -223,6 +224,7 @@ export class AppChromeService {
     this.update({
       addonBarPane: {
         id: addonApp.id,
+        isApp: addonApp.isApp,
         content: <addonApp.component {...addonApp.props} />,
       },
     });

@@ -82,6 +82,8 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  const dockedPane = Boolean(state.addonBarPane && state.addonPaneDocked && !state.addonBarPane.isApp);
+
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
@@ -132,7 +134,7 @@ export function AppChrome({ children }: Props) {
               className={cx(styles.pageContainer, {
                 [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
                 [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-                [styles.pageContainerAddonPane]: Boolean(state.addonBarPane && state.addonPaneDocked),
+                [styles.pageContainerAddonPane]: dockedPane,
               })}
               id="pageContent"
             >

@@ -12,17 +12,18 @@ export interface Props {
   title: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
+  isApp?: boolean;
 }
 
 export const ADDON_BAR_PANE_WIDTH = 300;
 
-export function AddonBarPane({ title, actions, children }: Props) {
+export function AddonBarPane({ title, actions, children, isApp }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const { addonBarDocked } = chrome.useState();
 
   return (
-    <div className={cx(styles.pane, addonBarDocked && styles.paneDocked)}>
+    <div className={cx(styles.pane, addonBarDocked && styles.paneDocked, isApp && styles.paneApp)}>
       <div className={styles.header}>
         <div>{title}</div>
 
@@ -55,6 +56,9 @@ function getStyles(theme: GrafanaTheme2) {
       right: ADDON_BAR_WIDTH + 1,
       zIndex: theme.zIndex.sidemenu,
       borderLeft: `1px solid ${theme.colors.border.weak}`,
+    }),
+    paneApp: css({
+      width: '90%',
     }),
     paneDocked: css({}),
     header: css({

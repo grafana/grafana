@@ -70,6 +70,9 @@ export function AddonBar() {
     });
   };
 
+  const transientApps = state.addonApps.filter((app) => app.isApp);
+  const contextApps = state.addonApps.filter((app) => !app.isApp);
+
   return (
     <div className={styles.addonBar}>
       {profileNode && (
@@ -83,7 +86,7 @@ export function AddonBar() {
         </Dropdown>
       )}
       <div style={{ marginBottom: '32px' }}></div>
-      {state.addonApps.map((app) => (
+      {contextApps.map((app) => (
         <AddonBarItem active={state.addonBarPane?.id === app.id} key={app.id}>
           <ToolbarButton
             tooltip={app.title}
@@ -95,6 +98,17 @@ export function AddonBar() {
         </AddonBarItem>
       ))}
       <FlexItem grow={1} />
+      {transientApps.map((app) => (
+        <AddonBarItem active={state.addonBarPane?.id === app.id} key={app.id}>
+          <ToolbarButton
+            tooltip={app.title}
+            iconOnly
+            icon={app.icon}
+            aria-label={app.title}
+            onClick={() => chrome.openAddon(app.id)}
+          />
+        </AddonBarItem>
+      ))}
       <LineSeparator />
       <AddonBarItem active={state.addonBarPane?.id === 'create'}>
         <ToolbarButton tooltip="Add / create" iconOnly icon={'plus'} aria-label="New" onClick={onShowCreate} />

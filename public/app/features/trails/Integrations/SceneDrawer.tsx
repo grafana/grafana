@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObject, SceneObjectState } from '@grafana/scenes';
-import { Drawer, useStyles2 } from '@grafana/ui';
+import { Drawer, ToolbarButton, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { AddonBarPane } from 'app/core/components/AppChrome/AddonBar/AddonBarPane';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ShowModalReactEvent } from 'app/types/events';
 
 export type SceneDrawerProps = {
@@ -15,13 +18,25 @@ export type SceneDrawerProps = {
 export function SceneDrawer(props: SceneDrawerProps) {
   const { scene, title, onDismiss } = props;
   const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
+
+  const onMinimize = () => {
+    chrome.update({ addonBarPane: undefined });
+  };
+
+  const actions = (
+    <>
+      <ToolbarButton icon="minus-circle" onClick={onMinimize} />
+      <ToolbarButton icon="times" onClick={onDismiss} />
+    </>
+  );
 
   return (
-    <Drawer title={title} onClose={onDismiss} size="lg">
+    <AddonBarPane title={'Explore metrics'} isApp={true} actions={actions}>
       <div className={styles.drawerInnerWrapper}>
         <scene.Component model={scene} />
       </div>
-    </Drawer>
+    </AddonBarPane>
   );
 }
 
@@ -34,8 +49,33 @@ export class SceneDrawerAsScene extends SceneObjectBase<SceneDrawerAsSceneState>
 
   static Component({ model }: SceneComponentProps<SceneDrawerAsScene>) {
     const state = model.useState();
+    const { chrome } = useGrafana();
 
-    return <SceneDrawer {...state} />;
+    useEffect(() => {
+      chrome.addAddonApp({
+        id: 'scene-drawer',
+        title: 'Explore metrics',
+        icon: 'compass',
+        isApp: true,
+        props: state,
+        //@ts-ignore
+        component: SceneDrawer,
+      });
+
+      const removeAddonApp = () => chrome.removeAddonApp('scene-drawer');
+
+      chrome.update({
+        addonBarPane: {
+          id: 'scene-drawer',
+          isApp: true,
+          content: <SceneDrawer {...state} onDismiss={removeAddonApp} />,
+        },
+      });
+
+      return removeAddonApp;
+    }, [chrome, state]);
+
+    return null;
   }
 }
 
@@ -52,12 +92,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     drawerInnerWrapper: css({
       display: 'flex',
-      padding: theme.spacing(2),
-      background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 0,
+      marginTop: theme.spacing(-2),
     }),
   };
 }
