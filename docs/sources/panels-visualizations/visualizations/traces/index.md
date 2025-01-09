@@ -171,8 +171,6 @@ You should now see a list of matching traces in the table visualization. While s
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
-How to use **Span filters**:
-
 * **Find in trace**: Set the initial value for the span search to focus on spans relevant to your query.
 * **Show matches only** toggle: Display only spans that match the defined filter criteria, simplifying trace interpretation.
 * **Show critical path only**: Highlight only the spans in the critical path to identify performance bottlenecks and their impact on overall latency.
