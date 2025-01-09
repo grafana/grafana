@@ -1,14 +1,11 @@
-import { FieldConfigSource, OneClickMode, PanelModel } from '@grafana/data';
+import { OneClickMode, PanelModel } from '@grafana/data';
 
 import { canvasMigrationHandler } from './migrations';
 
 describe('Canvas migration', () => {
-  let prevFieldConfig: FieldConfigSource;
-
   it('should migrate renamed options', () => {
     const panel = {
       type: 'canvas',
-      fieldConfig: prevFieldConfig,
       options: {
         root: {
           elements: [
