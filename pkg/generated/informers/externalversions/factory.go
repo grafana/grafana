@@ -11,6 +11,7 @@ import (
 
 	versioned "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	internalinterfaces "github.com/grafana/grafana/pkg/generated/informers/externalversions/internalinterfaces"
+	provisioning "github.com/grafana/grafana/pkg/generated/informers/externalversions/provisioning"
 	service "github.com/grafana/grafana/pkg/generated/informers/externalversions/service"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -240,7 +241,12 @@ type SharedInformerFactory interface {
 	// client.
 	InformerFor(obj runtime.Object, newFunc internalinterfaces.NewInformerFunc) cache.SharedIndexInformer
 
+	Provisioning() provisioning.Interface
 	Service() service.Interface
+}
+
+func (f *sharedInformerFactory) Provisioning() provisioning.Interface {
+	return provisioning.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Service() service.Interface {

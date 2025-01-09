@@ -7,7 +7,8 @@ package externalversions
 import (
 	fmt "fmt"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -38,8 +39,12 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=service.grafana.app, Version=v0alpha1
-	case v0alpha1.SchemeGroupVersion.WithResource("externalnames"):
+	// Group=provisioning.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithResource("repositories"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V0alpha1().Repositories().Informer()}, nil
+
+		// Group=service.grafana.app, Version=v0alpha1
+	case servicev0alpha1.SchemeGroupVersion.WithResource("externalnames"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Service().V0alpha1().ExternalNames().Informer()}, nil
 
 	}
