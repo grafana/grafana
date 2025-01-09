@@ -14,7 +14,7 @@ import { createLabelsCrossReferenceConnector } from './labelsCrossReference';
 type Label = { key: string; operator: string; value: string };
 
 function setVariables(variables: Label[] | null) {
-  sceneGraphSpy.mockReturnValue(variables ? createMockAdHocVariable(variables) : null);
+  sceneGraphSpy.mockReturnValue(variables ? createAdHocVariableStub(variables) : null);
 }
 
 function setVariablesAndQueryResponse({
@@ -69,30 +69,27 @@ function setQueryRunnerMockResults(hasLogs: boolean) {
   }));
 }
 
-jest.mock('@grafana/scenes', () => {
-  const originalModule = jest.requireActual('@grafana/scenes');
-  return {
-    ...originalModule,
-    SceneQueryRunner: queryRunnerMock,
-  };
-});
-
-const getListSpy = jest.fn().mockReturnValue([
+const lokiDataSourcesStub = [
   {
-    access: 'proxy',
     id: 1,
     uid: 'loki1',
-    name: 'Loki Main',
+    name: 'Loki Prod',
     type: 'loki',
-    jsonData: {},
   },
   {
     id: 2,
     uid: 'loki2',
-    name: 'Loki Secondary',
+    name: 'Loki Staging',
     type: 'loki',
   },
-]);
+  {
+    id: 3,
+    uid: 'loki3',
+    name: 'Loki Dev',
+    type: 'loki',
+  },
+];
+const getListSpy = jest.fn().mockReturnValue(lokiDataSourcesStub);
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -105,14 +102,23 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('@grafana/scenes', () => {
+  const originalModule = jest.requireActual('@grafana/scenes');
+  return {
+    ...originalModule,
+    SceneQueryRunner: queryRunnerMock,
+  };
+});
+
 const getTrailForSpy = jest.spyOn(utils, 'getTrailFor');
+const sceneGraphSpy = jest.spyOn(sceneGraph, 'lookupVariable');
 
 const mockScene = {
   state: {},
   useState: jest.fn(),
 } as unknown as RelatedLogsScene;
 
-const createMockAdHocVariable = (filters: Label[]) => {
+const createAdHocVariableStub = (filters: Label[]) => {
   return {
     __typename: 'AdHocFiltersVariable',
     state: {
@@ -128,21 +134,12 @@ const filtersStub = [
   { key: 'app', operator: '=', value: 'frontend' },
 ];
 
-const sceneGraphSpy = jest.spyOn(sceneGraph, 'lookupVariable');
-
 describe('LabelsCrossReferenceConnector', () => {
-  let consoleErrorSpy: jest.SpyInstance;
-
   beforeEach(() => {
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     getListSpy.mockClear();
     queryRunnerMock.mockClear();
     sceneGraphSpy.mockClear();
     getTrailForSpy.mockReturnValue(new DataTrail({}));
-  });
-
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
   });
 
   describe('getDataSources', () => {
@@ -154,18 +151,13 @@ describe('LabelsCrossReferenceConnector', () => {
       });
       const result = await connector.getDataSources();
 
-      expect(result).toHaveLength(2);
-      expect(result).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ name: 'Loki Main', uid: 'loki1' }),
-          expect.objectContaining({ name: 'Loki Secondary', uid: 'loki2' }),
-        ])
-      );
+      expect(result).toHaveLength(lokiDataSourcesStub.length);
+      expect(result).toEqual(expect.arrayContaining(lokiDataSourcesStub));
       expect(getListSpy).toHaveBeenCalledWith({ logs: true, type: 'loki' });
     });
 
     it('should handle no filters case', async () => {
-      sceneGraphSpy.mockReturnValue(createMockAdHocVariable([]));
+      sceneGraphSpy.mockReturnValue(createAdHocVariableStub([]));
       setVariablesAndQueryResponse({
         variables: [],
         labelsInResponse: false,
@@ -201,7 +193,7 @@ describe('LabelsCrossReferenceConnector', () => {
 
     it('should return empty string when no filters are present', () => {
       setVariables([]);
-      sceneGraphSpy.mockReturnValue(createMockAdHocVariable([]));
+      sceneGraphSpy.mockReturnValue(createAdHocVariableStub([]));
 
       const connector = createLabelsCrossReferenceConnector(mockScene);
       const result = connector.getLokiQueryExpr();
