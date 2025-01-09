@@ -13,7 +13,6 @@ import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxDatasource from './datasource';
 import { InfluxQuery, InfluxVersion } from './types';
 
-
 const fetchMock = mockBackendService(mockInfluxFetchResponse());
 
 describe('datasource initialization', () => {
@@ -271,7 +270,7 @@ describe('InfluxDataSource Backend Mode [influxdbBackendMigration=true]', () => 
 
 describe('interpolateQueryExpr', () => {
   const templateSrvStub = {
-    replace: jest.fn().mockImplementation((...rest: unknown[]) => "templateVarReplaced"),
+    replace: jest.fn().mockImplementation((...rest: unknown[]) => 'templateVarReplaced'),
   } as unknown as TemplateSrv;
   let ds = getMockInfluxDS(getMockDSInstanceSettings(), templateSrvStub);
   it('should return the value as it is', () => {
@@ -381,17 +380,17 @@ describe('interpolateQueryExpr', () => {
   });
 
   it('template var in adhoc', () => {
-    const templateVarName = "$templateVarName"
-    const templateVarValue = "templateVarValue";
+    const templateVarName = '$templateVarName';
+    const templateVarValue = 'templateVarValue';
     const templateSrvStub = {
-      replace: jest.fn().mockImplementation((target?: string) => target === templateVarName ? templateVarValue : target),
+      replace: jest
+        .fn()
+        .mockImplementation((target?: string) => (target === templateVarName ? templateVarValue : target)),
     } as unknown as TemplateSrv;
     const ds = getMockInfluxDS(getMockDSInstanceSettings(), templateSrvStub);
     ds.version = InfluxVersion.SQL;
-    const adhocFilter: AdHocVariableFilter[] = [
-      { key: 'bar', value: templateVarName, operator: '=' },
-    ];
-    const result = ds.applyTemplateVariables((mockInfluxQueryRequest() as unknown as InfluxQuery), {}, adhocFilter)
+    const adhocFilter: AdHocVariableFilter[] = [{ key: 'bar', value: templateVarName, operator: '=' }];
+    const result = ds.applyTemplateVariables(mockInfluxQueryRequest() as unknown as InfluxQuery, {}, adhocFilter);
     expect(result.tags![0].value).toBe(templateVarValue);
   });
 });
