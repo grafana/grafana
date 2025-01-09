@@ -31,6 +31,7 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -55,7 +56,8 @@ import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { getViewPanelUrl } from '../utils/urlBuilders';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -172,8 +174,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
-  // TODO: use feature toggle to allow v2 serializer
-  private _serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer();
+  private _serializer: DashboardSceneSerializerLike<
+    Dashboard | DashboardV2Spec,
+    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  > = getDashboardSceneSerializer();
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -648,8 +652,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
+  setInitialSaveModel(model?: Dashboard, meta?: DashboardMeta): void;
+  setInitialSaveModel(model?: DashboardV2Spec, meta?: DashboardWithAccessInfo<DashboardV2Spec>['metadata']): void;
+  public setInitialSaveModel(
+    saveModel?: Dashboard | DashboardV2Spec,
+    meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  ): void {
     this._serializer.initialSaveModel = saveModel;
+    this._serializer.metadata = meta;
   }
 
   public getTrackingInformation() {

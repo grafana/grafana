@@ -17,11 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -288,7 +288,6 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder := db.NewSqlBuilder(cfg, features, store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", ? as folder_name ", cmd.FolderName)
-		builder.Write(", COALESCE((SELECT folder.uid FROM folder WHERE folder.id = le.folder_id), '') as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
@@ -296,16 +295,9 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
-		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-
-		// use permission filter if lib panel RBAC isn't enabled
-		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
-		}
-
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
@@ -322,6 +314,11 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
+		// nolint:staticcheck
+		f, err := l.folderService.Get(c, &folder.GetFolderQuery{OrgID: signedInUser.GetOrgID(), ID: &libraryElement.FolderID, SignedInUser: signedInUser})
+		if err != nil {
+			return []model.LibraryElementDTO{}, err
+		}
 		var updatedModel json.RawMessage
 		if libraryElement.Kind == int64(model.PanelElement) {
 			updatedModel, err = l.addUidToLibraryPanel(libraryElement.Model, libraryElement.UID)
@@ -331,8 +328,8 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		folderUID := libraryElement.FolderUID
-		if libraryElement.FolderID == 0 { // nolint:staticcheck
+		folderUID := f.UID
+		if f.ID == 0 { // nolint:staticcheck
 			folderUID = ac.GeneralFolderUID
 		}
 		leDtos[i] = model.LibraryElementDTO{
@@ -348,8 +345,8 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 			Model:       updatedModel,
 			Version:     libraryElement.Version,
 			Meta: model.LibraryElementDTOMeta{
-				FolderName:          libraryElement.FolderName,
-				FolderUID:           libraryElement.FolderUID,
+				FolderName:          f.Title,
+				FolderUID:           folderUID,
 				ConnectedDashboards: libraryElement.ConnectedDashboards,
 				Created:             libraryElement.Created,
 				Updated:             libraryElement.Updated,
