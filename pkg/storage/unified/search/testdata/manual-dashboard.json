@@ -74,8 +74,8 @@
           "aa"
         ],
         "zzz",
-        3,
-        0,
+        null,
+        null,
         null,
         null,
         null
@@ -98,8 +98,8 @@
           "aa"
         ],
         "xxx",
-        2,
-        0,
+        null,
+        null,
         null,
         null,
         null
@@ -123,8 +123,8 @@
           "bb"
         ],
         "xxx",
-        1,
-        0,
+        null,
+        null,
         null,
         null,
         null
