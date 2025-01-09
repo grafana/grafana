@@ -73,6 +73,7 @@ type DashboardServiceImpl struct {
 	folderStore          folder.FolderStore
 	folderService        folder.Service
 	userService          user.Service
+	orgService           org.Service
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
@@ -104,7 +105,7 @@ func ProvideDashboardServiceImpl(
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
-	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient, orgSvc org.Service,
 ) (*DashboardServiceImpl, error) {
 	k8sHandler := &dashk8sHandler{
 		gvr:                v0alpha1.DashboardResourceInfo.GroupVersionResource(),
@@ -124,6 +125,7 @@ func ProvideDashboardServiceImpl(
 		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
+		orgService:           orgSvc,
 		userService:          userService,
 		k8sclient:            k8sHandler,
 		metrics:              newDashboardsMetrics(r),
@@ -140,14 +142,18 @@ func ProvideDashboardServiceImpl(
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
+	// TODO: search for annotations instead through unistore if FlagKubernetesCliDashboards is enabled
+	// will need to loop through orgs
 	return dr.dashboardStore.GetProvisionedDashboardData(ctx, name)
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
+	// TODO: search for annotations instead through unistore if FlagKubernetesCliDashboards is enabled
 	return dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
+	// TODO: search for annotations instead through unistore if FlagKubernetesCliDashboards is enabled
 	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
 }
 
@@ -290,6 +296,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
+	// TODO: search for annotations NOT IN when kubernetes cli dashboards is enabled
 	result, err := dr.dashboardStore.GetOrphanedProvisionedDashboards(ctx, cmd)
 	if err != nil {
 		return err
@@ -376,11 +383,21 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		return nil, err
 	}
 
-	dash, err := dr.saveDashboard(ctx, cmd)
-	if err != nil {
-		return nil, err
+	var dash *dashboards.Dashboard
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		dash, err = dr.saveProvisionedDashboardThroughK8s(ctx, cmd, provisioning.OrgID, provisioning)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		dash, err = dr.saveDashboard(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
 	}
 
+	// still save the data to the dashboard_provisioning table, even when FlagKubernetesCliDashboards is enabled
+	// to ensure we can safely rollback to mode2 if needed
 	err = dr.dashboardStore.SaveProvisionedDashboard(ctx, dash, provisioning)
 	if err != nil {
 		return nil, err
@@ -600,6 +617,7 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 // UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
 // and provisioned dashboards are left behind but not deleted.
 func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashboardId int64) error {
+	// TODO: remove annotations in unistore if FlagKubernetesCliDashboards is enabled
 	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 }
 
@@ -1169,6 +1187,58 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 	return dr.UnstructuredToLegacyDashboard(ctx, out, query.OrgID)
 }
 
+func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, orgID int64, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+	// create a new context - prevents issues when the request stems from the k8s api itself
+	// otherwise the context goes through the handlers twice and causes issues
+	newCtx, cancel, err := dr.getK8sContext(ctx)
+	if err != nil {
+		return nil, err
+	} else if cancel != nil {
+		defer cancel()
+	}
+
+	client, ok := dr.k8sclient.getClient(newCtx, orgID)
+	if !ok {
+		return nil, nil
+	}
+
+	obj, err := LegacySaveCommandToUnstructured(cmd, dr.k8sclient.getNamespace(orgID))
+	if err != nil {
+		return nil, err
+	}
+
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	annotations[utils.AnnoKeyRepoName] = provisioning.Name
+	annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
+	annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
+	annotations[utils.AnnoKeyRepoTimestamp] = string(provisioning.Updated)
+	obj.SetAnnotations(annotations)
+
+	var out *unstructured.Unstructured
+	current, err := client.Get(newCtx, obj.GetName(), v1.GetOptions{})
+	if current == nil || err != nil {
+		out, err = client.Create(newCtx, &obj, v1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		out, err = client.Update(newCtx, &obj, v1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	finalDash, err := dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return finalDash, nil
+}
+
 func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, orgID int64) (*dashboards.Dashboard, error) {
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
@@ -1394,6 +1464,80 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	return ParseResults(res, 0)
+}
+
+func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8sRaw(ctx context.Context, name, dashboard_uid string, orgID, dashboard_id int64) ([]*dashboards.DashboardProvisioning, error) {
+	dashboardskey := &resource.ResourceKey{
+		Namespace: dr.k8sclient.getNamespace(orgID),
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	request := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Key: dashboardskey,
+		},
+		Limit: 100000}
+
+	// TODO: need to fix this to search correctly. Probably need to add new field to search
+	if name != "" {
+		req := []*resource.Requirement{{
+			Key:      "repoInfo.name",
+			Operator: "in",
+			Values:   []string{name},
+		}}
+		if len(request.Options.Fields) == 0 {
+			request.Options.Fields = req
+		} else {
+			request.Options.Fields = append(request.Options.Fields, req...)
+		}
+	}
+
+	res, err := dr.k8sclient.getSearcher().Search(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	searchResults, err := ParseResults(res, 0)
+	newCtx, cancel, err := dr.getK8sContext(ctx)
+	if err != nil {
+		return nil, err
+	} else if cancel != nil {
+		defer cancel()
+	}
+
+	client, ok := dr.k8sclient.getClient(newCtx, orgID)
+	if !ok {
+		return nil, nil
+	}
+
+	dashs := make([]*dashboards.DashboardProvisioning, 0)
+	for _, hit := range searchResults.Hits {
+		out, err := client.Get(newCtx, hit.Name, v1.GetOptions{}, "")
+		if err != nil {
+			return nil, err
+		} else if out == nil {
+			return nil, dashboards.ErrDashboardNotFound
+		}
+		meta, err := utils.MetaAccessor(out)
+		if err != nil {
+			return nil, err
+		}
+		updated, err := meta.GetRepositoryTimestamp()
+		if err != nil {
+			return nil, err
+		}
+
+		dashs = append(dashs, &dashboards.DashboardProvisioning{
+			Name:        meta.GetRepositoryName(),
+			ExternalID:  meta.GetRepositoryPath(),
+			CheckSum:    meta.GetRepositoryHash(),
+			Updated:     updated.Unix(),
+			DashboardID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
+		})
+	}
+
+	return dashs, nil
 }
 
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]*dashboards.Dashboard, error) {
