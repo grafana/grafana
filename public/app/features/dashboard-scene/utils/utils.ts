@@ -305,23 +305,3 @@ export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivat
     cancel?.();
   };
 }
-
-/**
- * @deprecated use activateSceneObjectAndParentTree instead.
- * Activates any inactive ancestors of the scene object.
- * Useful when rendering a scene object out of context of it's parent
- */
-export const activateInActiveParents = activateSceneObjectAndParentTree;
-
-export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutManager {
-  let parent = sceneObject.parent;
-
-  while (parent) {
-    if (isDashboardLayoutManager(parent)) {
-      return parent;
-    }
-    parent = parent.parent;
-  }
-
-  throw new Error('Could not find layout manager for scene object');
-}
