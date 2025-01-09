@@ -22,6 +22,7 @@ import {
   DatasourceVariableKind,
   GroupByVariableKind,
   IntervalVariableKind,
+  PanelKind,
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
@@ -216,29 +217,47 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels).toHaveLength(1);
-    const vizPanel = vizPanels[0];
-    validateVizPanel(vizPanel, dash);
+    expect(vizPanels).toHaveLength(2);
 
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
-    expect(layout.state.grid.state.children.length).toBe(1);
-    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
+    const getPanelElement = (id: string) => (dash.elements[id].kind === 'Panel' ? dash.elements[id] : undefined);
+    const getLibraryPanelElement = (id: string) =>
+      dash.elements[id].kind === 'LibraryPanel' ? dash.elements[id] : undefined;
+
+    // Panel
+    const panel = getPanelElement('panel-1')!;
+    expect(layout.state.grid.state.children.length).toBe(2);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
     const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
+    const vizPanel = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    validateVizPanel(vizPanel, dash);
+
+    // Library Panel
+    const libraryPanel = getLibraryPanelElement('library-panel-1')!;
+    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.uid}`);
+    const libraryGridLayoutItemSpec = dash.layout.spec.items[1].spec;
+    expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
+    expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
+    expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
+    expect(layout.state.grid.state.children[1].state.y).toBe(libraryGridLayoutItemSpec.y);
+    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'library-panel-1')!;
+    validateVizPanel(vizLibraryPanel, dash);
 
     // Transformations
-    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+    const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+      getPanelElement('panel-1')!.spec.data.spec.transformations[0].spec
     );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -259,14 +278,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -287,14 +306,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
   });
 
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -311,7 +330,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
