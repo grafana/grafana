@@ -72,10 +72,27 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
       }
 
       const labelValuePairs = filtersVariable.state.filters.map(
-        (filter) => `${filter.key}${filter.operator}"${filter.value}"`
+        (filter) => `${replaceKnownLabelNames(filter.key)}${filter.operator}"${filter.value}"`
       );
 
       return `{${labelValuePairs.join(',')}}`; // e.g. `{environment="dev",region="us-west-1"}`
     },
   });
 };
+
+const knownLabelNameDiscrepancies = {
+  job: 'service_name', // `service.name` is `job` in Mimir and `service_name` in Loki
+  instance: 'service_instance_id', // `service.instance.id` is `instance` in Mimir and `service_instance_id` in Loki
+};
+
+function replaceKnownLabelNames(labelName: string): string {
+  if (isLabelNameThatShouldBeReplaced(labelName)) {
+    return knownLabelNameDiscrepancies[labelName];
+  }
+
+  return labelName;
+}
+
+function isLabelNameThatShouldBeReplaced(x: string): x is keyof typeof knownLabelNameDiscrepancies {
+  return x in knownLabelNameDiscrepancies;
+}
