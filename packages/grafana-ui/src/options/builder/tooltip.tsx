@@ -5,7 +5,6 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
   singleOnly = false,
   setProximity = false,
-  showOptionHideZeros = false,
   defaultOptions?: Partial<OptionsWithTooltip>
 ) {
   const category = ['Tooltip'];
@@ -51,7 +50,8 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       name: 'Hide zeros',
       category,
       defaultValue: false,
-      showIf: (options: T) => showOptionHideZeros && options.tooltip?.mode === TooltipDisplayMode.Multi,
+      showIf: (options: T) =>
+        defaultOptions?.tooltip?.hideZeros !== undefined && options.tooltip?.mode === TooltipDisplayMode.Multi,
     });
 
   if (setProximity) {

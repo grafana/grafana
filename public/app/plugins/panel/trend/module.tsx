@@ -1,5 +1,6 @@
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
-import { commonOptionsBuilder } from '@grafana/ui';
+import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
+import { commonOptionsBuilder, TooltipDisplayMode } from '@grafana/ui';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
@@ -24,7 +25,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
       },
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder, false, true, true);
+    commonOptionsBuilder.addTooltipOptions(builder, false, true, {
+      tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None, hideZeros: false },
+    });
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setSuggestionsSupplier(new TrendSuggestionsSupplier());
