@@ -128,14 +128,6 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 				},
 			},
 		})
-
-		// {
-		// 	Name:   "A name",
-		// 	Type:   cloudmigration.DatasourceDataType,
-		// 	RefID:  "A",
-		// 	Status: cloudmigration.ItemStatusError,
-		// 	Error:  "fake",
-		// },
 		assert.NoError(t, err)
 
 		return s, uid, sess.UID
