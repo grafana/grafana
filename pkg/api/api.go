@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -117,7 +118,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
-		r.Get("/admin/migrate-to-cloud", reqOrgAdmin, hs.Index)
+		r.Get("/admin/migrate-to-cloud", authorize(cloudmigration.MigrationAssistantAccess), hs.Index)
 	}
 
 	// feature toggle admin page

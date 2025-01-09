@@ -111,12 +111,17 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	pluginSettingsService pluginsettings.Service,
 	accessControl accesscontrol.AccessControl,
+	acService accesscontrol.Service,
 	kvStore kvstore.KVStore,
 	libraryElementsService libraryelements.Service,
 	ngAlert *ngalert.AlertNG,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
+	}
+
+	if err := cloudmigration.RegisterAccessControlRoles(acService); err != nil {
+		return nil, fmt.Errorf("registering access control roles: %w", err)
 	}
 
 	s := &Service{
@@ -137,7 +142,7 @@ func ProvideService(
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
 	}
-	s.api = api.RegisterApi(routeRegister, s, tracer)
+	s.api = api.RegisterApi(routeRegister, s, tracer, accessControl)
 
 	httpClientS3, err := httpClientProvider.New()
 	if err != nil {

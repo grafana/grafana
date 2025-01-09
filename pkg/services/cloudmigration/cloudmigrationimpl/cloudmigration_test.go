@@ -929,6 +929,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 		&pluginstore.FakePluginStore{},
 		&pluginsettings.FakePluginSettings{},
 		actest.FakeAccessControl{ExpectedEvaluate: true},
+		fakeAccessControlService,
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
 		ng,
