@@ -1458,6 +1458,9 @@
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
+      "actions-confirmation-input-placeholder": "E.g. Submit support ticket for pod ${__data.fields.pod}?",
+      "actions-confirmation-label": "Confirmation message",
+      "actions-confirmation-message": "Provide a descriptive prompt to confirm or cancel the action.",
       "footer-add-annotation": "Add annotation"
     }
   },

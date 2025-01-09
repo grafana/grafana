@@ -59,7 +59,9 @@ export const getActions = (
         const { request, confirmation } = prepRequest(action, boundReplaceVariables);
 
         if (confirmation && confirm) {
-          confirm(confirmation, () => { execAction(request); });
+          confirm(confirmation, () => {
+            execAction(request);
+          });
         } else {
           execAction(request);
         }

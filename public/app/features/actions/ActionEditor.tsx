@@ -8,6 +8,7 @@ import { InlineFieldRow } from '@grafana/ui/src/components/Forms/InlineFieldRow'
 import { RadioButtonGroup } from '@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { JSONFormatter } from '@grafana/ui/src/components/JSONFormatter/JSONFormatter';
 import { useStyles2 } from '@grafana/ui/src/themes';
+import { t } from '@grafana/ui/src/utils/i18n';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -102,7 +103,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
 
   return (
     <div className={styles.listItem}>
-      <Field label="Title">
+      <Field label="Title" className={styles.inputField}>
         <SuggestionsInput
           value={value.title}
           onChange={onTitleChange}
@@ -112,16 +113,24 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         />
       </Field>
 
-      <InlineFieldRow>
-        <InlineField label="Confirmation" labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput
-            value={value.confirmation}
-            onChange={onConfirmationChange}
-            suggestions={suggestions}
-            placeholder="Confirmation text"
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <Field
+        label={t('grafana-ui.viz-tooltip.actions-confirmation-label', 'Confirmation message')}
+        description={t(
+          'grafana-ui.viz-tooltip.actions-confirmation-message',
+          'Provide a descriptive prompt to confirm or cancel the action.'
+        )}
+        className={styles.inputField}
+      >
+        <SuggestionsInput
+          value={value.confirmation}
+          onChange={onConfirmationChange}
+          suggestions={suggestions}
+          placeholder={t(
+            'grafana-ui.viz-tooltip.actions-confirmation-input-placeholder',
+            'E.g. Submit support ticket for pod ${__data.fields.pod}?'
+          )}
+        />
+      </Field>
 
       <InlineFieldRow>
         <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
@@ -159,7 +168,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
       </Field>
 
       {value?.fetch.method !== HttpRequestMethod.GET && (
-        <Field label="Body">
+        <Field label="Body" className={styles.inputField}>
           <SuggestionsInput
             value={value.fetch.body}
             onChange={onBodyChange}
@@ -190,6 +199,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   fieldGap: css({
     marginTop: theme.spacing(2),
+  }),
+  inputField: css({
+    marginRight: 4,
   }),
 });
 

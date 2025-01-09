@@ -169,9 +169,10 @@ export const CanvasTooltip = ({ scene }: Props) => {
       {actionConfirmMessage && (
         <ConfirmModal
           isOpen={true}
-          title="Confirm action?"
+          title="Confirm action"
           body={actionConfirmMessage}
           confirmText="Confirm"
+          confirmButtonVariant="primary"
           onConfirm={() => {
             actionExec();
             setActionConfirmMessage('');
