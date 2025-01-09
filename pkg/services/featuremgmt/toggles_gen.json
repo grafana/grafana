@@ -3823,13 +3823,17 @@
     {
       "metadata": {
         "name": "userStorageAPI",
-        "resourceVersion": "1730204321785",
-        "creationTimestamp": "2024-10-29T12:18:41Z"
+        "resourceVersion": "1736438999910",
+        "creationTimestamp": "2024-10-29T12:18:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-09 16:09:59.910083 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the user storage API",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {

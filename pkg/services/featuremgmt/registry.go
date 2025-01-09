@@ -1549,8 +1549,9 @@ var (
 		{
 			Name:        "userStorageAPI",
 			Description: "Enables the user storage API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
