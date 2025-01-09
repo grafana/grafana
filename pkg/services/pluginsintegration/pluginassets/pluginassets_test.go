@@ -61,7 +61,7 @@ func TestService_Calculate(t *testing.T) {
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
-			name: "Expected LoadingStrategyScript when create-plugin version is not provided, plugin is not angular and is not configured as CDN enabled",
+			name:           "Expected LoadingStrategyScript when create-plugin version is not provided, plugin is not angular and is not configured as CDN enabled",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				// NOTE: cdn key is not set
 			}),
