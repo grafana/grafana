@@ -82,6 +82,8 @@ func (d *dashboardStore) emitEntityEvent() bool {
 	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
+// TODO: once the folder service removes usage of this function, remove it here. The dashboard service now implements this
+// on the service level for dashboards.
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.ValidateDashboardBeforesave")
 	defer span.End()
