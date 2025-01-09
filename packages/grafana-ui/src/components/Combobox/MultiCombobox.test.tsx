@@ -5,6 +5,21 @@ import React from 'react';
 import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
 
 describe('MultiCombobox', () => {
+  beforeAll(() => {
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      width: 120,
+      height: 120,
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+    }));
+
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: mockGetBoundingClientRect,
+    });
+  });
+
   let user: UserEvent;
 
   beforeEach(() => {
@@ -86,13 +101,13 @@ describe('MultiCombobox', () => {
     expect(onChange).toHaveBeenNthCalledWith(3, [third]);
   });
 
-  it('should be able to render a valie that is not in the options', async () => {
+  it('should be able to render a value that is not in the options', async () => {
     const options = [
       { label: 'A', value: 'a' },
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    render(<MultiCombobox options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
+    render(<MultiCombobox width={200} options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
     await user.click(screen.getByRole('combobox'));
     expect(await screen.findByText('d')).toBeInTheDocument();
   });

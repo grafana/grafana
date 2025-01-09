@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -72,7 +72,7 @@ func initTestIndexFromDashesExtended(t *testing.T, dashboards []dashboard, exten
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
 	}
-	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, func(ctx context.Context, folderId int64) (string, error) { return "x", nil }, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
+	index := newSearchIndex(dashboardLoader, &store.MockEntityEventsService{}, extender, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.SearchSettings{})
 	require.NotNil(t, index)
 	numDashboards, err := index.buildOrgIndex(context.Background(), testOrgID)
 	require.NoError(t, err)
@@ -432,9 +432,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       2,
-		uid:      "2",
-		folderID: 1,
+		id:        2,
+		uid:       "2",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 1",
 			Nested: []*entity.EntitySummary{
@@ -444,9 +445,10 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       3,
-		uid:      "3",
-		folderID: 1,
+		id:        3,
+		uid:       "3",
+		folderID:  1,
+		folderUID: "1",
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 2",
 			Nested: []*entity.EntitySummary{
@@ -754,7 +756,7 @@ func setupIntegrationEnv(t *testing.T, folderCount, dashboardsPerFolder int, sql
 		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 	}
 	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, folder.NewFakeStore()).(*StandardSearchService)
+		tracing.InitializeTracerForTest(), features, orgSvc, nil, foldertest.NewFakeService()).(*StandardSearchService)
 	require.True(t, ok)
 
 	err = runSearchService(searchService)

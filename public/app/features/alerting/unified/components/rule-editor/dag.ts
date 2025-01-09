@@ -24,8 +24,11 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
   graph.createNodes(nodes);
 
   queries.forEach((query) => {
+    if (!isExpressionQuery(query.model)) {
+      return;
+    }
     const source = query.refId;
-    const isMathExpression = isExpressionQuery(query.model) && query.model.type === 'math';
+    const isMathExpression = query.model.type === 'math';
 
     // some expressions have multiple targets (like the math expression)
     const targets = isMathExpression
@@ -63,6 +66,9 @@ export const getDescendants = memoize(_getDescendants, (refId, graph) => refId +
 
 export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
+  if (!node) {
+    return [];
+  }
 
   const origins: Node[] = [];
 
@@ -89,6 +95,10 @@ export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
 // get all children (and children's children etc) from a given node
 export function _getDescendants(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
+  if (!node) {
+    return [];
+  }
+
   const descendants: Node[] = [];
 
   // recurse through "node > outputEdges > outputNode"

@@ -56,12 +56,12 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 		return &DashboardDocumentBuilder{
 			Namespace: namespace,
 			Blob:      blob,
-			Stats: NewDashboardStatsLookup(map[string]map[string]int64{
+			Stats: map[string]map[string]int64{
 				"aaa": {
 					DASHBOARD_ERRORS_LAST_1_DAYS: 1,
 					DASHBOARD_ERRORS_LAST_7_DAYS: 1,
 				},
-			}),
+			},
 			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{
 				Name: "TheDisplayName", // used to be the unique ID!
 				Type: "my-custom-plugin",
