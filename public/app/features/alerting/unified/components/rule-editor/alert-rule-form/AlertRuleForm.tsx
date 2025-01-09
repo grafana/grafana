@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
+import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +9,7 @@ import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
@@ -26,8 +27,8 @@ import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  logInfo,
   LogMessages,
+  logInfo,
   trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
@@ -44,15 +45,15 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { DataSourceType } from '../../../utils/datasource';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
+  MANUAL_ROUTING_KEY,
+  SIMPLIFIED_QUERY_EDITOR_KEY,
   formValuesFromExistingRule,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
-  MANUAL_ROUTING_KEY,
   normalizeDefaultAnnotations,
-  SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
@@ -68,9 +69,9 @@ import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
 import {
+  QueryAndExpressionsStep,
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
-  QueryAndExpressionsStep,
 } from '../query-and-alert-condition/QueryAndExpressionsStep';
 import { translateRouteParamToRuleType } from '../util';
 
@@ -265,7 +266,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         Save rule and exit
       </Button>
       <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
-        Cancel
+        <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
       </Button>
       {existing ? (
         <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">

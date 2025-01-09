@@ -2,10 +2,10 @@
 
 Here's some notes about [OpenFGA authorization model](https://openfga.dev/docs/modeling/getting-started) (schema) using to model access control in Grafana.
 
-## Namespace level permissions
+## GroupResource level permissions
 
-A relation to a namespace object grant access to all objects of the GroupResource in the entire namespace.
-They take the form of `{ “user”: “user:1”, relation: “read”, object:”namespace:dashboard.grafana.app/dashboard” }`. This
+A relation to a group_resource object grants access to all objects of the GroupResource.
+They take the form of `{ “user”: “user:1”, relation: “read”, object:”group_resource:dashboard.grafana.app/dashboard” }`. This
 example would grant `user:1` access to all `dashboard.grafana.app/dashboard` in the namespace.
 
 ## Folder level permissions

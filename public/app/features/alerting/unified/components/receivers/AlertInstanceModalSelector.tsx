@@ -6,15 +6,16 @@ import { FixedSizeList } from 'react-window';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
-  clearButtonStyles,
   FilterInput,
+  Icon,
   LoadingPlaceholder,
   Modal,
-  Tooltip,
-  useStyles2,
-  Icon,
   Tag,
+  Tooltip,
+  clearButtonStyles,
+  useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -259,7 +260,7 @@ export function AlertInstanceModalSelector({
         </div>
         <Modal.ButtonRow>
           <Button type="button" variant="secondary" onClick={onDismiss}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </Button>
           <Button
             type="button"

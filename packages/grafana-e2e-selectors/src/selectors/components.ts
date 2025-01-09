@@ -495,6 +495,8 @@ export const versionedComponents = {
     },
     applyButton: {
       '9.2.0': 'data-testid Apply changes and go back to dashboard',
+      '9.1.0': 'Apply changes and go back to dashboard',
+      '8.0.0': 'panel editor apply',
     },
     toggleVizPicker: {
       '10.0.0': 'data-testid toggle-viz-picker',
@@ -879,6 +881,7 @@ export const versionedComponents = {
   Select: {
     menu: {
       '11.4.0': 'data-testid Select menu',
+      [MIN_GRAFANA_VERSION]: 'Select options menu',
     },
     option: {
       '11.1.0': 'data-testid Select option',
@@ -1230,6 +1233,11 @@ export const versionedComponents = {
   EntityNotFound: {
     container: {
       '11.2.0': 'data-testid entity-not-found',
+    },
+  },
+  Portal: {
+    container: {
+      '11.4.1': 'data-testid portal-container',
     },
   },
 } satisfies VersionedSelectorGroup;

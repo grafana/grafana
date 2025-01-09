@@ -1,6 +1,6 @@
 
 ARG BASE_IMAGE=alpine:3.20
-ARG JS_IMAGE=node:20-alpine
+ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
 ARG GO_IMAGE=golang:1.23.1-alpine
 
@@ -67,8 +67,10 @@ COPY pkg/storage/unified/apistore/go.* pkg/storage/unified/apistore/
 COPY pkg/semconv/go.* pkg/semconv/
 COPY pkg/aggregator/go.* pkg/aggregator/
 COPY apps/playlist/go.* apps/playlist/
+COPY apps/investigation/go.* apps/investigation/
 COPY apps apps
 COPY kindsv2 kindsv2
+COPY apps/alerting/notifications/go.* apps/alerting/notifications/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \

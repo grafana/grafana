@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,34 +44,43 @@ var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	gv            schema.GroupVersion
-	features      featuremgmt.FeatureToggles
-	namespacer    request.NamespaceMapper
-	folderSvc     folder.Service
-	storage       grafanarest.Storage
-	accessControl accesscontrol.AccessControl
+	gv                   schema.GroupVersion
+	features             featuremgmt.FeatureToggles
+	namespacer           request.NamespaceMapper
+	folderSvc            folder.Service
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	storage              grafanarest.Storage
+	accessControl        accesscontrol.AccessControl
+	searcher             resource.ResourceIndexClient
+	cfg                  *setting.Cfg
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
+	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
+	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
 		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
 	}
 
 	builder := &FolderAPIBuilder{
-		gv:            resourceInfo.GroupVersion(),
-		features:      features,
-		namespacer:    request.GetNamespaceMapper(cfg),
-		folderSvc:     folderSvc,
-		accessControl: accessControl,
+		gv:                   resourceInfo.GroupVersion(),
+		features:             features,
+		namespacer:           request.GetNamespaceMapper(cfg),
+		folderSvc:            folderSvc,
+		folderPermissionsSvc: folderPermissionsSvc,
+		cfg:                  cfg,
+		accessControl:        accessControl,
+		searcher:             unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -114,18 +125,16 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	dualWriteBuilder := opts.DualWriteBuilder
 
 	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
+		service:              b.folderSvc,
+		namespacer:           b.namespacer,
+		tableConverter:       resourceInfo.TableConverter(),
+		folderPermissionsSvc: b.folderPermissionsSvc,
+		features:             b.features,
+		cfg:                  b.cfg,
 	}
 
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
-	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
-
-	// enable dual writer
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 		if err != nil {
@@ -136,6 +145,11 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 			return err
 		}
 	}
+	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
+		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
+	}
+	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
@@ -233,41 +247,94 @@ var folderValidationRules = struct {
 	invalidNames: []string{"general"},
 }
 
+func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	verb := a.GetOperation()
+	if verb == admission.Create || verb == admission.Update {
+		obj := a.GetObject()
+		f, ok := obj.(*v0alpha1.Folder)
+		if !ok {
+			return fmt.Errorf("obj is not v0alpha1.Folder")
+		}
+		f.Spec.Title = strings.Trim(f.Spec.Title, "")
+		return nil
+	}
+	return nil
+}
+
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	id := a.GetName()
+	obj := a.GetObject()
+	if obj == nil || a.GetOperation() == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+	verb := a.GetOperation()
+
+	switch verb {
+	case admission.Create:
+		return b.validateOnCreate(ctx, id, obj)
+	case admission.Delete:
+		return b.validateOnDelete(ctx, f)
+	case admission.Update:
+		old := a.GetOldObject()
+		if old == nil {
+			return fmt.Errorf("old object is nil")
+		}
+		return b.validateOnUpdate(ctx, obj, old)
+	case admission.Connect:
+		return nil
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnDelete(ctx context.Context, f *v0alpha1.Folder) error {
+	resp, err := b.searcher.GetStats(ctx, &resource.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	if err != nil {
+		return err
+	}
+
+	if resp != nil && resp.Error != nil {
+		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	}
+
+	if resp.Stats == nil {
+		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	}
+
+	for _, v := range resp.Stats {
+		if v.Count > 0 {
+			return folder.ErrFolderNotEmpty
+		}
+	}
+
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj runtime.Object) error {
 	for _, invalidName := range folderValidationRules.invalidNames {
 		if id == invalidName {
 			return dashboards.ErrFolderInvalidUID
 		}
 	}
 
-	obj := a.GetObject()
-
 	f, ok := obj.(*v0alpha1.Folder)
 	if !ok {
 		return fmt.Errorf("obj is not v0alpha1.Folder")
 	}
-
 	if f.Spec.Title == "" {
 		return dashboards.ErrFolderTitleEmpty
 	}
 
-	for i := 1; i <= folderValidationRules.maxDepth; i++ {
-		parent := getParent(obj)
-		if parent == "" {
-			break
-		}
-		if i == folderValidationRules.maxDepth {
-			return folder.ErrMaximumDepthReached
-		}
-
-		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		obj = parentObj
+	_, err := b.checkFolderMaxDepth(ctx, obj)
+	if err != nil {
+		return err
 	}
-	return nil
+
+	return err
 }
 
 func getParent(o runtime.Object) string {
@@ -276,4 +343,67 @@ func getParent(o runtime.Object) string {
 		return ""
 	}
 	return meta.GetFolder()
+}
+
+func (b *FolderAPIBuilder) checkFolderMaxDepth(ctx context.Context, obj runtime.Object) ([]string, error) {
+	var parents = []string{}
+	for i := 0; i < folderValidationRules.maxDepth; i++ {
+		parent := getParent(obj)
+		if parent == "" {
+			break
+		}
+		parents = append(parents, parent)
+		if i+1 == folderValidationRules.maxDepth {
+			return parents, folder.ErrMaximumDepthReached
+		}
+
+		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
+		if err != nil {
+			return parents, err
+		}
+		obj = parentObj
+	}
+	return parents, nil
+}
+
+func (b *FolderAPIBuilder) validateOnUpdate(ctx context.Context, obj, old runtime.Object) error {
+	f, ok := obj.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+
+	fOld, ok := old.(*v0alpha1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not v0alpha1.Folder")
+	}
+	var newParent = getParent(obj)
+	if newParent != getParent(fOld) {
+		// it's a move operation
+		return b.validateMove(ctx, obj, newParent)
+	}
+	// it's a spec update
+	if f.Spec.Title == "" {
+		return dashboards.ErrFolderTitleEmpty
+	}
+	return nil
+}
+
+func (b *FolderAPIBuilder) validateMove(ctx context.Context, obj runtime.Object, newParent string) error {
+	// folder cannot be moved to a k6 folder
+	if newParent == accesscontrol.K6FolderUID {
+		return fmt.Errorf("k6 project may not be moved")
+	}
+
+	//FIXME: until we have a way to represent the tree, we can only
+	// look at folder parents to check how deep the new folder tree will be
+	parents, err := b.checkFolderMaxDepth(ctx, obj)
+	if err != nil {
+		return err
+	}
+
+	// if by moving a folder we exceed the max depth, return an error
+	if len(parents)+1 >= folderValidationRules.maxDepth {
+		return folder.ErrMaximumDepthReached
+	}
+	return nil
 }

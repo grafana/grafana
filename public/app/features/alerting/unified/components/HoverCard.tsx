@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { Placement } from '@popperjs/core';
 import classnames from 'classnames';
-import { cloneElement, ReactElement, ReactNode, useRef } from 'react';
+import { ReactElement, ReactNode, cloneElement, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Popover as GrafanaPopover, PopoverController, useStyles2, Stack } from '@grafana/ui';
+import { Popover as GrafanaPopover, PopoverController, Stack, useStyles2 } from '@grafana/ui';
 
 export interface PopupCardProps {
   children: ReactElement;
