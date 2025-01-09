@@ -176,8 +176,8 @@ export class BackendSrv implements BackendService {
           }
           if (disconnect) {
             // this happens when we unsubscribe before the connection is done
-            console.info('cancel reading', result.url);
-            result.data.cancel('disconnect');
+            // Catch the error because it may be locked from the abort controller
+            result.data.cancel('disconnect').catch(() => {});
           }
           observer.complete();
         }
@@ -187,8 +187,6 @@ export class BackendSrv implements BackendService {
       return function unsubscribe() {
         sub.unsubscribe();
         disconnect = true;
-
-        console.log('calling abort!');
         controller.abort('unsubscribe');
       };
     });
