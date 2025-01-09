@@ -6,10 +6,7 @@ import (
 	"strings"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -18,12 +15,8 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	ctx, span := tracer.Start(ctx, "authzServer.Check")
 	defer span.End()
 
-	c, ok := claims.From(ctx)
-	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "unauthenticated")
-	}
-	if !claims.NamespaceMatches(c.GetNamespace(), r.GetNamespace()) {
-		return nil, status.Errorf(codes.PermissionDenied, "namespace does not match")
+	if err := authorize(ctx, r); err != nil {
+		return nil, err
 	}
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())
