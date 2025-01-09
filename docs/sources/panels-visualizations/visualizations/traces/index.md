@@ -182,30 +182,3 @@ How to use **Span filters**:
 * **Tags**: Add one or more tags to further refine the filtering criteria, ensuring only relevant spans are displayed.
 
 Note that you must refresh the visualization for most span filter changes to take effect. This ensures the latest filters are applied to the displayed data.
-
-When using the visualization through scenes apps, the `spanFilter` options can be programmatically defined to integrate span filtering into automated workflows or custom applications:
-
-```
-const panel = PanelBuilders
-  .traces()
-  .setOption('spanFilters', { serviceName: 'testService', matchesOnly: true });
-```
-
-The value object for `spanFilters` must conform to the SearchProps type:
-
-```
-export interface SearchProps {
-  serviceName?: string;
-  serviceNameOperator: string;
-  spanName?: string;
-  spanNameOperator: string;
-  from?: string;
-  fromOperator: string;
-  to?: string;
-  toOperator: string;
-  tags: Tag[];
-  query?: string;
-  matchesOnly: boolean;
-  criticalPathOnly: boolean;
-}
-```
