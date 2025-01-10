@@ -69,7 +69,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	if err != nil {
 		return err
 	}
-	if query.Expr == nil || *query.Expr == "" {
+	if query.Expr == "" {
 		return fmt.Errorf("missing expr in cuannel")
 	}
 
@@ -80,7 +80,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	signal.Notify(interrupt, os.Interrupt)
 
 	params := url.Values{}
-	params.Add("query", *query.Expr)
+	params.Add("query", query.Expr)
 
 	wsurl, _ := url.Parse(dsInfo.URL)
 

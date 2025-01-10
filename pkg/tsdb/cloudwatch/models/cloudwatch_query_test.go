@@ -935,12 +935,12 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 
 			queryToMigrate := metricsDataQuery{
 				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
-					Region:     utils.Pointer("us-east-1"),
-					Namespace:  utils.Pointer("ec2"),
+					Region:     "us-east-1",
+					Namespace:  "ec2",
 					MetricName: utils.Pointer("CPUUtilization"),
 					Alias:      utils.Pointer(tc.inputAlias),
 					Dimensions: &dataquery.Dimensions{
-						"InstanceId": []any{"test"},
+						"InstanceId": dataquery.StringOrArrayOfString{ArrayOfString: []string{"test"}},
 					},
 					Statistic: &average,
 					Period:    utils.Pointer("600"),
