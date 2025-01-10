@@ -57,9 +57,12 @@ func (d *directResourceClient) List(ctx context.Context, in *resource.ListReques
 	return d.server.List(ctx, in)
 }
 
-// Origin implements ResourceClient.
-func (d *directResourceClient) Origin(ctx context.Context, in *resource.OriginRequest, opts ...grpc.CallOption) (*resource.OriginResponse, error) {
-	return d.server.Origin(ctx, in)
+func (d *directResourceClient) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
+	return d.server.ListRepositoryObjects(ctx, in)
+}
+
+func (d *directResourceClient) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
+	return d.server.CountRepositoryObjects(ctx, in)
 }
 
 // PutBlob implements ResourceClient.

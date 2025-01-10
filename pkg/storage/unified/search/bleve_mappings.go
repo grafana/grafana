@@ -67,17 +67,38 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_FOLDER, folderMapping)
 
-	repoMapping := &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_REPOSITORY,
+	// Repositories
+	repo := bleve.NewDocumentStaticMapping()
+	repo.AddFieldMappingsAt("name", &mapping.FieldMapping{
+		Name:               "name",
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
-		DocValues:          true,
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY, repoMapping)
+	})
+	repo.AddFieldMappingsAt("path", &mapping.FieldMapping{
+		Name:               "path",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+	})
+	repo.AddFieldMappingsAt("hash", &mapping.FieldMapping{
+		Name:               "hash",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+	})
+	repo.AddFieldMappingsAt("time", mapping.NewDateTimeFieldMapping())
+
+	mapper.AddSubDocumentMapping("repo", repo)
 
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
