@@ -83,6 +83,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   abstract reloadDashboard(params: LoadDashboardOptions['params']): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+  abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
 
   protected cache: Record<string, DashboardScene> = {};
 
@@ -101,17 +102,6 @@ abstract class DashboardScenePageStateManagerBase<T>
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
-  }
-
-  private async loadSnapshotScene(slug: string): Promise<DashboardScene> {
-    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
-
-    if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
-      return scene;
-    }
-
-    throw new Error('Snapshot not found');
   }
 
   public async loadDashboard(options: LoadDashboardOptions) {
@@ -226,6 +216,18 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
     throw new Error('Dashboard not found');
   }
+
+  public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+    const rsp = await dashboardLoaderSrv.loadSnapshot(slug);
+
+    if (rsp?.dashboard) {
+      const scene = transformSaveModelToScene(rsp);
+      return scene;
+    }
+
+    throw new Error('Snapshot not found');
+  }
+
   public async fetchDashboard({
     uid,
     route,
@@ -373,6 +375,17 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   DashboardWithAccessInfo<DashboardV2Spec>
 > {
   private dashboardLoader = new DashboardLoaderSrvV2();
+
+  public async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+    const rsp = await this.dashboardLoader.loadSnapshot(slug);
+
+    if (rsp?.spec) {
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      return scene;
+    }
+
+    throw new Error('Snapshot not found');
+  }
 
   transformResponseToScene(
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,

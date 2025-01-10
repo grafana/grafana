@@ -1,11 +1,14 @@
 package v0alpha1
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -13,6 +16,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -40,7 +44,9 @@ var (
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
+	dashboard.DashboardsAPIBuilder
 	dashboardService dashboards.DashboardService
+	features         featuremgmt.FeatureToggles
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
@@ -54,6 +60,7 @@ type DashboardsAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
+	provisioningDashboardService dashboards.DashboardProvisioningService,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
@@ -67,8 +74,11 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v0alpha1"),
-
+		DashboardsAPIBuilder: dashboard.DashboardsAPIBuilder{
+			ProvisioningDashboardService: provisioningDashboardService,
+		},
 		dashboardService: dashboardService,
+		features:         features,
 		accessControl:    accessControl,
 		unified:          unified,
 		search:           dashboard.NewSearchHandler(unified, tracing),
@@ -157,18 +167,20 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 	}
 
-	storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
-		b.unified,
-		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
-		defaultOpts,
-	)
+	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesRestore) {
+		storage[dash.StoragePath("restore")] = dashboard.NewRestoreConnector(
+			b.unified,
+			dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+			defaultOpts,
+		)
 
-	storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
-		b.unified,
-		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
-		defaultOpts,
-		scheme,
-	)
+		storage[dash.StoragePath("latest")] = dashboard.NewLatestConnector(
+			b.unified,
+			dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
+			defaultOpts,
+			scheme,
+		)
+	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(
@@ -225,4 +237,28 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.search.GetAPIRoutes(defs)
+}
+
+// Mutate removes any internal ID set in the spec & adds it as a label
+func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	op := a.GetOperation()
+	if op == admission.Create || op == admission.Update {
+		obj := a.GetObject()
+		dash, ok := obj.(*dashboardv0alpha1.Dashboard)
+		if !ok {
+			return fmt.Errorf("expected v0alpha1 dashboard")
+		}
+
+		if id, ok := dash.Spec.Object["id"].(float64); ok {
+			delete(dash.Spec.Object, "id")
+			if id != 0 {
+				meta, err := utils.MetaAccessor(obj)
+				if err != nil {
+					return err
+				}
+				meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
+			}
+		}
+	}
+	return nil
 }

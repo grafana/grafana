@@ -88,7 +88,6 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
-  prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
@@ -112,6 +111,7 @@ export interface FeatureToggles {
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
   kubernetesCliDashboards?: boolean;
+  kubernetesRestore?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -249,4 +249,5 @@ export interface FeatureToggles {
   investigationsBackend?: boolean;
   k8SFolderCounts?: boolean;
   k8SFolderMove?: boolean;
+  improvedExternalSessionHandlingSAML?: boolean;
 }

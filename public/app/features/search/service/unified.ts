@@ -72,10 +72,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
     // get the starred dashboards
-    const starsUIDS = await getBackendSrv().get('api/user/stars');
-    if (starsUIDS?.length) {
+    const starsIds = await getBackendSrv().get('api/user/stars');
+    if (starsIds?.length) {
       return this.doSearchQuery({
-        uid: starsUIDS,
+        ...query,
+        name: starsIds,
         query: query.query ?? '*',
       });
     }
@@ -206,6 +207,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     uri += `?query=${encodeURIComponent(query.query ?? '*')}`;
     uri += `&limit=${query.limit ?? pageSize}`;
 
+    if (!isEmpty(query.location)) {
+      uri += `&folder=${query.location}`;
+    }
+
     if (query.kind) {
       // filter resource types
       uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
@@ -218,6 +223,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.sort) {
       const sort = query.sort.replace('_sort', '').replace('name', 'title');
       uri += `&sort=${sort}`;
+    }
+
+    if (query.name?.length) {
+      uri += '&' + query.name.map((name) => `name=${encodeURIComponent(name)}`).join('&');
     }
     return uri;
   }
