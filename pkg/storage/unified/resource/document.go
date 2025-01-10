@@ -53,8 +53,8 @@ type IndexableDocument struct {
 	// The resource key
 	Key *ResourceKey `json:"key"`
 
-	// The resource type ( for federated indexes )
-	Kind string `json:"kind,omitempty"`
+	// The k8s name
+	Name string `json:"name,omitempty"`
 
 	// Resource version for the resource (if known)
 	RV int64 `json:"rv,omitempty"`
@@ -164,8 +164,8 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	}
 	doc := &IndexableDocument{
 		Key:       key,
-		Kind:      key.Resource,
 		RV:        rv,
+		Name:      key.Name,
 		Title:     title,                  // We always want *something* to display
 		TitleSort: strings.ToLower(title), // Lowercase for case-insensitive sorting
 		Labels:    obj.GetLabels(),
@@ -342,6 +342,16 @@ func StandardSearchFields() SearchableDocumentFields {
 				Name:        SEARCH_FIELD_CREATED,
 				Type:        ResourceTableColumnDefinition_INT64,
 				Description: "created timestamp", // date?
+			},
+			{
+				Name:        SEARCH_FIELD_EXPLAIN,
+				Type:        ResourceTableColumnDefinition_OBJECT,
+				Description: "Explain why this result matches (depends on the engine)",
+			},
+			{
+				Name:        SEARCH_FIELD_SCORE,
+				Type:        ResourceTableColumnDefinition_DOUBLE,
+				Description: "The search score",
 			},
 		})
 		if err != nil {

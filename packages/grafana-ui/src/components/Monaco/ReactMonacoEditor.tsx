@@ -11,7 +11,7 @@ import type { ReactMonacoEditorProps } from './types';
 monacoEditorLoader.config({ monaco });
 
 export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
-  const { beforeMount } = props;
+  const { beforeMount, options, ...restProps } = props;
 
   const theme = useTheme2();
   const onMonacoBeforeMount = useCallback(
@@ -23,6 +23,14 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
   );
 
   return (
-    <Editor {...props} theme={theme.isDark ? 'grafana-dark' : 'grafana-light'} beforeMount={onMonacoBeforeMount} />
+    <Editor
+      {...restProps}
+      options={{
+        ...options,
+        fontFamily: theme.typography.code.fontFamily,
+      }}
+      theme={theme.isDark ? 'grafana-dark' : 'grafana-light'}
+      beforeMount={onMonacoBeforeMount}
+    />
   );
 };

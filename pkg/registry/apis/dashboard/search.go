@@ -223,6 +223,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
 			"title",
 			"folder",
@@ -302,6 +303,20 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
+	// The names filter
+	names, ok := queryParams["name"]
+	if ok {
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = []*resource.Requirement{}
+		}
+		namesFilter := []*resource.Requirement{{
+			Key:      "name",
+			Operator: "in",
+			Values:   names,
+		}}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
+	}
+
 	// Run the query
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
@@ -309,7 +324,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.write(w, dashboardsvc.ParseResults(result, searchRequest.Offset))
+	parsedResults, err := dashboardsvc.ParseResults(result, searchRequest.Offset)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	s.write(w, parsedResults)
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {

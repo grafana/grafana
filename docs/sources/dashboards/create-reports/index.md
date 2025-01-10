@@ -301,7 +301,7 @@ These options are available in the [configuration](ref:configuration) file.
 [reporting]
 # Use this option to enable or disable the reporting feature. When disabled, no reports are generated, and the UI is hidden. By default, reporting is enabled.
 enabled = true
-# Set timeout for each panel rendering request
+# Set timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files.
 rendering_timeout = 10s
 # Set maximum number of concurrent calls to the rendering service
 concurrent_render_limit = 4
@@ -318,7 +318,7 @@ font_regular = DejaVuSansCondensed.ttf
 font_bold = DejaVuSansCondensed-Bold.ttf
 # Name of the TrueType font file with italic style
 font_italic = DejaVuSansCondensed-Oblique.ttf
-# Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+# Maximum number of times the following reporting rendering requests are retried before returning an error: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
 max_retries_per_panel = 3
 # Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 allowed_domains = *
