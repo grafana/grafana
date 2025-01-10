@@ -54,14 +54,14 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
 
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(tb, err)
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, fs,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, zanzana.NewNoopClient(), nil, nil, nil,
+		nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(tb, err)
 

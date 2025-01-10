@@ -21,6 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -1114,6 +1117,102 @@ func TestGetDashboardTags(t *testing.T) {
 		result, err := service.GetDashboardTags(ctx, query)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
+		fakeStore.AssertExpectations(t)
+	})
+}
+
+func TestQuotaCount(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	orgs := []*org.OrgDTO{
+		{
+			ID: 1,
+		},
+		{
+			ID: 2,
+		},
+	}
+
+	dashboardUnstructuredOrg1 := unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "uid",
+				},
+				"spec": map[string]any{
+					"test":    "test",
+					"version": int64(1),
+					"title":   "testing slugify",
+				},
+			},
+		}},
+	}
+	dashboardUnstructuredOrg2 := unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "uid",
+				},
+				"spec": map[string]any{
+					"test":    "test",
+					"version": int64(1),
+					"title":   "testing slugify",
+				},
+			},
+		},
+			{
+				Object: map[string]any{
+					"metadata": map[string]any{
+						"name": "uid2",
+					},
+					"spec": map[string]any{
+						"test":    "test2",
+						"version": int64(1),
+						"title":   "testing slugify2",
+					},
+				},
+			},
+		},
+	}
+
+	query := &quota.ScopeParameters{
+		OrgID: 1,
+	}
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("Count", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		_, err := service.Count(context.Background(), query)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		orgSvc := orgtest.FakeOrgService{ExpectedOrgs: orgs}
+		service.orgService = &orgSvc
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sClientMock.On("getClient", mock.Anything, int64(2)).Return(k8sResourceMock, true).Once()
+		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg2, nil).Once()
+		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg1, nil).Once()
+
+		result, err := service.Count(ctx, query)
+		require.NoError(t, err)
+
+		orgTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+		require.NoError(t, err)
+		c, _ := result.Get(orgTag)
+		require.Equal(t, c, int64(1))
+
+		globalTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+		require.NoError(t, err)
+		c, _ = result.Get(globalTag)
+		require.Equal(t, c, int64(3))
+
 		fakeStore.AssertExpectations(t)
 	})
 }
