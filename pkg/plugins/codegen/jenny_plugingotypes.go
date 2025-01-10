@@ -37,14 +37,13 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 
 	slotName := strings.ToLower(decl.SchemaInterface.Name)
 	cueValue := decl.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
-
-	opts := make([]cog.CUEOption, 0)
-	if decl.SchemaInterface.IsGroup {
-		opts = append(opts, cog.ForceEnvelope(slotName))
+	name, err := decl.CueFile.LookupPath(cue.MakePath(cue.Str("name"))).String()
+	if err != nil {
+		return nil, err
 	}
 
 	byt, err := cog.TypesFromSchema().
-		CUEValue(slotName, cueValue, opts...).
+		CUEValue(slotName, cueValue, cog.ForceEnvelope(name)).
 		Golang(cog.GoConfig{}).
 		Run(context.Background())
 
