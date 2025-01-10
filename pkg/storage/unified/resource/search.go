@@ -46,7 +46,7 @@ type ResourceIndex interface {
 	// List within an response
 	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
 
-	// Count the values in a repo
+	// Counts the values in a repo
 	CountRepositoryObjects(ctx context.Context) (map[string]int64, error)
 
 	// Get the number of documents in the index
