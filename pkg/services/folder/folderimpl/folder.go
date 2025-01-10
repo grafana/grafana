@@ -365,7 +365,7 @@ func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQu
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && q.UID == folder.SharedWithMeFolderUID {
-		return s.GetSharedWithMe(ctx, q, false)
+		return s.GetSharedWithMe(ctx, q, true)
 	}
 
 	if q.UID == "" {

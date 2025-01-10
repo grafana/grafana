@@ -349,7 +349,10 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	if len(q.UIDs) > 0 {
 		//return only the specified q.UIDs
 		for _, uid := range q.UIDs {
-			hits = append(hits, m[uid])
+			f, ok := m[uid]
+			if ok {
+				hits = append(hits, f)
+			}
 		}
 
 		return hits, nil
