@@ -4,6 +4,7 @@ import { isNumber } from 'lodash';
 import { NullValueMode } from '../types/data';
 import { Field, FieldCalcs, FieldType } from '../types/dataFrame';
 import { Registry, RegistryItem } from '../utils/Registry';
+import {calculateMidpoint} from "../../../../public/app/plugins/panel/canvas/utils";
 
 export enum ReducerID {
   sum = 'sum',
@@ -283,7 +284,8 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     id: ReducerID.median,
     name: 'Median',
     description: 'Median Value',
-    standard: true,
+    standard: false,
+    reduce: calculateMedian,
     aliasIds: ['median'],
     preservesUnits: true,
   },
@@ -447,7 +449,6 @@ export const defaultCalcs: FieldCalcs = {
   max: -Number.MAX_VALUE,
   min: Number.MAX_VALUE,
   logmin: Number.MAX_VALUE,
-  median: null,
   mean: null,
   last: null,
   first: null,
@@ -478,8 +479,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
   const isNumberField = field.type === FieldType.number || field.type === FieldType.time;
 
-  const numberData: any[] = [];
-
   for (let i = 0; i < data.length; i++) {
     let currentValue = data[i];
 
@@ -508,7 +507,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
 
       if (isNumberField) {
-        numberData.push(currentValue);
         calcs.sum += currentValue;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
@@ -587,10 +585,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
     calcs.diffperc = (calcs.diff / calcs.firstNotNull) * 100;
-  }
-
-  if (numberData.length > 0) {
-    calcs.median = calculateMedian(numberData);
   }
 
   return calcs;
@@ -713,16 +707,31 @@ function calculatePercentile(field: Field, percentile: number, ignoreNulls: bool
   return sorted[index];
 }
 
-function calculateMedian(arr: any[]): number {
-  // sort array
-  const sortedArr = [...arr].sort((a, b) => a - b);
+function calculateMedian(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  // add number
+  const data = field.values;
+  let numbers: any[] = [];
+  for (let i = 0; i < data.length; i++) {
+    let currentValue = data[i];
+    if (currentValue === null) {
+      if (ignoreNulls) {
+        continue;
+      }
+      if (nullAsZero) {
+        currentValue = 0;
+      }
+    }
+    numbers.push(currentValue);
+  }
 
-  const mid = Math.floor(sortedArr.length / 2);
+  // sort numbers
+  const sortedNumbers = [...numbers].sort((a, b) => a - b);
+  const mid = Math.floor(sortedNumbers.length / 2);
 
   //  calculate median
-  if (sortedArr.length % 2 === 0) {
-    return (sortedArr[mid - 1] + sortedArr[mid]) / 2;
+  if (sortedNumbers.length % 2 === 0) {
+    return { median: (sortedNumbers[mid - 1] + sortedNumbers[mid]) / 2 };
   } else {
-    return sortedArr[mid];
+    return { median: sortedNumbers[mid] };
   }
 }
