@@ -198,6 +198,11 @@ export const handyTestingSchema: DashboardV2Spec = {
             width: 200,
             x: 0,
             y: 0,
+            repeat: {
+              mode: 'variable',
+              value: 'customVar',
+              maxPerRow: 3,
+            },
           },
         },
       ],

@@ -37,7 +37,13 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import {
+  calculateGridItemDimensions,
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
@@ -319,11 +325,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
     }
 
     if (repeater.state.repeatedPanels) {
-      const itemHeight = repeater.state.itemHeight ?? 10;
-      const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
-      const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
-      const w = 24 / columnCount;
-      const h = itemHeight;
+      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
       const panels = repeater.state.repeatedPanels!.map((panel, index) => {
         let x = 0,
           y = 0;
