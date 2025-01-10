@@ -559,8 +559,8 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
-					IAM: &plugins.IAM{
-						Permissions: []plugins.Permission{
+					IAM: &auth.IAM{
+						Permissions: []auth.Permission{
 							{
 								Action: "read",
 								Scope:  "datasource",

@@ -456,7 +456,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:  "test",
-				IAM: &plugins.IAM{},
+				IAM: &auth.IAM{},
 			},
 			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
