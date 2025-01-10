@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -28,11 +28,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelsPerRow,
     isEditing,
   } = model.useState();
+  const { type } = useParams();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
-  const navModel = getNavModel(navIndex, 'dashboards/browse');
+  const navModel = getNavModel(navIndex, `dashboards/${type === 'snapshot' ? 'snapshots' : 'browse'}`);
   const isSettingsOpen = editview !== undefined;
 
   // Remember scroll pos when going into view panel, edit panel or settings
