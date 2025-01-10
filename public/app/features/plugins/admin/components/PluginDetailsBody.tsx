@@ -9,6 +9,7 @@ import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
+import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
@@ -64,6 +65,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
           pluginId={plugin.id}
           versions={plugin.details?.versions}
           installedVersion={plugin.installedVersion}
+          disableInstallation={shouldDisablePluginInstall(plugin)}
         />
       </div>
     );
