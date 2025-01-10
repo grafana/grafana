@@ -1235,14 +1235,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "notificationBanner",
-			Description:  "Enables the notification banner UI and API",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: false,
-			Expression:   "true",
-		},
-		{
 			Name:              "dashboardRestore",
 			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,
