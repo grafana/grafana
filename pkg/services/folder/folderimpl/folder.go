@@ -307,10 +307,14 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		f, err = s.setFullpath(ctx, f, q.SignedInUser, true)
+	}
+
 	return f, err
 }
 
-func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester) (*folder.Folder, error) {
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester, forceLegacy bool) (*folder.Folder, error) {
 	// #TODO is some kind of intermediate conversion required as is the case with user id where
 	// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
 	// part of the parsing?
@@ -323,10 +327,19 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 
 	// Fetch the parent since the permissions for fetching the newly created folder
 	// are not yet present for the user--this requires a call to ClearUserPermissionCache
-	parents, err := s.GetParents(ctx, folder.GetParentsQuery{
-		UID:   f.UID,
-		OrgID: f.OrgID,
-	})
+	var parents []*folder.Folder
+	var err error
+	if forceLegacy {
+		parents, err = s.GetParentsLegacy(ctx, folder.GetParentsQuery{
+			UID:   f.UID,
+			OrgID: f.OrgID,
+		})
+	} else {
+		parents, err = s.GetParents(ctx, folder.GetParentsQuery{
+			UID:   f.UID,
+			OrgID: f.OrgID,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -764,7 +777,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		f, err = s.setFullpath(ctx, f, user)
+		f, err = s.setFullpath(ctx, f, user, true)
 		if err != nil {
 			return nil, err
 		}
