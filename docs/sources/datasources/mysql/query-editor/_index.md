@@ -126,7 +126,7 @@ The following components will help you build a MySQL query:
 
 ## MySQL Code mode
 
-To create advanced queries, switch to **Code mode** by clicking **Code**in the upper right of the editor window. Code mode supports the auto-completion of tables, columns, SQL keywords, standard SQL functions, Grafana template variables, and Grafana macros. Columns cannot be completed before a table has been specified.
+To create advanced queries, switch to **Code mode** by clicking **Code** in the upper right of the editor window. Code mode supports the auto-completion of tables, columns, SQL keywords, standard SQL functions, Grafana template variables, and Grafana macros. Columns cannot be completed before a table has been specified.
 
 {{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
