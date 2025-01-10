@@ -44,7 +44,13 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getPanelIdForVizPanel, getQueryRunnerFor, getVizPanelKeyForPanelId, isLibraryPanel } from '../utils/utils';
+import {
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+  calculateGridItemDimensions,
+} from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
@@ -439,14 +445,6 @@ function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false):
     }
     return [];
   }
-}
-
-function calculateGridItemDimensions(repeater: DashboardGridItem) {
-  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
-  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
-  const w = 24 / columnCount;
-  const h = repeater.state.itemHeight ?? 10;
-  return { h, w, columnCount };
 }
 
 function getVariables(oldDash: DashboardSceneState) {

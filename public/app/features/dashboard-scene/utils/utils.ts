@@ -18,6 +18,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -248,6 +249,14 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
   }
 
   return undefined;
+}
+
+export function calculateGridItemDimensions(repeater: DashboardGridItem) {
+  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const w = 24 / columnCount;
+  const h = repeater.state.itemHeight ?? 10;
+  return { h, w, columnCount };
 }
 
 /**
