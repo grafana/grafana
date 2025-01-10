@@ -2,6 +2,7 @@ package pluginassets
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -61,7 +62,7 @@ func TestService_Calculate(t *testing.T) {
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
-			name:           "Expected LoadingStrategyScript when create-plugin version is not provided, plugin is not angular and is not configured as CDN enabled",
+			name: "Expected LoadingStrategyScript when create-plugin version is not provided, plugin is not angular and is not configured as CDN enabled",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				// NOTE: cdn key is not set
 			}),
@@ -178,10 +179,16 @@ func TestService_ModuleHash(t *testing.T) {
 		parentPluginID = "grafana-test-app"
 	)
 	for _, tc := range []struct {
-		name          string
-		features      *config.Features
-		store         []pluginstore.Plugin
-		plugin        pluginstore.Plugin
+		name     string
+		features *config.Features
+		store    []pluginstore.Plugin
+
+		// Can be used to configure plugin's class
+		// cdn class = loaded from CDN with no files on disk
+		// external class = files on disk but served from CDN only if cdn=true
+		plugin pluginstore.Plugin
+
+		// When true, set cdn=true in config
 		cdn           bool
 		expModuleHash string
 	}{
@@ -193,7 +200,6 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 		{
-			name: "feature flag on with cdn on should return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -205,7 +211,17 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
 		},
 		{
-			name: "feature flag on with cdn off should not return module hash",
+			plugin: newPlugin(
+				pluginID,
+				withSignatureStatus(plugins.SignatureStatusValid),
+				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+				withClass(plugins.ClassExternal),
+			),
+			cdn:           true,
+			features:      &config.Features{SriChecksEnabled: true},
+			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
+		},
+		{
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -216,7 +232,6 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 		{
-			name: "feature flag off with cdn on should not return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -228,7 +243,6 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 		{
-			name: "feature flag off with cdn off should not return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -351,6 +365,16 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 	} {
+		if tc.name == "" {
+			var expS string
+			if tc.expModuleHash == "" {
+				expS = "should not return module hash"
+			} else {
+				expS = "should return module hash"
+			}
+			tc.name = fmt.Sprintf("feature=%v, cdn_config=%v, class=%v %s", tc.features.SriChecksEnabled, tc.cdn, tc.plugin.Class, expS)
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			var pluginSettings setting.PluginSettings
 			if tc.cdn {
