@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { ListChildComponentProps, VariableSizeList } from "react-window";
+import { useCallback, useEffect, useState } from 'react';
+import { ListChildComponentProps, VariableSizeList } from 'react-window';
 
-import { CoreApp, LogRowModel } from "@grafana/data";
-import { useTheme2 } from "@grafana/ui";
+import { CoreApp, LogRowModel } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
-import { getLogLineSize, LogLine } from "./LogLine";
-import { init as initVirtualization } from "./virtualization";
+import { getLogLineSize, LogLine } from './LogLine';
+import { init as initVirtualization } from './virtualization';
 
 interface Props {
   app?: CoreApp;
@@ -18,16 +18,22 @@ export const LogList = ({ containerElement, logs }: Props) => {
   const theme = useTheme2();
 
   useEffect(() => {
-    initVirtualization(theme.typography.fontFamilyMonospace, theme.typography.body.fontSize);
-  }, [theme.typography.body.fontSize, theme.typography.fontFamilyMonospace]);
+    const letterSpacing = theme.typography.body.letterSpacing
+      ? theme.typography.fontSize * parseFloat(theme.typography.body.letterSpacing)
+      : undefined;
+    initVirtualization(theme.typography.fontFamilyMonospace, theme.typography.fontSize, letterSpacing);
+  }, [theme.typography.body.letterSpacing, theme.typography.fontFamilyMonospace, theme.typography.fontSize]);
 
   useEffect(() => {
     setListKey(`${Math.random()}`);
   }, [logs]);
-  
-  const Renderer = useCallback(({ index, style }: ListChildComponentProps) => {
-    return <LogLine log={logs[index]} style={style} />
-  }, [logs]);
+
+  const Renderer = useCallback(
+    ({ index, style }: ListChildComponentProps) => {
+      return <LogLine log={logs[index]} style={style} />;
+    },
+    [logs]
+  );
 
   const height = window.innerHeight * 0.75;
 
@@ -49,4 +55,4 @@ export const LogList = ({ containerElement, logs }: Props) => {
       {Renderer}
     </VariableSizeList>
   );
-}
+};

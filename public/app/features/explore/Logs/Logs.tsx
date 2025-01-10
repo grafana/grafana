@@ -1041,7 +1041,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             </>
           )}
           {visualisationType === 'logs' && logsPanelV2 && (
-            <div data-testid="logRows" ref={logsContainerRef} className={styles.scrollableLogRows}>
+            <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
               <LogList
                 app={CoreApp.Explore}
                 logs={dedupedRows}
