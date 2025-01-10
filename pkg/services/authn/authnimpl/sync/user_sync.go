@@ -189,21 +189,13 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	}
 
 	goCtx := context.WithoutCancel(ctx)
-	go func(orgID, userID int64) {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Error("Panic during user last seen sync", "err", err)
-			}
-		}()
-
-		s.lastSeenSF.Do(fmt.Sprintf("%d-%d", orgID, userID), func() (interface{}, error) {
-			err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: orgID})
-			if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
-				s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
-			}
-			return nil, nil
-		})
-	}(r.OrgID, userID)
+	s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
+		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: id.GetOrgID()})
+		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
+			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
+		}
+		return nil, nil
+	})
 
 	return nil
 }
