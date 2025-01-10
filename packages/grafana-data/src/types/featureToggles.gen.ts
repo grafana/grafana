@@ -249,4 +249,5 @@ export interface FeatureToggles {
   investigationsBackend?: boolean;
   k8SFolderCounts?: boolean;
   k8SFolderMove?: boolean;
+  improvedExternalSessionHandlingSAML?: boolean;
 }
