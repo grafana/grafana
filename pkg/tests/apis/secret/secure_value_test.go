@@ -39,60 +39,21 @@ func TestIntegrationSecureValue(t *testing.T) {
 		},
 	})
 
-	// Generic keeper name used in integration tests.
-	// Needed because creating/update securevalues requires the keeper to exist.
-	mustGenerateKeeper(t, helper, "my-keeper-1")
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
 
-	t.Run("creating a secure value without a name generates one", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrSecureValues,
-		})
-
-		testDataSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-
-		raw, err := client.Resource.Create(ctx, testDataSecureValue, metav1.CreateOptions{})
-		require.NoError(t, err)
-		require.NotNil(t, raw)
-
-		t.Cleanup(func() {
-			require.NoError(t, client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-		})
-
-		secureValue := new(secretv0alpha1.SecureValue)
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
-		require.NoError(t, err)
-		require.NotNil(t, secureValue)
-
-		require.NotEmpty(t, secureValue.Name)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		// #TODO: figure out permissions topic
+		User: helper.Org1.Admin,
+		GVR:  gvrSecureValues,
 	})
 
 	t.Run("creating a secure value returns it without any of the value or ref", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrSecureValues,
-		})
-
-		testDataSecureValueXyz := helper.LoadYAMLOrJSONFile("testdata/secure-value-xyz.yaml")
-
-		raw, err := client.Resource.Create(ctx, testDataSecureValueXyz, metav1.CreateOptions{})
-		require.NoError(t, err)
-		require.NotNil(t, raw)
-
-		t.Cleanup(func() {
-			require.NoError(t, client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-		})
+		keeper := mustGenerateKeeper(t, helper, nil)
+		raw := mustGenerateSecureValue(t, helper, keeper.GetName())
 
 		secureValue := new(secretv0alpha1.SecureValue)
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, secureValue)
 		require.NoError(t, err)
 		require.NotNil(t, secureValue)
 
@@ -103,7 +64,10 @@ func TestIntegrationSecureValue(t *testing.T) {
 		require.NotEmpty(t, secureValue.Spec.Audiences)
 
 		t.Run("and creating another secure value with the same name in the same namespace returns an error", func(t *testing.T) {
-			raw, err := client.Resource.Create(ctx, testDataSecureValueXyz, metav1.CreateOptions{})
+			testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			testSecureValue.SetName(raw.GetName())
+
+			raw, err := client.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 		})
@@ -130,16 +94,15 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
-			newKeeperName := "New keeper"
+			newKeeper := mustGenerateKeeper(t, helper, nil)
 
-			newRaw := testDataSecureValueXyz.DeepCopy()
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
-			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeperName
+			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 			newRaw.Object["spec"].(map[string]any)["audiences"] = []string{"audience1/name1", "audience2/*"}
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
-
-			mustGenerateKeeper(t, helper, newKeeperName)
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
 			require.NoError(t, err)
@@ -155,19 +118,10 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating an invalid secure value fails validation and returns an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
+		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testData.Object["spec"].(map[string]any)["title"] = ""
 
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrSecureValues,
-		})
-
-		testDataSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-xyz.yaml")
-		testDataSecureValue.Object["spec"].(map[string]any)["title"] = ""
-
-		raw, err := client.Resource.Create(ctx, testDataSecureValue, metav1.CreateOptions{})
+		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.Nil(t, raw)
 
@@ -176,15 +130,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("reading a secure value that does not exist returns a 404", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrSecureValues,
-		})
-
 		raw, err := client.Resource.Get(ctx, "some-secure-value-that-does-not-exist", metav1.GetOptions{})
 		require.Error(t, err)
 		require.Nil(t, raw)
@@ -195,36 +140,20 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("deleting a secure value that does not exist does not return an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrSecureValues,
-		})
-
 		err := client.Resource.Delete(ctx, "some-secure-value-that-does-not-exist", metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
 	t.Run("deleting a secure value that exists does not return an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrSecureValues,
-		})
-
 		generatePrefix := "generated-"
 
-		testDataSecureValueXyz := helper.LoadYAMLOrJSONFile("testdata/secure-value-xyz.yaml")
-		testDataSecureValueXyz.SetName("")
-		testDataSecureValueXyz.SetGenerateName("generated-")
+		keeper := mustGenerateKeeper(t, helper, nil)
 
-		raw, err := client.Resource.Create(ctx, testDataSecureValueXyz, metav1.CreateOptions{})
+		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+		testData.SetGenerateName(generatePrefix)
+		testData.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
+
+		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, raw)
 
@@ -250,29 +179,5 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NotNil(t, rawList)
 			require.Empty(t, rawList.Items)
 		})
-	})
-}
-
-func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, keeperName string) {
-	t.Helper()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-
-	keeperClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		// #TODO: figure out permissions topic
-		User: helper.Org1.Admin,
-		GVR:  gvrKeepers,
-	})
-
-	testKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
-	testKeeper.Object["metadata"].(map[string]any)["name"] = keeperName
-
-	rawKeeper, err := keeperClient.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
-	require.NoError(t, err)
-	require.NotNil(t, rawKeeper)
-
-	t.Cleanup(func() {
-		require.NoError(t, keeperClient.Resource.Delete(ctx, rawKeeper.GetName(), metav1.DeleteOptions{}))
 	})
 }
