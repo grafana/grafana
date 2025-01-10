@@ -14,7 +14,6 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -52,31 +51,19 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, err
 		}
 
-		authInterceptor := func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-			stackID := cfg.StackID
-			if stackID == "" {
-				stackID = "default"
-			}
+		stackID := cfg.StackID
+		if stackID == "" {
+			stackID = "default"
+		}
+		namespace := fmt.Sprintf("stacks-%s", stackID)
 
-			token, err := tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
-				Namespace: fmt.Sprintf("stacks-%s", stackID),
-				Audiences: []string{zanzanaAudience},
-			})
-			if err != nil {
-				return err
-			}
-
-			md := metadata.Pairs()
-			md.Set(authnlib.DefaultAccessTokenMetadataKey, token.Token)
-			ctx = metadata.NewOutgoingContext(ctx, md)
-			return invoker(ctx, method, req, reply, cc, opts...)
+		tokenAuthCred := &tokenAuth{
+			namespace:   namespace,
+			tokenClient: tokenClient,
 		}
 
 		dialOptions := []grpc.DialOption{
-			grpc.WithUnaryInterceptor(authInterceptor),
-		}
-		if cfg.Env == setting.Dev {
-			dialOptions = append(dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			grpc.WithPerRPCCredentials(tokenAuthCred),
 		}
 
 		conn, err := grpc.NewClient(cfg.Zanzana.Addr, dialOptions...)
@@ -247,4 +234,28 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
+}
+
+type tokenAuth struct {
+	cfg         *setting.Cfg
+	namespace   string
+	tokenClient *authnlib.TokenExchangeClient
+}
+
+func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
+	token, err := t.tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
+		Namespace: t.namespace,
+		Audiences: []string{zanzanaAudience},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		authnlib.DefaultAccessTokenMetadataKey: token.Token,
+	}, nil
+}
+
+func (t *tokenAuth) RequireTransportSecurity() bool {
+	return t.cfg.Env != setting.Dev
 }
