@@ -51,11 +51,10 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, err
 		}
 
-		stackID := cfg.StackID
-		if stackID == "" {
-			stackID = "default"
+		if cfg.StackID == "" {
+			return nil, fmt.Errorf("missing stack ID")
 		}
-		namespace := fmt.Sprintf("stacks-%s", stackID)
+		namespace := fmt.Sprintf("stacks-%s", cfg.StackID)
 
 		tokenAuthCred := &tokenAuth{
 			cfg:         cfg,
