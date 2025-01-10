@@ -2569,6 +2569,7 @@
         "name": "notificationBanner",
         "resourceVersion": "1727777007488",
         "creationTimestamp": "2024-05-13T09:32:34Z",
+        "deletionTimestamp": "2025-01-10T06:02:47Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-01 10:03:27.48823 +0000 UTC"
         }
