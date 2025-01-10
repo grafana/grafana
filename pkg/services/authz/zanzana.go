@@ -48,7 +48,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			TokenExchangeURL: cfg.Zanzana.TokenExchangeURL,
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
 		}
 
 		if cfg.StackID == "" {
