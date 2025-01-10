@@ -168,8 +168,7 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 		return nil, err
 	}
 
-	dashFolder, _ := internalfolders.UnstructuredToLegacyFolder(*out, q.SignedInUser.GetOrgID())
-	return dashFolder, nil
+	return internalfolders.UnstructuredToLegacyFolder(*out, q.SignedInUser.GetOrgID())
 }
 
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
