@@ -171,6 +171,24 @@ func TestIntegrationKeeper(t *testing.T) {
 
 			require.NotEqualValues(t, updatedKeeper.Spec, keeper.Spec)
 		})
+
+		t.Run("and updating the keeper to reference securevalues that does not exist returns an error", func(t *testing.T) {
+			newRaw := testDataKeeperAwsXyz.DeepCopy()
+			newRaw.Object["spec"].(map[string]any)["aws"] = map[string]any{
+				"accessKeyId": map[string]any{
+					"secureValueName": "securevalue-does-not-exist-1",
+				},
+				"secretAccessKey": map[string]any{
+					"secureValueName": "securevalue-does-not-exist-2",
+				},
+			}
+
+			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
+			require.Error(t, err)
+			require.Nil(t, updatedRaw)
+			require.Contains(t, err.Error(), "securevalue-does-not-exist-1")
+			require.Contains(t, err.Error(), "securevalue-does-not-exist-2")
+		})
 	})
 
 	t.Run("creating an invalid keeper fails validation and returns an error", func(t *testing.T) {
@@ -226,6 +244,33 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.NotNil(t, rawGCP)
 
 		require.NotEqualValues(t, rawAWS.Object["spec"], rawGCP.Object["spec"])
+	})
+
+	t.Run("creating a keeper that references securevalues that does not exist returns an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvrKeepers,
+		})
+
+		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
+		testDataKeeper.Object["spec"].(map[string]any)["aws"] = map[string]any{
+			"accessKeyId": map[string]any{
+				"secureValueName": "securevalue-does-not-exist-1",
+			},
+			"secretAccessKey": map[string]any{
+				"secureValueName": "securevalue-does-not-exist-2",
+			},
+		}
+
+		raw, err := client.Resource.Create(ctx, testDataKeeper, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, raw)
+		require.Contains(t, err.Error(), "securevalue-does-not-exist-1")
+		require.Contains(t, err.Error(), "securevalue-does-not-exist-2")
 	})
 
 	t.Run("deleting a keeper that exists does not return an error", func(t *testing.T) {
