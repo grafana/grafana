@@ -764,6 +764,8 @@ export {
   type DataSourceWithQueryModificationSupport,
   hasToggleableQueryFiltersSupport,
   hasQueryModificationSupport,
+  LogSortOrderChangeEvent,
+  type LogSortOrderChangePayload,
 } from './types/logs';
 export {
   type AnnotationQuery,

@@ -15,6 +15,9 @@ import { LokiQueryEditorProps } from './types';
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
+    getAppEvents: jest.fn().mockReturnValue({
+      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+    }),
     reportInteraction: jest.fn(),
   };
 });
