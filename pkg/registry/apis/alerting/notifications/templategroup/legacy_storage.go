@@ -82,7 +82,6 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	return convertToK8sResources(orgId, append([]definitions.NotificationTemplate{defaultTemplate}, res...), s.namespacer, opts.FieldSelector)
-
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
