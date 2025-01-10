@@ -869,7 +869,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -887,6 +887,8 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			zanzana.NewNoopClient(),
 			nil,
 			nil,
+			nil,
+			quotaService,
 			nil,
 		)
 		require.NoError(t, err)
@@ -937,7 +939,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -958,6 +960,8 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		nil,
 		nil,
 		nil,
+		quotaService,
+		nil,
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -971,7 +975,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	service, err := ProvideDashboardServiceImpl(
@@ -986,6 +990,8 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		zanzana.NewNoopClient(),
 		nil,
 		nil,
+		nil,
+		quotaService,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1017,7 +1023,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -1034,6 +1040,8 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		zanzana.NewNoopClient(),
 		nil,
 		nil,
+		nil,
+		quotaService,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1072,7 +1080,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -1089,6 +1097,8 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		zanzana.NewNoopClient(),
 		nil,
 		nil,
+		nil,
+		quotaService,
 		nil,
 	)
 	require.NoError(t, err)

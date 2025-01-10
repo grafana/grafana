@@ -425,7 +425,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	folderStore := ProvideDashboardFolderStore(db)
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db), quotaService)
+	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
 
@@ -487,7 +487,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				CanEditValue: true,
 			})
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil, zanzana.NewNoopClient(), nil, nil, nil)
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b)
@@ -543,7 +543,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		})
 		t.Run("With nested folder feature flag off", func(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
-			dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+			dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 			require.NoError(t, err)
 			nestedFolderStore := ProvideStore(db)
 
@@ -569,7 +569,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			})
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
-				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, zanzana.NewNoopClient(), nil, nil, nil)
+				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
@@ -708,13 +708,13 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
-				dashStore, err := database.ProvideDashboardStore(db, cfg, tc.featuresFlag, tagimpl.ProvideService(db), quotaService)
+				dashStore, err := database.ProvideDashboardStore(db, cfg, tc.featuresFlag, tagimpl.ProvideService(db))
 				require.NoError(t, err)
 				nestedFolderStore := ProvideStore(db)
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, tc.service.store, nil, zanzana.NewNoopClient(), nil, nil, nil)
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, tc.service.store, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil)
 				require.NoError(t, err)
 				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac, b)
 				require.NoError(t, err)
@@ -834,7 +834,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 	nestedFolderStore := ProvideStore(db)
 
-	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db), &quotatest.FakeQuotaService{})
+	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 
 	dashboardFolderStore := ProvideDashboardFolderStore(db)
@@ -1465,7 +1465,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	folderStore := ProvideDashboardFolderStore(db)
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db), quotaService)
+	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
 
@@ -1499,6 +1499,8 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		zanzana.NewNoopClient(),
 		nil,
 		nil,
+		nil,
+		quotaService,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1885,13 +1887,12 @@ func TestFolderServiceGetFolder(t *testing.T) {
 	})
 
 	getSvc := func(features featuremgmt.FeatureToggles) Service {
-		quotaService := quotatest.New(false, nil)
 		folderStore := ProvideDashboardFolderStore(db)
 
 		cfg := setting.NewCfg()
 
 		featuresFlagOff := featuremgmt.WithFeatures()
-		dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+		dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 		require.NoError(t, err)
 		nestedFolderStore := ProvideStore(db)
 
@@ -1983,11 +1984,10 @@ func TestFolderServiceGetFolder(t *testing.T) {
 
 func TestFolderServiceGetFolders(t *testing.T) {
 	db, cfg := sqlstore.InitTestDB(t)
-	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
 	featuresFlagOff := featuremgmt.WithFeatures()
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
 
@@ -2068,11 +2068,10 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 		},
 	}}
 
-	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
 	featuresFlagOff := featuremgmt.WithFeatures()
-	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db)
 

@@ -52,27 +52,14 @@ type dashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) (dashboards.Store, error) {
 	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
-
-	defaultLimits, err := readQuotaConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
 
 	// fill out dashboard_uid and org_id for dashboard_tags
 	// need to run this at startup in case any downgrade happened after the initial migration
-	err = migrations.RunDashboardTagMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName())
+	err := migrations.RunDashboardTagMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName())
 	if err != nil {
 		s.log.Error("Failed to run dashboard_tag migrations", "err", err)
-	}
-
-	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     dashboards.QuotaTargetSrv,
-		DefaultLimits: defaultLimits,
-		Reporter:      s.Count,
-	}); err != nil {
-		return nil, err
 	}
 
 	return s, nil
@@ -1078,25 +1065,4 @@ func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, du
 		return nil, err
 	}
 	return dashboards, nil
-}
-
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	globalQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return &quota.Map{}, err
-	}
-	orgQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
-	if err != nil {
-		return &quota.Map{}, err
-	}
-
-	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
-	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
-	return limits, nil
 }

@@ -58,7 +58,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		tagService := tagimpl.ProvideService(db)
 		folderStore := folderimpl.ProvideDashboardFolderStore(db)
 		fStore := folderimpl.ProvideStore(db)
-		dashboardStore, err := database.ProvideDashboardStore(db, cfg, features, tagService, quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(db, cfg, features, tagService)
 		require.NoError(t, err)
 
 		zclient, err := authz.ProvideZanzana(cfg, db, features)
@@ -77,6 +77,8 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			zclient,
 			nil,
 			nil,
+			nil,
+			quotaService,
 			nil,
 		)
 		require.NoError(t, err)
