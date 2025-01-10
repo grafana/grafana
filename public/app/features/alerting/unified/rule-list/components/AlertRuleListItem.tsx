@@ -191,6 +191,51 @@ export function RecordingRuleListItem({
   );
 }
 
+interface RuleInTransitionListItemProps {
+  name: string;
+  namespace: string;
+  group: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
+  transition: 'creating' | 'deleting';
+}
+
+export function RuleInTransitionListItem({
+  name,
+  namespace,
+  group,
+  rulesSource,
+  application,
+  transition,
+}: RuleInTransitionListItemProps) {
+  const metadata: ReactNode[] = [];
+  if (namespace && group) {
+    metadata.push(
+      <Text color="secondary" variant="bodySmall">
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
+      </Text>
+    );
+  }
+
+  const description =
+    transition === 'creating'
+      ? 'The rule has been created but has not been evaluated yet'
+      : 'The rule is being deleted';
+
+  return (
+    <ListItem
+      title={
+        <Stack direction="row" alignItems="center">
+          <Text>{name}</Text>
+        </Stack>
+      }
+      description={<Summary content={description} />}
+      icon={<RuleListIcon inTransition={true} />}
+      meta={metadata}
+    />
+  );
+}
+
 interface SummaryProps {
   content?: string;
   error?: string;

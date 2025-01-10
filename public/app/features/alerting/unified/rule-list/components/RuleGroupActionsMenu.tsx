@@ -151,7 +151,10 @@ type GrafanaActionState = 'edit' | 'reorder' | 'export';
 
 function GrafanaGroupsActionMenu({ groupIdentifier }: GrafanaGroupsActionMenuProps) {
   const { canEditRules } = useRulesAccess();
-  const { data: rulerRuleGroup } = useGetGrafanaRulerGroupQuery(groupIdentifier);
+  const { data: rulerRuleGroup } = useGetGrafanaRulerGroupQuery({
+    folderUid: groupIdentifier.namespace.uid,
+    groupName: groupIdentifier.groupName,
+  });
 
   const [actionState, setActionState] = useState<GrafanaActionState | undefined>(undefined);
 
