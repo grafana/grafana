@@ -72,10 +72,14 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return invoker(ctx, method, req, reply, cc, opts...)
 		}
 
-		conn, err := grpc.NewClient(cfg.Zanzana.Addr,
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		dialOptions := []grpc.DialOption{
 			grpc.WithUnaryInterceptor(authInterceptor),
-		)
+		}
+		if cfg.Env == setting.Dev {
+			dialOptions = append(dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		}
+
+		conn, err := grpc.NewClient(cfg.Zanzana.Addr, dialOptions...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
