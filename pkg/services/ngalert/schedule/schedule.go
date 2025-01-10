@@ -367,19 +367,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for i := range readyToRun {
 		item := readyToRun[i]
 
-		time.AfterFunc(time.Duration(int64(i)*step), func() {
-			key := item.rule.GetKey()
-			success, dropped := item.ruleRoutine.Eval(&item.Evaluation)
-			if !success {
-				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
-				return
-			}
-			if dropped != nil {
-				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick, "droppedTick", dropped.scheduledAt)...)
-				orgID := fmt.Sprint(key.OrgID)
-				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
-			}
-		})
+		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(item))
 	}
 
 	// Stop old routines for rules that got restarted.
@@ -394,4 +382,20 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	}
 	sch.deleteAlertRule(toDelete...)
 	return readyToRun, registeredDefinitions, updatedRules
+}
+
+func (sch *schedule) runJobFn(item readyToRunItem) func() {
+	return func() {
+		key := item.rule.GetKey()
+		success, dropped := item.ruleRoutine.Eval(&item.Evaluation)
+		if !success {
+			sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", item.scheduledAt)...)
+			return
+		}
+		if dropped != nil {
+			sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", item.scheduledAt, "droppedTick", dropped.scheduledAt)...)
+			orgID := fmt.Sprint(key.OrgID)
+			sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
+		}
+	}
 }
