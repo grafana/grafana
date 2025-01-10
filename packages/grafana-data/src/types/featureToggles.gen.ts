@@ -181,7 +181,6 @@ export interface FeatureToggles {
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
-  notificationBanner?: boolean;
   dashboardRestore?: boolean;
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
@@ -200,7 +199,6 @@ export interface FeatureToggles {
   enableScopesInMetricsExplore?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
-  cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   alertingFilterV2?: boolean;
   dataplaneAggregator?: boolean;
