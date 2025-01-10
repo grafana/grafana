@@ -235,7 +235,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	folder := queryParams.Get("folder")
 	if folder != "" {
 		if folder == "general" { // general is the root folder
-			folder = "" // root folder is empty
+			folder = "" // root folder is empty in the search index
 		}
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      "folder",
