@@ -123,7 +123,7 @@ Use the following options to refine the value in your visualization.
 | Calculation | If you chose **Calculate** as your **Show** option, select a calculation to reduce each series. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
 | Limit | If you chose **All values** as your **Show** option, enter a value to limit the number of values displayed. |
 | Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li><li>**Time** - All fields with time values.</li></ul> |
-| Sort | Select a sorting direction, or select **None** to have the fields show in the order they are returned from the datasource. |
+| Sort | Select a sorting direction, or select **None** to have the fields display in the order in which they're returned from the data source. |
 
 <!-- prettier-ignore-end -->
 
