@@ -21,6 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -88,7 +91,7 @@ func TestDashboardService(t *testing.T) {
 					dto.User = &user.SignedInUser{}
 
 					if tc.Error == nil {
-						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+						fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 					}
 					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, false)
 					require.Equal(t, err, tc.Error)
@@ -106,7 +109,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
@@ -117,7 +120,7 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should not return validation error if dashboard is provisioned but UI updates allowed", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
+				fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 				fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
@@ -132,7 +135,6 @@ func TestDashboardService(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
@@ -143,7 +145,6 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
 
 				oldRefreshInterval := service.cfg.MinRefreshInterval
@@ -164,7 +165,6 @@ func TestDashboardService(t *testing.T) {
 			dto := &dashboards.SaveDashboardDTO{}
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
@@ -594,7 +594,7 @@ func TestSaveDashboard(t *testing.T) {
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.Anything).Return(nil, nil)
-		fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil)
+		fakeStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 		fakeStore.On("SaveDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 		dashboard, err := service.SaveDashboard(context.Background(), query, false)
 		require.NoError(t, err)
@@ -616,7 +616,7 @@ func TestSaveDashboard(t *testing.T) {
 	t.Run("Should use Kubernetes create if feature flags are enabled and dashboard doesn't exist", func(t *testing.T) {
 		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
 		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, query.Dashboard.UID, mock.Anything, mock.Anything).Return(nil, nil)
+		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 		k8sResourceMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
 
 		dashboard, err := service.SaveDashboard(ctx, query, false)
@@ -627,12 +627,23 @@ func TestSaveDashboard(t *testing.T) {
 	t.Run("Should use Kubernetes update if feature flags are enabled and dashboard exists", func(t *testing.T) {
 		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
 		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true)
-		k8sResourceMock.On("Get", mock.Anything, query.Dashboard.UID, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
 		k8sResourceMock.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
 
 		dashboard, err := service.SaveDashboard(ctx, query, false)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
+	})
+
+	t.Run("Should return an error if uid is invalid", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true)
+		k8sResourceMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		k8sResourceMock.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil)
+
+		query.Dashboard.UID = "invalid/uid"
+		_, err := service.SaveDashboard(ctx, query, false)
+		require.Error(t, err)
 	})
 }
 
@@ -1106,6 +1117,102 @@ func TestGetDashboardTags(t *testing.T) {
 		result, err := service.GetDashboardTags(ctx, query)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
+		fakeStore.AssertExpectations(t)
+	})
+}
+
+func TestQuotaCount(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+
+	orgs := []*org.OrgDTO{
+		{
+			ID: 1,
+		},
+		{
+			ID: 2,
+		},
+	}
+
+	dashboardUnstructuredOrg1 := unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "uid",
+				},
+				"spec": map[string]any{
+					"test":    "test",
+					"version": int64(1),
+					"title":   "testing slugify",
+				},
+			},
+		}},
+	}
+	dashboardUnstructuredOrg2 := unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "uid",
+				},
+				"spec": map[string]any{
+					"test":    "test",
+					"version": int64(1),
+					"title":   "testing slugify",
+				},
+			},
+		},
+			{
+				Object: map[string]any{
+					"metadata": map[string]any{
+						"name": "uid2",
+					},
+					"spec": map[string]any{
+						"test":    "test2",
+						"version": int64(1),
+						"title":   "testing slugify2",
+					},
+				},
+			},
+		},
+	}
+
+	query := &quota.ScopeParameters{
+		OrgID: 1,
+	}
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("Count", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		_, err := service.Count(context.Background(), query)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		orgSvc := orgtest.FakeOrgService{ExpectedOrgs: orgs}
+		service.orgService = &orgSvc
+		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
+		k8sClientMock.On("getClient", mock.Anything, int64(2)).Return(k8sResourceMock, true).Once()
+		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg2, nil).Once()
+		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg1, nil).Once()
+
+		result, err := service.Count(ctx, query)
+		require.NoError(t, err)
+
+		orgTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+		require.NoError(t, err)
+		c, _ := result.Get(orgTag)
+		require.Equal(t, c, int64(1))
+
+		globalTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+		require.NoError(t, err)
+		c, _ = result.Get(globalTag)
+		require.Equal(t, c, int64(3))
+
 		fakeStore.AssertExpectations(t)
 	})
 }
