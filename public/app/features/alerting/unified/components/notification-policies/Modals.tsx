@@ -6,9 +6,9 @@ import { Trans } from 'app/core/internationalization';
 import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
+import { ERROR_NEWER_CONFIGURATION, getErrorMessageFromCode } from '../../utils/k8s/errors';
 import { MatcherFormatter } from '../../utils/matchers';
-import { stringifyErrorLike } from '../../utils/misc';
-import { InsertPosition } from '../../utils/routeTree';
+import { InsertPosition, RouteNotFoundError } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 
 import { AlertGroupsSummary } from './AlertGroupsSummary';
@@ -19,7 +19,13 @@ import { NotificationPoliciesErrorAlert } from './PolicyUpdateErrorAlert';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosition) => void, () => void];
-type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
+type EditModalHook = [
+  JSX.Element,
+  (item: RouteWithID, isDefaultRoute?: boolean) => void,
+  () => void,
+  Error | undefined,
+  (error: Error | undefined) => void,
+];
 
 const useAddPolicyModal = (
   handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => Promise<void>,
@@ -54,7 +60,7 @@ const useAddPolicyModal = (
           closeOnEscape={true}
           title="Add notification policy"
         >
-          {error && <NotificationPoliciesErrorAlert error={stringifyErrorLike(error)} />}
+          {error && <NotificationPoliciesErrorAlert error={getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION)} />}
           <AmRoutesExpandedForm
             defaults={{
               groupBy: referenceRoute?.group_by,
@@ -86,12 +92,13 @@ const useAddPolicyModal = (
 const useEditPolicyModal = (
   alertManagerSourceName: string,
   handleUpdate: (route: Partial<FormAmRoute>) => Promise<void>,
-  loading: boolean
+  loading: boolean,
+  conflictError: Error | undefined,
+  setConflictError: (error: Error | undefined) => void
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
-  const [error, setError] = useState<Error | undefined>();
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
@@ -103,6 +110,19 @@ const useEditPolicyModal = (
     setRoute(route);
     setShowModal(true);
   }, []);
+
+  const handleUpdateWithErrorHandling = useCallback(
+    (values: Partial<FormAmRoute>) => {
+      handleUpdate(values).catch((e) => {
+        if (e instanceof RouteNotFoundError) {
+          setConflictError(e);
+        } else {
+          setConflictError(undefined);
+        }
+      });
+    },
+    [handleUpdate, setConflictError]
+  );
 
   const modalElement = useMemo(
     () =>
@@ -116,15 +136,15 @@ const useEditPolicyModal = (
           closeOnEscape={true}
           title="Edit notification policy"
         >
-          {error && <NotificationPoliciesErrorAlert error={stringifyErrorLike(error)} />}
+          {conflictError && (
+            <NotificationPoliciesErrorAlert error={getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION)} />
+          )}
           {isDefaultPolicy && route && (
             <AmRootRouteForm
               // TODO *sigh* this alertmanagersourcename should come from context or something
               // passing it down all the way here is a code smell
               alertManagerSourceName={alertManagerSourceName}
-              onSubmit={(values) => {
-                handleUpdate(values).catch(setError);
-              }}
+              onSubmit={(values) => handleUpdateWithErrorHandling(values)}
               route={route}
               actionButtons={
                 <Modal.ButtonRow>
@@ -141,9 +161,7 @@ const useEditPolicyModal = (
           {!isDefaultPolicy && (
             <AmRoutesExpandedForm
               route={route}
-              onSubmit={(values) => {
-                handleUpdate(values).catch(setError);
-              }}
+              onSubmit={(values) => handleUpdateWithErrorHandling(values)}
               actionButtons={
                 <Modal.ButtonRow>
                   <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
@@ -158,10 +176,19 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [alertManagerSourceName, error, handleDismiss, handleUpdate, isDefaultPolicy, loading, route, showModal]
+    [
+      alertManagerSourceName,
+      conflictError,
+      handleDismiss,
+      isDefaultPolicy,
+      loading,
+      route,
+      showModal,
+      handleUpdateWithErrorHandling,
+    ]
   );
 
-  return [modalElement, handleShow, handleDismiss];
+  return [modalElement, handleShow, handleDismiss, conflictError, setConflictError];
 };
 
 const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loading: boolean): ModalHook<RouteWithID> => {

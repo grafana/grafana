@@ -12,6 +12,13 @@ import { FormAmRoute } from '../types/amroutes';
 
 import { formAmRouteToAmRoute } from './amroutes';
 
+export class RouteNotFoundError extends Error {
+  constructor(routeId: string) {
+    super(`No such route with ID '${routeId}'`);
+    this.name = 'RouteNotFoundError';
+  }
+}
+
 // add a form submission to the route tree
 export const mergePartialAmRouteWithRouteTree = (
   alertManagerSourceName: string,
@@ -20,7 +27,7 @@ export const mergePartialAmRouteWithRouteTree = (
 ): Route => {
   const existing = findExistingRoute(partialFormRoute.id ?? '', routeTree);
   if (!existing) {
-    throw new Error(`No such route with ID '${partialFormRoute.id}'`);
+    throw new RouteNotFoundError(partialFormRoute.id ?? '');
   }
 
   function findAndReplace(currentRoute: RouteWithID): Route {

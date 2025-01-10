@@ -56,6 +56,8 @@ export const NotificationPoliciesList = () => {
     refetch: refetchNotificationPolicyRoute,
   } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' });
 
+  const [conflictError, setConflictError] = useState<Error | undefined>();
+
   // We make the assumption that the first policy is the default one
   // At the time of writing, this will be always the case for the AM config response, and the K8S API
   // TODO in the future: Generalise the component to support any number of "root" policies
@@ -129,6 +131,7 @@ export const NotificationPoliciesList = () => {
     updateExistingNotificationPolicy.reset();
     deleteNotificationPolicy.reset();
     addNotificationPolicy.reset();
+    setConflictError(undefined);
   };
 
   async function handleUpdate(partialRoute: Partial<FormAmRoute>) {
@@ -175,7 +178,9 @@ export const NotificationPoliciesList = () => {
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
     handleUpdate,
-    updatingTree
+    updatingTree,
+    conflictError,
+    setConflictError
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
   const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
@@ -186,6 +191,7 @@ export const NotificationPoliciesList = () => {
 
   const hasPoliciesData = rootRoute && !resultError && !isLoading;
   const hasPoliciesError = !!resultError && !isLoading;
+  const hasConflictError = isErrorMatchingCode(conflictError, ERROR_NEWER_CONFIGURATION) || conflictError;
 
   return (
     <>
@@ -195,7 +201,7 @@ export const NotificationPoliciesList = () => {
         </Alert>
       )}
       {/* show when there is an update error */}
-      {isErrorMatchingCode(updateExistingNotificationPolicyState.error, ERROR_NEWER_CONFIGURATION) && (
+      {hasConflictError && (
         <Alert severity="info" title="Notification policies have changed">
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Trans i18nKey="alerting.policies.update-errors.conflict">
