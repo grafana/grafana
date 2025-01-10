@@ -332,7 +332,11 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   if (panel.libraryPanel) {
     vizPanelState.$behaviors!.push(
-      new LibraryPanelBehavior({ uid: panel.libraryPanel.uid, name: panel.libraryPanel.name })
+      new LibraryPanelBehavior({
+        uid: panel.libraryPanel.uid,
+        name: panel.libraryPanel.name,
+        title: panel.title,
+      })
     );
     vizPanelState.pluginId = LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID;
     vizPanelState.$data = undefined;

@@ -391,10 +391,13 @@ describe('transformSaveModelToScene', () => {
       expect(rowScene.state.children[0]).toBeInstanceOf(DashboardGridItem);
       expect(rowScene.state.children[1]).toBeInstanceOf(DashboardGridItem);
       // Panels are sorted by position in the row
-      expect((rowScene.state.children[0] as DashboardGridItem).state.body.state.$behaviors![0]).toBeInstanceOf(
-        LibraryPanelBehavior
-      );
+      const behavior = (rowScene.state.children[0] as DashboardGridItem).state.body.state
+        .$behaviors![0] as LibraryPanelBehavior;
+      expect(behavior).toBeInstanceOf(LibraryPanelBehavior);
+      expect(behavior.state.title).toEqual(libPanel.title);
+      expect((rowScene.state.children[0] as DashboardGridItem).state.body.state.title).toBe(libPanel.title);
       expect((rowScene.state.children[1] as DashboardGridItem).state.body!).toBeInstanceOf(VizPanel);
+      expect((rowScene.state.children[1] as DashboardGridItem).state.body!.state.title).toBe(panel.title);
     });
 
     it('should create panels within expanded row', () => {
@@ -778,6 +781,29 @@ describe('transformSaveModelToScene', () => {
       expect((libPanelBehavior as LibraryPanelBehavior).state.uid).toEqual(panel.libraryPanel.uid);
       expect((libPanelBehavior as LibraryPanelBehavior).state.name).toEqual(panel.libraryPanel.name);
       expect(gridItem.state.body.state.title).toEqual(panel.title);
+    });
+
+    it('should not hide the header because the name will be used and displayed as title', () => {
+      const panel = {
+        title: '',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+        libraryPanel: {
+          uid: '123',
+          name: 'My Panel',
+          folderUid: '456',
+        },
+      };
+
+      const gridItem = buildGridItemForPanel(new PanelModel(panel))!;
+      const libPanelBehavior = gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
+      const vizPanel = gridItem.state.body as VizPanel;
+
+      expect(libPanelBehavior).toBeInstanceOf(LibraryPanelBehavior);
+      expect(libPanelBehavior.state.uid).toEqual(panel.libraryPanel.uid);
+      expect(libPanelBehavior.state.name).toEqual(panel.libraryPanel.name);
+      expect(vizPanel.state.title).toEqual(panel.title);
+      expect(vizPanel.state.hoverHeader).toEqual(false);
     });
   });
 
