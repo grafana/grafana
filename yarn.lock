@@ -2988,7 +2988,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.4"
+    uuid: "npm:11.0.5"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3030,7 +3030,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.4"
+    uuid: "npm:11.0.5"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3230,7 +3230,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.4"
+    uuid: "npm:11.0.5"
     webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
@@ -3761,7 +3761,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.4"
+    uuid: "npm:11.0.5"
     webpack: "npm:5.97.1"
     webpack-cli: "npm:6.0.1"
     whatwg-fetch: "npm:3.6.20"
@@ -3947,7 +3947,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
-    uuid: "npm:11.0.4"
+    uuid: "npm:11.0.5"
   peerDependencies:
     "@grafana/runtime": 10.4.0-pre
   languageName: unknown
@@ -4098,7 +4098,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
     uplot: "npm:1.6.31"
-    uuid: "npm:11.0.4"
+    uuid: "npm:11.0.5"
     webpack: "npm:5.97.1"
   peerDependencies:
     react: ^18.0.0
@@ -17930,7 +17930,7 @@ __metadata:
     type-fest: "npm:^4.18.2"
     typescript: "npm:5.7.3"
     uplot: "npm:1.6.31"
-    uuid: "npm:11.0.4"
+    uuid: "npm:11.0.5"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.97.1"
     webpack-assets-manifest: "npm:^5.1.0"
@@ -30328,12 +30328,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.0.4, uuid@npm:^11.0.2":
-  version: 11.0.4
-  resolution: "uuid@npm:11.0.4"
+"uuid@npm:11.0.5, uuid@npm:^11.0.2":
+  version: 11.0.5
+  resolution: "uuid@npm:11.0.5"
   bin:
     uuid: dist/esm/bin/uuid
-  checksum: 10/5fd9832d2819f4535c92805f381e26ac254dfc601424a1000bc277ea38440538385db948645ef23c800906eeda28d3da9e037b049e71b2efe1eff1d05c9f61a2
+  checksum: 10/0594ecdff3051e15d4a2c614b4c72e73af373bde0a5d156512353c01156975295d024ae8d7151846d7bd4d22ccd251b16ed51b4318fa71505fb20ad984102dc1
   languageName: node
   linkType: hard
 
