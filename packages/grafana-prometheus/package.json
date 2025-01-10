@@ -49,7 +49,7 @@
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
-    "@prometheus-io/lezer-promql": "0.300.1",
+    "@prometheus-io/lezer-promql": "0.301.0",
     "@reduxjs/toolkit": "2.5.0",
     "d3": "7.9.0",
     "date-fns": "4.1.0",
@@ -134,7 +134,7 @@
     "style-loader": "4.0.0",
     "testing-library-selector": "0.3.1",
     "ts-node": "10.9.2",
-    "typescript": "5.7.2",
+    "typescript": "5.7.3",
     "webpack": "5.97.1",
     "webpack-cli": "6.0.1"
   },

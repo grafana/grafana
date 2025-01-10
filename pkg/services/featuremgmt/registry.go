@@ -1235,14 +1235,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "notificationBanner",
-			Description:  "Enables the notification banner UI and API",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: false,
-			Expression:   "true",
-		},
-		{
 			Name:              "dashboardRestore",
 			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,
@@ -1489,7 +1481,7 @@ var (
 		},
 		{
 			Name:        "improvedExternalSessionHandling",
-			Description: "Enable improved support for OAuth and SAML external sessions in Grafana",
+			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
@@ -1549,8 +1541,9 @@ var (
 		{
 			Name:        "userStorageAPI",
 			Description: "Enables the user storage API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1721,6 +1714,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "improvedExternalSessionHandlingSAML",
+			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 	}
 )
