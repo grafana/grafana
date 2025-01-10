@@ -13,6 +13,7 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
@@ -66,8 +67,8 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
-		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -124,6 +125,10 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
+	if identity.IsBackgroundCall(ctx) {
+		return "", nil
+	}
+
 	authInfo, ok := claims.From(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")

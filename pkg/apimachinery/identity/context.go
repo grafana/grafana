@@ -29,3 +29,13 @@ func GetRequester(ctx context.Context) (Requester, error) {
 func checkNilRequester(r Requester) bool {
 	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
 }
+
+type backgroundCallKey struct{}
+
+func WithBackgroundCallFlag(ctx context.Context) context.Context {
+	return context.WithValue(ctx, backgroundCallKey{}, true)
+}
+
+func IsBackgroundCall(ctx context.Context) bool {
+	return ctx.Value(backgroundCallKey{}) != nil
+}
