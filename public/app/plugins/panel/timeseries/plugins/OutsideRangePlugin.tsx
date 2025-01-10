@@ -54,6 +54,9 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
     return null;
   }
 
+  // Disable OutsideRangePlugin.
+  return null;
+
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= toX && last >= fromX) {
     return null;
