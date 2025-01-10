@@ -121,7 +121,7 @@ describe('LokiRecordingRulesConnector', () => {
     getListSpy.mockClear();
     fetchSpy.mockClear();
     fetchSpy.mockImplementation(defaultFetchImpl);
-    consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
   });
 
   afterEach(() => {
@@ -138,7 +138,7 @@ describe('LokiRecordingRulesConnector', () => {
       expect(result).toContainEqual({ name: 'Loki Secondary', uid: 'loki2' });
 
       // Verify underlying calls
-      expect(getListSpy).toHaveBeenCalledWith({ logs: true });
+      expect(getListSpy).toHaveBeenCalledWith({ logs: true, type: 'loki' });
       expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 
