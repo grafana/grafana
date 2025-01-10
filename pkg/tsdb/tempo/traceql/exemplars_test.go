@@ -57,11 +57,14 @@ func TestTransformExemplarToFrame_SingleExemplarHistogram(t *testing.T) {
 			Value:       1.23,
 			Labels: []v1.KeyValue{
 				{Key: "trace:id", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "trace-123"}}},
+				{Key: "__bucket", Value: &v1.AnyValue{Value: &v1.AnyValue_DoubleValue{DoubleValue: 1.23}}},
 			},
 		},
 	}
 	frame := transformExemplarToFrame("test", &tempopb.TimeSeries{
-		Labels:     nil,
+		Labels: []v1.KeyValue{
+			{Key: "__bucket", Value: &v1.AnyValue{Value: &v1.AnyValue_DoubleValue{DoubleValue: 1.23}}},
+		},
 		Samples:    nil,
 		PromLabels: "",
 		Exemplars:  exemplars,
@@ -73,8 +76,6 @@ func TestTransformExemplarToFrame_SingleExemplarHistogram(t *testing.T) {
 	assert.Equal(t, time.UnixMilli(1638316800000), frame.Fields[0].At(0))
 	assert.Equal(t, 1.23, frame.Fields[1].At(0))
 	assert.Equal(t, "trace-123", frame.Fields[2].At(0))
-	assert.Equal(t, 1.23, frame.Fields[3].At(0))
-	assert.Equal(t, "__bucket", frame.Fields[3].Name)
 }
 
 func TestTransformExemplarToFrame_MultipleExemplars(t *testing.T) {
