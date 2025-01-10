@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { PluginError, PluginType } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
 
-import { sortPlugins, Sorters, isPluginUpdateable } from '../helpers';
+import { sortPlugins, Sorters, isPluginUpdatable } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
@@ -37,7 +37,7 @@ export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.name
 export const useGetUpdatable = () => {
   const { isLoading } = useFetchStatus();
   const { plugins: installed } = useGetAll({ isInstalled: true });
-  const updatablePlugins = installed.filter(isPluginUpdateable);
+  const updatablePlugins = installed.filter(isPluginUpdatable);
   return {
     isLoading,
     updatablePlugins,
