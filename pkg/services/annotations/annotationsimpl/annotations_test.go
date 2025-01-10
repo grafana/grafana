@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -57,14 +56,14 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	fStore := folderimpl.ProvideStore(sql)
-	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql), quotatest.New(false, nil))
+	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	folderSvc := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil)
+		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
 	require.NoError(t, err)
 
 	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc)
@@ -231,7 +230,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 
 		tagService := tagimpl.ProvideService(sql)
 
-		dashStore, err := database.ProvideDashboardStore(sql, cfg, features, tagService, quotatest.New(false, nil))
+		dashStore, err := dashboardstore.ProvideDashboardStore(sql, cfg, features, tagService)
 		require.NoError(t, err)
 
 		origNewGuardian := guardian.New
@@ -246,7 +245,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil)
+			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
 		require.NoError(t, err)
 
 		cfg.AnnotationMaximumTagsLength = 60
