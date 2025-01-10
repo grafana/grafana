@@ -84,8 +84,11 @@ type TempoQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any            `json:"datasource,omitempty"`
-	Filters    []TraceqlFilter `json:"filters,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
+
+	// For metric queries, how many exemplars to request, 0 means no exemplars
+	Exemplars *int64          `json:"exemplars,omitempty"`
+	Filters   []TraceqlFilter `json:"filters,omitempty"`
 
 	// Filters that are used to query the metrics summary
 	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
