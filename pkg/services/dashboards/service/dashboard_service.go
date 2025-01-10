@@ -208,7 +208,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		dash.FolderUID = folder.UID
 	}
 
-	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
+	isParentFolderChanged, err := dr.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
 	}
@@ -288,6 +288,78 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	return cmd, nil
+}
+
+func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.ValidateDashboardBeforesave")
+	defer span.End()
+
+	isParentFolderChanged := false
+
+	var existingById *dashboards.Dashboard
+	var err error
+	if dashboard.ID > 0 {
+		// if ID is set and the dashboard is not found, ErrDashboardNotFound will be returned
+		existingById, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, ID: dashboard.ID})
+		if err != nil {
+			return false, err
+		}
+
+		if dashboard.UID == "" {
+			dashboard.SetUID(existingById.UID)
+		}
+	}
+	dashWithIdExists := (existingById != nil)
+
+	var existingByUid *dashboards.Dashboard
+	if dashboard.UID != "" {
+		existingByUid, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, UID: dashboard.UID})
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return false, err
+		}
+	}
+	dashWithUidExists := (existingByUid != nil)
+
+	if !dashWithIdExists && !dashWithUidExists {
+		return false, nil
+	}
+
+	if dashWithIdExists && dashWithUidExists && existingById.ID != existingByUid.ID {
+		return false, dashboards.ErrDashboardWithSameUIDExists
+	}
+
+	existing := existingById
+
+	if !dashWithIdExists && dashWithUidExists {
+		dashboard.SetID(existingByUid.ID)
+		dashboard.SetUID(existingByUid.UID)
+		existing = existingByUid
+	}
+
+	if (existing.IsFolder && !dashboard.IsFolder) ||
+		(!existing.IsFolder && dashboard.IsFolder) {
+		return isParentFolderChanged, dashboards.ErrDashboardTypeMismatch
+	}
+
+	if !dashboard.IsFolder && dashboard.FolderUID != existing.FolderUID {
+		isParentFolderChanged = true
+	}
+
+	// check for is someone else has written in between
+	if dashboard.Version != existing.Version {
+		if overwrite {
+			dashboard.SetVersion(existing.Version)
+		} else {
+			return isParentFolderChanged, dashboards.ErrDashboardVersionMismatch
+		}
+	}
+
+	// do not allow plugin dashboard updates without overwrite flag
+	if existing.PluginID != "" && !overwrite {
+		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
+	}
+
+	return isParentFolderChanged, nil
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
