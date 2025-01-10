@@ -13,6 +13,9 @@ func authorize(ctx context.Context, namespace string) error {
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, "unauthenticated")
 	}
+	if c.GetNamespace() == "" {
+		return status.Errorf(codes.Unauthenticated, "unauthenticated")
+	}
 	if !claims.NamespaceMatches(c.GetNamespace(), namespace) {
 		return status.Errorf(codes.PermissionDenied, "namespace does not match")
 	}
