@@ -234,6 +234,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
 	if folder != "" {
+		if folder == "general" { // general is the root folder
+			folder = "" // root folder is empty
+		}
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      "folder",
 			Operator: "=",
