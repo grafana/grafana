@@ -1376,14 +1376,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "cloudwatchMetricInsightsCrossAccount",
-			Description:  "Enables cross account observability for Cloudwatch Metric Insights query builder",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        awsDatasourcesSquad,
-			FrontendOnly: true,
-			Expression:   "true",
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
 			Stage:       FeatureStageDeprecated,
