@@ -14,6 +14,8 @@ use (
 	./pkg/apiserver
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
+	./pkg/codegen
+	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv
 	./pkg/storage/unified/apistore
@@ -25,7 +27,7 @@ use (
 // but we don't want to change all the imports. so we use replace to handle this situation
 replace xorm.io/xorm => ./pkg/util/xorm
 
-replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.125.0
+replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.126.0
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3
 

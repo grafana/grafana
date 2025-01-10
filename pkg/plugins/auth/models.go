@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 )
 
 type ExternalService struct {
