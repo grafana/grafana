@@ -45,7 +45,6 @@ func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, locations []Locatio
 	}
 
 	for _, mig := range migrations {
-
 		m.AddMigration(mig.name, mig.migration)
 	}
 
