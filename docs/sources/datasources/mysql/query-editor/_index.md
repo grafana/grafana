@@ -115,7 +115,7 @@ The following components will help you build a MySQL query:
 
 - **Group** - Toggle to add **Group by column**.
 
-  - **Group by column** - Select a column to filter by from the drop-down. Click the **+sign** to filter by multiple columns. Click the **X** to remove a filter.
+  - **Group by column** - Select a column to filter by from the drop-down. Click the **+ sign** to filter by multiple columns. Click the **X** to remove a filter.
 
 - **Order** - Toggle to add an ORDER BY statement.
 
