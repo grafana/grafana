@@ -680,6 +680,164 @@ func TestLogoutSaml(t *testing.T) {
 	require.Equal(t, 302, sc.resp.Code)
 }
 
+func TestIsExternallySynced(t *testing.T) {
+	testcases := []struct {
+		name      string
+		cfg       *setting.Cfg
+		rawCfg    func(*testing.T, *setting.Cfg)
+		oauthInfo *social.OAuthInfo
+		provider  string
+		expected  bool
+	}{
+		// Same for all of the OAuth providers
+		{
+			name:      "AzureAD external user should return that it is externally synced",
+			cfg:       &setting.Cfg{},
+			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: false},
+			provider:  loginservice.AzureADAuthModule,
+			expected:  true,
+		},
+		{
+			name:      "AzureAD external user should return that it is not externally synced when org role sync is set",
+			cfg:       &setting.Cfg{},
+			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: true},
+			provider:  loginservice.AzureADAuthModule,
+			expected:  false,
+		},
+		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
+		{
+			name:      "AzureAD external user should return that it is not externally synced when oauth org role sync is set",
+			cfg:       &setting.Cfg{OAuthSkipOrgRoleUpdateSync: true},
+			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: false},
+			provider:  loginservice.AzureADAuthModule,
+			expected:  false,
+		},
+		{
+			name:      "AzureAD external user should return that it is not externally synced when the provider is not enabled",
+			cfg:       &setting.Cfg{},
+			oauthInfo: &social.OAuthInfo{Enabled: false, SkipOrgRoleSync: false},
+			provider:  loginservice.AzureADAuthModule,
+			expected:  false,
+		},
+		{
+			name:      "AzureAD synced user should return that it is not externally synced when the provider is not enabled and nil",
+			cfg:       &setting.Cfg{},
+			oauthInfo: nil,
+			provider:  loginservice.AzureADAuthModule,
+			expected:  false,
+		},
+		// saml
+		{
+			name: "SAML synced user should return that it is externally synced",
+			rawCfg: func(t *testing.T, cfg *setting.Cfg) {
+				saml, err := cfg.Raw.NewSection("auth.saml")
+				require.NoError(t, err)
+				_, err = saml.NewKey("enabled", "true")
+				require.NoError(t, err)
+				_, err = saml.NewKey("skip_org_role_sync", "false")
+				require.NoError(t, err)
+			},
+			provider: loginservice.SAMLAuthModule,
+			expected: true,
+		},
+		{
+			name: "SAML synced user should return that it is not externally synced when org role sync is set",
+			cfg:  &setting.Cfg{SAMLAuthEnabled: true, SAMLSkipOrgRoleSync: true},
+			rawCfg: func(t *testing.T, cfg *setting.Cfg) {
+				saml, err := cfg.Raw.NewSection("auth.saml")
+				require.NoError(t, err)
+				_, err = saml.NewKey("enabled", "true")
+				require.NoError(t, err)
+				_, err = saml.NewKey("skip_org_role_sync", "true")
+				require.NoError(t, err)
+			},
+			provider: loginservice.SAMLAuthModule,
+			expected: false,
+		},
+		// ldap
+		{
+			name:     "LDAP synced user should return that it is externally synced",
+			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: false},
+			provider: loginservice.LDAPAuthModule,
+			expected: true,
+		},
+		{
+			name:     "LDAP synced user should return that it is not externally synced when org role sync is set",
+			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: true},
+			provider: loginservice.LDAPAuthModule,
+			expected: false,
+		},
+		// jwt
+		{
+			name:     "JWT synced user should return that it is externally synced",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: false}},
+			provider: loginservice.JWTModule,
+			expected: true,
+		},
+		{
+			name:     "JWT synced user should return that it is not externally synced when org role sync is set",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: true}},
+			provider: loginservice.JWTModule,
+			expected: false,
+		},
+		// IsProvider test
+		{
+			name:     "If no provider enabled should return false",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: false, SkipOrgRoleSync: true}},
+			provider: loginservice.JWTModule,
+			expected: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "saml").Return(true).Maybe()
+
+			cfg := tc.cfg
+			if tc.rawCfg != nil {
+				tc.rawCfg(t, cfg)
+			}
+
+			hs := &HTTPServer{
+				SettingsProvider: setting.ProvideProvider(cfg),
+				License:          license,
+			}
+			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider, tc.oauthInfo))
+		})
+	}
+}
+
+func TestIsProviderEnabled(t *testing.T) {
+	testcases := []struct {
+		name      string
+		oauthInfo *social.OAuthInfo
+		provider  string
+		expected  bool
+	}{
+		// github
+		{
+			name:      "Github should return true if enabled",
+			oauthInfo: &social.OAuthInfo{Enabled: true},
+			provider:  loginservice.GithubAuthModule,
+			expected:  true,
+		},
+		{
+			name:      "Github should return false if not enabled",
+			oauthInfo: &social.OAuthInfo{Enabled: false},
+			provider:  loginservice.GithubAuthModule,
+			expected:  false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{}
+			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider, tc.oauthInfo))
+		})
+	}
+}
+
 type mockSocialService struct {
 	oAuthInfo       *social.OAuthInfo
 	oAuthInfos      map[string]*social.OAuthInfo
