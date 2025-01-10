@@ -56,7 +56,7 @@ func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.P
 
 	ctxLogger := r.log.FromContext(ctx)
 
-	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.Type, *p.IAM)
+	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.Type, p.IAM)
 	if err != nil {
 		ctxLogger.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 		span.SetStatus(codes.Error, fmt.Sprintf("could not register external service: %v", err))
