@@ -788,7 +788,7 @@ export const versionedComponents = {
       '9.4.0': 'data-testid Nav toolbar',
     },
     commandPaletteTrigger: {
-      '11.4.0': 'data-testid Command palette trigger',
+      '11.5.0': 'data-testid Command palette trigger',
     },
     shareDashboard: {
       '11.1.0': 'data-testid Share dashboard',
@@ -880,7 +880,7 @@ export const versionedComponents = {
   },
   Select: {
     menu: {
-      '11.4.0': 'data-testid Select menu',
+      '11.5.0': 'data-testid Select menu',
       [MIN_GRAFANA_VERSION]: 'Select options menu',
     },
     option: {
@@ -1237,7 +1237,7 @@ export const versionedComponents = {
   },
   Portal: {
     container: {
-      '11.4.1': 'data-testid portal-container',
+      '11.5.0': 'data-testid portal-container',
     },
   },
 } satisfies VersionedSelectorGroup;
