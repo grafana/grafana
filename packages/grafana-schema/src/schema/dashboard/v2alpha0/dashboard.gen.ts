@@ -648,6 +648,21 @@ export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
 	fiscalYearStartMonth: 0,
 });
 
+// other repeat modes will be added in the future: label, frame
+export const RepeatMode = "variable";
+
+export interface RepeatOptions {
+	mode: "variable";
+	value: string;
+	direction?: "h" | "v";
+	maxPerRow?: number;
+}
+
+export const defaultRepeatOptions = (): RepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -655,6 +670,7 @@ export interface GridLayoutItemSpec {
 	height: number;
 	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
 	element: ElementReference;
+	repeat?: RepeatOptions;
 }
 
 export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({
