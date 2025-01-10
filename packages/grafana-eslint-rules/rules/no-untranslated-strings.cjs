@@ -5,7 +5,7 @@ const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
 );
 
-const propsToCheck = ['label', 'description', 'placeholder', 'aria-label', 'title', 'text'];
+const propsToCheck = ['label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
 
 const noUntranslatedStrings = createRule({
   create(context) {
@@ -17,7 +17,8 @@ const noUntranslatedStrings = createRule({
 
         const isUntranslatedProp =
           (node.value.type === 'Literal' && node.value.value !== '') ||
-          (node.value.type === 'JSXExpressionContainer' && node.value.expression.type === 'Literal');
+          (node.value.type === 'JSXExpressionContainer' &&
+            (node.value.expression.type === 'Literal' || node.value.expression.type === 'TemplateLiteral'));
 
         if (isUntranslatedProp) {
           return context.report({
