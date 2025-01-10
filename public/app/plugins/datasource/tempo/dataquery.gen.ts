@@ -13,10 +13,6 @@ import * as common from '@grafana/schema';
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
   /**
-   * Filters that are used to query the metrics summary
-   */
-  groupBy?: Array<TraceqlFilter>;
-  /**
    * Defines the maximum number of traces that are returned from Tempo
    */
   limit?: number;
@@ -68,7 +64,6 @@ export interface TempoQuery extends common.DataQuery {
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
   filters: [],
-  groupBy: [],
 };
 
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
