@@ -13,6 +13,7 @@ interface RuleListIconProps {
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   isPaused?: boolean;
+  inTransition?: boolean;
 }
 
 const icons: Record<PromAlertingRuleState, IconName> = {
@@ -42,6 +43,7 @@ export const RuleListIcon = memo(function RuleListIcon({
   health,
   recording = false,
   isPaused = false,
+  inTransition = false,
 }: RequireAtLeastOne<RuleListIconProps>) {
   let iconName: IconName = state ? icons[state] : 'circle';
   let iconColor: TextProps['color'] = state ? color[state] : 'secondary';
@@ -69,6 +71,12 @@ export const RuleListIcon = memo(function RuleListIcon({
     iconName = 'pause-circle';
     iconColor = 'warning';
     stateName = 'Paused';
+  }
+
+  if (inTransition) {
+    iconName = 'sync';
+    iconColor = 'info';
+    stateName = 'In transition';
   }
 
   return (

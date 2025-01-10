@@ -1,5 +1,5 @@
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GrafanaRulesSource } from '../utils/datasource';
@@ -13,13 +13,17 @@ const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
 interface GrafanaRuleLoaderProps {
   rule: GrafanaPromRuleDTO;
+
   groupIdentifier: GrafanaRuleGroupIdentifier;
   // TODO: How to improve this?
   namespaceName: string;
 }
 
 export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
-  const { data: rulerRuleGroup, isError } = useGetGrafanaRulerGroupQuery(groupIdentifier);
+  const { data: rulerRuleGroup, isError } = useGetGrafanaRulerGroupQuery({
+    folderUid: groupIdentifier.namespace.uid,
+    groupName: groupIdentifier.groupName,
+  });
 
   const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === rule.uid);
 
@@ -31,6 +35,19 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
     return <AlertRuleListItemLoader />;
   }
 
+  return (
+    <GrafanaRule rule={rule} rulerRule={rulerRule} groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
+  );
+}
+
+interface GrafanaRuleProps {
+  rule: GrafanaPromRuleDTO;
+  rulerRule: RulerGrafanaRuleDTO;
+  groupIdentifier: GrafanaRuleGroupIdentifier;
+  namespaceName: string;
+}
+
+export function GrafanaRule({ rule, rulerRule, groupIdentifier, namespaceName }: GrafanaRuleProps) {
   const {
     grafana_alert: { title, provenance },
     annotations = {},
