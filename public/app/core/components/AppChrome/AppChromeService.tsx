@@ -147,7 +147,7 @@ export class AppChromeService {
 
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const isSameUrl = newEntry.url === lastEntry.url;
+    const isSameUrl = lastEntry && newEntry.url === lastEntry.url;
 
     // To avoid adding an entry with the same url twice, we always use the latest one
     if (isSameUrl) {
@@ -156,7 +156,6 @@ export class AppChromeService {
       entries = [newEntry, ...entries];
     }
 
-    return entries;
     return entries;
   }
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
