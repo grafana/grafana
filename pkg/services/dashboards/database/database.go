@@ -60,10 +60,6 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 	if err != nil {
 		s.log.Error("Failed to run dashboard_tag migrations", "err", err)
 	}
-	err = migrations.RunDashboardUIDAndOrgIDMigrations(sqlStore.GetEngine().NewSession(), sqlStore.GetDialect().DriverName(), "dashboard_provisioning")
-	if err != nil {
-		s.log.Error("Failed to run dashboard_provisioning migrations", "err", err)
-	}
 
 	return s, nil
 }
@@ -454,8 +450,6 @@ func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardPro
 
 	provisioning.ID = result.ID
 	provisioning.DashboardID = dashboard.ID
-	provisioning.DashboardUID = dashboard.UID
-	provisioning.OrgID = dashboard.OrgID
 
 	if exist {
 		_, err = sess.ID(result.ID).Update(provisioning)

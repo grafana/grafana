@@ -255,25 +255,11 @@ func addDashboardMigration(mg *Migrator) {
 		Name: "org_id", Type: DB_BigInt, Nullable: true, Default: "1",
 	}))
 
-	mg.AddMigration("Add missing dashboard_uid and org_id to dashboard_tag", &FillDashbordUIDAndOrgIDMigration{
-		Table: "dashboard_tag",
-	})
-
-	mg.AddMigration("Add column dashboard_uid in dashboard_provisioning", NewAddColumnMigration(dashboardExtrasTableV2, &Column{
-		Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: true,
-	}))
-	mg.AddMigration("Add column org_id in dashboard_provisioning", NewAddColumnMigration(dashboardExtrasTableV2, &Column{
-		Name: "org_id", Type: DB_BigInt, Nullable: true, Default: "1",
-	}))
-
-	mg.AddMigration("Add missing dashboard_uid and org_id to dashboard_provisioning", &FillDashbordUIDAndOrgIDMigration{
-		Table: "dashboard_provisioning",
-	})
+	mg.AddMigration("Add missing dashboard_uid and org_id to dashboard_tag", &FillDashbordUIDAndOrgIDMigration{})
 }
 
 type FillDashbordUIDAndOrgIDMigration struct {
 	MigrationBase
-	Table string
 }
 
 func (m *FillDashbordUIDAndOrgIDMigration) SQL(dialect Dialect) string {
@@ -281,42 +267,36 @@ func (m *FillDashbordUIDAndOrgIDMigration) SQL(dialect Dialect) string {
 }
 
 func (m *FillDashbordUIDAndOrgIDMigration) Exec(sess *xorm.Session, mg *Migrator) error {
-	return RunDashboardUIDAndOrgIDMigrations(sess, mg.Dialect.DriverName(), m.Table)
+	return RunDashboardTagMigrations(sess, mg.Dialect.DriverName())
 }
 
-func RunDashboardUIDAndOrgIDMigrations(sess *xorm.Session, driverName, table string) error {
-	sql := getSQL(driverName, table)
-	if _, err := sess.Exec(sql); err != nil {
-		return fmt.Errorf("failed to set dashboard_uid and org_id in %s: %w", table, err)
-	}
-
-	return nil
-}
-
-func getSQL(driverName, table string) string {
-	switch driverName {
-	case Postgres:
-		return fmt.Sprintf(`UPDATE %s
+func RunDashboardTagMigrations(sess *xorm.Session, driverName string) error {
+	// sqlite
+	sql := `UPDATE dashboard_tag
+	SET 
+    	dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id),
+    	org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id)
+	WHERE 
+    	(dashboard_uid IS NULL OR org_id IS NULL)
+    	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id);`
+	if driverName == Postgres {
+		sql = `UPDATE dashboard_tag 
 		SET dashboard_uid = dashboard.uid, 
 			org_id = dashboard.org_id
 		FROM dashboard 
-		WHERE %s.dashboard_id = dashboard.id
-			AND (%s.dashboard_uid IS NULL OR %s.org_id IS NULL);`, table, table, table, table)
-	case MySQL:
-		return fmt.Sprintf(`UPDATE %s
-		LEFT JOIN dashboard ON %s.dashboard_id = dashboard.id 
-		SET %s.dashboard_uid = dashboard.uid, 
-			%s.org_id = dashboard.org_id
-		WHERE %s.dashboard_uid IS NULL OR %s.org_id IS NULL;`, table, table, table, table, table, table)
-	default:
-		// sqlite
-		return fmt.Sprintf(`UPDATE %s
-			SET 
-				dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = %s.dashboard_id),
-				org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = %s.dashboard_id)
-			WHERE 
-				(dashboard_uid IS NULL OR org_id IS NULL)
-				AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = %s.dashboard_id);`,
-			table, table, table, table)
+		WHERE dashboard_tag.dashboard_id = dashboard.id
+			AND (dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL);`
+	} else if driverName == MySQL {
+		sql = `UPDATE dashboard_tag 
+		LEFT JOIN dashboard ON dashboard_tag.dashboard_id = dashboard.id 
+		SET dashboard_tag.dashboard_uid = dashboard.uid, 
+			dashboard_tag.org_id = dashboard.org_id
+		WHERE dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL;`
 	}
+
+	if _, err := sess.Exec(sql); err != nil {
+		return fmt.Errorf("failed to set dashboard_uid and org_id in dashboard_tag: %w", err)
+	}
+
+	return nil
 }

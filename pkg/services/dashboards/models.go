@@ -215,14 +215,12 @@ type RestoreDeletedDashboardCommand struct {
 }
 
 type DashboardProvisioning struct {
-	ID           int64 `xorm:"pk autoincr 'id'"`
-	DashboardID  int64 `xorm:"dashboard_id"`
-	Name         string
-	ExternalID   string `xorm:"external_id"`
-	CheckSum     string
-	Updated      int64
-	DashboardUID string `xorm:"dashboard_uid"`
-	OrgID        int64  `xorm:"org_id"`
+	ID          int64 `xorm:"pk autoincr 'id'"`
+	DashboardID int64 `xorm:"dashboard_id"`
+	Name        string
+	ExternalID  string `xorm:"external_id"`
+	CheckSum    string
+	Updated     int64
 }
 
 type DeleteDashboardCommand struct {

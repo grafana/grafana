@@ -93,13 +93,11 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, 1, len(received))
 			require.Equal(t, &dashboards.DashboardProvisioning{
-				ID:           2,
-				DashboardID:  3,
-				DashboardUID: anotherDash.UID,
-				OrgID:        anotherDash.OrgID,
-				Name:         provisioning.Name,
-				ExternalID:   provisioning.ExternalID,
-				Updated:      provisioning.Updated,
+				ID:          2,
+				DashboardID: 3,
+				Name:        provisioning.Name,
+				ExternalID:  provisioning.ExternalID,
+				Updated:     provisioning.Updated,
 			}, received[0])
 		})
 
