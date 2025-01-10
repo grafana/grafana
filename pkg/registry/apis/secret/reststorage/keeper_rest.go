@@ -115,12 +115,12 @@ func (s *KeeperRest) Create(
 	}
 
 	if err := createValidation(ctx, obj); err != nil {
-		return nil, fmt.Errorf("create validation failed: %w", err)
+		return nil, err
 	}
 
 	createdKeeper, err := s.storage.Create(ctx, kp)
 	if err != nil {
-		var kErr *contracts.ErrKeeperInvalidSecureValues
+		var kErr xkube.ErrorLister
 		if errors.As(err, &kErr) {
 			return nil, apierrors.NewInvalid(kp.GroupVersionKind().GroupKind(), kp.Name, kErr.ErrorList())
 		}
@@ -157,7 +157,7 @@ func (s *KeeperRest) Update(
 	// Each provider-specific setting of a keeper lives at the top-level, so it makes it possible to change a provider
 	// during an update. Otherwise both old and new providers would be merged in the `newObj` which is not allowed.
 	if err := updateValidation(ctx, newObj, oldObj); err != nil {
-		return nil, false, fmt.Errorf("update validation failed: %w", err)
+		return nil, false, err
 	}
 
 	newKeeper, ok := newObj.(*secretv0alpha1.Keeper)
@@ -171,6 +171,11 @@ func (s *KeeperRest) Update(
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
 	updatedKeeper, err := s.storage.Update(ctx, newKeeper)
 	if err != nil {
+		var kErr xkube.ErrorLister
+		if errors.As(err, &kErr) {
+			return nil, false, apierrors.NewInvalid(newKeeper.GroupVersionKind().GroupKind(), newKeeper.Name, kErr.ErrorList())
+		}
+
 		return nil, false, fmt.Errorf("failed to update keeper: %w", err)
 	}
 

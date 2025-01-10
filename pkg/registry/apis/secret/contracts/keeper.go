@@ -28,7 +28,7 @@ type ErrKeeperInvalidSecureValues struct {
 	invalidSecureValues map[string]struct{}
 }
 
-var _ error = (*ErrKeeperInvalidSecureValues)(nil)
+var _ xkube.ErrorLister = (*ErrKeeperInvalidSecureValues)(nil)
 
 func NewErrKeeperInvalidSecureValues(invalidSecureValues map[string]struct{}) *ErrKeeperInvalidSecureValues {
 	return &ErrKeeperInvalidSecureValues{invalidSecureValues: invalidSecureValues}
@@ -41,8 +41,44 @@ func (e *ErrKeeperInvalidSecureValues) Error() string {
 func (e *ErrKeeperInvalidSecureValues) ErrorList() field.ErrorList {
 	errs := make(field.ErrorList, 0, len(e.invalidSecureValues))
 
-	for k := range e.invalidSecureValues {
-		errs = append(errs, field.NotFound(field.NewPath("secureValueName"), k))
+	path := field.NewPath("secureValueName")
+
+	for sv := range e.invalidSecureValues {
+		errs = append(errs, field.NotFound(path, sv))
+	}
+
+	return errs
+}
+
+// ErrKeeperInvalidSecureValuesReference is returned when a Keeper references SecureValues from a non-SQL Keeper.
+type ErrKeeperInvalidSecureValuesReference struct {
+	invalidSecureValues map[string]string
+}
+
+var _ xkube.ErrorLister = (*ErrKeeperInvalidSecureValuesReference)(nil)
+
+func NewErrKeeperInvalidSecureValuesReference(invalidSecureValues map[string]string) *ErrKeeperInvalidSecureValuesReference {
+	return &ErrKeeperInvalidSecureValuesReference{invalidSecureValues: invalidSecureValues}
+}
+
+func (e *ErrKeeperInvalidSecureValuesReference) Error() string {
+	return e.ErrorList().ToAggregate().Error()
+}
+
+func (e *ErrKeeperInvalidSecureValuesReference) ErrorList() field.ErrorList {
+	errs := make(field.ErrorList, 0, len(e.invalidSecureValues))
+
+	path := field.NewPath("secureValueName")
+
+	for sv, keeper := range e.invalidSecureValues {
+		errs = append(
+			errs,
+			field.TypeInvalid(
+				path,
+				sv,
+				`cannot reference third-party keeper "`+keeper+`" in another third-party keeper, use a "sql" keeper instead`,
+			),
+		)
 	}
 
 	return errs
