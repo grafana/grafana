@@ -64,7 +64,8 @@ func TestBleveBackend(t *testing.T) {
 			Resource:  key.Resource,
 		}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) {
 			_ = index.Write(&resource.IndexableDocument{
-				RV: 1,
+				RV:   1,
+				Name: "aaa",
 				Key: &resource.ResourceKey{
 					Name:      "aaa",
 					Namespace: "ns",
@@ -91,7 +92,8 @@ func TestBleveBackend(t *testing.T) {
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
-				RV: 2,
+				RV:   2,
+				Name: "bbb",
 				Key: &resource.ResourceKey{
 					Name:      "bbb",
 					Namespace: "ns",
@@ -126,6 +128,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
+				Name:      "ccc",
 				Title:     "ccc (dash)",
 				TitleSort: "ccc (dash)",
 				Folder:    "zzz",
