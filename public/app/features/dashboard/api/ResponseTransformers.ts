@@ -62,8 +62,8 @@ export function ensureV2Response(
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
   const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
-  // asserting here so that TypedVariableModel[] can be used
-  const variables = getVariables((dashboard.templating?.list as any[]) || []);
+  // we need to type case here because VariableModel[] doesn't have all the properties we need for specific variables
+  const variables = getVariables((dashboard.templating?.list as TypedVariableModel[]) || []);
   const annotations = getAnnotations(dashboard.annotations?.list || []);
 
   let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
@@ -377,14 +377,12 @@ function getPanelTransformations(transformations: DataTransformerConfig[]): Tran
 }
 
 function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] {
-  console.log('vars', vars);
-
   const variables: DashboardV2Spec['variables'] = [];
   for (const v of vars) {
     const commonProperties = {
       name: v.name,
       label: v.label,
-      description: v.description ?? undefined,
+      ...(v.description && { description: v.description }),
       skipUrlSync: Boolean(v.skipUrlSync),
       hide: transformVariableHideToEnum(v.hide),
     };
@@ -404,14 +402,14 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...commonProperties,
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
-            allValue: v.allValue ?? undefined,
+            ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current.value,
               text: v.current.text,
             },
             options: v.options || [],
             refresh: transformVariableRefreshToEnum(v.refresh),
-            datasource: v.datasource ?? undefined,
+            ...(v.datasource && { datasource: v.datasource }),
             regex: v.regex || '',
             sort: transformSortVariableToEnum(v.sort),
             query: {
@@ -437,7 +435,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...commonProperties,
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
-            allValue: v.allValue ?? undefined,
+            ...(v.allValue && { allValue: v.allValue }),
             current: {
               value: v.current.value,
               text: v.current.text,
@@ -463,7 +461,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             options: v.options,
             multi: v.multi,
             includeAll: v.includeAll,
-            allValue: v.allValue || undefined,
+            ...(v.allValue && { allValue: v.allValue }),
           },
         };
         variables.push(cv);
@@ -480,7 +478,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             label: v.label,
             hide: transformVariableHideToEnum(v.hide),
             skipUrlSync: v.skipUrlSync || false,
-            description: v.description ?? undefined,
+            ...(v.description && { description: v.description }),
           },
         };
         variables.push(av);
@@ -563,7 +561,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
       kind: 'AnnotationQuery',
       spec: {
         name: a.name,
-        datasource: a.datasource ?? undefined,
+        ...(a.datasource && { datasource: a.datasource }),
         enable: a.enable,
         hide: Boolean(a.hide),
         iconColor: a.iconColor,
