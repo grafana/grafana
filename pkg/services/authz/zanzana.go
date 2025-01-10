@@ -53,8 +53,13 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		}
 
 		authInterceptor := func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			stackID := cfg.StackID
+			if stackID == "" {
+				stackID = "default"
+			}
+
 			token, err := tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
-				Namespace: cfg.StackID,
+				Namespace: fmt.Sprintf("stacks-%s", stackID),
 				Audiences: []string{zanzanaAudience},
 			})
 			if err != nil {
