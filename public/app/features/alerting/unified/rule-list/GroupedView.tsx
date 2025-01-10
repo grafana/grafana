@@ -35,6 +35,10 @@ interface DataSourceLoaderProps {
   rulesSourceIdentifier: ExternalRulesSourceIdentifier;
 }
 
+export function GrafanaDataSourceLoader() {
+  return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true} />;
+}
+
 function DataSourceLoader({ rulesSourceIdentifier }: DataSourceLoaderProps) {
   const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
 

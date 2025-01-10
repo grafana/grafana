@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -73,6 +74,7 @@ type DashboardServiceImpl struct {
 	folderStore          folder.FolderStore
 	folderService        folder.Service
 	userService          user.Service
+	orgService           org.Service
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
@@ -105,6 +107,7 @@ func ProvideDashboardServiceImpl(
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
+	quotaService quota.Service, orgService org.Service,
 ) (*DashboardServiceImpl, error) {
 	k8sHandler := &dashk8sHandler{
 		gvr:                v0alpha1.DashboardResourceInfo.GroupVersionResource(),
@@ -124,9 +127,22 @@ func ProvideDashboardServiceImpl(
 		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
+		orgService:           orgService,
 		userService:          userService,
 		k8sclient:            k8sHandler,
 		metrics:              newDashboardsMetrics(r),
+	}
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     dashboards.QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      dashSvc.Count,
+	}); err != nil {
+		return nil, err
 	}
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
@@ -137,6 +153,79 @@ func ProvideDashboardServiceImpl(
 	}
 
 	return dashSvc, nil
+}
+
+func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		u := &quota.Map{}
+		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
+			return u, err
+		}
+
+		total := int64(0)
+		for _, org := range orgs {
+			ctx = identity.WithRequester(ctx, getQuotaRequester(org.ID))
+			dashs, err := dr.listDashboardsThroughK8s(ctx, org.ID)
+			if err != nil {
+				return u, err
+			}
+			orgDashboards := int64(len(dashs))
+			total += orgDashboards
+
+			tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+			if err != nil {
+				return nil, err
+			}
+			u.Set(tag, orgDashboards)
+		}
+
+		tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return nil, err
+		}
+		u.Set(tag, total)
+
+		return u, nil
+	}
+
+	return dr.dashboardStore.Count(ctx, scopeParams)
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+	orgQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
+	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
+	return limits, nil
+}
+
+func getQuotaRequester(orgId int64) *identity.StaticRequester {
+	return &identity.StaticRequester{
+		Type:   claims.TypeServiceAccount,
+		UserID: 1,
+		OrgID:  orgId,
+		Name:   "quota-requester",
+		Login:  "quota-requester",
+		Permissions: map[int64]map[string][]string{
+			orgId: {
+				"*": {"*"},
+			},
+		},
+	}
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
@@ -208,7 +297,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		dash.FolderUID = folder.UID
 	}
 
-	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
+	isParentFolderChanged, err := dr.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
 	}
@@ -288,6 +377,78 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	return cmd, nil
+}
+
+func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.ValidateDashboardBeforesave")
+	defer span.End()
+
+	isParentFolderChanged := false
+
+	var existingById *dashboards.Dashboard
+	var err error
+	if dashboard.ID > 0 {
+		// if ID is set and the dashboard is not found, ErrDashboardNotFound will be returned
+		existingById, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, ID: dashboard.ID})
+		if err != nil {
+			return false, err
+		}
+
+		if dashboard.UID == "" {
+			dashboard.SetUID(existingById.UID)
+		}
+	}
+	dashWithIdExists := (existingById != nil)
+
+	var existingByUid *dashboards.Dashboard
+	if dashboard.UID != "" {
+		existingByUid, err = dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: dashboard.OrgID, UID: dashboard.UID})
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return false, err
+		}
+	}
+	dashWithUidExists := (existingByUid != nil)
+
+	if !dashWithIdExists && !dashWithUidExists {
+		return false, nil
+	}
+
+	if dashWithIdExists && dashWithUidExists && existingById.ID != existingByUid.ID {
+		return false, dashboards.ErrDashboardWithSameUIDExists
+	}
+
+	existing := existingById
+
+	if !dashWithIdExists && dashWithUidExists {
+		dashboard.SetID(existingByUid.ID)
+		dashboard.SetUID(existingByUid.UID)
+		existing = existingByUid
+	}
+
+	if (existing.IsFolder && !dashboard.IsFolder) ||
+		(!existing.IsFolder && dashboard.IsFolder) {
+		return isParentFolderChanged, dashboards.ErrDashboardTypeMismatch
+	}
+
+	if !dashboard.IsFolder && dashboard.FolderUID != existing.FolderUID {
+		isParentFolderChanged = true
+	}
+
+	// check for is someone else has written in between
+	if dashboard.Version != existing.Version {
+		if overwrite {
+			dashboard.SetVersion(existing.Version)
+		} else {
+			return isParentFolderChanged, dashboards.ErrDashboardVersionMismatch
+		}
+	}
+
+	// do not allow plugin dashboard updates without overwrite flag
+	if existing.PluginID != "" && !overwrite {
+		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
+	}
+
+	return isParentFolderChanged, nil
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
@@ -492,14 +653,14 @@ func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID i
 		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
 	}
 
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		// deletes in unistore are soft deletes, so we can just delete in the same way
+		return dr.deleteDashboardThroughK8s(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgID, UID: dashboardUID}, true)
+	}
+
 	provisionedData, _ := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
 	if provisionedData != nil && provisionedData.ID != 0 {
 		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
-	}
-
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-		// deletes in unistore are soft deletes, so we can just delete in the same way
-		return dr.deleteDashboardThroughK8s(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgID, UID: dashboardUID})
 	}
 
 	return dr.dashboardStore.SoftDeleteDashboard(ctx, orgID, dashboardUID)
@@ -533,6 +694,12 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 	ctx, span := tracer.Start(ctx, "dashboards.service.deleteDashboard")
 	defer span.End()
 
+	cmd := &dashboards.DeleteDashboardCommand{OrgID: orgId, ID: dashboardId, UID: dashboardUID}
+
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		return dr.deleteDashboardThroughK8s(ctx, cmd, validateProvisionedDashboard)
+	}
+
 	if validateProvisionedDashboard {
 		provisionedData, err := dr.GetProvisionedDashboardDataByDashboardID(ctx, dashboardId)
 		if err != nil {
@@ -542,12 +709,6 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		if provisionedData != nil {
 			return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
 		}
-	}
-
-	cmd := &dashboards.DeleteDashboardCommand{OrgID: orgId, ID: dashboardId, UID: dashboardUID}
-
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-		return dr.deleteDashboardThroughK8s(ctx, cmd)
 	}
 
 	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
@@ -1218,7 +1379,7 @@ func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context
 	return nil
 }
 
-func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {
+func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand, validateProvisionedDashboard bool) error {
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := dr.getK8sContext(ctx)
@@ -1245,7 +1406,16 @@ func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, c
 		cmd.UID = result.UID
 	}
 
-	err = client.Delete(newCtx, cmd.UID, v1.DeleteOptions{})
+	// use a grace period of 0 to indicate to skip the check of deleting provisioned dashboards
+	var gracePeriod *int64
+	if !validateProvisionedDashboard {
+		noGracePeriod := int64(0)
+		gracePeriod = &noGracePeriod
+	}
+
+	err = client.Delete(newCtx, cmd.UID, v1.DeleteOptions{
+		GracePeriodSeconds: gracePeriod,
+	})
 	if err != nil {
 		return err
 	}

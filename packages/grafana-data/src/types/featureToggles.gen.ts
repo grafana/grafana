@@ -181,7 +181,6 @@ export interface FeatureToggles {
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
-  notificationBanner?: boolean;
   dashboardRestore?: boolean;
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
@@ -249,4 +248,5 @@ export interface FeatureToggles {
   investigationsBackend?: boolean;
   k8SFolderCounts?: boolean;
   k8SFolderMove?: boolean;
+  improvedExternalSessionHandlingSAML?: boolean;
 }
