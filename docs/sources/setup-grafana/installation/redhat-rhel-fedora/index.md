@@ -75,10 +75,14 @@ If you wish to install beta versions of Grafana, substitute the repository URL f
    sudo dnf install grafana-enterprise
    ```
 
-1. When installing Grafana v11.2 or v11.3 on RHEL9 and RHEL9-based Linux distributions, remove the `grafana-server` init.d script:
-   ```bash
-   sudo rm /etc/rc.d/init.d/grafana-server
-   ```
+   {{% admonition type="important" %}}
+   When installing Grafana v11.2 or v11.3 on RHEL9 and RHEL9-based Linux distributions, remove the `grafana-server` init.d script:
+
+```bash
+sudo rm /etc/rc.d/init.d/grafana-server
+```
+
+{{% /admonition %}}
 
 ## Install the Grafana RPM package manually
 
