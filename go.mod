@@ -476,7 +476,7 @@ require github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c
 
 require github.com/grafana/grafana/pkg/plugins/codegen v0.0.0-00010101000000-000000000000 // @grafana/grafana-as-code
 
-require github.com/grafana/grafana-app-sdk/logging v0.29.0
+require github.com/grafana/grafana-app-sdk/logging v0.29.0 // @grafana/grafana-app-platform-squad
 
 require (
 	cel.dev/expr v0.18.0 // indirect
