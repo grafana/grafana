@@ -189,6 +189,18 @@ describe('LabelsCrossReferenceConnector', () => {
       expect(result).toBe('{environment="production",app="frontend"}');
     });
 
+    it('should handle conversion of certain label names that are known to be different between Mimir & Loki', () => {
+      setVariables([
+        { key: 'job', operator: '=', value: 'grafana' },
+        { key: 'instance', operator: '=', value: 'instance1' },
+        { key: 'region', operator: '=', value: 'eu-north-1' },
+      ]);
+      const connector = createLabelsCrossReferenceConnector(mockScene);
+      const result = connector.getLokiQueryExpr();
+
+      expect(result).toBe('{service_name="grafana",service_instance_id="instance1",region="eu-north-1"}');
+    });
+
     it('should return empty string when no filters are present', () => {
       setVariables([]);
       sceneGraphSpy.mockReturnValue(createAdHocVariableStub([]));
