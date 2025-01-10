@@ -869,6 +869,7 @@
         "name": "cloudwatchMetricInsightsCrossAccount",
         "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
+        "deletionTimestamp": "2025-01-10T15:06:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }

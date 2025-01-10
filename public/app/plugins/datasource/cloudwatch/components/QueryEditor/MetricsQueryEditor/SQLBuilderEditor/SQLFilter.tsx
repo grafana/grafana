@@ -113,10 +113,7 @@ const FilterItem = (props: FilterItemProps) => {
     region: query.region,
     namespace,
     metricName,
-    ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
-    config.featureToggles.cloudwatchMetricInsightsCrossAccount
-      ? { accountId: query.accountId }
-      : {}),
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
   });
 
   const loadDimensionValues = async () => {
@@ -130,10 +127,7 @@ const FilterItem = (props: FilterItemProps) => {
         namespace,
         metricName,
         dimensionKey: filter.property.name,
-        ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
-        config.featureToggles.cloudwatchMetricInsightsCrossAccount
-          ? { accountId: query.accountId }
-          : {}),
+        ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
       })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);

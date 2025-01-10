@@ -180,7 +180,6 @@ reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,fals
 enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,GA,@grafana/alerting-squad,false,true,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
-cloudwatchMetricInsightsCrossAccount,GA,@grafana/aws-datasources,false,false,true
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
