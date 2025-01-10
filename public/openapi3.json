@@ -3162,13 +3162,12 @@
           "ids": {
             "description": "Panel IDs that should be included or excluded",
             "items": {
-              "format": "int64",
+              "format": "uint8",
               "type": "integer"
             },
             "type": "array"
           }
         },
-        "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
         "type": "object"
       },
       "AnnotationPermission": {
@@ -3187,7 +3186,7 @@
         "properties": {
           "builtIn": {
             "description": "Set to 1 for the standard annotation query all dashboards have by default.",
-            "format": "float",
+            "format": "double",
             "type": "number"
           },
           "datasource": {
@@ -3949,20 +3948,10 @@
       },
       "CookiePreferences": {
         "properties": {
-          "analytics": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "functional": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "performance": {
-            "additionalProperties": {},
-            "type": "object"
-          }
+          "analytics": {},
+          "functional": {},
+          "performance": {}
         },
-        "title": "CookiePreferences defines model for CookiePreferences.",
         "type": "object"
       },
       "CookieType": {
@@ -6986,7 +6975,6 @@
             "type": "string"
           }
         },
-        "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
         "type": "object"
       },
       "LibraryElementResponse": {
@@ -7372,7 +7360,6 @@
             "type": "array"
           }
         },
-        "title": "NavbarPreference defines model for NavbarPreference.",
         "type": "object"
       },
       "NewApiKeyResult": {
@@ -8569,7 +8556,7 @@
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
           "theme": {
-            "description": "Theme light, dark, empty is default",
+            "description": "light, dark, empty is default",
             "type": "string"
           },
           "timezone": {
@@ -8577,7 +8564,7 @@
             "type": "string"
           },
           "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "description": "day of the week (sunday, monday, etc)",
             "type": "string"
           }
         },
@@ -9042,11 +9029,10 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
-            "description": "HomeTab one of: '' | 'query' | 'starred';",
+            "description": "one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },
-        "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
         "type": "object"
       },
       "QueryHistoryResponse": {
