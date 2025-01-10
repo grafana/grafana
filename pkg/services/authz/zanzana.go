@@ -58,6 +58,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		namespace := fmt.Sprintf("stacks-%s", stackID)
 
 		tokenAuthCred := &tokenAuth{
+			cfg:         cfg,
 			namespace:   namespace,
 			tokenClient: tokenClient,
 		}
