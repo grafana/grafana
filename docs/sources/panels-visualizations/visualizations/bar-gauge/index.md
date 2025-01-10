@@ -123,7 +123,7 @@ Show a separate stat for every row. If you select this option, then you can also
 
 ### Sort
 
-Choose the sort direction (if any) the fields should be displayed.
+Choose the sort direction (if any) in which the fields should be displayed.
 
 ## Bar gauge options
 
