@@ -212,9 +212,26 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 		return errs
 	}
 
-	// TODO: validation of SQL keeper, once we have a finalized spec.
-	if keeper.Spec.SQL != nil {
-		_ = keeper.Spec.SQL
+	// TODO: Improve SQL keeper validation.
+	// SQL keeper is not allowed to use `secureValueName` in credentials fields to avoid depending on another keeper.
+	if keeper.Spec.SQL != nil && keeper.Spec.SQL.Encryption != nil {
+		if keeper.Spec.SQL.Encryption.AWS != nil {
+			if keeper.Spec.SQL.Encryption.AWS.AccessKeyID.SecureValueName != "" {
+				errs = append(errs, field.Forbidden(field.NewPath("spec", "aws", "accessKeyId"), "secureValueName cannot be used with SQL keeper"))
+			}
+
+			if keeper.Spec.SQL.Encryption.AWS.SecretAccessKey.SecureValueName != "" {
+				errs = append(errs, field.Forbidden(field.NewPath("spec", "aws", "secretAccessKey"), "secureValueName cannot be used with SQL keeper"))
+			}
+		}
+
+		if keeper.Spec.SQL.Encryption.Azure != nil && keeper.Spec.SQL.Encryption.Azure.ClientSecret.SecureValueName != "" {
+			errs = append(errs, field.Forbidden(field.NewPath("spec", "azure", "clientSecret"), "secureValueName cannot be used with SQL keeper"))
+		}
+
+		if keeper.Spec.SQL.Encryption.HashiCorp != nil && keeper.Spec.SQL.Encryption.HashiCorp.Token.SecureValueName != "" {
+			errs = append(errs, field.Forbidden(field.NewPath("spec", "hashicorp", "token"), "secureValueName cannot be used with SQL keeper"))
+		}
 	}
 
 	if keeper.Spec.AWS != nil {
