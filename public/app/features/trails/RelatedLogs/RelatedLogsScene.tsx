@@ -25,6 +25,7 @@ import { reportExploreMetrics } from '../interactions';
 import { VAR_FILTERS, VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
 import { NoRelatedLogsScene } from './NoRelatedLogsFoundScene';
+import { LogQLCombiner } from './logqlCombiner';
 
 export interface RelatedLogsSceneState extends SceneObjectState {
   controls: SceneObject[];
@@ -36,6 +37,7 @@ const LOGS_PANEL_CONTAINER_KEY = 'related_logs/logs_panel_container';
 const RELATED_LOGS_QUERY_KEY = 'related_logs/logs_query';
 
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
+  logqlQueryCombiner = new LogQLCombiner();
   constructor(state: Partial<RelatedLogsSceneState>) {
     super({
       controls: [],
@@ -106,17 +108,17 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
     const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
     const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
     // Merge the loki query expressions from all connectors
-    const lokiQuery = this.state.connectors
-      .reduce<string[]>((acc, connector) => {
-        const lokiExpr = connector.getLokiQueryExpr(selectedMetric, selectedDatasourceUid);
+    const lokiQueries = this.state.connectors.reduce<string[]>((acc, connector) => {
+      const lokiExpr = connector.getLokiQueryExpr(selectedMetric, selectedDatasourceUid);
 
-        if (lokiExpr) {
-          acc.push(`(${lokiExpr})`);
-        }
+      if (lokiExpr) {
+        acc.push(lokiExpr);
+      }
 
-        return acc;
-      }, [])
-      .join(' and ');
+      return acc;
+    }, []);
+
+    const lokiQuery = this.logqlQueryCombiner.combineQueries(lokiQueries);
 
     if (lokiQuery) {
       const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);
