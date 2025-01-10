@@ -51,7 +51,7 @@ faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
-pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false
+pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,true
 pluginsDetailsRightPanel,experimental,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
