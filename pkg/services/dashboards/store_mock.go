@@ -208,6 +208,7 @@ func (_m *FakeDashboardStore) GetAllDashboards(ctx context.Context) ([]*Dashboar
 	return r0, r1
 }
 
+
 // GetAllDashboardsByOrgId provides a mock function with given fields: ctx
 func (_m *FakeDashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error) {
 	ret := _m.Called(ctx, orgID)
@@ -237,6 +238,7 @@ func (_m *FakeDashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID
 
 	return r0, r1
 }
+
 
 // GetDashboard provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error) {
