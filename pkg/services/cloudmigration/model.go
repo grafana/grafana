@@ -67,7 +67,7 @@ const (
 
 type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
-	UID string `xorm:"uid"`
+	UID string `xorm:"uid" json:"uid"`
 
 	Name      string            `xorm:"name" json:"name"`
 	Type      MigrateDataType   `xorm:"resource_type" json:"type"`
@@ -98,9 +98,10 @@ const (
 type ItemStatus string
 
 const (
-	ItemStatusOK      ItemStatus = "OK"
-	ItemStatusWarning ItemStatus = "WARNING"
-	ItemStatusError   ItemStatus = "ERROR"
+	// Returned by GMS
+	ItemStatusOK    ItemStatus = "OK"
+	ItemStatusError ItemStatus = "ERROR"
+	// Used by default while awaiting GMS results
 	ItemStatusPending ItemStatus = "PENDING"
 )
 
@@ -180,7 +181,11 @@ type UpdateSnapshotCmd struct {
 	UID       string
 	SessionID string
 	Status    SnapshotStatus
-	Resources []CloudMigrationResource
+
+	// LocalResourcesToCreate represents the local state of a resource before it has been uploaded to GMS
+	LocalResourcesToCreate []CloudMigrationResource
+	// CloudResourcesToUpdate represents resource state from GMS, to be merged with the local state
+	CloudResourcesToUpdate []CloudMigrationResource
 }
 
 // access token
