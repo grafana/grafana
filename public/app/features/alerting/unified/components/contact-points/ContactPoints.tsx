@@ -128,8 +128,11 @@ const ContactPointsTab = () => {
           )}
         </Stack>
       </Stack>
-      {error && <Alert title="Failed to fetch contact points">{stringifyErrorLike(error)}</Alert>}
-      {!error && <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />}
+      {error ? (
+        <Alert title="Failed to fetch contact points">{stringifyErrorLike(error)}</Alert>
+      ) : (
+        <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
+      )}
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
       {ExportDrawer}
