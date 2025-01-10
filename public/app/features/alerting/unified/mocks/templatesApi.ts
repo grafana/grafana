@@ -1,7 +1,7 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { SetupServer } from 'msw/node';
 
-import { previewTemplateUrl, TemplatePreviewResponse } from '../api/templateApi';
+import { TemplatePreviewResponse, previewTemplateUrl } from '../api/templateApi';
 
 export function mockPreviewTemplateResponse(server: SetupServer, response: TemplatePreviewResponse) {
   server.use(http.post(previewTemplateUrl, () => HttpResponse.json(response)));

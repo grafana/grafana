@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -157,7 +158,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 	}
 
-	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
+	hideVersion := hs.Cfg.Anonymous.HideVersion && !c.IsSignedIn
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
 	commitShort := getShortCommitHash(setting.BuildCommit, 10)
@@ -266,8 +267,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		FeatureToggles:                   featureToggles,
-		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
-		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
+		AnonymousEnabled:                 hs.Cfg.Anonymous.Enabled,
+		AnonymousDeviceLimit:             hs.Cfg.Anonymous.DeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
 		RendererDefaultImageWidth:        hs.Cfg.RendererDefaultImageWidth,
@@ -360,7 +361,24 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
-		PasswordlessEnabled:           hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication),
+	}
+
+	if hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+		hasEnabledProviders := hs.samlEnabled() || hs.authnService.IsClientEnabled(authn.ClientLDAP)
+
+		if !hasEnabledProviders {
+			oauthInfos := hs.SocialService.GetOAuthInfoProviders()
+			for _, provider := range oauthInfos {
+				if provider.Enabled {
+					hasEnabledProviders = true
+					break
+				}
+			}
+		}
+
+		if !hasEnabledProviders {
+			frontendSettings.Auth.PasswordlessEnabled = true
+		}
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
@@ -721,6 +739,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			OrgID:         orgID,
 			Enabled:       plugin.AutoEnabled,
 			Pinned:        plugin.AutoEnabled,
+			AutoEnabled:   plugin.AutoEnabled,
 			PluginVersion: plugin.Info.Version,
 		}
 

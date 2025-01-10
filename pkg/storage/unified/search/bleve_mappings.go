@@ -16,53 +16,71 @@ func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMap
 
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
-	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name: "title",
-		Type: "text",
-		// TODO - if we don't want title to be a keyword, we can use this
-		// set the title field to use keyword analyzer so it sorts by the whole phrase
-		// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
+
+	nameMapping := &mapping.FieldMapping{
+		Analyzer: keyword.Name,
+		Type:     "text",
+		Index:    true,
+	}
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
+
+	// for sorting by title
+	titleSortMapping := bleve.NewKeywordFieldMapping()
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_SORT, titleSortMapping)
+
+	// for searching by title
+	titleSearchMapping := bleve.NewTextFieldMapping()
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleSearchMapping)
+
+	descriptionMapping := &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_DESCRIPTION,
+		Type:               "text",
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+		DocValues:          false,
+	}
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DESCRIPTION, descriptionMapping)
+
+	tagsMapping := &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_TAGS,
+		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
-		IncludeTermVectors: true,
+		IncludeTermVectors: false,
 		IncludeInAll:       true,
 		DocValues:          false,
-	})
+	}
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, tagsMapping)
 
-	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "description",
-		Type:               "text",
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
-
-	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "tags",
+	folderMapping := &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_FOLDER,
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
-
-	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "folder",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
+		IncludeInAll:       true,
 		DocValues:          true, // will be needed for authz client
-	})
+	}
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_FOLDER, folderMapping)
 
-	mapper.Dynamic = true
+	repoMapping := &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_REPOSITORY,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       true,
+		DocValues:          true,
+	}
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_REPOSITORY, repoMapping)
+
+	labelMapper := bleve.NewDocumentMapping()
+	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	return mapper
 }

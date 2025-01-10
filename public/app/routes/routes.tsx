@@ -377,7 +377,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.onPremToCloudMigrations && {
       path: '/admin/migrate-to-cloud',
-      roles: () => ['Admin'],
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.MigrationAssistantMigrate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
@@ -437,6 +437,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/snapshots',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SnapshotsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),

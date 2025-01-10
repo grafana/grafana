@@ -322,7 +322,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 			goto Default
 		}
 
-		clientRedirect, ok := logoutClient.Logout(ctx, user)
+		clientRedirect, ok := logoutClient.Logout(ctx, user, sessionToken)
 		if !ok {
 			goto Default
 		}

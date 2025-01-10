@@ -5,12 +5,12 @@ import { grafanaAlertNotifiers, grafanaAlertNotifiersMock } from '../mockGrafana
 import { CloudChannelValues, GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
 
 import {
-  formValuesToGrafanaReceiver,
-  omitEmptyValues,
-  omitEmptyUnlessExisting,
-  omitTemporaryIdentifiers,
   formValuesToCloudReceiver,
+  formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
+  omitEmptyUnlessExisting,
+  omitEmptyValues,
+  omitTemporaryIdentifiers,
 } from './receiver-form';
 
 describe('Receiver form utils', () => {

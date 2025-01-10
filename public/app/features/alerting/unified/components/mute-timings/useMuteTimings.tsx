@@ -307,16 +307,16 @@ export const useValidateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) =>
  * @deprecated This will be deprecated by the K8S API.
  * Once that is enabled by default, this method should be removed and `useMuteTimings` should always be used instead
  */
-export const useSelectableMuteTimings = ({ alertmanager }: BaseAlertmanagerArgs) => {
+export const useSelectableMuteTimings = ({ alertmanager, skip }: BaseAlertmanagerArgs & Skippable) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
   const useDeprecatedEndpoint = alertmanager === GRAFANA_RULES_SOURCE_NAME && !useK8sApi;
 
   /** Fetch from the (to be deprecated) specific endpoint for time-intervals */
   const deprecatedMuteTimingsResponse = useGetMuteTimingListQuery(undefined, {
-    skip: !useDeprecatedEndpoint,
+    skip: skip || !useDeprecatedEndpoint,
   });
 
-  const fetchMuteTimings = useMuteTimings({ alertmanager, skip: useDeprecatedEndpoint });
+  const fetchMuteTimings = useMuteTimings({ alertmanager, skip: skip || useDeprecatedEndpoint });
 
   return useDeprecatedEndpoint ? deprecatedMuteTimingsResponse : fetchMuteTimings;
 };

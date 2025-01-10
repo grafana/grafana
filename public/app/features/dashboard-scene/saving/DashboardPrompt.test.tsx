@@ -24,14 +24,14 @@ describe('DashboardPrompt', () => {
     describe('when called without original dashboard', () => {
       it('then it should return true', () => {
         const scene = buildTestScene();
-        expect(ignoreChanges(scene, undefined)).toBe(true);
+        scene.setInitialSaveModel(undefined);
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
     describe('when called without current dashboard', () => {
       it('then it should return true', () => {
-        const scene = buildTestScene();
-        expect(ignoreChanges(null, scene.getInitialSaveModel())).toBe(true);
+        expect(ignoreChanges(null)).toBe(true);
       });
     });
 
@@ -45,7 +45,7 @@ describe('DashboardPrompt', () => {
         });
         contextSrv.isEditor = false;
 
-        expect(ignoreChanges(scene, scene.getInitialSaveModel())).toBe(true);
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -59,10 +59,11 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
+        scene.setInitialSaveModel(initialSaveModel);
 
         contextSrv.isEditor = false;
 
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(undefined);
+        expect(ignoreChanges(scene)).toBe(undefined);
       });
     });
 
@@ -75,9 +76,10 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
+        scene.setInitialSaveModel(initialSaveModel);
 
         contextSrv.isSignedIn = false;
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(true);
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -90,7 +92,9 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(true);
+        scene.setInitialSaveModel(initialSaveModel);
+
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -104,7 +108,9 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(true);
+        scene.setInitialSaveModel(initialSaveModel);
+
+        expect(ignoreChanges(scene)).toBe(true);
       });
     });
 
@@ -118,7 +124,9 @@ describe('DashboardPrompt', () => {
           },
         });
         const initialSaveModel = transformSceneToSaveModel(scene);
-        expect(ignoreChanges(scene, initialSaveModel)).toBe(undefined);
+        scene.setInitialSaveModel(initialSaveModel);
+
+        expect(ignoreChanges(scene)).toBe(undefined);
       });
     });
   });

@@ -3,10 +3,11 @@ import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { useSelector } from 'app/types';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
 interface Props {

@@ -7,8 +7,8 @@ import {
   GrafanaTheme2,
   MetricFindValue,
   RawTimeRange,
-  VariableHide,
   urlUtil,
+  VariableHide,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
@@ -25,6 +25,7 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -32,6 +33,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncContextProvider,
   UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
@@ -50,11 +52,11 @@ import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
 import {
-  sortResources,
   getOtelJoinQuery,
   getOtelResourcesObject,
-  updateOtelJoinWithGroupLeft,
   getProdOrDefaultOption,
+  sortResources,
+  updateOtelJoinWithGroupLeft,
 } from './otel/util';
 import { getOtelExperienceToggleState } from './services/store';
 import {
@@ -64,6 +66,7 @@ import {
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
+  VAR_MISSING_OTEL_TARGETS,
   VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
@@ -98,8 +101,8 @@ export interface DataTrailState extends SceneObjectState {
   metricSearch?: string;
 }
 
-export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
+export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch', 'showPreviews'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -122,7 +125,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       useOtelExperience: state.useOtelExperience ?? false,
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
-      showPreviews: true,
+      showPreviews: state.showPreviews ?? true,
       ...state,
     });
 
@@ -176,11 +179,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
         // fresh check for otel experience
         this.checkDataSourceForOTelResources();
-        // clear filters on resetting the data source
-        const adhocVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
-        if (adhocVariable instanceof AdHocFiltersVariable) {
-          adhocVariable.setState({ filters: [] });
-        }
       }
 
       // update otel variables when changed
@@ -283,9 +281,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     return stateUpdate;
   }
 
-  getUrlState() {
-    const { metric, metricSearch } = this.state;
-    return { metric, metricSearch };
+  getUrlState(): SceneObjectUrlValues {
+    const { metric, metricSearch, showPreviews } = this.state;
+    return {
+      metric,
+      metricSearch,
+      ...{ showPreviews: showPreviews === false ? 'false' : null },
+    };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -304,6 +306,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.metricSearch = values.metricSearch;
     } else if (values.metric == null) {
       stateUpdate.metricSearch = undefined;
+    }
+
+    if (typeof values.showPreviews === 'string') {
+      stateUpdate.showPreviews = values.showPreviews !== 'false';
     }
 
     this.setState(stateUpdate);
@@ -616,10 +622,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings, useOtelExperience, hasOtelResources } = model.useState();
+    const { controls, topScene, history, settings, useOtelExperience, hasOtelResources, embedded } = model.useState();
 
     const chromeHeaderHeight = useChromeHeaderHeight();
-    const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
+    const styles = useStyles2(getStyles, embedded ? 0 : (chromeHeaderHeight ?? 0));
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     useEffect(() => {
@@ -663,7 +669,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             <settings.Component model={settings} />
           </div>
         )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        {topScene && (
+          <UrlSyncContextProvider scene={topScene}>
+            <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+          </UrlSyncContextProvider>
+        )}
       </div>
     );
   };
@@ -727,6 +737,11 @@ function getVariableSet(
         name: VAR_OTEL_GROUP_LEFT,
         value: undefined,
         hide: VariableHide.hideVariable,
+      }),
+      new ConstantVariable({
+        name: VAR_MISSING_OTEL_TARGETS,
+        hide: VariableHide.hideVariable,
+        value: false,
       }),
     ],
   });

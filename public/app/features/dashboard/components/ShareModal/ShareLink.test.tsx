@@ -10,7 +10,7 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
-import { PanelModel } from '../../state';
+import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { Props, ShareLink } from './ShareLink';

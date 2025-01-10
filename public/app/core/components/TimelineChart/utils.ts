@@ -375,9 +375,6 @@ export function prepareTimelineFields(
 
     const fields: Field[] = [];
     for (let field of frame.fields) {
-      if (field.config.custom?.hideFrom?.viz) {
-        continue;
-      }
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;

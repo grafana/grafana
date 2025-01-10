@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getCopiedPanelPlugin,
   onAddLibraryPanel,
