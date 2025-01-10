@@ -470,15 +470,11 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         const av: AdhocVariableKind = {
           kind: 'AdhocVariable',
           spec: {
-            name: v.name,
+            ...commonProperties,
             datasource: v.datasource || getDefaultDatasource(),
             baseFilters: v.baseFilters || [],
             filters: v.filters || [],
             defaultKeys: v.defaultKeys || [],
-            label: v.label,
-            hide: transformVariableHideToEnum(v.hide),
-            skipUrlSync: v.skipUrlSync || false,
-            ...(v.description && { description: v.description }),
           },
         };
         variables.push(av);
@@ -490,6 +486,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...commonProperties,
             current: {
               value: v.current.value,
+              // Constant variable doesn't use text state
               text: v.current.value,
             },
             query: v.query,
@@ -524,6 +521,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             ...commonProperties,
             current: {
               value: v.current.value,
+              // Text variable doesn't use text state
               text: v.current.value,
             },
             query: v.query,
