@@ -2519,13 +2519,17 @@
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
+        "documentation": "Documentation",
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed Version",
         "lastCommitDate": "Last commit date:",
-        "latestVersion": "Latest Version",
+        "latestVersion": "Latest version: ",
+        "license": "License",
         "links": "Links ",
+        "raiseAnIssue": "Raise an issue",
         "reportAbuse": "Report a concern ",
+        "repository": "Repository",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated:"
