@@ -130,35 +130,24 @@ func (_m *FakeDashboardStore) DeleteDashboardsInFolders(ctx context.Context, req
 	return r0
 }
 
-// GetOrphanedProvisionedDashboards provides a mock function with given fields: ctx, cmd
-func (_m *FakeDashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) ([]*DashboardProvisioning, error) {
+// DeleteOrphanedProvisionedDashboards provides a mock function with given fields: ctx, cmd
+func (_m *FakeDashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error {
 	ret := _m.Called(ctx, cmd)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetOrphanedProvisionedDashboards")
+		panic("no return value specified for DeleteOrphanedProvisionedDashboards")
 	}
 
-	var r0 []*DashboardProvisioning
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *DeleteOrphanedProvisionedDashboardsCommand) ([]*DashboardProvisioning, error)); ok {
-		return rf(ctx, cmd)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *DeleteOrphanedProvisionedDashboardsCommand) []*DashboardProvisioning); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *DeleteOrphanedProvisionedDashboardsCommand) error); ok {
 		r0 = rf(ctx, cmd)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*DashboardProvisioning)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *DeleteOrphanedProvisionedDashboardsCommand) error); ok {
-		r1 = rf(ctx, cmd)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
+
 
 // FindDashboards provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {

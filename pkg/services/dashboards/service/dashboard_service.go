@@ -229,18 +229,69 @@ func getQuotaRequester(orgId int64) *identity.StaticRequester {
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
-	// TODO: search for annotations instead through unistore if FlagKubernetesCliDashboards is enabled
-	// will need to loop through orgs
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
+			return nil, err
+		}
+
+		results := []*dashboards.DashboardProvisioning{}
+		for _, org := range orgs {
+			res, err := dr.searchProvisionedDashboardsThroughK8sRaw(ctx, name, "", org.ID, 0)
+			if err != nil {
+				return nil, err
+			}
+
+			results = append(results, res...)
+		}
+
+		return results, nil
+	}
+
 	return dr.dashboardStore.GetProvisionedDashboardData(ctx, name)
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
-	// TODO: search for annotations instead through unistore if FlagKubernetesCliDashboards is enabled
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
+			return nil, err
+		}
+
+		for _, org := range orgs {
+			res, err := dr.searchProvisionedDashboardsThroughK8sRaw(ctx, "", "", org.ID, dashboardID)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(res) > 1 {
+				return nil, fmt.Errorf("found more than one provisioned dashboard with ID %d", dashboardID)
+			} else if len(res) > 0 {
+				return res[0], nil
+			}
+		}
+
+		return nil, nil
+	}
+
 	return dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
-	// TODO: search for annotations instead through unistore if FlagKubernetesCliDashboards is enabled
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		res, err := dr.searchProvisionedDashboardsThroughK8sRaw(ctx, "", dashboardUID, orgID, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(res) > 1 {
+			return nil, fmt.Errorf("found more than one provisioned dashboard with UID %s", dashboardUID)
+		} else if len(res) > 0 {
+			return res[0], nil
+		}
+
+		return nil, nil
+	}
 	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
 }
 
@@ -455,20 +506,33 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 }
 
 func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
-	// TODO: search for annotations NOT IN when kubernetes cli dashboards is enabled
-	result, err := dr.dashboardStore.GetOrphanedProvisionedDashboards(ctx, cmd)
-	if err != nil {
-		return err
-	}
-
-	for _, deleteDashCommand := range result {
-		err := dr.DeleteProvisionedDashboard(ctx, deleteDashCommand.DashboardID, deleteDashCommand.OrgID)
-		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		// check each org for orphaned provisioned dashboards
+		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
 			return err
 		}
+		for _, org := range orgs {
+			// find all dashboards in the org that have a repo set not as the given readers
+			foundDashs, err := dr.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
+				OrgId:      org.ID,
+				NotInRepos: cmd.ReaderNames,
+			})
+			if err != nil {
+				return err
+			}
+
+			// delete them
+			for _, foundDash := range foundDashs {
+				if err := dr.DeleteProvisionedDashboard(ctx, foundDash.ID, org.ID); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
 	}
 
-	return nil
+	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
 }
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
@@ -544,10 +608,12 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 	var dash *dashboards.Dashboard
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-		dash, err = dr.saveProvisionedDashboardThroughK8s(ctx, cmd, provisioning.OrgID, provisioning)
+		dash, err = dr.saveProvisionedDashboardThroughK8s(ctx, cmd, provisioning)
 		if err != nil {
 			return nil, err
 		}
+		// do not return here - we want to still save the data to the dashboard_provisioning table,
+		// even when FlagKubernetesCliDashboards is enabled to ensure we can safely rollback to mode2 if needed
 	} else {
 		dash, err = dr.saveDashboard(ctx, cmd)
 		if err != nil {
@@ -555,8 +621,6 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		}
 	}
 
-	// still save the data to the dashboard_provisioning table, even when FlagKubernetesCliDashboards is enabled
-	// to ensure we can safely rollback to mode2 if needed
 	err = dr.dashboardStore.SaveProvisionedDashboard(ctx, dash, provisioning)
 	if err != nil {
 		return nil, err
@@ -1346,10 +1410,12 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 	return dr.UnstructuredToLegacyDashboard(ctx, out, query.OrgID)
 }
 
-func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, orgID int64, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
-	if orgID == 0 {
-		orgID = 1
+func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+	// default to 1 if not set
+	if cmd.OrgID == 0 {
+		cmd.OrgID = 1
 	}
+
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := dr.getK8sContext(ctx)
@@ -1359,12 +1425,12 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		defer cancel()
 	}
 
-	client, ok := dr.k8sclient.getClient(newCtx, orgID)
+	client, ok := dr.k8sclient.getClient(newCtx, cmd.OrgID)
 	if !ok {
 		return nil, nil
 	}
 
-	obj, err := LegacySaveCommandToUnstructured(cmd, dr.k8sclient.getNamespace(orgID))
+	obj, err := LegacySaveCommandToUnstructured(cmd, dr.k8sclient.getNamespace(cmd.OrgID))
 	if err != nil {
 		return nil, err
 	}
@@ -1394,7 +1460,7 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		}
 	}
 
-	finalDash, err := dr.UnstructuredToLegacyDashboard(ctx, out, orgID)
+	finalDash, err := dr.UnstructuredToLegacyDashboard(ctx, out, cmd.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -1590,6 +1656,37 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		}
 	}
 
+	/*
+	   const SEARCH_FIELD_REPOSITORY_NAME = "repo.name"
+	   const SEARCH_FIELD_REPOSITORY_PATH = "repo.path"
+	   const SEARCH_FIELD_REPOSITORY_HASH = "repo.hash"
+	   const SEARCH_FIELD_REPOSITORY_TIME = "repo.time"
+	*/
+	if query.ProvisionedRepo != "" {
+		req := []*resource.Requirement{{
+			Key:      "repo.name",
+			Operator: "in",
+			Values:   []string{query.ProvisionedRepo},
+		}}
+		if len(request.Options.Fields) == 0 {
+			request.Options.Fields = req
+		} else {
+			request.Options.Fields = append(request.Options.Fields, req...)
+		}
+	}
+	if len(query.NotInRepos) > 0 {
+		req := []*resource.Requirement{{
+			Key:      "repo.name",
+			Operator: "notin",
+			Values:   query.NotInRepos,
+		}}
+		if len(request.Options.Fields) == 0 {
+			request.Options.Fields = req
+		} else {
+			request.Options.Fields = append(request.Options.Fields, req...)
+		}
+	}
+
 	// note: this does not allow for partial matching
 	//
 	// partial matching will be allowed through the api layer for the frontend,
@@ -1645,7 +1742,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8sRaw(ctx con
 	// TODO: need to fix this to search correctly. Probably need to add new field to search
 	if name != "" {
 		req := []*resource.Requirement{{
-			Key:      "repoInfo.name",
+			Key:      "repo.name",
 			Operator: "in",
 			Values:   []string{name},
 		}}
@@ -1654,6 +1751,20 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8sRaw(ctx con
 		} else {
 			request.Options.Fields = append(request.Options.Fields, req...)
 		}
+	}
+	if dashboard_uid != "" {
+		request.Options.Fields = []*resource.Requirement{{
+			Key:      "key.name",
+			Operator: "in",
+			Values:   []string{dashboard_uid},
+		}}
+	}
+	if dashboard_id != 0 {
+		request.Options.Labels = []*resource.Requirement{{
+			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+			Operator: "in",
+			Values:   []string{strconv.FormatInt(dashboard_id, 10)},
+		}}
 	}
 
 	res, err := dr.k8sclient.getSearcher().Search(ctx, request)

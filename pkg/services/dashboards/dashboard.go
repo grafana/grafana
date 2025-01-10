@@ -63,7 +63,7 @@ type DashboardProvisioningService interface {
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
 	DeleteAllDashboards(ctx context.Context, orgID int64) error
-	GetOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) ([]*DashboardProvisioning, error)
+	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)

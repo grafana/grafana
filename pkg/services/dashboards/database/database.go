@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -183,12 +184,13 @@ func (d *dashboardStore) UnprovisionDashboard(ctx context.Context, id int64) err
 	})
 }
 
-func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) ([]*dashboards.DashboardProvisioning, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetOrphanedProvisionedDashboards")
+func (d *dashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
+	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteOrphanedProvisionedDashboards")
 	defer span.End()
 
-	var result []*dashboards.DashboardProvisioning
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		var result []*dashboards.DashboardProvisioning
+
 		convertedReaderNames := make([]any, len(cmd.ReaderNames))
 		for index, readerName := range cmd.ReaderNames {
 			convertedReaderNames[index] = readerName
@@ -199,12 +201,16 @@ func (d *dashboardStore) GetOrphanedProvisionedDashboards(ctx context.Context, c
 			return err
 		}
 
+		for _, deleteDashCommand := range result {
+			err := d.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{ID: deleteDashCommand.DashboardID})
+			if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+				return err
+			}
+		}
+
 		return nil
 	})
-
-	return result, err
 }
-
 func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.Count")
 	defer span.End()
