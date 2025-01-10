@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authz.AccessClient = (*Client)(nil)
@@ -21,12 +19,6 @@ var _ authz.AccessClient = (*Client)(nil)
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
 type ClientOption func(c *Client)
-
-func WithTenantID(tenantID string) ClientOption {
-	return func(c *Client) {
-		c.tenantID = tenantID
-	}
-}
 
 func WithLogger(logger log.Logger) ClientOption {
 	return func(c *Client) {
@@ -38,24 +30,16 @@ type Client struct {
 	logger   log.Logger
 	authz    authzv1.AuthzServiceClient
 	authzext authzextv1.AuthzExtentionServiceClient
-	tenantID string
 }
 
-func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*Client, error) {
-	stackID := cfg.StackID
-	if stackID == "" {
-		stackID = "default"
-	}
-
-	return New(
-		ctx,
+func New(cc grpc.ClientConnInterface) (*Client, error) {
+	return new(
 		cc,
-		WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
 		WithLogger(log.New("zanzana-client")),
 	)
 }
 
-func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
+func new(cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		authz:    authzv1.NewAuthzServiceClient(cc),
 		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),
