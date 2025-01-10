@@ -14,6 +14,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -63,6 +64,8 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		}
 
 		dialOptions := []grpc.DialOption{
+			// TODO: add TLS support
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithPerRPCCredentials(tokenAuthCred),
 		}
 
@@ -257,5 +260,5 @@ func (t *tokenAuth) GetRequestMetadata(ctx context.Context, _ ...string) (map[st
 }
 
 func (t *tokenAuth) RequireTransportSecurity() bool {
-	return t.cfg.Env != setting.Dev
+	return false
 }
