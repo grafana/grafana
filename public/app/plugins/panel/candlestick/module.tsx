@@ -72,7 +72,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultOptions;
     const info = prepareCandlestickFields(context.data, opts, config.theme2);
-    console.log('candlestick', context.options?.tooltip);
     builder
       .addRadio({
         path: 'mode',
