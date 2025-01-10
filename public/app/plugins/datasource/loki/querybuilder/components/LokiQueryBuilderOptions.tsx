@@ -110,7 +110,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         return;
       }
       const subscription = getAppEvents().subscribe(LogSortOrderChangeEvent, (sortEvent: LogSortOrderChangeEvent) => {
-        console.log('event received');
         const newDirection =
           sortEvent.payload.order === LogsSortOrder.Ascending
             ? LokiQueryDirection.Forward
