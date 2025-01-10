@@ -1,10 +1,9 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/query';
-import { TypedLazyQueryTrigger } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
+import { useDispatch } from 'app/types/store';
 import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
-import { BaseQueryFnArgs } from '../../api/alertingApi';
+import { alertRuleApi } from '../../api/alertRuleApi';
 import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
@@ -15,27 +14,64 @@ interface FetchGroupsOptions {
 }
 
 export function usePrometheusGroupsGenerator() {
+  const dispatch = useDispatch();
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
     async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
-      const getRuleSourceGroups = (options: FetchGroupsOptions) =>
-        getGroups({ ruleSource: { uid: ruleSource.uid }, ...options });
+      const getRuleSourceGroupsWithCache = async (options: FetchGroupsOptions) => {
+        const response = await getGroups({ ruleSource: { uid: ruleSource.uid }, ...options }).unwrap();
 
-      yield* genericGroupsGenerator(getRuleSourceGroups, groupLimit);
+        response.data.groups.forEach((group) => {
+          dispatch(
+            prometheusApi.util.upsertQueryData(
+              'getGroups',
+              { ruleSource: { uid: ruleSource.uid }, namespace: group.file, groupName: group.name },
+              { data: { groups: [group] }, status: 'success' }
+            )
+          );
+        });
+
+        return response;
+      };
+
+      yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
     },
-    [getGroups]
+    [getGroups, dispatch]
   );
 }
 
 export function useGrafanaGroupsGenerator() {
+  const dispatch = useDispatch();
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
+
+  const getGroupsAndProvideCache = useCallback(
+    async (options: FetchGroupsOptions) => {
+      const response = await getGrafanaGroups(options).unwrap();
+
+      response.data.groups.forEach((group) => {
+        dispatch(
+          alertRuleApi.util.prefetch('getGrafanaRulerGroup', { folderUid: group.folderUid, groupName: group.name }, {})
+        );
+        dispatch(
+          prometheusApi.util.upsertQueryData(
+            'getGrafanaGroups',
+            { folderUid: group.folderUid, groupName: group.name },
+            { data: { groups: [group] }, status: 'success' }
+          )
+        );
+      });
+
+      return response;
+    },
+    [getGrafanaGroups, dispatch]
+  );
 
   return useCallback(
     async function* (groupLimit: number) {
-      yield* genericGroupsGenerator(getGrafanaGroups, groupLimit);
+      yield* genericGroupsGenerator(getGroupsAndProvideCache, groupLimit);
     },
-    [getGrafanaGroups]
+    [getGroupsAndProvideCache]
   );
 }
 
@@ -44,38 +80,27 @@ export function useGrafanaGroupsGenerator() {
 // For unpaginated data sources we fetch everything in one go
 // For paginated we fetch the next page when needed
 async function* genericGroupsGenerator<TGroup>(
-  fetchGroups: TypedLazyQueryTrigger<PromRulesResponse<TGroup>, FetchGroupsOptions, BaseQueryFn<BaseQueryFnArgs>>,
+  fetchGroups: (options: FetchGroupsOptions) => Promise<PromRulesResponse<TGroup>>,
   groupLimit: number
 ) {
-  const response = await fetchGroups({ groupLimit });
-
-  if (!response.isSuccess) {
+  let response: PromRulesResponse<TGroup> | undefined;
+  try {
+    response = await fetchGroups({ groupLimit });
+    yield* response.data.groups;
+  } catch (error) {
     return;
   }
 
-  if (response.data?.data) {
-    yield* response.data.data.groups;
-  }
-
-  let lastToken: string | undefined = undefined;
-  if (response.data?.data?.groupNextToken) {
-    lastToken = response.data.data.groupNextToken;
-  }
+  let lastToken: string | undefined = response.data?.groupNextToken;
 
   while (lastToken) {
-    const response = await fetchGroups({
-      groupNextToken: lastToken,
-      groupLimit: groupLimit,
-    });
+    try {
+      response = await fetchGroups({ groupNextToken: lastToken, groupLimit: groupLimit });
 
-    if (!response.isSuccess) {
+      yield* response.data.groups;
+      lastToken = response.data?.groupNextToken;
+    } catch (error) {
       return;
     }
-
-    if (response.data?.data) {
-      yield* response.data.data.groups;
-    }
-
-    lastToken = response.data?.data?.groupNextToken;
   }
 }
