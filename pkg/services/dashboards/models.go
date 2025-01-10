@@ -430,6 +430,7 @@ type FindPersistedDashboardsQuery struct {
 	IsDeleted  bool
 
 	ProvisionedRepo string
+	ProvisionedPath string
 	NotInRepos      []string
 
 	Filters []any
