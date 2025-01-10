@@ -1,6 +1,7 @@
 package store
 
 import (
+	"embed"
 	"fmt"
 	"strings"
 	"time"
@@ -22,6 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
 )
 
+const (
+	mysqlMigrationDir = "migrations/mysql"
+)
+
+//go:embed migrations/*
+var embedMigrations embed.FS
+
 func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
 	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
 	if err != nil {
@@ -31,7 +39,7 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		connStr := sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, connStr, assets.EmbedMigrations, assets.SqliteMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.SQLite, connStr, getSQLiteMigrationLocations()); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -39,14 +47,14 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 	case migrator.MySQL:
 		// For mysql we need to pass parseTime parameter in connection string
 		connStr := grafanaDBCfg.ConnectionString + "&parseTime=true"
-		if err := migration.Run(cfg, migrator.MySQL, connStr, assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.MySQL, connStr, getMySQLMigrationLocations()); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return mysql.New(connStr, zanzanaDBCfg)
 	case migrator.Postgres:
 		connStr := grafanaDBCfg.ConnectionString
-		if err := migration.Run(cfg, migrator.Postgres, connStr, assets.EmbedMigrations, assets.PostgresMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.Postgres, connStr, getPostgresMigrationLocations()); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -66,14 +74,14 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
 		grafanaDBCfg.ConnectionString = sqliteConnectionString(grafanaDBCfg.ConnectionString)
-		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg.ConnectionString, assets.EmbedMigrations, assets.SqliteMigrationDir); err != nil {
+		if err := migration.Run(cfg, migrator.SQLite, grafanaDBCfg.ConnectionString, getSQLiteMigrationLocations()); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
 		return sqlite.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	case migrator.MySQL:
 		m := migrator.NewMigrator(db.GetEngine(), cfg)
-		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
+		if err := migration.RunWithMigrator(m, cfg, getMySQLMigrationLocations()); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -81,7 +89,7 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 		return mysql.New(grafanaDBCfg.ConnectionString+"&parseTime=true", zanzanaDBCfg)
 	case migrator.Postgres:
 		m := migrator.NewMigrator(db.GetEngine(), cfg)
-		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.PostgresMigrationDir); err != nil {
+		if err := migration.RunWithMigrator(m, cfg, getPostgresMigrationLocations()); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
@@ -122,4 +130,35 @@ func sqliteConnectionString(v string) string {
 
 	// hardcode zanzana.db for now
 	return v[0:strings.LastIndex(v, "/")+1] + "zanzana.db"
+}
+
+func getMySQLMigrationLocations() []migration.MigrationLocation {
+	return []migration.MigrationLocation{
+		{
+			FS:   assets.EmbedMigrations,
+			Path: assets.MySQLMigrationDir,
+		},
+		{
+			FS:   embedMigrations,
+			Path: mysqlMigrationDir,
+		},
+	}
+}
+
+func getSQLiteMigrationLocations() []migration.MigrationLocation {
+	return []migration.MigrationLocation{
+		{
+			FS:   assets.EmbedMigrations,
+			Path: assets.SqliteMigrationDir,
+		},
+	}
+}
+
+func getPostgresMigrationLocations() []migration.MigrationLocation {
+	return []migration.MigrationLocation{
+		{
+			FS:   assets.EmbedMigrations,
+			Path: assets.PostgresMigrationDir,
+		},
+	}
 }
