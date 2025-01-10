@@ -250,32 +250,33 @@ export class GraphCtrl extends MetricsPanelCtrl {
       };
     }
 
-    // If any data is in range, do not return an error
-    for (const series of this.seriesList) {
-      if (!series.isOutsideRange) {
-        return undefined;
-      }
-    }
-
-    // All data is outside the time range
-    const dataWarning: DataWarning = {
-      title: 'Data outside time range',
-      tip: 'Can be caused by timezone mismatch or missing time filter in query',
-    };
-
-    const range = getDataTimeRange(this.dataList);
-
-    if (range) {
-      dataWarning.actionText = 'Zoom to data';
-      dataWarning.action = () => {
-        locationService.partial({
-          from: range.from,
-          to: range.to,
-        });
-      };
-    }
-
-    return dataWarning;
+    return undefined;
+    // // If any data is in range, do not return an error
+    // for (const series of this.seriesList) {
+    //   if (!series.isOutsideRange) {
+    //     return undefined;
+    //   }
+    // }
+    //
+    // // All data is outside the time range
+    // const dataWarning: DataWarning = {
+    //   title: 'Data outside time range',
+    //   tip: 'Can be caused by timezone mismatch or missing time filter in query',
+    // };
+    //
+    // const range = getDataTimeRange(this.dataList);
+    //
+    // if (range) {
+    //   dataWarning.actionText = 'Zoom to data';
+    //   dataWarning.action = () => {
+    //     locationService.partial({
+    //       from: range.from,
+    //       to: range.to,
+    //     });
+    //   };
+    // }
+    //
+    // return dataWarning;
   }
 
   onRender() {
