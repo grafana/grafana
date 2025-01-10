@@ -183,6 +183,10 @@ export function quoteWithEscapeIfRequired(input: string) {
   return shouldQuote ? quoteWithEscape(input) : input;
 }
 
+export function unquoteIfRequired(input: string) {
+  return quoteWithEscapeIfRequired(unquoteWithUnescape(input));
+}
+
 export const encodeMatcher = ({ name, operator, value }: MatcherFieldValue) => {
   const encodedLabelName = quoteWithEscapeIfRequired(name);
   const encodedLabelValue = quoteWithEscape(value);

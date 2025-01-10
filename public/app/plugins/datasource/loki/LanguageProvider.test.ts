@@ -461,6 +461,15 @@ describe('Language completion provider', () => {
         config.featureToggles.lokiLabelNamesQueryApi = lokiLabelNamesQueryApi;
       });
 
+      it('should exclude empty vector selector', async () => {
+        const datasourceWithLabels = setup({ foo: [], bar: [], __name__: [], __stream_shard__: [] });
+
+        const instance = new LanguageProvider(datasourceWithLabels);
+        instance.request = jest.fn();
+        await instance.fetchLabels({ streamSelector: '{}' });
+        expect(instance.request).toBeCalledWith('labels', { end: 1560163909000, start: 1560153109000 });
+      });
+
       it('should use series endpoint for request with stream selector', async () => {
         const datasourceWithLabels = setup({});
         datasourceWithLabels.languageProvider.request = jest.fn();
@@ -481,7 +490,7 @@ describe('Language completion provider', () => {
 
       const instance = new LanguageProvider(datasourceWithLabels);
       const labels = await instance.fetchLabels();
-      expect(labels).toEqual(['bar', 'foo']);
+      expect(labels).toEqual(['__name__', 'bar', 'foo']);
     });
   });
 });

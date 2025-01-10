@@ -353,6 +353,56 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
+
+func TestIntegrationBlobSupport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	backend, server := newServer(t, nil)
+	store, ok := backend.(resource.BlobSupport)
+	require.True(t, ok)
+
+	t.Run("put and fetch blob", func(t *testing.T) {
+		key := &resource.ResourceKey{
+			Namespace: "ns",
+			Group:     "g",
+			Resource:  "r",
+			Name:      "n",
+		}
+
+		b1, err := server.PutBlob(ctx, &resource.PutBlobRequest{
+			Resource:    key,
+			Method:      resource.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("hello 11111"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, b1.Error)
+		require.Equal(t, "c894ae57bd227b8f8c63f38a2ddf458b", b1.Hash)
+
+		b2, err := server.PutBlob(ctx, &resource.PutBlobRequest{
+			Resource:    key,
+			Method:      resource.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("hello 22222"), // the most recent
+		})
+		require.NoError(t, err)
+		require.Nil(t, b2.Error)
+		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
+
+		// Check that we can still access both values
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, []byte("hello 11111"), found.Value)
+
+		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, []byte("hello 22222"), found.Value)
+	})
+}
+
 func TestClientServer(t *testing.T) {
 	if infraDB.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
