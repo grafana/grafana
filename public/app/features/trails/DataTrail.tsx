@@ -607,7 +607,7 @@ function getVariableSet(
       }),
       new AdHocFiltersVariable({
         name: VAR_OTEL_AND_METRIC_FILTERS,
-        addFilterButtonText: 'Add attribute',
+        addFilterButtonText: 'Filter',
         datasource: trailDS,
         hide: VariableHide.hideVariable,
         layout: 'vertical',
