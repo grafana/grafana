@@ -51,8 +51,8 @@
         "yyy (folder)",
         null,
         null,
-        2,
-        0
+        null,
+        null
       ],
       "object": {
         "kind": "folders",
@@ -70,8 +70,8 @@
         "zzz (folder)",
         null,
         null,
-        1,
-        0
+        null,
+        null
       ],
       "object": {
         "kind": "folders",
