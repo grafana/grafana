@@ -393,7 +393,7 @@ var (
 		{
 			Name:        "pluginsFrontendSandbox",
 			Description: "Enables the plugins frontend sandbox",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
@@ -1028,10 +1028,10 @@ var (
 		},
 		{
 			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.",
+			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "onPremToCloudMigrationsAuthApiMig",
@@ -1233,14 +1233,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "notificationBanner",
-			Description:  "Enables the notification banner UI and API",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: false,
-			Expression:   "true",
 		},
 		{
 			Name:              "dashboardRestore",
@@ -1489,7 +1481,7 @@ var (
 		},
 		{
 			Name:        "improvedExternalSessionHandling",
-			Description: "Enable improved support for OAuth and SAML external sessions in Grafana",
+			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
@@ -1549,8 +1541,9 @@ var (
 		{
 			Name:        "userStorageAPI",
 			Description: "Enables the user storage API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1721,6 +1714,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "improvedExternalSessionHandlingSAML",
+			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

@@ -1,13 +1,15 @@
 import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import {
   getPanelPluginCounts,
   getV1SchemaVariables,
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
@@ -16,11 +18,12 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-export interface DashboardSceneSerializerLike<T> {
+export interface DashboardSceneSerializerLike<T, M> {
   /**
    * The save model which the dashboard scene was originally created from
    */
   initialSaveModel?: T;
+  metadata?: M;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -45,8 +48,9 @@ interface DashboardTrackingInfo {
   settings_livenow?: boolean;
 }
 
-export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard> {
+export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
   initialSaveModel?: Dashboard;
+  metadata?: DashboardMeta;
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModel(s);
@@ -121,8 +125,11 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 }
 
-export class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2Spec> {
+export class V2DashboardSerializer
+  implements DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>
+{
   initialSaveModel?: DashboardV2Spec;
+  metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModelSchemaV2(s);
@@ -187,12 +194,14 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 
   getSnapshotUrl() {
-    throw new Error('v2 schema: Method not implemented.');
-    return undefined;
+    return this.metadata?.annotations?.[AnnoKeyDashboardSnapshotOriginalUrl];
   }
 }
 
-export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> {
+export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<
+  Dashboard | DashboardV2Spec,
+  DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+> {
   if (config.featureToggles.useV2DashboardsAPI) {
     return new V2DashboardSerializer();
   }
