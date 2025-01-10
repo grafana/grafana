@@ -198,9 +198,8 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 
 	case social.ClientSecretPost:
 		// Default behavior for ClientSecretPost, no additional setup needed
-
 	default:
-		return nil, fmt.Errorf("invalid client authentication method: %s", s.info.ClientAuthentication)
+		s.log.Debug("ClientAuthentication is not set. Using default client authentication method")
 	}
 
 	// Default token exchange
