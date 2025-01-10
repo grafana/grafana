@@ -37,8 +37,7 @@ export interface DataSourceSrv {
   reload(): void;
 
   /**
-   * Registers a runtime data source that can be used from scene applications
-   * Make sure your data source uid is unique
+   * Registers a runtime data source. Make sure your data source uid is unique.
    */
   registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void;
 }
