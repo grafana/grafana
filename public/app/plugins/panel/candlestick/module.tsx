@@ -7,7 +7,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GraphFieldConfig, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { GraphFieldConfig } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
@@ -136,15 +136,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
       },
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder, false, true, {
-      ...opts,
-      tooltip: {
-        ...opts,
-        mode: opts.tooltip?.mode ?? TooltipDisplayMode.Single,
-        sort: opts.tooltip?.sort ?? SortOrder.None,
-        hideZeros: undefined,
-      },
-    });
+    commonOptionsBuilder.addTooltipOptions(builder, false, true);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })

@@ -232,7 +232,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder, undefined, undefined, {
+    commonOptionsBuilder.addTooltipOptions(builder, false, false, {
       tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None, hideZeros: false },
     });
     commonOptionsBuilder.addLegendOptions(builder);

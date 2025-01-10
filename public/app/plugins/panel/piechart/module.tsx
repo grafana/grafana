@@ -57,7 +57,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
         },
       });
 
-    commonOptionsBuilder.addTooltipOptions(builder, undefined, undefined, {
+    commonOptionsBuilder.addTooltipOptions(builder, false, false, {
       tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None, hideZeros: false },
     });
     commonOptionsBuilder.addLegendOptions(builder, false);
