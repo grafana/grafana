@@ -18,9 +18,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -30,13 +32,15 @@ type SearchHandler struct {
 	log    log.Logger
 	client resource.ResourceIndexClient
 	tracer trace.Tracer
+	cfg    setting.UnifiedStorageConfig
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg) *SearchHandler {
 	return &SearchHandler{
 		client: client,
 		log:    log.New("grafana-apiserver.dashboards.search"),
 		tracer: tracer,
+		cfg:    cfg.UnifiedStorage["dashboards.dashboard.grafana.app"],
 	}
 }
 
@@ -197,6 +201,9 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 const rootFolder = "general"
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
+	// call Search on legacy/storage depneding on mode
+	fmt.Println("here mode enum: ", rest.Mode0)
+	fmt.Println("here the actual mode: ", s.cfg.DualWriterMode)
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
 
