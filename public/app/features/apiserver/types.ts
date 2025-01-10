@@ -49,6 +49,7 @@ export const AnnoKeyRepoTimestamp = 'grafana.app/repoTimestamp';
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 export const AnnoKeyDashboardNotFound = 'grafana.app/dashboard-not-found';
 export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
+export const AnnoKeyDashboardSnapshotOriginalUrl = 'grafana.app/dashboard-snapshot-original-url';
 export const AnnoKeyDashboardIsNew = 'grafana.app/dashboard-is-new';
 export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 
@@ -77,6 +78,7 @@ type GrafanaClientAnnotations = {
   [AnnoKeySavedFromUI]?: string;
   [AnnoKeyDashboardNotFound]?: boolean;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
+  [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
   [AnnoKeyDashboardIsNew]?: boolean;
 
   // TODO: This should be provided by the API
