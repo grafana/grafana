@@ -102,7 +102,7 @@ The following components will help you build a MySQL query:
 
   - **Table** - Select a table from the drop-down. Tables correspond to the chosen database.
 
-  - **Data operations** - _Optional_ Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **garbage can icon** to remove data operations.
+  - **Data operations** - _Optional_ Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **X** to remove a data operation. Click the **garbage can icon** to remove the entire column.
 
   - **Column** - Select a column on which to run the aggregation.
 
@@ -110,8 +110,7 @@ The following components will help you build a MySQL query:
 
 - **Filter** - Toggle to add filters.
 
-  - **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
-    Use the second dropdown to choose a filter. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. To remove a filter, click the `X` button next to that filter's dropdown. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
+  - **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition.  When multiple filters are added you can add an `AND` operator to display all true conditions or an `OR` operator to display any true conditions. Use the second drop-down to choose a filter. To remove a filter, click the `X` button next to that filter's drop-down. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
 
 - **Group** - Toggle to add **Group by column**.
 
@@ -298,7 +297,7 @@ Data frame result:
 
 ## Templating
 
-Instead of hardcoding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+Instead of hardcoding values like server, application, or sensor names in your metric queries, you can use variables. Variables appear as drop-down select boxes at the top of the dashboard. These drop-downs make it easy to change the data being displayed in your dashboard.
 
 Refer to [Templates](ref:variables) for an introduction to creating template variables as well as the different types.
 
@@ -392,7 +391,7 @@ Read more about variable formatting options in the [Variables](ref:variable-synt
 
 ## Annotations
 
-[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. You add annotation queries via the **Dashboard menu > Annotations view**.
+[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. You add annotation queries via the **Dashboard settings > Annotations view**.
 
 **Example query using a`time` column with epoch values:**
 
