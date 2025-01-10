@@ -195,19 +195,25 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
+	// getting folderIDs for now, while there isn't data parity between folderIDs and folder_uids in the library_elements table
+	fs, err := lps.FolderService.GetFolders(ctx, folder.GetFoldersQuery{OrgID: orgID, UIDs: folderUIDs, SignedInUser: u})
+	if err != nil {
+		return 0, err
+	}
+	ids := make([]int64, 0, len(fs))
+	for _, f := range fs {
+		ids = append(ids, f.ID)
+	}
+
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
-		// the sequential IDs for the respective entries of dashboard and folder tables are different,
-		// so we need to get the folder ID from the dashboard table
-		// TODO: In the future, we should consider adding a folder UID column to the library_element table
-		// and use that instead of the folder ID.
-		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element
-			WHERE org_id = ? AND folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN (%s)) AND kind = ?`, strings.Repeat("?,", len(folderUIDs)-1)+"?")
-		args := make([]interface{}, 0, len(folderUIDs)+2)
+		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element WHERE org_id = ? AND folder_id IN (%s`, strings.Repeat("?,", len(ids)-1)+"?)")
+
+		args := make([]interface{}, 0, len(ids)+2)
 		args = append(args, orgID, orgID)
-		for _, folderUID := range folderUIDs {
-			args = append(args, folderUID)
+		for _, id := range ids {
+			args = append(args, id)
 		}
 		args = append(args, int64(model.PanelElement))
 		_, err := sess.SQL(s, args...).Get(&count)
