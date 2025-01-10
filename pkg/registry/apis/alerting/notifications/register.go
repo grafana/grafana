@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -166,4 +167,12 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
+}
+
+func (t *NotificationsAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	switch a.GetResource().Resource {
+	case templategroup.ResourceInfo.GroupResource().Resource:
+		return templategroup.Validate(ctx, a, o)
+	}
+	return nil
 }

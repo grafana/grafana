@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
@@ -125,9 +127,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.ObjectMeta.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
-	if p.Spec.Title == templates.DefaultTemplateName {
-		return nil, errors.NewBadRequest(fmt.Sprintf("template name '%s' is reserved", templates.DefaultTemplateName))
-	}
 	out, err := s.service.CreateTemplate(ctx, info.OrgID, convertToDomainModel(p))
 	if err != nil {
 		return nil, err
@@ -170,10 +169,6 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
 
-	if p.Spec.Title == templates.DefaultTemplateName {
-		return nil, false, errors.NewBadRequest(fmt.Sprintf("template name '%s' is reserved", templates.DefaultTemplateName))
-	}
-
 	domainModel := convertToDomainModel(p)
 	updated, err := s.service.UpdateTemplate(ctx, info.OrgID, domainModel)
 	if err != nil {
@@ -205,6 +200,25 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 	err = s.service.DeleteTemplate(ctx, info.OrgID, name, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
 	return old, false, err                                                                                        // false - will be deleted async
+}
+
+func Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	op := a.GetOperation()
+	if op == admission.Create || op == admission.Update {
+		obj := a.GetObject()
+		p, ok := obj.(*model.TemplateGroup)
+		if !ok {
+			return fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
+		}
+		if p.Spec.Title == templates.DefaultTemplateName {
+			return errors.NewInvalid(
+				obj.GetObjectKind().GroupVersionKind().GroupKind(),
+				a.GetName(),
+				field.ErrorList{field.Invalid(field.NewPath("title"), templates.DefaultTemplateName, "reserved template name")},
+			)
+		}
+	}
+	return nil
 }
 
 func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
