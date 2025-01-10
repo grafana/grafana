@@ -145,13 +145,17 @@ export class AppChromeService {
       return entries;
     }
 
-    let lastEntry = entries[0];
-    if (!lastEntry || lastEntry.name !== newPageNav.text) {
-      lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
+    const lastEntry = entries[0];
+    const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
+    const isSameUrl = lastEntry && newEntry.url === lastEntry.url;
+
+    // To avoid adding an entry with the same url twice, we always use the latest one
+    if (isSameUrl) {
+      entries[0] = newEntry;
+    } else {
+      entries = [newEntry, ...entries];
     }
-    if (lastEntry !== entries[0]) {
-      entries = [lastEntry, ...entries];
-    }
+
     return entries;
   }
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
