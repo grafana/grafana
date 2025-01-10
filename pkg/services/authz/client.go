@@ -130,7 +130,9 @@ func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessCh
 	cfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
 	client, err := authzlib.NewClient(&cfg,
 		authzlib.WithGrpcDialOptionsClientOption(
-			getDialOpts(clientInterceptor, authCfg.allowInsecure)...,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
 		authzlib.WithTracerClientOption(tracer),
 		// TODO: remove this once access tokens are supported on-prem
@@ -163,7 +165,9 @@ func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessC
 	clientCfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
 	client, err := authzlib.NewClient(&clientCfg,
 		authzlib.WithGrpcDialOptionsClientOption(
-			getDialOpts(clientInterceptor, authCfg.allowInsecure)...,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
 		authzlib.WithTracerClientOption(tracer),
 	)
@@ -172,17 +176,4 @@ func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessC
 	}
 
 	return client, nil
-}
-
-func getDialOpts(interceptor *authnlib.GrpcClientInterceptor, allowInsecure bool) []grpc.DialOption {
-	dialOpts := []grpc.DialOption{
-		grpc.WithUnaryInterceptor(interceptor.UnaryClientInterceptor),
-		grpc.WithStreamInterceptor(interceptor.StreamClientInterceptor),
-	}
-	if allowInsecure {
-		// allow insecure connections in development mode to facilitate testing
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	}
-
-	return dialOpts
 }
