@@ -493,7 +493,7 @@ func parseDimensions(dimensions dataquery.Dimensions) (map[string][]string, erro
 		// This is for backwards compatibility. Before 6.5 dimensions values were stored as strings and not arrays
 		if v.String != nil {
 			parsedDimensions[k] = []string{*v.String}
-		} else if v.ArrayOfString != nil {
+		} else if len(v.ArrayOfString) > 0 {
 			for _, value := range v.ArrayOfString {
 				parsedDimensions[k] = append(parsedDimensions[k], value)
 			}

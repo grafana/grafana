@@ -435,7 +435,8 @@ func TestRequestParser(t *testing.T) {
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", logger, false)
 		require.Error(t, err)
 
-		assert.Equal(t, `error parsing query "", failed to parse dimensions: unknown type as dimension value`, err.Error())
+		assert.Equal(t, `error parsing query "", json: cannot unmarshal number into Go value of type string
+json: cannot unmarshal number into Go value of type []string`, err.Error())
 	})
 }
 
