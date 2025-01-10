@@ -2598,17 +2598,17 @@
     {
       "metadata": {
         "name": "onPremToCloudMigrations",
-        "resourceVersion": "1721693547668",
+        "resourceVersion": "1736458171023",
         "creationTimestamp": "2024-01-22T16:09:08Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-23 00:12:27.668899 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-09 21:29:31.023464 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.",
+        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
