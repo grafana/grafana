@@ -154,7 +154,7 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			return nil, err
 		}
 
-		expr := interpolateVariables(depointerizer(model.Expr), interval, timeRange, queryType, step)
+		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {

@@ -64,7 +64,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 			return response
 		}
 
-		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, utils.Depointerizer(qm.ProfileTypeId))...)
+		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, qm.ProfileTypeId)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {

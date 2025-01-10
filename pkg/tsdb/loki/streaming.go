@@ -34,7 +34,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 	if err != nil {
 		return nil, err
 	}
-	if query.Expr == nil || *query.Expr == "" {
+	if query.Expr == "" {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, fmt.Errorf("missing expr in channel (subscribe)")

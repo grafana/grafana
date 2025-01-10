@@ -51,11 +51,11 @@ var (
 const (
 	gceAuthentication         = "gce"
 	jwtAuthentication         = "jwt"
-	annotationQueryType       = dataquery.QueryTypeAnnotation
-	timeSeriesListQueryType   = dataquery.QueryTypeTimeSeriesList
-	timeSeriesQueryQueryType  = dataquery.QueryTypeTimeSeriesQuery
-	sloQueryType              = dataquery.QueryTypeSlo
-	promQLQueryType           = dataquery.QueryTypePromQL
+	annotationQueryType       = dataquery.QueryTypeANNOTATION
+	timeSeriesListQueryType   = dataquery.QueryTypeTIMESERIESLIST
+	timeSeriesQueryQueryType  = dataquery.QueryTypeTIMESERIESQUERY
+	sloQueryType              = dataquery.QueryTypeSLO
+	promQLQueryType           = dataquery.QueryTypePROMQL
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
@@ -239,7 +239,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if err != nil {
 				return err
 			}
-			q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
+			q.QueryType = string(dataquery.QueryTypeTIMESERIESLIST)
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -260,7 +260,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 
 		// Migrate type to queryType, which is only used for annotations
 		if rawQuery["type"] != nil && rawQuery["type"].(string) == "annotationQuery" {
-			q.QueryType = string(dataquery.QueryTypeAnnotation)
+			q.QueryType = string(dataquery.QueryTypeANNOTATION)
 		}
 		if rawQuery["queryType"] != nil {
 			q.QueryType = rawQuery["queryType"].(string)
@@ -274,9 +274,9 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				rawQuery["timeSeriesQuery"] = &dataquery.TimeSeriesQuery{
 					ProjectName: toString(metricQuery["projectName"]),
 					Query:       toString(metricQuery["query"]),
-					GraphPeriod: strPtr(toString(metricQuery["graphPeriod"])),
+					GraphPeriod: toString(metricQuery["graphPeriod"]),
 				}
-				q.QueryType = string(dataquery.QueryTypeTimeSeriesQuery)
+				q.QueryType = string(dataquery.QueryTypeTIMESERIESQUERY)
 			} else {
 				tslb, err := json.Marshal(metricQuery)
 				if err != nil {
@@ -292,7 +292,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
 				}
 				rawQuery["timeSeriesList"] = tsl
-				q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
+				q.QueryType = string(dataquery.QueryTypeTIMESERIESLIST)
 			}
 			// AliasBy is now a top level property
 			if metricQuery["aliasBy"] != nil {
@@ -305,7 +305,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			q.JSON = b
 		}
 
-		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSlo) {
+		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSLO) {
 			sloQuery := rawQuery["sloQuery"].(map[string]any)
 			// AliasBy is now a top level property
 			if sloQuery["aliasBy"] != nil {
@@ -349,7 +349,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	switch req.Queries[0].QueryType {
-	case string(dataquery.QueryTypeAnnotation):
+	case string(dataquery.QueryTypeANNOTATION):
 		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries, logger)
 	default:
 		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries, logger)
@@ -403,7 +403,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 
 		var queryInterface cloudMonitoringQueryExecutor
 		switch query.QueryType {
-		case string(dataquery.QueryTypeTimeSeriesList), string(dataquery.QueryTypeAnnotation):
+		case string(dataquery.QueryTypeTIMESERIESLIST), string(dataquery.QueryTypeANNOTATION):
 			cmtsf := &cloudMonitoringTimeSeriesList{
 				refID:   query.RefID,
 				aliasBy: q.AliasBy,
@@ -415,7 +415,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			cmtsf.parameters = q.TimeSeriesList
 			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
-		case string(dataquery.QueryTypeTimeSeriesQuery):
+		case string(dataquery.QueryTypeTIMESERIESQUERY):
 			queryInterface = &cloudMonitoringTimeSeriesQuery{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
@@ -424,7 +424,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				timeRange:  req.Queries[0].TimeRange,
 				logger:     logger,
 			}
-		case string(dataquery.QueryTypeSlo):
+		case string(dataquery.QueryTypeSLO):
 			cmslo := &cloudMonitoringSLO{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
@@ -432,7 +432,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			}
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
-		case string(dataquery.QueryTypePromQL):
+		case string(dataquery.QueryTypePROMQL):
 			cmp := &cloudMonitoringProm{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
