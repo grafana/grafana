@@ -28,8 +28,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelsPerRow,
     isEditing,
   } = model.useState();
-  const params = useParams();
-  const { type } = params;
+  const { type } = useParams();
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
