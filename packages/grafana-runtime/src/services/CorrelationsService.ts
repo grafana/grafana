@@ -29,17 +29,26 @@ type CorrelationBase = {
   orgId?: number;
 };
 
+/**
+ * @alpha
+ */
 export type CorrelationExternal = CorrelationBase & {
   type: 'external';
   config: CorrelationConfigExternal;
 };
 
+/**
+ * @alpha
+ */
 export type CorrelationQuery = CorrelationBase & {
   type: 'query';
   config: CorrelationConfigQuery;
   targetUID: string;
 };
 
+/**
+ * @alpha
+ */
 export type CorrelationData =
   | (Omit<CorrelationExternal, 'sourceUID'> & {
       source: DataSourceInstanceSettings;
@@ -49,6 +58,9 @@ export type CorrelationData =
       target: DataSourceInstanceSettings;
     });
 
+/**
+ * @alpha
+ */
 export interface CorrelationsData {
   correlations: CorrelationData[];
   page: number;
@@ -60,7 +72,7 @@ export interface CorrelationsData {
  * Used to work with user defined correlations.
  * Should be accessed via {@link getCorrelationsService} function.
  *
- * @public
+ * @alpha
  */
 export interface CorrelationsService {
   /**
@@ -107,7 +119,7 @@ export function setCorrelationsService(instance: CorrelationsService) {
 /**
  * Used to retrieve the {@link CorrelationsService}.
  *
- * @public
+ * @alpha
  */
 export function getCorrelationsService(): CorrelationsService {
   return singletonInstance;
