@@ -1,6 +1,7 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
+/** @internal */
 export const optsWithHideZeros: OptionsWithTooltip = {
   tooltip: {
     mode: TooltipDisplayMode.Single,
