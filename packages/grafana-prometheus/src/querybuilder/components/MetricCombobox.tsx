@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import { Button, ComponentSize, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
 import { getPropertiesForButtonSize } from '@grafana/ui/src/components/Forms/commonStyles';
@@ -89,8 +88,6 @@ export function MetricCombobox({
     return metrics;
   }, [onGetMetrics]);
 
-  const metricsExplorerEnabled = config.featureToggles.prometheusMetricEncyclopedia;
-
   const styles = useStyles2(getMectricComboboxStyles);
 
   const asyncSelect = () => {
@@ -105,29 +102,24 @@ export function MetricCombobox({
           onChange={onComboboxChange}
           createCustomValue
         />
-
-        {metricsExplorerEnabled ? (
-          <Button
-            size={BUTTON_SIZE}
-            tooltip="Open metrics explorer"
-            aria-label="Open metrics explorer"
-            variant="secondary"
-            icon="book-open"
-            onClick={() => {
-              tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-              setMetricsModalOpen(true);
-            }}
-          />
-        ) : (
-          <></>
-        )}
+        <Button
+          size={BUTTON_SIZE}
+          tooltip="Open metrics explorer"
+          aria-label="Open metrics explorer"
+          variant="secondary"
+          icon="book-open"
+          onClick={() => {
+            tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
+            setMetricsModalOpen(true);
+          }}
+        />
       </InputGroup>
     );
   };
 
   return (
     <>
-      {metricsExplorerEnabled && !datasource.lookupsDisabled && metricsModalOpen && (
+      {!datasource.lookupsDisabled && metricsModalOpen && (
         <MetricsModal
           datasource={datasource}
           isOpen={metricsModalOpen}

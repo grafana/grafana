@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	ftestutil "github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -27,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -218,7 +216,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 
 		tagService := tagimpl.ProvideService(sql)
 
-		dashStore, err := dashboardstore.ProvideDashboardStore(sql, cfg, features, tagService, quotatest.New(false, nil))
+		dashStore, err := dashboardstore.ProvideDashboardStore(sql, cfg, features, tagService)
 		require.NoError(t, err)
 
 		origNewGuardian := guardian.New
@@ -228,11 +226,10 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		})
 
 		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
-		folderPermissions, err := ftestutil.ProvideFolderPermissions(features, cfg, sql)
-		require.NoError(t, err)
 		fStore := folderimpl.ProvideStore(sql)
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-			folderimpl.ProvideDashboardFolderStore(sql), sql, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+
 		cfg.AnnotationMaximumTagsLength = 60
 
 		store := NewXormStore(cfg, log.New("annotation.test"), sql, tagService)

@@ -534,6 +534,7 @@ func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *ht
 
 func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 	testuser := &user.User{ID: 99, UID: "fdxsqt7t5ryf4a", Login: "testuser"}
+	testSignedInUser := &user.SignedInUser{UserID: 99, UserUID: "fdxsqt7t5ryf4a", Login: "testuser"}
 
 	legacyFolder := folder.Folder{
 		UID:          "ady4yobv315a8e",
@@ -570,7 +571,16 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
+		require.NoError(t, err)
+	})
 	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
@@ -709,7 +719,8 @@ func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
 						ExpectedResult: model.HitList{},
 					}
 					hs.userService = &usertest.FakeUserService{
-						ExpectedUser: testuser,
+						ExpectedUser:         testuser,
+						ExpectedSignedInUser: testSignedInUser,
 					}
 					hs.Features = featuremgmt.WithFeatures(
 						featuresArr...,
