@@ -542,31 +542,7 @@ func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFr
 }
 
 func (ss *FolderStoreImpl) FindFolders(ctx context.Context, query *folder.FindPersistedFoldersQuery) ([]folder.FolderSearchProjection, error) {
-	dashboardQuery := dashboards.FindPersistedDashboardsQuery{
-		Title: query.Title,
-		OrgId: query.OrgId,
-		// #TODO fill in the rest
-	}
-
-	dp, err := FindDashboardFolders(ctx, &dashboardQuery, ss.db, ss.features)
-	if err != nil {
-		return nil, err
-	}
-
-	dashProjection := []folder.FolderSearchProjection{}
-	for _, p := range dp {
-		dp := folder.FolderSearchProjection{
-			ID:  p.ID,
-			UID: p.UID,
-			// #TODO fill in the rest
-		}
-		dashProjection = append(dashProjection, dp)
-	}
-	return dashProjection, nil
-}
-
-func FindDashboardFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, d db.DB, ft featuremgmt.FeatureToggles) ([]dashboards.DashboardSearchProjection, error) {
-	recursiveQueriesAreSupported, err := d.RecursiveQueriesAreSupported()
+	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
 	}
@@ -599,11 +575,11 @@ func FindDashboardFolders(ctx context.Context, query *dashboards.FindPersistedDa
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: d.GetDialect(), Title: query.Title})
+		filters = append(filters, searchstore.TitleFilter{Dialect: ss.db.GetDialect(), Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {
-		filters = append(filters, searchstore.TypeFilter{Dialect: d.GetDialect(), Type: query.Type})
+		filters = append(filters, searchstore.TypeFilter{Dialect: ss.db.GetDialect(), Type: query.Type})
 	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
@@ -613,10 +589,10 @@ func FindDashboardFolders(ctx context.Context, query *dashboards.FindPersistedDa
 
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              d.GetDialect(),
+			Dialect:              ss.db.GetDialect(),
 			OrgID:                orgID,
 			UIDs:                 query.FolderUIDs,
-			NestedFoldersEnabled: ft.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+			NestedFoldersEnabled: ss.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
 		})
 	}
 
@@ -626,13 +602,13 @@ func FindDashboardFolders(ctx context.Context, query *dashboards.FindPersistedDa
 	}
 
 	if !query.SkipAccessControlFilter {
-		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, ft, recursiveQueriesAreSupported))
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, ss.features, recursiveQueriesAreSupported))
 	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 
-	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: d.GetDialect(), Filters: filters, Features: ft}
+	var res []folder.FolderSearchProjection
+	sb := &searchstore.Builder{Dialect: ss.db.GetDialect(), Filters: filters, Features: ss.features}
 
 	limit := query.Limit
 	if limit < 1 {
@@ -646,7 +622,7 @@ func FindDashboardFolders(ctx context.Context, query *dashboards.FindPersistedDa
 
 	sql, params := sb.ToSQL(limit, page)
 
-	err = d.WithDbSession(ctx, func(sess *db.Session) error {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})
 
