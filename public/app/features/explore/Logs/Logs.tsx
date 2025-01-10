@@ -58,6 +58,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
+import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { getState } from 'app/store/store';
 import { ExploreItemState, useDispatch } from 'app/types';
 
@@ -72,6 +73,7 @@ import {
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
+import { changeQueries } from '../state/query';
 
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -468,6 +470,31 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const newSortOrder =
         logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
       store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
+      if (logsQueries) {
+        let hasLokiQueries = false;
+        const newQueries = logsQueries.map((query) => {
+          if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
+            return query;
+          }
+          hasLokiQueries = true;
+
+          if (query.direction === LokiQueryDirection.Scan) {
+            // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
+            return query;
+          }
+          const newDirection =
+            newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+          if (newDirection !== query.direction) {
+            query.direction = newDirection;
+          }
+          return query;
+        });
+
+        if (hasLokiQueries) {
+          dispatch(changeQueries({ exploreId, queries: newQueries }));
+        }
+      }
+
       setLogsSortOrder(newSortOrder);
     }, 0);
     cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);

@@ -6,6 +6,13 @@ import { createLokiDatasource } from '../../__mocks__/datasource';
 
 import { MonacoQueryFieldWrapper, Props } from './MonacoQueryFieldWrapper';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: jest.fn().mockReturnValue({
+    subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+  }),
+}));
+
 function renderComponent({ initialValue = '', onChange = jest.fn(), onRunQuery = jest.fn() }: Partial<Props> = {}) {
   const datasource = createLokiDatasource();
 
