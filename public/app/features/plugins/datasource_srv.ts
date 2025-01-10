@@ -70,6 +70,9 @@ export class DatasourceSrv implements DataSourceService {
     if (this.runtimeDataSources[entry.dataSource.uid]) {
       throw new Error(`A runtime data source with uid ${entry.dataSource.uid} has already been registered`);
     }
+    if (this.settingsMapByUid[entry.dataSource.uid]) {
+      throw new Error(`A data source with uid ${entry.dataSource.uid} has already been registered`);
+    }
 
     this.runtimeDataSources[entry.dataSource.uid] = entry.dataSource;
     this.datasources[entry.dataSource.uid] = entry.dataSource;

@@ -495,6 +495,14 @@ describe('datasource_srv', () => {
           })
         ).toThrow();
       });
+
+      it('should throw when trying to register a runtime datasource with the same uid as an "regular" datasource', async () => {
+        expect(() =>
+          dataSourceSrv.registerRuntimeDataSource({
+            dataSource: new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-code-Jaeger'),
+          })
+        ).toThrow();
+      });
     });
   });
 
