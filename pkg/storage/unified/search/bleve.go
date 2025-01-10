@@ -261,6 +261,8 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Re
 			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
 		},
 		Fields: []string{
+			resource.SEARCH_FIELD_TITLE,
+			resource.SEARCH_FIELD_FOLDER,
 			resource.SEARCH_FIELD_REPOSITORY_NAME,
 			resource.SEARCH_FIELD_REPOSITORY_PATH,
 			resource.SEARCH_FIELD_REPOSITORY_HASH,
@@ -314,6 +316,8 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Re
 			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
 			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
 			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
+			Title:  asString(hit.Fields[resource.SEARCH_FIELD_TITLE]),
+			Folder: asString(hit.Fields[resource.SEARCH_FIELD_FOLDER]),
 		}
 		err := item.Object.ReadSearchID(hit.ID)
 		if err != nil {

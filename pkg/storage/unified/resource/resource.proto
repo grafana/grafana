@@ -490,7 +490,7 @@ message RepositoryListResponse {
   message Item {
     // The resource object key
     ResourceKey object = 1;
-  
+
     // Hash for the resource
     string path = 2;
   
@@ -499,6 +499,12 @@ message RepositoryListResponse {
   
     // Change time from the origin
     int64 time = 5;
+
+    // Title inside the payload
+    string title = 6;
+  
+    // The name of the folder in metadata
+    string folder = 7;
   }
 
   // Item iterator

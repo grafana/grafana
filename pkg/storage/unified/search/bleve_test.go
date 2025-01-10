@@ -237,7 +237,9 @@ func TestBleveBackend(t *testing.T) {
 					},
 					"path": "path/to/aaa.json",
 					"hash": "xyz",
-					"time": 1609462800000
+					"time": 1609462800000,
+					"title": "aaa (dash)",
+					"folder": "xxx"
 				},
 				{
 					"object": {
@@ -248,7 +250,9 @@ func TestBleveBackend(t *testing.T) {
 					},
 					"path": "path/to/bbb.json",
 					"hash": "hijk",
-					"time": 1640998800000
+					"time": 1640998800000,
+					"title": "bbb (dash)",
+					"folder": "xxx"
 				}
 			]
 		}`, string(jj))
