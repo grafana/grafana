@@ -6,7 +6,7 @@ import { Badge, Button } from '@grafana/ui';
 import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
-import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode, MetricQueryType } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode } from '../../types';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   extraHeaderElementLeft?: JSX.Element;
@@ -53,12 +53,7 @@ const QueryHeader = ({
     }
   };
 
-  const shouldDisplayMonitoringBadge =
-    config.featureToggles.cloudWatchCrossAccountQuerying &&
-    isMonitoringAccount &&
-    (query.queryMode === 'Logs' ||
-      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Search) ||
-      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Insights));
+  const shouldDisplayMonitoringBadge = config.featureToggles.cloudWatchCrossAccountQuerying && isMonitoringAccount;
 
   return (
     <>

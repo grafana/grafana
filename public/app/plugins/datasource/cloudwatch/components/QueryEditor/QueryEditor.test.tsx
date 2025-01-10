@@ -210,11 +210,6 @@ describe('QueryEditor should render right editor', () => {
     describe('should not be displayed when a monitoring account is returned and', () => {
       const cases: MonitoringBadgeScenario[] = [
         {
-          name: 'it is metric insights builder query and toggle is enabled',
-          query: validMetricQueryBuilderQuery,
-          toggle: true,
-        },
-        {
           name: 'it is metric insights code query and toggle is not enabled',
           query: validMetricQueryCodeQuery,
           toggle: false,
