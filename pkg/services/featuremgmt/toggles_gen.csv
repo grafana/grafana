@@ -162,7 +162,6 @@ queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
-notificationBanner,GA,@grafana/grafana-frontend-platform,false,false,false
 dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
