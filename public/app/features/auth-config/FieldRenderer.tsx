@@ -42,6 +42,13 @@ export const FieldRenderer = ({
     }
   }, [unregister, name, parentValue, isDependantField]);
 
+  useEffect(() => {
+    if (fieldData.defaultValue) {
+      setValue(name, fieldData.defaultValue.value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!field) {
     console.log('missing field:', name);
     return null;
