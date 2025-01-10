@@ -39,9 +39,11 @@ func (m *PerconaForwarderHTTPClientMiddleware) applyHeaders(ctx context.Context,
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			reqCtx := contexthandler.FromContext(ctx)
 
-			xProxyFilter := reqCtx.Req.Header.Get("X-Proxy-Filter")
-			if xProxyFilter != "" {
-				req.Header.Set("X-Proxy-Filter", xProxyFilter)
+			if reqCtx != nil && reqCtx.Req != nil && reqCtx.Req.Header != nil {
+				xProxyFilter := reqCtx.Req.Header.Get("X-Proxy-Filter")
+				if xProxyFilter != "" {
+					req.Header.Set("X-Proxy-Filter", xProxyFilter)
+				}
 			}
 
 			return next.RoundTrip(req)
