@@ -149,6 +149,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		require.NoError(t, err)
 
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
 		resp, err := http.Post(u, "application/json", &buf)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -491,7 +492,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 			"inactive": 2
 		}
 	}
-}`, respModel.Created[0], dashboardUID, respModel.Created[1], dashboardUID)
+}`, respModel.Created[0], dashboardUID, respModel.Created[1])
 	expectedFilteredByJSON := fmt.Sprintf(`
 {
 	"status": "success",
