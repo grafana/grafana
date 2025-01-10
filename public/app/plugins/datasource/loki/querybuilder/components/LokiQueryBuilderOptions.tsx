@@ -280,7 +280,7 @@ function getCollapsedInfo(
 function getDefaultQueryDirection(app?: CoreApp) {
   if (app !== CoreApp.Explore) {
     /**
-     * The default direction is forward because the default sort order is Descending.
+     * The default direction is backward because the default sort order is Descending.
      * See:
      * - public/app/features/explore/Logs/Logs.tsx
      * - public/app/plugins/panel/logs/module.tsx
