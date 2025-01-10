@@ -238,6 +238,22 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
+
+	t.Run("too long labels fit under the client error category", func(t *testing.T) {
+		msg := "received a series whose label value length exceeds the limit, label: 'label-1', value: 'value-1' (truncated) series: 'some_series (err-mimir-label-value-too-long). To adjust the related per-tenant limit, configure -validation.max-length-label-value, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
 }
 
 func extractValue(t *testing.T, frames data.Frames, labels map[string]string, frameType data.FrameType) float64 {
