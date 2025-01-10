@@ -150,10 +150,10 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = hs.getUserLogin(ctx, dash.UpdatedBy)
+		updater = hs.getIdentityName(ctx, dash.OrgID, dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = hs.getUserLogin(ctx, dash.CreatedBy)
+		creator = hs.getIdentityName(ctx, dash.OrgID, dash.CreatedBy)
 	}
 
 	annotationPermissions := &dashboardsV0.AnnotationPermission{}
@@ -265,16 +265,24 @@ func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext
 	}
 }
 
-func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
-	ctx, span := tracer.Start(ctx, "api.getUserLogin")
+// getIdentityName returns name of either user or service account
+func (hs *HTTPServer) getIdentityName(ctx context.Context, orgID, id int64) string {
+	ctx, span := tracer.Start(ctx, "api.getIdentityName")
 	defer span.End()
 
-	query := user.GetUserByIDQuery{ID: userID}
-	user, err := hs.userService.GetByID(ctx, &query)
+	// We use GetSignedInUser here instead of GetByID so both user and service accounts are resolved.
+	ident, err := hs.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+		UserID: id,
+		OrgID:  orgID,
+	})
 	if err != nil {
 		return anonString
 	}
-	return user.Login
+
+	if ident.IsIdentityType(claims.TypeServiceAccount) {
+		return ident.GetName()
+	}
+	return ident.GetLogin()
 }
 
 func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*dashboards.Dashboard, response.Response) {
@@ -845,7 +853,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 			if found {
 				creator = login
 			} else {
-				creator = hs.getUserLogin(c.Req.Context(), version.CreatedBy)
+				creator = hs.getIdentityName(c.Req.Context(), c.SignedInUser.GetOrgID(), version.CreatedBy)
 				if creator != anonString {
 					loginMem[version.CreatedBy] = creator
 				}
@@ -941,7 +949,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	creator := anonString
 	if res.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), res.CreatedBy)
+		creator = hs.getIdentityName(c.Req.Context(), dash.OrgID, res.CreatedBy)
 	}
 
 	dashVersionMeta := &dashver.DashboardVersionMeta{
