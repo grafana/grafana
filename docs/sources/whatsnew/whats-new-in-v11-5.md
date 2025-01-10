@@ -26,6 +26,30 @@ For even more detail about all the changes in this release, refer to the [change
 
 # What's new
 
+## Authentication and authorization
+
+<!-- #identity-access, Mihaly Gyongyosi (@Misi) -->
+
+_Available in public preview in all editions of Grafana_
+
+We’ve improved how Grafana manages external sessions for OAuth and SAML, enhancing compatibility with identity providers that support session management.
+
+Grafana can now reliably manage SAML external sessions (Identity Provider sessions) by using the `SessionIndex` attribute in the SAML assertion and the `NameID` attribute in the logout request. Previously, Grafana relied on the `Login` attribute as the `NameID` and did not include the `SessionIndex` in the logout request, which could result in users being logged out of all their applications/IdP sessions when logging out of Grafana.
+
+To enable the improved session management for SAML:
+
+1. If Single Logout is enabled, ensure that `Name identifier format` is set to a value that is persistent across sessions, such as `Persistent` or `EmailAddress`.
+2. Enable the `improvedExternalSessionHandlingSAML` feature toggle.
+3. After enabling the feature, users may need to log in again to establish a new session under the updated configuration.
+
+You can find more info on setting up SAML Single Logout in the [Grafana documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#single-logout).
+
+For OAuth, we’ve enhanced session management by linking external sessions to Grafana sessions. This includes better handling of access and refresh tokens, improving both the security and reliability of OAuth based authentication workflows.
+
+The feature is behind the `improvedExternalSessionHandling` feature toggle and is disabled by default. Once enabled, users may need to log in again to establish a new session.
+
+Both features will be enabled for all Grafana Cloud instances eventually.
+
 ## Dashboards and visualizations
 
 ### Redesigned sharing experience in Dashboards
