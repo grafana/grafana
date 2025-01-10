@@ -218,8 +218,11 @@ icon = signin
 enabled = true
 allow_sign_up = false
 auto_login = true
+client_authentication = test_client_authentication
 client_id = test_client_id
 client_secret = test_client_secret
+managed_identity_client_id = test_managed_identity_client_id
+federated_credential_audience = test_federated_credential_audience
 scopes = ["openid", "profile", "email"]
 empty_scopes = false
 email_attribute_name = email:primary
@@ -257,38 +260,41 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	require.NoError(t, err)
 
 	expectedOAuthInfo := &social.OAuthInfo{
-		Name:                    "OAuth",
-		Icon:                    "signin",
-		Enabled:                 true,
-		AllowSignup:             false,
-		AutoLogin:               true,
-		ClientId:                "test_client_id",
-		ClientSecret:            "test_client_secret",
-		Scopes:                  []string{"openid", "profile", "email"},
-		EmptyScopes:             false,
-		EmailAttributeName:      "email:primary",
-		EmailAttributePath:      "email",
-		RoleAttributePath:       "role",
-		RoleAttributeStrict:     true,
-		GroupsAttributePath:     "groups",
-		TeamIdsAttributePath:    "team_ids",
-		AuthUrl:                 "test_auth_url",
-		TokenUrl:                "test_token_url",
-		ApiUrl:                  "test_api_url",
-		TeamsUrl:                "test_teams_url",
-		AllowedDomains:          []string{"domain1.com"},
-		AllowedGroups:           []string{},
-		TlsSkipVerify:           true,
-		TlsClientCert:           "",
-		TlsClientKey:            "",
-		TlsClientCa:             "",
-		UsePKCE:                 false,
-		AuthStyle:               "",
-		AllowAssignGrafanaAdmin: true,
-		UseRefreshToken:         true,
-		SkipOrgRoleSync:         true,
-		HostedDomain:            "test_hosted_domain",
-		SignoutRedirectUrl:      "https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com",
+		Name:                        "OAuth",
+		Icon:                        "signin",
+		Enabled:                     true,
+		AllowSignup:                 false,
+		AutoLogin:                   true,
+		ClientAuthentication:        "test_client_authentication",
+		ClientId:                    "test_client_id",
+		ClientSecret:                "test_client_secret",
+		ManagedIdentityClientID:     "test_managed_identity_client_id",
+		FederatedCredentialAudience: "test_federated_credential_audience",
+		Scopes:                      []string{"openid", "profile", "email"},
+		EmptyScopes:                 false,
+		EmailAttributeName:          "email:primary",
+		EmailAttributePath:          "email",
+		RoleAttributePath:           "role",
+		RoleAttributeStrict:         true,
+		GroupsAttributePath:         "groups",
+		TeamIdsAttributePath:        "team_ids",
+		AuthUrl:                     "test_auth_url",
+		TokenUrl:                    "test_token_url",
+		ApiUrl:                      "test_api_url",
+		TeamsUrl:                    "test_teams_url",
+		AllowedDomains:              []string{"domain1.com"},
+		AllowedGroups:               []string{},
+		TlsSkipVerify:               true,
+		TlsClientCert:               "",
+		TlsClientKey:                "",
+		TlsClientCa:                 "",
+		UsePKCE:                     false,
+		AuthStyle:                   "",
+		AllowAssignGrafanaAdmin:     true,
+		UseRefreshToken:             true,
+		SkipOrgRoleSync:             true,
+		HostedDomain:                "test_hosted_domain",
+		SignoutRedirectUrl:          "https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com",
 		Extra: map[string]string{
 			"allowed_organizations":   "org1, org2",
 			"id_token_attribute_name": "id_token",

@@ -4,6 +4,7 @@ import { useAsync } from 'react-use';
 
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { Trans } from 'app/core/internationalization';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import {
@@ -89,7 +90,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
 
   const actionButtons = [
     <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
-      Cancel
+      <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
     </LinkButton>,
     <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
       Export

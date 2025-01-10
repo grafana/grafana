@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type StorageType string
@@ -16,12 +17,15 @@ type StorageType string
 const (
 	StorageTypeFile        StorageType = "file"
 	StorageTypeEtcd        StorageType = "etcd"
-	StorageTypeLegacy      StorageType = "legacy"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+
+	// Deprecated: legacy is a shim that is no longer necessary
+	StorageTypeLegacy StorageType = "legacy"
 )
 
-type StorageOptions struct { // The desired storage type
+type StorageOptions struct {
+	// The desired storage type
 	StorageType StorageType
 
 	// For unified-grpc, the address is required
@@ -43,7 +47,7 @@ type StorageOptions struct { // The desired storage type
 
 func NewStorageOptions() *StorageOptions {
 	return &StorageOptions{
-		StorageType: StorageTypeLegacy,
+		StorageType: StorageTypeUnified,
 		Address:     "localhost:10000",
 	}
 }
@@ -57,9 +61,13 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *StorageOptions) Validate() []error {
 	errs := []error{}
 	switch o.StorageType {
-	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc:
+	// nolint:staticcheck
+	case StorageTypeLegacy:
+		// no-op
+	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
+		// nolint:staticcheck
 		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
 	}
 
@@ -82,6 +90,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 // EnforceFeatureToggleAfterMode1 makes sure there is a feature toggle set for resources with DualWriterMode > 1.
 // This is needed to ensure that we use the K8s client before enabling dual writing.
 func (o *StorageOptions) EnforceFeatureToggleAfterMode1(features featuremgmt.FeatureToggles) error {
+	// nolint:staticcheck
 	if o.StorageType != StorageTypeLegacy {
 		for rg, s := range o.UnifiedStorageConfig {
 			if s.DualWriterMode > 1 {

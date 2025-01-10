@@ -18,31 +18,34 @@ labels:
     - enterprise
     - oss
 title: Configure mute timings
-weight: 450
+weight: 430
 refs:
-  external-alertmanager:
+  alertmanager-architecture:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+  shared-silences:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
+  shared-mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
 
 # Configure mute timings
 
-A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period.
+A mute timing is a recurring interval of time when no new notifications for a policy are generated or sent. Use them to prevent alerts from firing a specific and reoccurring period, for example, a regular maintenance period or weekends.
 
-Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
+{{< admonition type="note" >}}
+Mute timings are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
+{{< /admonition >}}
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager](ref:external-alertmanager).
-
-## Mute timings vs silences
-
-The following table highlights the key differences between mute timings and silences.
-
-| Mute timing                                        | Silence                                                                      |
-| -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Uses time interval definitions that can reoccur    | Has a fixed start and end time                                               |
-| Is created and then added to notification policies | Uses labels to match against an alert to determine whether to silence or not |
+{{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Add mute timings
 
@@ -65,6 +68,8 @@ The following table highlights the key differences between mute timings and sile
 
 A time interval is a specific duration during which alerts are suppressed. The duration typically consists of a specific time range and the days of the week, month, or year.
 
+A mute timing can contain multiple time intervals.
+
 Supported time interval options are:
 
 - Time range: The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time).
@@ -76,9 +81,13 @@ Supported time interval options are:
 
 All fields are lists; to match the field, at least one list element must be satisfied. Fields also support ranges using `:` (e.g., `monday:thursday`).
 
-If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
+If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match.
 
-If you want to specify an exact duration, specify all the options. For example, if you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
+If you want to specify an exact duration, specify all the options.
+
+**Example**
+
+If you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
 
 - Time range:
   - Start time: `12:00`

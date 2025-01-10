@@ -273,20 +273,11 @@ var (
 			Owner:       grafanaBackendGroup,
 		},
 		{
-			Name:           "prometheusMetricEncyclopedia",
-			Description:    "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
-			Expression:     "true",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:           "influxdbBackendMigration",
 			Description:    "Query InfluxDB InfluxQL without the proxy",
 			Stage:          FeatureStageGeneralAvailability,
 			FrontendOnly:   true,
-			Owner:          grafanaObservabilityMetricsSquad,
+			Owner:          grafanaPartnerPluginsSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: false,
 		},
@@ -294,21 +285,21 @@ var (
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:         "influxdbRunQueriesInParallel",
 			Description:  "Enables running InfluxDB Influxql queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaPartnerPluginsSquad,
 		},
 		{
 			Name:         "prometheusRunQueriesInParallel",
 			Description:  "Enables running Prometheus queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:        "lokiLogsDataplane",
@@ -402,7 +393,7 @@ var (
 		{
 			Name:        "pluginsFrontendSandbox",
 			Description: "Enables the plugins frontend sandbox",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
@@ -531,14 +522,6 @@ var (
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendGroup,
-		},
-		{
-			Name:           "prometheusConfigOverhaulAuth",
-			Description:    "Update the Prometheus configuration page with the new auth component",
-			Owner:          grafanaObservabilityMetricsSquad,
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // on by default
-			AllowSelfServe: false,
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -714,6 +697,18 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "kubernetesCliDashboards",
+			Description: "Use the k8s client to retrieve dashboards internally",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "kubernetesRestore",
+			Description: "Allow restoring objects in k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
+		{
 			Name:        "kubernetesFolders",
 			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
 			Stage:       FeatureStageExperimental,
@@ -811,14 +806,14 @@ var (
 			Description:  "Prometheus and AI/ML to assist users in creating a query",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:         "prometheusCodeModeMetricNamesSearch",
 			Description:  "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaOSSBigTent,
 		},
 		{
 			Name:         "addFieldFromCalculationStatFunctions",
@@ -1033,16 +1028,10 @@ var (
 		},
 		{
 			Name:        "onPremToCloudMigrations",
-			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.",
+			Description: "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "onPremToCloudMigrationsAlerts",
-			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "true",
 		},
 		{
 			Name:        "onPremToCloudMigrationsAuthApiMig",
@@ -1069,7 +1058,7 @@ var (
 			Name:        "promQLScope",
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaOSSBigTent,
 			Expression:  "true",
 		},
 		{
@@ -1104,8 +1093,9 @@ var (
 		{
 			Name:        "newPDFRendering",
 			Description: "New implementation for the dashboard-to-PDF rendering",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default,
 		},
 		{
 			Name:           "tlsMemcached",
@@ -1202,7 +1192,7 @@ var (
 			Description:     "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
-			Owner:           grafanaObservabilityMetricsSquad,
+			Owner:           grafanaOSSBigTent,
 			RequiresRestart: true,
 		},
 		{
@@ -1243,14 +1233,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "notificationBanner",
-			Description:  "Enables the notification banner UI and API",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendPlatformSquad,
-			FrontendOnly: false,
-			Expression:   "true",
 		},
 		{
 			Name:              "dashboardRestore",
@@ -1381,9 +1363,10 @@ var (
 		{
 			Name:            "alertingApiServer",
 			Description:     "Register Alerting APIs with the K8s API server",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Expression:      "true",
 		},
 		{
 			Name:        "cloudWatchRoundUpEndTime",
@@ -1439,14 +1422,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "singleTopNav",
-			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true",
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
@@ -1505,18 +1480,17 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:              "improvedExternalSessionHandling",
-			Description:       "Enable improved support for external sessions in Grafana",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			Name:        "improvedExternalSessionHandling",
+			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true",
 		},
 		{
 			Name:        "rolePickerDrawer",
@@ -1527,6 +1501,14 @@ var (
 		{
 			Name:              "unifiedStorageSearch",
 			Description:       "Enable unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "unifiedStorageSearchSprinkles",
+			Description:       "Enable sprinkles on unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -1554,13 +1536,14 @@ var (
 			Name:        "prometheusUsesCombobox",
 			Description: "Use new combobox component for Prometheus query editor",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
+			Owner:       grafanaOSSBigTent,
 		},
 		{
 			Name:        "userStorageAPI",
 			Description: "Enables the user storage API",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1577,15 +1560,8 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "dashboardSchemaV2",
-			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: true,
-		},
-		{
-			Name:            "playlistsWatcher",
-			Description:     "Enables experimental watcher for playlists",
+			Name:            "playlistsReconciler",
+			Description:     "Enables experimental reconciler for playlists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
@@ -1608,6 +1584,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "prometheusSpecialCharsInLabelValues",
+			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOSSBigTent,
+		},
+		{
 			Name:            "enableExtensionsAdminPage",
 			Description:     "Enables the extension admin page regardless of development mode",
 			Stage:           FeatureStageExperimental,
@@ -1617,8 +1600,9 @@ var (
 		{
 			Name:        "zipkinBackendMigration",
 			Description: "Enables querying Zipkin data source without the proxy",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "enableSCIM",
@@ -1642,9 +1626,9 @@ var (
 		{
 			Name:        "reportingUseRawTimeRange",
 			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Expression:  "false", // disabled by default
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "alertingUIOptimizeReducer",
@@ -1669,11 +1653,73 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "useV2DashboardsAPI",
+			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:         "feedbackButton",
 			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
+		},
+		{
+			Name:              "unifiedStorageSearchUI",
+			Description:       "Enable unified storage search UI",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:        "elasticsearchCrossClusterSearch",
+			Description: "Enables cross cluster search in the Elasticsearch datasource",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:         "unifiedHistory",
+			Description:  "Displays the navigation history so the user can navigate back to previous pages",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "lokiLabelNamesQueryApi",
+			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true",
+		},
+		{
+			Name:        "investigationsBackend",
+			Description: "Enable the investigations backend API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "k8SFolderCounts",
+			Description: "Enable folder's api server counts",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "k8SFolderMove",
+			Description: "Enable folder's api server move",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "improvedExternalSessionHandlingSAML",
+			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

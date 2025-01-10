@@ -142,32 +142,17 @@ export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 // Currently supports only error condition in Loki logs
-export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
-  if (logRow.labels.__error__) {
-    return {
-      hasError: true,
-      errorMessage: logRow.labels.__error__,
-    };
-  }
-  return {
-    hasError: false,
-  };
+export const checkLogsError = (logRow: LogRowModel): string | undefined => {
+  return logRow.labels.__error__;
 };
 
-export const checkLogsSampled = (logRow: LogRowModel): { isSampled: boolean; sampleMessage?: string } => {
-  if (logRow.labels.__adaptive_logs_sampled__) {
-    let msg =
-      logRow.labels.__adaptive_logs_sampled__ === 'true'
-        ? 'Logs like this one have been dropped by Adaptive Logs'
-        : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
-    return {
-      isSampled: true,
-      sampleMessage: msg,
-    };
+export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
+  if (!logRow.labels.__adaptive_logs_sampled__) {
+    return undefined;
   }
-  return {
-    isSampled: false,
-  };
+  return logRow.labels.__adaptive_logs_sampled__ === 'true'
+    ? 'Logs like this one have been dropped by Adaptive Logs'
+    : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
 };
 
 export const escapeUnescapedString = (string: string) =>
@@ -342,4 +327,62 @@ export function createLogRowsMap() {
     logRowsSet.add(id);
     return false;
   };
+}
+
+function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number): null | string {
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
+  if (!typeField) {
+    return null;
+  }
+  return typeField[labelKey] ?? null;
+}
+
+export function getLabelTypeFromRow(label: string, row: LogRowModel) {
+  if (!row.datasourceType) {
+    return null;
+  }
+  const idField = row.dataFrame.fields.find((field) => field.name === 'id');
+  if (!idField) {
+    return null;
+  }
+  const rowIndex = idField.values.findIndex((id) => id === row.rowId);
+  if (rowIndex < 0) {
+    return null;
+  }
+  const labelType = getLabelTypeFromFrame(label, row.dataFrame, rowIndex);
+  if (!labelType) {
+    return null;
+  }
+  return getDataSourceLabelType(labelType, row.datasourceType);
+}
+
+function getDataSourceLabelType(labelType: string, datasourceType: string) {
+  switch (datasourceType) {
+    case 'loki':
+      switch (labelType) {
+        case 'I':
+          return 'Indexed label';
+        case 'S':
+          return 'Structured metadata';
+        case 'P':
+          return 'Parsed label';
+        default:
+          return null;
+      }
+    default:
+      return null;
+  }
+}
+
+const POPOVER_STORAGE_KEY = 'logs.popover.disabled';
+export function disablePopoverMenu() {
+  localStorage.setItem(POPOVER_STORAGE_KEY, 'true');
+}
+
+export function enablePopoverMenu() {
+  localStorage.removeItem(POPOVER_STORAGE_KEY);
+}
+
+export function isPopoverMenuDisabled() {
+  return Boolean(localStorage.getItem(POPOVER_STORAGE_KEY));
 }

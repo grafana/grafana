@@ -1,22 +1,18 @@
 {
+  "__inputs": [],
+  "__elements": {},
   "__requires": [
     {
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.4.3"
+      "version": "10.4.7"
     },
     {
       "type": "datasource",
       "id": "grafana-azure-monitor-datasource",
       "name": "Azure Monitor",
-      "version": "0.3.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
+      "version": "1.0.0"
     },
     {
       "type": "panel",
@@ -29,18 +25,42 @@
       "id": "table",
       "name": "Table",
       "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
     }
   ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "The dashboard provides insights of Azure Key Vaults overview, failures and operations.",
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1620924220014,
   "links": [],
   "panels": [
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -49,24 +69,33 @@
       },
       "id": 25,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${ds}"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Overview",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "percentage",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -75,7 +104,7 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 19,
+        "w": 24,
         "x": 0,
         "y": 1
       },
@@ -90,27 +119,18 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Average",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -133,8 +153,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "Availability",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -176,30 +200,19 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -222,8 +235,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiResult",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "P1D",
             "timeGrains": [
               {
@@ -265,31 +282,20 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
-          "subscription": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
+          "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Average",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -312,8 +318,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiLatency",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "P1D",
             "timeGrains": [
               {
@@ -355,82 +365,104 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "C",
-          "subscription": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
+          "subscription": "$sub"
         }
       ],
       "title": "Availability, Requests and Latency",
       "type": "stat"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 0,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 11,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -445,8 +477,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiHit",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -488,125 +524,104 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
-          "subscription": "f7152080-b4e8-47ee-9c85-7f1d0e6b72dc"
+          "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Transactions Over Time",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "ms"
         },
         "overrides": []
       },
-      "fill": 0,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 6,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 13,
-      "legend": {
-        "avg": true,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "connected",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["mean"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Average",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -629,8 +644,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiLatency",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -672,119 +691,104 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Overall Latency",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "ms",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 12,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 15,
-      "legend": {
-        "avg": true,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["mean"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Average",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -807,8 +811,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "Availability",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -850,119 +858,104 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Availability",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "percent",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 18,
         "y": 8
       },
-      "hiddenSeries": false,
       "id": 17,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [],
             "dimensions": [
               {
@@ -977,8 +970,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiHit",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1020,59 +1017,23 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Request Types over Time",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1081,76 +1042,107 @@
       },
       "id": 23,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${ds}"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Failures",
       "type": "row"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 0,
         "y": 17
       },
-      "hiddenSeries": false,
       "id": 2,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [
               {
                 "dimension": "StatusCodeClass",
-                "filter": "2xx",
+                "filters": ["2xx"],
                 "operator": "eq"
               }
             ],
@@ -1175,8 +1167,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiResult",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1218,123 +1214,108 @@
             ],
             "top": ""
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Successes (2xx)",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 6,
         "y": 17
       },
-      "hiddenSeries": false,
       "id": 7,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [
               {
                 "dimension": "StatusCodeClass",
-                "filter": "4xx",
+                "filters": ["4xx"],
                 "operator": "eq"
               }
             ],
@@ -1359,8 +1340,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiResult",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1402,123 +1387,108 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Failures (4xx)",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 12,
         "y": 17
       },
-      "hiddenSeries": false,
       "id": 6,
-      "legend": {
-        "avg": true,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["mean"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [
               {
                 "dimension": "StatusCode",
-                "filter": "429",
+                "filters": ["429"],
                 "operator": "eq"
               }
             ],
@@ -1543,8 +1513,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiResult",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1586,123 +1560,108 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Throttling (429)",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {}
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 18,
         "y": 17
       },
-      "hiddenSeries": false,
       "id": 4,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": ["sum"],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [
               {
                 "dimension": "StatusCode",
-                "filter": "401",
+                "filters": ["401"],
                 "operator": "eq"
               }
             ],
@@ -1727,8 +1686,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiResult",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1770,34 +1733,23 @@
             ],
             "top": "10"
           },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Monitor",
           "refId": "A",
           "subscription": "$sub"
         },
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
-          "azureLogAnalytics": {
-            "query": "//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc",
-            "resultFormat": "time_series",
-            "workspace": "$ws"
-          },
           "azureMonitor": {
             "aggOptions": ["None", "Average", "Minimum", "Maximum", "Total", "Count"],
             "aggregation": "Count",
             "allowedTimeGrainsMs": [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-            "dimensionFilter": "*",
             "dimensionFilters": [
               {
                 "dimension": "StatusCode",
-                "filter": "403",
+                "filters": ["403"],
                 "operator": "eq"
               }
             ],
@@ -1822,8 +1774,12 @@
             "metricDefinition": "Microsoft.KeyVault/vaults",
             "metricName": "ServiceApiResult",
             "metricNamespace": "Microsoft.KeyVault/vaults",
-            "resourceGroup": "$rg",
-            "resourceName": "$resource",
+            "resources": [
+              {
+                "resourceGroup": "$rg",
+                "resourceName": "$resource"
+              }
+            ],
             "timeGrain": "auto",
             "timeGrains": [
               {
@@ -1865,60 +1821,24 @@
             ],
             "top": "10"
           },
-          "hide": false,
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
+          "hide": false,
           "queryType": "Azure Monitor",
           "refId": "B",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Authentication Errors (401 & 403)",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
       "collapsed": false,
-      "datasource": "$ds",
+      "datasource": {
+        "uid": "${ds}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1927,17 +1847,27 @@
       },
       "id": 21,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${ds}"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Operations",
       "type": "row"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1948,7 +1878,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 3,
+        "w": 4,
         "x": 0,
         "y": 26
       },
@@ -1963,184 +1893,142 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
             "query": "let rawData = AzureDiagnostics \r\n    // Ignore Authentication operations with a 401. This is normal when using Key Vault SDK, first an unauthenticated request is done then the response is used for authentication.\r\n    | where Category == \"AuditEvent\" and not (OperationName == \"Authentication\" and httpStatusCode_d == 401)\r\n    | where OperationName in ('SecretGet', 'VaultGet') or '*' in ('SecretGet', 'VaultGet')\r\n    // Create ResultStatus with all the 'success' results bucked as 'Success'\r\n    // Certain operations like StorageAccountAutoSyncKey have no ResultSignature, for now set to 'Success' as well\r\n    | extend ResultStatus = case (ResultSignature == \"\", \"Success\",\r\n        ResultSignature == \"OK\", \"Success\",\r\n        ResultSignature == \"Accepted\", \"Success\",\r\n        ResultSignature);                            \r\nrawData \r\n| make-series Trend = count() default = 0 on TimeGenerated from ago(1d) to now() step 30m by ResultStatus\r\n| join kind = inner (rawData\n    | where $__timeFilter(TimeGenerated)\r\n    | summarize Count = count() by ResultStatus\r\n    )\r\n    on ResultStatus\n    \r\n\r\n| project ResultStatus, Count, Trend\r\n| order by Count desc;\r",
             "resultFormat": "table",
             "workspace": "$ws"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "select",
-            "metricName": "select",
-            "metricNamespace": "select",
-            "resourceGroup": "select",
-            "resourceName": "select",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Success Operations",
       "type": "stat"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "points",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 7,
-        "x": 3,
+        "w": 8,
+        "x": 4,
         "y": 26
       },
-      "hiddenSeries": false,
       "id": 35,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": true,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "let rawData = AzureDiagnostics \r\n    // Ignore Authentication operations with a 401. This is normal when using Key Vault SDK, first an unauthenticated request is done then the response is used for authentication.\r\n    | where Category == \"AuditEvent\" and not (OperationName == \"Authentication\" and httpStatusCode_d == 401)\r\n    | where OperationName in ('SecretGet', 'VaultGet') or '*' in ('SecretGet', 'VaultGet')\r\n    // Create ResultStatus with all the 'success' results bucked as 'Success'\r\n    // Certain operations like StorageAccountAutoSyncKey have no ResultSignature, for now set to 'Success' as well\r\n    | extend ResultStatus = case (ResultSignature == \"\", \"Success\",\r\n        ResultSignature == \"OK\", \"Success\",\r\n        ResultSignature == \"Accepted\", \"Success\",\r\n        ResultSignature);                            \r\nrawData\n| where $__timeFilter(TimeGenerated)\n| extend resultCount = iif(ResultStatus == \"Success\", 1, 0)\n| summarize count(resultCount) by bin(TimeGenerated, 30m)\n| sort by TimeGenerated;\n\r\r\n\r",
-            "resultFormat": "table",
-            "workspace": "$ws"
+            "resources": ["$ws"],
+            "resultFormat": "table"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "select",
-            "metricName": "select",
-            "metricNamespace": "select",
-            "resourceGroup": "select",
-            "resourceName": "select",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Success Operations Counts",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -2151,8 +2039,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 3,
-        "x": 10,
+        "w": 4,
+        "x": 12,
         "y": 26
       },
       "id": 26,
@@ -2166,186 +2054,149 @@
           "fields": "",
           "values": true
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "value"
+        "textMode": "value",
+        "wideLayout": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
             "query": "let rawData = AzureDiagnostics \r\n    // Ignore Authentication operations with a 401. This is normal when using Key Vault SDK, first an unauthenticated request is done then the response is used for authentication.\r\n    | where Category == \"AuditEvent\" and not (OperationName == \"Authentication\" and httpStatusCode_d == 401)\r\n    | where OperationName in ('SecretGet', 'VaultGet') or '*' in ('SecretGet', 'VaultGet')\r;                     \r\nrawData \r\n| make-series Trend = count() default = 0 on TimeGenerated from ago(1d) to now() step 30m by ResultSignature \n| join kind = inner (rawData\n    | where $__timeFilter(TimeGenerated)\r\n    | summarize Count = count() by ResultSignature \n    )\r\n    on ResultSignature \n\r\n\r\n| project ResultSignature , Count, Trend\r\n| order by Count desc;",
             "resultFormat": "table",
             "workspace": "$ws"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "select",
-            "metricName": "select",
-            "metricNamespace": "select",
-            "resourceGroup": "select",
-            "resourceName": "select",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "All Operations",
       "type": "stat"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": {},
-          "custom": {},
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "points",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": []
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
           },
           "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 7,
-        "x": 13,
+        "w": 8,
+        "x": 16,
         "y": 26
       },
-      "hiddenSeries": false,
       "id": 36,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": false,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "7.4.3",
-      "pointradius": 2,
-      "points": true,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
+            "dashboardTime": false,
             "query": "let rawData = AzureDiagnostics \r\n    // Ignore Authentication operations with a 401. This is normal when using Key Vault SDK, first an unauthenticated request is done then the response is used for authentication.\r\n    | where Category == \"AuditEvent\" and not (OperationName == \"Authentication\" and httpStatusCode_d == 401)\r\n    | where OperationName in ('SecretGet', 'VaultGet') or '*' in ('SecretGet', 'VaultGet')\r;                          \r\nrawData\n| where $__timeFilter(TimeGenerated)\n| summarize count(ResultSignature ) by bin(TimeGenerated, 30m)\n| sort by TimeGenerated;\n\r\r\n\r",
-            "resultFormat": "table",
-            "workspace": "$ws"
+            "resources": ["$ws"],
+            "resultFormat": "table"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "select",
-            "metricName": "select",
-            "metricNamespace": "select",
-            "resourceGroup": "select",
-            "resourceName": "select",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
           "subscription": "$sub"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "All Operations Counts",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2372,37 +2223,26 @@
       },
       "id": 28,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
             "query": "let data = AzureDiagnostics \r\n    | where TimeGenerated > ago(1d)\r\n    // Ignore Authentication operations with a 401. This is normal when using Key Vault SDK, first an unauthenticated request is done then the response is used for authentication.\r\n    | where Category == \"AuditEvent\" and not (OperationName == \"Authentication\" and httpStatusCode_d == 401)\r\n    | where OperationName in ('SecretGet', 'VaultGet') or '*' in ('SecretGet', 'VaultGet')\r\n    // Create ResultStatus with all the 'success' results bucked as 'Success'\r\n    // Certain operations like StorageAccountAutoSyncKey have no ResultSignature, for now set to 'Success' as well\r\n    | extend ResultStatus = case (ResultSignature == \"\", \"Success\",\r\n        ResultSignature == \"OK\", \"Success\",\r\n        ResultSignature == \"Accepted\", \"Success\",\r\n        ResultSignature)\r\n    | where ResultStatus == 'All' or 'All' == 'All';\r\ndata\r\n// Data aggregated to the OperationName\r\n| summarize OperationCount = count(), SuccessCount = countif(ResultStatus == \"Success\"), FailureCount = countif(ResultStatus != \"Success\"), PDurationMs = percentile(DurationMs, 99) by Resource, OperationName\r\n| join kind=inner (data\r\n    | make-series Trend = count() default = 0 on TimeGenerated from ago(1d) to now() step 30m by OperationName\r\n    | project-away TimeGenerated)\r\n    on OperationName\r\n| order by OperationCount desc\r\n| project Name = strcat('⚡ ', OperationName), Id = strcat(Resource, '/', OperationName), ['Operation count'] = OperationCount, ['Operation count trend'] = Trend, ['Success count'] = SuccessCount, ['Failure count'] = FailureCount, ['p99 Duration'] = PDurationMs",
             "resultFormat": "time_series",
             "workspace": "$ws"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "select",
-            "metricName": "select",
-            "metricNamespace": "select",
-            "resourceGroup": "select",
-            "resourceName": "select",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -2413,15 +2253,22 @@
       "type": "table"
     },
     {
-      "datasource": "$ds",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -2497,38 +2344,27 @@
       },
       "id": 30,
       "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "7.4.3",
+      "pluginVersion": "10.4.7",
       "targets": [
         {
-          "appInsights": {
-            "dimension": [],
-            "metricName": "select",
-            "timeGrain": "auto"
-          },
           "azureLogAnalytics": {
             "query": "let gridRowSelected = dynamic({\"Id\": \"*\"});\r\nlet resourceName = split(gridRowSelected.Id, \"/\")[0];\r\nlet operationName = split(gridRowSelected.Id, \"/\")[1];\r\nAzureDiagnostics \r\n| where TimeGenerated > ago(1d)\r\n// Ignore Authentication operations with a 401. This is normal when using Key Vault SDK, first an unauthenticated request is done then the response is used for authentication.\r\n| where Category == \"AuditEvent\" and not (OperationName == \"Authentication\" and httpStatusCode_d == 401)\r\n| where OperationName in ('SecretGet', 'VaultGet') or '*' in ('SecretGet', 'VaultGet')\r\n| where resourceName == \"*\" or Resource == resourceName\r\n| where operationName == \"\" or OperationName == operationName\r\n// Create ResultStatus with all the 'success' results bucked as 'Success'\r\n// Certain operations like StorageAccountAutoSyncKey have no ResultSignature, for now set to 'Success' as well\r\n| extend ResultStatus = case (ResultSignature == \"\", \"Success\",\r\n    ResultSignature == \"OK\", \"Success\",\r\n    ResultSignature == \"Accepted\", \"Success\",\r\n    ResultSignature)\r\n| where ResultStatus == 'All' or 'All' == 'All'\r\n| extend p = pack_all()\r\n| mv-apply p on \r\n    ( \r\n    extend key = tostring(bag_keys(p)[0])\r\n    | where isnotempty(p[key]) and isnotnull(p[key])\r\n    | where key !in (\"SourceSystem\", \"Type\")\r\n    | summarize make_bag(p)\r\n    )\r\n| project Time=TimeGenerated, Operation=OperationName, Result=ResultSignature, Duration = DurationMs, [\"Details\"]=bag_p\r\n| sort by Time desc",
             "resultFormat": "time_series",
             "workspace": "$ws"
           },
-          "azureMonitor": {
-            "aggOptions": [],
-            "dimensionFilter": "*",
-            "dimensionFilters": [],
-            "metricDefinition": "select",
-            "metricName": "select",
-            "metricNamespace": "select",
-            "resourceGroup": "select",
-            "resourceName": "select",
-            "timeGrain": "auto",
-            "timeGrains": [],
-            "top": "10"
-          },
-          "insightsAnalytics": {
-            "query": "",
-            "resultFormat": "time_series"
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
@@ -2540,17 +2376,19 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 27,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
       {
-        "current": {},
-        "description": null,
-        "error": null,
+        "current": {
+          "selected": false,
+          "text": "Azure Monitor",
+          "value": "azure-monitor-oob"
+        },
         "hide": 0,
         "includeAll": false,
-        "label": "Data Source",
+        "label": "Datasource",
         "multi": false,
         "name": "ds",
         "options": [],
@@ -2562,56 +2400,31 @@
         "type": "datasource"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
-        "definition": "subscriptions()",
-        "description": null,
-        "error": null,
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
         "hide": 0,
         "includeAll": false,
-        "label": "subscription",
+        "label": "Subscription",
         "multi": false,
         "name": "sub",
         "options": [],
-        "query": "subscriptions()",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 5,
-        "tagValuesQuery": "",
-        "tags": [],
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "allValue": null,
-        "current": {},
-        "datasource": "$ds",
-        "definition": "",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Resource Group",
-        "multi": false,
-        "name": "rg",
-        "options": [],
         "query": {
-          "azureResourceGraph": {
-            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.KeyVault/vaults\"\r\n| distinct resourceGroup"
+          "grafanaTemplateVariableFn": {
+            "kind": "SubscriptionsQuery",
+            "rawQuery": "subscriptions()"
           },
-          "queryType": "Azure Resource Graph",
-          "refId": "A",
-          "subscriptions": ["$sub"]
+          "queryType": "Azure Subscriptions",
+          "refId": "A"
         },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -2623,40 +2436,72 @@
           "uid": "${ds}"
         },
         "definition": "",
-        "hide": 2,
+        "hide": 0,
         "includeAll": false,
-        "label": "Namespace",
+        "label": "Resource Group",
         "multi": false,
-        "name": "ns",
+        "name": "rg",
         "options": [],
         "query": {
-          "azureResourceGraph": {
-            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.KeyVault/vaults\"\r\n| distinct [\"type\"]"
+          "grafanaTemplateVariableFn": {
+            "kind": "ResourceGroupsQuery",
+            "rawQuery": "ResourceGroups($sub)",
+            "subscription": "$sub"
           },
-          "queryType": "Azure Resource Graph",
+          "queryType": "Azure Resource Groups",
           "refId": "A",
-          "subscriptions": ["$sub"]
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 5,
-        "type": "query"
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       },
       {
-        "allValue": null,
+        "hide": 2,
+        "label": "Namespace",
+        "name": "ns",
+        "query": "Microsoft.KeyVault/vaults",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "Microsoft.KeyVault/vaults",
+          "text": "Microsoft.KeyVault/vaults",
+          "selected": false
+        },
+        "options": [
+          {
+            "value": "Microsoft.KeyVault/vaults",
+            "text": "Microsoft.KeyVault/vaults",
+            "selected": false
+          }
+        ]
+      },
+      {
         "current": {},
-        "datasource": "$ds",
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
         "definition": "",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": null,
+        "label": "Resource",
         "multi": false,
         "name": "resource",
         "options": [],
         "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "ResourceNamesQuery",
+            "metricNamespace": "$ns",
+            "rawQuery": "ResourceNames($sub, $rg, $ns)",
+            "resourceGroup": "$rg",
+            "subscription": "$sub"
+          },
           "namespace": "$ns",
           "queryType": "Azure Resource Names",
           "refId": "A",
@@ -2668,31 +2513,38 @@
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "$ds",
-        "definition": "Workspaces($sub)",
-        "description": null,
-        "error": null,
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "Workspace",
         "multi": false,
         "name": "ws",
         "options": [],
-        "query": "Workspaces($sub)",
+        "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "WorkspacesQuery",
+            "rawQuery": "Workspaces($sub)",
+            "subscription": "$sub"
+          },
+          "queryType": "Azure Workspaces",
+          "refId": "A",
+          "subscription": "$sub"
+        },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 5,
         "tagValuesQuery": "",
-        "tags": [],
         "tagsQuery": "",
         "type": "query",
         "useTags": false
@@ -2705,7 +2557,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Azure / Insights / Key vaults",
+  "title": "Azure / Insights / Key Vaults",
   "uid": "tQZAMYrMk",
-  "version": 42
+  "version": 43,
+  "weekStart": ""
 }
