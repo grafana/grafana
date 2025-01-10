@@ -4,7 +4,6 @@ import { isNumber } from 'lodash';
 import { NullValueMode } from '../types/data';
 import { Field, FieldCalcs, FieldType } from '../types/dataFrame';
 import { Registry, RegistryItem } from '../utils/Registry';
-import {calculateMidpoint} from "../../../../public/app/plugins/panel/canvas/utils";
 
 export enum ReducerID {
   sum = 'sum',
