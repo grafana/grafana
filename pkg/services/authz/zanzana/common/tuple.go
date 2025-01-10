@@ -43,14 +43,19 @@ const (
 	RelationCreate string = "create"
 	RelationDelete string = "delete"
 
+	RelationGetPermissions string = "get_permissions"
+	RelationSetPermissions string = "set_permissions"
+
 	RelationFolderResourceSetView  string = "resource_" + RelationSetView
 	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
 	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceGet    string = "resource_" + RelationGet
-	RelationFolderResourceUpdate string = "resource_" + RelationUpdate
-	RelationFolderResourceCreate string = "resource_" + RelationCreate
-	RelationFolderResourceDelete string = "resource_" + RelationDelete
+	RelationFolderResourceGet            string = "resource_" + RelationGet
+	RelationFolderResourceUpdate         string = "resource_" + RelationUpdate
+	RelationFolderResourceCreate         string = "resource_" + RelationCreate
+	RelationFolderResourceDelete         string = "resource_" + RelationDelete
+	RelationFolderResourceGetPermissions string = "resource_" + RelationGetPermissions
+	RelationFolderResourceSetPermissions string = "resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -59,6 +64,8 @@ var RelationsGroupResource = []string{
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 }
 
 // RelationsResource are relations that can be added on type "resource".
@@ -66,6 +73,8 @@ var RelationsResource = []string{
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 }
 
 // RelationsFolderResource are relations that can be added on type "folder" for child resources.
@@ -74,6 +83,8 @@ var RelationsFolderResource = []string{
 	RelationFolderResourceUpdate,
 	RelationFolderResourceCreate,
 	RelationFolderResourceDelete,
+	RelationFolderResourceGetPermissions,
+	RelationFolderResourceSetPermissions,
 }
 
 // RelationsFolder are relations that can be added on type "folder".
@@ -83,6 +94,8 @@ var RelationsFolder = append(
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.
@@ -95,14 +108,18 @@ var VerbMapping = map[string]string{
 	utils.VerbPatch:            RelationUpdate,
 	utils.VerbDelete:           RelationDelete,
 	utils.VerbDeleteCollection: RelationDelete,
+	utils.VerbGetPermissions:   RelationGet,
+	utils.VerbSetPermissions:   RelationDelete,
 }
 
 // RelationToVerbMapping is mapping a zanzana relation to k8s verb.
 var RelationToVerbMapping = map[string]string{
-	RelationGet:    utils.VerbGet,
-	RelationCreate: utils.VerbCreate,
-	RelationUpdate: utils.VerbUpdate,
-	RelationDelete: utils.VerbDelete,
+	RelationGet:            utils.VerbGet,
+	RelationCreate:         utils.VerbCreate,
+	RelationUpdate:         utils.VerbUpdate,
+	RelationDelete:         utils.VerbDelete,
+	RelationGetPermissions: utils.VerbGetPermissions,
+	RelationSetPermissions: utils.VerbSetPermissions,
 }
 
 func IsGroupResourceRelation(relation string) bool {
