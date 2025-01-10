@@ -204,6 +204,7 @@ describe('DashboardPage', () => {
   describe('When going into view mode', () => {
     beforeEach(() => {
       setDataSourceSrv({
+        registerRuntimeDataSource: jest.fn(),
         get: jest.fn().mockResolvedValue({ getRef: jest.fn(), query: jest.fn().mockResolvedValue([]) }),
         getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
         getList: jest.fn(),

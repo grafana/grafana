@@ -69,6 +69,7 @@ function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupPa
   ];
 
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     get: datasourceGetter(datasources),
     getInstanceSettings: jest.fn(),
     getList: jest.fn(),
