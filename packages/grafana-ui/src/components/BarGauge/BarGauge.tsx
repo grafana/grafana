@@ -23,6 +23,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
 
+import { withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
 import { clearButtonStyles } from '../Button';
@@ -54,7 +55,7 @@ export interface Props extends Themeable2 {
   namePlacement?: BarGaugeNamePlacement;
 }
 
-export class BarGauge extends PureComponent<Props> {
+class UnThemedBarGauge extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     lcdCellWidth: 12,
     value: {
@@ -219,6 +220,8 @@ export class BarGauge extends PureComponent<Props> {
     );
   }
 }
+
+export const BarGauge = withTheme2(UnThemedBarGauge);
 
 interface CellColors {
   background: string;
