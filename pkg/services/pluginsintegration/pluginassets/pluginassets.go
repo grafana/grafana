@@ -142,7 +142,7 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 	// CDN plugins have the version as part of the URL, which acts as a cache-buster.
 	// Needed due to: https://github.com/grafana/plugin-tools/pull/1426
 	// FS plugins build before this change will have SRI mismatch issues.
-	if s.cdnEnabled(p.ID, p.Class) {
+	if !s.cdnEnabled(p.ID, p.Class) {
 		return "", nil
 	}
 
