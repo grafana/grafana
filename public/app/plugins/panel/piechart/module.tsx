@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
-import { commonOptionsBuilder, TooltipDisplayMode } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui';
+import { optsWithHideZeros } from '@grafana/ui/src/options/builder/tooltip';
 
 import { addStandardDataReduceOptions } from '../stat/common';
 
@@ -57,9 +57,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
         },
       });
 
-    commonOptionsBuilder.addTooltipOptions(builder, false, false, {
-      tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None, hideZeros: false },
-    });
+    commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder, false);
 
     builder.addMultiSelect({

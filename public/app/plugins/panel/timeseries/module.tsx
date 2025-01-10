@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
-import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
-import { commonOptionsBuilder, TooltipDisplayMode } from '@grafana/ui';
+import { commonOptionsBuilder } from '@grafana/ui';
+import { optsWithHideZeros } from '@grafana/ui/src/options/builder/tooltip';
 
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { TimezonesEditor } from './TimezonesEditor';
@@ -13,9 +13,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
-    commonOptionsBuilder.addTooltipOptions(builder, false, true, {
-      tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None, hideZeros: false },
-    });
+    commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
 
     builder.addCustomEditor({
