@@ -5,7 +5,7 @@ import (
 	"fmt"
 	sysruntime "runtime"
 
-	advisorv0alpha1 "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
+	advisor "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/registry/apis/advisor/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -25,11 +25,11 @@ func New(apiBuilderSvcs *models.AdvisorAPIServices) models.Check {
 }
 
 func (c *PluginCheckImpl) Object() runtime.Object {
-	return &advisorv0alpha1.PluginCheck{}
+	return &advisor.PluginCheck{}
 }
 
 func (c *PluginCheckImpl) ObjectList() runtime.Object {
-	return &advisorv0alpha1.PluginCheckList{}
+	return &advisor.PluginCheckList{}
 }
 
 func (c *PluginCheckImpl) Name() string {
@@ -40,10 +40,10 @@ func (c *PluginCheckImpl) Kind() string {
 	return "PluginCheck"
 }
 
-func (c *PluginCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisorv0alpha1.CheckStatus, error) {
+func (c *PluginCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisor.CheckStatus, error) {
 	ps := c.pluginStore.Plugins(ctx)
 
-	dsErrs := []advisorv0alpha1.CheckError{}
+	dsErrs := []advisor.CheckError{}
 	for _, p := range ps {
 		// Check if plugin is deprecated
 		i, err := c.pluginRepo.PluginInfo(ctx, p.ID)
@@ -51,7 +51,7 @@ func (c *PluginCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisor
 			continue
 		}
 		if i.Status == "deprecated" {
-			dsErrs = append(dsErrs, advisorv0alpha1.CheckError{
+			dsErrs = append(dsErrs, advisor.CheckError{
 				Type:   "Investigation recommended",
 				Reason: fmt.Sprintf("Plugin deprecated: %s", p.ID),
 				Action: "Look for alternatives",
@@ -64,7 +64,7 @@ func (c *PluginCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisor
 			continue
 		}
 		if info.Version != p.Info.Version { // TODO: Improve check for newer version
-			dsErrs = append(dsErrs, advisorv0alpha1.CheckError{
+			dsErrs = append(dsErrs, advisor.CheckError{
 				Type:   "Action recommended",
 				Reason: fmt.Sprintf("Newer version available: %s", p.ID),
 				Action: "Update plugin",
@@ -72,7 +72,7 @@ func (c *PluginCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisor
 		}
 	}
 
-	return &advisorv0alpha1.CheckStatus{
+	return &advisor.CheckStatus{
 		Errors: dsErrs,
 		Count:  len(ps),
 	}, nil

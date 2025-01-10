@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	advisorv0alpha1 "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
+	advisor "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/advisor/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -30,11 +30,11 @@ func New(apiBuilderSvcs *models.AdvisorAPIServices) models.Check {
 }
 
 func (c *DatasourceCheckImpl) Object() runtime.Object {
-	return &advisorv0alpha1.DatasourceCheck{}
+	return &advisor.DatasourceCheck{}
 }
 
 func (c *DatasourceCheckImpl) ObjectList() runtime.Object {
-	return &advisorv0alpha1.DatasourceCheckList{}
+	return &advisor.DatasourceCheckList{}
 }
 
 func (c *DatasourceCheckImpl) Name() string {
@@ -45,8 +45,9 @@ func (c *DatasourceCheckImpl) Kind() string {
 	return "DatasourceCheck"
 }
 
-func (c *DatasourceCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisorv0alpha1.CheckStatus, error) {
-	d, ok := obj.(*advisorv0alpha1.DatasourceCheck)
+func (c *DatasourceCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisor.CheckStatus, error) {
+	// Optionally read the check input encoded in the object
+	d, ok := obj.(*advisor.DatasourceCheck)
 	if !ok {
 		return nil, fmt.Errorf("invalid object type")
 	}
@@ -57,12 +58,12 @@ func (c *DatasourceCheckImpl) Run(ctx context.Context, obj runtime.Object) (*adv
 		return nil, err
 	}
 
-	dsErrs := []advisorv0alpha1.CheckError{}
+	dsErrs := []advisor.CheckError{}
 	for _, ds := range dss {
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, advisorv0alpha1.CheckError{
+			dsErrs = append(dsErrs, advisor.CheckError{
 				Type:   "Investigation recommended",
 				Reason: fmt.Sprintf("Invalid UID: %s", ds.UID),
 				Action: "Change UID",
@@ -99,7 +100,7 @@ func (c *DatasourceCheckImpl) Run(ctx context.Context, obj runtime.Object) (*adv
 		}
 
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, advisorv0alpha1.CheckError{
+			dsErrs = append(dsErrs, advisor.CheckError{
 				Type:   "Action recommended",
 				Reason: fmt.Sprintf("Health check failed: %s", ds.Name),
 				Action: "Check datasource",
@@ -107,7 +108,7 @@ func (c *DatasourceCheckImpl) Run(ctx context.Context, obj runtime.Object) (*adv
 		}
 	}
 
-	return &advisorv0alpha1.CheckStatus{
+	return &advisor.CheckStatus{
 		Errors: dsErrs,
 		Count:  len(dss),
 	}, nil
