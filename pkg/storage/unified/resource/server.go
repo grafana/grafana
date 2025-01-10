@@ -29,6 +29,7 @@ import (
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
+	RepositoryIndexServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -1073,9 +1074,12 @@ func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResp
 	return s.search.History(ctx, req)
 }
 
-// Origin implements ResourceServer.
-func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	return s.search.Origin(ctx, req)
+func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return s.search.ListRepositoryObjects(ctx, req)
+}
+
+func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return s.search.CountRepositoryObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

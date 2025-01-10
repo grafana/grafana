@@ -389,7 +389,6 @@ const (
 	ResourceIndex_Search_FullMethodName   = "/resource.ResourceIndex/Search"
 	ResourceIndex_GetStats_FullMethodName = "/resource.ResourceIndex/GetStats"
 	ResourceIndex_History_FullMethodName  = "/resource.ResourceIndex/History"
-	ResourceIndex_Origin_FullMethodName   = "/resource.ResourceIndex/Origin"
 )
 
 // ResourceIndexClient is the client API for ResourceIndex service.
@@ -404,8 +403,6 @@ type ResourceIndexClient interface {
 	GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error)
 	// Show resource history (and trash)
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
-	// Used for efficient provisioning
-	Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error)
 }
 
 type resourceIndexClient struct {
@@ -446,16 +443,6 @@ func (c *resourceIndexClient) History(ctx context.Context, in *HistoryRequest, o
 	return out, nil
 }
 
-func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(OriginResponse)
-	err := c.cc.Invoke(ctx, ResourceIndex_Origin_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ResourceIndexServer is the server API for ResourceIndex service.
 // All implementations should embed UnimplementedResourceIndexServer
 // for forward compatibility
@@ -468,8 +455,6 @@ type ResourceIndexServer interface {
 	GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error)
 	// Show resource history (and trash)
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
-	// Used for efficient provisioning
-	Origin(context.Context, *OriginRequest) (*OriginResponse, error)
 }
 
 // UnimplementedResourceIndexServer should be embedded to have forward compatible implementations.
@@ -484,9 +469,6 @@ func (UnimplementedResourceIndexServer) GetStats(context.Context, *ResourceStats
 }
 func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
-}
-func (UnimplementedResourceIndexServer) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Origin not implemented")
 }
 
 // UnsafeResourceIndexServer may be embedded to opt out of forward compatibility for this service.
@@ -554,24 +536,6 @@ func _ResourceIndex_History_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ResourceIndex_Origin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(OriginRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResourceIndexServer).Origin(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ResourceIndex_Origin_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).Origin(ctx, req.(*OriginRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ResourceIndex_ServiceDesc is the grpc.ServiceDesc for ResourceIndex service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -591,9 +555,142 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "History",
 			Handler:    _ResourceIndex_History_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "resource.proto",
+}
+
+const (
+	RepositoryIndex_CountRepositoryObjects_FullMethodName = "/resource.RepositoryIndex/CountRepositoryObjects"
+	RepositoryIndex_ListRepositoryObjects_FullMethodName  = "/resource.RepositoryIndex/ListRepositoryObjects"
+)
+
+// RepositoryIndexClient is the client API for RepositoryIndex service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Query repository info from the search index.
+// Results access control is based on access to the repository *not* the items
+type RepositoryIndexClient interface {
+	// Describe how many resources of each type exist within a repository
+	CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error)
+	// List the resources of a specific kind within a repository
+	ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error)
+}
+
+type repositoryIndexClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRepositoryIndexClient(cc grpc.ClientConnInterface) RepositoryIndexClient {
+	return &repositoryIndexClient{cc}
+}
+
+func (c *repositoryIndexClient) CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CountRepositoryObjectsResponse)
+	err := c.cc.Invoke(ctx, RepositoryIndex_CountRepositoryObjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *repositoryIndexClient) ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRepositoryObjectsResponse)
+	err := c.cc.Invoke(ctx, RepositoryIndex_ListRepositoryObjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RepositoryIndexServer is the server API for RepositoryIndex service.
+// All implementations should embed UnimplementedRepositoryIndexServer
+// for forward compatibility
+//
+// Query repository info from the search index.
+// Results access control is based on access to the repository *not* the items
+type RepositoryIndexServer interface {
+	// Describe how many resources of each type exist within a repository
+	CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error)
+	// List the resources of a specific kind within a repository
+	ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
+}
+
+// UnimplementedRepositoryIndexServer should be embedded to have forward compatible implementations.
+type UnimplementedRepositoryIndexServer struct {
+}
+
+func (UnimplementedRepositoryIndexServer) CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CountRepositoryObjects not implemented")
+}
+func (UnimplementedRepositoryIndexServer) ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRepositoryObjects not implemented")
+}
+
+// UnsafeRepositoryIndexServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RepositoryIndexServer will
+// result in compilation errors.
+type UnsafeRepositoryIndexServer interface {
+	mustEmbedUnimplementedRepositoryIndexServer()
+}
+
+func RegisterRepositoryIndexServer(s grpc.ServiceRegistrar, srv RepositoryIndexServer) {
+	s.RegisterService(&RepositoryIndex_ServiceDesc, srv)
+}
+
+func _RepositoryIndex_CountRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountRepositoryObjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryIndex_CountRepositoryObjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, req.(*CountRepositoryObjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryIndex_ListRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRepositoryObjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryIndex_ListRepositoryObjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, req.(*ListRepositoryObjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RepositoryIndex_ServiceDesc is the grpc.ServiceDesc for RepositoryIndex service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RepositoryIndex_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.RepositoryIndex",
+	HandlerType: (*RepositoryIndexServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Origin",
-			Handler:    _ResourceIndex_Origin_Handler,
+			MethodName: "CountRepositoryObjects",
+			Handler:    _RepositoryIndex_CountRepositoryObjects_Handler,
+		},
+		{
+			MethodName: "ListRepositoryObjects",
+			Handler:    _RepositoryIndex_ListRepositoryObjects_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

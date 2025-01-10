@@ -11,7 +11,7 @@
   "title_sort": "test aaa",
   "created": 1706690655000,
   "createdBy": "user:abc",
-  "repository": {
+  "repo": {
     "name": "SQL"
   }
 }
