@@ -114,7 +114,7 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('shows correct options for log query', async () => {
-    setup({ expr: '{foo="bar"}' });
+    setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Backward });
     expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Direction: Backward')).toBeInTheDocument();
@@ -265,7 +265,9 @@ describe('LokiQueryBuilderOptions', () => {
         });
       });
       it('subscribes to sort change event and updates the direction', () => {
-        setup({ expr: '{foo="bar"}' }, onChangeMock, { app: undefined });
+        setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Backward }, onChangeMock, {
+          app: CoreApp.Dashboard,
+        });
         expect(screen.getByText(/Direction: Backward/)).toBeInTheDocument();
         listener(
           new LogSortOrderChangeEvent({
@@ -281,7 +283,7 @@ describe('LokiQueryBuilderOptions', () => {
       });
 
       it('does not change the direction when the current direction is scan', () => {
-        setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Scan }, onChangeMock, { app: undefined });
+        setup({ expr: '{foo="bar"}', direction: LokiQueryDirection.Scan }, onChangeMock, { app: CoreApp.Dashboard });
         expect(screen.getByText(/Direction: Scan/)).toBeInTheDocument();
         listener(
           new LogSortOrderChangeEvent({
