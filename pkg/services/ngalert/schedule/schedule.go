@@ -361,6 +361,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
 	}
 
+	readyToRun = sch.buildSequences(readyToRun)
+
 	slices.SortFunc(readyToRun, func(a, b readyToRunItem) int {
 		return strings.Compare(a.rule.UID, b.rule.UID)
 	})

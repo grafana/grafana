@@ -344,7 +344,10 @@ func (a *alertRule) Run() error {
 					}
 				}
 			}()
-
+			if ctx.afterEval != nil {
+				logger.Debug("Calling afterEval")
+				ctx.afterEval()
+			}
 		case <-grafanaCtx.Done():
 			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
 			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
