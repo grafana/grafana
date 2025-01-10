@@ -43,9 +43,11 @@ type ResourceIndex interface {
 	// When working with federated queries, the additional indexes will be passed in explicitly
 	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
 
-	// Execute an origin query -- access control is not not checked for each item
-	// NOTE: this will likely be used for provisioning, or it will be removed
-	Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error)
+	// List within an response
+	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
+
+	// Counts the values in a repo
+	CountRepositoryObjects(ctx context.Context) (map[string]int64, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
@@ -93,7 +95,8 @@ type searchSupport struct {
 }
 
 var (
-	_ ResourceIndexServer = (*searchSupport)(nil)
+	_ ResourceIndexServer   = (*searchSupport)(nil)
+	_ RepositoryIndexServer = (*searchSupport)(nil)
 )
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
@@ -131,12 +134,25 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.A
 
 // History implements ResourceIndexServer.
 func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
-	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
+	return nil, fmt.Errorf("not implemented yet... likely should not be the search server")
 }
 
-// Origin implements ResourceIndexServer.
-func (s *searchSupport) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
-	return nil, fmt.Errorf("TBD.. rename to repository")
+func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
+		Group:     req.Key.Group,
+		Namespace: req.Key.Namespace,
+		Resource:  req.Key.Resource,
+	})
+	if err != nil {
+		return &ListRepositoryObjectsResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+	return idx.ListRepositoryObjects(ctx, req)
+}
+
+func (s *searchSupport) CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("not implemented yet... requires iterating kinds")
 }
 
 // Search implements ResourceIndexServer.
