@@ -137,7 +137,7 @@ func (s *Service) DBMigration(db db.DB) {
 	s.log.Debug("syncing dashboard and folder tables finished")
 }
 
-func (s *Service) FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (s *Service) FindFolders(ctx context.Context, query *folder.FindPersistedFoldersQuery) ([]folder.FolderSearchProjection, error) {
 	return s.store.FindFolders(ctx, query)
 }
 

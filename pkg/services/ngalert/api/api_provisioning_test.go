@@ -1964,8 +1964,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 
 	ruleAuthz := &fakes.FakeRuleService{}
 
-	features := featuremgmt.WithFeatures()
-
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,

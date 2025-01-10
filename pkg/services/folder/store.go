@@ -2,8 +2,6 @@ package folder
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type GetFoldersFromStoreQuery struct {
@@ -52,5 +50,5 @@ type Store interface {
 	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*Folder, error)
 
 	// FindFolders returns the folders which match the conditions set by the query argument.
-	FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error)
+	FindFolders(ctx context.Context, query *FindPersistedFoldersQuery) ([]FolderSearchProjection, error)
 }

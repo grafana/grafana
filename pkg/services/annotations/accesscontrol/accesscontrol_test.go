@@ -44,14 +44,15 @@ func TestIntegrationAuthorize(t *testing.T) {
 	defer func() { guardian.New = origNewDashboardGuardian }()
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
-	fStore := folderimpl.ProvideStore(sql)
-	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
+	features := featuremgmt.WithFeatures()
+	fStore := folderimpl.ProvideStore(sql, features)
+	dashStore, err := database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql))
 	require.NoError(t, err)
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderSvc := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
+		dashStore, folderStore, sql, features,
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
 	require.NoError(t, err)
 

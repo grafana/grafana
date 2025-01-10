@@ -15,10 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -540,8 +541,120 @@ func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFr
 	return folders, nil
 }
 
-func (ss *FolderStoreImpl) FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	return database.FindDashboardsAndFolders(ctx, query, ss.db, ss.features)
+func (ss *FolderStoreImpl) FindFolders(ctx context.Context, query *folder.FindPersistedFoldersQuery) ([]folder.FolderSearchProjection, error) {
+	dashboardQuery := dashboards.FindPersistedDashboardsQuery{
+		Title: query.Title,
+		OrgId: query.OrgId,
+		// #TODO fill in the rest
+	}
+
+	dp, err := FindDashboardFolders(ctx, &dashboardQuery, ss.db, ss.features)
+	if err != nil {
+		return nil, err
+	}
+
+	dashProjection := []folder.FolderSearchProjection{}
+	for _, p := range dp {
+		dp := folder.FolderSearchProjection{
+			ID:  p.ID,
+			UID: p.UID,
+			// #TODO fill in the rest
+		}
+		dashProjection = append(dashProjection, dp)
+	}
+	return dashProjection, nil
+}
+
+func FindDashboardFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, d db.DB, ft featuremgmt.FeatureToggles) ([]dashboards.DashboardSearchProjection, error) {
+	recursiveQueriesAreSupported, err := d.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	filters := []any{}
+
+	for _, filter := range query.Sort.Filter {
+		filters = append(filters, filter)
+	}
+
+	filters = append(filters, query.Filters...)
+
+	var orgID int64
+	if query.OrgId != 0 {
+		orgID = query.OrgId
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
+	} else if query.SignedInUser.GetOrgID() != 0 {
+		orgID = query.SignedInUser.GetOrgID()
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
+	}
+
+	if len(query.Tags) > 0 {
+		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
+	}
+
+	if len(query.DashboardUIDs) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{UIDs: query.DashboardUIDs})
+	} else if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
+	}
+
+	if len(query.Title) > 0 {
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.GetDialect(), Title: query.Title})
+	}
+
+	if len(query.Type) > 0 {
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.GetDialect(), Type: query.Type})
+	}
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+	// nolint:staticcheck
+	if len(query.FolderIds) > 0 {
+		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
+	}
+
+	if len(query.FolderUIDs) > 0 {
+		filters = append(filters, searchstore.FolderUIDFilter{
+			Dialect:              d.GetDialect(),
+			OrgID:                orgID,
+			UIDs:                 query.FolderUIDs,
+			NestedFoldersEnabled: ft.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+		})
+	}
+
+	// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
+	if query.SignedInUser == nil || !query.SignedInUser.IsIdentityType(claims.TypeServiceAccount) {
+		filters = append(filters, searchstore.K6FolderFilter{})
+	}
+
+	if !query.SkipAccessControlFilter {
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, ft, recursiveQueriesAreSupported))
+	}
+
+	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
+
+	var res []dashboards.DashboardSearchProjection
+	sb := &searchstore.Builder{Dialect: d.GetDialect(), Filters: filters, Features: ft}
+
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	sql, params := sb.ToSQL(limit, page)
+
+	err = d.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(sql, params...).Find(&res)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {

@@ -2,10 +2,6 @@ package folder
 
 import (
 	"context"
-
-	// #TODO move dashboards.FindPersistedDashboardsQuery and dashboards.DashboardSearchProjection to
-	// a new package which both dashboards and folders can import
-	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type Service interface {
@@ -39,7 +35,7 @@ type Service interface {
 	// If FullpathUIDs is true it computes a string that contains the UIDs of all parent folders separated by slash.
 	GetFolders(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
 	GetDescendantCounts(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
-	FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error)
+	FindFolders(ctx context.Context, query *FindPersistedFoldersQuery) ([]FolderSearchProjection, error)
 }
 
 // FolderStore is a folder store.

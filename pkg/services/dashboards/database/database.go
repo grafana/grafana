@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	"go.opentelemetry.io/otel"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -28,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboard/database")
@@ -840,14 +839,10 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 }
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	return FindDashboardsAndFolders(ctx, query, d.store, d.features)
-}
-
-func FindDashboardsAndFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, d db.DB, ft featuremgmt.FeatureToggles) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.FindDashboards")
 	defer span.End()
 
-	recursiveQueriesAreSupported, err := d.RecursiveQueriesAreSupported()
+	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
 	}
@@ -880,11 +875,11 @@ func FindDashboardsAndFolders(ctx context.Context, query *dashboards.FindPersist
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: d.GetDialect(), Title: query.Title})
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {
-		filters = append(filters, searchstore.TypeFilter{Dialect: d.GetDialect(), Type: query.Type})
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.GetDialect(), Type: query.Type})
 	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
@@ -894,10 +889,10 @@ func FindDashboardsAndFolders(ctx context.Context, query *dashboards.FindPersist
 
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              d.GetDialect(),
+			Dialect:              d.store.GetDialect(),
 			OrgID:                orgID,
 			UIDs:                 query.FolderUIDs,
-			NestedFoldersEnabled: ft.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
 		})
 	}
 
@@ -907,13 +902,13 @@ func FindDashboardsAndFolders(ctx context.Context, query *dashboards.FindPersist
 	}
 
 	if !query.SkipAccessControlFilter {
-		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, ft, recursiveQueriesAreSupported))
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
 	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 
 	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: d.GetDialect(), Filters: filters, Features: ft}
+	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
 
 	limit := query.Limit
 	if limit < 1 {
@@ -927,7 +922,7 @@ func FindDashboardsAndFolders(ctx context.Context, query *dashboards.FindPersist
 
 	sql, params := sb.ToSQL(limit, page)
 
-	err = d.WithDbSession(ctx, func(sess *db.Session) error {
+	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})
 

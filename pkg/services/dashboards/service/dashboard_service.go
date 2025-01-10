@@ -1032,7 +1032,26 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 
 	// This is the key part which ensures all queries for folders go through folder service.
 	if (query.Type == searchstore.TypeFolder) || (query.Type == searchstore.TypeAlertFolder) {
-		return dr.folderService.FindFolders(ctx, query)
+		folderQuery := folder.FindPersistedFoldersQuery{
+			Title: query.Title,
+			OrgId: query.OrgId,
+			// #TODO fill in the rest
+		}
+		fp, err := dr.folderService.FindFolders(ctx, &folderQuery)
+		if err != nil {
+			return nil, err
+		}
+
+		dashProjection := []dashboards.DashboardSearchProjection{}
+		for _, p := range fp {
+			dp := dashboards.DashboardSearchProjection{
+				ID:  p.ID,
+				UID: p.UID,
+				// #TODO fill in the rest
+			}
+			dashProjection = append(dashProjection, dp)
+		}
+		return dashProjection, nil
 	}
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }

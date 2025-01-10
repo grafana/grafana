@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -220,3 +221,45 @@ type GetDescendantCountsQuery struct {
 }
 
 type DescendantCounts map[string]int64
+
+type FindPersistedFoldersQuery struct {
+	Title         string
+	OrgId         int64
+	SignedInUser  identity.Requester
+	DashboardIds  []int64
+	DashboardUIDs []string
+	Type          string
+	// Deprecated: use FolderUIDs instead
+	FolderIds  []int64
+	FolderUIDs []string
+	Tags       []string
+	Limit      int64
+	Page       int64
+	Permission dashboardaccess.PermissionType
+	Sort       model.SortOption
+	IsDeleted  bool
+
+	Filters []any
+
+	// Skip access control checks. This field is used by OpenFGA search implementation.
+	// Should not be used anywhere else.
+	SkipAccessControlFilter bool
+}
+
+type FolderSearchProjection struct {
+	ID       int64  `xorm:"id"`
+	UID      string `xorm:"uid"`
+	OrgID    int64  `xorm:"org_id"`
+	Title    string
+	Slug     string
+	Term     string
+	IsFolder bool
+	// Deprecated: use FolderUID instead
+	FolderID    int64  `xorm:"folder_id"`
+	FolderUID   string `xorm:"folder_uid"`
+	FolderSlug  string
+	FolderTitle string
+	SortMeta    int64
+	Tags        []string
+	Deleted     *time.Time
+}

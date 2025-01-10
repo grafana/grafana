@@ -2,8 +2,6 @@ package folder
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type fakeStore struct {
@@ -65,7 +63,7 @@ func (f *fakeStore) GetDescendants(ctx context.Context, orgID int64, ancestor_ui
 	return f.ExpectedFolders, f.ExpectedError
 }
 
-func (s *fakeStore) FindFolders(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (f *fakeStore) FindFolders(ctx context.Context, query *FindPersistedFoldersQuery) ([]FolderSearchProjection, error) {
 	// #TODO figure out what the implementation of this method should be for the fake store
 	return nil, nil
 }
