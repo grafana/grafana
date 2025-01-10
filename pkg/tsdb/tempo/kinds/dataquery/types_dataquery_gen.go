@@ -52,13 +52,15 @@ type TempoQuery struct {
 	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
 	// The type of the table that is used to display the search results
 	TableType *SearchTableType `json:"tableType,omitempty"`
+	// For metric queries, the step size to use
+	Step *string `json:"step,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource any `json:"datasource,omitempty"`
-	// For metric queries, the step size to use
-	Step *string `json:"step,omitempty"`
+	// For metric queries, how many exemplars to request, 0 means no exemplars
+	Exemplars *int64 `json:"exemplars,omitempty"`
 }
 
 // NewTempoQuery creates a new TempoQuery object.
