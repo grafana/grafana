@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 
@@ -435,6 +436,51 @@ func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]
 		descendantsMap[uid] = nodes[uid]
 		getDescendants(nodes, tree, uid, descendantsMap)
 	}
+}
+
+func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
+	// create a new context - prevents issues when the request stems from the k8s api itself
+	// otherwise the context goes through the handlers twice and causes issues
+	newCtx, cancel, err := ss.getK8sContext(ctx)
+	if err != nil {
+		return nil, err
+	} else if cancel != nil {
+		defer cancel()
+	}
+
+	client, ok := ss.k8sclient.getClient(newCtx, orgID)
+	if !ok {
+		return nil, nil
+	}
+
+	counts, err := client.Get(newCtx, ancestor_uid, v1.GetOptions{}, "counts")
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := toFolderLegacyCounts(counts)
+	return *res, err
+}
+
+func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
+	ds, err := v0alpha1.UnstructuredToDescendantCounts(u)
+	if err != nil {
+		return nil, err
+	}
+
+	var out = make(folder.DescendantCounts)
+	for _, v := range ds.Counts {
+		// if stats come from unified storage, we will use them
+		if v.Group != "sql-fallback" {
+			out[v.Resource] = v.Count
+			continue
+		}
+		// if stats are from single tenant DB and they are not in unified storage, we will use them
+		if _, ok := out[v.Resource]; !ok {
+			out[v.Resource] = v.Count
+		}
+	}
+	return &out, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) getK8sContext(ctx context.Context) (context.Context, context.CancelFunc, error) {
