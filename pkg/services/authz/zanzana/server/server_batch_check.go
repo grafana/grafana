@@ -13,7 +13,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	ctx, span := tracer.Start(ctx, "authzServer.BatchCheck")
 	defer span.End()
 
-	if err := authorize(ctx, r); err != nil {
+	if err := authorize(ctx, r.GetNamespace()); err != nil {
 		return nil, err
 	}
 

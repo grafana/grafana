@@ -15,7 +15,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	ctx, span := tracer.Start(ctx, "authzServer.Check")
 	defer span.End()
 
-	if err := authorize(ctx, r); err != nil {
+	if err := authorize(ctx, r.GetNamespace()); err != nil {
 		return nil, err
 	}
 

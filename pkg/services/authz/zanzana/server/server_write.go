@@ -13,7 +13,7 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	ctx, span := tracer.Start(ctx, "authzServer.Write")
 	defer span.End()
 
-	if err := authorize(ctx, req); err != nil {
+	if err := authorize(ctx, req.GetNamespace()); err != nil {
 		return nil, err
 	}
 
