@@ -44,7 +44,7 @@ type ResourceIndex interface {
 	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
 
 	// List within an response
-	ListRepositoryObjects(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error)
+	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
 
 	// Count the values in a repo
 	CountRepositoryObjects(ctx context.Context) (map[string]int64, error)
@@ -137,21 +137,21 @@ func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryRespo
 	return nil, fmt.Errorf("not implemented yet... likely should not be the search server")
 }
 
-func (s *searchSupport) RepositoryList(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error) {
+func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
 	idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
 		Group:     req.Key.Group,
 		Namespace: req.Key.Namespace,
 		Resource:  req.Key.Resource,
 	})
 	if err != nil {
-		return &RepositoryListResponse{
+		return &ListRepositoryObjectsResponse{
 			Error: AsErrorResult(err),
 		}, nil
 	}
 	return idx.ListRepositoryObjects(ctx, req)
 }
 
-func (s *searchSupport) RepositoryStats(context.Context, *RepositoryStatsRequest) (*RepositoryStatsResponse, error) {
+func (s *searchSupport) CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented yet... requires iterating kinds")
 }
 

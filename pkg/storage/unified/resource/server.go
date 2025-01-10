@@ -1074,12 +1074,12 @@ func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResp
 	return s.search.History(ctx, req)
 }
 
-func (s *server) RepositoryList(ctx context.Context, req *RepositoryListRequest) (*RepositoryListResponse, error) {
-	return s.search.RepositoryList(ctx, req)
+func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return s.search.ListRepositoryObjects(ctx, req)
 }
 
-func (s *server) RepositoryStats(ctx context.Context, req *RepositoryStatsRequest) (*RepositoryStatsResponse, error) {
-	return s.search.RepositoryStats(ctx, req)
+func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return s.search.CountRepositoryObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

@@ -245,7 +245,7 @@ func (b *bleveIndex) Flush() (err error) {
 	return err
 }
 
-func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
+func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
@@ -309,9 +309,9 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Re
 		return 0
 	}
 
-	rsp := &resource.RepositoryListResponse{}
+	rsp := &resource.ListRepositoryObjectsResponse{}
 	for _, hit := range found.Hits {
-		item := &resource.RepositoryListResponse_Item{
+		item := &resource.ListRepositoryObjectsResponse_Item{
 			Object: &resource.ResourceKey{},
 			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
 			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),

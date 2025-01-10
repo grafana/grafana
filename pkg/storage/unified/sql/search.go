@@ -63,11 +63,11 @@ func (b *backend) History(context.Context, *resource.HistoryRequest) (*resource.
 	}, nil
 }
 
-func (b *backend) RepositoryList(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
+func (b *backend) RepositoryList(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
 	return nil, fmt.Errorf("SQL backend does not implement RepositoryList")
 }
 
-func (b *backend) RepositoryStats(context.Context, *resource.RepositoryStatsRequest) (*resource.RepositoryStatsResponse, error) {
+func (b *backend) RepositoryStats(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
 	return nil, fmt.Errorf("SQL backend does not implement RepositoryStats")
 }
 

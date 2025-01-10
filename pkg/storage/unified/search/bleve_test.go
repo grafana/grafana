@@ -218,7 +218,7 @@ func TestBleveBackend(t *testing.T) {
 		})
 
 		// Now look for repositories
-		found, err := index.ListRepositoryObjects(ctx, &resource.RepositoryListRequest{
+		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
 			Name:  "repo-1",
 			Limit: 100,
 		})

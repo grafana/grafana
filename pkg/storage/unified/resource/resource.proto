@@ -472,7 +472,7 @@ message HistoryResponse {
 
 // List items within a resource type & repository name
 // Access control is managed above this request
-message RepositoryListRequest {
+message ListRepositoryObjectsRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
@@ -486,7 +486,7 @@ message RepositoryListRequest {
   int64 limit = 4;
 }
 
-message RepositoryListResponse {
+message ListRepositoryObjectsResponse {
   message Item {
     // The resource object key
     ResourceKey object = 1;
@@ -518,7 +518,7 @@ message RepositoryListResponse {
 }
 
 // Count the items that exist with
-message RepositoryStatsRequest {
+message CountRepositoryObjectsRequest {
   // Namespace (tenant)
   string namespace = 1;
   
@@ -528,7 +528,7 @@ message RepositoryStatsRequest {
 }
 
 // Count the items that exist with
-message RepositoryStatsResponse {
+message CountRepositoryObjectsResponse {
   message KindCount {
     string group = 1;
     string resource = 2;
@@ -802,10 +802,10 @@ service ResourceIndex {
 // Results access control is based on access to the repository *not* the items
 service RepositoryIndex {
   // Describe how many resources of each type exist within a repository
-  rpc RepositoryStats(RepositoryStatsRequest) returns (RepositoryStatsResponse);
+  rpc CountRepositoryObjects(CountRepositoryObjectsRequest) returns (CountRepositoryObjectsResponse);
 
   // List the resources of a specific kind within a repository
-  rpc RepositoryList(RepositoryListRequest) returns (RepositoryListResponse);
+  rpc ListRepositoryObjects(ListRepositoryObjectsRequest) returns (ListRepositoryObjectsResponse);
 }
 
 service BlobStore {

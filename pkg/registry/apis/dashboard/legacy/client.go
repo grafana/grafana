@@ -57,12 +57,12 @@ func (d *directResourceClient) List(ctx context.Context, in *resource.ListReques
 	return d.server.List(ctx, in)
 }
 
-func (d *directResourceClient) RepositoryList(ctx context.Context, in *resource.RepositoryListRequest, opts ...grpc.CallOption) (*resource.RepositoryListResponse, error) {
-	return d.server.RepositoryList(ctx, in)
+func (d *directResourceClient) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
+	return d.server.ListRepositoryObjects(ctx, in)
 }
 
-func (d *directResourceClient) RepositoryStats(ctx context.Context, in *resource.RepositoryStatsRequest, opts ...grpc.CallOption) (*resource.RepositoryStatsResponse, error) {
-	return d.server.RepositoryStats(ctx, in)
+func (d *directResourceClient) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
+	return d.server.CountRepositoryObjects(ctx, in)
 }
 
 // PutBlob implements ResourceClient.

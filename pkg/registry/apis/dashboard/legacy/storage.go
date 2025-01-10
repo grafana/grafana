@@ -330,11 +330,11 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	return list, err
 }
 
-func (a *dashboardSqlAccess) RepositoryList(ctx context.Context, req *resource.RepositoryListRequest) (*resource.RepositoryListResponse, error) {
+func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (a *dashboardSqlAccess) RepositoryStats(context.Context, *resource.RepositoryStatsRequest) (*resource.RepositoryStatsResponse, error) {
+func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

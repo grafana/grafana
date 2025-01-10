@@ -561,8 +561,8 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	RepositoryIndex_RepositoryStats_FullMethodName = "/resource.RepositoryIndex/RepositoryStats"
-	RepositoryIndex_RepositoryList_FullMethodName  = "/resource.RepositoryIndex/RepositoryList"
+	RepositoryIndex_CountRepositoryObjects_FullMethodName = "/resource.RepositoryIndex/CountRepositoryObjects"
+	RepositoryIndex_ListRepositoryObjects_FullMethodName  = "/resource.RepositoryIndex/ListRepositoryObjects"
 )
 
 // RepositoryIndexClient is the client API for RepositoryIndex service.
@@ -573,9 +573,9 @@ const (
 // Results access control is based on access to the repository *not* the items
 type RepositoryIndexClient interface {
 	// Describe how many resources of each type exist within a repository
-	RepositoryStats(ctx context.Context, in *RepositoryStatsRequest, opts ...grpc.CallOption) (*RepositoryStatsResponse, error)
+	CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error)
 	// List the resources of a specific kind within a repository
-	RepositoryList(ctx context.Context, in *RepositoryListRequest, opts ...grpc.CallOption) (*RepositoryListResponse, error)
+	ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error)
 }
 
 type repositoryIndexClient struct {
@@ -586,20 +586,20 @@ func NewRepositoryIndexClient(cc grpc.ClientConnInterface) RepositoryIndexClient
 	return &repositoryIndexClient{cc}
 }
 
-func (c *repositoryIndexClient) RepositoryStats(ctx context.Context, in *RepositoryStatsRequest, opts ...grpc.CallOption) (*RepositoryStatsResponse, error) {
+func (c *repositoryIndexClient) CountRepositoryObjects(ctx context.Context, in *CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*CountRepositoryObjectsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RepositoryStatsResponse)
-	err := c.cc.Invoke(ctx, RepositoryIndex_RepositoryStats_FullMethodName, in, out, cOpts...)
+	out := new(CountRepositoryObjectsResponse)
+	err := c.cc.Invoke(ctx, RepositoryIndex_CountRepositoryObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *repositoryIndexClient) RepositoryList(ctx context.Context, in *RepositoryListRequest, opts ...grpc.CallOption) (*RepositoryListResponse, error) {
+func (c *repositoryIndexClient) ListRepositoryObjects(ctx context.Context, in *ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*ListRepositoryObjectsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RepositoryListResponse)
-	err := c.cc.Invoke(ctx, RepositoryIndex_RepositoryList_FullMethodName, in, out, cOpts...)
+	out := new(ListRepositoryObjectsResponse)
+	err := c.cc.Invoke(ctx, RepositoryIndex_ListRepositoryObjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -614,20 +614,20 @@ func (c *repositoryIndexClient) RepositoryList(ctx context.Context, in *Reposito
 // Results access control is based on access to the repository *not* the items
 type RepositoryIndexServer interface {
 	// Describe how many resources of each type exist within a repository
-	RepositoryStats(context.Context, *RepositoryStatsRequest) (*RepositoryStatsResponse, error)
+	CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error)
 	// List the resources of a specific kind within a repository
-	RepositoryList(context.Context, *RepositoryListRequest) (*RepositoryListResponse, error)
+	ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
 }
 
 // UnimplementedRepositoryIndexServer should be embedded to have forward compatible implementations.
 type UnimplementedRepositoryIndexServer struct {
 }
 
-func (UnimplementedRepositoryIndexServer) RepositoryStats(context.Context, *RepositoryStatsRequest) (*RepositoryStatsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RepositoryStats not implemented")
+func (UnimplementedRepositoryIndexServer) CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CountRepositoryObjects not implemented")
 }
-func (UnimplementedRepositoryIndexServer) RepositoryList(context.Context, *RepositoryListRequest) (*RepositoryListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RepositoryList not implemented")
+func (UnimplementedRepositoryIndexServer) ListRepositoryObjects(context.Context, *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRepositoryObjects not implemented")
 }
 
 // UnsafeRepositoryIndexServer may be embedded to opt out of forward compatibility for this service.
@@ -641,38 +641,38 @@ func RegisterRepositoryIndexServer(s grpc.ServiceRegistrar, srv RepositoryIndexS
 	s.RegisterService(&RepositoryIndex_ServiceDesc, srv)
 }
 
-func _RepositoryIndex_RepositoryStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RepositoryStatsRequest)
+func _RepositoryIndex_CountRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountRepositoryObjectsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RepositoryIndexServer).RepositoryStats(ctx, in)
+		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RepositoryIndex_RepositoryStats_FullMethodName,
+		FullMethod: RepositoryIndex_CountRepositoryObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryIndexServer).RepositoryStats(ctx, req.(*RepositoryStatsRequest))
+		return srv.(RepositoryIndexServer).CountRepositoryObjects(ctx, req.(*CountRepositoryObjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RepositoryIndex_RepositoryList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RepositoryListRequest)
+func _RepositoryIndex_ListRepositoryObjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRepositoryObjectsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RepositoryIndexServer).RepositoryList(ctx, in)
+		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RepositoryIndex_RepositoryList_FullMethodName,
+		FullMethod: RepositoryIndex_ListRepositoryObjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RepositoryIndexServer).RepositoryList(ctx, req.(*RepositoryListRequest))
+		return srv.(RepositoryIndexServer).ListRepositoryObjects(ctx, req.(*ListRepositoryObjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -685,12 +685,12 @@ var RepositoryIndex_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*RepositoryIndexServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RepositoryStats",
-			Handler:    _RepositoryIndex_RepositoryStats_Handler,
+			MethodName: "CountRepositoryObjects",
+			Handler:    _RepositoryIndex_CountRepositoryObjects_Handler,
 		},
 		{
-			MethodName: "RepositoryList",
-			Handler:    _RepositoryIndex_RepositoryList_Handler,
+			MethodName: "ListRepositoryObjects",
+			Handler:    _RepositoryIndex_ListRepositoryObjects_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
