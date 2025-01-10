@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -74,7 +74,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 
 	// Filter plugins
 	pluginDefinitions := hs.pluginStore.Plugins(c.Req.Context())
-	filteredPluginDefinitions := []pluginstore.Plugin{}
+	filteredPluginDefinitions := make([]pluginstore.Plugin, 0)
 	filteredPluginIDs := map[string]bool{}
 	for _, pluginDef := range pluginDefinitions {
 		// filter out app sub plugins
@@ -583,14 +583,14 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 }
 
 // evalAllPermissions generates an evaluator with all permissions from the input slice
-func evalAllPermissions(ps []pfs.Permission) ac.Evaluator {
-	res := []ac.Evaluator{}
-	for _, p := range ps {
-		if p.Scope != nil {
-			res = append(res, ac.EvalPermission(p.Action, *p.Scope))
+func evalAllPermissions(ps []auth.Permission) ac.Evaluator {
+	res := make([]ac.Evaluator, len(ps))
+	for i, p := range ps {
+		if p.Scope != "" {
+			res[i] = ac.EvalPermission(p.Action, p.Scope)
 			continue
 		}
-		res = append(res, ac.EvalPermission(p.Action))
+		res[i] = ac.EvalPermission(p.Action)
 	}
 	return ac.EvalAll(res...)
 }
