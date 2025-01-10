@@ -430,10 +430,6 @@ type Role struct {
 	Permissions []Permission `json:"permissions"`
 }
 
-type IAM struct {
-	Permissions []Permission `json:"permissions,omitempty"`
-}
-
 type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`

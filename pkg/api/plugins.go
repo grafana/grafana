@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -582,7 +583,7 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 }
 
 // evalAllPermissions generates an evaluator with all permissions from the input slice
-func evalAllPermissions(ps []plugins.Permission) ac.Evaluator {
+func evalAllPermissions(ps []auth.Permission) ac.Evaluator {
 	var res []ac.Evaluator
 	for _, p := range ps {
 		if p.Scope != "" {

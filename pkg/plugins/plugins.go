@@ -130,7 +130,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// App Service Auth Registration
-	IAM *IAM `json:"iam,omitempty"`
+	IAM *auth.IAM `json:"iam,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
