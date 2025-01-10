@@ -71,6 +71,8 @@ COPY apps/investigation/go.* apps/investigation/
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications/go.* apps/alerting/notifications/
+COPY pkg/codegen/go.* pkg/codegen/
+COPY pkg/plugins/codegen/go.* pkg/plugins/codegen/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \

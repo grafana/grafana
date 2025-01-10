@@ -2,7 +2,7 @@ package dtos
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
