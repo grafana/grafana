@@ -1,7 +1,7 @@
 const queryRunnerMock = jest.fn(); // this must be defined before imports so we can dynamically mock the implementation of `SceneQueryRunner`
 import { of } from 'rxjs';
 
-import { LoadingState } from '@grafana/data';
+import { type AdHocVariableFilter, LoadingState } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 
 import { DataTrail } from '../../DataTrail';
@@ -11,9 +11,7 @@ import * as utils from '../../utils';
 
 import { createLabelsCrossReferenceConnector } from './labelsCrossReference';
 
-type Label = { key: string; operator: string; value: string };
-
-function setVariables(variables: Label[] | null) {
+function setVariables(variables: AdHocVariableFilter[] | null) {
   sceneGraphSpy.mockReturnValue(variables ? createAdHocVariableStub(variables) : null);
 }
 
@@ -21,7 +19,7 @@ function setVariablesAndQueryResponse({
   variables,
   labelsInResponse,
 }: {
-  variables: Label[] | null;
+  variables: AdHocVariableFilter[] | null;
   labelsInResponse: boolean;
 }) {
   setVariables(variables);
@@ -118,7 +116,7 @@ const mockScene = {
   useState: jest.fn(),
 } as unknown as RelatedLogsScene;
 
-const createAdHocVariableStub = (filters: Label[]) => {
+const createAdHocVariableStub = (filters: AdHocVariableFilter[]) => {
   return {
     __typename: 'AdHocFiltersVariable',
     state: {
