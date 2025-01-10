@@ -1,4 +1,4 @@
-import { Observable, defer, finalize, first, map, of, skip } from 'rxjs';
+import { Observable, debounce, defer, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -116,14 +116,35 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     requestId: string
   ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
     return (source: Observable<DataQueryResponse>) => {
-      return requestId.includes(MIXED_REQUEST_PREFIX)
-        ? source.pipe(
-            // Scene QueryRunner has ReplaySubject on the result and first value will be previous
-            //   result with state of DONE. Therefore we need to skip the first value
-            skip(1),
-            first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
-          )
-        : source;
+      if (requestId.includes(MIXED_REQUEST_PREFIX)) {
+        let count = 0;
+
+        return source.pipe(
+          /*
+           * We can have the following piped values scenarios:
+           * Loading -> Done         - initial load
+           * Done -> Loading -> Done - refresh
+           * Done                    - adding another query in editor
+           *
+           * When we see Done as a first element this is because of ReplaySubject in SceneQueryRunner
+           *
+           * we use first(...) below to emit correct result which is last value with Done/Error states
+           *
+           * to avoid emitting first Done/Error (due to ReplaySubject) we selectively debounce only first value with such states
+           */
+          debounce((val) => {
+            if ([LoadingState.Done, LoadingState.Error].includes(val.state!) && count === 0) {
+              count++;
+              return interval(250);
+            }
+            count++;
+            return interval(0);
+          }),
+          first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
+        );
+      }
+
+      return source;
     };
   }
 
