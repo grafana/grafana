@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -73,6 +74,7 @@ type DashboardServiceImpl struct {
 	folderStore          folder.FolderStore
 	folderService        folder.Service
 	userService          user.Service
+	orgService           org.Service
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
@@ -105,6 +107,7 @@ func ProvideDashboardServiceImpl(
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
+	quotaService quota.Service, orgService org.Service,
 ) (*DashboardServiceImpl, error) {
 	k8sHandler := &dashk8sHandler{
 		gvr:                v0alpha1.DashboardResourceInfo.GroupVersionResource(),
@@ -124,9 +127,22 @@ func ProvideDashboardServiceImpl(
 		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
+		orgService:           orgService,
 		userService:          userService,
 		k8sclient:            k8sHandler,
 		metrics:              newDashboardsMetrics(r),
+	}
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     dashboards.QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      dashSvc.Count,
+	}); err != nil {
+		return nil, err
 	}
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
@@ -137,6 +153,79 @@ func ProvideDashboardServiceImpl(
 	}
 
 	return dashSvc, nil
+}
+
+func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		u := &quota.Map{}
+		orgs, err := dr.orgService.Search(ctx, &org.SearchOrgsQuery{})
+		if err != nil {
+			return u, err
+		}
+
+		total := int64(0)
+		for _, org := range orgs {
+			ctx = identity.WithRequester(ctx, getQuotaRequester(org.ID))
+			dashs, err := dr.listDashboardsThroughK8s(ctx, org.ID)
+			if err != nil {
+				return u, err
+			}
+			orgDashboards := int64(len(dashs))
+			total += orgDashboards
+
+			tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+			if err != nil {
+				return nil, err
+			}
+			u.Set(tag, orgDashboards)
+		}
+
+		tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return nil, err
+		}
+		u.Set(tag, total)
+
+		return u, nil
+	}
+
+	return dr.dashboardStore.Count(ctx, scopeParams)
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+	orgQuotaTag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
+	if err != nil {
+		return &quota.Map{}, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
+	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
+	return limits, nil
+}
+
+func getQuotaRequester(orgId int64) *identity.StaticRequester {
+	return &identity.StaticRequester{
+		Type:   claims.TypeServiceAccount,
+		UserID: 1,
+		OrgID:  orgId,
+		Name:   "quota-requester",
+		Login:  "quota-requester",
+		Permissions: map[int64]map[string][]string{
+			orgId: {
+				"*": {"*"},
+			},
+		},
+	}
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
