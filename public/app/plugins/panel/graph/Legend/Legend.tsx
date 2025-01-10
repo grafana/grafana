@@ -92,7 +92,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
   }
 
   sortLegend() {
-    let seriesList: TimeSeries[] = [...this.props.seriesList] || [];
+    let seriesList: TimeSeries[] = [...this.props.seriesList];
     const sortBy = this.props.sort;
     if (sortBy && this.props[sortBy] && this.props.alignAsTable) {
       seriesList = _sortBy(seriesList, (series) => {
