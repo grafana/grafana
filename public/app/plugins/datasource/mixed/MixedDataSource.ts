@@ -15,7 +15,7 @@ import {
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { CustomFormatterVariable } from '@grafana/scenes';
 
-import { SHARED_DASHBOARD_QUERY } from '../dashboard';
+import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 export const MIXED_REQUEST_PREFIX = 'mixed-';
