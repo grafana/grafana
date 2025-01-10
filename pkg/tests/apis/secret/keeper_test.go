@@ -38,16 +38,16 @@ func TestIntegrationKeeper(t *testing.T) {
 		},
 	})
 
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		// #TODO: figure out permissions topic
+		User: helper.Org1.Admin,
+		GVR:  gvrKeepers,
+	})
+
 	t.Run("reading a keeper that does not exist returns a 404", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
 		raw, err := client.Resource.Get(ctx, "some-keeper-that-does-not-exist", metav1.GetOptions{})
 		require.Error(t, err)
 		require.Nil(t, raw)
@@ -58,69 +58,15 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("deleting a keeper that does not exist does not return an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
 		err := client.Resource.Delete(ctx, "some-keeper-that-does-not-exist", metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
-	t.Run("creating a keeper without a name generates one", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
-		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
-
-		raw, err := client.Resource.Create(ctx, testDataKeeper, metav1.CreateOptions{})
-		require.NoError(t, err)
-		require.NotNil(t, raw)
-
-		t.Cleanup(func() {
-			require.NoError(t, client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-		})
-
-		keeper := new(secretv0alpha1.Keeper)
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, keeper)
-		require.NoError(t, err)
-		require.NotNil(t, keeper)
-
-		require.NotEmpty(t, keeper.Name)
-	})
-
 	t.Run("creating a keeper returns it", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
-		testDataKeeperAwsXyz := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
-
-		raw, err := client.Resource.Create(ctx, testDataKeeperAwsXyz, metav1.CreateOptions{})
-		require.NoError(t, err)
-		require.NotNil(t, raw)
-
-		t.Cleanup(func() {
-			require.NoError(t, client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-		})
+		raw := mustGenerateKeeper(t, helper, nil)
 
 		keeper := new(secretv0alpha1.Keeper)
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, keeper)
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw.Object, keeper)
 		require.NoError(t, err)
 		require.NotNil(t, keeper)
 
@@ -129,7 +75,10 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.Empty(t, keeper.Spec.Azure)
 
 		t.Run("and creating another keeper with the same name in the same namespace returns an error", func(t *testing.T) {
-			raw, err := client.Resource.Create(ctx, testDataKeeperAwsXyz, metav1.CreateOptions{})
+			testKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
+			testKeeper.SetName(raw.GetName())
+
+			raw, err := client.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 		})
@@ -156,7 +105,8 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 
 		t.Run("and updating the keeper replaces the spec fields and returns them", func(t *testing.T) {
-			newRaw := testDataKeeperAwsXyz.DeepCopy()
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
+			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
@@ -173,7 +123,8 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 
 		t.Run("and updating the keeper to reference securevalues that does not exist returns an error", func(t *testing.T) {
-			newRaw := testDataKeeperAwsXyz.DeepCopy()
+			newRaw := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
+			newRaw.SetName(raw.GetName())
 			newRaw.Object["spec"].(map[string]any)["aws"] = map[string]any{
 				"accessKeyId": map[string]any{
 					"secureValueName": "securevalue-does-not-exist-1",
@@ -192,19 +143,10 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating an invalid keeper fails validation and returns an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
+		testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
+		testData.Object["spec"].(map[string]any)["title"] = ""
 
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
-		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
-		testDataKeeper.Object["spec"].(map[string]any)["title"] = ""
-
-		raw, err := client.Resource.Create(ctx, testDataKeeper, metav1.CreateOptions{})
+		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.Nil(t, raw)
 
@@ -213,26 +155,9 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper with a provider then changing the provider does not return an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
+		rawAWS := mustGenerateKeeper(t, helper, nil)
 
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
-		testDataKeeperAWS := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
-
-		rawAWS, err := client.Resource.Create(ctx, testDataKeeperAWS, metav1.CreateOptions{})
-		require.NoError(t, err)
-		require.NotNil(t, rawAWS)
-
-		t.Cleanup(func() {
-			require.NoError(t, client.Resource.Delete(ctx, rawAWS.GetName(), metav1.DeleteOptions{}))
-		})
-
-		testDataKeeperGCP := testDataKeeperAWS.DeepCopy()
+		testDataKeeperGCP := rawAWS.DeepCopy()
 		testDataKeeperGCP.Object["spec"].(map[string]any)["aws"] = nil
 		testDataKeeperGCP.Object["spec"].(map[string]any)["gcp"] = map[string]any{
 			"projectId":       "project-id",
@@ -247,16 +172,7 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper that references securevalues that does not exist returns an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
-		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
+		testDataKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 		testDataKeeper.Object["spec"].(map[string]any)["aws"] = map[string]any{
 			"accessKeyId": map[string]any{
 				"secureValueName": "securevalue-does-not-exist-1",
@@ -274,22 +190,12 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("deleting a keeper that exists does not return an error", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			// #TODO: figure out permissions topic
-			User: helper.Org1.Admin,
-			GVR:  gvrKeepers,
-		})
-
 		generatePrefix := "generated-"
 
-		testDataKeeperAwsXyz := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-xyz.yaml")
-		testDataKeeperAwsXyz.SetName("")
-		testDataKeeperAwsXyz.SetGenerateName("generated-")
+		testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
+		testData.SetGenerateName(generatePrefix)
 
-		raw, err := client.Resource.Create(ctx, testDataKeeperAwsXyz, metav1.CreateOptions{})
+		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, raw)
 

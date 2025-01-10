@@ -151,6 +151,6 @@ func TestValidateSecureValue(t *testing.T) {
 		for _, err := range errs {
 			actualBadValues = append(actualBadValues, err.BadValue.(string))
 		}
-		require.EqualValues(t, []string{"my.grafana.app/app-1", "my.grafana.app/app-2"}, actualBadValues)
+		require.ElementsMatch(t, []string{"my.grafana.app/app-1", "my.grafana.app/app-2"}, actualBadValues)
 	})
 }
