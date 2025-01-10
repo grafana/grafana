@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authapi/fake"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/async"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/objectstorage"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -52,6 +53,8 @@ type Service struct {
 
 	log *log.ConcreteLogger
 	cfg *setting.Cfg
+
+	async async.Async
 
 	buildSnapshotMutex sync.Mutex
 
@@ -114,6 +117,7 @@ func ProvideService(
 	kvStore kvstore.KVStore,
 	libraryElementsService libraryelements.Service,
 	ngAlert *ngalert.AlertNG,
+	async async.Async,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
@@ -123,6 +127,7 @@ func ProvideService(
 		store:                  &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
 		log:                    log.New(LogPrefix),
 		cfg:                    cfg,
+		async:                  async,
 		features:               features,
 		dsService:              dsService,
 		tracer:                 tracer,
@@ -519,7 +524,8 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	}
 
 	// start building the snapshot asynchronously while we return a success response to the client
-	go func() {
+	// go func() {
+	s.async.Go(func() {
 		s.cancelMutex.Lock()
 		defer func() {
 			s.cancelFunc = nil
@@ -556,7 +562,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 
 		span.SetStatus(codes.Ok, "snapshot built")
 		s.report(asyncCtx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err, signedInUser.UserUID)
-	}()
+	})
 
 	return &snapshot, nil
 }
@@ -627,7 +633,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 	asyncSyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
 	// Sync snapshot results from GMS if the one created after upload is not running (e.g. due to a restart)
 	// and anybody is interested in the status.
-	go s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus)
+	s.async.Go(func() { s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus) })
 
 	return snapshot, nil
 }
@@ -669,23 +675,22 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 		snapshot = updatedSnapshot
 	}
 
-	tick := time.NewTicker(10 * time.Second)
-	defer tick.Stop()
-
-	for snapshot.ShouldQueryGMS() {
-		select {
-		case <-ctx.Done():
+	s.async.Tick(10*time.Second, func() bool {
+		// If the context has been canceled
+		if ctx.Err() != nil {
 			s.log.Info("cancelling snapshot status polling", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-			return
-		case <-tick.C:
-			updatedSnapshot, err := syncStatus(ctx, session, snapshot)
-			if err != nil {
-				s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-				continue
-			}
-			snapshot = updatedSnapshot
+			return true
 		}
-	}
+
+		updatedSnapshot, err := syncStatus(ctx, session, snapshot)
+		if err != nil {
+			s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+			return false
+		}
+		snapshot = updatedSnapshot
+
+		return false
+	})
 }
 
 var gmsStateToLocalStatus map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus = map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus{
@@ -748,7 +753,8 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser 
 	}
 
 	// start uploading the snapshot asynchronously while we return a success response to the client
-	go func() {
+	s.async.Go(func() {
+		fmt.Printf("\n\naaaaaaa running goroutine to upload snapshot\n\n")
 		s.cancelMutex.Lock()
 		defer func() {
 			s.cancelFunc = nil
@@ -783,7 +789,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser 
 		}
 
 		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err, signedInUser.UserUID)
-	}()
+	})
 
 	return nil
 }

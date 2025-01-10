@@ -37,6 +37,7 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, orgID int64, u
 		if err != nil {
 			return err
 		}
+
 		if !exist {
 			return cloudmigration.ErrMigrationNotFound
 		}
@@ -199,6 +200,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	if update.SessionID == "" {
 		return fmt.Errorf("missing session uid")
 	}
+
 	err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		// Update status if set
 		if update.Status != "" {
