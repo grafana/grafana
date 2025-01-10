@@ -3,9 +3,11 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,6 +84,12 @@ func TestBleveBackend(t *testing.T) {
 					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 				},
 				Tags: []string{"aa", "bb"},
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-1",
+					Path:      "path/to/aaa.json",
+					Hash:      "xyz",
+					Timestamp: asTimePointer(1609462800000), // 2021
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV:   2,
@@ -105,6 +113,12 @@ func TestBleveBackend(t *testing.T) {
 					"region":                           "east",
 					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 				},
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-1",
+					Path:      "path/to/bbb.json",
+					Hash:      "hijk",
+					Timestamp: asTimePointer(1640998800000), // 2022
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 3,
@@ -119,7 +133,8 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "ccc (dash)",
 				Folder:    "zzz",
 				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name: "r0",
+					Name: "repo2",
+					Path: "path/in/repo2.yaml",
 				},
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID: 12,
@@ -201,6 +216,53 @@ func TestBleveBackend(t *testing.T) {
 			rsp.Results.Rows[0].Key.Name,
 			rsp.Results.Rows[1].Key.Name,
 		})
+
+		// Now look for repositories
+		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
+			Name:  "repo-1",
+			Limit: 100,
+		})
+		require.NoError(t, err)
+		jj, err := json.MarshalIndent(found, "", "  ")
+		require.NoError(t, err)
+		fmt.Printf("%s\n", string(jj))
+		require.JSONEq(t, `{
+			"items": [
+				{
+					"object": {
+						"namespace": "ns",
+						"group": "dashboard.grafana.app",
+						"resource": "dashboards",
+						"name": "aaa"
+					},
+					"path": "path/to/aaa.json",
+					"hash": "xyz",
+					"time": 1609462800000,
+					"title": "aaa (dash)",
+					"folder": "xxx"
+				},
+				{
+					"object": {
+						"namespace": "ns",
+						"group": "dashboard.grafana.app",
+						"resource": "dashboards",
+						"name": "bbb"
+					},
+					"path": "path/to/bbb.json",
+					"hash": "hijk",
+					"time": 1640998800000,
+					"title": "bbb (dash)",
+					"folder": "xxx"
+				}
+			]
+		}`, string(jj))
+
+		counts, err := index.CountRepositoryObjects(ctx)
+		require.NoError(t, err)
+		require.Equal(t, map[string]int64{
+			"repo-1": 2,
+			"repo2":  1,
+		}, counts)
 	})
 
 	t.Run("build folders", func(t *testing.T) {
@@ -222,6 +284,12 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Title:     "zzz (folder)",
 				TitleSort: "zzz (folder)",
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-1",
+					Path:      "path/to/folder.json",
+					Hash:      "xxxx",
+					Timestamp: asTimePointer(300),
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
@@ -326,4 +394,12 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(disp))
 	})
+}
+
+func asTimePointer(milli int64) *time.Time {
+	if milli > 0 {
+		t := time.UnixMilli(milli)
+		return &t
+	}
+	return nil
 }
