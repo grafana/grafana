@@ -205,6 +205,10 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 		ids = append(ids, f.ID)
 	}
 
+	if len(ids) == 0 {
+		return 0, nil
+	}
+
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
