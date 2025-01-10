@@ -427,10 +427,10 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		// Finding creator and last updater of the folder
 		updater, creator := anonString, anonString
 		if f.CreatedBy > 0 {
-			creator = hs.getUserLogin(ctx, f.CreatedBy)
+			creator = hs.getIdentityName(ctx, f.OrgID, f.CreatedBy)
 		}
 		if f.UpdatedBy > 0 {
-			updater = hs.getUserLogin(ctx, f.UpdatedBy)
+			updater = hs.getIdentityName(ctx, f.OrgID, f.UpdatedBy)
 		}
 
 		acMetadata, _ := hs.getFolderACMetadata(c, f)
@@ -1079,10 +1079,10 @@ func (fk8s *folderK8sHandler) toDTO(c *contextmodel.ReqContext, fold *folder.Fol
 	// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 	// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 	if len(createdBy) > 0 {
-		creator = fk8s.getUserLogin(ctx, toUID(createdBy))
+		creator = fk8s.getIdentityName(ctx, toUID(createdBy))
 	}
 	if len(createdBy) > 0 {
-		updater = fk8s.getUserLogin(ctx, toUID(createdBy))
+		updater = fk8s.getIdentityName(ctx, toUID(createdBy))
 	}
 
 	acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
@@ -1119,18 +1119,21 @@ func (fk8s *folderK8sHandler) toDTO(c *contextmodel.ReqContext, fold *folder.Fol
 	}, nil
 }
 
-func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string) string {
+func (fk8s *folderK8sHandler) getIdentityName(ctx context.Context, uid string) string {
 	ctx, span := tracer.Start(ctx, "api.getUserLogin")
 	defer span.End()
 
-	query := user.GetUserByUIDQuery{
-		UID: userUID,
-	}
-	user, err := fk8s.userService.GetByUID(ctx, &query)
+	ident, err := fk8s.userService.GetByUID(ctx, &user.GetUserByUIDQuery{
+		UID: uid,
+	})
 	if err != nil {
 		return anonString
 	}
-	return user.Login
+
+	if ident.IsServiceAccount {
+		return ident.Name
+	}
+	return ident.Login
 }
 
 func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
