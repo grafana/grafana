@@ -594,3 +594,95 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
     fields: [info.xMin, info.xMax, ...info.counts],
   };
 }
+
+/**
+ *
+ * Join multiple histograms into a histogram with multiple counts.
+ * Useful eg if you want to overlay them for comparison.
+ * Will only work if buckets are aligned, otherwise will throw an error.
+ *
+ * This is needed because histogram results from database
+ * will have buckets omitted for 0 counts, but when joining multiple histograms
+ * we need to fill in the 0 values for missing buckets.
+ *
+ * Returns field configs of the first provided histogram.
+ * @alpha
+ */
+
+export function joinHistograms(histograms: HistogramFields[]): HistogramFields {
+  if (histograms.length === 0) {
+    throw new Error('Joining histograms requires at least one histogram');
+  }
+  if (histograms.length === 1) {
+    return histograms[0];
+  }
+
+  const result: HistogramFields = {
+    xMin: {
+      ...histograms[0].xMin,
+      values: [],
+    },
+    xMax: {
+      ...histograms[0].xMax,
+      values: [],
+    },
+    counts: histograms.map((histogram) => ({
+      ...histogram.counts[0],
+      values: [],
+    })),
+  };
+
+  type Bucket = { min: number; max: number };
+
+  let currentBucket: Bucket | undefined = undefined;
+
+  // bucket index cursor for each of the histograms
+  const cursors = histograms.map(() => 0);
+
+  // find next lowest bucket that at least one of the histograms has
+  function findNextBucket(): Bucket | undefined {
+    let nextBucket: Bucket | undefined = undefined;
+    for (let i = 0; i < histograms.length; i++) {
+      const min = histograms[i].xMin.values[cursors[i]];
+      const max = histograms[i].xMax.values[cursors[i]];
+      if (min !== undefined && max !== undefined) {
+        if (nextBucket === undefined || nextBucket.min > min) {
+          nextBucket = { min, max };
+        }
+      }
+    }
+    return nextBucket;
+  }
+
+  currentBucket = findNextBucket();
+
+  // while there is a bucket with higher bounds at least one of the histograms
+  while (currentBucket) {
+    // add a count for each of the histograms for this bucket
+    for (let i = 0; i < histograms.length; i++) {
+      const min = histograms[i].xMin.values[cursors[i]];
+      const max = histograms[i].xMax.values[cursors[i]];
+      // if this histogram has no such bucket, add 0 value for it
+      if (min === undefined || min >= currentBucket.max) {
+        result.counts[i].values.push(0);
+      }
+      // if this histogram has this bucket, add it's value and bump histogram bucket cursor
+      else if (min === currentBucket.min && max === currentBucket.max) {
+        result.counts[i].values.push(histograms[i].counts[0].values[cursors[i]]);
+        cursors[i]++;
+        // it has a bucket but it is not aligned, probably bucket sizes are different for the histograms.
+        // not handling this case, explode
+      } else {
+        throw new Error('Histogram buckets sizes are not aligned');
+      }
+    }
+
+    // add bucket to the result
+    result.xMin.values.push(currentBucket.min);
+    result.xMax.values.push(currentBucket.max);
+
+    currentBucket = findNextBucket();
+  }
+
+  return result;
+}
