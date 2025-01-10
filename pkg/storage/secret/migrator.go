@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	TableNameSecureValue = "secret_secure_value"
-	TableNameKeeper      = "secret_keeper"
+	TableNameSecureValue    = "secret_secure_value"
+	TableNameKeeper         = "secret_keeper"
+	TableNameEncryptedValue = "secret_encrypted_value"
 )
 
 func migrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
