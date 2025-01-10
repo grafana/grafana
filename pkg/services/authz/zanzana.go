@@ -54,7 +54,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 
 		authInterceptor := func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 			token, err := tokenClient.Exchange(ctx, authnlib.TokenExchangeRequest{
-				Namespace: "stack-id",
+				Namespace: cfg.StackID,
 				Audiences: []string{zanzanaAudience},
 			})
 			if err != nil {
