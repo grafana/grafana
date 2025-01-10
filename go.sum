@@ -2309,8 +2309,10 @@ github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 h1:jxJJ5z0GxqhWFbQU
 github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447/go.mod h1:IxsY6mns6Q5sAnWcrptrgUrSglTZJXH/kXr9nbpb/9I=
 github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e h1:UlEET0InuoFautfaFp8lDrNF7rPHYXuBMrzwWx9XqFY=
 github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e/go.mod h1:IGRj8oOoxwJbHBYl1+OhS9UjQR0dv6SQOep7HqmtyFU=
-github.com/grafana/grafana-app-sdk v0.23.1 h1:BRpUG0bA0oVxjthkmO2thuJBo3nbjaRSSmZJHw+mA8I=
-github.com/grafana/grafana-app-sdk v0.23.1/go.mod h1:KzgPnTJfMeckGmMctv6CJb8Jr/o/5rwARDyjXoeR0Fc=
+github.com/grafana/grafana-app-sdk v0.29.0 h1:LMSm/+0LOBPd13fe1bs/4sKJmuLiixYUX9T0oqDqp4I=
+github.com/grafana/grafana-app-sdk v0.29.0/go.mod h1:XLt308EmK6kvqPlzjUyXxbwZKEk2vur/eiypUNDay5I=
+github.com/grafana/grafana-app-sdk/logging v0.29.0 h1:mgbXaAf33aFwqwGVeaX30l8rkeAJH0iACgX5Rn6YkN4=
+github.com/grafana/grafana-app-sdk/logging v0.29.0/go.mod h1:xy6ZyVXl50Z3DBDLybvBPphbykPhuVNed/VNmen9DQM=
 github.com/grafana/grafana-aws-sdk v0.31.5 h1:4HpMQx7n4Qqoi7Bgu8KHQ2QKT9fYYdHilX/Gh3FZKBE=
 github.com/grafana/grafana-aws-sdk v0.31.5/go.mod h1:5p4Cjyr5ZiR6/RT2nFWkJ8XpIKgX4lAUmUMu70m2yCM=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 h1:fV6IgVtViXcYZ4VqTAMuVBTLuGAnI27HhQkaLttzbPE=
@@ -2508,8 +2510,8 @@ github.com/influxdata/influxql v1.4.0 h1:Lf62rbAF8KWQf+4Djqf4hVXgmQuGozUoSD6kNWj
 github.com/influxdata/influxql v1.4.0/go.mod h1:VqxAKyQz5p8GzgGsxWalCWYGxEqw6kvJo2IickMQiQk=
 github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf h1:7JTmneyiNEwVBOHSjoMxiWAqB992atOeepeFYegn5RU=
 github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
-github.com/invopop/jsonschema v0.12.0 h1:6ovsNSuvn9wEQVOyc72aycBMVQFKz7cPdMJn10CvzRI=
-github.com/invopop/jsonschema v0.12.0/go.mod h1:ffZ5Km5SWWRAIN6wbDXItl95euhFz2uON45H2qjYt+0=
+github.com/invopop/jsonschema v0.13.0 h1:KvpoAJWEjR3uD9Kbm2HWJmqsEaHt8lBUpd0qHcIi21E=
+github.com/invopop/jsonschema v0.13.0/go.mod h1:ffZ5Km5SWWRAIN6wbDXItl95euhFz2uON45H2qjYt+0=
 github.com/invopop/yaml v0.3.1 h1:f0+ZpmhfBSS4MhG+4HYseMdJhoeeopbSKbq5Rpeelso=
 github.com/invopop/yaml v0.3.1/go.mod h1:PMOp3nn4/12yEZUFfmOuNHJsZToEEOwoWsT+D81KkeA=
 github.com/ionos-cloud/sdk-go/v6 v6.1.11 h1:J/uRN4UWO3wCyGOeDdMKv8LWRzKu6UIkLEaes38Kzh8=
@@ -3351,8 +3353,8 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.25.0/go.mod h
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.33.0 h1:5pojmb1U1AogINhN3SurB+zm/nIcusopeBNp42f45QM=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.33.0/go.mod h1:57gTHJSE5S1tqg+EKsLPlTWhpHMsWlVmer+LA926XiA=
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.25.0/go.mod h1:e7ciERRhZaOZXVjx5MiL8TK5+Xv7G5Gv5PA2ZDEJdL8=
-go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 h1:lUsI2TYsQw2r1IASwoROaCnjdj2cvC2+Jbxvk6nHnWU=
-go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0/go.mod h1:2HpZxxQurfGxJlJDblybejHB6RX6pmExPNe517hREw4=
+go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.33.0 h1:wpMfgF8E1rkrT1Z6meFh1NDtownE9Ii3n3X2GJYjsaU=
+go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.33.0/go.mod h1:wAy0T/dUbs468uOlkT31xjvqQgEVXv58BRFWEgn5v/0=
 go.opentelemetry.io/otel/metric v1.17.0/go.mod h1:h4skoxdZI17AxwITdmdZjjYJQH5nzijUUjm+wtPph5o=
 go.opentelemetry.io/otel/metric v1.19.0/go.mod h1:L5rUsV9kM1IxCj1MmSdS+JQAcVm319EUrDVLrt7jqt8=
 go.opentelemetry.io/otel/metric v1.21.0/go.mod h1:o1p3CA8nNHW8j5yuQLdc1eeqEaPfzug24uvsyIEJRWM=

@@ -16,12 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
@@ -47,7 +47,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 		linterFactory := lint.NewDashboardLinterFactory()
 		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
 
-		logger := slogctx.From(ctx)
+		logger := logging.FromContext(ctx)
 		var linter lint.Linter
 		switch {
 		case err == nil:
@@ -130,7 +130,7 @@ func (r *Parser) ShouldIgnore(p string) bool {
 }
 
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
-	logger := slogctx.From(ctx).With("path", info.Path, "validate", validate)
+	logger := logging.FromContext(ctx).With("path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
 	}
@@ -141,10 +141,10 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
 	if err != nil {
-		logger.DebugContext(ctx, "failed to find GVK of the input data", "error", err)
+		logger.Debug("failed to find GVK of the input data", "error", err)
 		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil {
-			logger.DebugContext(ctx, "also failed to get GVK from fallback loader?", "error", err)
+			logger.Debug("also failed to get GVK from fallback loader?", "error", err)
 			return parsed, err
 		}
 	}

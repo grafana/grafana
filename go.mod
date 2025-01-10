@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.23.1
+go 1.23.4
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
@@ -77,7 +77,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-app-sdk v0.23.1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.29.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.5 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
@@ -304,7 +304,7 @@ require (
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/invopop/jsonschema v0.12.0 // indirect
+	github.com/invopop/jsonschema v0.13.0 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -476,6 +476,8 @@ require github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c
 
 require github.com/grafana/grafana/pkg/plugins/codegen v0.0.0-00010101000000-000000000000 // @grafana/grafana-as-code
 
+require github.com/grafana/grafana-app-sdk/logging v0.29.0
+
 require (
 	cel.dev/expr v0.18.0 // indirect
 	cloud.google.com/go/longrunning v0.6.0 // indirect
@@ -534,7 +536,7 @@ require (
 	go.etcd.io/bbolt v1.3.11 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.9.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.33.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.32.0 // indirect

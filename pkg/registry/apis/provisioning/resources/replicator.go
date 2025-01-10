@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"path"
 	"path/filepath"
 	"strings"
@@ -18,10 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type Replicator struct {
@@ -61,11 +60,11 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("ensure repository folder exists: %w", err)
 	}
 
-	logger := slogctx.From(ctx)
+	logger := logging.FromContext(ctx)
 	var latest string
 	switch {
 	case !isVersioned:
-		logger.InfoContext(ctx, "replicate tree unversioned repository")
+		logger.Info("replicate tree unversioned repository")
 		if err := r.replicateTree(ctx, ""); err != nil {
 			return "", fmt.Errorf("replicate tree: %w", err)
 		}
@@ -78,7 +77,7 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 		if err := r.replicateTree(ctx, latest); err != nil {
 			return latest, fmt.Errorf("replicate tree: %w", err)
 		}
-		logger.InfoContext(ctx, "initial replication for versioned repository", "latest", latest)
+		logger.Info("initial replication for versioned repository", "latest", latest)
 	default:
 		var err error
 		latest, err = versionedRepo.LatestRef(ctx)
@@ -86,7 +85,7 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("latest ref: %w", err)
 		}
 
-		logger.InfoContext(ctx, "replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
+		logger.Info("replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
 		changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest)
 		if err != nil {
 			return latest, fmt.Errorf("compare files: %w", err)
@@ -108,14 +107,14 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 	}
 
 	for _, entry := range tree {
-		logger := slogctx.From(ctx).With("file", entry.Path)
+		logger := logging.FromContext(ctx).With("file", entry.Path)
 		if !entry.Blob {
-			logger.DebugContext(ctx, "ignoring non-blob entry")
+			logger.Debug("ignoring non-blob entry")
 			continue
 		}
 
 		if r.parser.ShouldIgnore(entry.Path) {
-			logger.DebugContext(ctx, "ignoring file")
+			logger.Debug("ignoring file")
 			continue
 		}
 
@@ -130,7 +129,7 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 
 		if err := r.replicateFile(ctx, info); err != nil {
 			if errors.Is(err, ErrUnableToReadResourceBytes) {
-				logger.InfoContext(ctx, "file does not contain a resource")
+				logger.Info("file does not contain a resource")
 				continue
 			}
 			return fmt.Errorf("replicate file: %w", err)
@@ -143,7 +142,7 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 // replicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
 func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
-	logger := slogctx.From(ctx).With("file", fileInfo.Path, "ref", fileInfo.Ref)
+	logger := logging.FromContext(ctx).With("file", fileInfo.Path, "ref", fileInfo.Ref)
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
@@ -174,19 +173,19 @@ func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.Fil
 		// Just in case no uid is present on the metadata for some reason.
 		logger := logger.With("previous_uid", file.Meta.GetUID(), "previous_resource_version", existingMeta.GetResourceVersion())
 		if uid, ok, _ := unstructured.NestedString(file.Existing.Object, "spec", "uid"); ok {
-			logger.DebugContext(ctx, "updating file's UID with spec.uid", "uid", uid)
+			logger.Debug("updating file's UID with spec.uid", "uid", uid)
 			file.Meta.SetUID(types.UID(uid))
 		}
 		if uid := existingMeta.GetUID(); uid != "" {
-			logger.DebugContext(ctx, "updating file's UID with existing meta uid", "uid", uid)
+			logger.Debug("updating file's UID with existing meta uid", "uid", uid)
 			file.Meta.SetUID(uid)
 		}
 		if rev := existingMeta.GetResourceVersion(); rev != "" {
-			logger.DebugContext(ctx, "updating file's UID with existing resource version", "version", rev)
+			logger.Debug("updating file's UID with existing resource version", "version", rev)
 			file.Meta.SetResourceVersion(rev)
 		}
 		if gen := existingMeta.GetGeneration(); gen != 0 {
-			logger.DebugContext(ctx, "updating file's UID with existing generation + 1", "generation", gen, "new_generation", gen+1)
+			logger.Debug("updating file's UID with existing generation + 1", "generation", gen, "new_generation", gen+1)
 			file.Meta.SetGeneration(gen + 1)
 		}
 
@@ -195,11 +194,11 @@ func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.Fil
 			return fmt.Errorf("failed to update object: %w", err)
 		}
 	} else {
-		logger.ErrorContext(ctx, "bug in Grafana: the file's action is unhandled")
+		logger.Error("bug in Grafana: the file's action is unhandled")
 		return fmt.Errorf("bug in Grafana: got a file.Action of '%s', which is not defined to be handled", file.Action)
 	}
 
-	logger.InfoContext(ctx, "Replicated file")
+	logger.Info("Replicated file")
 
 	return nil
 }
@@ -211,7 +210,7 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 		return parent, nil
 	}
 
-	logger := slogctx.From(ctx).With("file", filePath)
+	logger := logging.FromContext(ctx).With("file", filePath)
 	for _, folder := range strings.Split(dir, "/") {
 		if folder == "" {
 			// Trailing / leading slash?
@@ -222,7 +221,7 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 		obj, err := r.folders.Get(ctx, folder, metav1.GetOptions{})
 		// FIXME: Check for IsNotFound properly
 		if obj != nil || err == nil {
-			logger.DebugContext(ctx, "folder already existed")
+			logger.Debug("folder already existed")
 			parent = folder
 			continue
 		}
@@ -247,7 +246,7 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 		}
 
 		parent = folder
-		logger.InfoContext(ctx, "folder created")
+		logger.Info("folder created")
 	}
 
 	return parent, nil
@@ -335,7 +334,7 @@ func (r *Replicator) parseResource(ctx context.Context, fileInfo *repository.Fil
 }
 
 func (r *Replicator) Export(ctx context.Context) error {
-	logger := slogctx.From(ctx)
+	logger := logging.FromContext(ctx)
 	dashboardIface := r.client.Resource(schema.GroupVersionResource{
 		Group:    "dashboard.grafana.app",
 		Version:  "v2alpha1",
@@ -356,7 +355,7 @@ func (r *Replicator) Export(ctx context.Context) error {
 
 	for _, item := range dashboardList.Items {
 		if ctx.Err() != nil {
-			logger.DebugContext(ctx, "cancelling replication process due to ctx error", "error", err)
+			logger.Debug("cancelling replication process due to ctx error", "error", err)
 			return ctx.Err()
 		}
 
@@ -364,14 +363,14 @@ func (r *Replicator) Export(ctx context.Context) error {
 		logger := logger.With("item", name)
 		ns := r.repository.Config().GetNamespace()
 		if item.GetNamespace() != ns {
-			logger.DebugContext(ctx, "skipping dashboard item due to mismatching namespace", "got", ns)
+			logger.Debug("skipping dashboard item due to mismatching namespace", "got", ns)
 			continue
 		}
 
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 		logger = logger.With("folder", folder)
 		if !folders.In(folder) {
-			logger.DebugContext(ctx, "folder of item was not in tree of repository")
+			logger.Debug("folder of item was not in tree of repository")
 			continue
 		}
 
@@ -382,10 +381,6 @@ func (r *Replicator) Export(ctx context.Context) error {
 		}
 		fileName := filepath.Join(folders.DirPath(folder), baseFileName)
 		logger = logger.With("file", fileName)
-		if logger.Enabled(ctx, slog.LevelDebug) {
-			bodyStr := string(marshalledBody)
-			logger.DebugContext(ctx, "got marshalled body for item", "body", bodyStr)
-		}
 
 		var ref string
 		if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
@@ -395,7 +390,7 @@ func (r *Replicator) Export(ctx context.Context) error {
 
 		_, err = r.repository.Read(ctx, fileName, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.ErrorContext(ctx, "failed to check if file exists before writing", "error", err)
+			logger.Error("failed to check if file exists before writing", "error", err)
 			return fmt.Errorf("failed to check if file exists before writing: %w", err)
 		} else if err != nil { // ErrFileNotFound
 			err = r.repository.Create(ctx, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
@@ -403,10 +398,10 @@ func (r *Replicator) Export(ctx context.Context) error {
 			err = r.repository.Update(ctx, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
 		}
 		if err != nil {
-			logger.ErrorContext(ctx, "failed to write a file in repository", "error", err)
+			logger.Error("failed to write a file in repository", "error", err)
 			return fmt.Errorf("failed to write file in repo: %w", err)
 		}
-		logger.DebugContext(ctx, "successfully exported item")
+		logger.Debug("successfully exported item")
 	}
 
 	return nil

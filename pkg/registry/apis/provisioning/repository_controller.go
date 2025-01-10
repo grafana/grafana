@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 const loggerName = "provisioning-repository-controller"
@@ -118,23 +118,23 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
-	logger := slogctx.From(ctx).With("logger", loggerName)
-	ctx = slogctx.To(ctx, logger)
-	logger.InfoContext(ctx, "Starting RepositoryController")
-	defer logger.InfoContext(ctx, "Shutting down RepositoryController")
+	logger := logging.FromContext(ctx).With("logger", loggerName)
+	ctx = logging.Context(ctx, logger)
+	logger.Info("Starting RepositoryController")
+	defer logger.Info("Shutting down RepositoryController")
 
 	if !cache.WaitForCacheSync(ctx.Done(), rc.repoSynced) {
 		return
 	}
 
-	logger.InfoContext(ctx, "Starting workers", "count", workerCount)
+	logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {
 		go wait.UntilWithContext(ctx, rc.runWorker, time.Second)
 	}
 
-	logger.InfoContext(ctx, "Started workers")
+	logger.Info("Started workers")
 	<-ctx.Done()
-	logger.InfoContext(ctx, "Shutting down workers")
+	logger.Info("Shutting down workers")
 }
 
 func (rc *RepositoryController) runWorker(ctx context.Context) {
@@ -175,9 +175,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	defer rc.queue.Done(item)
 
 	// TODO: should we move tracking work to trace ids instead?
-	logger := slogctx.From(ctx).With("work_key", item.key)
-	ctx = slogctx.To(ctx, logger) // lets us track the work in child tasks, similar to a trace id
-	logger.InfoContext(ctx, "RepositoryController processing key")
+	logger := logging.FromContext(ctx).With("work_key", item.key)
+	ctx = logging.Context(ctx, logger) // lets us track the work in child tasks, similar to a trace id
+	logger.Info("RepositoryController processing key")
 
 	err := rc.processFn(item)
 	if err == nil {
@@ -188,17 +188,17 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	item.attempts++
 	logger = logger.With("error", err, "attempts", item.attempts)
 	if item.attempts >= maxAttempts {
-		logger.ErrorContext(ctx, "RepositoryController failed too many times")
+		logger.Error("RepositoryController failed too many times")
 		rc.queue.Forget(item)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
-		logger.InfoContext(ctx, "RepositoryController will not retry")
+		logger.Info("RepositoryController will not retry")
 		rc.queue.Forget(item)
 		return true
 	} else {
-		logger.InfoContext(ctx, "RepositoryController will retry as service is unavailable")
+		logger.Info("RepositoryController will retry as service is unavailable")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
@@ -211,8 +211,8 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 func (rc *RepositoryController) process(item *queueItem) error {
 	ctx := context.Background()
 
-	logger := slogctx.From(ctx).With("logger", loggerName, "key", item.key)
-	ctx = slogctx.To(ctx, logger)
+	logger := logging.FromContext(ctx).With("logger", loggerName, "key", item.key)
+	ctx = logging.Context(ctx, logger)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
@@ -220,7 +220,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	if item.op == operationDelete {
-		logger.InfoContext(ctx, "handle repository deletion")
+		logger.Info("handle repository deletion")
 		cfg, ok := item.obj.(*provisioning.Repository)
 		if !ok {
 			return errors.New("object is not a repository")
@@ -252,7 +252,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 	ctx = identity.WithRequester(ctx, id)
 	logger = logger.With("repository", cachedRepo.Name, "namespace", cachedRepo.Namespace)
-	ctx = slogctx.To(ctx, logger)
+	ctx = logging.Context(ctx, logger)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
 	if err != nil {
@@ -261,23 +261,23 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	hasSpecChanged := cachedRepo.Generation != cachedRepo.Status.ObservedGeneration
 	if !hasSpecChanged {
-		logger.InfoContext(ctx, "repository spec unchanged")
+		logger.Info("repository spec unchanged")
 		return nil
 	}
 
-	logger.InfoContext(ctx, "repository spec changed", "previous", cachedRepo.Status.ObservedGeneration, "current", cachedRepo.Generation)
+	logger.Info("repository spec changed", "previous", cachedRepo.Status.ObservedGeneration, "current", cachedRepo.Generation)
 
 	var status *provisioning.RepositoryStatus
 	hooks, ok := repo.(repository.RepositoryHooks)
 	if ok {
 		if cachedRepo.Status.ObservedGeneration > 0 {
-			logger.InfoContext(ctx, "handle repository update")
+			logger.Info("handle repository update")
 			status, err = hooks.OnUpdate(ctx)
 			if err != nil {
 				return fmt.Errorf("handle repository update: %w", err)
 			}
 		} else {
-			logger.InfoContext(ctx, "handle repository init")
+			logger.Info("handle repository init")
 			status, err = hooks.OnCreate(ctx)
 			if err != nil {
 				return fmt.Errorf("handle repository create: %w", err)
@@ -290,7 +290,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	status.ObservedGeneration = cachedRepo.Generation
 
 	if time.Since(time.UnixMilli(cachedRepo.Status.Health.Checked)) < 200*time.Millisecond {
-		logger.InfoContext(ctx, "skipping health check as it was recently checked")
+		logger.Info("skipping health check as it was recently checked")
 	} else {
 		res, err := rc.tester.TestRepository(ctx, repo)
 		if err != nil {
@@ -304,7 +304,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 
 		if !res.Success {
-			logger.ErrorContext(ctx, "repository is unhealthy", "errors", res.Errors)
+			logger.Error("repository is unhealthy", "errors", res.Errors)
 		}
 
 		status.Health = provisioning.HealthStatus{
@@ -335,7 +335,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	if err != nil {
 		return fmt.Errorf("trigger sync job: %w", err)
 	}
-	logger.InfoContext(ctx, "sync job triggered", "job", job.Name)
+	logger.Info("sync job triggered", "job", job.Name)
 
 	return nil
 }

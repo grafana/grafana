@@ -10,9 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type exportConnector struct {
@@ -62,12 +62,13 @@ func (c *exportConnector) Connect(
 		return nil, err
 	}
 	ns := repo.Config().GetNamespace()
-	logger := slogctx.From(ctx).With("logger", "export-connector", "repository", name, "namespace", ns)
+	logger := logging.FromContext(ctx).With("logger", "export-connector", "repository", name, "namespace", ns)
 
 	// TODO: We need some way to filter what we export.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := slogctx.To(r.Context(), logger)
+		logger := logger.WithContext(ctx)
+		ctx := logging.Context(r.Context(), logger)
 
 		job, err := c.queue.Add(ctx, &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -87,7 +88,7 @@ func (c *exportConnector) Connect(
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create a job from request: %w", err)))
 			}
 		} else {
-			logger.InfoContext(ctx, "created an export job from request",
+			logger.Info("created an export job from request",
 				"job", job.GetName(),
 				"jobns", job.GetNamespace())
 			responder.Object(http.StatusOK, job)
