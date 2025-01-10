@@ -470,8 +470,6 @@ require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-2024120916
 
 require github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6 // @fcjack @matryer
 
-require github.com/grafana/grafana/pkg/plugins/codegen v0.0.0-00010101000000-000000000000 // @grafana/grafana-as-code
-
 require (
 	cel.dev/expr v0.18.0 // indirect
 	cloud.google.com/go/longrunning v0.6.0 // indirect
@@ -495,15 +493,10 @@ require (
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
-	github.com/dave/dst v0.27.3 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
-	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
-	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d // indirect
-	github.com/grafana/cuetsy v0.1.11 // indirect
-	github.com/grafana/grafana/pkg/codegen v0.0.0-00010101000000-000000000000 // indirect
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect
@@ -511,9 +504,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/maypok86/otter v1.2.2 // indirect
-	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
@@ -524,8 +515,6 @@ require (
 	github.com/sercand/kuberesolver/v5 v5.1.1 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20240102155221-e3a8590b820b // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
-	github.com/speakeasy-api/openapi-overlay v0.9.0 // indirect
-	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	go.etcd.io/bbolt v1.3.11 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.9.0 // indirect
@@ -549,11 +538,6 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
-
-replace (
-	github.com/grafana/grafana/pkg/codegen => ./pkg/codegen // @grafana/grafana-as-code
-	github.com/grafana/grafana/pkg/plugins/codegen => ./pkg/plugins/codegen // @grafana/grafana-as-code
-)
 
 // v1.* versions were retracted, we need to stick with v0.*. This should work
 // without the exclude, but this otherwise gets pulled in as a transitive
