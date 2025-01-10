@@ -63,10 +63,10 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	t.Helper()
 	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
 	require.NoError(t, err)
-	openfga, err := NewOpenFGA(&cfg.Zanzana, store, log.NewNopLogger())
+	openfga, err := NewOpenFGA(cfg.Zanzana, store, log.NewNopLogger())
 	require.NoError(t, err)
 
-	srv, err := NewAuthz(cfg, openfga)
+	srv, err := NewServer(cfg.Zanzana, openfga, log.NewNopLogger())
 	require.NoError(t, err)
 
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
