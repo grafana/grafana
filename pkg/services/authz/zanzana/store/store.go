@@ -132,8 +132,8 @@ func sqliteConnectionString(v string) string {
 	return v[0:strings.LastIndex(v, "/")+1] + "zanzana.db"
 }
 
-func getMySQLMigrationLocations() []migration.MigrationLocation {
-	return []migration.MigrationLocation{
+func getMySQLMigrationLocations() []migration.Location {
+	return []migration.Location{
 		{
 			FS:   assets.EmbedMigrations,
 			Path: assets.MySQLMigrationDir,
@@ -145,8 +145,8 @@ func getMySQLMigrationLocations() []migration.MigrationLocation {
 	}
 }
 
-func getSQLiteMigrationLocations() []migration.MigrationLocation {
-	return []migration.MigrationLocation{
+func getSQLiteMigrationLocations() []migration.Location {
+	return []migration.Location{
 		{
 			FS:   assets.EmbedMigrations,
 			Path: assets.SqliteMigrationDir,
@@ -154,8 +154,8 @@ func getSQLiteMigrationLocations() []migration.MigrationLocation {
 	}
 }
 
-func getPostgresMigrationLocations() []migration.MigrationLocation {
-	return []migration.MigrationLocation{
+func getPostgresMigrationLocations() []migration.Location {
+	return []migration.Location{
 		{
 			FS:   assets.EmbedMigrations,
 			Path: assets.PostgresMigrationDir,

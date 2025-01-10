@@ -12,12 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type MigrationLocation struct {
+type Location struct {
 	FS   embed.FS
 	Path string
 }
 
-func Run(cfg *setting.Cfg, typ, connStr string, migrationLocations []MigrationLocation) error {
+func Run(cfg *setting.Cfg, typ, connStr string, locations []Location) error {
 	engine, err := xorm.NewEngine(typ, connStr)
 	if err != nil {
 		return fmt.Errorf("failed to create db engine: %w", err)
@@ -26,17 +26,17 @@ func Run(cfg *setting.Cfg, typ, connStr string, migrationLocations []MigrationLo
 	m := migrator.NewMigrator(engine, cfg)
 	m.AddCreateMigration()
 
-	if err := RunWithMigrator(m, cfg, migrationLocations); err != nil {
+	if err := RunWithMigrator(m, cfg, locations); err != nil {
 		return err
 	}
 
 	return engine.Close()
 }
 
-func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, migrationLocations []MigrationLocation) error {
+func RunWithMigrator(m *migrator.Migrator, cfg *setting.Cfg, locations []Location) error {
 	var migrations []migration
 
-	for _, loc := range migrationLocations {
+	for _, loc := range locations {
 		parsed, err := parseMigrations(loc.FS, loc.Path)
 		if err != nil {
 			return err
