@@ -20,6 +20,7 @@ var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
 	AddToScheme        = localSchemeBuilder.AddToScheme
+	types              = []runtime.Object{}
 )
 
 func init() {
@@ -31,10 +32,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		// Each check needs to be registered here.
 		// Add more to the list and execute ./hack/update-codegen.sh advisor
-		&DatasourceCheck{},
-		&DatasourceCheckList{},
-		&PluginCheck{},
-		&PluginCheckList{},
+		types...,
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

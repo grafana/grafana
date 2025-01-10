@@ -14,15 +14,14 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError":            schema_pkg_apis_advisor_v0alpha1_CheckError(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheck":       schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckList":   schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec":   schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus": schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheck":           schema_pkg_apis_advisor_v0alpha1_PluginCheck(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckList":       schema_pkg_apis_advisor_v0alpha1_PluginCheckList(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckSpec":       schema_pkg_apis_advisor_v0alpha1_PluginCheckSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckStatus":     schema_pkg_apis_advisor_v0alpha1_PluginCheckStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError":          schema_pkg_apis_advisor_v0alpha1_CheckError(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckSpec":           schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckStatus":         schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheck":     schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckList": schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.GenericCheck":        schema_pkg_apis_advisor_v0alpha1_GenericCheck(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheck":         schema_pkg_apis_advisor_v0alpha1_PluginCheck(ref),
+		"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckList":     schema_pkg_apis_advisor_v0alpha1_PluginCheckList(ref),
 	}
 }
 
@@ -49,15 +48,81 @@ func schema_pkg_apis_advisor_v0alpha1_CheckError(ref common.ReferenceCallback) c
 					},
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Why the check is failing",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
 				Required: []string{"type", "reason", "action"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"data": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Data is currently unused but this can be used to add user inputs to the check.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"data"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of Datasources analyzed",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"count", "errors"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError"},
 	}
 }
 
@@ -90,20 +155,20 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref common.ReferenceCallba
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec", "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckSpec", "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -154,67 +219,49 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_GenericCheck(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"data": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Data is the key:value stored.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckStatus"),
 						},
 					},
 				},
-				Required: []string{"data"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"count": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int32",
-						},
-					},
-					"errors": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"count", "errors"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError"},
+			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckSpec", "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -247,20 +294,20 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheck(ref common.ReferenceCallback) 
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckStatus"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckSpec", "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckSpec", "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -308,69 +355,5 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheckList(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.PluginCheck", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_PluginCheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"data": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Data is the key:value stored.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"data"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_PluginCheckStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"count": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int32",
-						},
-					},
-					"errors": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"count", "errors"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/advisor/v0alpha1.CheckError"},
 	}
 }

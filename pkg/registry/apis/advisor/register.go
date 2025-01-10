@@ -3,6 +3,7 @@ package advisor
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,10 +12,13 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	advisor "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/registry/apis/advisor/datasourcecheck"
+	"github.com/grafana/grafana/pkg/registry/apis/advisor/models"
 	"github.com/grafana/grafana/pkg/registry/apis/advisor/plugincheck"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -23,18 +27,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ builder.APIGroupBuilder = (*AdvisorAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder = (*AdvisorAPIBuilder)(nil)
+)
 
 type AdvisorAPIBuilder struct {
-	datasourceSvc         datasources.DataSourceService
-	pluginRepo            repo.Service
-	pluginStore           pluginstore.Store
-	pluginContextProvider *plugincontext.Provider
-	pluginClient          plugins.Client
+	models.AdvisorAPIServices
 
 	namespacer request.NamespaceMapper
+	checks     []models.Check
 }
 
 func RegisterAPIService(
@@ -49,13 +53,23 @@ func RegisterAPIService(
 ) *AdvisorAPIBuilder {
 	// TODO: Add a feature flag
 
+	apvs := models.AdvisorAPIServices{
+		DatasourceSvc:         datasourceSvc,
+		PluginRepo:            pluginRepo,
+		PluginStore:           pluginStore,
+		PluginContextProvider: pluginContextProvider,
+		PluginClient:          pluginClient,
+	}
+
+	checks := []models.Check{
+		// Register new checks here
+		datasourcecheck.New(&apvs),
+		plugincheck.New(&apvs),
+	}
 	builder := &AdvisorAPIBuilder{
-		namespacer:            request.GetNamespaceMapper(cfg),
-		datasourceSvc:         datasourceSvc,
-		pluginRepo:            pluginRepo,
-		pluginStore:           pluginStore,
-		pluginContextProvider: pluginContextProvider,
-		pluginClient:          pluginClient,
+		namespacer:         request.GetNamespaceMapper(cfg),
+		AdvisorAPIServices: apvs,
+		checks:             checks,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -65,40 +79,53 @@ func (b *AdvisorAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return advisor.SchemeGroupVersion
 }
 
+func resourceInfo(check models.Check) utils.ResourceInfo {
+	// Each check has its own resource info, multiple checks can reuse the same resource info if they are related
+	return utils.NewResourceInfo(advisor.GROUP, advisor.VERSION,
+		check.Name(), check.Name(), check.Kind(), check.Object, check.ObjectList,
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Created At", Type: "date"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				meta, err := utils.MetaAccessor(obj)
+				if err != nil {
+					return nil, err
+				}
+				return []interface{}{
+					meta.GetName(),
+					meta.GetCreationTimestamp().UTC().Format(time.RFC3339),
+				}, nil
+			},
+		}, // default table converter
+	)
+}
+
 func (b *AdvisorAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	// Each check schema needs to be registered here
-	if err := datasourcecheck.AddKnownTypes(scheme); err != nil {
-		return err
-	}
-	if err := plugincheck.AddKnownTypes(scheme); err != nil {
-		return err
+	for _, check := range b.checks {
+		ri := resourceInfo(check)
+		scheme.AddKnownTypes(ri.GroupVersion(), ri.NewFunc(), ri.NewListFunc())
+		metav1.AddToGroupVersion(scheme, ri.GroupVersion())
 	}
 	return nil
 }
 
 func (b *AdvisorAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	addStorage := func(gvr schema.GroupVersionResource, s rest.Storage) {
+	for _, check := range b.checks {
+		ri := resourceInfo(check)
+		storage, err := newStorage(opts.Scheme, opts.OptsGetter, check, ri)
+		if err != nil {
+			return fmt.Errorf("failed to initialize storage: %w", err)
+		}
+		gvr := ri.GroupVersionResource()
 		v, ok := apiGroupInfo.VersionedResourcesStorageMap[gvr.Version]
 		if !ok {
 			v = map[string]rest.Storage{}
 			apiGroupInfo.VersionedResourcesStorageMap[gvr.Version] = v
 		}
-		v[gvr.Resource] = s
+		v[gvr.Resource] = storage
 	}
-
-	// Each check storage needs to be registered here
-	dscheckStorage, err := datasourcecheck.NewStorage(opts.Scheme, opts.OptsGetter, b.datasourceSvc, b.pluginContextProvider, b.pluginClient)
-	if err != nil {
-		return fmt.Errorf("failed to initialize route storage: %w", err)
-	}
-	addStorage(datasourcecheck.ResourceInfo.GroupVersionResource(), dscheckStorage)
-
-	plugincheckStorage, err := plugincheck.NewStorage(opts.Scheme, opts.OptsGetter, b.pluginStore, b.pluginRepo)
-	if err != nil {
-		return fmt.Errorf("failed to initialize route storage: %w", err)
-	}
-	addStorage(plugincheck.ResourceInfo.GroupVersionResource(), plugincheckStorage)
-
 	return nil
 }
 
@@ -110,12 +137,18 @@ func (b *AdvisorAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
-			// Each check authorizer needs to be registered here
-			case datasourcecheck.ResourceInfo.GroupResource().Resource:
-				return datasourcecheck.Authorize(ctx, nil, a)
-			case plugincheck.ResourceInfo.GroupResource().Resource:
-				return plugincheck.Authorize(ctx, nil, a)
+			// Custom authorizer can be registered here
 			}
-			return authorizer.DecisionNoOpinion, "", nil
+			// Default case, only allow admins
+			user, err := identity.GetRequester(ctx)
+			if err != nil {
+				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			isAdmin := user.GetIsGrafanaAdmin()
+			if isAdmin {
+				return authorizer.DecisionAllow, "", nil
+			}
+			return authorizer.DecisionDeny, "", err
 		})
 }

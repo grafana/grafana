@@ -10,6 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+func init() {
+	types = append(types, &PluginCheck{}, &PluginCheckList{})
+}
+
 var PluginCheckResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"plugincheck", "plugin-check", "PluginCheck",
 	func() runtime.Object { return &PluginCheck{} },
@@ -36,22 +40,7 @@ var PluginCheckResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type PluginCheck struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec PluginCheckSpec `json:"spec,omitempty"`
-
-	Status PluginCheckStatus `json:"status,omitempty"`
-}
-
-type PluginCheckSpec struct {
-	// Data is currently unused but this can be used to add user inputs to the check.
-	Data map[string]string `json:"data"`
-}
-
-type PluginCheckStatus struct {
-	Count  int          `json:"count"`  // Number of plugins analyzed
-	Errors []CheckError `json:"errors"` // List of errors found
+	GenericCheck `json:",inline"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

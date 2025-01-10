@@ -5,55 +5,64 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	advisor "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	advisorv0alpha1 "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/advisor/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-type genericStrategy interface {
-	rest.RESTCreateStrategy
-	rest.RESTUpdateStrategy
-}
-
-type userstorageStrategy struct {
-	genericStrategy
-
+type DatasourceCheckImpl struct {
 	datasourceSvc         datasources.DataSourceService
 	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
 }
 
-func newStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion, datasourceSvc datasources.DataSourceService, pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client) *userstorageStrategy {
-	genericStrategy := grafanaregistry.NewStrategy(typer, gv)
-	return &userstorageStrategy{genericStrategy, datasourceSvc, pluginContextProvider, pluginClient}
+func New(apiBuilderSvcs *models.AdvisorAPIServices) models.Check {
+	return &DatasourceCheckImpl{
+		datasourceSvc:         apiBuilderSvcs.DatasourceSvc,
+		pluginContextProvider: apiBuilderSvcs.PluginContextProvider,
+		pluginClient:          apiBuilderSvcs.PluginClient,
+	}
 }
 
-func (g *userstorageStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	meta, err := utils.MetaAccessor(obj)
+func (c *DatasourceCheckImpl) Object() runtime.Object {
+	return &advisorv0alpha1.DatasourceCheck{}
+}
+
+func (c *DatasourceCheckImpl) ObjectList() runtime.Object {
+	return &advisorv0alpha1.DatasourceCheckList{}
+}
+
+func (c *DatasourceCheckImpl) Name() string {
+	return "datasourcecheck"
+}
+
+func (c *DatasourceCheckImpl) Kind() string {
+	return "DatasourceCheck"
+}
+
+func (c *DatasourceCheckImpl) Run(ctx context.Context, obj runtime.Object) (*advisorv0alpha1.CheckStatus, error) {
+	d, ok := obj.(*advisorv0alpha1.DatasourceCheck)
+	if !ok {
+		return nil, fmt.Errorf("invalid object type")
+	}
+	fmt.Println(d.Spec.Data)
+
+	dss, err := c.datasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
-		// TODO: Errors may need to be at least logged
-		return
+		return nil, err
 	}
 
-	dss, err := g.datasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
-	if err != nil {
-		return
-	}
-
-	dsErrs := []advisor.CheckError{}
+	dsErrs := []advisorv0alpha1.CheckError{}
 	for _, ds := range dss {
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, advisor.CheckError{
+			dsErrs = append(dsErrs, advisorv0alpha1.CheckError{
 				Type:   "Investigation recommended",
 				Reason: fmt.Sprintf("Invalid UID: %s", ds.UID),
 				Action: "Change UID",
@@ -62,7 +71,7 @@ func (g *userstorageStrategy) PrepareForCreate(ctx context.Context, obj runtime.
 
 		// Health check execution
 		identity := &user.SignedInUser{OrgID: int64(1), Login: "admin"}
-		pCtx, err := g.pluginContextProvider.GetWithDataSource(ctx, ds.Type, identity, ds)
+		pCtx, err := c.pluginContextProvider.GetWithDataSource(ctx, ds.Type, identity, ds)
 		if err != nil {
 			fmt.Println("Error getting plugin context", err)
 			continue
@@ -83,14 +92,14 @@ func (g *userstorageStrategy) PrepareForCreate(ctx context.Context, obj runtime.
 		// 	continue
 		// }
 
-		resp, err := g.pluginClient.CheckHealth(ctx, req)
+		resp, err := c.pluginClient.CheckHealth(ctx, req)
 		if err != nil {
 			fmt.Println("Error checking health", err)
 			continue
 		}
 
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, advisor.CheckError{
+			dsErrs = append(dsErrs, advisorv0alpha1.CheckError{
 				Type:   "Action recommended",
 				Reason: fmt.Sprintf("Health check failed: %s", ds.Name),
 				Action: "Check datasource",
@@ -98,12 +107,8 @@ func (g *userstorageStrategy) PrepareForCreate(ctx context.Context, obj runtime.
 		}
 	}
 
-	// Store result in the status
-	err = meta.SetStatus(advisor.DatasourceCheckStatus{
+	return &advisorv0alpha1.CheckStatus{
 		Errors: dsErrs,
 		Count:  len(dss),
-	})
-	if err != nil {
-		return
-	}
+	}, nil
 }

@@ -1,15 +1,14 @@
-package plugincheck
+package advisor
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
-	advisor "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/registry/apis/advisor/models"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -18,10 +17,14 @@ type storage struct {
 	*genericregistry.Store
 }
 
-func NewStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, pluginStore pluginstore.Store, pluginRepo repo.Service) (*storage, error) {
-	resourceInfo := advisor.PluginCheckResourceInfo
+func newStorage(
+	scheme *runtime.Scheme,
+	optsGetter generic.RESTOptionsGetter,
+	check models.Check,
+	resourceInfo utils.ResourceInfo,
+) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
-	storageStrategy := newStrategy(scheme, resourceInfo.GroupVersion(), pluginStore, pluginRepo)
+	storageStrategy := newStrategy(scheme, resourceInfo.GroupVersion(), check)
 
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
