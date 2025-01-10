@@ -9,8 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
@@ -18,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 var (
@@ -90,7 +87,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	if name == templates.DefaultTemplateName || name == legacy_storage.NameToUid(templates.DefaultTemplateName) {
+	if name == templates.DefaultTemplateName {
 		dto, err := s.defaultTemplate()
 		if err != nil {
 			return nil, err
@@ -201,25 +198,6 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return old, false, err                                                                                        // false - will be deleted async
 }
 
-func Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	op := a.GetOperation()
-	if op == admission.Create || op == admission.Update {
-		obj := a.GetObject()
-		p, ok := obj.(*model.TemplateGroup)
-		if !ok {
-			return fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
-		}
-		if p.Spec.Title == templates.DefaultTemplateName {
-			return errors.NewInvalid(
-				obj.GetObjectKind().GroupVersionKind().GroupKind(),
-				a.GetName(),
-				field.ErrorList{field.Invalid(field.NewPath("title"), templates.DefaultTemplateName, "reserved template name")},
-			)
-		}
-	}
-	return nil
-}
-
 func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, error) {
 	defaultTemplate, err := templates.DefaultTemplate()
 	if err != nil {
@@ -227,8 +205,8 @@ func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, err
 	}
 
 	dto := definitions.NotificationTemplate{
-		Name:       defaultTemplate.Name,
-		UID:        legacy_storage.NameToUid(defaultTemplate.Name),
+		Name:       model.DefaultTemplateTitle, // User friendly name.
+		UID:        defaultTemplate.Name,
 		Provenance: definitions.Provenance("system"),
 		Template:   defaultTemplate.Template,
 	}
