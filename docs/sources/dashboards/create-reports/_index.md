@@ -138,25 +138,27 @@ To create a report, follow these steps:
    - [Select dashboard](#1-select-dashboard)
    - [Format report](#2-format-report)
    - [Schedule](#3-schedule)
-   - [Share](#share)
-   - [Confirm](#confirm)
-1. Do one of the following:
-   - **Send** - The report will be sent according the schedule you've set.
+   - [Share](#4-share)
+   - [Confirm](#5-confirm)
+1. Click one of the following buttons:
+   - **Send** or **Schedule send** - The report is sent according the schedule you've set.
    - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
    - **Discard** - Delete the report draft. This action can't be reversed.
 
 ### 1. Select dashboard
 
-At this step, select the dashboard or dashboards on which the report is based as well as the variables and time range for those dashboards. The options are:
+At this step, select the dashboard or dashboards on which the report is based, as well as the variables and time range for those dashboards. The options are:
 
-- [Source dashboard](#source-dashboard)
-- [Template variables](#template-variables)
-- [Time range (optional)](#time-range)
-- [Add another dashboard](#add-another-dashboard)
+<!-- prettier-ignore-start -->
 
-#### Source dashboard
+| Option | Description |
+| ------ | ----------- |
+| Source dashboard | Select the dashboard from which you want to generate the report. |
+| [Template variables](#template-variables) | Select the variable **Datasource** and **Instance** for the selected dashboard. This option is only displayed if the dashboard has variables. |
+| [Time range (optional)](#time-range) | By default, reports use the saved time range of the dashboard. Optionally, you can change the time range of the report. |
+| Add another dashboard | Add more dashboards to the report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You can't add the same dashboard to a report multiple times. |
 
-Select the dashboard from which you want to generate the report.
+<!-- prettier-ignore-end -->
 
 #### Template variables
 
@@ -169,15 +171,6 @@ The query variables saved with a report might become out of date if the results 
 ##### Reports with panels or rows set to repeat by a variable
 
 You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
-
-This functionality has the following caveats:
-
-- Rendering repeating panels for dynamic variable types (for example, `query` variables) with selected `All` value is currently not supported. As a workaround, select all the values.
-- If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue
-  - use the dashboard's original template variables for the report, or make a copy of the dashboard
-  - select the new set of template variables
-  - generate a report based on the copied dashboard.
-- Rendering of the repeating panels inside collapsed rows in reports is not supported.
 
 #### Time range
 
@@ -195,10 +188,6 @@ Reports use the time zone of the dashboard from which they’re generated. You c
 If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server. As a result, this time zone might not match the time zone of users creating or receiving the report.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
-
-#### Add another dashboard
-
-Add more dashboards to the report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You can't add the same dashboard to a report multiple times.
 
 ### 2. Format report
 
@@ -269,7 +258,7 @@ This feature relies on the same plugin that supports the [image rendering](ref:i
 
 ### 3. Schedule
 
-At this step, set scheduling information. Options vary depending on the frequency selected.
+At this step, set scheduling information. Options vary depending on the frequency you select.
 
 <!-- prettier-ignore-start -->
 
@@ -283,52 +272,56 @@ At this step, set scheduling information. Options vary depending on the frequenc
 
 <!-- prettier-ignore-end -->
 
-### Share
+### 4. Share
 
-1. Enter report information. All fields are required unless otherwise indicated.
-   - **Report name:** Name of the report as you want it to appear in the **Reports** list. The report name populates the email subject line.
-   - **Recipients:** Enter the emails of the people or teams that you want to receive the report, separated by commas or semicolons.
-   - **Reply to:** (optional) The address that appears in the **Reply to** field of the email.
-   - **Message:** (optional) Message body in the email with the report.
-   - **Include a dashboard link:** Include a link to the dashboard from within the report email.
-   - **Send test email:** To verify that the configuration works as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
+At this step, enter information related to sharing the report:
 
-#### Send a test email
+<!-- prettier-ignore-start -->
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+| Option | Description |
+| ------ | ----------- |
+| Report name | Name of the report as you want it to appear in the **Reports** list. The report name also populates the email subject line. |
+| Recipients | Enter the email addresses of the people or teams that you want to receive the report, separated by commas or semicolons. |
+| Reply-to email address | The address that appears in the **Reply to** field of the email. |
+| Message | Message body in the email with the report. |
+| Include a dashboard link | Include a link to the dashboard from within the report email. |
 
-1. In the report, click **Send test email**.
-1. In the **Email** field, enter the email address or addresses that you want to test, separated by a semicolon.
-   If you want to use email addresses from the report, then select the **Use emails from report** check box.
-1. Click **Send**.
+<!-- prettier-ignore-end -->
 
-The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
+Click **Send test email** in the top-right corner of the screen to verify that the configuration works as expected and to verify that emails are working. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing. The last saved version of the report will be sent to selected emails.
 
-### Confirm
+### 5. Confirm
 
-1. Preview and save the report.
+The confirmation page displays all your report settings. Review them and confirm that they're correct or click the provided **Edit** links for each section to make updates.
+
+Then click **Send now** or **Schedule send**.
+
+You can also save the report as a draft or discard it. Discarding the report is irreversible.
 
 ## Manage reports
 
-The **Reports** page allows you to view, create, and update your reports.
+On the **Reports** page, you can view and manage your existing reports or create new ones.
 
 ### Edit
 
-TBD
+To edit a report, follow these steps:
 
-#### Pause or resume a report
+1. In the main menu, click **Dashboards > Reports**.
+1. Click the row of the report you want to update.
+1. Click the **Edit report** button in the top-right hand corner or click the **Edit** link for a specific section to go to that one directly.
+1. When you've finished making changes, click **Confirm** at the top of the screen to go to the last step.
+1. Click **Update report**.
 
-You can pause sending reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
+### Pause or resume a report
 
-## Send a report via the API
+You can pause and resume sending reports from the report list view. To do this, follow these steps:
+
+1. In the main menu, click **Dashboards > Reports**.
+1. On the row of the report you want to update, do one of the following:
+
+   - Click the pause icon - The report won't be sent according to its schedule until it's resumed.
+   - Click the resume icon - The report resumes on its previous schedule.
+
+## Send a report using the API
 
 You can send reports programmatically with the [send report](ref:send-report) endpoint in the [HTTP APIs](ref:http-apis).
-
-## Troubleshoot reporting
-
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration](ref:configuration) for more information.
-
-```bash
-[log]
-filters = report:debug
-```

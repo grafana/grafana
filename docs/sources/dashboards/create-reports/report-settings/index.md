@@ -82,3 +82,12 @@ max_retries_per_panel = 3
 # Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 allowed_domains = *
 ```
+
+## Troubleshoot reporting
+
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration](ref:configuration) for more information.
+
+```bash
+[log]
+filters = report:debug
+```
