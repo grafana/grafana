@@ -133,7 +133,7 @@ Use the following options to refine how your visualization displays the value:
 | Calculation | If you chose **Calculate** as your **Show** option, select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
 | Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 5,000. |
 | Fields | Select the fields display in the panel. |
-| Sort | Select a sorting direction, or select **None** to have gauges show in the order they are returned from the datasource. |
+| Sort | Select a sorting direction, or select **None** to have gauges display in the order in which they're returned from the data source. |
 
 <!-- prettier-ignore-end -->
 
