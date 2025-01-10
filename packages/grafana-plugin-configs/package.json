@@ -15,7 +15,7 @@
     "eslint": "9.17.0",
     "eslint-webpack-plugin": "4.2.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
-    "glob": "11.0.0",
+    "glob": "11.0.1",
     "replace-in-file-webpack-plugin": "1.0.6",
     "swc-loader": "0.2.6",
     "typescript": "5.7.3",

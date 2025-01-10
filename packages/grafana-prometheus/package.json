@@ -117,7 +117,7 @@
     "eslint-plugin-react-hooks": "5.0.0",
     "eslint-webpack-plugin": "4.2.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
-    "glob": "11.0.0",
+    "glob": "11.0.1",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",
     "jest-matcher-utils": "29.7.0",
