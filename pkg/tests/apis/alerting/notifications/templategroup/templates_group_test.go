@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/alerting/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -99,6 +100,42 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, actual, resource)
+
+		existingTemplateGroup = actual
+	})
+
+	var defaultTemplateGroup *v0alpha1.TemplateGroup
+	t.Run("default template should be available by the identifier", func(t *testing.T) {
+		actual, err := client.Get(ctx, templates.DefaultTemplateName, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+
+		defaultDefn, err := templates.DefaultTemplate()
+		require.NoError(t, err)
+		require.Equal(t, v0alpha1.Spec{
+			Title:   v0alpha1.DefaultTemplateTitle,
+			Content: defaultDefn.Template,
+		}, actual.Spec)
+		defaultTemplateGroup = actual
+	})
+
+	var newTemplateWithOverlappingName *v0alpha1.TemplateGroup
+	t.Run("create with reserved default title should work", func(t *testing.T) {
+		template := newTemplate.Copy().(*v0alpha1.TemplateGroup)
+		template.Spec.Title = defaultTemplateGroup.Spec.Title
+		actual, err := client.Create(ctx, template, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+		require.NotEmptyf(t, actual.UID, "Resource UID should not be empty")
+		newTemplateWithOverlappingName = actual
+	})
+
+	t.Run("default template should not be available by calculated UID", func(t *testing.T) {
+		actual, err := client.Get(ctx, newTemplateWithOverlappingName.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+
+		require.Equal(t, newTemplateWithOverlappingName.Spec, actual.Spec) // This is the new template, not the default one.
 	})
 }
 
@@ -229,7 +266,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				t.Run("should be able to list template groups", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
 					require.NoError(t, err)
-					require.Len(t, list.Items, 1)
+					require.Len(t, list.Items, 2) // Includes default template.
 				})
 
 				t.Run("should be able to read template group by resource identifier", func(t *testing.T) {
@@ -319,10 +356,11 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 
 			if tc.canRead {
-				t.Run("should get empty list if no mute timings", func(t *testing.T) {
+				t.Run("should get list with just default template if no template groups", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
 					require.NoError(t, err)
-					require.Len(t, list.Items, 0)
+					require.Len(t, list.Items, 1)
+					require.Equal(t, templates.DefaultTemplateName, list.Items[0].Name)
 				})
 			}
 		})
@@ -570,9 +608,9 @@ func TestIntegrationListSelector(t *testing.T) {
 
 	require.NoError(t, err)
 
-	templates, err := adminClient.List(ctx, v1.ListOptions{})
+	tmpls, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
-	require.Len(t, templates.Items, 2)
+	require.Len(t, tmpls.Items, 3) // Includes default template.
 
 	t.Run("should filter by template name", func(t *testing.T) {
 		list, err := adminClient.List(ctx, v1.ListOptions{
@@ -607,6 +645,24 @@ func TestIntegrationListSelector(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
+	})
+
+	t.Run("should filter by default template name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.title=" + v0alpha1.DefaultTemplateTitle,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, templates.DefaultTemplateName, list.Items[0].Name)
+
+		// Now just non-default templates
+		list, err = adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.title!=" + v0alpha1.DefaultTemplateTitle,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 2)
+		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[0].Name, "Expected non-default template but got %s", list.Items[0].Name)
+		require.NotEqualf(t, templates.DefaultTemplateName, list.Items[1].Name, "Expected non-default template but got %s", list.Items[1].Name)
 	})
 }
 
