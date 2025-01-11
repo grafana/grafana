@@ -94,6 +94,24 @@ func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDa
 	return r0
 }
 
+// CleanupAfterDelete provides a mock function with given fields: ctx, cmd
+func (_m *FakeDashboardStore) CleanupAfterDelete(ctx context.Context, cmd *DeleteDashboardCommand) error {
+	ret := _m.Called(ctx, cmd)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CleanupAfterDelete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *DeleteDashboardCommand) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteAllDashboards provides a mock function with given fields: ctx, orgID
 func (_m *FakeDashboardStore) DeleteAllDashboards(ctx context.Context, orgID int64) error {
 	ret := _m.Called(ctx, orgID)
@@ -147,7 +165,6 @@ func (_m *FakeDashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Co
 
 	return r0
 }
-
 
 // FindDashboards provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
@@ -208,7 +225,6 @@ func (_m *FakeDashboardStore) GetAllDashboards(ctx context.Context) ([]*Dashboar
 
 	return r0, r1
 }
-
 
 // GetAllDashboardsByOrgId provides a mock function with given fields: ctx
 func (_m *FakeDashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error) {

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -277,13 +278,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 		if origin_name.String != "" {
 			ts := time.Unix(origin_ts.Int64, 0)
-			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
+
 			repo := &utils.ResourceRepositoryInfo{
 				Name:      origin_name.String,
 				Hash:      origin_hash.String,
 				Timestamp: &ts,
 			}
 			// if the reader cannot be found, it may be an orphaned provisioned dashboard
+			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
 			if resolvedPath != "" {
 				originPath, err := filepath.Rel(
 					resolvedPath,
@@ -391,13 +393,9 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	if err != nil {
 		return nil, false, err
 	}
-	pluginID := ""
-	if meta.GetRepositoryName() == "plugin" {
-		pluginID = meta.GetRepositoryPath()
-	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		PluginID:  pluginID,
+		PluginID:  service.GetPluginIDFromMeta(meta),
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!

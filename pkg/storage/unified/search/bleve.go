@@ -625,7 +625,6 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		return query.NewDisjunctionQuery(disjuncts), nil
 	case selection.NotIn:
-		// negative lookahead regexs are not supported, so we can't use the regex querier here
 		boolQuery := bleve.NewBooleanQuery()
 
 		var mustNotQueries []query.Query
