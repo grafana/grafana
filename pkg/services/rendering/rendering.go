@@ -429,6 +429,16 @@ func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
 	}
 
+	if rs.Cfg.RendererCallbackUrl != "" {
+		_, err := url.Parse(rs.Cfg.RendererCallbackUrl)
+		if err != nil {
+			// Error handling here if renderer callback url is not a valid URL?
+		}
+
+		// &render=1 signals to the legacy redirect layer to
+		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
+	}
+
 	protocol := rs.Cfg.Protocol
 	switch protocol {
 	case setting.HTTPScheme:
@@ -442,15 +452,6 @@ func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 	subPath := ""
 	if rs.Cfg.ServeFromSubPath {
 		subPath = rs.Cfg.AppSubURL
-	}
-
-	if rs.Cfg.RendererCallbackUrl != "" {
-		u, err := url.Parse(rs.Cfg.RendererCallbackUrl)
-		if err != nil {
-			// Error handling here if renderer callback url is not a valid URL?
-		}
-		rs.domain = u.Hostname()
-		return fmt.Sprintf("%s://%s%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
 	}
 
 	// &render=1 signals to the legacy redirect layer to
