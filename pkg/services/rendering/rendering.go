@@ -432,7 +432,9 @@ func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 	if rs.Cfg.RendererCallbackUrl != "" {
 		_, err := url.Parse(rs.Cfg.RendererCallbackUrl)
 		if err != nil {
-			// Error handling here if renderer callback url is not a valid URL?
+			rs.log.Warn("Image renderer callback url is not valid. " +
+				"Please provide a valid RendererCallbackUrl. " +
+				"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 		}
 
 		// &render=1 signals to the legacy redirect layer to
