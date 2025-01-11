@@ -297,7 +297,6 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				repo.Path = originPath
 			}
 			meta.SetRepositoryInfo(repo)
-
 		} else if plugin_id != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name: "plugin",

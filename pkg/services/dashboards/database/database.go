@@ -149,8 +149,7 @@ func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *das
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
 
-	var err error
-	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if provisioning.Updated == 0 {
 			provisioning.Updated = dash.Updated.Unix()
 		}

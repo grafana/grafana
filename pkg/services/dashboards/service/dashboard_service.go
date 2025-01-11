@@ -661,6 +661,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	dto.SignedInUser = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
 	ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(dto.OrgID))
 
+	fmt.Println("made it")
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
 		dr.log.Error("failed to create folder for provisioned dashboards", "folder", dto.Title, "org", dto.OrgID, "err", err)
@@ -890,8 +891,8 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 			}, nil, true)
 
 			return err
-
 		}
+
 		return dashboards.ErrDashboardNotFound
 	}
 
