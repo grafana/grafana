@@ -305,6 +305,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx co
 
 		return nil, nil
 	}
+
 	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
 }
 
@@ -634,6 +635,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 	var dash *dashboards.Dashboard
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		fmt.Println("here")
 		dash, err = dr.saveProvisionedDashboardThroughK8s(ctx, cmd, provisioning, false)
 		if err != nil {
 			return nil, err
@@ -1517,7 +1519,8 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 		annotations[utils.AnnoKeyRepoName] = "file:" + provisioning.Name
 		annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
 		annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
-		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).String()
+		// TODO: this is't working...
+		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).UTC().Format(time.RFC3339)
 	}
 	obj.SetAnnotations(annotations)
 

@@ -391,8 +391,13 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	if err != nil {
 		return nil, false, err
 	}
+	pluginID := ""
+	if meta.GetRepositoryName() == "plugin" {
+		pluginID = meta.GetRepositoryPath()
+	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
+		PluginID:  pluginID,
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
