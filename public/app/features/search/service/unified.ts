@@ -58,12 +58,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-
-    if (query.kind?.length === 1 && query.kind[0] === 'dashboard') {
-      // TODO: this is browse mode, so skip the search
-      return noDataResponse();
-    }
-
     return this.doSearchQuery(query);
   }
 

@@ -192,6 +192,8 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
+const rootFolder = "general"
+
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -234,6 +236,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
 	if folder != "" {
+		if folder == rootFolder {
+			folder = "" // root folder is empty in the search index
+		}
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      "folder",
 			Operator: "=",
