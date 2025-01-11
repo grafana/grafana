@@ -1504,17 +1504,15 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
-
 	if unprovision {
 		annotations[utils.AnnoKeyRepoName] = ""
 		annotations[utils.AnnoKeyRepoPath] = ""
 		annotations[utils.AnnoKeyRepoHash] = ""
 		annotations[utils.AnnoKeyRepoTimestamp] = ""
 	} else {
-		annotations[utils.AnnoKeyRepoName] = "file:" + provisioning.Name
+		annotations[utils.AnnoKeyRepoName] = fileProvisionedRepoPrefix + provisioning.Name
 		annotations[utils.AnnoKeyRepoPath] = provisioning.ExternalID
 		annotations[utils.AnnoKeyRepoHash] = provisioning.CheckSum
-		// TODO: this is't working...
 		annotations[utils.AnnoKeyRepoTimestamp] = time.Unix(provisioning.Updated, 0).UTC().Format(time.RFC3339)
 	}
 	obj.SetAnnotations(annotations)
@@ -1664,7 +1662,7 @@ func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, or
 
 	client, ok := dr.k8sclient.getClient(newCtx, orgID)
 	if !ok {
-		return []*dashboards.Dashboard{}, nil
+		return nil, nil
 	}
 
 	out, err := client.List(newCtx, v1.ListOptions{})
@@ -1695,7 +1693,8 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	request := &resource.ResourceSearchRequest{
 		Options: &resource.ListOptions{
-			Key: dashboardskey,
+			Key:    dashboardskey,
+			Fields: []*resource.Requirement{},
 		},
 		Limit: 100000}
 
@@ -1724,11 +1723,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Operator: "in",
 			Values:   query.FolderUIDs,
 		}}
-		if len(request.Options.Fields) == 0 {
-			request.Options.Fields = req
-		} else {
-			request.Options.Fields = append(request.Options.Fields, req...)
-		}
+		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
 	if query.ProvisionedRepo != "" {
@@ -1737,11 +1732,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Operator: "in",
 			Values:   []string{query.ProvisionedRepo},
 		}}
-		if len(request.Options.Fields) == 0 {
-			request.Options.Fields = req
-		} else {
-			request.Options.Fields = append(request.Options.Fields, req...)
-		}
+		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
 	if len(query.ProvisionedReposNotIn) > 0 {
@@ -1750,11 +1741,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Operator: "notin",
 			Values:   query.ProvisionedReposNotIn,
 		}}
-		if len(request.Options.Fields) == 0 {
-			request.Options.Fields = req
-		} else {
-			request.Options.Fields = append(request.Options.Fields, req...)
-		}
+		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 	if query.ProvisionedPath != "" {
 		req := []*resource.Requirement{{
@@ -1762,11 +1749,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Operator: "in",
 			Values:   []string{query.ProvisionedPath},
 		}}
-		if len(request.Options.Fields) == 0 {
-			request.Options.Fields = req
-		} else {
-			request.Options.Fields = append(request.Options.Fields, req...)
-		}
+		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
 	// note: this does not allow for partial matching
@@ -1779,11 +1762,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Operator: "in",
 			Values:   []string{query.Title},
 		}}
-		if len(request.Options.Fields) == 0 {
-			request.Options.Fields = req
-		} else {
-			request.Options.Fields = append(request.Options.Fields, req...)
-		}
+		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
 	if len(query.Tags) > 0 {
@@ -1792,12 +1771,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Operator: "in",
 			Values:   query.Tags,
 		}}
-
-		if len(request.Options.Fields) == 0 {
-			request.Options.Fields = req
-		} else {
-			request.Options.Fields = append(request.Options.Fields, req...)
-		}
+		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
 	res, err := dr.k8sclient.getSearcher().Search(ctx, request)
@@ -1840,6 +1814,7 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 
 	dashs := make([]*dashboards.DashboardProvisioning, 0)
 	for _, hit := range searchResults.Hits {
+		// get matching dashboards
 		out, err := client.Get(newCtx, hit.Name, v1.GetOptions{}, "")
 		if err != nil {
 			return nil, err
@@ -1852,7 +1827,8 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 			return nil, err
 		}
 
-		// only return provisioned dashboards (the repo name will start with file:)
+		// ensure the repo is set due to file provisioning (starts with `file:`)
+		// otherwise we'll also return things like plugin imports in the orphaned provisioned query
 		fileRepo, found := strings.CutPrefix(meta.GetRepositoryName(), fileProvisionedRepoPrefix)
 		if !found {
 			continue
