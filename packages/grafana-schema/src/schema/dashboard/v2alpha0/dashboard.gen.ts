@@ -27,20 +27,20 @@ export interface DashboardV2Spec {
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// Tags associated with dashboard.
-	tags?: string[];
+	tags: string[];
 	timeSettings: TimeSettingsSpec;
 	// Configured template variables.
-	variables: (QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind)[];
+	variables: VariableKind[];
 	// |* more element types in the future
 	elements: Record<string, PanelKind>;
 	annotations: AnnotationQueryKind[];
 	layout: GridLayoutKind;
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
-	// version: will rely on k8s resource versioning, via metadata.resorceVersion
-	// revision?: int // for plugins only
-	// gnetId?: string // ??? Wat is this used for?
 	schemaVersion: number;
+	// Plugins only. The version of the dashboard installed together with the plugin.
+	// This is used to determine if the dashboard should be updated when the plugin is updated.
+	revision?: number;
 }
 
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
@@ -49,6 +49,7 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	preload: false,
 	editable: true,
 	links: [],
+	tags: [],
 	timeSettings: defaultTimeSettingsSpec(),
 	variables: [],
 	elements: {},
@@ -475,22 +476,21 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 
 export interface AnnotationQuerySpec {
 	datasource?: DataSourceRef;
-	query: DataQueryKind;
-	builtIn?: boolean;
+	query?: DataQueryKind;
 	enable: boolean;
-	filter: AnnotationPanelFilter;
 	hide: boolean;
 	iconColor: string;
 	name: string;
+	builtIn?: boolean;
+	filter?: AnnotationPanelFilter;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
-	query: defaultDataQueryKind(),
 	enable: false,
-	filter: defaultAnnotationPanelFilter(),
 	hide: false,
 	iconColor: "",
 	name: "",
+	builtIn: false,
 });
 
 export interface AnnotationQueryKind {
@@ -648,6 +648,21 @@ export const defaultTimeSettingsSpec = (): TimeSettingsSpec => ({
 	fiscalYearStartMonth: 0,
 });
 
+// other repeat modes will be added in the future: label, frame
+export const RepeatMode = "variable";
+
+export interface RepeatOptions {
+	mode: "variable";
+	value: string;
+	direction?: "h" | "v";
+	maxPerRow?: number;
+}
+
+export const defaultRepeatOptions = (): RepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -655,6 +670,7 @@ export interface GridLayoutItemSpec {
 	height: number;
 	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
 	element: ElementReference;
+	repeat?: RepeatOptions;
 }
 
 export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({
@@ -694,7 +710,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface PanelSpec {
-	uid: string;
+	id: number;
 	title: string;
 	description: string;
 	links: DataLink[];
@@ -704,7 +720,7 @@ export interface PanelSpec {
 }
 
 export const defaultPanelSpec = (): PanelSpec => ({
-	uid: "",
+	id: 0,
 	title: "",
 	description: "",
 	links: [],
@@ -800,6 +816,10 @@ export const defaultVariableCustomFormatterFn = (): VariableCustomFormatterFn =>
 export type VariableType = "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" | "snapshot";
 
 export const defaultVariableType = (): VariableType => ("query");
+
+export type VariableKind = QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind;
+
+export const defaultVariableKind = (): VariableKind => (defaultQueryVariableKind());
 
 // Sort variable options
 // Accepted values are:
@@ -971,7 +991,6 @@ export interface DatasourceVariableSpec {
 	refresh: VariableRefresh;
 	regex: string;
 	current: VariableOption;
-	defaultOptionEnabled: boolean;
 	options: VariableOption[];
 	multi: boolean;
 	includeAll: boolean;
@@ -988,7 +1007,6 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	refresh: "never",
 	regex: "",
 	current: { text: "", value: "", },
-	defaultOptionEnabled: false,
 	options: [],
 	multi: false,
 	includeAll: false,

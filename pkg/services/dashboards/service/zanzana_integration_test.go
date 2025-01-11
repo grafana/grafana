@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +58,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		tagService := tagimpl.ProvideService(db)
 		folderStore := folderimpl.ProvideDashboardFolderStore(db)
 		fStore := folderimpl.ProvideStore(db)
-		dashboardStore, err := database.ProvideDashboardStore(db, cfg, features, tagService, quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(db, cfg, features, tagService)
 		require.NoError(t, err)
 
 		zclient, err := authz.ProvideZanzana(cfg, db, features)
@@ -74,6 +76,10 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			nil,
 			zclient,
 			nil,
+			nil,
+			nil,
+			quotaService,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -85,10 +91,24 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		createDashboards(t, service, 100, "test-a")
 		createDashboards(t, service, 100, "test-b")
 
+		folderImplStore := folderimpl.ProvideStore(db)
+		folderService := folderimpl.ProvideService(
+			folderImplStore,
+			ac,
+			bus.ProvideBus(tracing.InitializeTracerForTest()),
+			dashboardStore,
+			folderStore,
+			db,
+			featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			supportbundlestest.NewFakeBundleService(),
+			nil,
+			tracing.InitializeTracerForTest(),
+		)
+
 		// Sync Grafana DB with zanzana (migrate data)
 		tracer := tracing.InitializeTracerForTest()
 		lock := serverlock.ProvideService(db, tracer)
-		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock)
+		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock, folderService)
 		err = zanzanaSyncronizer.ReconcileSync(context.Background())
 		require.NoError(t, err)
 

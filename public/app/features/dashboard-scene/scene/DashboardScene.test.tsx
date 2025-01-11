@@ -168,6 +168,7 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBe(false);
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.title).toEqual('Updated title');
+        expect(scene.state.meta.version).toEqual(2);
       });
 
       it('Should start the detect changes worker', () => {
@@ -638,6 +639,7 @@ describe('DashboardScene', () => {
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
           panelId: 1,
+          panelName: 'Panel A',
           panelPluginId: 'table',
         });
       });
@@ -653,6 +655,7 @@ describe('DashboardScene', () => {
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
           panelId: 1,
+          panelName: 'Panel A',
           panelPluginId: 'table',
         });
       });
