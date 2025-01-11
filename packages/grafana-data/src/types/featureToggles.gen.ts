@@ -248,4 +248,6 @@ export interface FeatureToggles {
   k8SFolderCounts?: boolean;
   k8SFolderMove?: boolean;
   improvedExternalSessionHandlingSAML?: boolean;
+  ABTestFeatureToggleA?: boolean;
+  ABTestFeatureToggleB?: boolean;
 }

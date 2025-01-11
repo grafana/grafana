@@ -230,6 +230,8 @@ Experimental features might be changed or removed without prior notice.
 | `investigationsBackend`                       | Enable the investigations backend API                                                                                                                                                                                                                                             |
 | `k8SFolderCounts`                             | Enable folder's api server counts                                                                                                                                                                                                                                                 |
 | `k8SFolderMove`                               | Enable folder's api server move                                                                                                                                                                                                                                                   |
+| `ABTestFeatureToggleA`                        | Test feature toggle to see how cohorts could be set up AB testing                                                                                                                                                                                                                 |
+| `ABTestFeatureToggleB`                        | Test feature toggle to see how cohorts could be set up AB testing                                                                                                                                                                                                                 |
 
 ## Development feature toggles
 

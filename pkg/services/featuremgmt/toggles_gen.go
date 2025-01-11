@@ -926,4 +926,12 @@ const (
 	// FlagImprovedExternalSessionHandlingSAML
 	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
 	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
+
+	// FlagABTestFeatureToggleA
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
+
+	// FlagABTestFeatureToggleB
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
 )

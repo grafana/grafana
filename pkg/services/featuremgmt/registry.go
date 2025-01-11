@@ -1713,6 +1713,20 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
+		{
+			Name:        "ABTestFeatureToggleA",
+			Description: "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "ABTestFeatureToggleB",
+			Description: "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
 	}
 )
 
