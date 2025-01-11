@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -56,7 +55,6 @@ func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceSe
 		Backend:     ret,
 		Diagnostics: ret,
 		Lifecycle:   ret,
-		Index:       resource.NewResourceIndexServer(cfg, tracing.NewNoopTracerService()),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, server)
@@ -99,6 +97,12 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
 		require.Greater(t, rv3, rv2)
+
+		stats, err := backend.GetResourceStats(ctx, "", 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+		require.Equal(t, int64(3), stats[0].Count)
+		require.Equal(t, rv3, stats[0].ResourceVersion)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
@@ -349,6 +353,56 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
+
+func TestIntegrationBlobSupport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	backend, server := newServer(t, nil)
+	store, ok := backend.(resource.BlobSupport)
+	require.True(t, ok)
+
+	t.Run("put and fetch blob", func(t *testing.T) {
+		key := &resource.ResourceKey{
+			Namespace: "ns",
+			Group:     "g",
+			Resource:  "r",
+			Name:      "n",
+		}
+
+		b1, err := server.PutBlob(ctx, &resource.PutBlobRequest{
+			Resource:    key,
+			Method:      resource.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("hello 11111"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, b1.Error)
+		require.Equal(t, "c894ae57bd227b8f8c63f38a2ddf458b", b1.Hash)
+
+		b2, err := server.PutBlob(ctx, &resource.PutBlobRequest{
+			Resource:    key,
+			Method:      resource.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("hello 22222"), // the most recent
+		})
+		require.NoError(t, err)
+		require.Nil(t, b2.Error)
+		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
+
+		// Check that we can still access both values
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, []byte("hello 11111"), found.Value)
+
+		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, []byte("hello 22222"), found.Value)
+	})
+}
+
 func TestClientServer(t *testing.T) {
 	if infraDB.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
@@ -357,12 +411,12 @@ func TestClientServer(t *testing.T) {
 	dbstore := infraDB.InitTestDB(t)
 
 	cfg := setting.NewCfg()
-	cfg.GRPCServerAddress = "localhost:0" // get a free address
-	cfg.GRPCServerNetwork = "tcp"
+	cfg.GRPCServer.Address = "localhost:0" // get a free address
+	cfg.GRPCServer.Network = "tcp"
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry())
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil)
 	require.NoError(t, err)
 	var client resource.ResourceStoreClient
 

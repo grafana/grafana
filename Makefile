@@ -146,6 +146,11 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
 
+.PHONY: gen-cuev2
+gen-cuev2: ## Do all CUE code generation
+	@echo "generate code from .cue files (v2)"
+	go generate ./kindsv2/gen.go
+
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
@@ -305,7 +310,7 @@ test: test-go test-js ## Run all tests.
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
-		--config .golangci.toml \
+		--config .golangci.yml \
 		$(GO_LINT_FILES)
 
 .PHONY: lint-go

@@ -2,7 +2,7 @@ import { FeatureState } from '@grafana/data';
 
 import { Badge, BadgeProps } from '../Badge/Badge';
 
-interface FeatureBadgeProps {
+export interface FeatureBadgeProps {
   featureState: FeatureState;
   tooltip?: string;
 }

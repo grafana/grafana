@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,8 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -44,6 +47,9 @@ var _ storage.Interface = (*Storage)(nil)
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	LargeObjectSupport LargeObjectSupport
+	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
+
+	RequireDeprecatedInternalID bool
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -57,8 +63,9 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store  resource.ResourceClient
-	getKey func(string) (*resource.ResourceKey, error)
+	store     resource.ResourceClient
+	getKey    func(string) (*resource.ResourceKey, error)
+	snowflake *snowflake.Node // used to enforce internal ids
 
 	versioner storage.Versioner
 
@@ -103,6 +110,14 @@ func NewStorage(
 		opts: opts,
 	}
 
+	if opts.RequireDeprecatedInternalID {
+		node, err := snowflake.NewNode(rand.Int63n(1024))
+		if err != nil {
+			return nil, nil, err
+		}
+		s.snowflake = node
+	}
+
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
 	if s.getKey == nil {
 		s.getKey = func(key string) (*resource.ResourceKey, error) {
@@ -130,6 +145,14 @@ func NewStorage(
 
 func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
+}
+
+func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
+	if s.opts.InternalConversion != nil {
+		return s.opts.InternalConversion(data, obj)
+	}
+	obj, _, err := s.codec.Decode(data, nil, obj)
+	return obj, err
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
@@ -170,7 +193,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	// set a timer to delete the file after ttl seconds
 	if ttl > 0 {
 		time.AfterFunc(time.Second*time.Duration(ttl), func() {
-			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj); err != nil {
+			if err := s.Delete(ctx, key, s.newFunc(), &storage.Preconditions{}, func(ctx context.Context, obj runtime.Object) error { return nil }, obj, storage.DeleteOptions{}); err != nil {
 				panic(err)
 			}
 		})
@@ -191,6 +214,7 @@ func (s *Storage) Delete(
 	preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc,
 	_ runtime.Object,
+	opts storage.DeleteOptions,
 ) error {
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
@@ -218,9 +242,10 @@ func (s *Storage) Delete(
 		}
 	}
 
-	// ?? this was after delete before
-	if err := validateDeletion(ctx, out); err != nil {
-		return err
+	if validateDeletion != nil {
+		if err := validateDeletion(ctx, out); err != nil {
+			return err
+		}
 	}
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
@@ -310,7 +335,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return resource.GetError(rsp.Error)
 	}
 
-	_, _, err = s.codec.Decode(rsp.Value, nil, objPtr)
+	_, err = s.convertToObject(rsp.Value, objPtr)
 	if err != nil {
 		return err
 	}
@@ -360,7 +385,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	for _, item := range rsp.Items {
-		obj, _, err := s.codec.Decode(item.Value, nil, s.newFunc())
+		obj, err := s.convertToObject(item.Value, s.newFunc())
 		if err != nil {
 			return err
 		}
@@ -461,7 +486,7 @@ func (s *Storage) GuaranteedUpdate(
 		existingObj = s.newFunc()
 		if len(rsp.Value) > 0 {
 			created = false
-			_, _, err = s.codec.Decode(rsp.Value, nil, existingObj)
+			_, err = s.convertToObject(rsp.Value, existingObj)
 			if err != nil {
 				return err
 			}

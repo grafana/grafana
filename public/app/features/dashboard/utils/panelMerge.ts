@@ -2,7 +2,7 @@ import { isEqualWith } from 'lodash';
 
 import { PanelModel as IPanelModel } from '@grafana/data';
 
-import { PanelModel } from '../state';
+import { PanelModel } from '../state/PanelModel';
 
 export interface PanelMergeInfo {
   changed: boolean;

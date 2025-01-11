@@ -2,10 +2,12 @@ import { groupBy } from 'lodash';
 import { FC, useCallback, useMemo, useState } from 'react';
 
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
-import { AlertmanagerGroup, AlertState, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Trans } from 'app/core/internationalization';
+import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFormatter } from '../../utils/matchers';
+import { stringifyErrorLike } from '../../utils/misc';
 import { InsertPosition } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 
@@ -13,6 +15,7 @@ import { AlertGroupsSummary } from './AlertGroupsSummary';
 import { AmRootRouteForm } from './EditDefaultPolicyForm';
 import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 import { Matchers } from './Matchers';
+import { NotificationPoliciesErrorAlert } from './PolicyUpdateErrorAlert';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosition) => void, () => void];
@@ -62,9 +65,11 @@ const useAddPolicyModal = (
             actionButtons={
               <Modal.ButtonRow>
                 <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                  Cancel
+                  <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                 </Button>
-                <Button type="submit">Save policy</Button>
+                <Button type="submit">
+                  <Trans i18nKey="alerting.policies.save-policy">Save policy</Trans>
+                </Button>
               </Modal.ButtonRow>
             }
           />
@@ -79,7 +84,8 @@ const useAddPolicyModal = (
 const useEditPolicyModal = (
   alertManagerSourceName: string,
   handleSave: (route: Partial<FormAmRoute>) => void,
-  loading: boolean
+  loading: boolean,
+  error?: Error
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
@@ -108,6 +114,7 @@ const useEditPolicyModal = (
           closeOnEscape={true}
           title="Edit notification policy"
         >
+          {error && <NotificationPoliciesErrorAlert error={stringifyErrorLike(error)} />}
           {isDefaultPolicy && route && (
             <AmRootRouteForm
               // TODO *sigh* this alertmanagersourcename should come from context or something
@@ -118,9 +125,11 @@ const useEditPolicyModal = (
               actionButtons={
                 <Modal.ButtonRow>
                   <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                    Cancel
+                    <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                   </Button>
-                  <Button type="submit">Update default policy</Button>
+                  <Button type="submit">
+                    <Trans i18nKey="alerting.policies.default-policy.update">Update default policy</Trans>
+                  </Button>
                 </Modal.ButtonRow>
               }
             />
@@ -132,16 +141,18 @@ const useEditPolicyModal = (
               actionButtons={
                 <Modal.ButtonRow>
                   <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                    Cancel
+                    <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                   </Button>
-                  <Button type="submit">Update policy</Button>
+                  <Button type="submit">
+                    <Trans i18nKey="alerting.policies.update.update-policy">Update policy</Trans>
+                  </Button>
                 </Modal.ButtonRow>
               }
             />
           )}
         </Modal>
       ),
-    [alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
+    [alertManagerSourceName, error, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -179,15 +190,17 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
           closeOnEscape={true}
           title="Delete notification policy"
         >
-          <p>Deleting this notification policy will permanently remove it.</p>
-          <p>Are you sure you want to delete this policy?</p>
+          <Trans i18nKey="alerting.policies.delete.warning-1">
+            Deleting this notification policy will permanently remove it.
+          </Trans>
+          <Trans i18nKey="alerting.policies.delete.warning-2">Are you sure you want to delete this policy?</Trans>
 
           <Modal.ButtonRow>
             <Button type="button" variant="destructive" onClick={handleSubmit}>
-              Yes, delete policy
+              <Trans i18nKey="alerting.policies.delete.confirm">Yes, delete policy</Trans>
             </Button>
             <Button type="button" variant="secondary" onClick={handleDismiss}>
-              Cancel
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
             </Button>
           </Modal.ButtonRow>
         </Modal>
@@ -241,7 +254,7 @@ const useAlertGroupsModal = (
         title={
           <Stack direction="row" alignItems="center" gap={1} wrap={'wrap'}>
             <Stack direction="row" alignItems="center" gap={0.5}>
-              <Icon name="x" /> Matchers
+              <Icon name="x" /> <Trans i18nKey="alerting.policies.matchers">Matchers</Trans>
             </Stack>
             <Matchers matchers={matchers} formatter={formatter} />
           </Stack>
@@ -261,7 +274,7 @@ const useAlertGroupsModal = (
         </Stack>
         <Modal.ButtonRow>
           <Button type="button" variant="secondary" onClick={handleDismiss}>
-            Cancel
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </Button>
         </Modal.ButtonRow>
       </Modal>
@@ -280,12 +293,14 @@ const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
     closeOnEscape={false}
     title={
       <Stack direction="row" alignItems="center" gap={0.5}>
-        Updating... <Spinner inline />
+        <Trans i18nKey="alerting.policies.update.updating">Updating...</Trans> <Spinner inline />
       </Stack>
     }
   >
-    Please wait while we update your notification policies.
+    <Trans i18nKey="alerting.policies.update.please-wait">
+      Please wait while we update your notification policies.
+    </Trans>
   </Modal>
 );
 
-export { useAddPolicyModal, useDeletePolicyModal, useEditPolicyModal, useAlertGroupsModal };
+export { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal };

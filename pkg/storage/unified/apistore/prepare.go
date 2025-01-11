@@ -56,16 +56,25 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
 
+	if s.opts.RequireDeprecatedInternalID {
+		// nolint:staticcheck
+		id := obj.GetDeprecatedInternalID()
+		if id < 1 {
+			// nolint:staticcheck
+			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64())
+		}
+	}
+
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	// Read+write will verify that origin format is accurate
-	origin, err := obj.GetOriginInfo()
+	// Read+write will verify that repository format is accurate
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
 		return nil, err
 	}
-	obj.SetOriginInfo(origin)
+	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(user.GetUID())
@@ -100,9 +109,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if previous.GetUID() == "" {
 		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
-		if obj.GetUID() != "" {
-			klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
-		}
+		// Eventually this should be a real error or logged
+		// However the dashboard dual write behavior hits this every time, so we will ignore it
+		// if obj.GetUID() != "" {
+		// 	klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		// }
 		obj.SetUID(previous.GetUID())
 	}
 
@@ -114,12 +125,19 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
 
+	// for dashboards, a mutation hook will set it if it didn't exist on the previous obj
+	// avoid setting it back to 0
+	previousInternalID := previous.GetDeprecatedInternalID() // nolint:staticcheck
+	if previousInternalID != 0 {
+		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
+	}
+
 	// Read+write will verify that origin format is accurate
-	origin, err := obj.GetOriginInfo()
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
 		return nil, err
 	}
-	obj.SetOriginInfo(origin)
+	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy(user.GetUID())
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 

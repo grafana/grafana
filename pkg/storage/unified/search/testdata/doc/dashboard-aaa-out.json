@@ -1,0 +1,67 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "dashboard.grafana.app",
+    "resource": "dashboards",
+    "name": "aaa"
+  },
+  "name": "aaa",
+  "rv": 1234,
+  "title": "Test title",
+  "title_sort": "test title",
+  "description": "test description",
+  "tags": [
+    "a",
+    "b",
+    "c"
+  ],
+  "labels": {
+    "host": "abc",
+    "region": "xyz"
+  },
+  "folder": "the-folder-uid",
+  "created": 1730313054000,
+  "createdBy": "user:be2g71ke8yoe8b",
+  "fields": {
+    "ds_types": [
+      "datasource",
+      "my-custom-plugin"
+    ],
+    "errors_last_1_days": 1,
+    "errors_last_7_days": 1,
+    "legacy_id": 141,
+    "link_count": 0,
+    "panel_types": [
+      "barchart",
+      "graph",
+      "row"
+    ],
+    "schema_version": 38
+  },
+  "reference": [
+    {
+      "relation": "depends-on",
+      "group": "my-custom-plugin",
+      "kind": "DataSource",
+      "name": "DSUID"
+    },
+    {
+      "relation": "depends-on",
+      "group": "datasource",
+      "kind": "DataSource",
+      "name": "grafana"
+    },
+    {
+      "relation": "depends-on",
+      "group": "dashboards.grafana.app",
+      "kind": "LibraryPanel",
+      "name": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
+    },
+    {
+      "relation": "depends-on",
+      "group": "dashboards.grafana.app",
+      "kind": "LibraryPanel",
+      "name": "a7975b7a-fb53-4ab7-951d-15810953b54f"
+    }
+  ]
+}

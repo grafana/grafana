@@ -127,7 +127,7 @@ To integrate your OAuth2 provider with Grafana using our Generic OAuth authentic
    c. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
-1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. Optional: [Configure group synchronization]({{< relref "#configure-group-synchronization" >}}).
 1. Restart Grafana.
 
    You should now see a Generic OAuth login button on the login page and be able to log in or sign up with your OAuth2 provider.
@@ -239,14 +239,10 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "groups": [
-            "engineer",
-            "admin",
-        ],
-        ...
-    },
+    "groups": [
+        "engineer",
+        "admin",
+    ],
     ...
 }
 ```
@@ -254,7 +250,7 @@ Payload:
 Config:
 
 ```bash
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
 ##### Map server administrator role
@@ -266,13 +262,9 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "roles": [
-            "admin",
-        ],
-        ...
-    },
+    "roles": [
+        "admin",
+    ],
     ...
 }
 ```
@@ -280,7 +272,7 @@ Payload:
 Config:
 
 ```ini
-role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
 ```
 
@@ -305,47 +297,39 @@ Payload:
 
 ```json
 {
-    ...
-    "info": {
-        ...
-        "roles": [
-            "org_foo",
-            "org_bar",
-            "another_org"
-        ],
-        ...
-    },
-    ...
+  "roles": ["org_foo", "org_bar", "another_org"]
 }
 ```
 
 Config:
 
 ```ini
-role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || 'None'
+role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || 'None'
 allow_assign_grafana_admin = true
-org_attribute_path = info.roles
+org_attribute_path = roles
 org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 ```
 
-### Configure team synchronization
+## Configure group synchronization
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< /admonition >}}
 
-By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
-Teams for each user are synchronized when the user logs in.
+Grafana supports synchronization of OAuth2 groups with Grafana teams and roles. This allows automatically assigning users to the appropriate teams or automatically granting them the mapped roles.
+Teams and roles get synchronized when the user logs in.
 
 Generic OAuth groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options]({{< relref "#configuration-options" >}}).
 
-To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about group synchronization, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync).
 
-#### Team synchronization example
+#### Group attribute synchronization example
 
 Configuration:
 
 ```bash
-groups_attribute_path = info.groups
+groups_attribute_path = groups
 ```
 
 Payload:
@@ -353,14 +337,10 @@ Payload:
 ```json
 {
     ...
-    "info": {
-        ...
-        "groups": [
-            "engineers",
-            "analysts",
-        ],
-        ...
-    },
+    "groups": [
+        "engineers",
+        "analysts",
+    ],
     ...
 }
 ```
@@ -368,6 +348,10 @@ Payload:
 ## Configuration options
 
 The following table outlines the various Generic OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
+
+{{< admonition type="note" >}}
+If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`
+{{< /admonition >}}
 
 | Setting                      | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Default         |
 | ---------------------------- | -------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
@@ -449,6 +433,10 @@ To set up Generic OAuth authentication with Descope, follow these steps:
    ```
 
 ### Set up OAuth2 with Auth0
+
+{{< admonition type="note" >}}
+Support for the Auth0 "audience" feature is not currently available in Grafana. For roles and permissions, the available options are described [here]({{< relref "../../../../administration/roles-and-permissions/" >}}).
+{{< /admonition >}}
 
 To set up Generic OAuth authentication with Auth0, follow these steps:
 

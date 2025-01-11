@@ -69,9 +69,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#span-idroute-get-alert-rule-exportspan-export-an-alert-rule-in-provisioning-file-format-_routegetalertruleexport_
   alerting_http_templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#templates
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#notification-template-groups
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/#templates
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/#notification-template-groups
   alerting_http_contactpoints:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#contact-points
@@ -153,6 +153,23 @@ To export a modified alert rule without saving the modifications, complete the f
 
 1. Click **Copy Code** or **Download**.
 
+### Export a new alert rule definition without saving changes
+
+{{% admonition type="note" %}} You can only export in Terraform (HCL) format. {{% /admonition %}}
+
+Add a new alert rule definition to an existing provisioned rule group rather than creating the code manually. You can then copy it to your Terraform pipeline, and quickly deploy and manage alert rules as part of your infrastructure as code.
+
+An alert rule definition differs from an alert rule in the sense that you define your alert rule, but you do not save it. It only becomes a saved alert rule once you provision it using Terraform.
+
+To export your alert rule definition into Terraform (HCL) format, complete the following steps.
+
+1. Click **Alerts & IRM** -> **Alert rules**.
+2. Click **Export rule definition**.
+3. Fill out the alert rule details.
+4. Choose a provisioned folder and group to add your alert rule definition to.
+5. Click **Export**.
+6. Copy and paste the code into your Terraform pipeline to create your new alert rule.
+
 ### Export contact points
 
 To export contact points from the Grafana UI, complete the following steps.
@@ -165,15 +182,15 @@ To export contact points from the Grafana UI, complete the following steps.
 
 1. Click **Copy Code** or **Download**.
 
-### Export templates
+### Export notification template groups
 
-Grafana currently doesn't offer an Export UI or [Export endpoint](#export-api-endpoints) for notification templates, unlike other Alerting resources presented in this documentation.
+Grafana currently doesn't offer an Export UI or [Export endpoint](#export-api-endpoints) for notification template groups, unlike other Alerting resources presented in this documentation.
 
-However, you can export it by manually copying the content template and title directly from the Grafana UI.
+However, you can export it by manually copying the content and name of the notification template group from the Grafana UI.
 
 1. Click **Alerts & IRM** -> **Contact points** -> **Notification templates** tab.
-1. Find the template you want to export.
-1. Copy the content and title.
+1. Find the notification template group you want to export.
+1. Copy the content and name.
 1. Adjust it for the [file provisioning format](ref:alerting_file_provisioning_template) or [Terraform resource](ref:alerting_tf_provisioning_template).
 
 ### Export the notification policy tree
@@ -182,19 +199,19 @@ All notification policies are provisioned through a single resource: the root of
 
 {{% admonition type="warning" %}}
 
-Since the policy tree is a single resource, provisioning it will overwrite a policy tree created through any other means.
+Since the policy tree is a single resource, provisioning it overwrites a policy tree created through any other means.
 
 {{< /admonition >}}
 
 To export the notification policy tree from the Grafana UI, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Notification policies**.
-1. In the **Default notification policy** section, click **...** -> **Export**.
-1. Choose the format to export in.
+2. In the **Default notification policy** section, click **...** -> **Export**.
+3. Choose the format to export in.
 
    The exported contact point appears in different formats - YAML, JSON, Terraform.
 
-1. Click **Copy Code** or **Download**.
+4. Click **Copy Code** or **Download**.
 
 ### Export mute timings
 
@@ -217,8 +234,8 @@ You can use the [Alerting HTTP API](ref:alerting_http_provisioning) to return ex
 | [Alert rules](ref:alerting_http_alertrules)                        | /api/v1/provisioning/alert-rules    |
 | [Contact points](ref:alerting_http_contactpoints)                  | /api/v1/provisioning/contact-points |
 | [Notification policy tree](ref:alerting_http_notificationpolicies) | /api/v1/provisioning/policies       |
+| [Notification template groups](ref:alerting_http_templates)        | /api/v1/provisioning/templates      |
 | [Mute timings](ref:alerting_http_mutetimings)                      | /api/v1/provisioning/mute-timings   |
-| [Templates](ref:alerting_http_templates)                           | /api/v1/provisioning/templates      |
 
 However, note the standard endpoints return a JSON format that is not compatible for provisioning through configuration files or Terraform, except the `/export` endpoints listed below.
 

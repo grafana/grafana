@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -14,124 +15,133 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	ctx, span := tracer.Start(ctx, "authzServer.Check")
 	defer span.End()
 
-	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.checkTyped(ctx, r, info)
-	}
-	return s.checkGeneric(ctx, r)
-}
-
-func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	store, err := s.getStoreInfo(ctx, r.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	// 1. check if subject has direct access to resource
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewTypedIdent(info.Type, r.GetName()),
-		},
-	})
+	resource := common.NewResourceInfoFromCheck(r)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
 	if err != nil {
 		return nil, err
 	}
 
 	if res.GetAllowed() {
-		return &authzv1.CheckResponse{Allowed: true}, nil
+		return res, nil
 	}
 
-	// 2. check if subject has access through namespace
-	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
-		},
-	})
-	if err != nil {
-		return nil, err
+	if resource.IsGeneric() {
+		return s.checkGeneric(ctx, r.GetSubject(), relation, resource, store)
 	}
 
-	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+	return s.checkTyped(ctx, r.GetSubject(), relation, resource, store)
 }
 
-func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	relation := common.VerbMapping[r.GetVerb()]
-	// 1. check if subject has direct access to resource
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewResourceIdent(r.GetGroup(), r.GetResource(), r.GetName()),
-		},
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
-			},
-		},
-	})
-
-	if err != nil {
-		// FIXME: wrap error
-		return nil, err
-	}
-
-	if res.GetAllowed() {
-		return &authzv1.CheckResponse{Allowed: true}, nil
-	}
-
-	// 2. check if subject has access through namespace
-	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
-		},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if res.GetAllowed() {
-		return &authzv1.CheckResponse{Allowed: true}, nil
-	}
-
-	if r.Folder == "" {
+// checkGroupResource check if subject has access to the full "GroupResource", if they do they can access every object
+// within it.
+func (s *Server) checkGroupResource(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
+	if !common.IsGroupResourceRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
-	// 3. check if subject has access as a sub resource for the folder
-	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+	req := &openfgav1.CheckRequest{
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: common.FolderResourceRelation(relation),
-			Object:   common.NewFolderIdent(r.GetFolder()),
+			User:     subject,
+			Relation: relation,
+			Object:   resource.GroupResourceIdent(),
 		},
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
+	}
+
+	if strings.HasPrefix(subject, fmt.Sprintf("%s:", common.TypeRenderService)) {
+		common.AddRenderContext(req)
+	}
+
+	res, err := s.check(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+}
+
+// checkTyped checks on our typed resources e.g. folder.
+func (s *Server) checkTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
+	if !resource.IsValidRelation(relation) {
+		return &authzv1.CheckResponse{Allowed: false}, nil
+	}
+
+	// Check if subject has direct access to resource
+	res, err := s.check(ctx, &openfgav1.CheckRequest{
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
+		TupleKey: &openfgav1.CheckRequestTupleKey{
+			User:     subject,
+			Relation: relation,
+			Object:   resource.ResourceIdent(),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if res.GetAllowed() {
+		return &authzv1.CheckResponse{Allowed: true}, nil
+	}
+
+	return &authzv1.CheckResponse{Allowed: false}, nil
+}
+
+// checkGeneric check our generic "resource" type. It checks:
+// 1. If subject has access as a sub resource for a folder.
+// 2. If subject has direct access to resource.
+func (s *Server) checkGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
+	var (
+		folderIdent    = resource.FolderIdent()
+		resourceCtx    = resource.Context()
+		folderRelation = common.FolderResourceRelation(relation)
+	)
+
+	if folderIdent != "" && common.IsFolderResourceRelation(folderRelation) {
+		// Check if subject has access as a sub resource for the folder
+		res, err := s.check(ctx, &openfgav1.CheckRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				User:     subject,
+				Relation: folderRelation,
+				Object:   folderIdent,
 			},
+			Context: resourceCtx,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		if res.GetAllowed() {
+			return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+		}
+	}
+
+	resourceIdent := resource.ResourceIdent()
+	if !resource.IsValidRelation(relation) || resourceIdent == "" {
+		return &authzv1.CheckResponse{Allowed: false}, nil
+	}
+
+	// Check if subject has direct access to resource
+	res, err := s.check(ctx, &openfgav1.CheckRequest{
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
+		TupleKey: &openfgav1.CheckRequestTupleKey{
+			User:     subject,
+			Relation: relation,
+			Object:   resourceIdent,
 		},
+		Context: resourceCtx,
 	})
 
 	if err != nil {
@@ -139,4 +149,13 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 	}
 
 	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+}
+
+func (s *Server) check(ctx context.Context, req *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	err := s.addCheckAuthorizationContext(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to add authorization context", "error", err)
+	}
+
+	return s.openfga.Check(ctx, req)
 }

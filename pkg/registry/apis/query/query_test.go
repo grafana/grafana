@@ -26,7 +26,7 @@ func TestQueryRestConnectHandler(t *testing.T) {
 		},
 		tracer: tracing.InitializeTracerForTest(),
 		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
-			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest()),
+			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
 		log: log.New("test"),
 	}
 	qr := newQueryREST(b)

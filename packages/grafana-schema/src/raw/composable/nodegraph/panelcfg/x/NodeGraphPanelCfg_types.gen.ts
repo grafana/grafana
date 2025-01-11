@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "11.4.0-pre";
+export const pluginVersion = "11.5.0-pre";
 
 export interface ArcOption {
   /**
@@ -19,6 +19,11 @@ export interface ArcOption {
    * Field from which to get the value. Values should be less than 1, representing fraction of a circle.
    */
   field?: string;
+}
+
+export enum ZoomMode {
+  Cooperative = 'cooperative',
+  Greedy = 'greedy',
 }
 
 export interface Options {
@@ -46,4 +51,8 @@ export interface Options {
      */
     arcs?: Array<ArcOption>;
   };
+  /**
+   * How to handle zoom/scroll events in the node graph
+   */
+  zoomMode?: ZoomMode;
 }

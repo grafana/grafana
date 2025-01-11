@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
-import { LokiQueryBuilder, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
+import { LokiQueryBuilder, Props, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
@@ -315,6 +315,68 @@ describe('LokiQueryBuilder', () => {
 
     await waitFor(() => {
       expect(props.datasource.getDataSamples).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Disabling operations', () => {
+    let props: Omit<Props, 'query'>;
+    beforeEach(() => {
+      props = createDefaultProps();
+      props.datasource.getDataSamples = jest.fn().mockReturnValue(new Promise(() => {}));
+      props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
+    });
+    it('Allows to disable operations', async () => {
+      const onChange = jest.fn();
+
+      const query: LokiVisualQuery = {
+        labels: [{ op: '=', label: 'job', value: 'grafana' }],
+        operations: [
+          {
+            id: LokiOperationId.Logfmt,
+            params: [],
+          },
+        ],
+      };
+      render(<LokiQueryBuilder {...props} onChange={onChange} query={query} />);
+
+      expect(screen.getByText('Logfmt')).toBeInTheDocument();
+      await userEvent.click(screen.getByTitle('Disable operation'));
+      expect(onChange).toHaveBeenCalledWith({
+        ...query,
+        operations: [
+          {
+            ...query.operations[0],
+            disabled: true,
+          },
+        ],
+      });
+    });
+
+    it('Allows to enable operations', async () => {
+      const onChange = jest.fn();
+      const query: LokiVisualQuery = {
+        labels: [{ op: '=', label: 'job', value: 'grafana' }],
+        operations: [
+          {
+            id: LokiOperationId.Logfmt,
+            params: [],
+            disabled: true,
+          },
+        ],
+      };
+      render(<LokiQueryBuilder {...props} onChange={onChange} query={query} />);
+
+      expect(screen.getByText('Logfmt')).toBeInTheDocument();
+      await userEvent.click(screen.getByTitle('Enable operation'));
+      expect(onChange).toHaveBeenCalledWith({
+        ...query,
+        operations: [
+          {
+            ...query.operations[0],
+            disabled: false,
+          },
+        ],
+      });
     });
   });
 });

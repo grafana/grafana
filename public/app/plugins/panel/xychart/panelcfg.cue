@@ -45,7 +45,7 @@ composableKinds: PanelCfg: {
 
 					show?: XYShowMode & (*"points" | _)
 
-					pointSize?:  {
+					pointSize?: {
 						fixed?: int32 & >=0
 						min?:   int32 & >=0
 						max?:   int32 & >=0
@@ -62,12 +62,12 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface",TSVeneer="type")
 
 				XYSeriesConfig: {
-					name?:   { fixed?: string }
-					frame?:  { matcher: #MatcherConfig }
-					x?:      { matcher: #MatcherConfig }
-					y?:      { matcher: #MatcherConfig }
-					color?:  { matcher: #MatcherConfig }
-					size?:   { matcher: #MatcherConfig }
+					name?: {fixed?: string}
+					frame?: {matcher: #MatcherConfig}
+					x?: {matcher: #MatcherConfig}
+					y?: {matcher: #MatcherConfig}
+					color?: {matcher: #MatcherConfig}
+					size?: {matcher: #MatcherConfig}
 				} @cuetsy(kind="interface")
 
 				Options: {
