@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   AdHocVariableFilter,
@@ -38,7 +38,7 @@ import {
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { getSelectedScopes } from 'app/features/scopes';
 
 import { DataTrailSettings } from './DataTrailSettings';
@@ -99,6 +99,9 @@ export interface DataTrailState extends SceneObjectState {
   // Synced with url
   metric?: string;
   metricSearch?: string;
+
+  histogramsLoaded: boolean;
+  nativeHistograms: string[];
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
@@ -126,6 +129,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
       showPreviews: state.showPreviews ?? true,
+      nativeHistograms: state.nativeHistograms ?? [],
+      histogramsLoaded: state.histogramsLoaded ?? false,
       ...state,
     });
 
@@ -176,6 +181,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
+
+        // reset native histograms
+        this.resetNativeHistograms();
 
         // fresh check for otel experience
         this.checkDataSourceForOTelResources();
@@ -235,6 +243,29 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
   public isNativeHistogram(metric: string) {
     return this.datasourceHelper.isNativeHistogram(metric);
+  }
+
+  // use this to initialize histograms in all scenes
+  public async initializeHistograms() {
+    if (!this.state.histogramsLoaded) {
+      await this.datasourceHelper.initializeHistograms();
+      
+      this.setState({ 
+        nativeHistograms: this.listNativeHistograms(),
+        histogramsLoaded: true,
+      });
+    }
+  }
+
+  public listNativeHistograms() {
+    return this.datasourceHelper.listNativeHistograms() ?? [];
+  }
+
+  private resetNativeHistograms() {
+    this.setState({
+      histogramsLoaded: false,
+      nativeHistograms: [],
+    });
   }
 
   public getCurrentMetricMetadata() {
@@ -626,11 +657,23 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings, useOtelExperience, hasOtelResources, embedded } = model.useState();
+    const { 
+      controls, 
+      topScene, 
+      history, 
+      settings, 
+      useOtelExperience, 
+      hasOtelResources, 
+      embedded,
+      histogramsLoaded,
+      nativeHistograms
+    } = model.useState();
 
     const chromeHeaderHeight = useChromeHeaderHeight();
     const styles = useStyles2(getStyles, embedded ? 0 : (chromeHeaderHeight ?? 0));
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
+    // need to initialize this here and not on activate because it requires the data source helper to be fully initialized first
+    model.initializeHistograms();
 
     useEffect(() => {
       // check if the otel experience has been enabled
@@ -663,6 +706,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
     return (
       <div className={styles.container}>
+        {nativeHistogramInfo({ histogramsLoaded, nativeHistograms})}
         {showHeaderForFirstTimeUsers && <MetricsHeader />}
         <history.Component model={history} />
         {controls && (
@@ -777,6 +821,20 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
       zIndex: theme.zIndex.navbarFixed,
       top: chromeHeaderHeight,
     }),
+    histogramDiv: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(1),
+    }),
+    histogramSentence: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    histogramLearnMore: css({
+      display: 'flex',
+      flexDirection: 'column',
+      marginBottom: '10px',
+    }),
   };
 }
 
@@ -785,4 +843,56 @@ function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
     return [{ key: '__name__', operator: '=', value: metric }];
   }
   return [];
+}
+
+export function nativeHistogramInfo(props: { histogramsLoaded: boolean, nativeHistograms: string[] }) {
+  const { histogramsLoaded, nativeHistograms } = props;
+  const [histogramMessage, setHistogramMessage] = useState(true);
+  const [showHistogramExamples, setShowHistogramExamples] = useState(false);
+  const styles = useStyles2(getStyles,0);
+  return (
+    <>
+    {
+      histogramsLoaded && 
+      (nativeHistograms ?? []).length > 0 && 
+      histogramMessage && (
+      <Alert 
+        title={'Native Histogram Support'} 
+        severity={'info'} 
+        onRemove={()=> {
+          setHistogramMessage(false)
+      }}>
+        <div className={styles.histogramDiv}>
+          <div className={styles.histogramSentence}>
+            Explore metrics now supports native histograms which  offer significant benefits over traditional histograms, including: higher resolution with lower storage costs, simpler instrumentation due to automatic bucket allocation, better representation of data distribution, especially for outlier values in the left tail, and more efficient querying capabilities
+          </div>
+          <div className={styles.histogramLearnMore}>
+            <Button>
+              Learn more
+            </Button>
+          </div>
+        </div>
+        <div>
+          <Button 
+            type='button' 
+            fill='text' 
+            variant='primary' 
+            onClick={() => {
+              setShowHistogramExamples(true);
+            }}
+          >
+            {`> See examples`}
+          </Button>
+        </div>
+        {showHistogramExamples && (
+          <div>
+            <p>{nativeHistograms?.[0]}</p>
+            <p>{nativeHistograms?.[1]}</p>
+            <p>{nativeHistograms?.[2]}</p>
+          </div>
+        )}
+      </Alert>
+    )}
+    </>
+  )
 }
