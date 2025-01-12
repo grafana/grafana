@@ -945,7 +945,10 @@ export function nativeHistogramInfo(props: NativeHistogramInfoProps) {
             {nativeHistograms.map((el)=> {
               return (
                 <div>
-                <Button onClick={() => selectNativeHistogram(el)} key={el} variant='primary' size='sm' fill='text'>
+                <Button onClick={() => {
+                  selectNativeHistogram(el);
+                  setHistogramMessage(false);
+                  }} key={el} variant='primary' size='sm' fill='text'>
                   {el}
                 </Button>
                 </div>
