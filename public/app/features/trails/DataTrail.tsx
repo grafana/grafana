@@ -730,7 +730,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
     return (
       <div className={styles.container}>
-        {nativeHistogramInfo({ histogramsLoaded, nativeHistograms})}
+        {nativeHistogramInfo({ histogramsLoaded, nativeHistograms, trail: model })}
         {showHeaderForFirstTimeUsers && <MetricsHeader />}
         <history.Component model={history} />
         {controls && (
@@ -869,11 +869,22 @@ function getBaseFiltersForMetric(metric?: string): AdHocVariableFilter[] {
   return [];
 }
 
-export function nativeHistogramInfo(props: { histogramsLoaded: boolean, nativeHistograms: string[] }) {
-  const { histogramsLoaded, nativeHistograms } = props;
+type NativeHistogramInfoProps = {
+  histogramsLoaded: boolean;
+  nativeHistograms: string[];
+  trail: DataTrail;
+}
+
+export function nativeHistogramInfo(props: NativeHistogramInfoProps) {
+  const { histogramsLoaded, nativeHistograms, trail } = props;
   const [histogramMessage, setHistogramMessage] = useState(true);
   const [showHistogramExamples, setShowHistogramExamples] = useState(false);
   const styles = useStyles2(getStyles,0);
+
+  const selectNativeHistogram = (metric: string) => {
+    trail.publishEvent(new MetricSelectedEvent(metric), true);
+  }
+
   return (
     <>
     {
@@ -885,10 +896,17 @@ export function nativeHistogramInfo(props: { histogramsLoaded: boolean, nativeHi
         severity={'info'} 
         onRemove={()=> {
           setHistogramMessage(false)
-      }}>
+        }}
+      >
         <div className={styles.histogramDiv}>
           <div className={styles.histogramSentence}>
-            Explore metrics now supports native histograms which  offer significant benefits over traditional histograms, including: higher resolution with lower storage costs, simpler instrumentation due to automatic bucket allocation, better representation of data distribution, especially for outlier values in the left tail, and more efficient querying capabilities
+            Explore metrics now supports native histograms which 
+            offer significant benefits over traditional histograms, including: 
+            higher resolution with lower storage costs, 
+            simpler instrumentation due to automatic bucket allocation, 
+            better representation of data distribution, 
+            especially for outlier values in the left tail, 
+            and more efficient querying capabilities.
           </div>
           <div className={styles.histogramLearnMore}>
             <Button>
@@ -897,10 +915,10 @@ export function nativeHistogramInfo(props: { histogramsLoaded: boolean, nativeHi
           </div>
         </div>
         {/* 
-          [x] show native histogram panel in metric scene
-          show images of native histogram examples
-          click text to search for examples
-          show the badge in the metric preview panel
+          [x] show native histogram panel in metric scene          
+          [x] show the badge in the metric preview panel          
+          [x] click text to search for examples
+          [ ] show images of native histogram examples
         */}
 
         {!showHistogramExamples && 
@@ -918,11 +936,24 @@ export function nativeHistogramInfo(props: { histogramsLoaded: boolean, nativeHi
           </div>
         }
         {showHistogramExamples && (
+          <>
+          <br />
           <div>
-            <p>{nativeHistograms?.[0]}</p>
-            <p>{nativeHistograms?.[1]}</p>
-            <p>{nativeHistograms?.[2]}</p>
+            Click any of the native histograms below to explore them:
           </div>
+          <div>
+            {nativeHistograms.map((el)=> {
+              return (
+                <div>
+                <Button onClick={() => selectNativeHistogram(el)} key={el} variant='primary' size='sm' fill='text'>
+                  {el}
+                </Button>
+                </div>
+              )
+            })}
+          </div>
+          </>
+
         )}
       </Alert>
     )}
