@@ -909,7 +909,7 @@ export function nativeHistogramInfo(props: NativeHistogramInfoProps) {
             and more efficient querying capabilities.
           </div>
           <div className={styles.histogramLearnMore}>
-            <Button>
+            <Button  onClick={() => window.open('https://grafana.com/docs/grafana-cloud/whats-new/native-histograms/', "_blank")} >
               Learn more
             </Button>
           </div>
