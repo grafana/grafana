@@ -102,10 +102,11 @@ export interface DataTrailState extends SceneObjectState {
 
   histogramsLoaded: boolean;
   nativeHistograms: string[];
+  nativeHistogramMetric: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch', 'showPreviews'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch', 'showPreviews', 'nativeHistogramMetric'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -131,6 +132,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       showPreviews: state.showPreviews ?? true,
       nativeHistograms: state.nativeHistograms ?? [],
       histogramsLoaded: state.histogramsLoaded ?? false,
+      nativeHistogramMetric: state.nativeHistogramMetric ?? '',
       ...state,
     });
 
@@ -283,6 +285,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         history: this.state.history,
         metric: !state.metric ? undefined : state.metric,
         metricSearch: !state.metricSearch ? undefined : state.metricSearch,
+        // store type because this requires an expensive api call to determine
+        // when loading the metric scene
+        nativeHistogramMetric: !state.nativeHistogramMetric ? undefined : state.nativeHistogramMetric,
       })
     );
 
@@ -298,7 +303,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       await updateOtelJoinWithGroupLeft(this, metric);
     }
 
-    this.setState(this.getSceneUpdatesForNewMetricValue(metric));
+    // from the metric preview panel we have the info loaded to determine that a metric is a native histogram
+    let nativeHistogramMetric = false;
+    if (this.isNativeHistogram(metric)) {
+      nativeHistogramMetric = true;
+    }
+
+    this.setState(this.getSceneUpdatesForNewMetricValue(metric, nativeHistogramMetric));
 
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
@@ -309,19 +320,25 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     }
   }
 
-  private getSceneUpdatesForNewMetricValue(metric: string | undefined) {
+  private getSceneUpdatesForNewMetricValue(metric: string | undefined, nativeHistogramMetric?: boolean) {
     const stateUpdate: Partial<DataTrailState> = {};
     stateUpdate.metric = metric;
-    stateUpdate.topScene = getTopSceneFor(metric);
+    // refactoring opportunity? Or do we pass metric knowledge all the way down?
+    // must pass this native histogram prometheus knowledge deep into 
+    // the topscene set on the trail > MetricScene > getAutoQueriesForMetric() > createHistogramMetricQueryDefs();
+    stateUpdate.nativeHistogramMetric = nativeHistogramMetric ? '1' : '';
+    stateUpdate.topScene = getTopSceneFor(metric, nativeHistogramMetric);
     return stateUpdate;
   }
 
   getUrlState(): SceneObjectUrlValues {
-    const { metric, metricSearch, showPreviews } = this.state;
+    const { metric, metricSearch, showPreviews, nativeHistogramMetric } = this.state;
     return {
       metric,
       metricSearch,
       ...{ showPreviews: showPreviews === false ? 'false' : null },
+      // store the native histogram knowledge in url for the metric scene
+      nativeHistogramMetric,
     };
   }
 
@@ -330,7 +347,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
 
     if (typeof values.metric === 'string') {
       if (this.state.metric !== values.metric) {
-        Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
+        // if we have a metric and we have stored in the url that it is a native histogram
+        // we can pass that info into the metric scene to generate the appropriate queries
+        let nativeHistogramMetric = false;
+        if (values.nativeHistogramMetric === '1') {
+          nativeHistogramMetric = true;
+        }
+
+        Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric, nativeHistogramMetric));
       }
     } else if (values.metric == null) {
       stateUpdate.metric = undefined;
@@ -727,9 +751,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   };
 }
 
-export function getTopSceneFor(metric?: string) {
+export function getTopSceneFor(metric?: string, nativeHistogram?: boolean) {
   if (metric) {
-    return new MetricScene({ metric: metric });
+    return new MetricScene({ metric: metric, nativeHistogram: nativeHistogram ?? false });
   } else {
     return new MetricSelectScene({});
   }
@@ -872,6 +896,13 @@ export function nativeHistogramInfo(props: { histogramsLoaded: boolean, nativeHi
             </Button>
           </div>
         </div>
+        {/* 
+          [x] show native histogram panel in metric scene
+          show images of native histogram examples
+          click text to search for examples
+          show the badge in the metric preview panel
+        */}
+
         {!showHistogramExamples && 
           <div>
             <Button 
