@@ -9,8 +9,8 @@ import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 
-export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string) {
-  const autoQuery = getAutoQueriesForMetric(metric);
+export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string, nativeHistogram?: boolean) {
+  const autoQuery = getAutoQueriesForMetric(metric, nativeHistogram);
 
   const vizPanel = autoQuery.preview
     .vizBuilder()
