@@ -872,18 +872,20 @@ export function nativeHistogramInfo(props: { histogramsLoaded: boolean, nativeHi
             </Button>
           </div>
         </div>
-        <div>
-          <Button 
-            type='button' 
-            fill='text' 
-            variant='primary' 
-            onClick={() => {
-              setShowHistogramExamples(true);
-            }}
-          >
-            {`> See examples`}
-          </Button>
-        </div>
+        {!showHistogramExamples && 
+          <div>
+            <Button 
+              type='button' 
+              fill='text' 
+              variant='primary' 
+              onClick={() => {
+                setShowHistogramExamples(true);
+              }}
+            >
+              {`> See examples`}
+            </Button>
+          </div>
+        }
         {showHistogramExamples && (
           <div>
             <p>{nativeHistograms?.[0]}</p>
