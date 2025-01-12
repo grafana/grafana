@@ -66,21 +66,49 @@ export class MetricDatasourceHelper {
   private _classicHistograms: Record<string, number> = {};
   private _nativeHistograms: string[] = [];
 
-  public async isNativeHistogram(metric: string) {
+  public listNativeHistograms() {
+    return this._nativeHistograms;
+  }
+  /**
+   * Identify native histograms by querying classic histograms and all metrics,
+   * then comparing the results.
+   * classic histogram = test_metric_bucket
+   * native histogram = test_metric
+   */
+  public async initializeHistograms() {    
+    const ds = await this.getDatasource();
+    if (Object.keys(this._classicHistograms).length === 0 && ds instanceof PrometheusDatasource) {
+      const classicHistogramsCall = ds.metricFindQuery('metrics(.*_bucket)');
+      const allMetricsCall = ds.metricFindQuery('metrics(.*)');
+
+      const [classicHistograms, allMetrics] = await Promise.all([
+        classicHistogramsCall,
+        allMetricsCall,
+      ]);
+
+      classicHistograms.forEach((m)=> {
+        this._classicHistograms[m.text] = 1;
+      });
+
+      allMetrics.forEach((m)=> {
+        this.isNativeHistogram(m.text);
+      });
+    }
+  }
+
+  /**
+   * Build the collection of native histograms.
+   * If a metric name + _bucket exists in the classic histograms, then it is a native histogram
+   * 
+   * @param metric 
+   * @returns 
+   */
+  public isNativeHistogram(metric: string) {    
     if(!metric) {
       return false;
     }
-    const ds = await this.getDatasource();
-    if (Object.keys(this._classicHistograms).length === 0 && ds instanceof PrometheusDatasource) {
-      // build this comparison libraryonce
-      const classicHistograms = await ds.metricFindQuery('metrics(.*_bucket)');
-      classicHistograms.map((m)=> {
-        this._classicHistograms[m.text] = 1;
-      });
-    }
 
     if (this._classicHistograms[`${metric}_bucket`]) {
-
       this.addNativeHistogram(metric)
       return true;
     }
