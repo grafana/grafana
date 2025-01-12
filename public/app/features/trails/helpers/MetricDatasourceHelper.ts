@@ -19,6 +19,8 @@ export class MetricDatasourceHelper {
   public reset() {
     this._datasource = undefined;
     this._metricsMetadata = undefined;
+    this._classicHistograms = {};
+    this._nativeHistograms = [];
   }
 
   private _trail: DataTrail;
@@ -59,6 +61,37 @@ export class MetricDatasourceHelper {
 
     const metadata = await this._metricsMetadata;
     return metadata?.[metric];
+  }
+
+  private _classicHistograms: Record<string, number> = {};
+  private _nativeHistograms: string[] = [];
+
+  public async isNativeHistogram(metric: string) {
+    if(!metric) {
+      return false;
+    }
+    const ds = await this.getDatasource();
+    if (Object.keys(this._classicHistograms).length === 0 && ds instanceof PrometheusDatasource) {
+      // build this comparison libraryonce
+      const classicHistograms = await ds.metricFindQuery('metrics(.*_bucket)');
+      classicHistograms.map((m)=> {
+        this._classicHistograms[m.text] = 1;
+      });
+    }
+
+    if (this._classicHistograms[`${metric}_bucket`]) {
+
+      this.addNativeHistogram(metric)
+      return true;
+    }
+
+    return false
+  }
+
+  private addNativeHistogram(metric: string) {
+    if (!this._nativeHistograms.includes(metric)) {
+      this._nativeHistograms.push(metric);
+    }
   }
 
   /**
