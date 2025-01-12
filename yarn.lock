@@ -1556,19 +1556,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/eslint@npm:5.4.0":
-  version: 5.4.0
-  resolution: "@betterer/eslint@npm:5.4.0"
-  dependencies:
-    "@betterer/betterer": "npm:^5.4.0"
-    "@betterer/errors": "npm:^5.3.0"
-    tslib: "npm:^2.3.1"
-  peerDependencies:
-    eslint: ">=7.0.0"
-  checksum: 10/8af4e490814c3c7e93dd23ea23d5aff19abb2a1b5e179307fb1ec5a66018ce1a14b9b4d5dce05df6862b642d6cfadb561b020ddb637cb761ceddd4f9d63a49c6
-  languageName: node
-  linkType: hard
-
 "@betterer/logger@npm:^5.3.4":
   version: 5.3.4
   resolution: "@betterer/logger@npm:5.3.4"
@@ -3718,7 +3705,7 @@ __metadata:
     eslint: "npm:9.17.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-jest: "npm:28.9.0"
+    eslint-plugin-jest: "npm:28.10.0"
     eslint-plugin-jsdoc: "npm:50.6.1"
     eslint-plugin-jsx-a11y: "npm:6.10.2"
     eslint-plugin-lodash: "npm:8.0.0"
@@ -4032,7 +4019,7 @@ __metadata:
     chance: "npm:1.1.12"
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
-    core-js: "npm:3.39.0"
+    core-js: "npm:3.40.0"
     css-loader: "npm:7.1.2"
     csstype: "npm:3.1.3"
     d3: "npm:7.9.0"
@@ -11972,8 +11959,8 @@ __metadata:
   linkType: hard
 
 "browserslist@npm:^4.0.0, browserslist@npm:^4.21.10, browserslist@npm:^4.21.4, browserslist@npm:^4.23.3, browserslist@npm:^4.24.0":
-  version: 4.24.4
-  resolution: "browserslist@npm:4.24.4"
+  version: 4.24.3
+  resolution: "browserslist@npm:4.24.3"
   dependencies:
     caniuse-lite: "npm:^1.0.30001688"
     electron-to-chromium: "npm:^1.5.73"
@@ -11981,7 +11968,7 @@ __metadata:
     update-browserslist-db: "npm:^1.1.1"
   bin:
     browserslist: cli.js
-  checksum: 10/11fda105e803d891311a21a1f962d83599319165faf471c2d70e045dff82a12128f5b50b1fcba665a2352ad66147aaa248a9d2355a80aadc3f53375eb3de2e48
+  checksum: 10/f5b22757302a4c04036c4ed82ef82d8005c15b809fa006132765f306e8d8a5c02703479f6738db6640f27c0935ebecde4fa5ae3457fc7ad4805156430dba6bc7
   languageName: node
   linkType: hard
 
@@ -13254,10 +13241,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.39.0, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
-  version: 3.39.0
-  resolution: "core-js@npm:3.39.0"
-  checksum: 10/a3d34e669783dfc878e545f1983f60d9ff48a3867cd1d7ff8839b849e053002a208c7c14a5ca354b8e0b54982901e2f83dc87c3d9b95de0a94b4071d1c74e5f6
+"core-js@npm:3.40.0, core-js@npm:^3.6.0, core-js@npm:^3.8.3":
+  version: 3.40.0
+  resolution: "core-js@npm:3.40.0"
+  checksum: 10/9c7e7d2839db6c3c7b72725a3ce5edf6dd61fc771e1551e08b5622ca7da330f2f5d3c7dcd6a6e7889baa8d4cc5a909ba75b4add0d1f3da940a2a60a3e0603be5
   languageName: node
   linkType: hard
 
@@ -15823,9 +15810,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jest@npm:28.9.0":
-  version: 28.9.0
-  resolution: "eslint-plugin-jest@npm:28.9.0"
+"eslint-plugin-jest@npm:28.10.0":
+  version: 28.10.0
+  resolution: "eslint-plugin-jest@npm:28.10.0"
   dependencies:
     "@typescript-eslint/utils": "npm:^6.0.0 || ^7.0.0 || ^8.0.0"
   peerDependencies:
@@ -15837,7 +15824,7 @@ __metadata:
       optional: true
     jest:
       optional: true
-  checksum: 10/399dd882205da996c2d46b768b744093346ffe4f730972825c72a3f85cc2e26bc08ccd73a7b487f8da4c39fa0178c58b571d5d611a22ced5518b5dfccb48d906
+  checksum: 10/cb19f2171e93873d9207425c4fa52ec49018579d73ece23a1ffea90f3ffd284b0e48f74ff4f50b15ff31882b06b03fec0e48c9c6ca830acdeff8931802ef0a9e
   languageName: node
   linkType: hard
 
@@ -17604,7 +17591,6 @@ __metadata:
     "@babel/runtime": "npm:7.26.0"
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
-    "@betterer/eslint": "npm:5.4.0"
     "@bsull/augurs": "npm:^0.8.0"
     "@cypress/webpack-preprocessor": "npm:6.0.2"
     "@emotion/css": "npm:11.13.5"
@@ -17760,7 +17746,7 @@ __metadata:
     comlink: "npm:4.4.2"
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
-    core-js: "npm:3.39.0"
+    core-js: "npm:3.40.0"
     crashme: "npm:0.0.15"
     css-loader: "npm:7.1.2"
     css-minimizer-webpack-plugin: "npm:7.0.0"
@@ -17780,7 +17766,7 @@ __metadata:
     eslint: "npm:9.17.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-jest: "npm:28.9.0"
+    eslint-plugin-jest: "npm:28.10.0"
     eslint-plugin-jest-dom: "npm:^5.4.0"
     eslint-plugin-jsdoc: "npm:50.6.1"
     eslint-plugin-jsx-a11y: "npm:6.10.2"
@@ -18674,8 +18660,8 @@ __metadata:
   linkType: hard
 
 "i18next@npm:^24.0.0":
-  version: 24.1.2
-  resolution: "i18next@npm:24.1.2"
+  version: 24.2.1
+  resolution: "i18next@npm:24.2.1"
   dependencies:
     "@babel/runtime": "npm:^7.23.2"
   peerDependencies:
@@ -18683,7 +18669,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10/b8c11b1d1dab17a7b2c3aad68325f9cc66b1a15bd3d176d24587dcc430b4dfaf453f8bd0cc244260cdd84610caf0a258269633083824af291022249f16635c22
+  checksum: 10/74836c3ca3365155906f95162bf75461f8f82a86034b03fc8efc670e10f610299dc5b51923acc1ab9d52ec7e7e717e44fb95b91ff1560ff45c6bad0c383517af
   languageName: node
   linkType: hard
 
@@ -21833,9 +21819,9 @@ __metadata:
   linkType: hard
 
 "micro-memoize@npm:^4.1.2":
-  version: 4.1.3
-  resolution: "micro-memoize@npm:4.1.3"
-  checksum: 10/4e9c7767911cc76ae9c9779584ec87844437af9446b295a01774640a732c2c7f91944794027f44625031f7330ab7f9147740d0a9fb612680d1d2d858dad43402
+  version: 4.1.2
+  resolution: "micro-memoize@npm:4.1.2"
+  checksum: 10/027e90c3147c97c07224440ea50ede27eb7d888149e4925820397b466d16efc525f5ec3981e4cadec3258a8d36dfd5e7e7c8e660879fbe2e47106785be9bc570
   languageName: node
   linkType: hard
 
@@ -25599,11 +25585,11 @@ __metadata:
   linkType: hard
 
 "react-hook-form@npm:^7.49.2":
-  version: 7.54.2
-  resolution: "react-hook-form@npm:7.54.2"
+  version: 7.54.1
+  resolution: "react-hook-form@npm:7.54.1"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10/b156d15b6246c76d0275e5722d9056014693e014d0e3dec06e44bf2672ee549aaba4366de5144d18c4cab29e631f3b2b84269d4fd5727ca17aad9b970fde6960
+  checksum: 10/64060da8960a50584002bd5549f59dcb4d9c9b223b21ced1096a539ac520a3d9b65a8eb08c62d7f00b751f421ac133e3f82f23e01292dd2775d93f85791fd2f3
   languageName: node
   linkType: hard
 
