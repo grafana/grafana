@@ -176,7 +176,6 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	// TODO: should we move tracking work to trace ids instead?
 	logger := logging.FromContext(ctx).With("work_key", item.key)
-	ctx = logging.Context(ctx, logger) // lets us track the work in child tasks, similar to a trace id
 	logger.Info("RepositoryController processing key")
 
 	err := rc.processFn(item)
