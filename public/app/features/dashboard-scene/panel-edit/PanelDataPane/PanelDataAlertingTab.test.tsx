@@ -237,7 +237,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard, dashboard);
+    renderAlertTab(dashboard);
 
     const defaults = await clickNewButton();
 
@@ -264,7 +264,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard, dashboard);
+    renderAlertTab(dashboard);
     const defaults = await clickNewButton();
 
     expect(defaults.queries[0].model).toEqual({
@@ -290,7 +290,7 @@ describe('PanelAlertTabContent', () => {
       }),
     ];
 
-    renderAlertTab(dashboard, dashboard);
+    renderAlertTab(dashboard);
     const defaults = await clickNewButton();
 
     expect(defaults.queries[0].model).toEqual({
@@ -310,7 +310,7 @@ describe('PanelAlertTabContent', () => {
   it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
     dashboard.panels = [panel];
 
-    renderAlertTab(dashboard, dashboard);
+    renderAlertTab(dashboard);
 
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(2);
@@ -334,8 +334,8 @@ describe('PanelAlertTabContent', () => {
   });
 });
 
-function renderAlertTab(dashboard: DashboardModel, dto: DashboardDataDTO) {
-  const model = createModel(dashboard, dto);
+function renderAlertTab(dashboard: DashboardModel) {
+  const model = createModel(dashboard);
   renderAlertTabContent(model);
 }
 
@@ -353,8 +353,8 @@ async function clickNewButton() {
   return defaults;
 }
 
-function createModel(dashboard: DashboardModel, dto: DashboardDataDTO) {
-  const scene = createDashboardSceneFromDashboardModel(dashboard, dto);
+function createModel(dashboard: DashboardModel) {
+  const scene = createDashboardSceneFromDashboardModel(dashboard, {} as DashboardDataDTO);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
   const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
