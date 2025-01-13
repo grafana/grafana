@@ -1,6 +1,6 @@
 import { noop } from 'lodash';
 import { render } from 'test/test-utils';
-import { byRole } from 'testing-library-selector';
+import { byLabelText, byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -16,7 +16,7 @@ import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 
 const ui = {
   error: byRole('alert'),
-  overrideTimingsCheckbox: byRole('checkbox', { name: /Override general timings/ }),
+  overrideTimingsSwitch: byLabelText(/Override general timings/),
   submitBtn: byRole('button', { name: /Update default policy/ }),
   groupWaitInput: byRole('textbox', { name: /Group wait/ }),
   groupIntervalInput: byRole('textbox', { name: /Group interval/ }),
@@ -42,7 +42,7 @@ describe('EditNotificationPolicyForm', function () {
         repeat_interval: '1w2d6h',
       });
 
-      expect(ui.overrideTimingsCheckbox.get()).toBeChecked();
+      expect(ui.overrideTimingsSwitch.get()).toBeChecked();
       expect(ui.groupWaitInput.get()).toHaveValue('1m30s');
       expect(ui.groupIntervalInput.get()).toHaveValue('2d4h30m35s');
       expect(ui.repeatIntervalInput.get()).toHaveValue('1w2d6h');
@@ -58,7 +58,7 @@ describe('EditNotificationPolicyForm', function () {
         onSubmit
       );
 
-      await user.click(ui.overrideTimingsCheckbox.get());
+      await user.click(ui.overrideTimingsSwitch.get());
 
       await user.type(ui.groupWaitInput.get(), '5m25s');
       await user.type(ui.groupIntervalInput.get(), '35m40s');
@@ -88,7 +88,7 @@ describe('EditNotificationPolicyForm', function () {
       onSubmit
     );
 
-    await user.click(ui.overrideTimingsCheckbox.get());
+    await user.click(ui.overrideTimingsSwitch.get());
 
     await user.type(ui.groupWaitInput.get(), '5m25s');
     await user.type(ui.groupIntervalInput.get(), '35m40s');

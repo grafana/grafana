@@ -56,11 +56,15 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 	return nil
 }
 
-func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
 	return nil
 }
 
-func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
+	return nil
+}
+
+func (f *FakeInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.recordedOps = []any{}

@@ -2,6 +2,7 @@ package authtest
 
 import (
 	"context"
+	"errors"
 	"net"
 	"time"
 
@@ -13,12 +14,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
+var _ auth.UserTokenService = (*FakeUserAuthTokenService)(nil)
+
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider                 func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error)
 	RotateTokenProvider                 func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
 	GetTokenByExternalSessionIDProvider func(ctx context.Context, externalSessionID int64) (*auth.UserToken, error)
 	GetExternalSessionProvider          func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error)
 	FindExternalSessionsProvider        func(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error)
+	UpdateExternalSessionProvider       func(ctx context.Context, externalSessionID int64, cmd *auth.UpdateExternalSessionCommand) error
 	TryRotateTokenProvider              func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider                 func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider                 func(ctx context.Context, token *auth.UserToken, soft bool) error
@@ -65,6 +69,9 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 		GetUserTokensProvider: func(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 			return nil, nil
 		},
+		GetExternalSessionProvider: func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
+			return nil, errors.New("settings Provider table not found")
+		},
 	}
 }
 
@@ -92,6 +99,10 @@ func (s *FakeUserAuthTokenService) GetExternalSession(ctx context.Context, exter
 
 func (s *FakeUserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
 	return s.FindExternalSessionsProvider(context.Background(), query)
+}
+
+func (s *FakeUserAuthTokenService) UpdateExternalSession(ctx context.Context, externalSessionID int64, cmd *auth.UpdateExternalSessionCommand) error {
+	return s.UpdateExternalSessionProvider(context.Background(), externalSessionID, cmd)
 }
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
@@ -143,16 +154,6 @@ func (ts *FakeOAuthTokenService) GetCurrentOAuthToken(context.Context, identity.
 
 func (ts *FakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
-}
-
-func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error) {
-	if ts.ExpectedAuthUser != nil {
-		return ts.ExpectedAuthUser, true, nil
-	}
-	if error, ok := ts.ExpectedErrors["HasOAuthEntry"]; ok {
-		return nil, false, error
-	}
-	return nil, false, nil
 }
 
 func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth) error {

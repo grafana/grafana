@@ -20,17 +20,18 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { contextSrv } from 'app/core/core';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
+import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -167,6 +168,35 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
       expect(scene.state.$variables?.state.variables).toBeDefined();
+    });
+
+    it('should not return lazy loaded panels when user is image renderer', () => {
+      contextSrv.user.authenticatedBy = 'render';
+
+      const panel1 = createPanelSaveModel({
+        title: 'test1',
+        gridPos: { x: 0, y: 1, w: 12, h: 8 },
+      }) as Panel;
+
+      const panel2 = createPanelSaveModel({
+        title: 'test2',
+        gridPos: { x: 0, y: 10, w: 12, h: 8 },
+      }) as Panel;
+
+      const dashboard = {
+        ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
+        panels: [panel1, panel2],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard);
+      const layout = scene.state.body as DefaultGridLayoutManager;
+      const body = layout.state.grid;
+
+      expect(body.state.isLazy).toBeFalsy();
     });
   });
 
@@ -585,6 +615,18 @@ describe('transformSaveModelToScene', () => {
       expect(vizPanel.state.hoverHeader).toEqual(true);
     });
 
+    it('should set hoverHeader to true if timeFrom and hideTimeOverride is true', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeFrom: '2h',
+        hideTimeOverride: true,
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+
+      expect(vizPanel.state.hoverHeader).toBe(true);
+    });
+
     it('should initalize the VizPanel with min interval set', () => {
       const panel = {
         title: '',
@@ -646,6 +688,26 @@ describe('transformSaveModelToScene', () => {
       const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.$data).toBeUndefined();
+    });
+
+    it('When repeat is set but repeatDirection is not it should default to horizontal repeat', () => {
+      const panel = {
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 0, y: 0, w: 8, h: 8 },
+        repeat: 'server',
+        maxPerRow: 8,
+      };
+
+      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const repeater = gridItem as DashboardGridItem;
+
+      expect(repeater.state.maxPerRow).toBe(8);
+      expect(repeater.state.variableName).toBe('server');
+      expect(repeater.state.width).toBe(24);
+      expect(repeater.state.height).toBe(8);
+      expect(repeater.state.repeatDirection).toBe('h');
+      expect(repeater.state.maxPerRow).toBe(8);
     });
 
     it('When repeat is set should build PanelRepeaterGridItem', () => {

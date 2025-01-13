@@ -5,7 +5,10 @@ go 1.23.1
 
 use (
 	. // skip:golangci-lint
+	./apps/alerting/notifications
+	./apps/investigation
 	./apps/playlist
+	./kindsv2
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver
@@ -25,3 +28,5 @@ replace xorm.io/xorm => ./pkg/util/xorm
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.125.0
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3
+
+replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56

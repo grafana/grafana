@@ -290,44 +290,44 @@ interface ThresholdStyles {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2): ThresholdStyles => {
   return {
-    wrapper: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    thresholds: css`
-      display: flex;
-      flex-direction: column;
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    item: css`
-      margin-bottom: ${theme.spacing(1)};
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    thresholds: css({
+      display: 'flex',
+      flexDirection: 'column',
+      marginBottom: theme.spacing(2),
+    }),
+    item: css({
+      marginBottom: theme.spacing(1),
 
-      &:last-child {
-        margin-bottom: 0;
-      }
-    `,
-    colorPicker: css`
-      padding: 0 ${theme.spacing(1)};
-    `,
-    addButton: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    percentIcon: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-    inputPrefix: css`
-      display: flex;
-      align-items: center;
-    `,
-    trashIcon: css`
-      color: ${theme.colors.text.secondary};
-      cursor: pointer;
-      margin-right: 0;
+      '&:last-child': {
+        marginBottom: 0,
+      },
+    }),
+    colorPicker: css({
+      padding: theme.spacing(0, 1),
+    }),
+    addButton: css({
+      marginBottom: theme.spacing(1),
+    }),
+    percentIcon: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    inputPrefix: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    trashIcon: css({
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      marginRight: 0,
 
-      &:hover {
-        color: ${theme.colors.text};
-      }
-    `,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
   };
 });

@@ -41,9 +41,11 @@ generatedTemplatesApi.enhanceEndpoints({
   },
 });
 
+export type TemplatesTestPayload = { template: string; alerts: AlertField[]; name: string };
+
 export const templatesApi = generatedTemplatesApi.injectEndpoints({
   endpoints: (build) => ({
-    previewTemplate: build.mutation<TemplatePreviewResponse, { template: string; alerts: AlertField[]; name: string }>({
+    previewTemplate: build.mutation<TemplatePreviewResponse, TemplatesTestPayload>({
       query: ({ template, alerts, name }) => ({
         url: previewTemplateUrl,
         data: { template: template, alerts: alerts, name: name },

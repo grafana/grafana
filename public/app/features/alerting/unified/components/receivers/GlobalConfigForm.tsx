@@ -1,7 +1,8 @@
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
-import { Alert, Button, Stack, LinkButton } from '@grafana/ui';
+import { Alert, Button, LinkButton, Stack } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { Trans } from 'app/core/internationalization';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -103,7 +104,7 @@ export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
               variant="secondary"
               href={makeAMLink('alerting/notifications', alertManagerSourceName)}
             >
-              Cancel
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
             </LinkButton>
           </Stack>
         </div>

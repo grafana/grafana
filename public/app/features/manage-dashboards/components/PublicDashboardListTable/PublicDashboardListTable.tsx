@@ -209,46 +209,46 @@ export const PublicDashboardListTable = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  list: css`
-    list-style-type: none;
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  card: css`
-    ${theme.breakpoints.up('sm')} {
-      display: flex;
-    }
-  `,
-  heading: css`
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-    flex: 1;
-  `,
-  orphanedTitle: css`
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-  `,
-  actions: css`
-    display: flex;
-    align-items: center;
-    position: relative;
+  list: css({
+    listStyleType: 'none',
+    marginBottom: theme.spacing(2),
+  }),
+  card: css({
+    [theme.breakpoints.up('sm')]: {
+      display: 'flex',
+    },
+  }),
+  heading: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    flex: 1,
+  }),
+  orphanedTitle: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  actions: css({
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
 
-    gap: ${theme.spacing(0.5)};
-    ${theme.breakpoints.up('sm')} {
-      gap: ${theme.spacing(1)};
-    }
-  `,
-  pauseSwitch: css`
-    display: flex;
-    gap: ${theme.spacing(1)};
-    align-items: center;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    margin-bottom: 0;
-    flex: 1;
+    gap: theme.spacing(0.5),
+    [theme.breakpoints.up('sm')]: {
+      gap: theme.spacing(1),
+    },
+  }),
+  pauseSwitch: css({
+    display: 'flex',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+    fontSize: theme.typography.bodySmall.fontSize,
+    marginBottom: 0,
+    flex: 1,
 
-    ${theme.breakpoints.up('sm')} {
-      padding-right: ${theme.spacing(2)};
-    }
-  `,
+    [theme.breakpoints.up('sm')]: {
+      paddingRight: theme.spacing(2),
+    },
+  }),
 });

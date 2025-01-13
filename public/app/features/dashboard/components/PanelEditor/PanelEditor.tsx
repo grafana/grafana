@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   HorizontalGroup,
@@ -37,7 +37,8 @@ import { UnlinkModal } from '../../../dashboard-scene/scene/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { SaveDashboardDrawer } from '../SaveDashboard/SaveDashboardDrawer';
 
@@ -432,7 +433,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   render() {
     const { initDone, uiState, theme, sectionNav, pageNav, className, updatePanelEditorUIState } = this.props;
-    const isSingleTopNav = config.featureToggles.singleTopNav;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
@@ -446,17 +446,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         data-testid={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Custom}
         className={className}
-        toolbar={
-          isSingleTopNav ? (
-            <ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>
-          ) : undefined
-        }
       >
-        {!isSingleTopNav && (
-          <AppChromeUpdate
-            actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
-          />
-        )}
+        <AppChromeUpdate
+          actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
+        />
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>
             {!uiState.isPanelOptionsVisible ? (

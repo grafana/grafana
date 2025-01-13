@@ -11,8 +11,8 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  CustomScrollbar,
   LoadingPlaceholder,
+  ScrollContainer,
   useStyles2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -35,7 +35,7 @@ import {
 } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -219,40 +219,38 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
   return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-      <div className={styles.container}>
-        {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-        {havePreviousResults && (
-          <section>
-            {props.options.viewMode === ViewMode.Stat && (
-              <BigValue
-                width={props.width}
-                height={props.height}
-                graphMode={BigValueGraphMode.None}
-                textMode={BigValueTextMode.Auto}
-                justifyMode={BigValueJustifyMode.Auto}
-                theme={config.theme2}
-                value={{ text: `${rules.length}`, numeric: rules.length }}
-              />
-            )}
-            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
-              <GroupedModeView rules={rules} options={parsedOptions} />
-            )}
-            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
-              <UngroupedModeView
-                rules={rules}
-                options={parsedOptions}
-                handleInstancesLimit={handleInstancesLimit}
-                limitInstances={limitInstances}
-                hideViewRuleLinkText={hideViewRuleLinkText}
-              />
-            )}
-          </section>
-        )}
-        {/* loading moved here to avoid twitching  */}
-        {renderLoading && <LoadingPlaceholder text="Loading..." />}
-      </div>
-    </CustomScrollbar>
+    <ScrollContainer minHeight="100%">
+      {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+      {havePreviousResults && (
+        <section>
+          {props.options.viewMode === ViewMode.Stat && (
+            <BigValue
+              width={props.width}
+              height={props.height}
+              graphMode={BigValueGraphMode.None}
+              textMode={BigValueTextMode.Auto}
+              justifyMode={BigValueJustifyMode.Auto}
+              theme={config.theme2}
+              value={{ text: `${rules.length}`, numeric: rules.length }}
+            />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
+            <GroupedModeView rules={rules} options={parsedOptions} />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
+            <UngroupedModeView
+              rules={rules}
+              options={parsedOptions}
+              handleInstancesLimit={handleInstancesLimit}
+              limitInstances={limitInstances}
+              hideViewRuleLinkText={hideViewRuleLinkText}
+            />
+          )}
+        </section>
+      )}
+      {/* loading moved here to avoid twitching  */}
+      {renderLoading && <LoadingPlaceholder text="Loading..." />}
+    </ScrollContainer>
   );
 }
 
@@ -325,7 +323,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   }
 
-  // Remove rules having 0 instances
+  // Remove rules having 0 instances unless explicitly configured
   // AlertInstances filters instances and we need to prevent situation
   // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
@@ -339,7 +337,12 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
           alertingRule.alerts ?? []
         )
       : [];
-    if (filteredAlerts.length) {
+    if (
+      filteredAlerts.length ||
+      (alertingRule?.state === PromAlertingRuleState.Inactive &&
+        options.showInactiveAlerts &&
+        !options.alertInstanceLabelFilter.length)
+    ) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
       rules.push(rule);
@@ -351,102 +354,98 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  cardContainer: css`
-    padding: ${theme.spacing(0.5)} 0 ${theme.spacing(0.25)} 0;
-    line-height: ${theme.typography.body.lineHeight};
-    margin-bottom: 0px;
-  `,
-  container: css`
-    overflow-y: auto;
-    height: 100%;
-  `,
-  alertRuleList: css`
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    list-style-type: none;
-  `,
-  alertRuleItem: css`
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    background: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border-radius: ${theme.shape.radius.default};
-    margin-bottom: ${theme.spacing(0.5)};
+  cardContainer: css({
+    padding: theme.spacing(0.5, 0, 0.25, 0),
+    lineHeight: theme.typography.body.lineHeight,
+    marginBottom: 0,
+  }),
+  alertRuleList: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    listStyleType: 'none',
+  }),
+  alertRuleItem: css({
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+    background: theme.colors.background.secondary,
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.radius.default,
+    marginBottom: theme.spacing(0.5),
 
-    gap: ${theme.spacing(2)};
-  `,
-  alertName: css`
-    font-size: ${theme.typography.h6.fontSize};
-    font-weight: ${theme.typography.fontWeightBold};
+    gap: theme.spacing(2),
+  }),
+  alertName: css({
+    fontSize: theme.typography.h6.fontSize,
+    fontWeight: theme.typography.fontWeightBold,
 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
-  alertNameWrapper: css`
-    display: flex;
-    flex: 1;
-    flex-wrap: nowrap;
-    flex-direction: column;
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+  alertNameWrapper: css({
+    display: 'flex',
+    flex: 1,
+    flexWrap: 'nowrap',
+    flexDirection: 'column',
 
-    min-width: 100px;
-  `,
-  alertLabels: css`
-    > * {
-      margin-right: ${theme.spacing(0.5)};
-    }
-  `,
-  alertDuration: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  alertRuleItemText: css`
-    font-weight: ${theme.typography.fontWeightBold};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    margin: 0;
-  `,
-  alertRuleItemTime: css`
-    color: ${theme.colors.text.secondary};
-    font-weight: normal;
-    white-space: nowrap;
-  `,
-  alertRuleItemInfo: css`
-    font-weight: normal;
-    flex-grow: 2;
-    display: flex;
-    align-items: flex-end;
-  `,
-  noAlertsMessage: css`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-  `,
-  alertIcon: css`
-    margin-right: ${theme.spacing(0.5)};
-  `,
-  instanceDetails: css`
-    min-width: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
-  customGroupDetails: css`
-    margin-bottom: ${theme.spacing(0.5)};
-  `,
-  link: css`
-    word-break: break-all;
-    color: ${theme.colors.primary.text};
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-  `,
-  hidden: css`
-    display: none;
-  `,
+    minWidth: '100px',
+  }),
+  alertLabels: css({
+    '> *': {
+      marginRight: theme.spacing(0.5),
+    },
+  }),
+  alertDuration: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  alertRuleItemText: css({
+    fontWeight: theme.typography.fontWeightBold,
+    fontSize: theme.typography.bodySmall.fontSize,
+    margin: 0,
+  }),
+  alertRuleItemTime: css({
+    color: theme.colors.text.secondary,
+    fontWeight: 'normal',
+    whiteSpace: 'nowrap',
+  }),
+  alertRuleItemInfo: css({
+    fontWeight: 'normal',
+    flexGrow: 2,
+    display: 'flex',
+    alignItems: 'flex-end',
+  }),
+  noAlertsMessage: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  }),
+  alertIcon: css({
+    marginRight: theme.spacing(0.5),
+  }),
+  instanceDetails: css({
+    minWidth: '1px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+  customGroupDetails: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+  link: css({
+    wordBreak: 'break-all',
+    color: theme.colors.primary.text,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  hidden: css({
+    display: 'none',
+  }),
 });
 
 export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>) {

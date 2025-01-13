@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -142,12 +141,12 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	for _, query := range originalQueries {
 		logsQuery, err := e.buildQuery(ctx, query, dsInfo, fromAlert)
 		if err != nil {
-			errorsource.AddErrorToResponse(query.RefID, result, err)
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 		res, err := e.executeQuery(ctx, logsQuery, dsInfo, client, url)
 		if err != nil {
-			errorsource.AddErrorToResponse(query.RefID, result, err)
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -252,7 +251,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 			cfg := backend.GrafanaConfigFromContext(ctx)
 			hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
 			if !hasPromExemplarsToggle {
-				return nil, errorsource.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"), false)
+				return nil, backend.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"))
 			}
 		}
 		azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
@@ -269,7 +268,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, errorsource.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"), false)
+		return nil, backend.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -280,7 +279,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
 		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
-			return nil, errorsource.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"), false)
+			return nil, backend.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"))
 		}
 	}
 
@@ -301,7 +300,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, errorsource.DownstreamError(err, false)
+		return nil, backend.DownstreamError(err)
 	}
 
 	defer func() {
@@ -320,14 +319,23 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat)
+	logLimitDisabled := backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorDisableLogLimit")
+
+	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat, logLimitDisabled)
 	if err != nil {
 		return nil, err
 	}
+
 	frame = appendErrorNotice(frame, logResponse.Error)
 	if frame == nil {
-		dataResponse := backend.DataResponse{}
-		return &dataResponse, nil
+		return &backend.DataResponse{}, nil
+	}
+
+	// Ensure Meta.Custom is initialized
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = &LogAnalyticsMeta{
+			ColumnTypes: make([]string, 0),
+		}
 	}
 
 	queryUrl, err := getQueryUrl(query.Query, query.Resources, dsInfo.Routes["Azure Portal"].URL, query.TimeRange)
@@ -335,30 +343,37 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if (query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql) && query.ResultFormat == dataquery.ResultFormatTrace {
-		frame.Meta.PreferredVisualization = data.VisTypeTrace
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatTable {
-		frame.Meta.PreferredVisualization = data.VisTypeTable
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatLogs {
-		frame.Meta.PreferredVisualization = data.VisTypeLogs
-		frame.Meta.Custom = &LogAnalyticsMeta{
-			ColumnTypes:     frame.Meta.Custom.(*LogAnalyticsMeta).ColumnTypes,
-			AzurePortalLink: queryUrl,
+	// Set the preferred visualization
+	switch query.ResultFormat {
+	case dataquery.ResultFormatTrace:
+		if query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql {
+			frame.Meta.PreferredVisualization = data.VisTypeTrace
 		}
-	}
-
-	if query.ResultFormat == dataquery.ResultFormatTimeSeries {
+	case dataquery.ResultFormatTable:
+		frame.Meta.PreferredVisualization = data.VisTypeTable
+	case dataquery.ResultFormatLogs:
+		frame.Meta.PreferredVisualization = data.VisTypeLogs
+		if logMeta, ok := frame.Meta.Custom.(*LogAnalyticsMeta); ok {
+			frame.Meta.Custom = &LogAnalyticsMeta{
+				ColumnTypes:     logMeta.ColumnTypes,
+				AzurePortalLink: queryUrl,
+			}
+		} else {
+			frame.Meta.Custom = &LogAnalyticsMeta{
+				AzurePortalLink: queryUrl,
+			}
+		}
+	case dataquery.ResultFormatTimeSeries:
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
 			if err == nil {
 				frame = wideFrame
 			} else {
-				frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not convert frame to time series, returning raw table: " + err.Error()})
+				frame.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "could not convert frame to time series, returning raw table: " + err.Error(),
+				})
 			}
 		}
 	}
@@ -497,7 +512,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 	}
 
 	if query.AppInsightsQuery {
-		body["applications"] = query.Resources
+		body["applications"] = []string{query.Resources[0]}
 	}
 
 	jsonValue, err := json.Marshal(body)
@@ -596,11 +611,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
+			return AzureCorrelationAPIResponse{}, backend.DownstreamError(err)
 		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
+			return AzureCorrelationAPIResponse{}, backend.DownstreamError(err)
 		}
 
 		defer func() {
@@ -610,7 +625,10 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		}()
 
 		if res.StatusCode/100 != 2 {
-			return AzureCorrelationAPIResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
+			if res.StatusCode == 404 {
+				return AzureCorrelationAPIResponse{}, backend.DownstreamError(fmt.Errorf("requested trace not found by Application Insights indexing. Select the relevant Application Insights resource to search for the Operation ID directly"))
+			}
+			return AzureCorrelationAPIResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 		}
 		var data AzureCorrelationAPIResponse
 		d := json.NewDecoder(bytes.NewReader(body))
@@ -674,7 +692,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureLogAnalyticsResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
+		return AzureLogAnalyticsResponse{}, utils.CreateResponseErrorFromStatusCode(res.StatusCode, res.Status, body)
 	}
 
 	var data AzureLogAnalyticsResponse

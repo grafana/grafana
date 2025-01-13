@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -128,8 +128,8 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 }
 
 // Read implements ResourceStoreServer.
-func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
-	rsp := &resource.ReadResponse{}
+func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
+	rsp := &resource.BackendReadResponse{}
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
 		err = isDashboardKey(req.Key, true)
@@ -242,11 +242,12 @@ func (a *dashboardSqlAccess) WatchWriteEvents(ctx context.Context) (<-chan *reso
 }
 
 // Simple wrapper for index implementation
-func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest) (*resource.BackendReadResponse, error) {
 	return a.ReadResource(ctx, req), nil
 }
 
-func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.SearchRequest) (*resource.SearchResponse, error) {
+// TODO: this needs to be implemented
+func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not yet (filter)")
 }
 
@@ -332,4 +333,9 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 // Used for efficient provisioning
 func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
 	return nil, fmt.Errorf("not yet (origin)")
+}
+
+// GetStats implements ResourceServer.
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+	return nil, fmt.Errorf("not yet (GetStats)")
 }

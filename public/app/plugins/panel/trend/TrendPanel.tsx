@@ -29,8 +29,7 @@ export const TrendPanel = ({
   const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
-    options.xField ?? data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
-
+    options.xField ?? data.series[0]?.fields.find((field) => field.type === FieldType.number)?.name;
   const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
     dimFields = {
       ...dimFields,
@@ -61,7 +60,7 @@ export const TrendPanel = ({
     } else {
       // first number field
       // Perhaps we can/should support any ordinal rather than an error here
-      xFieldIdx = frames[0].fields.findIndex((f) => f.type === FieldType.number);
+      xFieldIdx = frames[0] ? frames[0].fields.findIndex((f) => f.type === FieldType.number) : -1;
       if (xFieldIdx === -1) {
         return {
           warning: 'No numeric fields found for X axis',
@@ -120,7 +119,10 @@ export const TrendPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                getDataLinks={(seriesIdx: number, dataIdx: number) =>
+                  alignedDataFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                }
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange, viaSync, dataLinks) => {
                   return (
                     <TimeSeriesTooltip
                       series={alignedDataFrame}
@@ -131,6 +133,7 @@ export const TrendPanel = ({
                       isPinned={isPinned}
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
+                      dataLinks={dataLinks}
                     />
                   );
                 }}

@@ -10,12 +10,12 @@ import { FormDTO } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  label: css`
-    max-width: ${theme.spacing(80)};
-  `,
-  description: css`
-    max-width: ${theme.spacing(80)};
-  `,
+  label: css({
+    maxWidth: theme.spacing(80),
+  }),
+  description: css({
+    maxWidth: theme.spacing(80),
+  }),
 });
 
 export const ConfigureCorrelationBasicInfoForm = () => {

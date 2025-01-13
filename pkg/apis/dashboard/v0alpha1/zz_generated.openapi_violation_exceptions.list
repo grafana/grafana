@@ -1,1 +1,7 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,DashboardHit,Tags
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,FacetResult,Terms
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,LibraryPanelStatus,Warnings
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SearchResults,Hits
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SortableFields,Fields
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SortBy,Descending
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1,SortableField,Field

@@ -46,6 +46,7 @@ export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpda
       value={inputState.value}
       className={styles.input}
       data-testid="scopes-tree-search"
+      escapeRegex={false}
       onChange={(value) => {
         setInputState({ value, isDirty: true });
       }}
@@ -57,6 +58,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     input: css({
       margin: theme.spacing(1, 0),
+      minHeight: theme.spacing(4),
+      height: theme.spacing(4),
+      maxHeight: theme.spacing(4),
+      width: `calc(100% - ${theme.spacing(0.5)})`,
     }),
   };
 };

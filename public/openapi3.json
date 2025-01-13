@@ -139,6 +139,16 @@
         },
         "description": "(empty)"
       },
+      "apiResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/messageResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "badRequestError": {
         "content": {
           "application/json": {
@@ -885,6 +895,29 @@
         },
         "description": "(empty)"
       },
+      "getGroupRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RoleDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getGroupsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/getGroupsResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getHomeDashboardResponse": {
         "content": {
           "application/json": {
@@ -1314,10 +1347,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/TeamLBACRules"
-              },
-              "type": "array"
+              "$ref": "#/components/schemas/TeamLBACRules"
             }
           }
         },
@@ -2062,14 +2092,17 @@
                   "format": "int64",
                   "type": "integer"
                 },
-                "lbacRules": {
-                  "$ref": "#/components/schemas/TeamLBACRules"
-                },
                 "message": {
                   "type": "string"
                 },
                 "name": {
                   "type": "string"
+                },
+                "rules": {
+                  "items": {
+                    "$ref": "#/components/schemas/TeamLBACRule"
+                  },
+                  "type": "array"
                 },
                 "uid": {
                   "type": "string"
@@ -2346,6 +2379,9 @@
             "type": "integer"
           },
           "message": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
@@ -4424,6 +4460,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUid": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -4448,6 +4487,9 @@
             "type": "integer"
           },
           "userLogin": {
+            "type": "string"
+          },
+          "userUid": {
             "type": "string"
           }
         },
@@ -4731,7 +4773,7 @@
             "type": "string"
           },
           "ErrorSource": {
-            "$ref": "#/components/schemas/ErrorSource"
+            "$ref": "#/components/schemas/Source"
           },
           "Frames": {
             "$ref": "#/components/schemas/Frames"
@@ -6314,6 +6356,26 @@
         },
         "type": "object"
       },
+      "Group": {
+        "properties": {
+          "groupID": {
+            "type": "string"
+          },
+          "mappings": {}
+        },
+        "type": "object"
+      },
+      "GroupAttributes": {
+        "properties": {
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "HTTPClientConfig": {
         "properties": {
           "authorization": {
@@ -6424,6 +6486,10 @@
           },
           "isStarred": {
             "type": "boolean"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
           },
           "permanentlyDeleteDate": {
             "format": "date-time",
@@ -7127,6 +7193,22 @@
       },
       "MigrateDataResponseItemDTO": {
         "properties": {
+          "errorCode": {
+            "enum": [
+              "DATASOURCE_NAME_CONFLICT",
+              "DATASOURCE_INVALID_URL",
+              "DATASOURCE_ALREADY_MANAGED",
+              "FOLDER_NAME_CONFLICT",
+              "DASHBOARD_ALREADY_MANAGED",
+              "LIBRARY_ELEMENT_NAME_CONFLICT",
+              "UNSUPPORTED_DATA_TYPE",
+              "RESOURCE_CONFLICT",
+              "UNEXPECTED_STATUS_CODE",
+              "INTERNAL_SERVICE_ERROR",
+              "GENERIC_ERROR"
+            ],
+            "type": "string"
+          },
           "message": {
             "type": "string"
           },
@@ -7159,7 +7241,8 @@
               "CONTACT_POINT",
               "NOTIFICATION_POLICY",
               "NOTIFICATION_TEMPLATE",
-              "MUTE_TIMING"
+              "MUTE_TIMING",
+              "PLUGIN"
             ],
             "type": "string"
           }
@@ -7663,6 +7746,9 @@
             "type": "integer"
           },
           "role": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           },
           "userId": {
@@ -9455,6 +9541,9 @@
           "orientation": {
             "type": "string"
           },
+          "pdfCombineOneFile": {
+            "type": "boolean"
+          },
           "pdfShowTemplateVariables": {
             "type": "boolean"
           },
@@ -9501,6 +9590,9 @@
           "branding": {
             "$ref": "#/components/schemas/ReportBrandingOptions"
           },
+          "embeddedImageTheme": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -9508,6 +9600,9 @@
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "pdfTheme": {
+            "type": "string"
           },
           "userId": {
             "format": "int64",
@@ -9620,6 +9715,9 @@
             "type": "string"
           },
           "hidden": {
+            "type": "boolean"
+          },
+          "mapped": {
             "type": "boolean"
           },
           "name": {
@@ -10284,6 +10382,10 @@
             "example": 0,
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "example": "fe1xejlha91xce",
+            "type": "string"
           }
         },
         "type": "object"
@@ -10349,6 +10451,10 @@
           "tokens": {
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "example": "fe1xejlha91xce",
+            "type": "string"
           },
           "updatedAt": {
             "example": "2022-03-21T14:35:33Z",
@@ -10707,6 +10813,10 @@
         },
         "type": "object"
       },
+      "Source": {
+        "title": "Source type defines the status source.",
+        "type": "string"
+      },
       "Span": {
         "properties": {
           "Length": {
@@ -10921,6 +11031,9 @@
             "type": "array"
           },
           "teamId": {
+            "type": "string"
+          },
+          "teamUid": {
             "type": "string"
           }
         },
@@ -12005,6 +12118,9 @@
           "login": {
             "type": "string"
           },
+          "uid": {
+            "type": "string"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -12530,6 +12646,21 @@
         },
         "type": "object"
       },
+      "getGroupsResponse": {
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            },
+            "type": "array"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "gettableAlert": {
         "description": "GettableAlert gettable alert",
         "properties": {
@@ -12773,6 +12904,14 @@
         },
         "type": "array"
       },
+      "messageResponse": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "peerStatus": {
         "description": "PeerStatus peer status",
         "properties": {
@@ -12956,6 +13095,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUid": {
+            "type": "string"
+          },
           "userAvatarUrl": {
             "type": "string"
           },
@@ -12964,6 +13106,9 @@
             "type": "integer"
           },
           "userLogin": {
+            "type": "string"
+          },
+          "userUid": {
             "type": "string"
           }
         },
@@ -17854,6 +17999,9 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -18949,6 +19097,202 @@
         "summary": "Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.",
         "tags": [
           "folder_permissions"
+        ]
+      }
+    },
+    "/groupsync/groups": {
+      "get": {
+        "operationId": "getMappedGroups",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getGroupsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ]
+      }
+    },
+    "/groupsync/groups/{group_id}": {
+      "delete": {
+        "operationId": "deleteGroupMappings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "operationId": "createGroupMappings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupAttributes"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/apiResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ]
+      },
+      "put": {
+        "operationId": "updateGroupMappings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupAttributes"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/apiResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ]
+      }
+    },
+    "/groupsync/groups/{group_id}/roles": {
+      "get": {
+        "operationId": "getGroupRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getGroupRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
         ]
       }
     },
@@ -21900,7 +22244,8 @@
     },
     "/reports/{id}": {
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "deprecated": true,
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "operationId": "deleteReport",
         "parameters": [
           {
@@ -21940,7 +22285,8 @@
         ]
       },
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "deprecated": true,
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "operationId": "getReport",
         "parameters": [
           {
@@ -21980,7 +22326,8 @@
         ]
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "deprecated": true,
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "operationId": "updateReport",
         "parameters": [
           {

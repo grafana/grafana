@@ -649,7 +649,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			TimeColumn:       "timestamp",
 		})
 		require.NoError(t, err)
-		expectedBody := fmt.Sprintf(`{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],"query":"","query_datetimescope_column":"timestamp","query_datetimescope_from":"%s","query_datetimescope_to":"%s","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339), from.Format(time.RFC3339), to.Format(time.RFC3339))
+		expectedBody := fmt.Sprintf(`{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],"query":"","query_datetimescope_column":"timestamp","query_datetimescope_from":"%s","query_datetimescope_to":"%s","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339), from.Format(time.RFC3339), to.Format(time.RFC3339))
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {

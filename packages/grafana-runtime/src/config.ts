@@ -126,6 +126,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: false,
     customEndpoint: '',
     apiKey: '',
+    allInstrumentationsEnabled: false,
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
@@ -139,7 +140,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
-  customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
@@ -182,6 +182,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
   rudderstackIntegrationsUrl: undefined;
+  analyticsConsoleReporting = false;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
@@ -189,7 +190,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   tokenExpirationDayLimit: undefined;
-  disableFrontendSandboxForPlugins: string[] = [];
+  enableFrontendSandboxForPlugins: string[] = [];
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;

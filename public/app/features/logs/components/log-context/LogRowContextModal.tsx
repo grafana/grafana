@@ -34,91 +34,91 @@ import { LogContextButtons } from './LogContextButtons';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    modal: css`
-      width: 85vw;
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-      }
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    `,
-    sticky: css`
-      position: sticky;
-      z-index: 1;
-      top: -1px;
-      bottom: -1px;
-    `,
-    entry: css`
-      & > td {
-        padding: ${theme.spacing(1)} 0 ${theme.spacing(1)} 0;
-      }
-      background: ${theme.colors.emphasize(theme.colors.background.secondary)};
+    modal: css({
+      width: '85vw',
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+    }),
+    sticky: css({
+      position: 'sticky',
+      zIndex: 1,
+      top: '-1px',
+      bottom: '-1px',
+    }),
+    entry: css({
+      '& > td': {
+        padding: theme.spacing(1, 0, 1, 0),
+      },
+      background: theme.colors.emphasize(theme.colors.background.secondary),
 
-      & > table {
-        margin-bottom: 0;
-      }
+      '& > table': {
+        marginBottom: 0,
+      },
 
-      & .log-row-menu {
-        margin-top: -6px;
-      }
-    `,
-    datasourceUi: css`
-      padding-bottom: ${theme.spacing(1.25)};
-      display: flex;
-      align-items: center;
-    `,
-    logRowGroups: css`
-      overflow: auto;
-      max-height: 75%;
-      align-self: stretch;
-      display: inline-block;
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.radius.default};
-      & > table {
-        min-width: 100%;
-      }
-    `,
-    flexColumn: css`
-      display: flex;
-      flex-direction: column;
-      padding: 0 ${theme.spacing(3)} ${theme.spacing(3)} ${theme.spacing(3)};
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      & > div:last-child {
-        margin-left: auto;
-      }
-    `,
-    noMarginBottom: css`
-      & > table {
-        margin-bottom: 0;
-      }
-    `,
-    hidden: css`
-      display: none;
-    `,
-    paddingTop: css`
-      padding-top: ${theme.spacing(1)};
-    `,
-    paddingBottom: css`
-      padding-bottom: ${theme.spacing(1)};
-    `,
-    link: css`
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      :hover {
-        color: ${theme.colors.text.link};
-      }
-    `,
-    loadingCell: css`
-      position: sticky;
-      left: 50%;
-      display: inline-block;
-      transform: translateX(-50%);
-    `,
+      '& .log-row-menu': {
+        marginTop: '-6px',
+      },
+    }),
+    datasourceUi: css({
+      paddingBottom: theme.spacing(1.25),
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    logRowGroups: css({
+      overflow: 'auto',
+      maxHeight: '75%',
+      alignSelf: 'stretch',
+      display: 'inline-block',
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      '& > table': {
+        minWidth: '100%',
+      },
+    }),
+    flexColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(0, 3, 3, 3),
+    }),
+    flexRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      '& > div:last-child': {
+        marginLeft: 'auto',
+      },
+    }),
+    noMarginBottom: css({
+      '& > table': {
+        marginBottom: 0,
+      },
+    }),
+    hidden: css({
+      display: 'none',
+    }),
+    paddingTop: css({
+      paddingTop: theme.spacing(1),
+    }),
+    paddingBottom: css({
+      paddingBottom: theme.spacing(1),
+    }),
+    link: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      ':hover': {
+        color: theme.colors.text.link,
+      },
+    }),
+    loadingCell: css({
+      position: 'sticky',
+      left: '50%',
+      display: 'inline-block',
+      transform: 'translateX(-50%)',
+    }),
   };
 };
 
@@ -540,6 +540,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   displayedFields={displayedFields}
                   onClickShowField={showField}
                   onClickHideField={hideField}
+                  scrollElement={null}
                 />
               </td>
             </tr>
@@ -562,6 +563,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onPinLine={() => setSticky(true)}
                   pinnedRowId={sticky ? row.uid : undefined}
                   overflowingContent={true}
+                  scrollElement={null}
                 />
               </td>
             </tr>
@@ -580,6 +582,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     displayedFields={displayedFields}
                     onClickShowField={showField}
                     onClickHideField={hideField}
+                    scrollElement={null}
                   />
                 </>
               </td>

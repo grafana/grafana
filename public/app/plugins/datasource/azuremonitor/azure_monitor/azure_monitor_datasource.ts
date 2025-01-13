@@ -1,13 +1,15 @@
 import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { AzureCredentials } from '@grafana/azure-sdk';
+import { ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { getAuthType } from '../credentials';
+import { getCredentials } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceInstanceSettings,
+  AzureMonitorDataSourceJsonData,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorQuery,
   AzureQueryType,
@@ -37,7 +39,11 @@ function hasValue(item?: string) {
   return !!(item && item !== defaultDropdownValue);
 }
 
-export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+export default class AzureMonitorDatasource extends DataSourceWithBackend<
+  AzureMonitorQuery,
+  AzureMonitorDataSourceJsonData
+> {
+  private readonly credentials: AzureCredentials;
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
   listByResourceGroupApiVersion = '2021-04-01';
@@ -50,10 +56,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   declare resourceName: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    instanceSettings: AzureMonitorDataSourceInstanceSettings,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.credentials = getCredentials(instanceSettings);
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
@@ -265,6 +272,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           }
         }
         return result;
+      })
+      .catch((reason) => {
+        console.error(`Failed to get metric namespaces: ${reason}`);
+        return [];
       });
   }
 
@@ -302,17 +313,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {
-    const authType = getAuthType(this.instanceSettings);
-
-    if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+    if (this.credentials.authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.credentials.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+      if (!this.isValidConfigField(this.credentials.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

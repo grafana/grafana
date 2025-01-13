@@ -75,7 +75,7 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 					cfg := newCfgFromIniMap(t, cfgMap)
 					setupDBForGrafana(t, ctx, cfgMap)
 					grafanaDB := newTestInfraDB(t, cfgMap)
-					resourceDB, err := ProvideResourceDB(grafanaDB, cfg, testGrafanaTracer{})
+					resourceDB, err := ProvideResourceDB(grafanaDB, cfg, nil)
 					require.NotNil(t, resourceDB)
 					require.NoError(t, err)
 				})
@@ -105,7 +105,7 @@ func TestReproIncident2144UsingGrafanaDB(t *testing.T) {
 			t.Run("Resource API provides a reasonable error for this case", func(t *testing.T) {
 				t.Parallel()
 				cfg := newCfgFromIniMap(t, cfgMap)
-				resourceDB, err := ProvideResourceDB(grafanaDB, cfg, testGrafanaTracer{})
+				resourceDB, err := ProvideResourceDB(grafanaDB, cfg, nil)
 				require.Nil(t, resourceDB)
 				require.Error(t, err)
 				require.ErrorIs(t, err, errGrafanaDBInstrumentedNotSupported)

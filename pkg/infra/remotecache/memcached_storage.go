@@ -18,7 +18,7 @@ type memcachedStorage struct {
 	c *memcache.Client
 }
 
-func newMemcachedStorage(opts *setting.RemoteCacheOptions) *memcachedStorage {
+func newMemcachedStorage(opts *setting.RemoteCacheSettings) *memcachedStorage {
 	return &memcachedStorage{
 		c: memcache.New(opts.ConnStr),
 	}

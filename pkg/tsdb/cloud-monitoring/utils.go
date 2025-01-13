@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -85,12 +84,12 @@ func doRequestPage(_ context.Context, r *http.Request, dsInfo datasourceInfo, pa
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
 	if err != nil {
-		return cloudMonitoringResponse{}, errorsource.DownstreamError(err, false)
+		return cloudMonitoringResponse{}, backend.DownstreamError(err)
 	}
 
 	defer func() {
 		if err = res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 

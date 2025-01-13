@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -129,11 +129,9 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
           </div>
         )}
       </div>
-      <div className={styles.scrollWrapper}>
-        <CustomScrollbar autoHeightMin="100%">
-          <div className={styles.mainBox}>{mainBoxElements}</div>
-        </CustomScrollbar>
-      </div>
+      <ScrollContainer>
+        <div className={styles.mainBox}>{mainBoxElements}</div>
+      </ScrollContainer>
     </div>
   );
 };
@@ -206,10 +204,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   searchHits: css({
     padding: theme.spacing(1, 1, 0, 1),
-  }),
-  scrollWrapper: css({
-    flexGrow: 1,
-    minHeight: 0,
   }),
   searchNotice: css({
     fontSize: theme.typography.size.sm,

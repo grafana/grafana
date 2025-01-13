@@ -3,9 +3,9 @@ import {
   DragDropContext,
   Draggable,
   DraggableProvided,
+  DropResult,
   Droppable,
   DroppableProvided,
-  DropResult,
 } from '@hello-pangea/dnd';
 import cx from 'classnames';
 import { produce } from 'immer';
@@ -15,15 +15,20 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { dispatch, getState } from 'app/store/store';
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { dispatch } from 'app/store/store';
+import {
+  CombinedRuleGroup,
+  CombinedRuleNamespace,
+  RuleGroupIdentifier,
+  RulerDataSourceConfig,
+} from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { useReorderRuleForRuleGroup } from '../../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading } from '../../hooks/useAsync';
-import { swapItems, SwapOperation } from '../../reducers/ruler/ruleGroups';
-import { fetchRulerRulesAction, getDataSourceRulerConfig } from '../../state/actions';
+import { SwapOperation, swapItems } from '../../reducers/ruler/ruleGroups';
+import { fetchRulerRulesAction } from '../../state/actions';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
 import {
@@ -38,6 +43,7 @@ interface ModalProps {
   group: CombinedRuleGroup;
   onClose: () => void;
   folderUid?: string;
+  rulerConfig: RulerDataSourceConfig;
 }
 
 type RulerRuleWithUID = { uid: string } & RulerRuleDTO;
@@ -52,11 +58,9 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
 
   // The list of rules might have been filtered before we get to this reordering modal
   // We need to grab the full (unfiltered) list
-  const dataSourceName = rulesSourceToDataSourceName(namespace.rulesSource);
-  const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
   const { currentData: ruleGroup, isLoading: loadingRules } = alertRuleApi.endpoints.getRuleGroupForNamespace.useQuery(
     {
-      rulerConfig,
+      rulerConfig: props.rulerConfig,
       namespace: folderUid ?? namespace.name,
       group: group.name,
     },
@@ -97,8 +101,10 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
   );
 
   const updateRulesOrder = useCallback(async () => {
+    const dataSourceName = rulesSourceToDataSourceName(namespace.rulesSource);
+
     const ruleGroupIdentifier: RuleGroupIdentifier = {
-      dataSourceName: rulesSourceToDataSourceName(namespace.rulesSource),
+      dataSourceName,
       groupName: group.name,
       namespaceName: folderUid ?? namespace.name,
     };
@@ -107,16 +113,7 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
     // TODO: Remove once RTKQ is more prevalently used
     await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
     onClose();
-  }, [
-    namespace.rulesSource,
-    namespace.name,
-    group.name,
-    folderUid,
-    reorderRulesInGroup,
-    operations,
-    dataSourceName,
-    onClose,
-  ]);
+  }, [namespace.rulesSource, namespace.name, group.name, folderUid, reorderRulesInGroup, operations, onClose]);
 
   // assign unique but stable identifiers to each (alerting / recording) rule
   const rulesWithUID: RulerRuleWithUID[] = rulesList.map((rulerRule) => ({

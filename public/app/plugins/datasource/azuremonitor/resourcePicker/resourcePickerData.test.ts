@@ -5,6 +5,7 @@ import {
 } from '../__mocks__/argResourcePickerResponse';
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
+import { resourceTypes } from '../azureMetadata';
 import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
 
@@ -19,12 +20,14 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const createResourcePickerData = (responses: AzureGraphResponse[]) => {
+const createResourcePickerData = (responses: AzureGraphResponse[], noNamespaces?: boolean) => {
   const instanceSettings = createMockInstanceSetttings();
   const mockDatasource = createMockDatasource();
   mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest
     .fn()
-    .mockResolvedValueOnce([{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]);
+    .mockResolvedValueOnce(
+      noNamespaces ? [] : [{ text: 'Microsoft.Storage/storageAccounts', value: 'Microsoft.Storage/storageAccounts' }]
+    );
   const resourcePickerData = new ResourcePickerData(instanceSettings, mockDatasource.azureMonitorDatasource);
   const postResource = jest.fn();
   responses.forEach((res) => {
@@ -353,6 +356,53 @@ describe('AzureMonitor resourcePickerData', () => {
         typeLabel: 'Virtual machines',
         uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
       });
+    });
+    it('metrics searches - fallback namespaces', async () => {
+      const mockSubscriptionsResponse = createMockARGSubscriptionResponse();
+
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
+            name: 'vmName',
+            type: 'microsoft.compute/virtualmachines',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData, postResource, mockDatasource } = createResourcePickerData(
+        [mockSubscriptionsResponse, mockResponse],
+        true
+      );
+      await resourcePickerData.search('vmname', 'metrics');
+      expect(postResource).toHaveBeenCalledTimes(2);
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'westeurope'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'eastus'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'japaneast'
+      );
+      const secondCall = postResource.mock.calls[1];
+      const [_, postBody] = secondCall;
+      const namespaces = (postBody.query as string).match(/\((.*?)\)/)?.[0].split(',');
+      expect(namespaces?.length).toEqual(resourceTypes.length);
     });
     it('makes requests for logs searches', async () => {
       const mockResponse = {

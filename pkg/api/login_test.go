@@ -659,7 +659,11 @@ func TestLogoutSaml(t *testing.T) {
 	license.On("FeatureEnabled", "saml").Return(true)
 
 	hs := &HTTPServer{
-		authnService:     &authntest.FakeService{},
+		authnService: &authntest.FakeService{
+			ExpectedClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSingleLogoutEnabled: true,
+			},
+		},
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          license,

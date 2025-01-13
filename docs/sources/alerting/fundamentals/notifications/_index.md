@@ -27,9 +27,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
   templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/templates/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/templates/
   configure-alertmanager:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
@@ -84,7 +84,9 @@ Start defining your [contact points](ref:contact-points) to specify how to recei
 
 [Contact points](ref:contact-points) contain the configuration for sending alert notifications, specifying destinations like email, Slack, OnCall, webhooks, and their notification messages.
 
-A contact point is a list of integrations, each sending a message to a specific destination. They allow the customization of notification messages and the use of notification templates.
+A contact point is a list of integrations, each sending a message to a specific destination.
+
+By default, notification messages include common alert details, such as the number of alerts, alert names, labels, annotations, and other alert information. You can also customize notification messages and use notification templates.
 
 First, create the contact point and test the notifications. Then, configure the alert rule to send its notifications to either a contact point or through Notification Policies.
 
@@ -132,6 +134,4 @@ Grafana Alerting is based on the Prometheus model for designing alerting systems
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-Grafana uses a custom Alertmanager to manage and deliver alert notifications, as detailed in this guide. This custom Alertmanager extends the capabilities of the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/).
-
-If you already run a Prometheus Alertmanager instance, you can configure Grafana Alerting to forward alerts to your [external Alertmanager for handling notifications](ref:configure-alertmanager).
+Grafana provides a custom Alertmanager, extending the Prometheus Alertmanager, to manage and deliver alert notifications. If you run a Prometheus or Mimir Alertmanager, you can configure Grafana Alerting to manage them and handle notifications for Grafana-managed alerts. For details, refer to [configure Alertmanagers](ref:configure-alertmanager).

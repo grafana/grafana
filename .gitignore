@@ -17,13 +17,11 @@ vendor/
 tsconfig.tsbuildinfo
 __debug_bin*
 
-# Yarn
-.yarn/
-!.yarn/patches
-!.yarn/releases
-!.yarn/plugins
-!.yarn/sdks
-!.yarn/versions
+# yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 .pnp.*
 
 # Enterprise emails
@@ -41,6 +39,7 @@ __debug_bin*
 /devenv/docker/blocks/saml-enterprise
 # This is the new place of the block, but I leave the previous here for a while
 /devenv/docker/blocks/auth/saml-enterprise
+/devenv/docker/blocks/auth/signer
 
 /tmp
 tools/phantomjs/phantomjs
@@ -107,6 +106,7 @@ profile.cov
 /pkg/extensions/*
 /pkg/build/cmd/artifactspage.go
 /pkg/build/cmd/artifactspage.tmpl.html
+/pkg/build/cmd/exportversion.go
 /pkg/server/wireexts_enterprise.go
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
@@ -140,6 +140,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
+/packages/grafana-ui/.storybook/static
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
@@ -223,3 +224,5 @@ public/app/plugins/**/dist/
 
 # Mock service worker used for fake API responses in frontend development
 public/mockServiceWorker.js
+
+/e2e/test-plugins/*/dist

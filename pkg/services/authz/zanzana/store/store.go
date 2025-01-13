@@ -113,6 +113,13 @@ func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig,
 }
 
 func sqliteConnectionString(v string) string {
+	// handle test setup by replacing grafana-test with zanzana-test
+	if strings.Contains(v, "grafana-test/grafana-test") {
+		name := v[strings.LastIndex(v, "/")+1:]
+		name = strings.Replace(name, "grafana-test", "zanzana-test", 1)
+		return v[0:strings.LastIndex(v, "/")+1] + name
+	}
+
 	// hardcode zanzana.db for now
 	return v[0:strings.LastIndex(v, "/")+1] + "zanzana.db"
 }

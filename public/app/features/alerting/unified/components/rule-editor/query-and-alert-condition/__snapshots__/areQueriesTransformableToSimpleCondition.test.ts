@@ -1,44 +1,11 @@
-// QueryAndExpressionsStep.test.tsx
-
 import { produce } from 'immer';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
+import { dataQuery, reduceExpression, thresholdExpression } from 'app/features/alerting/unified/mocks';
+import { ExpressionQuery, ReducerMode } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { areQueriesTransformableToSimpleCondition } from '../QueryAndExpressionsStep';
-import {
-  SIMPLE_CONDITION_QUERY_ID,
-  SIMPLE_CONDITION_REDUCER_ID,
-  SIMPLE_CONDITION_THRESHOLD_ID,
-} from '../SimpleCondition';
-
-const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_QUERY_ID,
-  datasourceUid: 'abc123',
-  queryType: '',
-  model: { refId: SIMPLE_CONDITION_QUERY_ID },
-};
-
-const reduceExpression: AlertQuery<ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_REDUCER_ID,
-  queryType: 'expression',
-  datasourceUid: '__expr__',
-  model: {
-    type: ExpressionQueryType.reduce,
-    refId: SIMPLE_CONDITION_REDUCER_ID,
-    settings: { mode: ReducerMode.Strict },
-  },
-};
-const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_THRESHOLD_ID,
-  queryType: 'expression',
-  datasourceUid: '__expr__',
-  model: {
-    type: ExpressionQueryType.threshold,
-    refId: SIMPLE_CONDITION_THRESHOLD_ID,
-  },
-};
 
 const expressionQueries: Array<AlertQuery<ExpressionQuery>> = [reduceExpression, thresholdExpression];
 
@@ -55,7 +22,7 @@ describe('areQueriesTransformableToSimpleCondition', () => {
     expect(result).toBe(false);
   });
 
-  it('should return false if the dataQuery refId does not match SIMPLE_CONDITION_QUERY_ID', () => {
+  it('should return false if the dataQuery refId does not match SimpleConditionIdentifier.queryId', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [
       { refId: 'notSimpleCondition', datasourceUid: 'abc123', queryType: '', model: { refId: 'notSimpleCondition' } },
     ];

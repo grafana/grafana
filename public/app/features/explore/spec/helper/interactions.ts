@@ -26,15 +26,13 @@ export const runQuery = async (exploreId = 'left') => {
 };
 
 export const openQueryHistory = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query history' });
+  const button = screen.getByRole('button', { name: 'Query history' });
   await userEvent.click(button);
   expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
 export const openQueryLibrary = async () => {
-  const explore = withinExplore('left');
-  const button = explore.getByRole('button', { name: 'Query library' });
+  const button = screen.getByRole('button', { name: 'Query library' });
   await userEvent.click(button);
   await waitFor(async () => {
     screen.getByRole('tab', {
@@ -75,9 +73,9 @@ export const switchToQueryHistoryTab = async (name: 'Settings' | 'Query History'
 };
 
 export const selectStarredTabFirst = async () => {
-  const checkbox = withinQueryHistory().getByRole('checkbox', {
-    name: /Change the default active tab from “Query history” to “Starred”/,
-  });
+  const checkbox = withinQueryHistory().getByLabelText(
+    /Change the default active tab from “Query history” to “Starred”/
+  );
   await userEvent.click(checkbox);
 };
 

@@ -33,7 +33,7 @@ func (l fakeLogger) With(args ...interface{}) log.Logger {
 
 func TestConfigureAzureAuthentication(t *testing.T) {
 	azureSettings := &azsettings.AzureSettings{}
-	testLogger := backend.Logger
+	testLogger := log.NewNullLogger()
 
 	t.Run("should set Azure middleware when JsonData contains valid credentials", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{

@@ -6,14 +6,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -33,7 +31,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 	}
 
 	builder := NewServiceAPIBuilder()
-	apiregistration.RegisterAPI(NewServiceAPIBuilder())
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
@@ -70,7 +68,10 @@ func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
+func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+	optsGetter := opts.OptsGetter
+
 	resourceInfo := service.ExternalNameResourceInfo
 	storage := map[string]rest.Storage{}
 
@@ -86,9 +87,4 @@ func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 
 func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return service.GetOpenAPIDefinitions
-}
-
-// Register additional routes with the server
-func (b *ServiceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }

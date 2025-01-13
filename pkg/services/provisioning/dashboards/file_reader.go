@@ -262,8 +262,11 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			&dashboards.GetDashboardQuery{
 				OrgID:     jsonFile.dashboard.OrgID,
 				UID:       jsonFile.dashboard.Dashboard.UID,
-				Title:     &jsonFile.dashboard.Dashboard.Title,
 				FolderUID: util.Pointer(""),
+
+				// provisioning depends on unique names
+				//nolint:staticcheck
+				Title: &jsonFile.dashboard.Dashboard.Title,
 			},
 		)
 		if err != nil {
@@ -349,6 +352,8 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 	if cfg.FolderUID != "" {
 		cmd.UID = cfg.FolderUID
 	} else {
+		// provisioning depends on unique names
+		//nolint:staticcheck
 		cmd.Title = &folderName
 	}
 

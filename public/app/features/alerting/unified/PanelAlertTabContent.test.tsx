@@ -1,12 +1,11 @@
 import { render } from 'test/test-utils';
 import { byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceApi } from '@grafana/data';
-import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
-import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { PromOptions } from '@grafana/prometheus';
+import { setPluginLinksHook } from '@grafana/runtime';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
@@ -15,7 +14,6 @@ import * as apiRuler from './api/ruler';
 import * as alertingAbilities from './hooks/useAbilities';
 import { mockAlertRuleApi, setupMswServer } from './mockApi';
 import {
-  MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
   mockPromAlert,
@@ -25,42 +23,51 @@ import {
 } from './mocks';
 import { captureRequests } from './mocks/server/events';
 import { RuleFormValues } from './types/rule-form';
-import * as config from './utils/config';
 import { Annotation } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
-jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
-jest.mock('../../../core/hooks/useMediaQueryChange');
-
-jest.spyOn(config, 'getAllDataSources');
-jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
-jest.spyOn(apiRuler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
+
+const prometheusModuleSettings = { alerting: true, module: 'core:plugin/prometheus' };
+
 const dataSources = {
-  prometheus: mockDataSource<PromOptions>({
-    name: 'Prometheus',
-    type: DataSourceType.Prometheus,
-    isDefault: false,
-  }),
-  default: mockDataSource<PromOptions>({
-    name: 'Default',
-    type: DataSourceType.Prometheus,
-    isDefault: true,
-  }),
+  prometheus: mockDataSource<PromOptions>(
+    {
+      name: 'Prometheus',
+      type: DataSourceType.Prometheus,
+      isDefault: false,
+      jsonData: { manageAlerts: true },
+    },
+    prometheusModuleSettings
+  ),
+  default: mockDataSource<PromOptions>(
+    {
+      name: 'Default',
+      type: DataSourceType.Prometheus,
+      isDefault: true,
+      jsonData: { manageAlerts: true },
+    },
+    prometheusModuleSettings
+  ),
+  prometheusMinInterval: mockDataSource<PromOptions>(
+    {
+      name: 'Prometheus Min Interval',
+      type: DataSourceType.Prometheus,
+      isDefault: false,
+      jsonData: { manageAlerts: true, timeInterval: '7m' },
+    },
+    prometheusModuleSettings
+  ),
 };
-dataSources.prometheus.meta.alerting = true;
-dataSources.default.meta.alerting = true;
 
 const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
   useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAlertRuleAbility),
   rulerBuilderMock: jest.mocked(apiRuler.rulerUrlBuilder),
 };
 
-const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) => {
+const renderAlertTabContent = (dashboard: DashboardModel, panel: PanelModel) =>
   render(<PanelAlertTabContent dashboard={dashboard} panel={panel} />);
-};
 
 const promResponse: PromRulesResponse = {
   status: 'success',
@@ -181,7 +188,6 @@ const server = setupMswServer();
 
 describe('PanelAlertTabContent', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -190,19 +196,13 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
+    setupDataSources(...Object.values(dataSources));
 
     setPluginLinksHook(() => ({
       links: [],
       isLoading: false,
     }));
 
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
-    const dsService = new MockDataSourceSrv(dataSources);
-    dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
-      dataSources.prometheus
-    ) as DataSourceApi;
-    dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi;
-    setDataSourceSrv(dsService);
     mocks.rulerBuilderMock.mockReturnValue({
       rules: () => ({ path: `api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules` }),
       namespace: () => ({ path: 'ruler' }),
@@ -297,13 +297,15 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account datasource minInterval', async () => {
-    (getDatasourceSrv() as unknown as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
-
     renderAlertTabContent(
       dashboard,
       new PanelModel({
         ...panel,
         maxDataPoints: 100,
+        datasource: {
+          type: 'prometheus',
+          uid: dataSources.prometheusMinInterval.uid,
+        },
       })
     );
 
@@ -318,7 +320,7 @@ describe('PanelAlertTabContent', () => {
       refId: 'A',
       datasource: {
         type: 'prometheus',
-        uid: 'mock-ds-2',
+        uid: 'mock-ds-4',
       },
       interval: '',
       intervalMs: 420000,

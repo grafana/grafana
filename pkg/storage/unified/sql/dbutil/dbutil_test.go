@@ -87,6 +87,8 @@ func TestQuery(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil)
 		req.EXPECT().GetScanDest().Return(nil).Maybe()
@@ -108,6 +110,8 @@ func TestQuery(t *testing.T) {
 		rows := newReturnsRow(rdb.SQLMock, req)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows.Add(1, nil)
@@ -131,6 +135,8 @@ func TestQuery(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(errTest).Once()
 
 		// execute and assert
@@ -152,6 +158,8 @@ func TestQuery(t *testing.T) {
 		req.EXPECT().Validate().Return(nil).Once()
 
 		// execute and assert
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		res, err := Query(ctx, rdb.DB, invalidTestTmpl, req)
 		require.Zero(t, res)
 		require.Error(t, err)
@@ -167,6 +175,8 @@ func TestQuery(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil)
 		req.EXPECT().GetScanDest().Return(nil).Maybe()
@@ -189,6 +199,8 @@ func TestQuery(t *testing.T) {
 		rows := newReturnsRow(rdb.SQLMock, req)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows.Add(0, errTest)
@@ -211,6 +223,8 @@ func TestQuery(t *testing.T) {
 		rows := newReturnsRow(rdb.SQLMock, req)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows.Rows.AddRow() // we don't expect GetScanDest or Results here
@@ -235,6 +249,8 @@ func TestQuery(t *testing.T) {
 		rows2 := newReturnsRow(rdb.SQLMock, req)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows1.Add(1, nil)
@@ -262,6 +278,8 @@ func TestQueryRow(t *testing.T) {
 		rows := newReturnsRow(rdb.SQLMock, req)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows.Add(1, nil)
@@ -282,6 +300,8 @@ func TestQueryRow(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rdb.SQLMock.ExpectQuery("").WillReturnRows(rdb.SQLMock.NewRows(nil))
@@ -302,6 +322,8 @@ func TestQueryRow(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil)
 		req.EXPECT().GetScanDest().Return(nil).Maybe()
@@ -324,6 +346,8 @@ func TestQueryRow(t *testing.T) {
 		rows := newReturnsRow(rdb.SQLMock, req)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows.Add(1, nil)
@@ -348,6 +372,8 @@ func TestQueryRow(t *testing.T) {
 		rows2 := newReturnsRow(rdb.SQLMock, req)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rows1.Add(1, nil)
@@ -445,6 +471,8 @@ func TestExec(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil).Once()
 		rdb.SQLMock.ExpectExec("").WillReturnResult(sqlmock.NewResult(0, 0))
@@ -464,6 +492,8 @@ func TestExec(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(errTest).Once()
 
 		// execute and assert
@@ -482,6 +512,8 @@ func TestExec(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 
 		// execute and assert
@@ -500,6 +532,8 @@ func TestExec(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
 
 		// setup expectations
+		req.EXPECT().DialectName().Return("test").Maybe()
+		req.EXPECT().GetColNames().Return(nil).Maybe()
 		req.EXPECT().Validate().Return(nil).Once()
 		req.EXPECT().GetArgs().Return(nil)
 		rdb.SQLMock.ExpectExec("").WillReturnError(errTest)

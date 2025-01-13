@@ -291,7 +291,7 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
 
-func (f *FakeUserStore) GetByUID(context.Context, int64, string) (*user.User, error) {
+func (f *FakeUserStore) GetByUID(context.Context, string) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
 

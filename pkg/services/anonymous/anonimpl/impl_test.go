@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
+	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -123,7 +124,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := db.InitTestDB(t)
 			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-				&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
+				&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 			for _, req := range tc.req {
 				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
@@ -161,7 +162,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	}
 	store := db.InitTestDB(t)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
+		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	req := &http.Request{
 		Header: http.Header{
@@ -258,8 +259,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 	}
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.AnonymousEnabled = true
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{})
+	cfg.Anonymous.Enabled = true
+	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	for _, tc := range testCases {
 		err := store.Reset()
@@ -290,7 +291,7 @@ func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
 	// Setup test environment
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.AnonymousDeviceLimit = 1 // Set device limit to 1 for testing
+	cfg.Anonymous.DeviceLimit = 1 // Set device limit to 1 for testing
 	anonService := ProvideAnonymousDeviceService(
 		&usagestats.UsageStatsMock{},
 		&authntest.FakeService{},
@@ -300,6 +301,7 @@ func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
 		nil,
 		actest.FakeAccessControl{},
 		&routing.RouteRegisterImpl{},
+		validator.FakeAnonUserLimitValidator{},
 	)
 
 	// Define test cases

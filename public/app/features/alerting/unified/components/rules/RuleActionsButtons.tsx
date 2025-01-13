@@ -1,8 +1,7 @@
-import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { LinkButton, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -15,6 +14,7 @@ import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-ale
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
@@ -33,15 +33,13 @@ interface Props {
    */
   compact?: boolean;
   showViewButton?: boolean;
-  showCopyLinkButton?: boolean;
 }
 
 /**
  * **Action** buttons to show for an alert rule - e.g. "View", "Edit", "More..."
  */
-export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton, rule, rulesSource }: Props) => {
+export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
-  const style = useStyles2(getStyles);
 
   const redirectToListView = compact ? false : true;
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
@@ -62,28 +60,24 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   const canEditRule = editRuleSupported && editRuleAllowed;
 
   const buttons: JSX.Element[] = [];
-
-  const buttonClasses = cx({ [style.compactButton]: compact });
   const buttonSize = compact ? 'sm' : 'md';
 
   const sourceName = getRulesSourceName(rulesSource);
 
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
+  const groupId = groupIdentifier.fromCombinedRule(rule);
 
   if (showViewButton) {
     buttons.push(
       <LinkButton
-        tooltip={compact ? 'View' : undefined}
-        tooltipPlacement="top"
-        className={buttonClasses}
-        title={'View'}
+        title="View"
         size={buttonSize}
         key="view"
         variant="secondary"
         icon="eye"
         href={createViewLink(rulesSource, rule)}
       >
-        {!compact && 'View'}
+        <Trans i18nKey="common.view">View</Trans>
       </LinkButton>
     );
   }
@@ -94,31 +88,29 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
     buttons.push(
-      <LinkButton
-        tooltip={compact ? 'Edit' : undefined}
-        tooltipPlacement="top"
-        title={'Edit'}
-        className={buttonClasses}
-        size={buttonSize}
-        key="edit"
-        variant="secondary"
-        icon="pen"
-        href={editURL}
-      >
-        {!compact && 'Edit'}
+      <LinkButton title="Edit" size={buttonSize} key="edit" variant="secondary" icon="pen" href={editURL}>
+        <Trans i18nKey="common.edit">Edit</Trans>
       </LinkButton>
     );
   }
 
+  if (!rule.promRule) {
+    return null;
+  }
+
   return (
-    <Stack gap={1}>
+    <Stack gap={1} alignItems="center" wrap="nowrap">
       {buttons}
       <AlertRuleMenu
-        buttonSize={buttonSize}
-        rule={rule}
+        rulerRule={rule.rulerRule}
+        promRule={rule.promRule}
         identifier={identifier}
-        showCopyLinkButton={showCopyLinkButton}
-        handleDelete={() => showDeleteModal(rule)}
+        groupIdentifier={groupId}
+        handleDelete={() => {
+          if (rule.rulerRule) {
+            showDeleteModal(rule.rulerRule, groupId);
+          }
+        }}
         handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
         onPauseChange={() => {
@@ -130,6 +122,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
           // on tag invalidation (or optimistic cache updates) for this
           dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME, limitAlerts }));
         }}
+        buttonSize={buttonSize}
       />
       {deleteModal}
       {isGrafanaAlertingRule(rule.rulerRule) && showSilenceDrawer && (
@@ -147,9 +140,3 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
     </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  compactButton: css({
-    padding: `0 ${theme.spacing(2)}`,
-  }),
-});

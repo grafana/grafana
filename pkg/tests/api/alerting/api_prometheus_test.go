@@ -215,7 +215,10 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		assert.Equal(t, 400, resp.StatusCode)
 		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
-		require.Equal(t, "invalid rule specification at index [0]: both annotations __dashboardUid__ and __panelId__ must be specified", res["message"])
+		require.Contains(t, res["message"], "[0]") // Index of the invalid rule.
+		require.Contains(t, res["message"], ngmodels.ErrAlertRuleFailedValidation.Error())
+		require.Contains(t, res["message"], ngmodels.DashboardUIDAnnotation)
+		require.Contains(t, res["message"], ngmodels.PanelIDAnnotation)
 	}
 
 	// Now, let's see how this looks like.

@@ -161,7 +161,7 @@ type AlertNG struct {
 
 func (ng *AlertNG) init() error {
 	// AlertNG should be initialized before the cancellation deadline of initCtx
-	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	initCtx, cancelFunc := context.WithTimeout(context.Background(), ng.Cfg.UnifiedAlerting.InitializationTimeout)
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log
@@ -409,6 +409,7 @@ func (ng *AlertNG) init() error {
 		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		StatePeriodicSaveBatchSize:     ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
 		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
@@ -441,6 +442,7 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.Log,
 		ng.ResourcePermissions,
+		ng.tracer,
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -451,6 +453,7 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.Log,
 		ng.ResourcePermissions,
+		ng.tracer,
 	)
 
 	// Provisioning
@@ -550,7 +553,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		// Also note that this runs synchronously to ensure state is loaded
 		// before rule evaluation begins, hence we use ctx and not subCtx.
 		//
-		ng.stateManager.Warm(ctx, ng.store)
+		ng.stateManager.Warm(ctx, ng.store, ng.store)
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)

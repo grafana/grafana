@@ -10,12 +10,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -24,7 +24,6 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -110,6 +109,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
 		if err != nil {
+			b.log.Error("Hit unexpected error when reading query", "err", err)
 			err = errorsK8s.NewBadRequest("error reading query")
 			// TODO: can we wrap the error so details are not lost?!
 			// errutil.BadRequest(
@@ -122,23 +122,34 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
-			reason := metav1.StatusReasonInvalid
-			message := err.Error()
+			var refError ErrorWithRefID
+			statusCode := http.StatusBadRequest
+			message := err
+			refID := "A"
 
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-				reason = metav1.StatusReasonNotFound
-				// TODO, can we wrap the error somehow?
-				message = "datasource not found"
+				statusCode = http.StatusNotFound
+				message = errors.New("datasource not found")
 			}
 
-			err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusBadRequest,
-				Reason:  reason,
-				Message: message,
-			}}
+			if errors.As(err, &refError) {
+				refID = refError.refId
+			}
 
-			responder.Error(err)
+			qdr := &query.QueryDataResponse{
+				QueryDataResponse: backend.QueryDataResponse{
+					Responses: backend.Responses{
+						refID: {
+							Error:  message,
+							Status: backend.Status(statusCode),
+						},
+					},
+				},
+			}
+
+			b.log.Error("Error parsing query", "refId", refID, "message", message)
+
+			responder.Object(statusCode, qdr)
 			return
 		}
 
@@ -162,17 +173,27 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
+		b.log.Debug("executing empty query")
 		qdr = &backend.QueryDataResponse{}
 	case 1:
+		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
 		if alertQueryWithoutExpression(req) {
+			b.log.Debug("handling alert query without expression")
 			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
 		}
 	default:
+		b.log.Debug("executing concurrent queries")
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
 	}
 
+	if err != nil {
+		b.log.Debug("error in query phase, skipping expressions", "error", err)
+		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
+	}
+
 	if len(req.Expressions) > 0 {
+		b.log.Debug("executing expressions")
 		qdr, err = b.handleExpressions(ctx, req, qdr)
 	}
 
@@ -216,7 +237,9 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		req.Headers,
 	)
 	if err != nil {
-		return nil, err
+		b.log.Debug("error getting single datasource client", "error", err, "reqUid", req.UID)
+		qdr := buildErrorResponse(err, req)
+		return qdr, err
 	}
 
 	code, rsp, err := client.QueryData(ctx, *req.Request)
@@ -322,6 +345,9 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedRequestInfo, data *backend.QueryDataResponse) (qdr *backend.QueryDataResponse, err error) {
 	start := time.Now()
 	ctx, span := b.tracer.Start(ctx, "Query.handleExpressions")
+	traceId := span.SpanContext().TraceID()
+	expressionsLogger := b.log.New("traceId", traceId.String())
+	expressionsLogger.Debug("handling expressions")
 	defer func() {
 		var respStatus string
 		switch {
@@ -355,10 +381,12 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 					allowLongFrames := false // TODO -- depends on input type and only if SQL?
 					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, allowLongFrames)
 					if err != nil {
+						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
 					}
 					vars[refId] = res
 				} else {
+					expressionsLogger.Error("missing variable in handle expressions", "refId", refId, "expressionRefId", expression.RefID)
 					// This should error in the parsing phase
 					err := fmt.Errorf("missing variable %s for %s", refId, expression.RefID)
 					qdr.Responses[refId] = backend.DataResponse{
@@ -372,6 +400,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		refId := expression.RefID
 		results, err := expression.Command.Execute(ctx, now, vars, b.tracer)
 		if err != nil {
+			expressionsLogger.Error("error executing expression", "error", err)
 			results.Error = err
 		}
 		qdr.Responses[refId] = backend.DataResponse{

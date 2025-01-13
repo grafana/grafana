@@ -86,7 +86,7 @@ func (m *orphanedServiceAccountPermissions) exec(sess *xorm.Session, mg *migrato
 	}
 
 	// delete all orphaned permissions
-	rawDelete := "DELETE FROM permission AS p WHERE p.kind = 'serviceaccounts' AND p.identifier IN(?" + strings.Repeat(",?", len(orphaned)-1) + ")"
+	rawDelete := "DELETE FROM permission WHERE kind = 'serviceaccounts' AND identifier IN(?" + strings.Repeat(",?", len(orphaned)-1) + ")"
 	deleteArgs := make([]any, 0, len(orphaned)+1)
 	deleteArgs = append(deleteArgs, rawDelete)
 	for _, id := range orphaned {

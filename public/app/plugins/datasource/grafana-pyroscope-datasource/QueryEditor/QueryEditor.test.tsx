@@ -126,6 +126,7 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         refId: 'A',
         maxNodes: 1000,
         groupBy: [],
+        limit: 42,
       }}
       datasource={setupDs()}
       onChange={onChange}

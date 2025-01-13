@@ -37,7 +37,7 @@ Query parameters:
 - **folderUIDs** – List of folder UIDs to search in
 - **starred** – Flag indicating if only starred Dashboards should be returned
 - **limit** – Limit the number of returned results (max is 5000; default is 1000)
-- **page** – Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+.
+- **page** – Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size.
 
 **Example request for retrieving folders and dashboards at the root level**:
 

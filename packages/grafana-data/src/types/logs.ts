@@ -235,7 +235,6 @@ export type LogsVolumeCustomMetaData = {
  * Data sources that support supplementary queries in Explore.
  * This will enable users to see additional data when running original queries.
  * Supported supplementary queries are defined in SupplementaryQueryType enum.
- * @internal
  */
 export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
   /**

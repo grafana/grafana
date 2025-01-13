@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { createLokiDatasource } from './__mocks__/datasource';
 import { getMockFrames } from './__mocks__/frames';
@@ -15,6 +16,24 @@ jest.mock('./tracking');
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
 }));
+
+const originalShardingFlagState = config.featureToggles.lokiShardSplitting;
+const originalErr = console.error;
+beforeEach(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+beforeAll(() => {
+  // @ts-expect-error
+  jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
+    callback();
+  });
+  config.featureToggles.lokiShardSplitting = false;
+});
+afterAll(() => {
+  jest.mocked(global.setTimeout).mockReset();
+  config.featureToggles.lokiShardSplitting = originalShardingFlagState;
+  console.error = originalErr;
+});
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
@@ -48,6 +67,26 @@ describe('runSplitQuery()', () => {
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Retries retriable failed requests', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 3 days, 3 chunks, 1 retry, 4 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  test('Does not retry on other errors', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'nope nope' }], data: [] }));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 3 days, 3 chunks, 3 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -285,9 +324,10 @@ describe('runSplitQuery()', () => {
 
   describe('Dynamic maxLines for logs requests', () => {
     const request = createRequest([{ expr: '{a="b"}', refId: 'A', maxLines: 4 }]);
-    const { logFrameA } = getMockFrames();
+    const { logFrameA, logFrameB } = getMockFrames();
     beforeEach(() => {
-      jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [logFrameA], refId: 'A' }));
+      jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(of({ data: [logFrameA], refId: 'A' }));
+      jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(of({ data: [logFrameB], refId: 'A' }));
     });
     test('Stops requesting once maxLines of logs have been received', async () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {

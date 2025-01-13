@@ -14,6 +14,7 @@ import { useSelector } from 'app/types';
 import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -22,6 +23,8 @@ import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
+
+export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
 
 interface Props {
   sectionNav: NavModelItem;
@@ -47,12 +50,18 @@ export const SingleTopBar = memo(function SingleTopBar({
   const profileNode = navIndex['profile'];
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
+  const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
 
   return (
     <div className={styles.layout}>
       <Stack minWidth={0} gap={0.5} alignItems="center">
         {!menuDockedAndOpen && (
-          <ToolbarButton narrow onClick={onToggleMegaMenu} tooltip={t('navigation.megamenu.open', 'Open menu')}>
+          <ToolbarButton
+            narrow
+            id={MEGA_MENU_TOGGLE_ID}
+            onClick={onToggleMegaMenu}
+            tooltip={t('navigation.megamenu.open', 'Open menu')}
+          >
             <Stack gap={0} alignItems="center">
               <Branding.MenuLogo className={styles.img} />
               <Icon size="sm" name="angle-down" />
@@ -64,6 +73,7 @@ export const SingleTopBar = memo(function SingleTopBar({
 
       <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
+        {unifiedHistoryEnabled && <HistoryContainer />}
         <QuickAdd />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
@@ -71,6 +81,12 @@ export const SingleTopBar = memo(function SingleTopBar({
           </Dropdown>
         )}
         {config.newsFeedEnabled && <NewsContainer />}
+        <ToolbarButton
+          icon="monitor"
+          className={styles.kioskToggle}
+          onClick={onToggleKioskMode}
+          tooltip="Enable kiosk mode"
+        />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
@@ -82,9 +98,6 @@ export const SingleTopBar = memo(function SingleTopBar({
             />
           </Dropdown>
         )}
-        <ToolbarButton className={styles.kioskToggle} onClick={onToggleKioskMode} narrow aria-label="Enable kiosk mode">
-          <Icon name="angle-up" size="xl" />
-        </ToolbarButton>
       </Stack>
     </div>
   );
@@ -102,9 +115,8 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('lg')]: {
-      gridTemplateColumns: '2fr minmax(440px, 1fr)',
+      gridTemplateColumns: '2fr minmax(550px, 1fr)',
       display: 'grid',
-
       justifyContent: 'flex-start',
     },
   }),
@@ -121,7 +133,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     width: theme.spacing(3),
   }),
   profileButton: css({
-    padding: theme.spacing(0, 0.25),
+    padding: theme.spacing(0, 0.5),
     img: {
       borderRadius: theme.shape.radius.circle,
       height: '24px',

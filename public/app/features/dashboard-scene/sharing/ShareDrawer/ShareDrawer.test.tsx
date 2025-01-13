@@ -23,15 +23,6 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn(),
 }));
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useLocation: jest.fn().mockReturnValue({
-    pathname: '/d/dash-1',
-    hash: '',
-    state: null,
-  }),
-}));
-
 describe('ShareDrawer', () => {
   it('removes shareView query param from url when it is closed', async () => {
     const { dashboard } = await buildAndRenderScenario();

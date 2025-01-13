@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -14,7 +15,7 @@ import (
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
 
-func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) (authorizer.Authorizer, claims.AccessClient) {
+func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) (authorizer.Authorizer, authz.AccessClient) {
 	client := accesscontrol.NewLegacyAccessClient(
 		ac,
 		accesscontrol.ResourceAuthorizerOptions{
@@ -52,6 +53,19 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 					return nil, err
 				}
 				return []string{fmt.Sprintf("serviceaccounts:id:%d", res.ID)}, nil
+			}),
+		},
+		accesscontrol.ResourceAuthorizerOptions{
+			Resource: iamv0.TeamResourceInfo.GetName(),
+			Attr:     "id",
+			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error) {
+				res, err := store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{
+					UID: name,
+				})
+				if err != nil {
+					return nil, err
+				}
+				return []string{fmt.Sprintf("teams:id:%d", res.ID)}, nil
 			}),
 		},
 	)

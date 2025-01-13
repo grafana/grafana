@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -15,12 +16,19 @@ export interface Props {
   onChange: (options: VizTypeChangeDetails) => void;
   data?: PanelData;
   panel?: PanelModel;
+  trackSearch?: (q: string, count: number) => void;
 }
 
-export function VisualizationSuggestions({ searchQuery, onChange, data, panel }: Props) {
+export function VisualizationSuggestions({ searchQuery, onChange, data, panel, trackSearch }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
-  const filteredSuggestions = filterSuggestionsBySearch(searchQuery, suggestions);
+  const filteredSuggestions = useMemo(() => {
+    const result = filterSuggestionsBySearch(searchQuery, suggestions);
+    if (trackSearch) {
+      trackSearch(searchQuery, result.length);
+    }
+    return result;
+  }, [searchQuery, suggestions, trackSearch]);
 
   return (
     // This div is needed in some places to make AutoSizer work

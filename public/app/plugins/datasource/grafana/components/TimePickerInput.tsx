@@ -5,7 +5,7 @@ import TimePicker from 'rc-time-picker';
 import { GrafanaTheme2 } from '@grafana/data';
 import { FormInputSize, Icon, useStyles2 } from '@grafana/ui';
 import { inputSizes } from '@grafana/ui/src/components/Forms/commonStyles';
-import { focusCss } from '@grafana/ui/src/themes/mixins';
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 
 export interface Props {
   onChange: (value: Moment) => void;
@@ -49,9 +49,9 @@ export const TimePickerInput = ({
 
   const getWidth = () => {
     if (width) {
-      return css`
-        width: ${width}px;
-      `;
+      return css({
+        width: `${width}px`,
+      });
     }
 
     return inputSizes()[size];
@@ -99,90 +99,87 @@ const getStyles = (theme: GrafanaTheme2) => {
   const borderColor = theme.components.input.borderColor;
 
   return {
-    caretWrapper: css`
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: inline-block;
-      text-align: right;
-      color: ${theme.colors.text.secondary};
-    `,
-    picker: css`
-      .rc-time-picker-panel-select {
-        font-size: 14px;
-        background-color: ${bgColor};
-        border-color: ${borderColor};
-        li {
-          outline-width: 2px;
-          &.rc-time-picker-panel-select-option-selected {
-            background-color: inherit;
-            border: 1px solid ${theme.v1.palette.orange};
-            border-radius: ${borderRadius};
-          }
+    caretWrapper: css({
+      position: 'absolute',
+      right: '8px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      display: 'inline-block',
+      textAlign: 'right',
+      color: theme.colors.text.secondary,
+    }),
+    picker: css({
+      '.rc-time-picker-panel-select': {
+        fontSize: '14px',
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+        li: {
+          outlineWidth: '2px',
+          '&.rc-time-picker-panel-select-option-selected': {
+            backgroundColor: 'inherit',
+            border: `1px solid ${theme.v1.palette.orange}`,
+            borderRadius: borderRadius,
+          },
 
-          &:hover {
-            background: ${optionBgHover};
-          }
+          '&:hover': {
+            background: optionBgHover,
+          },
 
-          &.rc-time-picker-panel-select-option-disabled {
-            color: ${theme.colors.action.disabledText};
-          }
-        }
-      }
+          '&.rc-time-picker-panel-select-option-disabled': {
+            color: theme.colors.action.disabledText,
+          },
+        },
+      },
 
-      .rc-time-picker-panel-inner {
-        box-shadow: 0px 4px 4px ${menuShadowColor};
-        background-color: ${bgColor};
-        border-color: ${borderColor};
-        border-radius: ${borderRadius};
-        margin-top: 3px;
+      '.rc-time-picker-panel-inner': {
+        boxShadow: `0px 4px 4px ${menuShadowColor}`,
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+        borderRadius: borderRadius,
+        marginTop: '3px',
 
-        .rc-time-picker-panel-input-wrap {
-          margin-right: 2px;
+        '.rc-time-picker-panel-input-wrap': {
+          marginRight: '2px',
 
-          &,
-          .rc-time-picker-panel-input {
-            background-color: ${bgColor};
-            padding-top: 2px;
-          }
-        }
+          '&, .rc-time-picker-panel-input': {
+            backgroundColor: bgColor,
+            paddingTop: '2px',
+          },
+        },
 
-        .rc-time-picker-panel-combobox {
-          display: flex;
-        }
-      }
-    `,
-    input: css`
-      .rc-time-picker-input {
-        background-color: ${bgColor};
-        border-radius: ${borderRadius};
-        border-color: ${borderColor};
-        height: ${theme.spacing(4)};
+        '.rc-time-picker-panel-combobox': {
+          display: 'flex',
+        },
+      },
+    }),
+    input: css({
+      '.rc-time-picker-input': {
+        backgroundColor: bgColor,
+        borderRadius: borderRadius,
+        borderColor: borderColor,
+        height: theme.spacing(4),
 
-        &:focus {
-          ${focusCss(theme)}
-        }
+        '&:focus': getFocusStyles(theme),
 
-        &:disabled {
-          background-color: ${theme.colors.action.disabledBackground};
-          color: ${theme.colors.action.disabledText};
-          border: 1px solid ${theme.colors.action.disabledBackground};
-          &:focus {
-            box-shadow: none;
-          }
-        }
-      }
+        '&:disabled': {
+          backgroundColor: theme.colors.action.disabledBackground,
+          color: theme.colors.action.disabledText,
+          border: `1px solid ${theme.colors.action.disabledBackground}`,
+          '&:focus': {
+            boxShadow: 'none',
+          },
+        },
+      },
 
-      .rc-time-picker-clear {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        cursor: pointer;
-        overflow: hidden;
-        transform: translateY(-50%);
-        color: ${theme.colors.text.secondary};
-      }
-    `,
+      '.rc-time-picker-clear': {
+        position: 'absolute',
+        right: '20px',
+        top: '50%',
+        cursor: 'pointer',
+        overflow: 'hidden',
+        transform: 'translateY(-50%)',
+        color: theme.colors.text.secondary,
+      },
+    }),
   };
 };

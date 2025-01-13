@@ -143,7 +143,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
     if (viewMode === 'compare') {
       return (
-        <Page navModel={this.props.sectionNav} pageNav={pageNav} toolbar={this.props.toolbar}>
+        <Page navModel={this.props.sectionNav} pageNav={pageNav}>
           <VersionHistoryHeader
             onClick={this.reset}
             baseVersion={baseInfo?.version}
@@ -165,7 +165,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }
 
     return (
-      <Page navModel={this.props.sectionNav} pageNav={pageNav} toolbar={this.props.toolbar}>
+      <Page navModel={this.props.sectionNav} pageNav={pageNav}>
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (

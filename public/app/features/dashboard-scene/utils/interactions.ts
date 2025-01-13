@@ -28,6 +28,9 @@ export const DashboardInteractions = {
   toolbarShareClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
   },
+  toolbarShareDropdownClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
+  },
   toolbarAddClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
   },
@@ -41,6 +44,12 @@ export const DashboardInteractions = {
   },
   embedSnippetCopy: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_embed_copy_clicked', properties);
+  },
+  generatePanelImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('sharing_link_generate_image_clicked', properties);
+  },
+  downloadPanelImageClicked: (properties?: Record<string, unknown>) => {
+    reportDashboardInteraction('sharing_link_download_image_clicked', properties);
   },
   publishSnapshotClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('sharing_snapshot_publish_clicked', properties);

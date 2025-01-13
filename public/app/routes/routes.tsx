@@ -1,4 +1,5 @@
-import { Navigate, useParams } from 'react-router-dom-v5-compat';
+import { useEffect } from 'react';
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -18,7 +19,6 @@ import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
-import { BookmarksPage } from '../core/components/Bookmarks/BookmarksPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
@@ -202,11 +202,15 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/extensions',
       navId: 'extensions',
-      component: isDevEnv
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
-          )
-        : () => <Navigate replace to="/admin" />,
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
+      component:
+        isDevEnv || config.featureToggles.enableExtensionsAdminPage
+          ? SafeDynamicImport(
+              () =>
+                import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+            )
+          : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/access',
@@ -366,13 +370,6 @@ export function getAppRoutes(): RouteDescriptor[] {
         : () => <Navigate replace to="/admin" />,
     },
     {
-      path: '/admin/storage/:path*',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
-      ),
-    },
-    {
       path: '/admin/stats',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
@@ -380,7 +377,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.onPremToCloudMigrations && {
       path: '/admin/migrate-to-cloud',
-      roles: () => ['Admin'],
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.MigrationAssistantMigrate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
@@ -440,13 +437,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/snapshots',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SnapshotsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
-    config.featureToggles.dashboardRestoreUI && {
+    config.featureToggles.dashboardRestore && {
       path: '/dashboard/recently-deleted',
-      roles: () => ['Admin'],
+      roles: () => ['Admin', 'ServerAdmin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
@@ -516,9 +514,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      path: '/explore/metrics',
+      path: '/explore/metrics/*',
       chromeless: false,
-      exact: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
@@ -526,7 +523,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/bookmarks',
-      component: () => <BookmarksPage />,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+      ),
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
@@ -535,6 +534,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
+    {
+      path: '/goto/*',
+      component: HandleGoToRedirect,
+    },
     {
       path: '/*',
       component: PageNotFound,
@@ -571,4 +574,15 @@ function DataSourceDashboardRoute() {
 function DataSourceEditRoute() {
   const { uid = '' } = useParams();
   return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', uid)} />;
+}
+
+// Explicitly send "goto" URLs to server, bypassing client-side routing
+function HandleGoToRedirect() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.location.href = pathname;
+  }, [pathname]);
+
+  return null;
 }

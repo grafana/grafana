@@ -1,18 +1,16 @@
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import {
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
-  getRuleGroupLocationFromCombinedRule,
-} from 'app/features/alerting/unified/utils/rules';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
+import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
 import { isLoading } from '../hooks/useAsync';
 import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {
-  rule: CombinedRule;
+  rule: RulerRuleDTO;
+  groupIdentifier: GrafanaRuleGroupIdentifier;
   /**
    * Method invoked after the request to change the paused state has completed
    */
@@ -23,11 +21,11 @@ interface Props {
  * Menu item to display correct text for pausing/resuming an alert,
  * and triggering API call to do so
  */
-const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
+const MenuItemPauseRule = ({ rule, groupIdentifier, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
   const [pauseRule, updateState] = usePauseRuleInGroup();
 
-  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+  const isPaused = isGrafanaRulerRule(rule) && isGrafanaRulerRulePaused(rule);
   const icon = isPaused ? 'play' : 'pause';
   const title = isPaused ? 'Resume evaluation' : 'Pause evaluation';
 
@@ -35,15 +33,14 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
    * Triggers API call to update the current rule to the new `is_paused` state
    */
   const setRulePause = async (newIsPaused: boolean) => {
-    if (!isGrafanaRulerRule(rule.rulerRule)) {
+    if (!isGrafanaRulerRule(rule)) {
       return;
     }
 
     try {
-      const ruleGroupId = getRuleGroupLocationFromCombinedRule(rule);
-      const ruleUID = rule.rulerRule.grafana_alert.uid;
+      const ruleUID = rule.grafana_alert.uid;
 
-      await pauseRule.execute(ruleGroupId, ruleUID, newIsPaused);
+      await pauseRule.execute(groupIdentifier, ruleUID, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
       return;

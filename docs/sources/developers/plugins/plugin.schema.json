@@ -234,6 +234,10 @@
       "type": "boolean",
       "description": "If the plugin has a backend component."
     },
+    "buildMode": {
+      "type": "string",
+      "description": "The build mode of the plugin. This field is set automatically at build time, so it should not be provided manually."
+    },
     "builtIn": {
       "type": "boolean",
       "description": "[internal only] Indicates whether the plugin is developed and shipped as part of Grafana. Also known as a 'core plugin'."

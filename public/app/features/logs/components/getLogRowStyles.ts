@@ -32,11 +32,11 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
   }
 
   return {
-    logsRowLevelColor: css`
-      &::after {
-        background-color: ${logColor};
-      }
-    `,
+    logsRowLevelColor: css({
+      '&::after': {
+        backgroundColor: logColor,
+      },
+    }),
   };
 };
 
@@ -44,79 +44,88 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
   const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
   return {
-    logsRowLevel: css`
-      label: logs-row__level;
-      max-width: ${theme.spacing(1.25)};
-      cursor: default;
-      &::after {
-        content: '';
-        display: block;
-        position: absolute;
-        top: 1px;
-        bottom: 1px;
-        width: 3px;
-        left: ${theme.spacing(0.5)};
-      }
-    `,
+    logsRowLevel: css({
+      label: 'logs-row__level',
+      maxWidth: theme.spacing(1.25),
+      cursor: 'default',
+      '&::after': {
+        content: "''",
+        display: 'block',
+        position: 'absolute',
+        top: '1px',
+        bottom: '1px',
+        width: '3px',
+        left: theme.spacing(0.5),
+      },
+    }),
     // Compared to logsRowLevel we need to make error logs wider to accommodate the icon
     logsRowWithError: css({
       maxWidth: `${theme.spacing(1.5)}`,
     }),
-    logsRowMatchHighLight: css`
-      label: logs-row__match-highlight;
-      background: inherit;
-      padding: inherit;
-      color: ${theme.components.textHighlight.text}
-      background-color: ${theme.components.textHighlight};
-    `,
+    logsRowMatchHighLight: css({
+      label: 'logs-row__match-highlight',
+      background: 'inherit',
+      padding: 'inherit',
+      color: theme.components.textHighlight.text,
+      backgroundColor: theme.components.textHighlight.background,
+    }),
     logRows: css({
       position: 'relative',
     }),
-    logsRowsTable: css`
-      label: logs-rows;
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      width: 100%;
-      position: relative;
-    `,
-    logsRowsTableContain: css`
-      contain: strict;
-    `,
-    highlightBackground: css`
-      background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
-    `,
-    logsRow: css`
-      label: logs-row;
-      width: 100%;
-      cursor: pointer;
-      vertical-align: top;
+    shortcut: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      color: theme.colors.text.secondary,
+      opacity: 0.7,
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginTop: theme.spacing(1),
+    }),
+    logsRowsTable: css({
+      label: 'logs-rows',
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      width: '100%',
+      position: 'relative',
+    }),
+    logsRowsTableContain: css({
+      contain: 'strict',
+    }),
+    highlightBackground: css({
+      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+    }),
+    logsRow: css({
+      label: 'logs-row',
+      width: '100%',
+      cursor: 'pointer',
+      verticalAlign: 'top',
 
-      &:hover {
-        .log-row-menu {
-          z-index: 1;
-        }
+      '&:hover': {
+        '.log-row-menu': {
+          zIndex: 1,
+        },
 
-        background: ${hoverBgColor};
-      }
+        background: hoverBgColor,
+      },
 
-      td:not(.log-row-menu-cell):last-child {
-        width: 100%;
-      }
+      'td:not(.log-row-menu-cell):last-child': {
+        width: '100%',
+      },
 
-      > td:not(.log-row-menu-cell) {
-        position: relative;
-        padding-right: ${theme.spacing(1)};
-        border-top: 1px solid transparent;
-        border-bottom: 1px solid transparent;
-        height: 100%;
-      }
-    `,
-    logsRowDuplicates: css`
-      label: logs-row__duplicates;
-      text-align: right;
-      width: 4em;
-      cursor: default;
-    `,
+      '> td:not(.log-row-menu-cell)': {
+        position: 'relative',
+        paddingRight: theme.spacing(1),
+        borderTop: '1px solid transparent',
+        borderBottom: '1px solid transparent',
+        height: '100%',
+      },
+    }),
+    logsRowDuplicates: css({
+      label: 'logs-row__duplicates',
+      textAlign: 'right',
+      width: '4em',
+      cursor: 'default',
+    }),
     logIconError: css({
       color: theme.colors.warning.main,
       position: 'relative',
@@ -127,202 +136,201 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       position: 'relative',
       top: '-2px',
     }),
-    logsRowToggleDetails: css`
-      label: logs-row-toggle-details__level;
-      font-size: 9px;
-      padding-top: 5px;
-      max-width: 15px;
-    `,
-    logsRowLocalTime: css`
-      label: logs-row__localtime;
-      white-space: nowrap;
-    `,
-    logsRowLabels: css`
-      label: logs-row__labels;
-      white-space: nowrap;
-      max-width: 22em;
+    logsRowToggleDetails: css({
+      label: 'logs-row-toggle-details__level',
+      fontSize: '9px',
+      paddingTop: '5px',
+      maxWidth: '15px',
+    }),
+    logsRowLocalTime: css({
+      label: 'logs-row__localtime',
+      whiteSpace: 'nowrap',
+    }),
+    logsRowLabels: css({
+      label: 'logs-row__labels',
+      whiteSpace: 'nowrap',
+      maxWidth: '22em',
 
       /* This is to make the labels vertical align */
-      > span {
-        margin-top: 0.75px;
-      }
-    `,
-    logsRowMessage: css`
-      label: logs-row__message;
-      white-space: pre-wrap;
-      word-break: break-all;
-      overflow-wrap: anywhere;
-      width: 100%;
-      text-align: left;
-    `,
-    copyLogButton: css`
-      padding: 0 0 0 ${theme.spacing(0.5)};
-      height: ${theme.spacing(3)};
-      width: ${theme.spacing(3.25)};
-      line-height: ${theme.spacing(2.5)};
-      overflow: hidden;
-      &:hover {
-          background-color: ${colorManipulator.alpha(theme.colors.text.primary, 0.12)};
-        }
-      }
-    `,
+      '> span': {
+        marginTop: '0.75px',
+      },
+    }),
+    logsRowMessage: css({
+      label: 'logs-row__message',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-all',
+      overflowWrap: 'anywhere',
+      width: '100%',
+      textAlign: 'left',
+    }),
+    copyLogButton: css({
+      padding: theme.spacing(0, 0, 0, 0.5),
+      height: theme.spacing(3),
+      width: theme.spacing(3.25),
+      lineHeight: theme.spacing(2.5),
+      overflow: 'hidden',
+      '&:hover': {
+        backgroundColor: colorManipulator.alpha(theme.colors.text.primary, 0.12),
+      },
+    }),
     //Log details specific CSS
-    logDetailsContainer: css`
-      label: logs-row-details-table;
-      border: 1px solid ${theme.colors.border.medium};
-      padding: 0 ${theme.spacing(1)} ${theme.spacing(1)};
-      border-radius: ${theme.shape.radius.default};
-      margin: ${theme.spacing(2.5)} ${theme.spacing(1)} ${theme.spacing(2.5)} ${theme.spacing(2)};
-      cursor: default;
-    `,
-    logDetailsTable: css`
-      label: logs-row-details-table;
-      line-height: 18px;
-      width: 100%;
-      td:last-child {
-        width: 100%;
-      }
-    `,
-    logsDetailsIcon: css`
-      label: logs-row-details__icon;
-      position: relative;
-      color: ${theme.v1.palette.gray3};
-      padding-top: 1px;
-      padding-bottom: 1px;
-      padding-right: ${theme.spacing(0.75)};
-    `,
-    logDetailsLabel: css`
-      label: logs-row-details__label;
-      max-width: 30em;
-      min-width: 20em;
-      padding: 0 ${theme.spacing(1)};
-      overflow-wrap: break-word;
-    `,
-    logDetailsHeading: css`
-      label: logs-row-details__heading;
-      font-weight: ${theme.typography.fontWeightBold};
-      padding: ${theme.spacing(1)} 0 ${theme.spacing(0.5)};
-    `,
-    logDetailsValue: css`
-      label: logs-row-details__row;
-      position: relative;
-      vertical-align: middle;
-      cursor: default;
+    logDetailsContainer: css({
+      label: 'logs-row-details-table',
+      border: `1px solid ${theme.colors.border.medium}`,
+      padding: theme.spacing(0, 1, 1),
+      borderRadius: theme.shape.radius.default,
+      margin: theme.spacing(2.5, 1, 2.5, 2),
+      cursor: 'default',
+    }),
+    logDetailsTable: css({
+      label: 'logs-row-details-table',
+      lineHeight: '18px',
+      width: '100%',
+      'td:last-child': {
+        width: '100%',
+      },
+    }),
+    logsDetailsIcon: css({
+      label: 'logs-row-details__icon',
+      position: 'relative',
+      color: theme.v1.palette.gray3,
+      paddingTop: '1px',
+      paddingBottom: '1px',
+      paddingRight: theme.spacing(0.75),
+    }),
+    logDetailsLabel: css({
+      label: 'logs-row-details__label',
+      maxWidth: '30em',
+      minMidth: '20em',
+      padding: theme.spacing(0, 1),
+      overflowWrap: 'break-word',
+    }),
+    logDetailsHeading: css({
+      label: 'logs-row-details__heading',
+      fontWeight: theme.typography.fontWeightBold,
+      padding: theme.spacing(1, 0, 0.5),
+    }),
+    logDetailsValue: css({
+      label: 'logs-row-details__row',
+      position: 'relative',
+      verticalAlign: 'middle',
+      cursor: 'default',
 
-      &:hover {
-        background-color: ${hoverBgColor};
-      }
-    `,
+      '&:hover': {
+        backgroundColor: hoverBgColor,
+      },
+    }),
     // Log row
-    topVerticalAlign: css`
-      label: topVerticalAlign;
-      margin-top: -${theme.spacing(0.9)};
-      margin-left: -${theme.spacing(0.25)};
-    `,
-    detailsOpen: css`
-      &:hover {
-        background-color: ${styleMixins.hoverColor(theme.colors.background.primary, theme)};
-      }
-    `,
-    errorLogRow: css`
-      label: erroredLogRow;
-      color: ${theme.colors.text.secondary};
-    `,
+    topVerticalAlign: css({
+      label: 'topVerticalAlign',
+      marginTop: theme.spacing(-0.9),
+      marginLeft: theme.spacing(-0.25),
+    }),
+    detailsOpen: css({
+      '&:hover': {
+        backgroundColor: styleMixins.hoverColor(theme.colors.background.primary, theme),
+      },
+    }),
+    errorLogRow: css({
+      label: 'erroredLogRow',
+      color: theme.colors.text.secondary,
+    }),
     // Log Row Message
-    positionRelative: css`
-      label: positionRelative;
-      position: relative;
-    `,
-    rowWithContext: css`
-      label: rowWithContext;
-      z-index: 1;
-      outline: 9999px solid ${contextOutlineColor};
-      display: inherit;
-    `,
-    horizontalScroll: css`
-      label: horizontalScroll;
-      white-space: pre;
-    `,
-    contextNewline: css`
-      display: block;
-      margin-left: 0px;
-    `,
-    rowMenu: css`
-      label: rowMenu;
-      display: flex;
-      flex-wrap: nowrap;
-      flex-direction: row;
-      align-content: flex-end;
-      justify-content: space-evenly;
-      align-items: center;
-      position: absolute;
-      top: 0;
-      bottom: auto;
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      padding: ${theme.spacing(0.5, 1, 0.5, 1)};
-      z-index: 100;
-      gap: ${theme.spacing(0.5)};
+    positionRelative: css({
+      label: 'positionRelative',
+      position: 'relative',
+    }),
+    rowWithContext: css({
+      label: 'rowWithContext',
+      zIndex: 1,
+      outline: `9999px solid ${contextOutlineColor}`,
+      display: 'inherit',
+    }),
+    horizontalScroll: css({
+      label: 'horizontalScroll',
+      whiteSpace: 'pre',
+    }),
+    contextNewline: css({
+      display: 'block',
+      marginLeft: '0px',
+    }),
+    rowMenu: css({
+      label: 'rowMenu',
+      display: 'flex',
+      flexWrap: 'nowrap',
+      flexDirection: 'row',
+      alignContent: 'flex-end',
+      justifyContent: 'space-evenly',
+      alignItems: 'center',
+      position: 'absolute',
+      top: 0,
+      bottom: 'auto',
+      background: theme.colors.background.primary,
+      boxShadow: theme.shadows.z3,
+      padding: theme.spacing(0.5, 1, 0.5, 1),
+      zIndex: 100,
+      gap: theme.spacing(0.5),
 
-      & > button {
-        margin: 0;
-      }
-    `,
-    logRowMenuCell: css`
-      position: sticky;
-      z-index: ${theme.zIndex.dropdown};
-      margin-top: -${theme.spacing(0.125)};
-      right: 0px;
+      '& > button': {
+        margin: 0,
+      },
+    }),
+    logRowMenuCell: css({
+      position: 'sticky',
+      zIndex: theme.zIndex.dropdown,
+      marginTop: theme.spacing(-0.125),
+      right: 0,
 
-      & > span {
-        transform: translateX(-100%);
-      }
-    `,
-    logLine: css`
-      background-color: transparent;
-      border: none;
-      diplay: inline;
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      letter-spacing: ${theme.typography.bodySmall.letterSpacing};
-      text-align: left;
-      padding: 0;
-      user-select: text;
-    `,
+      '& > span': {
+        transform: 'translateX(-100%)',
+      },
+    }),
+    logLine: css({
+      backgroundColor: 'transparent',
+      border: 'none',
+      diplay: 'inline',
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      letterSpacing: theme.typography.bodySmall.letterSpacing,
+      textAlign: 'left',
+      padding: 0,
+      userSelect: 'text',
+    }),
     // Log details
-    logsRowLevelDetails: css`
-      label: logs-row__level_details;
-      &::after {
-        top: -3px;
-      }
-    `,
-    logDetails: css`
-      label: logDetailsDefaultCursor;
-      cursor: default;
+    logsRowLevelDetails: css({
+      label: 'logs-row__level_details',
+      '&::after': {
+        top: '-3px',
+      },
+    }),
+    logDetails: css({
+      label: 'logDetailsDefaultCursor',
+      cursor: 'default',
 
-      &:hover {
-        background-color: ${theme.colors.background.primary};
-      }
-    `,
-    visibleRowMenu: css`
-      label: visibleRowMenu;
-      aspect-ratio: 1/1;
-      z-index: 90;
-    `,
-    linkButton: css`
-      label: linkButton;
-      > button {
-        padding-top: ${theme.spacing(0.5)};
-      }
-    `,
-    hidden: css`
-      label: hidden;
-      visibility: hidden;
-    `,
-    unPinButton: css`
-      height: ${theme.spacing(3)};
-      line-height: ${theme.spacing(2.5)};
-    `,
+      '&:hover': {
+        backgroundColor: theme.colors.background.primary,
+      },
+    }),
+    visibleRowMenu: css({
+      label: 'visibleRowMenu',
+      aspectRatio: '1/1',
+      zIndex: 90,
+    }),
+    linkButton: css({
+      label: 'linkButton',
+      '> button': {
+        paddingTop: theme.spacing(0.5),
+      },
+    }),
+    hidden: css({
+      label: 'hidden',
+      visibility: 'hidden',
+    }),
+    unPinButton: css({
+      height: theme.spacing(3),
+      lineHeight: theme.spacing(2.5),
+    }),
   };
 });
 

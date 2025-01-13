@@ -11,21 +11,21 @@ const getStyles = (theme: GrafanaTheme2) => {
   const footerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray6;
 
   return {
-    container: css`
-      padding: 36px 79px;
-      background: ${theme.components.panel.background};
-    `,
-    footer: css`
-      text-align: center;
-      padding: 16px;
-      background: ${footerBg};
-    `,
-    header: css`
-      height: 137px;
-      padding: 40px 0 0 79px;
-      position: relative;
-      background: url('${backgroundUrl}') right;
-    `,
+    container: css({
+      padding: '36px 79px',
+      background: theme.components.panel.background,
+    }),
+    footer: css({
+      textAlign: 'center',
+      padding: theme.spacing(2),
+      background: footerBg,
+    }),
+    header: css({
+      height: '137px',
+      padding: '40px 0 0 79px',
+      position: 'relative',
+      background: `url('${backgroundUrl}') right`,
+    }),
   };
 };
 

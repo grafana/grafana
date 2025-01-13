@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
@@ -7,6 +9,9 @@ import { ShowModalReactEvent } from '../../../../types/events';
 import appEvents from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
+import { MEGA_MENU_TOGGLE_ID } from '../TopBar/SingleTopBar';
+
+import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 
 export const enrichHelpItem = (helpItem: NavModelItem) => {
   let menuItems = helpItem.children || [];
@@ -145,4 +150,29 @@ export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | nu
     }
   }
   return null;
+}
+
+/**
+ * helper to manage focus when opening/closing and docking/undocking the mega menu
+ * @param isOpen whether the mega menu is open
+ * @param isDocked whether mega menu is docked
+ */
+export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
+  // manage focus when opening/closing
+  useEffect(() => {
+    if (isOpen) {
+      document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
+    } else {
+      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+    }
+  }, [isOpen]);
+
+  // manage focus when docking/undocking
+  useEffect(() => {
+    if (isDocked) {
+      document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
+    } else {
+      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+    }
+  }, [isDocked]);
 }

@@ -25,9 +25,9 @@ describe('RichHistorySettings', () => {
   });
   it('should render component with correctly checked starredTabAsFirstTab and uncheched toggleactiveDatasourcesOnly settings', () => {
     setup();
-    const checkboxes = screen.getAllByRole('checkbox');
-    expect(checkboxes.length).toBe(2);
-    expect(checkboxes[0]).toHaveAttribute('checked');
-    expect(checkboxes[1]).not.toHaveAttribute('checked');
+    const switches = screen.getAllByRole('switch');
+    expect(switches.length).toBe(2);
+    expect(switches[0]).toHaveAttribute('checked');
+    expect(switches[1]).not.toHaveAttribute('checked');
   });
 });

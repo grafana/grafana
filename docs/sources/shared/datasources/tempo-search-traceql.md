@@ -105,8 +105,8 @@ To add a tag, follow these steps:
 ### Optional: Use Aggregate by
 
 {{% admonition type="warning" %}}
-**Aggregate by** is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
-[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature. Your Grafana Tempo data source must also point to a Tempo database with the [Metrics Summary API](https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/) enabled. Contact Grafana Support to enable this feature in Grafana Cloud.
+Metrics summary API and the **Aggregate by** feature are deprecated in Grafana Cloud and Grafana 11.3 and later.
+It will be removed in a future release.
 {{% /admonition %}}
 
 Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes.
@@ -118,7 +118,16 @@ For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in G
 
 {{< youtube id="xOolCpm2F8c" >}}
 
-When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
+**Aggregate by** is disabled by default.
+[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature.
+
+Your Grafana Tempo data source must also point to a Tempo database with the [Metrics Summary API](https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/) enabled.
+Contact Grafana Support to enable this feature in Grafana Cloud.
+
+#### Use Aggregate by
+
+When you use **Aggregate by**, the selections you make determine how the information is reported in the Table.
+Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
 
 For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the selections in **Aggregate by**.
@@ -167,12 +176,9 @@ Selecting a Trace ID (2 in the screenshot) displays more detailed information (3
 
 The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
 
-{{% admonition type="note" %}}
-To use this public preview feature, enable the `traceQLStreaming` feature toggle.
-When active, all configured Tempo data sources will attempt to use streaming.
-You can control which Tempo data sources do and don't attempt to stream results at the per-data source level using the **Streaming** section of the Tempo data source configuration.
-
-{{% /admonition %}}
+When active, all configured Tempo data sources attempt to use streaming.
+You can activate and control which Tempo data sources do and don't attempt to stream results at the per-data source level using the **Streaming** section of the Tempo data source configuration.
+For more information, refer to the [Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#streaming) documentation.
 
 Streaming is available for both the **Search** and **TraceQL** query types.
 You'll get immediate visibility of incoming traces on the results table.

@@ -109,7 +109,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		"from":          []string{from},
 		"until":         []string{until},
 		"format":        []string{"json"},
-		"maxDataPoints": []string{"500"},
+		"maxDataPoints": []string{fmt.Sprintf("%d", q.MaxDataPoints)},
 		"target":        []string{},
 	}
 
@@ -295,6 +295,9 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
+			if name == "name" {
+				value = target
+			}
 			switch value := value.(type) {
 			case string:
 				tags[name] = value

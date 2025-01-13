@@ -24,17 +24,25 @@ export interface EchoMeta {
    */
   sessionId: string;
   /**
-   * The current users username used to login into Grafana e.g. email.
+   * The current user's username used to login into Grafana e.g. email.
    */
   userLogin: string;
   /**
-   * The current users unique identifier.
+   * The current user's unique identifier.
    */
   userId: number;
   /**
    * True when user is logged in into Grafana.
    */
   userSignedIn: boolean;
+  /**
+   * Current user's role
+   */
+  orgRole: string | '';
+  /**
+   * Current user's org
+   */
+  orgId: number;
   /**
    * A millisecond epoch
    */

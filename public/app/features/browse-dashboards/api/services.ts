@@ -1,12 +1,13 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { NestedFolderDTO } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { contextSrv } from '../../../core/core';
 import { AccessControlAction } from '../../../types';
-import { isSharedWithMe } from '../components/utils';
+import { getFolderURL, isSharedWithMe } from '../components/utils';
 
 export const PAGE_SIZE = 50;
 
@@ -22,6 +23,7 @@ export async function listFolders(
 
   const backendSrv = getBackendSrv();
 
+  // TODO: what to do here for unified search?
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
     folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
@@ -30,7 +32,6 @@ export async function listFolders(
       limit: pageSize,
     });
   }
-  const subUrlPrefix = config.appSubUrl ?? '';
 
   return folders.map((item) => ({
     kind: 'folder',
@@ -40,7 +41,7 @@ export async function listFolders(
     parentUID,
 
     // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
-    url: isSharedWithMe(item.uid) ? undefined : `${subUrlPrefix}/dashboards/f/${item.uid}/`,
+    url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),
   }));
 }
 

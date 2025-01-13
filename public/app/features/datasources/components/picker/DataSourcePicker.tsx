@@ -3,7 +3,8 @@ import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { debounce } from 'lodash';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
@@ -11,7 +12,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
@@ -26,6 +27,7 @@ import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 const INTERACTION_ITEM = {
+  SEARCH: 'search',
   OPEN_DROPDOWN: 'open_dspicker',
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
@@ -78,6 +80,18 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [filterTerm, setFilterTerm] = useState<string>('');
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
+  const debouncedTrackSearch = useMemo(
+    () =>
+      debounce((q) => {
+        reportInteraction(INTERACTION_EVENT_NAME, {
+          item: INTERACTION_ITEM.SEARCH,
+          query: q,
+          creator_team: 'grafana_plugins_catalog',
+          schema_version: '1.0.0',
+        });
+      }, 300),
+    []
+  );
 
   // Used to position the popper correctly and to bring back the focus when navigating from footer to input
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
@@ -151,7 +165,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   );
 
   function openDropdown() {
-    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
     setOpen(true);
     markerElement?.focus();
   }
@@ -214,7 +227,17 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div className={styles.trigger} onClick={openDropdown}>
+      <div
+        className={styles.trigger}
+        onClick={() => {
+          openDropdown();
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.OPEN_DROPDOWN,
+            creator_team: 'grafana_plugins_catalog',
+            schema_version: '1.0.0',
+          });
+        }}
+      >
         <Input
           id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
@@ -235,6 +258,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           onChange={(e) => {
             openDropdown();
             setFilterTerm(e.currentTarget.value);
+            if (e.currentTarget.value) {
+              debouncedTrackSearch(e.currentTarget.value);
+            }
           }}
           ref={handleReference}
           disabled={disabled}
@@ -321,7 +347,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <CustomScrollbar>
+      <ScrollContainer showScrollIndicators>
         <DataSourceList
           {...props}
           enableKeyboardNavigation
@@ -335,7 +361,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             })
           }
         ></DataSourceList>
-      </CustomScrollbar>
+      </ScrollContainer>
       <FocusScope>
         <Footer
           {...props}

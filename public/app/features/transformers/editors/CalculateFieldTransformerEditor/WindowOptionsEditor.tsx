@@ -105,7 +105,7 @@ export const WindowOptionsEditor = (props: {
           onChange={onTypeChange}
         />
       </InlineField>
-      <InlineField label="Window size mode">
+      <InlineField label="Window size mode" labelWidth={LABEL_WIDTH}>
         <RadioButtonGroup
           value={window?.windowSizeMode ?? WindowSizeMode.Percentage}
           options={windowSizeModeOptions}

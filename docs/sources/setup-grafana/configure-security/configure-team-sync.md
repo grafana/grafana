@@ -21,21 +21,22 @@ Team sync lets you set up synchronization between your auth providers teams and 
 Grafana keeps track of all synchronized users in teams, and you can see which users have been synchronized in the team members list, see `LDAP` label in screenshot.
 This mechanism allows Grafana to remove an existing synchronized user from a team when its group membership changes. This mechanism also enables you to manually add a user as member of a team, and it will not be removed when the user signs in. This gives you flexibility to combine LDAP group memberships and Grafana team memberships.
 
-> Currently the synchronization only happens when a user logs in, unless LDAP is used with the active background synchronization that was added in Grafana 6.3.
+> Currently the synchronization only happens when a user logs in, unless LDAP is used with the active background synchronization.
 
 <div class="clearfix"></div>
 
 ## Supported providers
 
 - [Auth Proxy]({{< relref "./configure-authentication/auth-proxy#team-sync-enterprise-only" >}})
-- [Azure AD]({{< relref "./configure-authentication/azuread#team-sync-enterprise-only" >}})
-- [Generic OAuth integration]({{< relref "./configure-authentication/generic-oauth#configure-team-synchronization" >}})
-- [GitHub OAuth]({{< relref "./configure-authentication/github#configure-team-synchronization" >}})
-- [GitLab OAuth]({{< relref "./configure-authentication/gitlab#configure-team-synchronization" >}})
-- [Google OAuth]({{< relref "./configure-authentication/google#configure-team-sync-for-google-oauth" >}})
-- [LDAP]({{< relref "./configure-authentication/enhanced-ldap#ldap-group-synchronization-for-teams" >}})
-- [Okta]({{< relref "./configure-authentication/okta#configure-team-synchronization-enterprise-only" >}})
-- [SAML]({{< relref "./configure-authentication/saml#configure-team-sync" >}})
+- [Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-authentication/azuread#group-sync-enterprise-only)
+- [Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/azuread#group-sync-enterprise-only)
+- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/generic-oauth#configure-group-synchronization)
+- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/github#configure-group-synchronization)
+- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/gitlab#configure-group-synchronization)
+- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/google#configure-group-synchronization)
+- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/enhanced-ldap#ldap-group-synchronization)
+- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/okta#configure-group-synchronization-enterprise-only)
+- [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/saml#configure-group-synchronization)
 
 ## Synchronize a Grafana team with an external group
 

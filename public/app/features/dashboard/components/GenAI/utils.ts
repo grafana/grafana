@@ -4,7 +4,8 @@ import { llms } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardStringDiff } from './jsonDiffText';

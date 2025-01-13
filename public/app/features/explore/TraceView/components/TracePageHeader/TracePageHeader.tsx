@@ -138,6 +138,13 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       <div className={styles.subtitle}>
         <span className={styles.timestamp}>{timestamp(trace, timeZone)}</span>
         <span className={styles.tagMeta}>
+          {data.meta?.custom?.partial && (
+            <Tooltip content={data.meta?.custom?.message} interactive={true}>
+              <span className={styles.tag}>
+                <Badge icon={'info-circle'} text={'Partial trace'} color={'orange'} />
+              </span>
+            </Tooltip>
+          )}
           {method && method.length > 0 && (
             <Tooltip content={'http.method'} interactive={true}>
               <span className={styles.tag}>

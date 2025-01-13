@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Tooltip, Pagination } from '@grafana/ui';
+import { Pagination, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -15,15 +15,15 @@ import { attachRulerRuleToCombinedRule } from '../../hooks/useCombinedRuleNamesp
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { usePagination } from '../../hooks/usePagination';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
+import { calculateNextEvaluationEstimate } from '../../rule-list/components/util';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 import { Tokenize } from '../Tokenize';
-import { calculateNextEvaluationEstimate } from '../rule-list/util';
 
 import { RuleActionsButtons } from './RuleActionsButtons';
 import { RuleConfigStatus } from './RuleConfigStatus';
@@ -211,9 +211,9 @@ function useColumns(
         label: '',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
-          const rulerRule = rule.rulerRule;
+          const { promRule, rulerRule } = rule;
 
-          const originMeta = getRulePluginOrigin(rule);
+          const originMeta = getRulePluginOrigin(promRule ?? rulerRule);
           if (originMeta) {
             return <PluginOriginBadge pluginId={originMeta.pluginId} />;
           }
@@ -298,7 +298,7 @@ function useColumns(
       label: 'Actions',
       // eslint-disable-next-line react/display-name
       renderCell: ({ data: rule }) => <RuleActionsCell rule={rule} isLoadingRuler={isRulerLoading} />,
-      size: '200px',
+      size: '215px',
     });
 
     return columns;

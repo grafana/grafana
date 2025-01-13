@@ -35,6 +35,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
+export { TimeRangeProvider } from './DateTimePickers/TimeRangeContext';
 export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
@@ -84,6 +85,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+export { TableCellInspector, TableCellInspectorMode } from './Table/TableCellInspector';
 export {
   type TableCustomCellOptions,
   type CustomCellRendererProps,
@@ -216,6 +218,7 @@ export { Box } from './Layout/Box/Box';
 export { Stack } from './Layout/Stack/Stack';
 export { Grid } from './Layout/Grid/Grid';
 export { Space } from './Layout/Space';
+export { ScrollContainer } from './ScrollContainer/ScrollContainer';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -229,11 +232,14 @@ export { InlineFieldRow } from './Forms/InlineFieldRow';
 export { FieldArray } from './Forms/FieldArray';
 
 // Select
+// Note - Select is nearly deprecated in favor of Combobox
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
 export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
+
+export { Combobox, type ComboboxOption } from './Combobox/Combobox';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';
@@ -317,3 +323,9 @@ export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
 
 export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
 export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';
+
+export {
+  ElementSelectionContext,
+  useElementSelection,
+  type ElementSelectionContextState,
+} from './ElementSelectionContext/ElementSelectionContext';

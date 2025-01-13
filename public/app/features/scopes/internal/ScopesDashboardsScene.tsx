@@ -1,18 +1,18 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
+import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, ScopeDashboardBinding } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Button, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 import { ScopesSelectorScene } from './ScopesSelectorScene';
 import { fetchDashboards } from './api';
-import { DASHBOARDS_OPENED_KEY } from './const';
 import { SuggestedDashboardsFoldersMap } from './types';
-import { filterFolders, getScopeNamesFromSelectedScopes, groupDashboards } from './utils';
+import { filterFolders, groupDashboards } from './utils';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   selector: SceneObjectRef<ScopesSelectorScene> | null;
@@ -26,7 +26,7 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
   isLoading: boolean;
   isPanelOpened: boolean;
   isEnabled: boolean;
-  scopesSelected: boolean;
+  isReadOnly: boolean;
   searchQuery: string;
 }
 
@@ -36,14 +36,16 @@ export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, '
   filteredFolders: {},
   forScopeNames: [],
   isLoading: false,
-  isPanelOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
+  isPanelOpened: false,
   isEnabled: false,
-  scopesSelected: false,
+  isReadOnly: false,
   searchQuery: '',
 });
 
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
+
+  private dashboardsFetchingSub: Subscription | undefined;
 
   constructor() {
     super({
@@ -52,35 +54,20 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
 
     this.addActivationHandler(() => {
-      if (this.state.isEnabled && this.state.isPanelOpened) {
-        this.fetchDashboards();
-      }
-
-      const resolvedSelector = this.state.selector?.resolve();
-
-      if (resolvedSelector) {
-        this._subs.add(
-          resolvedSelector.subscribeToState((newState, prevState) => {
-            if (
-              this.state.isEnabled &&
-              this.state.isPanelOpened &&
-              !newState.isLoadingScopes &&
-              (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)
-            ) {
-              this.fetchDashboards();
-            }
-          })
-        );
-      }
+      return () => {
+        this.dashboardsFetchingSub?.unsubscribe();
+      };
     });
   }
 
-  public async fetchDashboards() {
-    const scopeNames = getScopeNamesFromSelectedScopes(this.state.selector?.resolve().state.scopes ?? []);
-
-    if (isEqual(scopeNames, this.state.forScopeNames)) {
+  public async fetchDashboards(scopeNames: string[]) {
+    if (isEqual(this.state.forScopeNames, scopeNames)) {
       return;
     }
+
+    this.dashboardsFetchingSub?.unsubscribe();
+
+    this.setState({ forScopeNames: scopeNames });
 
     if (scopeNames.length === 0) {
       return this.setState({
@@ -89,24 +76,32 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
         filteredFolders: {},
         forScopeNames: [],
         isLoading: false,
-        scopesSelected: false,
+        isPanelOpened: false,
       });
     }
 
     this.setState({ isLoading: true });
 
-    const dashboards = await fetchDashboards(scopeNames);
-    const folders = groupDashboards(dashboards);
-    const filteredFolders = filterFolders(folders, this.state.searchQuery);
+    this.dashboardsFetchingSub = from(fetchDashboards(scopeNames))
+      .pipe(
+        finalize(() => {
+          this.setState({ isLoading: false });
+        })
+      )
+      .subscribe((dashboards) => {
+        const folders = groupDashboards(dashboards);
+        const filteredFolders = filterFolders(folders, this.state.searchQuery);
 
-    this.setState({
-      dashboards,
-      folders,
-      filteredFolders,
-      forScopeNames: scopeNames,
-      isLoading: false,
-      scopesSelected: scopeNames.length > 0,
-    });
+        this.setState({
+          dashboards,
+          folders,
+          filteredFolders,
+          isLoading: false,
+          isPanelOpened: scopeNames.length > 0,
+        });
+
+        this.dashboardsFetchingSub?.unsubscribe();
+      });
   }
 
   public changeSearchQuery(searchQuery: string) {
@@ -148,14 +143,19 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   }
 
   public openPanel() {
-    this.fetchDashboards();
+    if (this.state.isPanelOpened) {
+      return;
+    }
+
     this.setState({ isPanelOpened: true });
-    localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(true));
   }
 
   public closePanel() {
+    if (!this.state.isPanelOpened) {
+      return;
+    }
+
     this.setState({ isPanelOpened: false });
-    localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(false));
   }
 
   public enable() {
@@ -165,20 +165,28 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   public disable() {
     this.setState({ isEnabled: false });
   }
+
+  public enterReadOnly() {
+    this.setState({ isReadOnly: true });
+  }
+
+  public exitReadOnly() {
+    this.setState({ isReadOnly: false });
+  }
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { dashboards, filteredFolders, isLoading, isPanelOpened, isEnabled, searchQuery, scopesSelected } =
+  const { dashboards, filteredFolders, forScopeNames, isLoading, isPanelOpened, isEnabled, isReadOnly, searchQuery } =
     model.useState();
 
   const styles = useStyles2(getStyles);
 
-  if (!isEnabled || !isPanelOpened) {
+  if (!isEnabled || !isPanelOpened || isReadOnly) {
     return null;
   }
 
   if (!isLoading) {
-    if (!scopesSelected) {
+    if (forScopeNames.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
@@ -214,13 +222,13 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           data-testid="scopes-dashboards-loading"
         />
       ) : filteredFolders[''] ? (
-        <CustomScrollbar>
+        <ScrollContainer>
           <ScopesDashboardsTree
             folders={filteredFolders}
             folderPath={['']}
             onFolderUpdate={(path, isExpanded) => model.updateFolder(path, isExpanded)}
           />
-        </CustomScrollbar>
+        </ScrollContainer>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
           <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>

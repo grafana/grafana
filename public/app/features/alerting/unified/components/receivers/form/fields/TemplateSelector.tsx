@@ -8,7 +8,7 @@ import {
   Button,
   Drawer,
   IconButton,
-  Input,
+  Label,
   RadioButtonGroup,
   Select,
   Stack,
@@ -16,6 +16,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,
@@ -34,6 +35,8 @@ import { defaultPayloadString } from '../../TemplateForm';
 import { TemplateContentAndPreview } from './TemplateContentAndPreview';
 import { getTemplateName, getUseTemplateText, matchesOnlyOneTemplate, parseTemplates } from './utils';
 
+const { useGetDefaultTemplatesQuery } = templatesApi;
+
 interface TemplatesPickerProps {
   onSelect: (temnplate: string) => void;
   option: NotificationChannelOption;
@@ -45,27 +48,23 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
     setShowTemplates(true);
     trackEditInputWithTemplate();
   };
+  const handleClose = () => setShowTemplates(false);
+
   return (
     <>
       <Button
         icon="edit"
-        tooltip={'Edit using existing templates.'}
+        tooltip={`Edit ${option.label.toLowerCase()} using existing notification templates.`}
         onClick={onClick}
         variant="secondary"
         size="sm"
-        aria-label={'Select available template from the list of available templates.'}
       >
         {`Edit ${option.label}`}
       </Button>
 
       {showTemplates && (
-        <Drawer title={`Edit ${option.label}`} size="md" onClose={() => setShowTemplates(false)}>
-          <TemplateSelector
-            onSelect={onSelect}
-            onClose={() => setShowTemplates(false)}
-            option={option}
-            valueInForm={valueInForm}
-          />
+        <Drawer title={`Edit ${option.label}`} size="md" onClose={handleClose}>
+          <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
         </Drawer>
       )}
     </>
@@ -102,10 +101,6 @@ export function getTemplateOptions(templateFiles: NotificationTemplate[], defaul
   // return the sum of default and custom templates
   return Array.from(templateMap.values());
 }
-function getContentFromOptions(name: string, options: Array<SelectableValue<Template>>) {
-  const template = options.find((option) => option.label === name);
-  return template?.value?.content ?? '';
-}
 
 export interface Template {
   name: string;
@@ -117,40 +112,44 @@ interface TemplateSelectorProps {
   option: NotificationChannelOption;
   valueInForm: string;
 }
+
 function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
-  const useGetDefaultTemplatesQuery = templatesApi.endpoints.getDefaultTemplates.useQuery;
-  const [template, setTemplate] = useState<Template | undefined>(undefined);
-  const [inputToUpdate, setInputToUpdate] = useState<string>('');
-  const [inputToUpdateCustom, setInputToUpdateCustom] = useState<string>(valueInForm);
+  const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
+  const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);
+  const [customTemplateValue, setCustomTemplateValue] = useState<string>(valueInForm);
 
   const { selectedAlertmanager } = useAlertmanager();
   const { data = [], error, isLoading } = useNotificationTemplates({ alertmanager: selectedAlertmanager! });
   const { data: defaultTemplates } = useGetDefaultTemplatesQuery();
-  const [templateOption, setTemplateOption] = useState<TemplateFieldOption>('Existing');
+  const [templateOption, setTemplateOption] = useState<TemplateFieldOption | undefined>(
+    valueInFormIsCustom ? 'Custom' : 'Existing'
+  );
   const [_, copyToClipboard] = useCopyToClipboard();
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: 'Select existing template',
+      label: 'Select notification template',
+      ariaLabel: 'Select notification template',
       value: 'Existing',
-      description: `Select a single template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save will save your changes to the selected template.' : ''}`,
+      description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
     },
     {
       label: `Enter custom ${option.label.toLowerCase()}`,
+      ariaLabel: `Enter custom ${option.label.toLowerCase()}`,
       value: 'Custom',
       description: `Enter custom ${option.label.toLowerCase()}. ${templateOption === 'Custom' ? 'Clicking Save will save the custom value only.' : ''}`,
     },
   ];
 
   useEffect(() => {
-    if (template) {
-      setInputToUpdate(getUseTemplateText(template.name));
+    if (template?.value?.name) {
+      setCustomTemplateValue(getUseTemplateText(template.value.name));
     }
   }, [template]);
 
   function onCustomTemplateChange(customInput: string) {
-    setInputToUpdateCustom(customInput);
+    setCustomTemplateValue(customInput);
   }
 
   const onTemplateOptionChange = (option: TemplateFieldOption) => {
@@ -164,21 +163,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     return getTemplateOptions(data, defaultTemplates);
   }, [data, defaultTemplates, isLoading, error]);
 
-  // if we are using only one template, we should settemplate to that template
-  useEffect(() => {
-    if (Boolean(valueInForm)) {
-      if (matchesOnlyOneTemplate(valueInForm)) {
-        const name = getTemplateName(valueInForm);
-        setTemplate({
-          name,
-          content: getContentFromOptions(name, options),
-        });
-      } else {
-        // if it's empty we default to select existing template
-        setTemplateOption('Custom');
-      }
+  const defaultTemplateValue = useMemo(() => {
+    if (!options.length || !Boolean(valueInForm) || !matchesOnlyOneTemplate(valueInForm)) {
+      return null;
     }
-  }, [valueInForm, setTemplate, setTemplateOption, options]);
+    const nameOfTemplateInForm = getTemplateName(valueInForm);
+
+    return options.find((option) => option.label === nameOfTemplateInForm) || null;
+  }, [options, valueInForm]);
 
   if (error) {
     return <div>Error loading templates</div>;
@@ -202,26 +194,29 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
           <Stack direction="column" gap={1}>
             <Stack direction="row" gap={1} alignItems="center">
               <Select<Template>
-                placeholder="Choose template"
-                aria-label="Choose template"
+                data-testid="existing-templates-selector"
+                placeholder="Choose notification template"
+                aria-label="Choose notification template"
                 onChange={(value: SelectableValue<Template>, _) => {
-                  setTemplate(value?.value);
+                  setTemplate(value);
                 }}
                 options={options}
                 width={50}
-                value={template ? { label: template.name, value: template } : undefined}
+                defaultValue={defaultTemplateValue}
               />
               <IconButton
-                tooltip="Copy selected template to clipboard. You can use it in the custom tab."
-                onClick={() => copyToClipboard(getUseTemplateText(template?.name ?? ''))}
+                tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
+                onClick={() =>
+                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
+                }
                 name="copy"
               />
             </Stack>
 
             <TemplateContentAndPreview
-              templateContent={template?.content ?? ''}
+              templateContent={template?.value?.content ?? defaultTemplateValue?.value?.content ?? ''}
               payload={defaultPayloadString}
-              templateName={template?.name ?? ''}
+              templateName={template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''}
               setPayloadFormatError={() => {}}
               className={cx(styles.templatePreview, styles.minEditorSize)}
               payloadFormatError={null}
@@ -231,27 +226,29 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
           <OptionCustomfield
             option={option}
             onCustomTemplateChange={onCustomTemplateChange}
-            initialValue={inputToUpdateCustom}
+            initialValue={customTemplateValue}
           />
         )}
       </Stack>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={onClose}>
-          Cancel
+          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </Button>
         <Button
           variant="primary"
           onClick={() => {
-            onSelect(templateOption === 'Custom' ? inputToUpdateCustom : inputToUpdate);
-            onClose();
             if (templateOption === 'Custom') {
               trackUseCustomInputInTemplate();
+              onSelect(customTemplateValue);
             } else {
               trackUseSingleTemplateInInput();
+              const name = template?.value?.name ?? defaultTemplateValue?.value?.name ?? '';
+              onSelect(getUseTemplateText(name));
             }
+            return onClose();
           }}
         >
-          Save
+          <Trans i18nKey="common.save">Save</Trans>
         </Button>
       </div>
     </Stack>
@@ -267,31 +264,21 @@ function OptionCustomfield({
   onCustomTemplateChange(customInput: string): void;
   initialValue: string;
 }) {
-  switch (option.element) {
-    case 'textarea':
-      return (
-        <Stack direction="row" gap={1} alignItems="center">
-          <TextArea
-            placeholder={option.placeholder}
-            onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
-            defaultValue={initialValue}
-          />
-        </Stack>
-      );
-    case 'input':
-      return (
-        <Stack direction="row" gap={1} alignItems="center">
-          <Input
-            type={option.inputType}
-            placeholder={option.placeholder}
-            onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
-            defaultValue={initialValue}
-          />
-        </Stack>
-      );
-    default:
-      return null;
-  }
+  const id = `custom-template-${option.label}`;
+  return (
+    <Stack direction="column" gap={1}>
+      <Label htmlFor={id}>
+        <Trans i18nKey="alerting.contact-points.custom-template-value">Custom template value</Trans>
+      </Label>
+      <TextArea
+        id={id}
+        label="Custom template"
+        placeholder={option.placeholder}
+        onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
+        defaultValue={initialValue}
+      />
+    </Stack>
+  );
 }
 
 interface WrapWithTemplateSelectionProps extends PropsWithChildren {

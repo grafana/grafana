@@ -4,22 +4,23 @@ import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
+import { isAlertingRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
-  rule: CombinedRule;
+  promRule: Rule;
+  rulerRule?: RulerRuleDTO;
   identifier: RuleIdentifier;
-  showCopyLinkButton?: boolean;
+  groupIdentifier: RuleGroupIdentifierV2;
   handleSilence: () => void;
-  handleDelete: (rule: CombinedRule) => void;
+  handleDelete: (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
@@ -30,9 +31,10 @@ interface Props {
  * dropdown menu
  */
 const AlertRuleMenu = ({
-  rule,
+  promRule,
+  rulerRule,
   identifier,
-  showCopyLinkButton,
+  groupIdentifier,
   handleSilence,
   handleDelete,
   handleDuplicateRule,
@@ -40,22 +42,30 @@ const AlertRuleMenu = ({
   buttonSize,
 }: Props) => {
   // check all abilities and permissions
-  const [pauseSupported, pauseAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Pause);
+  const [pauseSupported, pauseAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Pause);
   const canPause = pauseSupported && pauseAllowed;
 
-  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
+  const [deleteSupported, deleteAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
 
-  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
+  const [duplicateSupported, duplicateAllowed] = useRulerRuleAbility(
+    rulerRule,
+    groupIdentifier,
+    AlertRuleAction.Duplicate
+  );
   const canDuplicate = duplicateSupported && duplicateAllowed;
 
-  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
+  const [silenceSupported, silenceAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Silence);
   const canSilence = silenceSupported && silenceAllowed;
 
-  const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
+  const [exportSupported, exportAllowed] = useRulerRuleAbility(
+    rulerRule,
+    groupIdentifier,
+    AlertRuleAction.ModifyExport
+  );
   const canExport = exportSupported && exportAllowed;
 
-  const ruleExtensionLinks = useRulePluginLinkExtension(rule);
+  const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
@@ -63,21 +73,25 @@ const AlertRuleMenu = ({
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
    */
+  // @TODO Migrate "declare incident button" to plugin links extensions
   const shouldShowDeclareIncidentButton =
     (!isOpenSourceEdition() || isLocalDevEnv()) &&
-    isAlertingRule(rule.promRule) &&
-    rule.promRule.state === PromAlertingRuleState.Firing;
-  const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
+    isAlertingRule(promRule) &&
+    promRule.state === PromAlertingRuleState.Firing;
+
+  const shareUrl = createShareLink(identifier);
 
   const showDivider =
-    [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
-    [showCopyLinkButton, canExport].some(Boolean);
+    [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) && [canExport].some(Boolean);
 
   const menuItems = (
     <>
-      {canPause && <MenuItemPauseRule rule={rule} onPauseChange={onPauseChange} />}
+      {canPause && rulerRule && groupIdentifier.groupOrigin === 'grafana' && (
+        <MenuItemPauseRule rule={rulerRule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />
+      )}
       {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
-      {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
+      {/* TODO Migrate Declare Incident to plugin links extensions */}
+      {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
       {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
       {showDivider && <Menu.Divider />}
       {shareUrl && <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />}
@@ -96,10 +110,15 @@ const AlertRuleMenu = ({
           ))}
         </>
       )}
-      {canDelete && (
+      {canDelete && rulerRule && (
         <>
           <Menu.Divider />
-          <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => handleDelete(rule)} />
+          <Menu.Item
+            label="Delete"
+            icon="trash-alt"
+            destructive
+            onClick={() => handleDelete(rulerRule, groupIdentifier)}
+          />
         </>
       )}
     </>

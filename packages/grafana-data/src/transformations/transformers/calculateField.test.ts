@@ -41,6 +41,15 @@ describe('calculateField transformer w/ timeseries', () => {
     mockTransformationsRegistry([calculateFieldTransformer]);
   });
 
+  beforeEach(() => {
+    seriesA.fields.forEach((f) => {
+      delete f.state;
+    });
+    seriesBC.fields.forEach((f) => {
+      delete f.state;
+    });
+  });
+
   it('will filter and alias', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
@@ -198,6 +207,56 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('multiple queries + field + static number', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: 'B',
+          operator: BinaryOperationID.Add,
+          right: '2',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toMatchInlineSnapshot(`
+        [
+          {
+            "fields": [
+              {
+                "config": {},
+                "name": "TheTime",
+                "state": {
+                  "displayName": "TheTime",
+                  "multipleFrames": true,
+                },
+                "type": "time",
+                "values": [
+                  1000,
+                  2000,
+                ],
+              },
+              {
+                "config": {},
+                "name": "B + 2",
+                "type": "number",
+                "values": [
+                  4,
+                  202,
+                ],
+              },
+            ],
+            "length": 2,
+          },
+        ]
+      `);
+    });
+  });
+
   it('all numbers + static number', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
@@ -228,6 +287,85 @@ describe('calculateField transformer w/ timeseries', () => {
           TheTime: 2000,
         },
       ]);
+    });
+  });
+
+  it('all numbers + static number (multi-frame, avoids join)', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
+          operator: BinaryOperationID.Add,
+          right: '2',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+
+      expect(data).toMatchInlineSnapshot(`
+        [
+          {
+            "fields": [
+              {
+                "config": {},
+                "name": "TheTime",
+                "type": "time",
+                "values": [
+                  1000,
+                  2000,
+                ],
+              },
+              {
+                "config": {},
+                "name": "A + 2",
+                "type": "number",
+                "values": [
+                  3,
+                  102,
+                ],
+              },
+            ],
+            "length": 2,
+          },
+          {
+            "fields": [
+              {
+                "config": {},
+                "name": "TheTime",
+                "type": "time",
+                "values": [
+                  1000,
+                  2000,
+                ],
+              },
+              {
+                "config": {},
+                "name": "B + 2",
+                "type": "number",
+                "values": [
+                  4,
+                  202,
+                ],
+              },
+              {
+                "config": {},
+                "name": "C + 2",
+                "type": "number",
+                "values": [
+                  5,
+                  302,
+                ],
+              },
+            ],
+            "length": 2,
+          },
+        ]
+      `);
     });
   });
 
@@ -587,6 +725,35 @@ describe('calculateField transformer w/ timeseries', () => {
       expect(data.fields[1].values[0]).toEqual(1);
       expect(data.fields[1].values[1]).toEqual(1.5);
       expect(data.fields[1].values[2]).toEqual(2);
+    });
+  });
+
+  it('calculates fixed, trailing moving average with missing values', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.WindowFunctions,
+        window: {
+          windowAlignment: WindowAlignment.Trailing,
+          field: 'x',
+          windowSize: 2,
+          windowSizeMode: WindowSizeMode.Fixed,
+          reducer: ReducerID.mean,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: [1, undefined, 3, 4, 5] }],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+
+      //console.log(data.fields);
+
+      expect(data.fields.length).toEqual(2);
+      expect(data.fields[1].values).toEqual([1, 1, 3, 3.5, 4.5]);
     });
   });
 

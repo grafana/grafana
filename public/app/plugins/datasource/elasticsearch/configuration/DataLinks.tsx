@@ -10,15 +10,15 @@ import { DataLink } from './DataLink';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    addButton: css`
-      margin-right: 10px;
-    `,
-    container: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    dataLink: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    addButton: css({
+      marginRight: '10px',
+    }),
+    container: css({
+      marginBottom: theme.spacing(2),
+    }),
+    dataLink: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };
 

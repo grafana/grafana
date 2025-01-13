@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Action, DataFrame, GrafanaTheme2, defaultActionConfig, VariableSuggestion } from '@grafana/data';
 import { Button } from '@grafana/ui/src/components/Button';
 import { Modal } from '@grafana/ui/src/components/Modal/Modal';
 import { useStyles2 } from '@grafana/ui/src/themes';
+import { Trans } from 'app/core/internationalization';
 
 import { ActionEditorModalContent } from './ActionEditorModalContent';
 import { ActionListItem } from './ActionsListItem';
@@ -90,46 +91,41 @@ export const ActionsInlineEditor = ({
     onChange(update);
   };
 
-  const renderFirstAction = (actionsJSX: ReactNode, key: string) => {
-    if (showOneClick) {
-      return (
-        <div className={styles.oneClickOverlay} key={key}>
-          <span className={styles.oneClickSpan}>One-click action</span> {actionsJSX}
-        </div>
-      );
-    }
-    return actionsJSX;
-  };
-
   return (
-    <>
+    <div className={styles.container}>
+      {/* one-link placeholder */}
+      {showOneClick && actionsSafe.length > 0 && (
+        <div className={styles.oneClickOverlay}>
+          <span className={styles.oneClickSpan}>
+            <Trans i18nKey="actions-editor.inline.one-click-link">One-click link</Trans>
+          </span>
+        </div>
+      )}
+
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="sortable-actions" direction="vertical">
           {(provided) => (
-            <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
+            <div
+              className={styles.wrapper}
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              style={{ paddingTop: showOneClick && actionsSafe.length > 0 ? '28px' : '0px' }}
+            >
               {actionsSafe.map((action, idx) => {
                 const key = `${action.title}/${idx}`;
 
-                const actionsJSX = (
-                  <div className={styles.itemWrapper} key={key}>
-                    <ActionListItem
-                      key={key}
-                      index={idx}
-                      action={action}
-                      onChange={onActionChange}
-                      onEdit={() => setEditIndex(idx)}
-                      onRemove={() => onActionRemove(idx)}
-                      data={data}
-                      itemKey={key}
-                    />
-                  </div>
+                return (
+                  <ActionListItem
+                    key={key}
+                    index={idx}
+                    action={action}
+                    onChange={onActionChange}
+                    onEdit={() => setEditIndex(idx)}
+                    onRemove={() => onActionRemove(idx)}
+                    data={data}
+                    itemKey={key}
+                  />
                 );
-
-                if (idx === 0) {
-                  return renderFirstAction(actionsJSX, key);
-                }
-
-                return actionsJSX;
               })}
               {provided.placeholder}
             </div>
@@ -158,24 +154,29 @@ export const ActionsInlineEditor = ({
       )}
 
       <Button size="sm" icon="plus" onClick={onActionAdd} variant="secondary" className={styles.button}>
-        Add action
+        <Trans i18nKey="actions-editor.inline.add-button">Add action</Trans>
       </Button>
-    </>
+    </div>
   );
 };
 
 const getActionsInlineEditorStyle = (theme: GrafanaTheme2) => ({
+  container: css({
+    position: 'relative',
+  }),
   wrapper: css({
     marginBottom: theme.spacing(2),
     display: 'flex',
     flexDirection: 'column',
   }),
   oneClickOverlay: css({
-    height: 'auto',
     border: `2px dashed ${theme.colors.text.link}`,
     fontSize: 10,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing(1),
+    position: 'absolute',
+    width: '100%',
+    height: '89px',
   }),
   oneClickSpan: css({
     padding: 10,

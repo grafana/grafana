@@ -22,8 +22,7 @@ images = {
     "plugins_slack": "plugins/slack",
     "python": "python:3.8",
     "postgres_alpine": "postgres:12.3-alpine",
-    "mimir": "grafana/mimir-alpine:r304-3872ccb",
-    "mysql5": "mysql:5.7.39",
+    "mimir": "grafana/mimir-alpine:r316-55f47f8",
     "mysql8": "mysql:8.0.32",
     "redis_alpine": "redis:6.2.11-alpine",
     "memcached_alpine": "memcached:1.6.9-alpine",
@@ -36,4 +35,6 @@ images = {
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
     "rocky": "rockylinux:9",
+    "wine": "scottyhardy/docker-wine:stable-9.0",
+    "github_app_secret_writer": "us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59",
 }

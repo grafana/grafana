@@ -43,7 +43,6 @@ describe('TagsInput', () => {
         jest.advanceTimersByTime(1000);
       });
       await waitFor(() => {
-        expect(screen.getByText('foo')).toBeInTheDocument();
         expect(screen.getByText('bar')).toBeInTheDocument();
       });
     });
@@ -127,7 +126,7 @@ describe('TagsInput', () => {
         setError={() => {}}
         staticTags={[]}
         isTagsLoading={false}
-        query={''}
+        generateQueryWithoutFilter={() => ''}
         addVariablesToOptions={true}
       />
     );

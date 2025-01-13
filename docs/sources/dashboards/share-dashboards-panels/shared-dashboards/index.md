@@ -77,9 +77,17 @@ This feature was previously called **email sharing**.
 Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud).
 {{< /admonition >}}
 
+<!-- {{< docs/private-preview product="Sharing externally with specific people" >}}-->
+
+{{< admonition type="note" >}}
+Sharing externally with specific people is currently in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview). Please contact support to have this feature enabled.
+
+This feature will incur a cost once it is promoted to general availability.
+{{< /admonition >}}
+
 To share a dashboard with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people. When you share dashboards by email, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
 
-When you share a dashboard with an email link, your organization is billed per user, regardless of how many dashboards are shared. Grafana bills monthly per user until access is revoked.
+<!--When you share a dashboard with an email link, your organization is billed per user, regardless of how many dashboards are shared. Grafana bills monthly per user until access is revoked.-->
 
 To share a dashboard with specific people, follow these steps:
 
@@ -213,112 +221,84 @@ Learn more about the kind of information provided in the [dashboard insights doc
 Externally shared dashboards _should_ work with any data source that has the properties `backend` and `alerting` both set to true in its `plugin.json`. However, this can't always be
 guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with externally shared dashboards and data sources that should work, but have not been confirmed as compatible.
 
-### Confirmed:
+### Confirmed
 
-<table>
-  <tr>
-    <td>
-      <ul>
-        <li>ClickHouse</li>
-        <li>CloudWatch</li>
-        <li>Elasticsearch</li>
-        <li>Infinity</li>
-        <li>InfluxDB</li>
-        <li>Loki</li>
-        <li>Microsoft SQL Server</li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li>MongoDB</li>
-        <li>MySQL</li>
-        <li>Oracle Database</li>
-        <li>PostgreSQL</li>
-        <li>Prometheus</li>
-        <li>Redis</li>
-        <li>SQLite</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+{{< column-list >}}
 
-### Unsupported:
+- ClickHouse
+- CloudWatch
+- Elasticsearch
+- Infinity
+- InfluxDB
+- Loki
+- Microsoft SQL Server
+- MongoDB
+- MySQL
+- Oracle Database
+- PostgreSQL
+- Prometheus
+- Redis
+- SQLite
 
-<table>
-  <tr>
-    <td>
-      <ul>
-        <li>Graphite</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+{{< /column-list >}}
 
-### Unconfirmed:
+### Unsupported
 
-<table>
-  <tr>
-    <td>
-      <ul>
-        <li>Altinity plugin for ClickHouse</li>
-        <li>Amazon Athena</li>
-        <li>Amazon Redshift</li>
-        <li>Amazon Timestream</li>
-        <li>Apache Cassandra</li>
-        <li>AppDynamics</li>
-        <li>Azure Data Explorer Datasource</li>
-        <li>Azure Monitor</li>
-        <li>CSV</li>
-        <li>DB2 Datasource</li>
-        <li>Databricks</li>
-        <li>Datadog</li>
-        <li>Dataset</li>
-        <li>Druid</li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li>Dynatrace</li>
-        <li>GitHub</li>
-        <li>Google BigQuery</li>
-        <li>Grafana for YNAB</li>
-        <li>Honeycomb</li>
-        <li>Jira</li>
-        <li>Mock</li>
-        <li>Neo4j Datasource</li>
-        <li>New Relic</li>
-        <li>OPC UA (Unified Architecture)</li>
-        <li>Open Distro for Elasticsearch</li>
-        <li>OpenSearch</li>
-        <li>OpenTSDB</li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li>Orbit</li>
-        <li>SAP HANA®</li>
-        <li>Salesforce</li>
-        <li>Sentry</li>
-        <li>ServiceNow</li>
-        <li>Snowflake</li>
-        <li>Splunk</li>
-        <li>Splunk Infrastructure Monitoring</li>
-        <li>Sqlyze data source</li>
-        <li>TDengine</li>
-        <li>Vertica</li>
-        <li>Wavefront</li>
-        <li>X-Ray</li>
-        <li>kdb+</li>
-        <li>simple grpc data source</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+- Graphite
+- Dynatrace
+
+### Unconfirmed
+
+{{< column-list >}}
+
+- Altinity plugin for ClickHouse
+- Amazon Athena
+- Amazon Redshift
+- Amazon Timestream
+- Apache Cassandra
+- AppDynamics
+- Azure Data Explorer Datasource
+- Azure Monitor
+- CSV
+- DB2 Datasource
+- Databricks
+- Datadog
+- Dataset
+- Druid
+- GitHub
+- Google BigQuery
+- Grafana for YNAB
+- Honeycomb
+- Jira
+- Mock
+- Neo4j Datasource
+- New Relic
+- OPC UA (Unified Architecture)
+- Open Distro for Elasticsearch
+- OpenSearch
+- OpenTSDB
+- Orbit
+- SAP HANA®
+- Salesforce
+- Sentry
+- ServiceNow
+- Snowflake
+- Splunk
+- Splunk Infrastructure Monitoring
+- Sqlyze data source
+- TDengine
+- Vertica
+- Wavefront
+- X-Ray
+- kdb+
+- simple grpc data source
+
+{{< /column-list >}}
 
 ## Limitations
 
 - Panels that use frontend data sources will fail to fetch data.
-- Template variables are not supported.
+- Variables and queries including variables are not supported.
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` data source are supported.
 - Organization annotations are not supported.

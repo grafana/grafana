@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,13 +29,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -49,8 +46,6 @@ type Service struct {
 	dashboardStore       dashboards.Store
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
-	cfg                  *setting.Cfg
-	folderPermissions    accesscontrol.FolderPermissionsService
 	accessControl        accesscontrol.AccessControl
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
@@ -70,20 +65,16 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
-	folderPermissions accesscontrol.FolderPermissionsService,
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
-) folder.Service {
+) *Service {
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,
 		features:             features,
-		cfg:                  cfg,
-		folderPermissions:    folderPermissions,
 		accessControl:        ac,
 		bus:                  bus,
 		db:                   db,
@@ -95,9 +86,8 @@ func ProvideService(
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, store))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, store))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 	return srv
 }
 
@@ -287,7 +277,45 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		f, err = s.setFullpath(ctx, f, q.SignedInUser)
+	}
+
 	return f, err
+}
+
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester) (*folder.Folder, error) {
+	// #TODO is some kind of intermediate conversion required as is the case with user id where
+	// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
+	// part of the parsing?
+	f.CreatedByUID = user.GetUID()
+	f.UpdatedByUID = user.GetUID()
+
+	if f.ParentUID == "" {
+		return f, nil
+	}
+
+	// Fetch the parent since the permissions for fetching the newly created folder
+	// are not yet present for the user--this requires a call to ClearUserPermissionCache
+	parents, err := s.GetParents(ctx, folder.GetParentsQuery{
+		UID:   f.UID,
+		OrgID: f.OrgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
+	// Escape forward slashes in the title
+	escapedSlash := "\\/"
+	title := strings.Replace(f.Title, "/", escapedSlash, -1)
+	f.Fullpath = title
+	f.FullpathUIDs = f.UID
+	for _, p := range parents {
+		pt := strings.Replace(p.Title, "/", escapedSlash, -1)
+		f.Fullpath = f.Fullpath + "/" + pt
+		f.FullpathUIDs = f.FullpathUIDs + "/" + p.UID
+	}
+	return f, nil
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
@@ -638,6 +666,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	var nestedFolder *folder.Folder
 	var dash *dashboards.Dashboard
+	var f *folder.Folder
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
 			return toFolderError(err)
@@ -665,69 +694,16 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, err
 	}
 
-	f := dashboards.FromDashboard(dash)
+	f = dashboards.FromDashboard(dash)
 	if nestedFolder != nil && nestedFolder.ParentUID != "" {
 		f.ParentUID = nestedFolder.ParentUID
 	}
-	if err = s.setDefaultFolderPermissions(ctx, cmd.OrgID, user, f); err != nil {
-		return nil, err
-	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		if f.ParentUID == "" {
-			return f, nil
-		}
-
-		// Fetch the parent since the permissions for fetching the newly created folder
-		// are not yet present for the user--this requires a call to ClearUserPermissionCache
-		parent, err := s.Get(ctx, &folder.GetFolderQuery{
-			UID:              &f.ParentUID,
-			OrgID:            f.OrgID,
-			WithFullpath:     true,
-			WithFullpathUIDs: true,
-			SignedInUser:     user,
-		})
-		if err != nil {
-			return nil, err
-		}
-		// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
-		// Escape forward slashes in the title
-		title := strings.Replace(f.Title, "/", "\\/", -1)
-		f.Fullpath = title + "/" + parent.Fullpath
-		f.FullpathUIDs = f.UID + "/" + parent.FullpathUIDs
+		f, err = s.setFullpath(ctx, f, user)
 	}
 
 	return f, nil
-}
-
-func (s *Service) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
-	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
-		return nil
-	}
-
-	var permissions []accesscontrol.SetResourcePermissionCommand
-
-	if user.IsIdentityType(claims.TypeUser) {
-		userID, err := user.GetInternalID()
-		if err != nil {
-			return err
-		}
-
-		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
-		})
-	}
-
-	isNested := folder.ParentUID != ""
-	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
-	}
-
-	_, err := s.folderPermissions.SetPermissions(ctx, orgID, folder.UID, permissions...)
-	return err
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
@@ -1003,9 +979,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			NewParentUID: &cmd.NewParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
-			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
-				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
-			}
 			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
 		}
 
@@ -1017,9 +990,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			// bypass optimistic locking used for dashboards
 			Overwrite: true,
 		}); err != nil {
-			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
-				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
-			}
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
 		}
 
@@ -1385,10 +1355,6 @@ func toFolderError(err error) error {
 
 	if errors.Is(err, dashboards.ErrDashboardUpdateAccessDenied) {
 		return dashboards.ErrFolderAccessDenied
-	}
-
-	if errors.Is(err, dashboards.ErrDashboardWithSameNameInFolderExists) {
-		return dashboards.ErrFolderSameNameExists
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardWithSameUIDExists) {

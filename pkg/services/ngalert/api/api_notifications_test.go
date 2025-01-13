@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -375,6 +376,7 @@ func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) Notific
 		env.xact,
 		env.log,
 		fakes.NewFakeReceiverPermissionsService(),
+		tracing.InitializeTracerForTest(),
 	)
 	return NotificationSrv{
 		logger:          env.log,

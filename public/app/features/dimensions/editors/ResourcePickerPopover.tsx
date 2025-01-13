@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -21,20 +21,22 @@ interface Props {
   mediaType: MediaType;
   folderName: ResourceFolderName;
   maxFiles?: number;
+  hidePopper?: () => void;
 }
 
 interface ErrorResponse {
   message: string;
 }
 export const ResourcePickerPopover = (props: Props) => {
-  const { value, onChange, mediaType, folderName, maxFiles } = props;
+  const { value, onChange, mediaType, folderName, maxFiles, hidePopper } = props;
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
     onChange(value);
+    hidePopper?.();
   };
 
-  const ref = createRef<HTMLElement>();
+  const ref = useRef<HTMLElement>(null);
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
 
@@ -124,11 +126,13 @@ export const ResourcePickerPopover = (props: Props) => {
                         getBackendSrv()
                           .get(`api/storage/read/${data.path}`)
                           .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`))
-                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`));
+                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`))
+                          .then(() => hidePopper?.());
                       })
                       .catch((err) => console.error(err));
                   } else {
                     onChange(newValue);
+                    hidePopper?.();
                   }
                 }}
               >
@@ -143,49 +147,49 @@ export const ResourcePickerPopover = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  resourcePickerPopover: css`
-    border-radius: ${theme.shape.radius.default};
-    box-shadow: ${theme.shadows.z3};
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.weak};
-  `,
-  resourcePickerPopoverTab: css`
-    width: 50%;
-    text-align: center;
-    padding: ${theme.spacing(1, 0)};
-    background: ${theme.colors.background.secondary};
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    cursor: pointer;
-    border: none;
+  resourcePickerPopover: css({
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+  }),
+  resourcePickerPopoverTab: css({
+    width: '50%',
+    textAlign: 'center',
+    padding: theme.spacing(1, 0),
+    background: theme.colors.background.secondary,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    cursor: 'pointer',
+    border: 'none',
 
-    &:focus:not(:focus-visible) {
-      outline: none;
-      box-shadow: none;
-    }
+    '&:focus:not(:focus-visible)': {
+      outline: 'none',
+      boxShadow: 'none',
+    },
 
-    :focus-visible {
-      position: relative;
-    }
-  `,
-  resourcePickerPopoverActiveTab: css`
-    color: ${theme.colors.text.primary};
-    font-weight: ${theme.typography.fontWeightMedium};
-    background: ${theme.colors.background.primary};
-  `,
-  resourcePickerPopoverContent: css`
-    width: 315px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    min-height: 184px;
-    padding: ${theme.spacing(1)};
-    display: flex;
-    flex-direction: column;
-  `,
-  resourcePickerPopoverTabs: css`
-    display: flex;
-    width: 100%;
-    border-radius: ${theme.shape.radius.default} ${theme.shape.radius.default} 0 0;
-  `,
+    ':focus-visible': {
+      position: 'relative',
+    },
+  }),
+  resourcePickerPopoverActiveTab: css({
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeightMedium,
+    background: theme.colors.background.primary,
+  }),
+  resourcePickerPopoverContent: css({
+    width: '315px',
+    fontSize: theme.typography.bodySmall.fontSize,
+    minHeight: '184px',
+    padding: theme.spacing(1),
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  resourcePickerPopoverTabs: css({
+    display: 'flex',
+    width: '100%',
+    borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+  }),
   buttonRow: css({
     display: 'flex',
     justifyContent: 'center',

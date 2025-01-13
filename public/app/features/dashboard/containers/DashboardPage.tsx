@@ -7,7 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -17,17 +16,15 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
-import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
-import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
+import { KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
-import { AddWidgetModal } from '../components/AddWidgetModal/AddWidgetModal';
 import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
@@ -35,7 +32,7 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { ShareModal } from '../components/ShareModal';
+import { ShareModal } from '../components/ShareModal/ShareModal';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -362,7 +359,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const { editPanel, viewPanel, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
     const styles = getStyles(theme);
-    const isSingleTopNav = config.featureToggles.singleTopNav;
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -438,8 +434,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           layout={PageLayoutType.Canvas}
           className={pageClassName}
           onSetScrollRef={this.setScrollRef}
-          toolbar={
-            isSingleTopNav ? (
+        >
+          {showToolbar && (
+            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
               <DashNav
                 dashboard={dashboard}
                 title={dashboard.title}
@@ -447,23 +444,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 isFullscreen={!!viewPanel}
                 kioskMode={kioskMode}
                 hideTimePicker={dashboard.timepicker.hidden}
-              />
-            ) : undefined
-          }
-        >
-          {showToolbar && (
-            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
-              <AppChromeUpdate
-                actions={
-                  <DashNav
-                    dashboard={dashboard}
-                    title={dashboard.title}
-                    folderTitle={dashboard.meta.folderTitle}
-                    isFullscreen={!!viewPanel}
-                    kioskMode={kioskMode}
-                    hideTimePicker={dashboard.timepicker.hidden}
-                  />
-                }
               />
             </header>
           )}
@@ -512,7 +492,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
-        {queryParams.addWidget && config.featureToggles.vizAndWidgetSplit && <AddWidgetModal />}
       </>
     );
   }
@@ -539,19 +518,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  if (props.route.routeName === DashboardRoutes.Path) {
-    sectionNav = getRootContentNavModel();
-    const pageNav = getPageNavFromSlug(props.params.slug!);
-    if (pageNav?.parentItem) {
-      pageNav.parentItem = pageNav.parentItem;
-    }
-  } else {
-    sectionNav = getNavModel(
-      props.navIndex,
-      ID_PREFIX + dashboard.uid,
-      getNavModel(props.navIndex, 'dashboards/browse')
-    );
-  }
+  sectionNav = getNavModel(props.navIndex, ID_PREFIX + dashboard.uid, getNavModel(props.navIndex, 'dashboards/browse'));
 
   const { folderUid } = dashboard.meta;
   if (folderUid && pageNav && sectionNav.main.id !== 'starred') {

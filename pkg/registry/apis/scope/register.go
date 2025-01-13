@@ -3,20 +3,17 @@ package scope
 import (
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -31,7 +28,9 @@ func NewScopeAPIBuilder() *ScopeAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *ScopeAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagScopeApi,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := NewScopeAPIBuilder()
@@ -111,7 +110,10 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(scope.SchemeGroupVersion)
 }
 
-func (b *ScopeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
+func (b *ScopeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+	optsGetter := opts.OptsGetter
+
 	scopeResourceInfo := scope.ScopeResourceInfo
 	scopeDashboardResourceInfo := scope.ScopeDashboardBindingResourceInfo
 	scopeNodeResourceInfo := scope.ScopeNodeResourceInfo
@@ -153,11 +155,6 @@ func (b *ScopeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return scope.GetOpenAPIDefinitions
-}
-
-// Register additional routes with the server
-func (b *ScopeAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {

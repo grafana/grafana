@@ -16,11 +16,12 @@ import (
 	"k8s.io/apiserver/pkg/apis/example"
 )
 
-var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", CreationTimestamp: metav1.Time{}}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Now()}}}
-var exampleObjNoRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", CreationTimestamp: metav1.Time{}}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Now()}}}
-var exampleObjDifferentRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "3"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
-var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Now()}}}
-var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var now = time.Now()
+
+var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", CreationTimestamp: metav1.Time{}, GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
+var exampleObjNoRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", CreationTimestamp: metav1.Time{}, GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
+var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2", GenerateName: "foo"}, Spec: example.PodSpec{}, Status: example.PodStatus{StartTime: &metav1.Time{Time: now}}}
+var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2", GenerateName: "object-fail"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListMeta: metav1.ListMeta{}, Items: []example.Pod{*exampleObj}}
 var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
 
@@ -142,7 +143,7 @@ func TestMode1_CreateOnUnifiedStorage(t *testing.T) {
 			}
 
 			dw := NewDualWriter(Mode1, ls, us, p, kind)
-			err := dw.(*DualWriterMode1).createOnUnifiedStorage(ctx, tt.input, func(context.Context, runtime.Object) error { return nil }, tt.input, &metav1.CreateOptions{})
+			err := dw.(*DualWriterMode1).createOnUnifiedStorage(ctx, func(context.Context, runtime.Object) error { return nil }, tt.input, &metav1.CreateOptions{})
 			assert.NoError(t, err)
 		})
 	}
@@ -609,7 +610,6 @@ func TestMode1_Update(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, input string)
 		setupStorageFn func(m *mock.Mock, input string)
-		setupGetFn     func(m *mock.Mock, input string)
 		name           string
 		input          string
 		wantErr        bool
@@ -625,18 +625,12 @@ func TestMode1_Update(t *testing.T) {
 				setupStorageFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
 				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
-				},
 			},
 			{
 				name:  "error updating an object in legacy",
 				input: "object-fail",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
-				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
 				},
 				setupStorageFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
@@ -659,10 +653,6 @@ func TestMode1_Update(t *testing.T) {
 			}
 			if tt.setupStorageFn != nil {
 				tt.setupStorageFn(m, tt.input)
-			}
-
-			if tt.setupGetFn != nil {
-				tt.setupGetFn(m, tt.input)
 			}
 
 			dw := NewDualWriter(Mode1, ls, us, p, kind)
@@ -744,7 +734,7 @@ func TestMode1_UpdateOnUnifiedStorage(t *testing.T) {
 
 			dw := NewDualWriter(Mode1, ls, us, p, kind)
 
-			err := dw.(*DualWriterMode1).updateOnUnifiedStorage(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			err := dw.(*DualWriterMode1).updateOnUnifiedStorageMode1(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 			assert.NoError(t, err)
 		})
 	}

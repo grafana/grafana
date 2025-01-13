@@ -91,7 +91,6 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
   return render(
     <DashboardPageProxy
       location={locationService.getLocation()}
-      history={locationService.getHistory()}
       queryParams={{}}
       route={{ routeName: DashboardRoutes.Home, component: () => null, path: '/' }}
       {...props}

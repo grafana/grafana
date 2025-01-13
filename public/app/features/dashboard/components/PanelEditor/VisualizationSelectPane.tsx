@@ -4,10 +4,9 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
-import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
+import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -30,12 +29,8 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Add support to show widgets in the visualization picker
-  const isWidget = !!plugin.meta.skipDataQuery;
-  const isWidgetEnabled = Boolean(isWidget && config.featureToggles.vizAndWidgetSplit);
-
-  const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
-  const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
+  const tabKey = LS_VISUALIZATION_SELECT_TAB_KEY;
+  const defaultTab = VisualizationSelectPaneTab.Visualizations;
 
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
 
@@ -73,15 +68,6 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
     },
   ];
 
-  const radioOptionsWidgetFlow: Array<SelectableValue<VisualizationSelectPaneTab>> = [
-    { label: 'Widgets', value: VisualizationSelectPaneTab.Widgets },
-    {
-      label: 'Library panels',
-      value: VisualizationSelectPaneTab.LibraryPanels,
-      description: 'Reusable panels you can share between multiple dashboards.',
-    },
-  ];
-
   return (
     <div className={styles.openWrapper}>
       <div className={styles.formBox}>
@@ -103,37 +89,23 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
           />
         </div>
         <Field className={styles.customFieldMargin}>
-          <RadioButtonGroup
-            options={isWidgetEnabled ? radioOptionsWidgetFlow : radioOptions}
-            value={listMode}
-            onChange={setListMode}
-            fullWidth
-          />
+          <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
         </Field>
       </div>
       <div className={styles.scrollWrapper}>
-        <CustomScrollbar autoHeightMin="100%">
+        <ScrollContainer>
           <div className={styles.scrollContent}>
             {listMode === VisualizationSelectPaneTab.Visualizations && (
               <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} />
             )}
-            {listMode === VisualizationSelectPaneTab.Widgets && (
-              <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} isWidget />
-            )}
-
             {listMode === VisualizationSelectPaneTab.Suggestions && (
               <VisualizationSuggestions onChange={onVizChange} searchQuery={searchQuery} panel={panel} data={data} />
             )}
             {listMode === VisualizationSelectPaneTab.LibraryPanels && (
-              <PanelLibraryOptionsGroup
-                searchQuery={searchQuery}
-                panel={panel}
-                key="Panel Library"
-                isWidget={isWidget}
-              />
+              <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
-        </CustomScrollbar>
+        </ScrollContainer>
       </div>
     </div>
   );

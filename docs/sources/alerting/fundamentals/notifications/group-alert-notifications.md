@@ -61,7 +61,7 @@ If you want to group alerts by other labels, something other than the alert rule
 
 ### A single group for all alerts
 
-If you want to group all alerts handled by the notification policy in a single group (without grouping notifications by alert rule or other labels), you can do so by leaving `Group by` empty.
+If you want to group all alerts handled by the notification policy in a single group (without grouping notifications by alert rule or other labels), leave `Group by` empty in the Default policy.
 
 ### Disable grouping
 
@@ -105,15 +105,15 @@ Consider a notification policy that:
 - Groups notifications by the `team` label—one group for each distinct `team`.
 - Sets the Group wait timer to `30s`.
 
-| Time               | Incoming alert instance         | Notification policy group | Number of instances |                                                                         |
-| ------------------ | ------------------------------- | ------------------------- | ------------------- | ----------------------------------------------------------------------- |
-| 00:00              | `alert_name=f1` `team=frontend` | `frontend`                | 1                   | Starts the group wait timer of the `frontend` group.                    |
-| 00:10              | `alert_name=f2` `team=frontend` | `frontend`                | 2                   |                                                                         |
-| 00:20              | `alert_name=b1` `team=backend`  | `backend`                 | 1                   | Starts the group wait timer of the `backend` group.                     |
-| 00:30<sup>\*</sup> |                                 | `frontend`                | 2                   | Group wait elapsed. <br/> Send initial notification reporting 2 alerts. |
-| 00:35              | `alert_name=b2` `team=backend`  | `backend`                 | 2                   |                                                                         |
-| 00:40              | `alert_name=b3` `team=backend`  | `backend`                 | 3                   |                                                                         |
-| 00:50<sup>\*</sup> |                                 | `backend`                 | 3                   | Group wait elapsed. <br/> Send initial notification reporting 3 alerts. |
+| Time               | Incoming alert instance        | Notification policy group | Number of instances |                                                                         |
+| ------------------ | ------------------------------ | ------------------------- | ------------------- | ----------------------------------------------------------------------- |
+| 00:00              | `alertname=f1` `team=frontend` | `frontend`                | 1                   | Starts the group wait timer of the `frontend` group.                    |
+| 00:10              | `alertname=f2` `team=frontend` | `frontend`                | 2                   |                                                                         |
+| 00:20              | `alertname=b1` `team=backend`  | `backend`                 | 1                   | Starts the group wait timer of the `backend` group.                     |
+| 00:30<sup>\*</sup> |                                | `frontend`                | 2                   | Group wait elapsed. <br/> Send initial notification reporting 2 alerts. |
+| 00:35              | `alertname=b2` `team=backend`  | `backend`                 | 2                   |                                                                         |
+| 00:40              | `alertname=b3` `team=backend`  | `backend`                 | 3                   |                                                                         |
+| 00:50<sup>\*</sup> |                                | `backend`                 | 3                   | Group wait elapsed. <br/> Send initial notification reporting 3 alerts. |
 
 ### Group interval
 
@@ -134,15 +134,15 @@ Here are the related excerpts from the previous example:
 
 And below is the continuation of the example setting the Group interval timer to 5 minutes:
 
-| Time               | Incoming alert instance         | Notification policy group | Number of instances |                                                                                                |
-| ------------------ | ------------------------------- | ------------------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
-| 01:30              | `alert_name=f3` `team=frontend` | `frontend`                | 3                   |                                                                                                |
-| 02:30              | `alert_name=f4` `team=frontend` | `frontend`                | 4                   |                                                                                                |
-| 05:30<sup>\*</sup> |                                 | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.       |
-| 05:50<sup>\*</sup> |                                 | `backend`                 | 3                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification. |
-| 08:00              | `alert_name=f4` `team=backend`  | `backend`                 | 4                   |                                                                                                |
-| 10:30<sup>\*</sup> |                                 | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification. |
-| 10:50<sup>\*</sup> |                                 | `backend`                 | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.       |
+| Time               | Incoming alert instance        | Notification policy group | Number of instances |                                                                                                |
+| ------------------ | ------------------------------ | ------------------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
+| 01:30              | `alertname=f3` `team=frontend` | `frontend`                | 3                   |                                                                                                |
+| 02:30              | `alertname=f4` `team=frontend` | `frontend`                | 4                   |                                                                                                |
+| 05:30<sup>\*</sup> |                                | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.       |
+| 05:50<sup>\*</sup> |                                | `backend`                 | 3                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification. |
+| 08:00              | `alertname=f4` `team=backend`  | `backend`                 | 4                   |                                                                                                |
+| 10:30<sup>\*</sup> |                                | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification. |
+| 10:50<sup>\*</sup> |                                | `backend`                 | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.       |
 
 **How it works**
 

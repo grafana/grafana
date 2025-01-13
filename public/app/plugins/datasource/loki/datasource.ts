@@ -82,9 +82,11 @@ import {
   getStreamSelectorsFromQuery,
   isLogsQuery,
   isQueryWithError,
+  requestSupportsSharding,
   requestSupportsSplitting,
 } from './queryUtils';
 import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
+import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -252,7 +254,7 @@ export class LokiDatasource
 
   /**
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
-   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   * @returns A DataQueryRequest or undefined if no suitable queries are found.
    */
   private getLogsVolumeDataProvider(
     request: DataQueryRequest<LokiQuery>,
@@ -272,7 +274,7 @@ export class LokiDatasource
 
   /**
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
-   * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
+   * @returns A DataQueryRequest or undefined if no suitable queries are found.
    */
   private getLogsSampleDataProvider(
     request: DataQueryRequest<LokiQuery>,
@@ -359,7 +361,9 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
+    if (config.featureToggles.lokiShardSplitting && requestSupportsSharding(fixedRequest.targets)) {
+      return runShardSplitQuery(this, fixedRequest);
+    } else if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
       return runSplitQuery(this, fixedRequest);
     }
 
@@ -533,7 +537,12 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params, options);
-    return res.data || [];
+
+    // detected_field/${label}/values has different structure then other metadata responses
+    if (!res.data && res.values) {
+      return res.values ?? [];
+    }
+    return res.data ?? [];
   }
 
   /**
@@ -1029,8 +1038,12 @@ export class LokiDatasource
     const annotations: AnnotationEvent[] = [];
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
+    const isDataplaneLog = config.featureToggles.lokiLogsDataplane;
+
     for (const frame of data) {
-      const view = new DataFrameView<{ Time: string; Line: string; labels: Labels }>(frame);
+      const view = new DataFrameView<{ timestamp: string; Time: string; body: string; Line: string; labels: Labels }>(
+        frame
+      );
 
       view.forEach((row) => {
         const { labels } = row;
@@ -1050,15 +1063,17 @@ export class LokiDatasource
 
             return true;
           })
-          .map(([key, val]) => val); // keep only the label-value
+          .map(([_, val]) => val); // keep only the label-value
 
         // remove duplicates
         const tags = Array.from(new Set(maybeDuplicatedTags));
 
+        const logLine = isDataplaneLog ? row.body : row.Line;
+
         annotations.push({
-          time: new Date(row.Time).valueOf(),
+          time: isDataplaneLog ? new Date(row.timestamp).valueOf() : new Date(row.Time).valueOf(),
           title: renderLegendFormat(titleFormat, labels),
-          text: renderLegendFormat(textFormat, labels) || row.Line,
+          text: renderLegendFormat(textFormat, labels) || logLine,
           tags,
         });
       });

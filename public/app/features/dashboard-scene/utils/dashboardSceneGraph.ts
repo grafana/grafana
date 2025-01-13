@@ -4,6 +4,8 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 
+import { getLayoutManagerFor } from './utils';
+
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
 }
@@ -46,16 +48,12 @@ export function getCursorSync(scene: DashboardScene) {
   return;
 }
 
-export function getNextPanelId(dashboard: DashboardScene): number {
-  return dashboard.state.body.getNextPanelId();
-}
-
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
   getVizPanels,
   getDataLayers,
-  getNextPanelId,
   getCursorSync,
+  getLayoutManagerFor,
 };

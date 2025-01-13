@@ -1,16 +1,17 @@
 import { ReactElement, useState } from 'react';
 import * as React from 'react';
 
-import { DataSourceSettings } from '@grafana/data';
 import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/experimental';
-import { PromOptions, docsTip, overhaulStyles } from '@grafana/prometheus';
+import { docsTip, overhaulStyles } from '@grafana/prometheus';
 import { Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 // NEED TO EXPORT THIS FROM GRAFANA/UI FOR EXTERNAL DS
 import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
 
+import { AzurePromDataSourceSettings } from './AzureCredentialsConfig';
+
 type Props = {
-  options: DataSourceSettings<PromOptions, {}>;
-  onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void;
+  options: AzurePromDataSourceSettings;
+  onOptionsChange: (options: AzurePromDataSourceSettings) => void;
   azureAuthSettings: AzureAuthSettings;
   sigV4AuthToggleEnabled: boolean | undefined;
   renderSigV4Editor: React.ReactNode;
@@ -73,7 +74,7 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
   const azureAuthOption: CustomMethod = {
     id: azureAuthId,
     label: 'Azure auth',
-    description: 'This is Azure auth description',
+    description: 'Authenticate with Azure',
     component: (
       <>
         {azureAuthSettings.azureSettingsUI && (
@@ -161,6 +162,7 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
             withCredentials: method === AuthMethod.CrossSiteCredentials,
             jsonData: {
               ...options.jsonData,
+              azureCredentials: method === azureAuthId ? options.jsonData.azureCredentials : undefined,
               sigV4Auth: method === sigV4Id,
               oauthPassThru: method === AuthMethod.OAuthForward,
             },

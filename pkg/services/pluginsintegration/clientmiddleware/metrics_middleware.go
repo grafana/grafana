@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
@@ -115,7 +114,7 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	status, err := fn(ctx)
 	elapsed := time.Since(start)
 
-	statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
+	statusSource := backend.ErrorSourceFromContext(ctx)
 	endpoint := backend.EndpointFromContext(ctx)
 
 	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, string(statusSource))

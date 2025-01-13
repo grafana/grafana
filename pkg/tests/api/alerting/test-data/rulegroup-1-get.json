@@ -44,7 +44,8 @@
         "is_paused": false,
         "metadata": {
           "editor_settings": {
-            "simplified_query_and_expressions_section": false
+            "simplified_query_and_expressions_section": false,
+            "simplified_notifications_section": false
           }
         }
       }
@@ -91,7 +92,8 @@
         "is_paused": false,
         "metadata": {
           "editor_settings": {
-            "simplified_query_and_expressions_section": false
+            "simplified_query_and_expressions_section": false,
+            "simplified_notifications_section": false
           }
         }
       }

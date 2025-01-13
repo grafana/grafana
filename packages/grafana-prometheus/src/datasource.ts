@@ -97,7 +97,6 @@ export class PrometheusDatasource
   basicAuth: any;
   withCredentials: boolean;
   interval: string;
-  queryTimeout: string | undefined;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
@@ -127,7 +126,6 @@ export class PrometheusDatasource
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = Boolean(instanceSettings.withCredentials);
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
-    this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
@@ -407,6 +405,7 @@ export class PrometheusDatasource
           ...processedTarget,
           refId: processedTarget.refId + InstantQueryRefIdIndex,
           range: false,
+          exemplar: false,
         }
       );
     } else {
@@ -538,7 +537,11 @@ export class PrometheusDatasource
     const annotation = options.annotation;
     const { tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
 
-    const step = rangeUtil.intervalToSeconds(annotation.step || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
+    const input = frames[0].meta?.executedQueryString || '';
+    const regex = /Step:\s*([\d\w]+)/;
+    const match = input.match(regex);
+    const stepValue = match ? match[1] : null;
+    const step = rangeUtil.intervalToSeconds(stepValue || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
     const tagKeysArray = tagKeys.split(',');
 
     const eventList: AnnotationEvent[] = [];
@@ -621,7 +624,7 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
-    if (config.featureToggles.promQLScope && !!options) {
+    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       const suggestions = await this.languageProvider.fetchSuggestions(
         options.timeRange,
         options.queries,
@@ -1043,13 +1046,46 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
-// NOTE: these two functions are very similar to the escapeLabelValueIn* functions
+// NOTE: these two functions are similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
+    // don't escape the encapsulating quotes
+    if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
+      return value;
+    }
+
+    return value
+      .replace(/\\/g, '\\\\') // escape backslashes
+      .replace(/"/g, '\\"'); // escape double quotes
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\') // escape backslashes
+    .replace(/'/g, "\\\\'"); // escape single quotes
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    return value
+      .replace(/\\/g, '\\\\\\\\') // escape backslashes
+      .replace(/"/g, '\\\\\\"') // escape double quotes
+      .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\\\\\') // escape backslashes
+    .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'); // escape regex metacharacters
 }

@@ -19,6 +19,7 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -57,7 +58,8 @@ type httpClient interface {
 func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*DataSourceProxy, error) {
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
 		return nil, err
@@ -261,7 +263,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
-		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser); token != nil {
+		reqCtx := contexthandler.FromContext(req.Context())
+		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser, reqCtx.UserToken); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 
 			idToken, ok := token.Extra("id_token").(string)
@@ -372,7 +375,7 @@ func (proxy *DataSourceProxy) logRequest() {
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
 	uri, err := util.SanitizeURI(proxy.ctx.Req.RequestURI)
-	if err == nil {
+	if err != nil {
 		proxy.ctx.Logger.Error("Could not sanitize RequestURI", "error", err)
 	}
 

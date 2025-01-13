@@ -2,15 +2,18 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
-import { isAddedComponentMetaInfoMissing, isGrafanaDevMode, wrapWithPluginContext } from '../utils';
-import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint, isReactComponent } from '../validators';
+import * as errors from '../errors';
+import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
+import { isAddedComponentMetaInfoMissing } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+
+const logPrefix = 'Could not register component extension. Reason:';
 
 export type AddedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -40,22 +43,8 @@ export class AddedComponentsRegistry extends Registry<
         pluginId,
       });
 
-      if (!isReactComponent(config.component)) {
-        configLog.error(
-          `Could not register added component. Reason: The provided component is not a valid React component.`
-        );
-        continue;
-      }
-
       if (!config.title) {
-        configLog.error(`Could not register added component. Reason: Title is missing.`);
-        continue;
-      }
-
-      if (!config.description) {
-        configLog.error(
-          `Could not register added component with title '${config.title}'. Reason: Description is missing.`
-        );
+        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
         continue;
       }
 
@@ -71,12 +60,6 @@ export class AddedComponentsRegistry extends Registry<
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
 
-        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          pointIdLog.warning(
-            `Added component "${config.title}": it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
-          );
-        }
-
         const result = {
           pluginId,
           component: wrapWithPluginContext(pluginId, config.component, pointIdLog),
@@ -84,7 +67,7 @@ export class AddedComponentsRegistry extends Registry<
           title: config.title,
         };
 
-        pointIdLog.debug(`Added component from '${pluginId}' to '${extensionPointId}'`);
+        pointIdLog.debug('Added component extension successfully registered');
 
         if (!(extensionPointId in registry)) {
           registry[extensionPointId] = [result];

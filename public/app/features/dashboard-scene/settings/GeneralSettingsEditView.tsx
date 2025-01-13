@@ -25,7 +25,7 @@ import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/Ge
 
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions, ToolbarActions } from '../scene/NavToolbarActions';
+import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -123,9 +123,7 @@ export class GeneralSettingsEditView
   };
 
   public onWeekStartChange = (value: string) => {
-    this.getTimeRange().setState({
-      weekStart: value,
-    });
+    this.getTimeRange().setState({ weekStart: value });
   };
 
   public onRefreshIntervalChange = (value: string[]) => {
@@ -177,16 +175,10 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
     const { enabled: liveNow } = model.getLiveNowTimer().useState();
-    const isSingleTopNav = config.featureToggles.singleTopNav;
 
     return (
-      <Page
-        navModel={navModel}
-        pageNav={pageNav}
-        layout={PageLayoutType.Standard}
-        toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
-      >
-        {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
         <div style={{ maxWidth: '600px' }}>
           <Box marginBottom={5}>
             <Field
