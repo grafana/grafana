@@ -128,7 +128,7 @@ Only organization administrators can create reports by default. You can customiz
 
 The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
 
-<!-- image here -->
+![Reporting wizard](/media/docs/grafana/dashboards/screenshot-reporting-wizard-v11.5.png)
 
 To create a report, follow these steps:
 
@@ -300,9 +300,15 @@ Then, click **Send now** or **Schedule send**.
 
 You can also save the report as a draft or discard it. Discarding the report is irreversible.
 
+## Send a report using the API
+
+You can send reports programmatically with the [send report](ref:send-report) endpoint in the [HTTP APIs](ref:http-apis).
+
 ## Manage reports
 
 On the **Reports** page, you can view and manage your existing reports or create new ones.
+
+![Reports page](/media/docs/grafana/dashboards/screenshot-reports-page-v11.5.png)
 
 ### Edit
 
@@ -323,7 +329,3 @@ You can pause and resume sending reports from the report list view. To do this, 
 
    - Click the pause icon - The report won't be sent according to its schedule until it's resumed.
    - Click the resume icon - The report resumes on its previous schedule.
-
-## Send a report using the API
-
-You can send reports programmatically with the [send report](ref:send-report) endpoint in the [HTTP APIs](ref:http-apis).
