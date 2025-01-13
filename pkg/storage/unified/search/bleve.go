@@ -606,6 +606,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		return query.NewConjunctionQuery(conjuncts), nil
+
 	case selection.NotEquals:
 	case selection.DoesNotExist:
 	case selection.GreaterThan:
@@ -629,7 +630,21 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		return query.NewDisjunctionQuery(disjuncts), nil
+
 	case selection.NotIn:
+		boolQuery := bleve.NewBooleanQuery()
+
+		var mustNotQueries []query.Query
+		for _, value := range req.Values {
+			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(value))
+		}
+		boolQuery.AddMustNot(mustNotQueries...)
+
+		// must still have a value
+		notEmptyQuery := bleve.NewWildcardQuery("*")
+		boolQuery.AddMust(notEmptyQuery)
+
+		return boolQuery, nil
 	}
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
