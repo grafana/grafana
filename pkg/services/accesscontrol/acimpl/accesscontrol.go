@@ -3,7 +3,6 @@ package acimpl
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -16,10 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-var (
-	errAccessNotImplemented = errors.New("access control not implemented for resource")
-	tracer                  = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
-)
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
@@ -96,57 +92,6 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 
 	a.debug(ctx, user, "Evaluating resolved permissions", resolvedEvaluator)
 	return resolvedEvaluator.Evaluate(permissions), nil
-}
-
-func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.evaluateZanzana")
-	defer span.End()
-
-	eval, err := evaluator.MutateScopes(ctx, a.resolvers.GetScopeAttributeMutator(user.GetOrgID()))
-	if err != nil {
-		if !errors.Is(err, accesscontrol.ErrResolverNotFound) {
-			return false, err
-		}
-		eval = evaluator
-	}
-
-	return eval.EvaluateCustom(func(action string, scopes ...string) (bool, error) {
-		// FIXME: handle action with no scopes
-		if len(scopes) == 0 {
-			return false, nil
-		}
-
-		resourceScope := scopes[0]
-		kind, _, identifier := accesscontrol.SplitScope(resourceScope)
-
-		// Parent folder always returned by scope resolver as a second value
-		var parentFolder string
-		if len(scopes) > 1 {
-			_, _, parentFolder = accesscontrol.SplitScope(scopes[1])
-		}
-
-		req, ok := zanzana.TranslateToCheckRequest(user.GetNamespace(), action, kind, parentFolder, identifier)
-		if !ok {
-			// unsupported translation
-			return false, errAccessNotImplemented
-		}
-
-		a.log.Debug("evaluating zanzana", "user", user.GetUID(), "namespace", req.Namespace, "verb", req.Verb, "resource", req.Resource, "name", req.Name)
-		res, err := a.zclient.Check(ctx, user, *req)
-
-		if err != nil {
-			return false, err
-		}
-
-		return res.Allowed, nil
-	})
-}
-
-type evalResult struct {
-	runner   string
-	decision bool
-	err      error
-	duration time.Duration
 }
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
