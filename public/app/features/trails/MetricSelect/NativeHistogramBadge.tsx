@@ -15,7 +15,7 @@ export class NativeHistogramBadge extends SceneObjectBase {
       <Badge 
         className={styles.badge} 
         color="blue" 
-        text={<Trans i18nKey="trails.metric-select.nattive-histogram">Native histogram</Trans>}
+        text={<Trans i18nKey="trails.metric-select.nattive-histogram">Native Histogram</Trans>}
       />
     );
   };
