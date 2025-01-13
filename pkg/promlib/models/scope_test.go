@@ -28,6 +28,12 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name:      "No filters with existing utf8 filter",
+			query:     `http_requests_total{"job.name"="prometheus"}`,
+			expected:  `http_requests_total{"job.name"="prometheus"}`,
+			expectErr: false,
+		},
+		{
 			name:  "Adhoc filter with existing filter",
 			query: `http_requests_total{job="prometheus"}`,
 			adhocFilters: []ScopeFilter{
@@ -161,6 +167,13 @@ func TestApplyQueryFiltersAndGroupBy_GroupBy(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name:      "GroupBy with no aggregate expression and utf8 metric",
+			groupBy:   []string{"job"},
+			query:     `{"http.requests_total"}`,
+			expected:  `{__name__="http.requests_total"}`,
+			expectErr: false,
+		},
+		{
 			name:      "No GroupBy with aggregate expression",
 			query:     `sum by () (http_requests_total)`,
 			expected:  `sum(http_requests_total)`,
@@ -181,6 +194,13 @@ func TestApplyQueryFiltersAndGroupBy_GroupBy(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name:      "GroupBy with aggregate expression with existing utf8 group by",
+			groupBy:   []string{"status"},
+			query:     `sum by ("utf8.job") (http_requests_total)`,
+			expected:  `sum by ("utf8.job", status) (http_requests_total)`,
+			expectErr: false,
+		},
+		{
 			name:      "GroupBy with aggregate expression with existing group by (already exists)",
 			groupBy:   []string{"job"},
 			query:     `sum by (job) (http_requests_total)`,
@@ -197,7 +217,7 @@ func TestApplyQueryFiltersAndGroupBy_GroupBy(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, expr, tt.expected)
+				require.Equal(t, tt.expected, expr)
 			}
 		})
 	}
@@ -227,6 +247,45 @@ func TestApplyQueryFiltersAndGroupBy(t *testing.T) {
 			expected:  `sum by (job) (capacity_bytes{job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,
 			expectErr: false,
 		},
+		{
+			name:  "Adhoc filters with more complex expression and utf8 metric name",
+			query: `sum({"capacity_bytes", job="prometheus"} + {"available_bytes", job="grafana"}) / 1024`,
+			adhocFilters: []ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			},
+			scopeFilters: []ScopeFilter{
+				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			},
+			groupby:   []string{"job"},
+			expected:  `sum by (job) ({__name__="capacity_bytes",job="alloy",vol="/"} + {__name__="available_bytes",job="alloy",vol="/"}) / 1024`,
+			expectErr: false,
+		},
+		{
+			name:  "Adhoc filters with more complex expression with utf8 label",
+			query: `sum(capacity_bytes{job="prometheus", "utf8.label"="value"} + available_bytes{job="grafana"}) / 1024`,
+			adhocFilters: []ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			},
+			scopeFilters: []ScopeFilter{
+				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			},
+			groupby:   []string{"job"},
+			expected:  `sum by (job) (capacity_bytes{"utf8.label"="value",job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,
+			expectErr: false,
+		},
+		{
+			name:  "Adhoc filters with more complex expression with utf8 metric and label",
+			query: `sum({"capacity_bytes", job="prometheus", "utf8.label"="value"} + available_bytes{job="grafana"}) / 1024`,
+			adhocFilters: []ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			},
+			scopeFilters: []ScopeFilter{
+				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			},
+			groupby:   []string{"job"},
+			expected:  `sum by (job) ({"utf8.label"="value",__name__="capacity_bytes",job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -237,7 +296,7 @@ func TestApplyQueryFiltersAndGroupBy(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, expr, tt.expected)
+				require.Equal(t, tt.expected, expr)
 			}
 		})
 	}
