@@ -161,7 +161,7 @@ export class BackendSrv implements BackendService {
         async function process() {
           while (true) {
             if (controller.signal.aborted) {
-              throw new Error('aborted')
+              throw new Error('aborted');
             }
             const chunk = await reader.read();
             observer.next({
