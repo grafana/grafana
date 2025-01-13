@@ -823,6 +823,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"baseDirectory": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The directory path (under the repository) which should be regarded as the base for all resources. Set to e.g. `/grafana/` to put them all in the `grafana` directory under the root of the repository's location. This means in a local repository of `/example`, it'd use `/example/grafana`; in a Git repository, it'd use `/grafana`. Trailing and leading slashes are permitted but effectively useless.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"editing": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Edit options within the repository",
