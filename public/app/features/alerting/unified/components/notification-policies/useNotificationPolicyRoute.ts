@@ -70,10 +70,14 @@ export const useNotificationPolicyRoute = ({ alertmanager }: BaseAlertmanagerArg
   return k8sApiSupported ? k8sRouteQuery : amConfigQuery;
 };
 
+export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
+
 const parseAmConfigRoute = memoize((route: Route): Route => {
   return {
     ...route,
-    _metadata: { provisioned: Boolean(route.provenance && route.provenance !== PROVENANCE_NONE) },
+    [ROUTES_META_SYMBOL]: {
+      provisioned: Boolean(route.provenance && route.provenance !== PROVENANCE_NONE),
+    },
   };
 });
 
@@ -94,7 +98,7 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
     const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree?.[0] ?? {});
     const newRouteTree = mergePartialAmRouteWithRouteTree(alertmanager, update, rootRouteWithIdentifiers);
 
-    const { routes, _metadata, ...defaults } = newRouteTree;
+    const { routes, ...defaults } = newRouteTree;
     // Remove provenance so we don't send it to API
     // Convert Route to K8s compatible format
     const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
@@ -109,7 +113,7 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
     // Create the K8s route object
     const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
       spec: k8sRoute,
-      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: _metadata?.resourceVersion },
+      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: newRouteTree[ROUTES_META_SYMBOL]?.resourceVersion },
     };
 
     return updatedNamespacedRoute({
@@ -148,7 +152,7 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
     const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree?.[0] ?? {});
     const newRouteTree = omitRouteFromRouteTree(id, rootRouteWithIdentifiers);
 
-    const { routes, _metadata, ...defaults } = newRouteTree;
+    const { routes, ...defaults } = newRouteTree;
     // Remove provenance so we don't send it to API
     // Convert Route to K8s compatible format
     const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
@@ -163,7 +167,7 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
     // Create the K8s route object
     const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
       spec: k8sRoute,
-      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: _metadata?.resourceVersion },
+      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: newRouteTree[ROUTES_META_SYMBOL]?.resourceVersion },
     };
 
     return updatedNamespacedRoute({
@@ -213,7 +217,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
         rootRouteWithIdentifiers,
         insertPosition
       );
-      const { routes, _metadata, ...defaults } = newRouteTree;
+      const { routes, ...defaults } = newRouteTree;
       // Remove provenance so we don't send it to API
       // Convert Route to K8s compatible format
       const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
@@ -228,7 +232,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
       // Create the K8s route object
       const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
         spec: k8sRoute,
-        metadata: { name: ROOT_ROUTE_NAME, resourceVersion: _metadata?.resourceVersion },
+        metadata: { name: ROOT_ROUTE_NAME, resourceVersion: newRouteTree[ROUTES_META_SYMBOL]?.resourceVersion },
       };
 
       return updatedNamespacedRoute({
@@ -267,7 +271,7 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
     return {
       ...route.spec.defaults,
       routes: route.spec.routes?.map(k8sSubRouteToRoute),
-      _metadata: {
+      [ROUTES_META_SYMBOL]: {
         provisioned: isK8sEntityProvisioned(route),
         resourceVersion: route.metadata.resourceVersion,
         name: route.metadata.name,

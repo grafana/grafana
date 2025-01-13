@@ -1,5 +1,6 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
+import { ROUTES_META_SYMBOL } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 
 export type AlertManagerCortexConfig = {
@@ -133,7 +134,8 @@ export type Route = {
   active_time_intervals?: string[];
   /** only the root policy might have a provenance field defined */
   provenance?: string;
-  _metadata?: {
+  /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
+  [ROUTES_META_SYMBOL]?: {
     provisioned?: boolean;
     resourceVersion?: string;
     name?: string;

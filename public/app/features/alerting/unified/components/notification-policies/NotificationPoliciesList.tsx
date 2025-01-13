@@ -12,6 +12,7 @@ import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/
 import { computeInheritedTree } from 'app/features/alerting/unified/utils/notification-policies';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 
@@ -23,6 +24,7 @@ import { NotificationPoliciesFilter, findRoutesByMatchers, findRoutesMatchingPre
 import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal } from './Modals';
 import { Policy } from './Policy';
 import {
+  ROUTES_META_SYMBOL,
   useAddNotificationPolicy,
   useDeleteNotificationPolicy,
   useNotificationPolicyRoute,
@@ -51,7 +53,7 @@ export const NotificationPoliciesList = () => {
   const {
     currentData,
     isLoading,
-    error: resultError,
+    error: fetchPoliciesError,
     refetch: refetchNotificationPolicyRoute,
   } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' });
 
@@ -186,20 +188,19 @@ export const NotificationPoliciesList = () => {
     return null;
   }
 
-  const hasPoliciesData = rootRoute && !resultError && !isLoading;
-  const hasPoliciesError = !!resultError && !isLoading;
-
+  const hasPoliciesData = rootRoute && !fetchPoliciesError && !isLoading;
+  const hasPoliciesError = Boolean(fetchPoliciesError) && !isLoading;
   const hasConflictError = [
     addNotificationPolicyState,
     updateExistingNotificationPolicyState,
     deleteNotificationPolicyState,
-  ].some((state) => state.error && getErrorCode(state.error) === ERROR_NEWER_CONFIGURATION);
+  ].some((state) => isError(state) && getErrorCode(state.error) === ERROR_NEWER_CONFIGURATION);
 
   return (
     <>
       {hasPoliciesError && (
         <Alert severity="error" title="Error loading Alertmanager config">
-          {stringifyErrorLike(resultError) || 'Unknown error.'}
+          {stringifyErrorLike(fetchPoliciesError) || 'Unknown error.'}
         </Alert>
       )}
       {/* show when there is an update error */}
@@ -230,7 +231,7 @@ export const NotificationPoliciesList = () => {
               currentRoute={rootRoute}
               contactPointsState={contactPointsState.receivers}
               readOnly={!hasConfigurationAPI}
-              provisioned={rootRoute._metadata?.provisioned}
+              provisioned={rootRoute[ROUTES_META_SYMBOL]?.provisioned}
               alertManagerSourceName={selectedAlertmanager}
               onAddPolicy={openAddModal}
               onEditPolicy={openEditModal}
