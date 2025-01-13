@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -125,20 +124,20 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 
 	return &authzv1.ListResponse{
 		Folders: folderObject(folders),
-		Items:   directObjects(resource.GroupResource(), objects),
+		Items:   genericObjects(resource.GroupResource(), objects),
 	}, nil
 }
 
 func typedObjects(typ string, objects []string) []string {
-	prefix := fmt.Sprintf("%s:", typ)
+	prefix := typ + ":"
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
 	return objects
 }
 
-func directObjects(gr string, objects []string) []string {
-	prefix := fmt.Sprintf("%s:%s/", resourceType, gr)
+func genericObjects(gr string, objects []string) []string {
+	prefix := common.TypeResourcePrefix + gr + "/"
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
@@ -147,7 +146,7 @@ func directObjects(gr string, objects []string) []string {
 
 func folderObject(objects []string) []string {
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], folderTypePrefix)
+		objects[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
 	}
 	return objects
 }
