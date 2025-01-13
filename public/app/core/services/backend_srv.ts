@@ -160,17 +160,11 @@ export class BackendSrv implements BackendService {
       }).subscribe((result) => {
         const reader = result.data.getReader();
         disconnect = () => {
-          console.log('chunked, disconnect', requestId);
+          console.log('disconnect', requestId);
 
           // Send all the cancel messages
           reader.cancel('disconnect').catch((e) => {
             console.log('reader.cancel', requestId, e);
-          });
-
-          // this happens when we unsubscribe before the connection is done
-          // Catch the error because it may be locked from the abort controller
-          result.data.cancel('disconnect').catch((e) => {
-            console.log('result.data.cancel', requestId, e);
           });
         };
         async function process() {
@@ -182,13 +176,14 @@ export class BackendSrv implements BackendService {
             });
             if (chunk.done) {
               console.log('chunked, done', requestId);
+              disconnect = () => {}
               return Promise.resolve();
             }
           }
         }
         process()
           .catch((e) => {
-            console.error('error running process', e);
+            console.error('error running process', requestId, e);
           })
           .then(() => {
             console.log('complete', requestId);
@@ -197,9 +192,10 @@ export class BackendSrv implements BackendService {
       });
 
       return function unsubscribe() {
-        controller.abort('unsubscribe');
-        disconnect();
         console.log('chunked, unsubscribe', requestId);
+        disconnect();
+
+        controller.abort('unsubscribe');
         sub.unsubscribe();
       };
     });
