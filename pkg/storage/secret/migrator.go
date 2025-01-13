@@ -49,8 +49,8 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "title", Type: migrator.DB_Text, Nullable: false},
 			{Name: "keeper", Type: migrator.DB_Text, Nullable: false},
 			{Name: "audiences", Type: migrator.DB_Text, Nullable: false},
-			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
-			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
+			{Name: "is_ref", Type: migrator.DB_Bool, Nullable: false},
+			{Name: "external_id", Type: migrator.DB_Text, Nullable: false}, // when `is_ref`` is `true``, this is the `ref`.
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
