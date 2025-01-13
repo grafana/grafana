@@ -238,6 +238,38 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NotContains(t, terms, "delete this")
 	})
 
+	t.Run("Should delete associated provisioning info, even without the dashboard existing in the db", func(t *testing.T) {
+		setup()
+		provisioningData := &dashboards.DashboardProvisioning{
+			ID:          1,
+			DashboardID: 200,
+			Name:        "test",
+			CheckSum:    "123",
+			Updated:     54321,
+			ExternalID:  "/path/to/dashboard",
+		}
+		err := dashboardStore.SaveProvisionedDashboard(context.Background(), &dashboards.Dashboard{
+			ID: 200,
+		}, provisioningData)
+		require.NoError(t, err)
+
+		res, err := dashboardStore.GetProvisionedDashboardData(context.Background(), "test")
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.Equal(t, res[0], provisioningData)
+
+		err = dashboardStore.CleanupAfterDelete(context.Background(), &dashboards.DeleteDashboardCommand{
+			ID:    200,
+			OrgID: 1,
+			UID:   "test",
+		})
+		require.NoError(t, err)
+
+		res, err = dashboardStore.GetProvisionedDashboardData(context.Background(), "test")
+		require.NoError(t, err)
+		require.Len(t, res, 0)
+	})
+
 	t.Run("Should be able to delete all dashboards for an org", func(t *testing.T) {
 		setup()
 		dash1 := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
