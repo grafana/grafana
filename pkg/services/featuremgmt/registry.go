@@ -1721,6 +1721,22 @@ var (
 			AllowSelfServe: false,
 			Owner:          identityAccessTeam,
 		},
+		{
+			Name:         "ABTestFeatureToggleA",
+			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "ABTestFeatureToggleB",
+			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 	}
 )
 

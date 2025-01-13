@@ -249,4 +249,6 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   improvedExternalSessionHandlingSAML?: boolean;
   teamHttpHeadersMimir?: boolean;
+  ABTestFeatureToggleA?: boolean;
+  ABTestFeatureToggleB?: boolean;
 }
