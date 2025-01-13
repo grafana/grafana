@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -320,11 +319,11 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	if !s.isTeamMember(ctx, client) {
-		return nil, errors.New("user not a member of one of the required teams")
+		return nil, &SocialError{"User not a member of one of the required teams"}
 	}
 
 	if !s.isOrganizationMember(ctx, client) {
-		return nil, errors.New("user not a member of one of the required organizations")
+		return nil, &SocialError{"User not a member of one of the required organizations"}
 	}
 
 	if !s.isGroupMember(userInfo.Groups) {
