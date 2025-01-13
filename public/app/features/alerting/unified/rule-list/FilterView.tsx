@@ -170,29 +170,24 @@ function onFinished<T>(fn: () => void) {
 }
 
 function getRuleKey(ruleWithOrigin: RuleWithOrigin): string {
-  switch (ruleWithOrigin.origin) {
-    case 'grafana':
-      return getGrafanaRuleKey(ruleWithOrigin);
-    case 'datasource':
-      return getDataSourceRuleKey(ruleWithOrigin);
-    default:
-      const _exhaustiveCheck: never = ruleWithOrigin;
-      return _exhaustiveCheck;
+  if (ruleWithOrigin.origin === 'grafana') {
+    return getGrafanaRuleKey(ruleWithOrigin);
   }
+  return getDataSourceRuleKey(ruleWithOrigin);
+}
 
-  function getGrafanaRuleKey(ruleWithOrigin: GrafanaRuleWithOrigin) {
-    const {
-      groupIdentifier: { namespace, groupName },
-      rule,
-    } = ruleWithOrigin;
-    return `grafana-${namespace.uid}-${groupName}-${rule.uid}}`;
-  }
+function getGrafanaRuleKey(ruleWithOrigin: GrafanaRuleWithOrigin) {
+  const {
+    groupIdentifier: { namespace, groupName },
+    rule,
+  } = ruleWithOrigin;
+  return `grafana-${namespace.uid}-${groupName}-${rule.uid}}`;
+}
 
-  function getDataSourceRuleKey(ruleWithOrigin: PromRuleWithOrigin) {
-    const {
-      rule,
-      groupIdentifier: { rulesSource, namespace, groupName },
-    } = ruleWithOrigin;
-    return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}`;
-  }
+function getDataSourceRuleKey(ruleWithOrigin: PromRuleWithOrigin) {
+  const {
+    rule,
+    groupIdentifier: { rulesSource, namespace, groupName },
+  } = ruleWithOrigin;
+  return `${rulesSource.name}-${namespace.name}-${groupName}-${rule.name}-${rule.type}-${hashRule(rule)}`;
 }
