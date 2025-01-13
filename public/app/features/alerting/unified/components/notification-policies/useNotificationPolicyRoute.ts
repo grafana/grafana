@@ -1,10 +1,9 @@
-import { omit } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { generatedRoutesApi as routingTreeApi } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
-import { dispatch } from 'app/store/store';
+import { useDispatch } from 'app/types/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useAsync } from '../../hooks/useAsync';
@@ -82,6 +81,8 @@ const parseAmConfigRoute = memoize((route: Route): Route => {
 });
 
 export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
+  const dispatch = useDispatch();
+
   // for k8s api
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
@@ -93,9 +94,12 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
       routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
     );
 
-    const rootTree = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : undefined;
+    const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
+    if (!rootTree) {
+      throw new Error(`no root route found for namespace ${namespace}`);
+    }
 
-    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree?.[0] ?? {});
+    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
     const newRouteTree = mergePartialAmRouteWithRouteTree(alertmanager, update, rootRouteWithIdentifiers);
 
     const { routes, ...defaults } = newRouteTree;
@@ -135,6 +139,8 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
 }
 
 export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
+  const dispatch = useDispatch();
+
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
@@ -146,9 +152,12 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
       routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
     );
 
-    const rootTree = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : undefined;
+    const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
+    if (!rootTree) {
+      throw new Error(`no root route found for namespace ${namespace}`);
+    }
 
-    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree?.[0] ?? {});
+    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
     const newRouteTree = omitRouteFromRouteTree(id, rootRouteWithIdentifiers);
 
     const { routes, ...defaults } = newRouteTree;
@@ -185,6 +194,8 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
 }
 
 export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
+  const dispatch = useDispatch();
+
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
@@ -205,10 +216,12 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
         routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
       );
 
-      const rootTree = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : undefined;
+      const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
+      if (!rootTree) {
+        throw new Error(`no root route found for namespace ${namespace}`);
+      }
 
-      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree?.[0] ?? {});
-
+      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
       const newRouteTree = addRouteToReferenceRoute(
         alertmanager ?? '',
         partialRoute,
@@ -300,17 +313,14 @@ function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotific
 
 function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route {
   const { object_matchers, ...rest } = route;
-  return omit(
-    {
-      ...rest,
-      receiver: route.receiver ?? undefined,
-      matchers: object_matchers?.map(([label, type, value]) => ({
-        label,
-        type,
-        value,
-      })),
-      routes: route.routes?.map(routeToK8sSubRoute),
-    },
-    'id'
-  );
+  return {
+    ...rest,
+    receiver: route.receiver ?? undefined,
+    matchers: object_matchers?.map(([label, type, value]) => ({
+      label,
+      type,
+      value,
+    })),
+    routes: route.routes?.map(routeToK8sSubRoute),
+  };
 }
