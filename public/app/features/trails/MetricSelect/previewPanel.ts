@@ -1,11 +1,11 @@
 import { PromQuery } from '@grafana/prometheus';
 import { SceneCSSGridItem, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
+import { PanelMenu } from '../Menu/PanelMenu';
 import { getAutoQueriesForMetric } from '../autoQuery/getAutoQueriesForMetric';
 import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
 import { getColorByIndex } from '../utils';
 
-import { AddToExplorationButton } from './AddToExplorationsButton';
 import { NativeHistogramBadge } from './NativeHistogramBadge';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
@@ -18,9 +18,8 @@ export function getPreviewPanelFor(
   nativeHistogram?: boolean
 ) {
   const autoQuery = getAutoQueriesForMetric(metric, nativeHistogram);
-  let actions: Array<SelectMetricAction | AddToExplorationButton | NativeHistogramBadge> = [
+  let actions: Array<SelectMetricAction | NativeHistogramBadge> = [
     new SelectMetricAction({ metric, title: 'Select' }),
-    new AddToExplorationButton({ labelName: metric }),
   ];
 
   if (nativeHistogram) {
@@ -32,6 +31,8 @@ export function getPreviewPanelFor(
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setDescription(description)
     .setHeaderActions(actions)
+    .setShowMenuAlways(true)
+    .setMenu(new PanelMenu({ labelName: metric }))
     .build();
 
   const queries = autoQuery.preview.queries.map((query) =>

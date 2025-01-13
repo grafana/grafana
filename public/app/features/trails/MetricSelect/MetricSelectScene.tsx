@@ -29,6 +29,7 @@ import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Too
 import { Trans } from 'app/core/internationalization';
 import { getSelectedScopes } from 'app/features/scopes';
 
+import { PanelMenu } from '../Menu/PanelMenu';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
@@ -45,7 +46,7 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-import { AddToExplorationButton } from './AddToExplorationsButton';
+// import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
@@ -655,10 +656,9 @@ function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
     .setDescription(description)
-    .setHeaderActions([
-      new SelectMetricAction({ metric, title: 'Select' }),
-      new AddToExplorationButton({ labelName: metric }),
-    ])
+    .setHeaderActions([new SelectMetricAction({ metric, title: 'Select' })])
+    .setShowMenuAlways(true)
+    .setMenu(new PanelMenu({ labelName: metric }))
     .setOption('content', '')
     .build();
 }

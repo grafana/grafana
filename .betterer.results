@@ -6192,6 +6192,9 @@ exports[`better eslint`] = {
     "public/app/features/trails/DataTrailsHome.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/components/Text/Text\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
+    "public/app/features/trails/Menu/PanelMenu.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/trails/MetricScene.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
