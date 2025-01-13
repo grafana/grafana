@@ -19,13 +19,13 @@ import { NotificationPoliciesErrorAlert } from './PolicyUpdateErrorAlert';
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosition) => void, () => void];
 type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
-
 const useAddPolicyModal = (
   handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => Promise<void>,
-  loading: boolean
+  loading: boolean,
+  error: Error | undefined,
+  setError: (error: Error) => void
 ): AddModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
-  const [error, setError] = useState<Error | undefined>();
   const [insertPosition, setInsertPosition] = useState<InsertPosition | undefined>(undefined);
   const [referenceRoute, setReferenceRoute] = useState<RouteWithID>();
 
@@ -76,7 +76,7 @@ const useAddPolicyModal = (
           />
         </Modal>
       ),
-    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal]
+    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal, setError]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -85,12 +85,13 @@ const useAddPolicyModal = (
 const useEditPolicyModal = (
   alertManagerSourceName: string,
   handleUpdate: (route: Partial<FormAmRoute>) => Promise<void>,
-  loading: boolean
+  loading: boolean,
+  error: Error | undefined,
+  setError: (error: Error) => void
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
-  const [error, setError] = useState<Error | undefined>();
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
@@ -153,7 +154,7 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [loading, showModal, handleDismiss, error, isDefaultPolicy, route, alertManagerSourceName, handleUpdate]
+    [loading, showModal, handleDismiss, error, isDefaultPolicy, route, alertManagerSourceName, handleUpdate, setError]
   );
 
   return [modalElement, handleShow, handleDismiss];
