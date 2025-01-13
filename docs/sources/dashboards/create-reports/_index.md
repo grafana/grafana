@@ -104,7 +104,7 @@ refs:
 
 # Create and manage reports
 
-Reporting enables you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud and in Grafana Enterprise.
+**Reporting** allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud and in Grafana Enterprise.
 
 {{< admonition type="note" >}}
 If you have [Role-based access control](ref:role-based-access-control) enabled, for some actions you would need to have relevant permissions.
@@ -140,7 +140,7 @@ To create a report, follow these steps:
    - [Schedule](#3-schedule)
    - [Share](#4-share)
    - [Confirm](#5-confirm)
-1. Click one of the following buttons:
+1. Click one of the following buttons in the top-right corner of the screen:
    - **Send** or **Schedule send** - The report is sent according the schedule you've set.
    - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
    - **Discard** - Delete the report draft. This action can't be reversed.
@@ -191,13 +191,13 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ### 2. Format report
 
-To begin, select at least one of the following options for how the report should be formatted:
+At this step, set the report formatting options. You can select multiple options:
 
 - [Attach the report as a PDF](#attach-the-report-as-a-pdf)
-- [Include table data as PDF appendix](#table-data-in-pdf) (Public preview)
+- [Include table data as PDF appendix](#table-data-in-pdf) (Public preview only)
 - [Embed a dashboard image in the email](#embed-a-dashboard-as-an-image-in-the-email)
 - [Attach a CSV file of the table panel data](#attach-a-csv-file-of-the-table-panel-data)
-- [Attach a separate PDF of table data](#table-data-in-pdf) (Public preview)
+- [Attach a separate PDF of table data](#table-data-in-pdf) (Public preview only)
 
 #### Attach the report as a PDF
 
@@ -206,11 +206,13 @@ If you selected the PDF format option, under the **Style the PDF** section, set 
 - **Configure the report header** - Click the checkbox to select this option.
 - **Orientation** - Set the report orientation in **Portrait** or **Landscape**.
 - **Layout** - Select one of the following:
-  - **Simple** - Renders each panel as full-width across the PDF. Refer to the table following this list to see examples.
-  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard. Refer to the table following this list to see examples.
+  - **Simple** - Renders each panel as full-width across the PDF. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
+  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
 - **Zoom** - Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
 
 Click **Preview PDF** in the top-right corner of the screen to view a rendered PDF with the options you selected.
+
+##### Layout and orientation
 
 <!-- prettier-ignore-start -->
 
@@ -292,9 +294,9 @@ Click **Send test email** in the top-right corner of the screen to verify that t
 
 ### 5. Confirm
 
-The confirmation page displays all your report settings. Review them and confirm that they're correct or click the provided **Edit** links for each section to make updates.
+At this step, the confirmation page displays all your the settings. Review them and confirm that they're correct or click the provided **Edit** links for each section to make updates.
 
-Then click **Send now** or **Schedule send**.
+Then, click **Send now** or **Schedule send**.
 
 You can also save the report as a draft or discard it. Discarding the report is irreversible.
 
