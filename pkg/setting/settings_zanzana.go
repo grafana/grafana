@@ -37,6 +37,13 @@ type ZanzanaSettings struct {
 	// Use streamed version of list objects.
 	// Returns full list of objects, but takes more time.
 	UseStreamedListObjects bool
+
+	// Token used to perform the exchange request.
+	Token string
+	// URL called to perform exchange request.
+	TokenExchangeURL string
+	// URL for signing keys
+	SigningKeysURL string
 }
 
 func (cfg *Cfg) readZanzanaSettings() {
@@ -62,6 +69,10 @@ func (cfg *Cfg) readZanzanaSettings() {
 	s.ListObjectsDeadline = sec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	s.ListObjectsMaxResults = uint32(sec.Key("list_objects_max_results").MustUint(1000))
 	s.UseStreamedListObjects = sec.Key("use_streamed_list_objects").MustBool(false)
+
+	s.Token = sec.Key("token").MustString("")
+	s.TokenExchangeURL = sec.Key("token_exchange_url").MustString("")
+	s.SigningKeysURL = sec.Key("signing_keys_url").MustString("")
 
 	cfg.Zanzana = s
 }

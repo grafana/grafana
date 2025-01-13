@@ -27,10 +27,13 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
 };
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: () => mockDashboardDto,
   }),
-  config: {},
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+  },
 }));
 
 jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
