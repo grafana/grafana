@@ -690,7 +690,7 @@ function getStyles(theme: GrafanaTheme2) {
     badgeStyle: css({
       display: 'flex',
       height: '1rem',
-      padding: '0rem 0.25rem',
+      padding: '0rem 0.25rem 0 0.30rem',
       alignItems: 'center',
       borderRadius: theme.shape.radius.pill,
       border: `1px solid ${theme.colors.info.text}`,
