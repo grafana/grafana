@@ -53,6 +53,7 @@ const styles = {
 
 const mobileWidthThreshold = 480;
 const numberOfColumnsBeforeExpandedViewIsDefault = 2;
+const numTotalColumnsBeforeExpandedViewIsDefault = 5;
 
 /**
  * The container that provides the virtualized list to the child components
@@ -65,10 +66,13 @@ const RawListContainer = (props: RawListContainerProps) => {
   const listRef = useRef<List | null>(null);
 
   const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
+  const totalLabels = dataFrame.fields.length;
   const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
   const { width } = useWindowSize();
   const [isExpandedView, setIsExpandedView] = useState(
-    width <= mobileWidthThreshold || valueLabels.length > numberOfColumnsBeforeExpandedViewIsDefault
+    width <= mobileWidthThreshold ||
+    valueLabels.length > numberOfColumnsBeforeExpandedViewIsDefault ||
+    totalLabels > numTotalColumnsBeforeExpandedViewIsDefault
   );
 
   const onContentClick = () => {
