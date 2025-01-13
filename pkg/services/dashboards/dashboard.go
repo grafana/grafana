@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // DashboardService is a service for operating on dashboards.
@@ -18,14 +20,11 @@ type DashboardService interface {
 	DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error
 	DeleteAllDashboards(ctx context.Context, orgID int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
-	// GetDashboard fetches a dashboard.
-	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
-	// eg. util.Pointer("")
-	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
-	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
+	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
@@ -36,6 +35,18 @@ type DashboardService interface {
 	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
+}
+
+type DashboardGetService interface {
+	// GetDashboard fetches a dashboard.
+	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
+	// eg. util.Pointer("")
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
+	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
+	SearchDashboardsThroughK8s(ctx context.Context, query *FindPersistedDashboardsQuery) ([]*Dashboard, error)
+	SearchDashboardsThroughK8sRaw(ctx context.Context, query *FindPersistedDashboardsQuery) (*v0alpha1.SearchResults, error)
+	UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*Dashboard, error)
+	GetDashboardThroughK8s(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.

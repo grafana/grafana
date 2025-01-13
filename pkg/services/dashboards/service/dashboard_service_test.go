@@ -1628,7 +1628,7 @@ func TestGetDashboardUIDByID(t *testing.T) {
 func TestUnstructuredToLegacyDashboard(t *testing.T) {
 	fake := usertest.NewUserServiceFake()
 	fake.ExpectedUser = &user.User{ID: 10, UID: "useruid"}
-	dr := &DashboardServiceImpl{
+	dr := &DashboardGetService{
 		userService: fake,
 	}
 	t.Run("successfully converts unstructured to legacy dashboard", func(t *testing.T) {
@@ -1672,7 +1672,7 @@ func TestUnstructuredToLegacyDashboard(t *testing.T) {
 		item := &unstructured.Unstructured{
 			Object: map[string]interface{}{},
 		}
-		_, err := (&DashboardServiceImpl{}).UnstructuredToLegacyDashboard(context.Background(), item, int64(123))
+		_, err := (&DashboardGetService{}).UnstructuredToLegacyDashboard(context.Background(), item, int64(123))
 		assert.Error(t, err)
 		assert.Equal(t, "error parsing dashboard from k8s response", err.Error())
 	})
