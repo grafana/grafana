@@ -39,7 +39,7 @@ export const ExploreActions = () => {
         },
         section: exploreSection,
       });
-      if ([panes[1]]) {
+      if (panes[1]) {
         // we should always have the right exploreId if split
         actionsArr.push({
           id: 'explore/run-query-right',

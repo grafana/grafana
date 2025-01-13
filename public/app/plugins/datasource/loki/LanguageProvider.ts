@@ -17,6 +17,7 @@ import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from '.
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
+const HIDDEN_LABELS = ['__aggregrated_metric__', '__tenant_id__', '__stream_shard__'];
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
@@ -174,7 +175,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const range = options?.timeRange ?? this.getDefaultTimeRange();
     const { start, end } = this.datasource.getTimeRangeParams(range);
     const params: Record<string, string | number> = { start, end };
-    if (options?.streamSelector) {
+    if (options?.streamSelector && options?.streamSelector !== EMPTY_SELECTOR) {
       params['query'] = options.streamSelector;
     }
     const res = await this.request(url, params);
@@ -182,7 +183,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       const labels = Array.from(new Set(res))
         .slice()
         .sort()
-        .filter((label: string) => label.startsWith('__') === false);
+        .filter((label: string) => HIDDEN_LABELS.includes(label) === false);
       this.labelKeys = labels;
       return this.labelKeys;
     }
