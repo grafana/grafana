@@ -930,4 +930,12 @@ const (
 	// FlagTeamHttpHeadersMimir
 	// Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
 	FlagTeamHttpHeadersMimir = "teamHttpHeadersMimir"
+
+	// FlagABTestFeatureToggleA
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
+
+	// FlagABTestFeatureToggleB
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
 )
