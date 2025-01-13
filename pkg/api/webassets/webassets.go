@@ -199,9 +199,7 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	// 	return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
 	// }
 
-	var entryPointJSAssets []dtos.EntryPointAsset
-
-	entryPointJSAssets = append([]dtos.EntryPointAsset{*trustedTypePolicyAsset}, otherJSAssets...)
+	var entryPointJSAssets = append([]dtos.EntryPointAsset{*trustedTypePolicyAsset}, otherJSAssets...)
 
 	if entryPointJSAssets == nil {
 		return nil, fmt.Errorf("no entrypoints found in assets manifest, try running `yarn build`")
