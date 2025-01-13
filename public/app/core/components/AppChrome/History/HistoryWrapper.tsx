@@ -34,8 +34,8 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
   }, {});
 
   return (
-    <Stack direction="column" alignItems="flex-start">
-      <Box width="100%">
+    <Box padding={2} width="100%">
+      <Stack direction="column" alignItems="flex-start">
         {Object.keys(hist).map((entries, date) => {
           return (
             <Stack key={date} direction="column" gap={1}>
@@ -55,13 +55,14 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
             </Stack>
           );
         })}
-      </Box>
-      {history.length > numItemsToShow && (
-        <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
-          {t('nav.history-wrapper.show-more', 'Show more')}
-        </Button>
-      )}
-    </Stack>
+
+        {history.length > numItemsToShow && (
+          <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
+            {t('nav.history-wrapper.show-more', 'Show more')}
+          </Button>
+        )}
+      </Stack>
+    </Box>
   );
 }
 interface ItemProps {
@@ -96,7 +97,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
             className={styles.iconButton}
           />
         ) : (
-          <Space h={2} />
+          <Space h={0.5} />
         )}
 
         <Card
@@ -111,12 +112,14 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           <Stack direction="column">
             <div>
               {breadcrumbs.map((breadcrumb, index) => (
-                <Text key={index}>
+                <Text key={index} variant="bodySmall">
                   {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
                 </Text>
               ))}
             </div>
-            <Text color="secondary">{moment(time).format('h:mm A')}</Text>
+            <Text color="secondary" variant="bodySmall">
+              {moment(time).format('h:mm A')}
+            </Text>
             {sparklineData && (
               <Sparkline
                 theme={theme}
@@ -187,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     expanded: css({
       display: 'flex',
       flexDirection: 'column',
-      marginLeft: theme.spacing(5),
+      marginLeft: theme.spacing(0),
       gap: theme.spacing(1),
       position: 'relative',
       '&:before': {

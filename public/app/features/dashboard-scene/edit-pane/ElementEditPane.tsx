@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack, useStyles2 } from '@grafana/ui';
-import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
+import { Stack } from '@grafana/ui';
+import { AddonBarPane } from 'app/core/components/AppChrome/AddonBar/AddonBarPane';
 
 import { EditableDashboardElement } from '../scene/types';
 
@@ -12,22 +12,13 @@ export interface Props {
 
 export function ElementEditPane({ element }: Props) {
   const categories = element.useEditPaneOptions();
-  const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={0}>
-      {element.renderActions && (
-        <OptionsPaneCategory
-          id="selected-item"
-          title={element.getTypeName()}
-          isOpenDefault={true}
-          className={styles.noBorderTop}
-        >
-          <div className={styles.actionsBox}>{element.renderActions()}</div>
-        </OptionsPaneCategory>
-      )}
-      {categories.map((cat) => cat.render())}
-    </Stack>
+    <AddonBarPane title={element.getTypeName()} actions={element.renderActions && element.renderActions()}>
+      <Stack direction="column" gap={0}>
+        {categories.map((cat) => cat.render())}
+      </Stack>
+    </AddonBarPane>
   );
 }
 

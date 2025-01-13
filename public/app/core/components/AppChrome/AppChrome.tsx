@@ -11,7 +11,10 @@ import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
+import { KioskMode } from 'app/types';
 
+import { ADDON_BAR_WIDTH, AddonBar } from './AddonBar/AddonBar';
+import { ADDON_BAR_PANE_WIDTH, AddonBarPane } from './AddonBar/AddonBarPane';
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
@@ -36,6 +39,8 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
   );
+  const addonBarVisible = state.addonBarDocked || state.kioskMode === KioskMode.Full;
+
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -77,61 +82,74 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  const dockedPane = Boolean(state.addonBarPane && state.addonPaneDocked && !state.addonBarPane.isApp);
+
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
   return (
-    <div
-      className={classNames('main-view', {
-        'main-view--chrome-hidden': state.chromeless,
-      })}
-    >
-      {!state.chromeless && (
-        <>
-          <LinkButton className={styles.skipLink} href="#pageContent">
-            <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
-          </LinkButton>
-          {menuDockedAndOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
-          )}
-          <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
-            <SingleTopBar
-              sectionNav={state.sectionNav.node}
-              pageNav={state.pageNav}
-              onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
-            />
-            {state.actions && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
-          </header>
-        </>
-      )}
-      <div className={contentClass}>
-        <div className={styles.panes}>
-          {!state.chromeless && (
-            <div
-              className={cx(styles.scopesDashboardsContainer, {
-                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
-              })}
+    <div className={cx(styles.addonBarWrapper, addonBarVisible && styles.addonBarWrapperOpen)}>
+      <div
+        className={classNames('main-view', {
+          'main-view--chrome-hidden': state.chromeless,
+        })}
+      >
+        {!state.chromeless && (
+          <>
+            <LinkButton className={styles.skipLink} href="#pageContent">
+              <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
+            </LinkButton>
+            {menuDockedAndOpen && (
+              <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+            )}
+            <header
+              className={cx(
+                styles.topNav,
+                menuDockedAndOpen && styles.topNavMenuDocked,
+                state.addonBarDocked && styles.topNavWithAddonBar
+              )}
             >
-              <ScopesDashboards />
-            </div>
-          )}
-          <main
-            className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-            })}
-            id="pageContent"
-          >
-            {children}
-          </main>
+              <SingleTopBar
+                sectionNav={state.sectionNav.node}
+                pageNav={state.pageNav}
+                onToggleMegaMenu={handleMegaMenu}
+                onToggleKioskMode={chrome.onToggleKioskMode}
+              />
+              {state.actions && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
+            </header>
+          </>
+        )}
+        <div className={contentClass}>
+          <div className={styles.panes}>
+            {!state.chromeless && (
+              <div
+                className={cx(styles.scopesDashboardsContainer, {
+                  [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
+                })}
+              >
+                <ScopesDashboards />
+              </div>
+            )}
+            <main
+              className={cx(styles.pageContainer, {
+                [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+                [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+                [styles.pageContainerAddonPane]: dockedPane,
+              })}
+              id="pageContent"
+            >
+              {children}
+            </main>
+            {state.addonBarPane && state.addonBarPane.content}
+          </div>
         </div>
+        {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
+        {!state.chromeless && <CommandPalette />}
+        {shouldShowReturnToPrevious && state.returnToPrevious && (
+          <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
+        )}
       </div>
-      {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
-      {!state.chromeless && <CommandPalette />}
-      {shouldShowReturnToPrevious && state.returnToPrevious && (
-        <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
-      )}
+      {!state.kioskMode && <AddonBar />}
     </div>
   );
 }
@@ -147,6 +165,14 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     }),
     contentChromeless: css({
       paddingTop: 0,
+    }),
+    addonBarWrapper: css({
+      display: 'flex',
+      height: '100%',
+      flexGrow: 1,
+    }),
+    addonBarWrapperOpen: css({
+      paddingRight: ADDON_BAR_WIDTH,
     }),
     dockedMegaMenu: css({
       background: theme.colors.background.primary,
@@ -182,6 +208,9 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     topNavMenuDocked: css({
       left: MENU_WIDTH,
     }),
+    topNavWithAddonBar: css({
+      right: ADDON_BAR_WIDTH,
+    }),
     panes: css({
       display: 'flex',
       flexDirection: 'column',
@@ -193,6 +222,9 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     }),
     pageContainerMenuDockedScopes: css({
       paddingLeft: `calc(${MENU_WIDTH} * 2)`,
+    }),
+    pageContainerAddonPane: css({
+      paddingRight: ADDON_BAR_PANE_WIDTH + 1,
     }),
     pageContainer: css({
       label: 'page-container',

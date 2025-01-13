@@ -20,9 +20,10 @@ interface Props {
   searchQuery: string;
   listMode: OptionFilter;
   data?: PanelData;
+  show?: string;
 }
 
-export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
+export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data, show }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
@@ -89,14 +90,21 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           // Library Panel options first
           mainBoxElements.push(libraryPanelOptions.render());
         }
-        mainBoxElements.push(panelFrameOptions.render());
 
-        for (const item of visualizationOptions ?? []) {
-          mainBoxElements.push(item.render());
+        if (show === 'panel') {
+          mainBoxElements.push(panelFrameOptions.render());
         }
 
-        for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
+        if (show === 'viz') {
+          for (const item of visualizationOptions ?? []) {
+            mainBoxElements.push(item.render());
+          }
+        }
+
+        if (show === 'overrides') {
+          for (const item of justOverrides) {
+            mainBoxElements.push(item.render());
+          }
         }
         break;
       case OptionFilter.Overrides:

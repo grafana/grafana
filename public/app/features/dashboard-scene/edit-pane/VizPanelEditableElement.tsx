@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 
-import { sceneGraph, SceneObjectBase, VizPanel } from '@grafana/scenes';
+import { locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -13,28 +16,22 @@ import {
 } from '../panel-edit/getPanelFrameOptions';
 import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getEditPanelUrl } from '../utils/urlBuilders';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
-export class VizPanelEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
+export class VizPanelEditableElement implements EditableDashboardElement {
   public isEditableDashboardElement: true = true;
 
-  private getPanel(): VizPanel {
-    const panel = this.parent;
-
-    if (!(panel instanceof VizPanel)) {
-      throw new Error('VizPanelEditPaneBehavior must have a VizPanel parent');
-    }
-
-    return panel;
-  }
+  public constructor(private panel: VizPanel) {}
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const panel = this.getPanel();
+    const panel = this.panel;
     const layoutElement = panel.parent!;
 
     const panelOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
         title: 'Panel options',
-        id: 'panel-options',
+        id: '',
         isOpenDefault: true,
       })
         .addItem(
@@ -108,22 +105,26 @@ export class VizPanelEditPaneBehavior extends SceneObjectBase implements Editabl
   }
 
   public onDelete = () => {
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this);
-    layout.removePanel(this.getPanel());
+    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
+    layout.removePanel(this.panel);
+  };
+
+  public onEdit = () => {
+    const dashboard = getDashboardSceneFor(this.panel);
+    dashboard.state.editPane.clearSelection();
+    const panelId = getPanelIdForVizPanel(this.panel);
+    const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));
+    locationService.push(url);
   };
 
   public renderActions(): React.ReactNode {
     return (
       <>
-        <Button size="sm" variant="secondary">
-          Edit
+        <Button size="sm" variant="secondary" onClick={this.onEdit}>
+          <Trans i18nKey="panel.header-menu.edit">Edit</Trans>
         </Button>
-        <Button size="sm" variant="secondary">
-          Copy
-        </Button>
-        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
-          Delete
-        </Button>
+        <Button size="sm" variant="secondary" icon="copy" />
+        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
       </>
     );
   }

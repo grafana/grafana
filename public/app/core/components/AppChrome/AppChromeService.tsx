@@ -28,6 +28,25 @@ export interface AppChromeState {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
   };
+  addonBarDocked?: boolean;
+  addonPaneDocked?: boolean;
+  addonBarPane?: AddonBarPane;
+  addonApps: AddonAppDefinition[];
+}
+
+export interface AddonAppDefinition<T = {}> {
+  id: string;
+  title: string;
+  icon: string;
+  component: React.ComponentType<T>;
+  isApp?: boolean;
+  props: T;
+}
+
+export interface AddonBarPane {
+  id: string;
+  isApp?: boolean;
+  content: React.ReactNode;
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -55,6 +74,9 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
+    addonBarDocked: true,
+    addonPaneDocked: true,
+    addonApps: [],
   });
 
   public headerHeightObservable = this.state
@@ -178,6 +200,40 @@ export class AppChromeService {
     return false;
   }
 
+  public addAddonApp(app: AddonAppDefinition) {
+    const current = this.state.getValue();
+    const addonApps = [...current.addonApps];
+    addonApps.push(app);
+    this.update({ addonApps });
+  }
+
+  public removeAddonApp(id: string) {
+    const current = this.state.getValue();
+    const addonApps = current.addonApps.filter((app) => app.id !== id);
+    this.update({ addonApps, addonBarPane: current.addonBarPane?.id === id ? undefined : current.addonBarPane });
+  }
+
+  public openAddon(id: string) {
+    const current = this.state.getValue();
+    const addonApp = current.addonApps.find((app) => app.id === id);
+    if (!addonApp) {
+      return;
+    }
+
+    if (current.addonBarPane?.id === addonApp.id) {
+      this.update({ addonBarPane: undefined });
+      return;
+    }
+
+    this.update({
+      addonBarPane: {
+        id: addonApp.id,
+        isApp: addonApp.isApp,
+        content: <addonApp.component {...addonApp.props} />,
+      },
+    });
+  }
+
   public useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.state, this.state.getValue());
@@ -237,6 +293,10 @@ export class AppChromeService {
       this.update({ kioskMode: newKioskMode });
     }
   }
+
+  public onToggleDockAddonPane = () => {
+    this.update({ addonPaneDocked: !this.state.getValue().addonPaneDocked });
+  };
 
   public getKioskUrlValue(mode: KioskMode | null) {
     switch (mode) {

@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { DeclareAddonApp } from 'app/core/components/AppChrome/AddonBar/DeclareAddonApp';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -12,6 +13,7 @@ import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
+import { PanelOptionsAddonPane, VisualizationSuggestionsPane } from './PanelOptionsAddonPane';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
@@ -19,53 +21,74 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
   const styles = useStyles2(getStyles);
-  const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  // const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
-    useSnappingSplitter({
-      direction: 'row',
-      dragPosition: 'end',
-      initialSize: 0.8,
-      collapsed: isCollapsed,
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
-    });
+  // const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
+  //   useSnappingSplitter({
+  //     direction: 'row',
+  //     dragPosition: 'end',
+  //     initialSize: 0.8,
+  //     collapsed: isCollapsed,
+  //     paneOptions: {
+  //       collapseBelowPixels: 250,
+  //       snapOpenToPixels: 400,
+  //     },
+  //   });
 
-  useEffect(() => {
-    setIsCollapsed(splitterState.collapsed);
-  }, [splitterState.collapsed, setIsCollapsed]);
+  // useEffect(() => {
+  //   setIsCollapsed(splitterState.collapsed);
+  // }, [splitterState.collapsed, setIsCollapsed]);
 
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
-      <div
-        {...containerProps}
-        className={cx(containerProps.className, styles.content)}
-        data-testid={selectors.components.PanelEditor.General.content}
-      >
-        <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
-          <VizAndDataPane model={model} />
-        </div>
-        <div {...splitterProps} />
-        <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
-          {splitterState.collapsed && (
-            <div className={styles.expandOptionsWrapper}>
-              <ToolbarButton
-                tooltip={'Open options pane'}
-                icon={'arrow-to-right'}
-                onClick={onToggleCollapse}
-                variant="canvas"
-                className={styles.rotate180}
-                aria-label={'Open options pane'}
-              />
-            </div>
-          )}
-          {!splitterState.collapsed && optionsPane && <optionsPane.Component model={optionsPane} />}
-          {!splitterState.collapsed && !optionsPane && <Spinner />}
-        </div>
+      <DeclareAddonApp
+        id="suggestions"
+        title="Visualization suggestions"
+        icon="graph-bar"
+        type="context"
+        props={{ editor: model }}
+        component={VisualizationSuggestionsPane}
+      />
+      <DeclareAddonApp
+        id="panel-options"
+        title="Panel options"
+        icon="square-shape"
+        type="context"
+        props={{ editor: model, show: 'panel', title: 'Panel options' }}
+        component={PanelOptionsAddonPane}
+      />
+      <DeclareAddonApp
+        id="viz-options"
+        title="Visualization options"
+        icon="sliders-v-alt"
+        type="context"
+        props={{ editor: model, show: 'viz', title: 'Visualization options' }}
+        component={PanelOptionsAddonPane}
+      />
+      <DeclareAddonApp
+        id="overrides"
+        title="Overrides"
+        icon="code-branch"
+        type="context"
+        props={{ editor: model, show: 'overrides', title: 'Overrides' }}
+        component={PanelOptionsAddonPane}
+      />
+      <DeclareAddonApp
+        id="json"
+        title="JSON / As Code"
+        icon="brackets-curly"
+        type="context"
+        props={{ editor: model, show: 'overrides', title: 'Overrides' }}
+        component={PanelOptionsAddonPane}
+      />
+      <div className={cx(styles.body)}>
+        <VizAndDataPane model={model} />
       </div>
+      {/* <div className={cx(styles.optionsPane)}>
+          {optionsPane && <optionsPane.Component model={optionsPane} />}
+          {!optionsPane && <Spinner />}
+        </div> */}
     </>
   );
 }
@@ -231,6 +254,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 0,
       gridArea: 'controls',
+      paddingRight: theme.spacing(2),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),
@@ -242,7 +266,7 @@ function getStyles(theme: GrafanaTheme2) {
     vizWrapper: css({
       height: '100%',
       width: '100%',
-      paddingLeft: theme.spacing(2),
+      padding: theme.spacing(0, 2),
     }),
   };
 }
