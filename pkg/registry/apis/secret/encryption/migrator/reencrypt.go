@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s simpleSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.EncryptionManager, sqlStore db.DB) bool {
+func (s simpleSecret) ReEncrypt(ctx context.Context, namespace string, secretsSrv *manager.EncryptionManager, sqlStore db.DB) bool {
 	var rows []struct {
 		Id     int
 		Secret []byte
@@ -31,13 +31,13 @@ func (s simpleSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Encrypt
 		}
 
 		err := sqlStore.InTransaction(ctx, func(ctx context.Context) error {
-			decrypted, err := secretsSrv.Decrypt(ctx, row.Secret)
+			decrypted, err := secretsSrv.Decrypt(ctx, namespace, row.Secret)
 			if err != nil {
 				logger.Warn("Could not decrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
 				return err
 			}
 
-			encrypted, err := secretsSrv.Encrypt(ctx, decrypted, encryption.WithoutScope())
+			encrypted, err := secretsSrv.Encrypt(ctx, namespace, decrypted, encryption.WithoutScope())
 			if err != nil {
 				logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
 				return err

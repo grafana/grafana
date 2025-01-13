@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/authlib/claims"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,11 +41,11 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	}
 
 	// This should come from the keeper. From this point on, we should not have a need to read value/ref.
-	externalID := secret.ExternalID("TODO")
+	externalID := "TODO"
 	sv.Spec.Value = ""
 	sv.Spec.Ref = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
+	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
@@ -113,11 +112,11 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	}
 
 	// This should come from the keeper.
-	externalID := secret.ExternalID("TODO2")
+	externalID := "TODO2"
 	newSecureValue.Spec.Value = ""
 	newSecureValue.Spec.Ref = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID.String())
+	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}

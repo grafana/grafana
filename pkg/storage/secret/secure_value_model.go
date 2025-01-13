@@ -28,7 +28,7 @@ type secureValueDB struct {
 	// Spec
 	Title      string `xorm:"title"`
 	Keeper     string `xorm:"keeper"`
-	Audiences  string `xorm:"audiences"`
+	Audiences  string `xorm:"audiences"` // TODO rename this since it's a "reserved word" in the authnz world
 	ExternalID string `xorm:"external_id"`
 }
 
