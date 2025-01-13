@@ -8,18 +8,17 @@ import { useContactPointsWithStatus } from 'app/features/alerting/unified/compon
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
-import { ERROR_NEWER_CONFIGURATION } from 'app/features/alerting/unified/utils/k8s/errors';
 import { isErrorMatchingCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { computeInheritedTree } from 'app/features/alerting/unified/utils/notification-policies';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { isLoading as isPending } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
 import { useGetContactPointsState } from './../../api/receiversApi';
 import { useRouteGroupsMatcher } from './../../useRouteGroupsMatcher';
-import { InsertPosition } from './../../utils/routeTree';
+import { InsertPosition, RouteNotFoundError } from './../../utils/routeTree';
 import { NotificationPoliciesFilter, findRoutesByMatchers, findRoutesMatchingPredicate } from './Filters';
 import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal } from './Modals';
 import { Policy } from './Policy';
@@ -30,6 +29,21 @@ import {
   useUpdateExistingNotificationPolicy,
 } from './useNotificationPolicyRoute';
 
+function handleUpdateWithErrorHandling(
+  values: Partial<FormAmRoute>,
+  handleUpdate: (partialRoute: Partial<FormAmRoute>) => Promise<void>,
+  setConflictError: (value: boolean) => void
+) {
+  handleUpdate(values).catch((e) => {
+    const conflictErrorUsingConfigAPI = e instanceof RouteNotFoundError;
+    const conflictErrorUsingK8sAPI = isErrorMatchingCode(e, ERROR_NEWER_CONFIGURATION);
+    if (conflictErrorUsingConfigAPI || conflictErrorUsingK8sAPI) {
+      setConflictError(true);
+    } else {
+      setConflictError(false);
+    }
+  });
+}
 export const NotificationPoliciesList = () => {
   const appNotification = useAppNotification();
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
@@ -56,7 +70,7 @@ export const NotificationPoliciesList = () => {
     refetch: refetchNotificationPolicyRoute,
   } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' });
 
-  const [conflictError, setConflictError] = useState<Error | undefined>();
+  const [conflictError, setConflictError] = useState<boolean>(false);
 
   // We make the assumption that the first policy is the default one
   // At the time of writing, this will be always the case for the AM config response, and the K8S API
@@ -131,7 +145,7 @@ export const NotificationPoliciesList = () => {
     updateExistingNotificationPolicy.reset();
     deleteNotificationPolicy.reset();
     addNotificationPolicy.reset();
-    setConflictError(undefined);
+    setConflictError(false);
   };
 
   async function handleUpdate(partialRoute: Partial<FormAmRoute>) {
@@ -171,16 +185,16 @@ export const NotificationPoliciesList = () => {
     handleActionResult({ error: addNotificationPolicyState.error });
   }
 
-  const updatingTree = [updateExistingNotificationPolicyState, deleteNotificationPolicyState].some(isPending);
+  // const updatingTree = [updateExistingNotificationPolicyState, deleteNotificationPolicyState].some(isPending);
+  const updatingTree = updateExistingNotificationPolicyState.status === 'loading'; // todo add the rest of loading states–
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(handleAdd, updatingTree);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
-    handleUpdate,
+    (values) => handleUpdateWithErrorHandling(values, handleUpdate, setConflictError),
     updatingTree,
-    conflictError,
-    setConflictError
+    conflictError
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
   const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
@@ -191,7 +205,7 @@ export const NotificationPoliciesList = () => {
 
   const hasPoliciesData = rootRoute && !resultError && !isLoading;
   const hasPoliciesError = !!resultError && !isLoading;
-  const hasConflictError = isErrorMatchingCode(conflictError, ERROR_NEWER_CONFIGURATION) || conflictError;
+  const hasConflictError = conflictError;
 
   return (
     <>
