@@ -115,7 +115,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'azuremonitor',
-      testDir: path.join(testDirRoot, '/azuremonitor'),
+      testDir: 'e2e/test-plugins/azuremonitor',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -124,7 +124,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'cloudmonitoring',
-      testDir: path.join(testDirRoot, '/cloudmonitoring'),
+      testDir: 'e2e/test-plugins/cloudmonitoring',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -133,7 +133,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'graphite',
-      testDir: path.join(testDirRoot, '/graphite'),
+      testDir: 'e2e/test-plugins/graphite',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -142,7 +142,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'influxdb',
-      testDir: path.join(testDirRoot, '/influxdb'),
+      testDir: 'e2e/test-plugins/influxdb',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -151,7 +151,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'opentsdb',
-      testDir: path.join(testDirRoot, '/opentsdb'),
+      testDir: 'e2e/test-plugins/opentsdb',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
