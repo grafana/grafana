@@ -131,6 +131,9 @@ type RepositoryStatus struct {
 	// Sync information with the last sync information
 	Sync SyncStatus `json:"sync"`
 
+	// The object count when sync last ran
+	Stats []ResourceObjectCount `json:"stats,omitempty"`
+
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
 }
@@ -282,9 +285,7 @@ type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
-	// kubernetes/kubernetes#126809
-	Items []FileItem `json:"files,omitempty"`
+	Items []FileItem `json:"items,omitempty"`
 }
 
 type FileItem struct {
@@ -293,6 +294,43 @@ type FileItem struct {
 	Hash     string `json:"hash,omitempty"`
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ObjectList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []ObjectListItem `json:"items,omitempty"`
+}
+
+type ObjectListItem struct {
+	Path     string `json:"path"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Name     string `json:"name"` // the k8s identifier
+	Hash     string `json:"hash"`
+	Time     int64  `json:"time,omitempty"`
+
+	Title  string `json:"title,omitempty"`
+	Folder string `json:"folder,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ObjectStats struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []ResourceObjectCount `json:"items,omitempty"`
+}
+
+type ResourceObjectCount struct {
+	Repository string `json:"repository,omitempty"`
+	Group      string `json:"group"`
+	Resource   string `json:"resource"`
+	Count      int64  `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource

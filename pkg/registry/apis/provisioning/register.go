@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const repoControllerWorkers = 1
@@ -64,6 +65,7 @@ type ProvisioningAPIBuilder struct {
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
+	lister            resources.ObjectLister
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -76,6 +78,7 @@ func NewProvisioningAPIBuilder(
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
+	index resource.RepositoryIndexClient,
 	blobstore blob.PublicBlobStore,
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
@@ -93,6 +96,7 @@ func NewProvisioningAPIBuilder(
 			Client: clientFactory,
 		},
 		render:    render,
+		lister:    resources.NewObjectLister(index),
 		blobstore: blobstore,
 		jobs:      jobs.NewJobQueue(50), // in memory for now
 	}
@@ -108,6 +112,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
@@ -115,6 +120,10 @@ func RegisterAPIService(
 		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs)) {
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
+	}
+
+	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		return nil, fmt.Errorf("missing featureFlag: unifiedStorageSearch")
 	}
 
 	// TODO: use wire to initialize this storage
@@ -128,7 +137,7 @@ func RegisterAPIService(
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render, store, configProvider, ghFactory)
+	}, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -192,6 +201,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter:  b,
 		parsers: b.parsers,
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("list")] = &listConnector{
+		getter: b,
+		lister: b.lister,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
@@ -388,6 +401,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				c.ProvisioningV0alpha1(),
 				b.identities,
 				b.render,
+				b.lister,
 				b.blobstore,
 				b.urlProvider,
 			))

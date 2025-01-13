@@ -117,6 +117,8 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&FileList{},
 		&HistoryList{},
 		&TestResults{},
+		&ObjectList{},
+		&ObjectStats{},
 		&Job{},
 		&JobList{},
 	)

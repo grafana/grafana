@@ -250,14 +250,9 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
 
-	size := 1000000000 // big number
-	if req.Limit > 0 {
-		size = int(req.Limit)
-	}
-
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: &query.TermQuery{
-			Term:     req.Name,
+			Term:     req.Repository,
 			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
 		},
 		Fields: []string{
@@ -275,8 +270,8 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 				Desc:  false,
 			},
 		},
-		Size: size,
-		From: 0, // TODO! next page token!!!
+		Size: 1000000000, // big number
+		From: 0,          // next page token not yet supported
 	})
 	if err != nil {
 		return nil, err
@@ -328,7 +323,7 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) (map[string]int64, error) {
+func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.CountRepositoryObjectsResponse_KindCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
@@ -339,14 +334,19 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) (map[string]int
 	if err != nil {
 		return nil, err
 	}
-	rsp := make(map[string]int64)
+	vals := make([]*resource.CountRepositoryObjectsResponse_KindCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
 		for _, v := range f.Terms.Terms() {
-			rsp[v.Term] = int64(v.Count)
+			vals = append(vals, &resource.CountRepositoryObjectsResponse_KindCount{
+				Repository: v.Term,
+				Group:      b.key.Group,
+				Resource:   b.key.Resource,
+				Count:      int64(v.Count),
+			})
 		}
 	}
-	return rsp, nil
+	return vals, nil
 }
 
 // Search implements resource.DocumentIndex.
