@@ -14,51 +14,43 @@ interface GrafanaRuleLoaderProps {
 export function GrafanaRuleLoader({ rule, groupName, namespaceName }: GrafanaRuleLoaderProps) {
   const { folderUid } = rule;
 
-  switch (rule.type) {
-    case PromRuleType.Alerting:
-      return (
-        <AlertRuleListItem
-          name={rule.name}
-          rulesSource={GrafanaRulesSource}
-          application="grafana"
-          group={groupName}
-          namespace={namespaceName}
-          href={''}
-          summary={rule.annotations?.summary}
-          state={rule.state}
-          health={rule.health}
-          error={rule.lastError}
-          labels={rule.labels}
-          isProvisioned={undefined}
-          instancesCount={rule.alerts?.length}
-        />
-      );
-    case PromRuleType.Recording:
-      return (
-        <RecordingRuleListItem
-          name={rule.name}
-          rulesSource={GrafanaRulesSource}
-          application="grafana"
-          group={groupName}
-          namespace={namespaceName}
-          href={''}
-          health={rule.health}
-          error={rule.lastError}
-          labels={rule.labels}
-          isProvisioned={undefined}
-        />
-      );
-    default:
-      return (
-        <UnknownRuleListItem
-          rule={rule}
-          groupIdentifier={{
-            rulesSource: GrafanaRulesSource,
-            groupName,
-            namespace: { uid: folderUid },
-            groupOrigin: 'grafana',
-          }}
-        />
-      );
+  const commonProps = {
+    name: rule.name,
+    rulesSource: GrafanaRulesSource,
+    group: groupName,
+    namespace: namespaceName,
+    href: '',
+    health: rule.health,
+    error: rule.lastError,
+    labels: rule.labels,
+  };
+
+  if (rule.type === PromRuleType.Alerting) {
+    return (
+      <AlertRuleListItem
+        {...commonProps}
+        application="grafana"
+        summary={rule.annotations?.summary}
+        state={rule.state}
+        isProvisioned={undefined}
+        instancesCount={rule.alerts?.length}
+      />
+    );
   }
+
+  if (rule.type === PromRuleType.Recording) {
+    return <RecordingRuleListItem {...commonProps} application="grafana" isProvisioned={undefined} />;
+  }
+
+  return (
+    <UnknownRuleListItem
+      rule={rule}
+      groupIdentifier={{
+        rulesSource: GrafanaRulesSource,
+        groupName,
+        namespace: { uid: folderUid },
+        groupOrigin: 'grafana',
+      }}
+    />
+  );
 }
