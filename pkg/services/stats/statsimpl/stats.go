@@ -6,7 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -17,13 +21,96 @@ import (
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func ProvideService(cfg *setting.Cfg, db db.DB) stats.Service {
-	return &sqlStatsService{cfg: cfg, db: db}
+func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardService, folderSvc folder.Service, orgSvc org.Service) stats.Service {
+	return &sqlStatsService{
+		cfg:       cfg,
+		db:        db,
+		folderSvc: folderSvc,
+		dashSvc:   dashSvc,
+		orgSvc:    orgSvc,
+	}
 }
 
 type sqlStatsService struct {
-	db  db.DB
-	cfg *setting.Cfg
+	db        db.DB
+	cfg       *setting.Cfg
+	dashSvc   dashboards.DashboardService
+	folderSvc folder.Service
+	orgSvc    org.Service
+}
+
+type dashboardStats struct {
+	count      int
+	bytesTotal int
+	bytesMax   int
+}
+
+func (ss *sqlStatsService) collectDashboardStats(ctx context.Context, orgs []*org.OrgDTO, calculateByteSize bool) (dashboardStats, error) {
+	stats := dashboardStats{
+		count:      0,
+		bytesTotal: 0,
+		bytesMax:   0,
+	}
+
+	for _, org := range orgs {
+		ctx = identity.WithRequester(ctx, getStatsRequester(org.ID))
+		dashs, err := ss.dashSvc.GetAllDashboardsByOrgId(ctx, org.ID)
+		if err != nil {
+			return stats, err
+		}
+		stats.count += len(dashs)
+
+		// only calculate bytes if needed
+		if calculateByteSize {
+			for _, dash := range dashs {
+				b, err := dash.Data.ToDB()
+				if err != nil {
+					return stats, err
+				}
+				stats.bytesTotal += len(b)
+
+				if len(b) > stats.bytesMax {
+					stats.bytesMax = len(b)
+				}
+			}
+		}
+	}
+
+	return stats, nil
+}
+
+func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
+	total := 0
+	for _, org := range orgs {
+		ctx = identity.WithRequester(ctx, getStatsRequester(org.ID))
+		tags, err := ss.dashSvc.GetDashboardTags(ctx, &dashboards.GetDashboardTagsQuery{
+			OrgID: org.ID,
+		})
+		if err != nil {
+			return 0, err
+		}
+		total += len(tags)
+	}
+
+	return int64(total), nil
+}
+
+func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
+	total := 0
+	for _, org := range orgs {
+		backgroundUser := getStatsRequester(org.ID)
+		ctx = identity.WithRequester(ctx, backgroundUser)
+		folders, err := ss.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
+			OrgID:        org.ID,
+			SignedInUser: backgroundUser,
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		total += len(folders)
+	}
+	return int64(total), nil
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
@@ -67,7 +154,6 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
@@ -86,11 +172,6 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
 			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
-
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
 
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
@@ -124,6 +205,30 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 
 		return nil
 	})
+	if err != nil {
+		return result, err
+	}
+
+	orgs, err := ss.orgSvc.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return result, err
+	}
+	result.Orgs = int64(len(orgs))
+
+	// for services in unified storage, get the stats through the service rather than the db directly
+	dashStats, err := ss.collectDashboardStats(ctx, orgs, true)
+	if err != nil {
+		return result, err
+	}
+	result.DashboardBytesMax = int64(dashStats.bytesMax)
+	result.DashboardBytesTotal = int64(dashStats.bytesTotal)
+	result.Dashboards = int64(dashStats.count)
+
+	folderCount, err := ss.getFolderCount(ctx, orgs)
+	if err != nil {
+		return result, err
+	}
+	result.Folders = folderCount
 
 	return result, err
 }
@@ -163,20 +268,8 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 		var rawSQL = `SELECT
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("org") + `
-		) AS orgs,
-		(
-			SELECT COUNT(*)
-			FROM ` + dialect.Quote("dashboard") + `WHERE is_folder=` + dialect.BooleanStr(false) + `
-		) AS dashboards,
-		(
-			SELECT COUNT(*)
 			FROM ` + dialect.Quote("dashboard_snapshot") + `
 		) AS snapshots,
-		(
-			SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
-			FROM ` + dialect.Quote("dashboard_tag") + `
-		) AS tags,
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("data_source") + `
@@ -225,6 +318,29 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 		result = &stats
 		return nil
 	})
+	if err != nil {
+		return result, err
+	}
+
+	orgs, err := ss.orgSvc.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return result, err
+	}
+	result.Orgs = int64(len(orgs))
+
+	// for services in unified storage, get the stats through the service rather than the db directly
+	dashStats, err := ss.collectDashboardStats(ctx, orgs, false)
+	if err != nil {
+		return result, err
+	}
+	result.Dashboards = int64(dashStats.count)
+
+	tagCount, err := ss.getTagCount(ctx, orgs)
+	if err != nil {
+		return result, err
+	}
+	result.Tags = tagCount
+
 	return result, err
 }
 
@@ -342,4 +458,19 @@ func addToStats(base stats.UserStats, role org.RoleType, count int64) stats.User
 	}
 
 	return base
+}
+
+func getStatsRequester(orgId int64) *identity.StaticRequester {
+	return &identity.StaticRequester{
+		Type:   claims.TypeServiceAccount,
+		UserID: 1,
+		OrgID:  orgId,
+		Name:   "stats-requester",
+		Login:  "stats-requester",
+		Permissions: map[int64]map[string][]string{
+			orgId: {
+				"*": {"*"},
+			},
+		},
+	}
 }

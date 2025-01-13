@@ -85,6 +85,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
       $data: new DashboardDataLayerSet({ annotationLayers }),
+      id: 1,
       title: 'Test Dashboard',
       description: 'Test Description',
       preload: true,
@@ -140,7 +141,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           children: [
             new DashboardGridItem({
               body: new VizPanel({
-                key: 'test-panel-uid',
+                key: 'panel-1',
                 pluginId: 'timeseries',
                 title: 'Test Panel',
                 titleItems: [
@@ -175,7 +176,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         }),
       }),
       meta: {},
-      editPane: new DashboardEditPane({}),
+      editPane: new DashboardEditPane(),
       $behaviors: [
         new behaviors.CursorSync({
           sync: DashboardCursorSyncV1.Crosshair,
@@ -328,7 +329,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
     // check annotation layer 3 with no datasource has the default datasource defined as type
-    expect(result.annotations?.[2].spec.query.kind).toBe('loki');
+    expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
   });
 });
 

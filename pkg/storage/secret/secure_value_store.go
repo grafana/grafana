@@ -2,13 +2,14 @@ package secret
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,54 +17,53 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-var (
-	ErrSecureValueNotFound = errors.New("secure value not found")
-)
-
-// SecureValueStorage is the interface for wiring and dependency injection.
-type SecureValueStorage interface {
-	Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error)
-	Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error)
-	Delete(ctx context.Context, namespace, name string) error
-	List(ctx context.Context, ns string, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
-}
-
-func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SecureValueStorage, error) {
+func ProvideSecureValueStorage(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (contracts.SecureValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &storage{}, nil
+		return &secureValueStorage{}, nil
 	}
 
 	if err := migrateSecretSQL(db.GetEngine(), cfg); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	return &storage{db: db}, nil
+	return &secureValueStorage{db: db}, nil
 }
 
-// storage is the actual implementation of the secure value (metadata) storage.
-type storage struct {
+// secureValueStorage is the actual implementation of the secure value (metadata) storage.
+type secureValueStorage struct {
 	db db.DB
 }
 
-func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
 	// This should come from the keeper. From this point on, we should not have a need to read value/ref.
-	externalID := "TODO"
+	externalID := secret.ExternalID("TODO")
 	sv.Spec.Value = ""
 	sv.Spec.Ref = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
+	row, err := toCreateRow(sv, authInfo.GetUID(), externalID.String())
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Validate before inserting that the chosen `keeper` exists.
+		keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+
+		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+		if err != nil {
+			return fmt.Errorf("check keeper existence: %w", err)
+		}
+
+		if !keeperExists {
+			return contracts.ErrKeeperNotFound
+		}
+
 		if _, err := sess.Insert(row); err != nil {
 			return fmt.Errorf("insert row: %w", err)
 		}
@@ -82,8 +82,8 @@ func (s *storage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*
 	return createdSecureValue, nil
 }
 
-func (s *storage) Read(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	row, err := s.readInternal(ctx, namespace, name)
+func (s *secureValueStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error) {
+	row, err := s.readInternal(ctx, nn)
 	if err != nil {
 		return nil, fmt.Errorf("read internal: %w", err)
 	}
@@ -96,28 +96,45 @@ func (s *storage) Read(ctx context.Context, namespace, name string) (*secretv0al
 	return secureValue, nil
 }
 
-func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	currentRow, err := s.readInternal(ctx, newSecureValue.Namespace, newSecureValue.Name)
+	nn := xkube.NameNamespace{
+		Name:      newSecureValue.Name,
+		Namespace: xkube.Namespace(newSecureValue.Namespace),
+	}
+
+	currentRow, err := s.readInternal(ctx, nn)
 	if err != nil {
 		return nil, fmt.Errorf("read securevalue: %w", err)
 	}
 
 	// This should come from the keeper.
-	externalID := "TODO2"
+	externalID := secret.ExternalID("TODO2")
 	newSecureValue.Spec.Value = ""
 	newSecureValue.Spec.Ref = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
+	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID.String())
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Validate before updating that the new `keeper` exists.
+		keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
+
+		keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+		if err != nil {
+			return fmt.Errorf("check keeper existence: %w", err)
+		}
+
+		if !keeperExists {
+			return contracts.ErrKeeperNotFound
+		}
+
 		if _, err := sess.Update(newRow); err != nil {
 			return fmt.Errorf("update row: %w", err)
 		}
@@ -136,7 +153,7 @@ func (s *storage) Update(ctx context.Context, newSecureValue *secretv0alpha1.Sec
 	return secureValue, nil
 }
 
-func (s *storage) Delete(ctx context.Context, namespace string, name string) error {
+func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
@@ -145,7 +162,7 @@ func (s *storage) Delete(ctx context.Context, namespace string, name string) err
 	// TODO: delete from the keeper!
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
-	row := &secureValueDB{Name: name, Namespace: namespace}
+	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
@@ -162,7 +179,7 @@ func (s *storage) Delete(ctx context.Context, namespace string, name string) err
 	return nil
 }
 
-func (s *storage) List(ctx context.Context, namespace string, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -176,7 +193,9 @@ func (s *storage) List(ctx context.Context, namespace string, options *internalv
 	secureValueRows := make([]*secureValueDB, 0)
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if err := sess.Where("namespace = ?", namespace).Find(&secureValueRows); err != nil {
+		cond := &secureValueDB{Namespace: namespace.String()}
+
+		if err := sess.Find(&secureValueRows, cond); err != nil {
 			return fmt.Errorf("find rows: %w", err)
 		}
 
@@ -204,13 +223,13 @@ func (s *storage) List(ctx context.Context, namespace string, options *internalv
 	}, nil
 }
 
-func (s *storage) readInternal(ctx context.Context, namespace, name string) (*secureValueDB, error) {
+func (s *secureValueStorage) readInternal(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
 	_, ok := claims.From(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	row := &secureValueDB{Name: name, Namespace: namespace}
+	row := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
@@ -219,7 +238,7 @@ func (s *storage) readInternal(ctx context.Context, namespace, name string) (*se
 		}
 
 		if !found {
-			return ErrSecureValueNotFound
+			return contracts.ErrSecureValueNotFound
 		}
 
 		return nil
@@ -229,26 +248,4 @@ func (s *storage) readInternal(ctx context.Context, namespace, name string) (*se
 	}
 
 	return row, nil
-}
-
-// TODO: move this somewhere else!
-var (
-	// Exclude these annotations
-	skipAnnotations = map[string]bool{
-		"kubectl.kubernetes.io/last-applied-configuration": true, // force server side apply
-		utils.AnnoKeyCreatedBy:                             true,
-		utils.AnnoKeyUpdatedBy:                             true,
-		utils.AnnoKeyUpdatedTimestamp:                      true,
-	}
-)
-
-func CleanAnnotations(anno map[string]string) map[string]string {
-	copy := make(map[string]string)
-	for k, v := range anno {
-		if skipAnnotations[k] {
-			continue
-		}
-		copy[k] = v
-	}
-	return copy
 }
