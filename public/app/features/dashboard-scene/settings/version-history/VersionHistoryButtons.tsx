@@ -1,5 +1,5 @@
-import { reportInteraction } from '@grafana/runtime';
 import { Tooltip, Button, Stack } from '@grafana/ui';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 type VersionsButtonsType = {
   hasMore: boolean;
@@ -21,7 +21,7 @@ export const VersionsHistoryButtons = ({
         type="button"
         onClick={() => {
           getVersions(true);
-          reportInteraction('grafana_dashboards_show_more_versions_clicked');
+          DashboardInteractions.showMoreVersionsClicked();
         }}
         variant="secondary"
         disabled={isLastPage}

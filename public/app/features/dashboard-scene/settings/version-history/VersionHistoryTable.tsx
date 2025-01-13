@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
 
@@ -66,7 +66,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                             hideModal,
                             onRestore,
                           });
-                          reportInteraction('grafana_dashboards_version_restore_clicked', {
+                          DashboardInteractions.versionRestoreClicked({
                             version: version.version,
                             index: idx,
                             confirm: false,
