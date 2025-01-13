@@ -66,6 +66,7 @@ export enum AzureQueryType {
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
   LocationsQuery = 'Azure Regions',
   LogAnalytics = 'Azure Log Analytics',
+  LogBuilderMode = 'Azure Log Builder Mode',
   MetricNamesQuery = 'Azure Metric Names',
   NamespacesQuery = 'Azure Namespaces',
   ResourceGroupsQuery = 'Azure Resource Groups',

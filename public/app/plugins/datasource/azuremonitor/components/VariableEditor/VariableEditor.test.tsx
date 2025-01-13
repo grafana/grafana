@@ -83,7 +83,7 @@ describe('VariableEditor:', () => {
       await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
       expect(onChange).toHaveBeenCalledWith({
         azureLogAnalytics: {
-          query: 'test quer',
+          query: 'test query',
         },
         queryType: 'Azure Log Analytics',
         refId: 'A',
