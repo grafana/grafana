@@ -53,7 +53,7 @@ export type FilterType = {
 };
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions, onColumnResize } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
   const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
@@ -158,7 +158,7 @@ export function TableNG(props: TableNGProps) {
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
   const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent }) => {
-    const headerRef = useRef(null);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     let isColumnFilterable = filterable;
     if (field.config.custom.filterable !== filterable) {
@@ -183,6 +183,26 @@ export function TableNG(props: TableNGProps) {
         headerCellRefs.current[column.key] = headerRef.current;
       }
     }, [headerRef, column.key]);
+
+    useEffect(() => {
+      const headerCellParent = headerRef.current?.parentElement;
+      if (headerCellParent) {
+        const lastElement = headerCellParent.lastElementChild;
+        if (lastElement) {
+          const handleMouseUp = () => {
+            console.log('update size');
+          };
+
+          lastElement.addEventListener('click', handleMouseUp);
+
+          return () => {
+            lastElement.removeEventListener('click', handleMouseUp);
+          };
+        }
+      }
+      // to handle "Not all code paths return a value." error
+      return;
+    }, []);
 
     return (
       <div ref={headerRef} style={{ display: 'flex', justifyContent }}>
