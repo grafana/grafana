@@ -8,6 +8,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -92,7 +93,13 @@ func ProvideStandaloneAuthZClient(
 }
 
 func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
-	noAuth := func(ctx context.Context) (context.Context, error) {
+	// For in-proc use-case authorize add fake service claims - it should be able to access every namespace, as there is only one
+	staticAuth := func(ctx context.Context) (context.Context, error) {
+		ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+			Rest: authnlib.AccessTokenClaims{
+				Namespace: "*",
+			},
+		}))
 		return ctx, nil
 	}
 
@@ -100,8 +107,8 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzli
 	channel.RegisterService(
 		grpchan.InterceptServer(
 			&authzv1.AuthzService_ServiceDesc,
-			grpcAuth.UnaryServerInterceptor(noAuth),
-			grpcAuth.StreamServerInterceptor(noAuth),
+			grpcAuth.UnaryServerInterceptor(staticAuth),
+			grpcAuth.StreamServerInterceptor(staticAuth),
 		),
 		server,
 	)
