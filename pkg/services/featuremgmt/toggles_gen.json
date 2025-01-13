@@ -3568,6 +3568,18 @@
     },
     {
       "metadata": {
+        "name": "teamHttpHeadersMimir",
+        "resourceVersion": "1736763800062",
+        "creationTimestamp": "2025-01-13T10:23:20Z"
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1728565214224",
         "creationTimestamp": "2024-10-10T13:00:14Z"
