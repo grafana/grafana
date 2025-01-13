@@ -86,6 +86,10 @@ module.exports = [
               importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
               message: 'Use Stack component instead.',
             },
+            {
+              group: ['@grafana/*/src/*'],
+              message: 'Direct imports from @grafana/ui/src are not allowed. Please import from @grafana/ui instead.',
+            },
           ],
         },
       ],
