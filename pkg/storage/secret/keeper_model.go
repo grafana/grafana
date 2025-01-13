@@ -42,7 +42,7 @@ type keeperDB struct {
 }
 
 func (*keeperDB) TableName() string {
-	return TableNameSecretKeeper
+	return TableNameKeeper
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
