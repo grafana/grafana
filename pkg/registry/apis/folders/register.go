@@ -18,13 +18,13 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -182,37 +182,11 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		if !attr.IsResourceRequest() {
-			return authorizer.DecisionNoOpinion, "", nil
-		}
-
-		// Check for the request claims
-		user, ok := claims.From(ctx)
-		if !ok {
-			return authorizer.DecisionDeny, "", nil
-		}
-
-		rsp, err := b.authz.Check(ctx, user, authz.CheckRequest{
-			Verb:        attr.GetVerb(),
-			Group:       attr.GetAPIGroup(),
-			Resource:    attr.GetResource(),
-			Namespace:   attr.GetNamespace(),
-			Name:        attr.GetName(),
-			Subresource: attr.GetSubresource(),
-			Path:        attr.GetSubresource(),
-			Folder:      "", // not known until we read thw whole folder!
+	return gfauthorizer.NewResourceAuthorizer(b.authz,
+		func(group, resource, namespace, name string) (string, error) {
+			// TODO! get the parent folder value
+			return "", nil
 		})
-		if err != nil {
-			b.cfg.Logger.Warn("error checking authorization", "err", err)
-			return authorizer.DecisionDeny, "", nil
-		}
-
-		if rsp.Allowed {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "folder", err
-	})
 }
 
 var folderValidationRules = struct {

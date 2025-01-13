@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -70,5 +71,5 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 		},
 	)
 
-	return gfauthorizer.NewResourceAuthorizer(client), client
+	return gfauthorizer.NewResourceAuthorizer(client, nil), client
 }

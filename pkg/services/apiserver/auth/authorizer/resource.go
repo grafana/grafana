@@ -4,18 +4,25 @@ import (
 	"context"
 	"errors"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-func NewResourceAuthorizer(c authz.AccessClient) authorizer.Authorizer {
-	return ResourceAuthorizer{c}
+type FolderLookup = func(group, resource, namespace, name string) (string, error)
+
+func NewResourceAuthorizer(c authz.AccessClient, lookup FolderLookup) authorizer.Authorizer {
+	return ResourceAuthorizer{
+		client: c,
+		lookup: lookup,
+	}
 }
 
 // ResourceAuthorizer is used to translate authorizer.Authorizer calls to claims.AccessClient calls
 type ResourceAuthorizer struct {
-	c authz.AccessClient
+	client authz.AccessClient
+	lookup FolderLookup
 }
 
 func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -28,7 +35,21 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionDeny, "", errors.New("no identity found for request")
 	}
 
-	res, err := r.c.Check(ctx, ident, authz.CheckRequest{
+	folder := ""
+	if r.lookup != nil {
+		var err error
+		folder, err = r.lookup(
+			attr.GetAPIGroup(),
+			attr.GetResource(),
+			attr.GetNamespace(),
+			attr.GetName())
+
+		if err != nil {
+			return authorizer.DecisionDeny, "Error reading folder", err
+		}
+	}
+
+	res, err := r.client.Check(ctx, ident, authz.CheckRequest{
 		Verb:        attr.GetVerb(),
 		Group:       attr.GetAPIGroup(),
 		Resource:    attr.GetResource(),
@@ -36,6 +57,7 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 		Name:        attr.GetName(),
 		Subresource: attr.GetSubresource(),
 		Path:        attr.GetPath(),
+		Folder:      folder,
 	})
 
 	if err != nil {
