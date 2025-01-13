@@ -66,6 +66,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFolders,
+		featuremgmt.FlagKubernetesFoldersServiceV2,
 		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
