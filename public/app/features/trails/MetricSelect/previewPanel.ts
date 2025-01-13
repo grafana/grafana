@@ -10,15 +10,21 @@ import { NativeHistogramBadge } from './NativeHistogramBadge';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 
-export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string, nativeHistogram?: boolean) {
+export function getPreviewPanelFor(
+  metric: string,
+  index: number,
+  currentFilterCount: number,
+  description?: string,
+  nativeHistogram?: boolean
+) {
   const autoQuery = getAutoQueriesForMetric(metric, nativeHistogram);
-  let actions: Array<(SelectMetricAction | AddToExplorationButton | NativeHistogramBadge)> = [
+  let actions: Array<SelectMetricAction | AddToExplorationButton | NativeHistogramBadge> = [
     new SelectMetricAction({ metric, title: 'Select' }),
     new AddToExplorationButton({ labelName: metric }),
   ];
 
-  if(nativeHistogram) {
-    actions.unshift(new NativeHistogramBadge({}))
+  if (nativeHistogram) {
+    actions.unshift(new NativeHistogramBadge({}));
   }
 
   const vizPanel = autoQuery.preview

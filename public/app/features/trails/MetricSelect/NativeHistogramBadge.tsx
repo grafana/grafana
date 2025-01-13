@@ -5,17 +5,14 @@ import { SceneObjectBase } from '@grafana/scenes';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { Trans } from '@grafana/ui/src/utils/i18n';
 
-
-
-
 export class NativeHistogramBadge extends SceneObjectBase {
   public static Component = () => {
     const styles = useStyles2(getStyles);
     return (
-      <Badge 
-        className={styles.badge} 
-        color="blue" 
-        text={<Trans i18nKey="trails.metric-select.nattive-histogram">Native Histogram</Trans>}
+      <Badge
+        className={styles.badge}
+        color="blue"
+        text={<Trans i18nKey="trails.metric-select.native-histogram">Native Histogram</Trans>}
       />
     );
   };

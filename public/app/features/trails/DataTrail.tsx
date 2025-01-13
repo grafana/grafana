@@ -73,7 +73,6 @@ import {
   VAR_OTEL_RESOURCES,
 } from './shared';
 import { getTrailFor, limitAdhocProviders } from './utils';
-import { set } from 'lodash';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -107,7 +106,9 @@ export interface DataTrailState extends SceneObjectState {
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch', 'showPreviews', 'nativeHistogramMetric'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, {
+    keys: ['metric', 'metricSearch', 'showPreviews', 'nativeHistogramMetric'],
+  });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -252,8 +253,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   public async initializeHistograms() {
     if (!this.state.histogramsLoaded) {
       await this.datasourceHelper.initializeHistograms();
-      
-      this.setState({ 
+
+      this.setState({
         nativeHistograms: this.listNativeHistograms(),
         histogramsLoaded: true,
       });
@@ -325,7 +326,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     const stateUpdate: Partial<DataTrailState> = {};
     stateUpdate.metric = metric;
     // refactoring opportunity? Or do we pass metric knowledge all the way down?
-    // must pass this native histogram prometheus knowledge deep into 
+    // must pass this native histogram prometheus knowledge deep into
     // the topscene set on the trail > MetricScene > getAutoQueriesForMetric() > createHistogramMetricQueryDefs();
     stateUpdate.nativeHistogramMetric = nativeHistogramMetric ? '1' : '';
     stateUpdate.topScene = getTopSceneFor(metric, nativeHistogramMetric);
@@ -682,16 +683,16 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { 
-      controls, 
-      topScene, 
-      history, 
-      settings, 
-      useOtelExperience, 
-      hasOtelResources, 
+    const {
+      controls,
+      topScene,
+      history,
+      settings,
+      useOtelExperience,
+      hasOtelResources,
       embedded,
       histogramsLoaded,
-      nativeHistograms
+      nativeHistograms,
     } = model.useState();
 
     const chromeHeaderHeight = useChromeHeaderHeight();
@@ -874,98 +875,99 @@ type NativeHistogramInfoProps = {
   histogramsLoaded: boolean;
   nativeHistograms: string[];
   trail: DataTrail;
-}
+};
 
 export function nativeHistogramInfo(props: NativeHistogramInfoProps) {
   const { histogramsLoaded, nativeHistograms, trail } = props;
   const [histogramMessage, setHistogramMessage] = useState(true);
   const [showHistogramExamples, setShowHistogramExamples] = useState(false);
-  const styles = useStyles2(getStyles,0);
+  const styles = useStyles2(getStyles, 0);
 
   useEffect(() => {
     setHistogramMessage(true);
     setShowHistogramExamples(false);
-  },[histogramsLoaded, nativeHistograms])
+  }, [histogramsLoaded, nativeHistograms]);
 
   const selectNativeHistogram = (metric: string) => {
     trail.publishEvent(new MetricSelectedEvent(metric), true);
-  }
+  };
 
   return (
     <>
-    {
-      histogramsLoaded && 
-      (nativeHistograms ?? []).length > 0 && 
-      histogramMessage && (
-      <Alert 
-        title={'Native Histogram Support'} 
-        severity={'info'} 
-        onRemove={()=> {
-          setHistogramMessage(false)
-        }}
-      >
-        <div className={styles.histogramDiv}>
-          <div className={styles.histogramSentence}>
-            Explore metrics now supports native histograms which 
-            offer significant benefits over traditional histograms, including: 
-            higher resolution with lower storage costs, 
-            simpler instrumentation due to automatic bucket allocation, 
-            better representation of data distribution, 
-            especially for outlier values in the left tail, 
-            and more efficient querying capabilities.
+      {histogramsLoaded && (nativeHistograms ?? []).length > 0 && histogramMessage && (
+        <Alert
+          title={'Native Histogram Support'}
+          severity={'info'}
+          onRemove={() => {
+            setHistogramMessage(false);
+          }}
+        >
+          <div className={styles.histogramDiv}>
+            <div className={styles.histogramSentence}>
+              Explore metrics now supports native histograms which offer significant benefits over traditional
+              histograms, including: higher resolution with lower storage costs, simpler instrumentation due to
+              automatic bucket allocation, better representation of data distribution, especially for outlier values in
+              the left tail, and more efficient querying capabilities.
+            </div>
+            <div className={styles.histogramLearnMore}>
+              <Button
+                onClick={() =>
+                  window.open('https://grafana.com/docs/grafana-cloud/whats-new/native-histograms/', '_blank')
+                }
+              >
+                Learn more
+              </Button>
+            </div>
           </div>
-          <div className={styles.histogramLearnMore}>
-            <Button  onClick={() => window.open('https://grafana.com/docs/grafana-cloud/whats-new/native-histograms/', "_blank")} >
-              Learn more
-            </Button>
-          </div>
-        </div>
-        {/* 
+          {/* 
           [x] show native histogram panel in metric scene          
           [x] show the badge in the metric preview panel          
           [x] click text to search for examples
           [ ] show images of native histogram examples
         */}
 
-        {!showHistogramExamples && 
-          <div>
-            <Button 
-              type='button' 
-              fill='text' 
-              variant='primary' 
-              onClick={() => {
-                setShowHistogramExamples(true);
-              }}
-            >
-              {`> See examples`}
-            </Button>
-          </div>
-        }
-        {showHistogramExamples && (
-          <>
-          <br />
-          <div>
-            Click any of the native histograms below to explore them:
-          </div>
-          <div>
-            {nativeHistograms.map((el)=> {
-              return (
-                <div>
-                <Button onClick={() => {
-                  selectNativeHistogram(el);
-                  setHistogramMessage(false);
-                  }} key={el} variant='primary' size='sm' fill='text'>
-                  {el}
-                </Button>
-                </div>
-              )
-            })}
-          </div>
-          </>
-
-        )}
-      </Alert>
-    )}
+          {!showHistogramExamples && (
+            <div>
+              <Button
+                type="button"
+                fill="text"
+                variant="primary"
+                onClick={() => {
+                  setShowHistogramExamples(true);
+                }}
+              >
+                {`> See examples`}
+              </Button>
+            </div>
+          )}
+          {showHistogramExamples && (
+            <>
+              <br />
+              <div>Click any of the native histograms below to explore them:</div>
+              <div>
+                {nativeHistograms.map((el) => {
+                  return (
+                    <div>
+                      <Button
+                        onClick={() => {
+                          selectNativeHistogram(el);
+                          setHistogramMessage(false);
+                        }}
+                        key={el}
+                        variant="primary"
+                        size="sm"
+                        fill="text"
+                      >
+                        {el}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </Alert>
+      )}
     </>
-  )
+  );
 }
