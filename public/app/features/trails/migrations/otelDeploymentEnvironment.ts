@@ -38,7 +38,7 @@ export function migrateOtelDeploymentEnvironment(trail: DataTrail, urlParams: Ur
   }
 
   let filters: AdHocVariableFilter[] = [];
-  // if there is a dep environment, we must also migrate the otel resources to the new variable
+  // if there is a deployment environment, we must also migrate the otel resources to the new variable
   const otelResources = urlParams['var-otel_resources'];
   const metricVarfilters = urlParams['var-filters'];
   if (
