@@ -45,15 +45,15 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
       // if the label chosen is a resource attribute, add it to the otel resource variable
       allAttributes?.split(',').includes(labelName)
     ) {
-      // this is different than the first non promoted labels on data trail.
-      // in data trail we looks at all labels for all metrics.
-      // In breakdown, we look at one metric.
-      // The metric may not have the label promoted so we have to compare
-      // not the nonPromoted label collection we use in the parent datatrail
-      // but instead have to look at VAR_OTEL_GROUP_LEFT which are a collection of labels from
-      // target_info that ave not been promoted to the metric.
-      // these metric specific non promoted labels are retrieved in the function getFilteredResourceAttributes
-      // These attributes on on the metric that has been selected
+      // This is different than the first non-promoted labels on data trail. In data trail we look at all labels
+      // for all metrics. In breakdown, we look at one metric.
+      //
+      // The metric may not have the label promoted so we have to compare not the non-promoted
+      // label collection we use in the parent datatrail, but instead have to look at `VAR_OTEL_GROUP_LEFT`
+      // which are a collection of labels from `target_info` that have not been promoted to the metric.
+      //
+      // These metric-specific non-promoted labels are retrieved in the function `getFilteredResourceAttributes`.
+      // These attributes on the metric that has been selected.
       trail.setState({ addingLabelFromBreakdown: true });
       // add to OTel resource var filters
       const otelResourcesVar = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
