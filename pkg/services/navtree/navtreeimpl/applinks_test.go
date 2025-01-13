@@ -12,7 +12,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -443,7 +442,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	service := ServiceImpl{
 		log:            log.New("navtree"),
 		cfg:            cfg,
-		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{

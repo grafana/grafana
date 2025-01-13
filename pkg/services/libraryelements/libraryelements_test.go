@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -310,7 +309,6 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
-		zanzana.NewNoopClient(),
 		nil,
 		nil,
 		nil,
@@ -400,12 +398,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, zanzana.NewNoopClient(),
-		nil,
-		nil,
-		nil,
-		quotaService,
-		nil,
+		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, svcErr)
 	guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -458,7 +451,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+		ac := acimpl.ProvideAccessControl(features)
 		folderPermissions := acmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
@@ -467,7 +460,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(), folder.NewFakeStore(),
-			nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
+			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)

@@ -188,7 +188,7 @@ func Test_legacyServer_Check(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			f := featuremgmt.WithFeatures()
 			l := &legacyServer{
-				ac: acimpl.ProvideAccessControl(f, nil),
+				ac: acimpl.ProvideAccessControl(f),
 				authnSvc: &authntest.FakeService{
 					ExpectedIdentity: &authn.Identity{
 						ID:          "user:1",

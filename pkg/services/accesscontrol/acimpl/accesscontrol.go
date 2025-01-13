@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -19,7 +18,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.Client) *AccessControl {
+func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
 	m := initMetrics()
 
@@ -27,20 +26,18 @@ func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.C
 		features,
 		logger,
 		accesscontrol.NewResolvers(logger),
-		zclient,
 		m,
 	}
 }
 
 func ProvideAccessControlTest() *AccessControl {
-	return ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	return ProvideAccessControl(featuremgmt.WithFeatures())
 }
 
 type AccessControl struct {
 	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
-	zclient   zanzana.Client
 	metrics   *acMetrics
 }
 
@@ -102,7 +99,6 @@ func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return &AccessControl{
 		features:  a.features,
 		log:       a.log,
-		zclient:   a.zclient,
 		metrics:   a.metrics,
 		resolvers: accesscontrol.NewResolvers(a.log),
 	}

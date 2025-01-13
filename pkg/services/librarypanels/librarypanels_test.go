@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -735,7 +734,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
+		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -830,7 +829,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashStore, folderStore,
 			features, acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 			foldertest.NewFakeService(), folder.NewFakeStore(),
-			nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
+			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)
