@@ -188,7 +188,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardEditPane({}),
+      editPane: new DashboardEditPane(),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
@@ -378,6 +378,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboard: new DashboardModel(version.data),
       meta: this.state.meta,
     };
+
     const dashScene = transformSaveModelToScene(dashboardDTO);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;

@@ -248,4 +248,5 @@ export interface FeatureToggles {
   k8SFolderCounts?: boolean;
   k8SFolderMove?: boolean;
   improvedExternalSessionHandlingSAML?: boolean;
+  teamHttpHeadersMimir?: boolean;
 }
