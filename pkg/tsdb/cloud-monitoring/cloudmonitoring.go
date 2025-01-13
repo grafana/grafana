@@ -217,10 +217,6 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters any) []string 
 	return metricTypeFilterArray
 }
 
-func strPtr(s string) *string {
-	return &s
-}
-
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
 		var rawQuery map[string]any

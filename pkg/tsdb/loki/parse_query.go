@@ -197,12 +197,3 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 
 	return qs, nil
 }
-
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
-	}
-
-	return emptyValue
-}

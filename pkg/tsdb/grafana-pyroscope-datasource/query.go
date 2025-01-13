@@ -454,12 +454,3 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 	}
 	return frames
 }
-
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
-	}
-
-	return emptyValue
-}

@@ -494,9 +494,7 @@ func parseDimensions(dimensions dataquery.Dimensions) (map[string][]string, erro
 		if v.String != nil {
 			parsedDimensions[k] = []string{*v.String}
 		} else if len(v.ArrayOfString) > 0 {
-			for _, value := range v.ArrayOfString {
-				parsedDimensions[k] = append(parsedDimensions[k], value)
-			}
+			parsedDimensions[k] = append(parsedDimensions[k], v.ArrayOfString...)
 		} else {
 			return nil, errors.New("unknown type as dimension value")
 		}
