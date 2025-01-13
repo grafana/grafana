@@ -5,6 +5,34 @@
   "items": [
     {
       "metadata": {
+        "name": "ABTestFeatureToggleA",
+        "resourceVersion": "1736782112674",
+        "creationTimestamp": "2025-01-13T15:28:32Z"
+      },
+      "spec": {
+        "description": "Test feature toggle to see how cohorts could be set up AB testing",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "ABTestFeatureToggleB",
+        "resourceVersion": "1736782112674",
+        "creationTimestamp": "2025-01-13T15:28:32Z"
+      },
+      "spec": {
+        "description": "Test feature toggle to see how cohorts could be set up AB testing",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "accessActionSets",
         "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",

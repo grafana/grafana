@@ -167,6 +167,9 @@ func TestFeatureToggleFiles(t *testing.T) {
 func verifyFlagsConfiguration(t *testing.T) {
 	legacyNames := map[string]bool{
 		"live-service-web-worker": true,
+		// TODO: Remove this when removing feature toggles
+		"ABTestFeatureToggleA": true,
+		"ABTestFeatureToggleB": true,
 	}
 	invalidNames := make([]string, 0)
 
