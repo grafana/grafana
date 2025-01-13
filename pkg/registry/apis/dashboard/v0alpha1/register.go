@@ -71,6 +71,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
+	legacyDashboardAccess := legacy.NewDashboardAccess(dbp, namespacer, dashStore, dashboardService, provisioning, softDelete)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v0alpha1"),
 		DashboardsAPIBuilder: dashboard.DashboardsAPIBuilder{
@@ -80,11 +81,11 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		features:         features,
 		accessControl:    accessControl,
 		unified:          unified,
-		search:           dashboard.NewSearchHandler(unified, tracing, cfg),
+		search:           dashboard.NewSearchHandler(unified, tracing, cfg, legacyDashboardAccess),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
-			Access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
+			Access:         legacyDashboardAccess,
 			TableConverter: dashboardv0alpha1.DashboardResourceInfo.TableConverter(),
 			Features:       features,
 		},

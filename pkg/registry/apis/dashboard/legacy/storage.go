@@ -9,8 +9,11 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -257,7 +260,35 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 
 // TODO: this needs to be implemented
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	return nil, fmt.Errorf("not yet (filter)")
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := &dashboards.FindPersistedDashboardsQuery{
+		Title:        req.Query,
+		Limit:        req.Limit,
+		SignedInUser: user,
+	}
+	// TODO skips zanzana
+	res, err := a.dashService.FindDashboards(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO sort if query.Sort == "" see sortedHits in services/search/service.go
+	// TODO set starred dashboards attribute
+	// TODO if requested filter by starred dashboards
+
+	fmt.Println("res ", res)
+	list := &resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Rows:    nil,
+			Columns: nil,
+		},
+	}
+
+	return list, nil
 }
 
 func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
