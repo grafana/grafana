@@ -20,6 +20,7 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,18 +30,20 @@ import (
 
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
-	log    log.Logger
-	client resource.ResourceIndexClient
-	tracer trace.Tracer
-	cfg    setting.UnifiedStorageConfig
+	log                   log.Logger
+	client                resource.ResourceIndexClient
+	tracer                trace.Tracer
+	cfg                   setting.UnifiedStorageConfig
+	legacyDashboardAccess legacy.DashboardAccess
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg) *SearchHandler {
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardAccess legacy.DashboardAccess) *SearchHandler {
 	return &SearchHandler{
-		client: client,
-		log:    log.New("grafana-apiserver.dashboards.search"),
-		tracer: tracer,
-		cfg:    cfg.UnifiedStorage["dashboards.dashboard.grafana.app"],
+		client:                client,
+		log:                   log.New("grafana-apiserver.dashboards.search"),
+		tracer:                tracer,
+		cfg:                   cfg.UnifiedStorage["dashboards.dashboard.grafana.app"],
+		legacyDashboardAccess: legacyDashboardAccess,
 	}
 }
 
@@ -201,9 +204,6 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 const rootFolder = "general"
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
-	// call Search on legacy/storage depneding on mode
-	fmt.Println("here mode enum: ", rest.Mode0)
-	fmt.Println("here the actual mode: ", s.cfg.DualWriterMode)
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
 
@@ -339,8 +339,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	// Run the query
-	result, err := s.client.Search(ctx, searchRequest)
+	var result *resource.ResourceSearchResponse
+	if s.cfg.DualWriterMode == rest.Mode0 {
+		// TODO add missing query params to spec above
+		result, err = s.legacyDashboardAccess.Search(ctx, searchRequest)
+	} else {
+		result, err = s.client.Search(ctx, searchRequest)
+	}
+
+	fmt.Println("here results: ", result)
+
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
