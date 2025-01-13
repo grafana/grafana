@@ -378,7 +378,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       //   - remove deployment environments as a check
       const nonPromotedOtelResources = await getNonPromotedOtelResources(datasourceUid, timeRange);
 
-      // We only turn on otel experience when we update it the whole experience
+      // This is the function that will turn on OTel for the entire app.
       // The conditions to use this function are
       // 1. must be an otel data source
       // 2. Do not turn it on if the start button was clicked
@@ -393,7 +393,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
         // HERE WE START THE OTEL EXPERIENCE ENGINE
         // 1. Set deployment variable values
         // 2. update all other variables and state
-        // 3. the first check 'startButtonClicked' button should turn it off but pass later if the toggle is turned on
         updateOtelData(
           this,
           datasourceUid,
@@ -403,7 +402,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
           nonPromotedOtelResources
         );
       } else {
-        // reset filters to apply auto, anywhere there are {} characters
         this.resetOtelExperience(hasOtelResources, nonPromotedOtelResources);
       }
     }

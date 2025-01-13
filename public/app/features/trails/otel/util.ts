@@ -366,11 +366,10 @@ export async function updateOtelData(
   ) {
     return;
   }
-  // 1. set deployment variable as a new otel metric filter
-  // We have to have a default value because custom variable requires it
-  // we choose one default value to help filter metrics
-  // The work flow for OTel begins with users selecting a deployment environment
-  // default to production
+  // Set deployment environment variable as a new otel & metric filter.
+  // We choose one default value at the beginning of the OTel experience.
+  // This is because the work flow for OTel begins with users selecting a deployment environment
+  // default to production.
   let defaultDepEnv = getProdOrDefaultEnv(deploymentEnvironments ?? []) ?? '';
 
   const isEnabledInLocalStorage = getOtelExperienceToggleState();
