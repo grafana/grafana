@@ -514,8 +514,9 @@ export async function updateOtelData(
 }
 
 function checkLabelPromotion(filters: AdHocVariableFilter[], nonPromotedOtelResources: string[] = []) {
-  const nonPromoted = filters.filter((f) => nonPromotedOtelResources.includes(f.key));
-  const promoted = filters.filter((f) => !nonPromotedOtelResources.includes(f.key));
+  const nonPromotedResources = new Set(nonPromotedOtelResources);
+  const nonPromoted = filters.filter((f) => nonPromotedResources.has(f.key));
+  const promoted = filters.filter((f) => !nonPromotedResources.has(f.key));
 
   return {
     nonPromoted,
