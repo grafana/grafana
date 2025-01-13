@@ -683,7 +683,18 @@ func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, err
 			if err != nil {
 				return PostableUserConfig{}, err
 			}
-			gmr.SecureSettings = decrypted
+			settings := make(map[string]any)
+			err = json.Unmarshal(gmr.Settings, &settings)
+			if err != nil {
+				return PostableUserConfig{}, fmt.Errorf("cannot unmarshal settings of receiver %s (uid %s): %w", gmr.Name, gmr.UID, err)
+			}
+			for key, val := range decrypted {
+				settings[key] = val
+			}
+			gmr.Settings, err = json.Marshal(settings)
+			if err != nil {
+				return PostableUserConfig{}, fmt.Errorf("cannot marshal settings of receiver %s (uid %s): %w", gmr.Name, gmr.UID, err)
+			}
 		}
 	}
 	return *newCfg, nil
