@@ -39,7 +39,7 @@ func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.L
 }
 
 func (s *Server) listObjectsWithStream(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.listObjectsWithStream")
+	ctx, span := tracer.Start(ctx, "server.listObjectsWithStream")
 	defer span.End()
 
 	r := &openfgav1.StreamedListObjectsRequest{
@@ -49,6 +49,7 @@ func (s *Server) listObjectsWithStream(ctx context.Context, req *openfgav1.ListO
 		Relation:             req.GetRelation(),
 		User:                 req.GetUser(),
 		Context:              req.GetContext(),
+		ContextualTuples:     req.ContextualTuples,
 	}
 
 	clientStream, err := s.openfgaClient.StreamedListObjects(ctx, r)
