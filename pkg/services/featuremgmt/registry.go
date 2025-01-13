@@ -1713,6 +1713,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
+		{
+			Name:           "teamHttpHeadersMimir",
+			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
+			Stage:          FeatureStageExperimental,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
+			Owner:          identityAccessTeam,
+		},
 	}
 )
 
