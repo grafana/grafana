@@ -14,12 +14,12 @@ import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
-export const GROUP_PAGE_SIZE = 40;
+const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
 
-  const groupsGenerator = useRef(grafanaGroupsGenerator(GROUP_PAGE_SIZE));
+  const groupsGenerator = useRef(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE));
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
@@ -35,7 +35,7 @@ export function PaginatedGrafanaLoader() {
     canMoveForward,
     canMoveBackward,
     isLoading,
-  } = usePaginatedPrometheusGroups(groupsGenerator.current, GROUP_PAGE_SIZE);
+  } = usePaginatedPrometheusGroups(groupsGenerator.current, GRAFANA_GROUP_PAGE_SIZE);
 
   const groupsByFolder = useMemo(() => groupBy(groupsPage, 'folderUid'), [groupsPage]);
 

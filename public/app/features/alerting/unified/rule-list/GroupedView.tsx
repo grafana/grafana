@@ -14,8 +14,6 @@ import { DataSourceSection } from './components/DataSourceSection';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
-export const GROUP_PAGE_SIZE = 40;
-
 export function GroupedView() {
   const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
 

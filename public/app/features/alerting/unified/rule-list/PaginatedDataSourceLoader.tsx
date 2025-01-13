@@ -15,7 +15,7 @@ import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
-export const GROUP_PAGE_SIZE = 40;
+const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 
 interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
   rulesSourceIdentifier: ExternalRulesSourceIdentifier;
@@ -24,7 +24,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
   const { uid, name } = rulesSourceIdentifier;
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
 
-  const groupsGenerator = useRef(prometheusGroupsGenerator(rulesSourceIdentifier, GROUP_PAGE_SIZE));
+  const groupsGenerator = useRef(prometheusGroupsGenerator(rulesSourceIdentifier, DATA_SOURCE_GROUP_PAGE_SIZE));
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
@@ -40,7 +40,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
     canMoveForward,
     canMoveBackward,
     isLoading,
-  } = usePaginatedPrometheusGroups(groupsGenerator.current, GROUP_PAGE_SIZE);
+  } = usePaginatedPrometheusGroups(groupsGenerator.current, DATA_SOURCE_GROUP_PAGE_SIZE);
 
   const groupsByNamespace = useMemo(() => groupBy(groupsPage, 'file'), [groupsPage]);
 
