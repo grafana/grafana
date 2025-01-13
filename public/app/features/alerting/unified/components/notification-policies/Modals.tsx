@@ -6,7 +6,6 @@ import { Trans } from 'app/core/internationalization';
 import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
-import { ERROR_NEWER_CONFIGURATION, getErrorMessageFromCode } from '../../utils/k8s/errors';
 import { MatcherFormatter } from '../../utils/matchers';
 import { InsertPosition } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
@@ -54,7 +53,7 @@ const useAddPolicyModal = (
           closeOnEscape={true}
           title="Add notification policy"
         >
-          {error && <NotificationPoliciesErrorAlert error={getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION)} />}
+          {error && <NotificationPoliciesErrorAlert error={error} />}
           <AmRoutesExpandedForm
             defaults={{
               groupBy: referenceRoute?.group_by,
@@ -85,13 +84,13 @@ const useAddPolicyModal = (
 
 const useEditPolicyModal = (
   alertManagerSourceName: string,
-  handleUpdate: (route: Partial<FormAmRoute>) => void,
-  loading: boolean,
-  conflictError: boolean
+  handleUpdate: (route: Partial<FormAmRoute>) => Promise<void>,
+  loading: boolean
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
+  const [error, setError] = useState<Error | undefined>();
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
@@ -116,15 +115,13 @@ const useEditPolicyModal = (
           closeOnEscape={true}
           title="Edit notification policy"
         >
-          {conflictError && (
-            <NotificationPoliciesErrorAlert error={getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION)} />
-          )}
+          {error && <NotificationPoliciesErrorAlert error={error} />}
           {isDefaultPolicy && route && (
             <AmRootRouteForm
               // TODO *sigh* this alertmanagersourcename should come from context or something
               // passing it down all the way here is a code smell
               alertManagerSourceName={alertManagerSourceName}
-              onSubmit={(values) => handleUpdate(values)}
+              onSubmit={(values) => handleUpdate(values).catch(setError)}
               route={route}
               actionButtons={
                 <Modal.ButtonRow>
@@ -141,7 +138,7 @@ const useEditPolicyModal = (
           {!isDefaultPolicy && (
             <AmRoutesExpandedForm
               route={route}
-              onSubmit={(values) => handleUpdate(values)}
+              onSubmit={(values) => handleUpdate(values).catch(setError)}
               actionButtons={
                 <Modal.ButtonRow>
                   <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
@@ -156,7 +153,7 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [alertManagerSourceName, conflictError, handleDismiss, isDefaultPolicy, loading, route, showModal, handleUpdate]
+    [loading, showModal, handleDismiss, error, isDefaultPolicy, route, alertManagerSourceName, handleUpdate]
   );
 
   return [modalElement, handleShow, handleDismiss];

@@ -11,13 +11,7 @@ import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 
 import { formAmRouteToAmRoute } from './amroutes';
-
-export class RouteNotFoundError extends Error {
-  constructor(routeId: string) {
-    super(`No such route with ID '${routeId}'`);
-    this.name = 'RouteNotFoundError';
-  }
-}
+import { ERROR_NEWER_CONFIGURATION } from './k8s/errors';
 
 // add a form submission to the route tree
 export const mergePartialAmRouteWithRouteTree = (
@@ -27,7 +21,12 @@ export const mergePartialAmRouteWithRouteTree = (
 ): Route => {
   const existing = findExistingRoute(partialFormRoute.id ?? '', routeTree);
   if (!existing) {
-    throw new RouteNotFoundError(partialFormRoute.id ?? '');
+    throw new Error(`No such route with ID '${partialFormRoute.id}'`, {
+      // this allows any error handling (when using stringifyErrorLike) to identify and translate this exception
+      // we do, however, make the assumption that this exception is the result of the policy tree having been updating by the user
+      // and this not being a programmer error.
+      cause: ERROR_NEWER_CONFIGURATION,
+    });
   }
 
   function findAndReplace(currentRoute: RouteWithID): Route {
