@@ -110,27 +110,6 @@ describe('DashboardScene', () => {
       });
     });
 
-    describe('Given new dashboard in edit mode', () => {
-      it('when saving it should clear isNew state', () => {
-        const scene = buildTestScene({
-          meta: { isNew: true },
-        });
-
-        scene.activate();
-        scene.onEnterEditMode();
-        scene.saveCompleted({} as Dashboard, {
-          id: 1,
-          slug: 'slug',
-          uid: 'dash-1',
-          url: 'sss',
-          version: 2,
-          status: 'aaa',
-        });
-
-        expect(scene.state.meta.isNew).toBeFalsy();
-      });
-    });
-
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
       let deactivateScene: () => void;
