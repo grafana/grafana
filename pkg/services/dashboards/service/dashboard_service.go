@@ -1582,11 +1582,11 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 			explainIDX = i
 		case resource.SEARCH_FIELD_SCORE:
 			scoreIDX = i
-		case "title":
+		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
-		case "folder":
+		case resource.SEARCH_FIELD_FOLDER:
 			folderIDX = i
-		case "tags":
+		case resource.SEARCH_FIELD_TAGS:
 			tagsIDX = i
 		}
 	}
@@ -1599,10 +1599,17 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
 
+	excludedFields := []string{
+		resource.SEARCH_FIELD_EXPLAIN,
+		resource.SEARCH_FIELD_SCORE,
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_TAGS,
+	}
 	for i, row := range result.Results.Rows {
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
-			if !slices.Contains([]string{"title", "folder", "tags"}, col.Name) {
+			if !slices.Contains(excludedFields, col.Name) {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
 					return nil, err
