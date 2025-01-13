@@ -22,9 +22,10 @@ func newStorage(
 	optsGetter generic.RESTOptionsGetter,
 	check models.Check,
 	resourceInfo utils.ResourceInfo,
+	updateChan chan<- updateReq,
 ) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
-	storageStrategy := newStrategy(scheme, resourceInfo.GroupVersion(), check)
+	storageStrategy := newStrategy(scheme, resourceInfo.GroupVersion(), check, updateChan)
 
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,

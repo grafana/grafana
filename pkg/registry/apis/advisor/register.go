@@ -5,13 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/kube-openapi/pkg/common"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	advisor "github.com/grafana/grafana/pkg/apis/advisor/v0alpha1"
@@ -28,6 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/kube-openapi/pkg/common"
 )
 
 var (
@@ -114,7 +113,8 @@ func (b *AdvisorAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *AdvisorAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	for _, check := range b.checks {
 		ri := resourceInfo(check)
-		storage, err := newStorage(opts.Scheme, opts.OptsGetter, check, ri)
+		controller := newController(check)
+		storage, err := newStorage(opts.Scheme, opts.OptsGetter, check, ri, controller.GetChan())
 		if err != nil {
 			return fmt.Errorf("failed to initialize storage: %w", err)
 		}
@@ -125,6 +125,8 @@ func (b *AdvisorAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 			apiGroupInfo.VersionedResourcesStorageMap[gvr.Version] = v
 		}
 		v[gvr.Resource] = storage
+		controller.SetStorage(storage)
+		go controller.Run(context.Background())
 	}
 	return nil
 }

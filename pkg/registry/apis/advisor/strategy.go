@@ -3,7 +3,6 @@ package advisor
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/advisor/models"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,30 +19,20 @@ type genericStrategy interface {
 type datasourceCheckStrategy struct {
 	genericStrategy
 
-	c models.Check
+	c          models.Check
+	updateChan chan<- updateReq
 }
 
-func newStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion, c models.Check) *datasourceCheckStrategy {
+func newStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion, c models.Check, updateChan chan<- updateReq) *datasourceCheckStrategy {
 	genericStrategy := grafanaregistry.NewStrategy(typer, gv)
-	return &datasourceCheckStrategy{genericStrategy, c}
+	return &datasourceCheckStrategy{genericStrategy, c, updateChan}
 }
 
 func (g *datasourceCheckStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	// Run the check
-	dsErrs, err := g.c.Run(ctx, obj)
-	if err != nil {
-		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
-	}
-
-	// Store result in the status
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
-	}
-	err = meta.SetStatus(*dsErrs)
-	if err != nil {
-		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
-	}
+	// Send the update signal
+	go func() {
+		g.updateChan <- updateReq{ctx, obj}
+	}()
 
 	return nil
 }

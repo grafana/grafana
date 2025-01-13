@@ -75,12 +75,13 @@ func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime
 	}
 
 	// update shouldn't change the status
-	status, err := oldMeta.GetStatus()
-	if err != nil {
-		_ = newMeta.SetStatus(nil)
-	} else {
-		_ = newMeta.SetStatus(status)
-	}
+	// TODO: Maybe use spec?
+	// status, err := oldMeta.GetStatus()
+	// if err != nil {
+	// 	_ = newMeta.SetStatus(nil)
+	// } else {
+	// 	_ = newMeta.SetStatus(status)
+	// }
 
 	spec, err := newMeta.GetSpec()
 	if err != nil {
