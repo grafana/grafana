@@ -2,27 +2,78 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, SceneObjectBase, SceneObject, SceneObjectRef } from '@grafana/scenes';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneObject,
+  SceneObjectRef,
+  sceneGraph,
+  useSceneObjectState,
+} from '@grafana/scenes';
+import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
+import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selectedObject?: SceneObjectRef<SceneObject>;
+  selectionContext: ElementSelectionContextState;
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
-  public selectObject(obj: SceneObject) {
+  public constructor() {
+    super({
+      selectionContext: {
+        enabled: false,
+        selected: [],
+        onSelect: (item, multi) => this.selectElement(item, multi),
+      },
+    });
+  }
+
+  public enableSelection() {
+    // Enable element selection
+    this.setState({ selectionContext: { ...this.state.selectionContext, enabled: true } });
+  }
+
+  public disableSelection() {
+    this.setState({ selectionContext: { ...this.state.selectionContext, enabled: false } });
+  }
+
+  private selectElement(element: ElementSelectionContextItem, multi?: boolean) {
+    const obj = sceneGraph.findByKey(this, element.id);
+    if (obj) {
+      this.selectObject(obj, element.id, multi);
+    }
+  }
+
+  public selectObject(obj: SceneObject, id: string, multi?: boolean) {
     const currentSelection = this.state.selectedObject?.resolve();
     if (currentSelection === obj) {
-      const dashboard = getDashboardSceneFor(this);
-      this.setState({ selectedObject: dashboard.getRef() });
-    } else {
-      this.setState({ selectedObject: obj.getRef() });
+      this.clearSelection();
+      return;
     }
+
+    this.setState({
+      selectedObject: obj.getRef(),
+      selectionContext: {
+        ...this.state.selectionContext,
+        selected: [{ id }],
+      },
+    });
+  }
+
+  public clearSelection() {
+    const dashboard = getDashboardSceneFor(this);
+    this.setState({
+      selectedObject: dashboard.getRef(),
+      selectionContext: {
+        ...this.state.selectionContext,
+        selected: [],
+      },
+    });
   }
 }
 
@@ -42,14 +93,20 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
       const dashboard = getDashboardSceneFor(editPane);
       editPane.setState({ selectedObject: dashboard.getRef() });
     }
-    editPane.activate();
+
+    editPane.enableSelection();
+
+    return () => {
+      editPane.disableSelection();
+    };
   }, [editPane]);
 
-  const { selectedObject } = editPane.useState();
+  const { selectedObject } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
+  const editableElement = useEditableElement(selectedObject?.resolve());
 
-  if (!selectedObject) {
+  if (!editableElement) {
     return null;
   }
 
@@ -68,27 +125,11 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     );
   }
 
-  const element = getEditableElementFor(selectedObject.resolve());
-
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      <ElementEditPane element={element} key={element.getTypeName()} />
+      <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
     </div>
   );
-}
-
-function getEditableElementFor(obj: SceneObject): EditableDashboardElement {
-  if (isEditableDashboardElement(obj)) {
-    return obj;
-  }
-
-  for (const behavior of obj.state.$behaviors ?? []) {
-    if (isEditableDashboardElement(behavior)) {
-      return behavior;
-    }
-  }
-
-  throw new Error("Can't find editable element for selected object");
 }
 
 function getStyles(theme: GrafanaTheme2) {
