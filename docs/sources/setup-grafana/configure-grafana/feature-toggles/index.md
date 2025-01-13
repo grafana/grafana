@@ -122,6 +122,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsLDAP`                 | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
 | `improvedExternalSessionHandling` | Enable improved support for OAuth and SAML external sessions in Grafana                                                                                                                      |
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                                                                                                                 |
+| `elasticsearchImprovedParsing`    | Enables less memory intensive Elasticsearch result parsing                                                                                                                                   |
 
 ## Experimental feature toggles
 

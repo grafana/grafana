@@ -930,4 +930,8 @@ const (
 	// FlagK8SFolderMove
 	// Enable folder&#39;s api server move
 	FlagK8SFolderMove = "k8SFolderMove"
+
+	// FlagElasticsearchImprovedParsing
+	// Enables less memory intensive Elasticsearch result parsing
+	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 )

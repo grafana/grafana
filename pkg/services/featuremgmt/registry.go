@@ -1723,6 +1723,12 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 		},
+		{
+			Name:        "elasticsearchImprovedParsing",
+			Description: "Enables less memory intensive Elasticsearch result parsing",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+		},
 	}
 )
 

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Used in logging to mark a stage
@@ -213,20 +214,26 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	}()
 
 	var msr MultiSearchResponse
-	err = StreamMultiSearchResponse(res.Body, &msr)
+	improvedParsingEnabled := isFeatureEnabled(c.ctx, featuremgmt.FlagElasticsearchImprovedParsing)
+	if improvedParsingEnabled {
+		err = StreamMultiSearchResponse(res.Body, &msr)
+	} else {
+		dec := json.NewDecoder(res.Body)
+		err = dec.Decode(&msr)
+	}
 	if err != nil {
-		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
+		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start), "improvedParsingEnabled", improvedParsingEnabled)
 		return nil, err
 	}
 
-	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start))
+	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start), "improvedParsingEnabled", improvedParsingEnabled)
 
 	msr.Status = res.StatusCode
 
 	return &msr, nil
 }
 
-// StreamMultiSearchResponse processes the JSON response in a streaming fashion.
+// StreamMultiSearchResponse processes the JSON response in a streaming fashion
 func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
 	dec := json.NewDecoder(body)
 
@@ -455,4 +462,8 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
 	return NewMultiSearchRequestBuilder()
+}
+
+func isFeatureEnabled(ctx context.Context, feature string) bool {
+	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }

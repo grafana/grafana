@@ -1294,6 +1294,18 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchImprovedParsing",
+        "resourceVersion": "1736800355177",
+        "creationTimestamp": "2025-01-13T20:32:35Z"
+      },
+      "spec": {
+        "description": "Enables less memory intensive Elasticsearch result parsing",
+        "stage": "preview",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-24T14:46:31Z"
