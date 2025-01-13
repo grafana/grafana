@@ -162,25 +162,24 @@ const useEditPolicyModal = (
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loading: boolean): ModalHook<RouteWithID> => {
+const useDeletePolicyModal = (
+  handleDelete: (route: RouteWithID) => Promise<void>,
+  loading: boolean
+): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
+  const [error, setError] = useState<Error | undefined>(undefined);
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
     setShowModal(false);
+    setError(undefined);
   }, [setRoute]);
 
   const handleShow = useCallback((route: RouteWithID) => {
     setRoute(route);
     setShowModal(true);
   }, []);
-
-  const handleSubmit = useCallback(() => {
-    if (route) {
-      handleDelete(route);
-    }
-  }, [handleDelete, route]);
 
   const modalElement = useMemo(
     () =>
@@ -194,12 +193,13 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
           closeOnEscape={true}
           title="Delete notification policy"
         >
+          {error && <NotificationPoliciesErrorAlert error={error} />}
           <Trans i18nKey="alerting.policies.delete.warning-1">
             Deleting this notification policy will permanently remove it.
           </Trans>{' '}
           <Trans i18nKey="alerting.policies.delete.warning-2">Are you sure you want to delete this policy?</Trans>
           <Modal.ButtonRow>
-            <Button type="button" variant="destructive" onClick={handleSubmit}>
+            <Button type="button" variant="destructive" onClick={() => route && handleDelete(route).catch(setError)}>
               <Trans i18nKey="alerting.policies.delete.confirm">Yes, delete policy</Trans>
             </Button>
             <Button type="button" variant="secondary" onClick={handleDismiss}>
@@ -208,7 +208,7 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
           </Modal.ButtonRow>
         </Modal>
       ),
-    [handleDismiss, handleSubmit, loading, showModal]
+    [handleDismiss, loading, showModal, error, route, handleDelete]
   );
 
   return [modalElement, handleShow, handleDismiss];
