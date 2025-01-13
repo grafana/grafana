@@ -35,18 +35,23 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
   }
 
   return (
-    <GrafanaRule rule={rule} rulerRule={rulerRule} groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
+    <GrafanaRuleListItem
+      rule={rule}
+      rulerRule={rulerRule}
+      groupIdentifier={groupIdentifier}
+      namespaceName={namespaceName}
+    />
   );
 }
 
-interface GrafanaRuleProps {
+interface GrafanaRuleListItemProps {
   rule: GrafanaPromRuleDTO;
   rulerRule: RulerGrafanaRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
 }
 
-export function GrafanaRule({ rule, rulerRule, groupIdentifier, namespaceName }: GrafanaRuleProps) {
+export function GrafanaRuleListItem({ rule, rulerRule, groupIdentifier, namespaceName }: GrafanaRuleListItemProps) {
   const {
     grafana_alert: { title, provenance, is_paused },
     annotations = {},

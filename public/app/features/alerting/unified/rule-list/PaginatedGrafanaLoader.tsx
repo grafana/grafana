@@ -9,7 +9,7 @@ import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
 import { GrafanaRulesSource } from '../utils/datasource';
 
-import { GrafanaRule } from './GrafanaRuleLoader';
+import { GrafanaRuleListItem } from './GrafanaRuleLoader';
 import { RuleInTransitionListItem } from './components/AlertRuleListItem';
 import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
@@ -160,7 +160,7 @@ function GrafanaGroupLoader({ groupIdentifier, namespaceName }: GrafanaGroupLoad
         />
       ))}
       {matching.map(({ promRule, rulerRule }) => (
-        <GrafanaRule
+        <GrafanaRuleListItem
           key={promRule.uid}
           rule={promRule}
           rulerRule={rulerRule}

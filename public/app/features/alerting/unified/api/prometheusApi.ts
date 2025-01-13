@@ -41,9 +41,12 @@ export const prometheusApi = alertingApi.injectEndpoints({
         return {
           url: `api/prometheus/${ruleSource.uid}/api/v1/rules`,
           params: {
-            'file[]': namespace,
-            'rule_group[]': groupName,
-            'rule_name[]': ruleName,
+            file: namespace, // Mimir
+            'file[]': namespace, // Prometheus
+            rule_group: groupName, // Mimir
+            'rule_group[]': groupName, // Prometheus
+            rule_name: ruleName, // Mimir
+            'rule_name[]': ruleName, // Prometheus
             exclude_alerts: excludeAlerts?.toString(),
             group_limit: groupLimit?.toFixed(0),
             group_next_token: groupNextToken,

@@ -1,14 +1,12 @@
 import { memo, useMemo } from 'react';
 
-import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
+import { DataSourceRuleGroupIdentifier, Rule } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { equal, fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
-import { createRelativeUrl } from '../utils/url';
+import { equal, fromRule, fromRulerRule } from '../utils/rule-id';
 
-import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
+import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
 
@@ -25,10 +23,6 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
   groupIdentifier,
 }: DataSourceRuleLoaderProps) {
   const { rulesSource, namespace, groupName } = groupIdentifier;
-
-  const ruleIdentifier = fromRule(rulesSource.name, namespace.name, groupName, rule);
-  const href = createViewLinkFromIdentifier(ruleIdentifier);
-  const originMeta = getRulePluginOrigin(rule);
 
   // @TODO work with context API to propagate rulerConfig and such
   const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: rulesSource.uid });
@@ -48,6 +42,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
   );
 
   const rulerRule = useMemo(() => {
+    const ruleIdentifier = fromRule(rulesSource.name, namespace.name, groupName, rule);
     if (!rulerRuleGroup) {
       return;
     }
@@ -55,7 +50,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     return rulerRuleGroup.rules.find((rule) =>
       equal(fromRulerRule(rulesSource.name, namespace.name, groupName, rule), ruleIdentifier)
     );
-  }, [rulesSource, namespace, groupName, ruleIdentifier, rulerRuleGroup]);
+  }, [rulesSource, namespace, groupName, rule, rulerRuleGroup]);
 
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler
@@ -74,53 +69,13 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     return null;
   }, [groupIdentifier, isLoading, rule, rulerRule]);
 
-  if (isAlertingRule(rule)) {
-    return (
-      <AlertRuleListItem
-        name={rule.name}
-        rulesSource={rulesSource}
-        application={dataSourceInfo?.application}
-        group={groupName}
-        namespace={namespace.name}
-        href={href}
-        summary={rule.annotations?.summary}
-        state={rule.state}
-        health={rule.health}
-        error={rule.lastError}
-        labels={rule.labels}
-        isProvisioned={undefined}
-        instancesCount={rule.alerts?.length}
-        actions={actions}
-        origin={originMeta}
-      />
-    );
-  }
-
-  if (isRecordingRule(rule)) {
-    return (
-      <RecordingRuleListItem
-        name={rule.name}
-        rulesSource={rulesSource}
-        application={dataSourceInfo?.application}
-        group={groupName}
-        namespace={namespace.name}
-        href={href}
-        health={rule.health}
-        error={rule.lastError}
-        labels={rule.labels}
-        isProvisioned={undefined}
-        actions={actions}
-        origin={originMeta}
-      />
-    );
-  }
-
-  return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
+  return (
+    <DataSourceRuleListItem
+      rule={rule}
+      rulerRule={rulerRule}
+      groupIdentifier={groupIdentifier}
+      application={dataSourceInfo?.application}
+      actions={actions}
+    />
+  );
 });
-
-function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
-  const paramId = encodeURIComponent(stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(identifier.ruleSourceName);
-
-  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
-}
