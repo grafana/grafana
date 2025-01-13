@@ -68,7 +68,7 @@ type ProvisioningAPIBuilder struct {
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
-	lister            resources.ObjectLister
+	lister            resources.ResourceLister
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -99,7 +99,7 @@ func NewProvisioningAPIBuilder(
 			Client: clientFactory,
 		},
 		render:    render,
-		lister:    resources.NewObjectLister(index),
+		lister:    resources.NewResourceLister(index),
 		blobstore: blobstore,
 		jobs:      jobs.NewJobQueue(50), // in memory for now
 	}

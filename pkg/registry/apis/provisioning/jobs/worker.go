@@ -32,7 +32,7 @@ type JobWorker struct {
 	parsers     *resources.ParserFactory
 	identities  auth.BackgroundIdentityService
 	render      rendering.Service
-	lister      resources.ObjectLister
+	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
 }
@@ -43,7 +43,7 @@ func NewJobWorker(
 	client client.ProvisioningV0alpha1Interface,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
-	lister resources.ObjectLister,
+	lister resources.ResourceLister,
 	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
 ) *JobWorker {

@@ -8,23 +8,23 @@ import (
 )
 
 // Get repository stats
-type ObjectLister interface {
-	List(ctx context.Context, namespace, repository string) (*provisioning.ObjectList, error)
-	Stats(ctx context.Context, namespace, repository string) (*provisioning.ObjectStats, error)
+type ResourceLister interface {
+	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
+	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
 }
 
-type objectListerFromSearch struct {
+type ResourceListerFromSearch struct {
 	index resource.RepositoryIndexClient
 }
 
-func NewObjectLister(index resource.RepositoryIndexClient) ObjectLister {
-	return &objectListerFromSearch{
+func NewResourceLister(index resource.RepositoryIndexClient) ResourceLister {
+	return &ResourceListerFromSearch{
 		index: index,
 	}
 }
 
-// List implements ObjectLister.
-func (o *objectListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ObjectList, error) {
+// List implements ResourceLister.
+func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
 	objects, err := o.index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
 		Namespace: namespace,
 		Name:      repository,
@@ -36,9 +36,9 @@ func (o *objectListerFromSearch) List(ctx context.Context, namespace, repository
 		return nil, resource.GetError(objects.Error)
 	}
 
-	list := &provisioning.ObjectList{}
+	list := &provisioning.ResourceList{}
 	for _, v := range objects.Items {
-		list.Items = append(list.Items, provisioning.ObjectListItem{
+		list.Items = append(list.Items, provisioning.ResourceListItem{
 			Path:     v.Path,
 			Group:    v.Object.Group,
 			Resource: v.Object.Resource,
@@ -52,8 +52,8 @@ func (o *objectListerFromSearch) List(ctx context.Context, namespace, repository
 	return list, nil
 }
 
-// Stats implements ObjectLister.
-func (o *objectListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ObjectStats, error) {
+// Stats implements ResourceLister.
+func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error) {
 	counts, err := o.index.CountRepositoryObjects(ctx, &resource.CountRepositoryObjectsRequest{
 		Namespace: namespace,
 		Name:      repository,
@@ -65,9 +65,9 @@ func (o *objectListerFromSearch) Stats(ctx context.Context, namespace, repositor
 		return nil, resource.GetError(counts.Error)
 	}
 
-	stats := &provisioning.ObjectStats{}
+	stats := &provisioning.ResourceStats{}
 	for _, v := range counts.Items {
-		stats.Items = append(stats.Items, provisioning.ResourceObjectCount{
+		stats.Items = append(stats.Items, provisioning.ResourceCount{
 			Repository: v.Repository,
 			Group:      v.Group,
 			Resource:   v.Resource,

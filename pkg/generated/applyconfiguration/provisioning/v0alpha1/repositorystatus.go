@@ -7,11 +7,11 @@ package v0alpha1
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
 type RepositoryStatusApplyConfiguration struct {
-	ObservedGeneration *int64                                  `json:"observedGeneration,omitempty"`
-	Health             *HealthStatusApplyConfiguration         `json:"health,omitempty"`
-	Sync               *SyncStatusApplyConfiguration           `json:"sync,omitempty"`
-	Stats              []ResourceObjectCountApplyConfiguration `json:"stats,omitempty"`
-	Webhook            *WebhookStatusApplyConfiguration        `json:"webhook,omitempty"`
+	ObservedGeneration *int64                            `json:"observedGeneration,omitempty"`
+	Health             *HealthStatusApplyConfiguration   `json:"health,omitempty"`
+	Sync               *SyncStatusApplyConfiguration     `json:"sync,omitempty"`
+	Stats              []ResourceCountApplyConfiguration `json:"stats,omitempty"`
+	Webhook            *WebhookStatusApplyConfiguration  `json:"webhook,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -47,7 +47,7 @@ func (b *RepositoryStatusApplyConfiguration) WithSync(value *SyncStatusApplyConf
 // WithStats adds the given value to the Stats field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Stats field.
-func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*ResourceObjectCountApplyConfiguration) *RepositoryStatusApplyConfiguration {
+func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*ResourceCountApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithStats")

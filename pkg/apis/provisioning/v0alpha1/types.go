@@ -132,7 +132,7 @@ type RepositoryStatus struct {
 	Sync SyncStatus `json:"sync"`
 
 	// The object count when sync last ran
-	Stats []ResourceObjectCount `json:"stats,omitempty"`
+	Stats []ResourceCount `json:"stats,omitempty"`
 
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
@@ -298,14 +298,14 @@ type FileItem struct {
 
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ObjectList struct {
+type ResourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ObjectListItem `json:"items,omitempty"`
+	Items []ResourceListItem `json:"items,omitempty"`
 }
 
-type ObjectListItem struct {
+type ResourceListItem struct {
 	Path     string `json:"path"`
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
@@ -319,14 +319,14 @@ type ObjectListItem struct {
 
 // Information we can get just from the file listing
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ObjectStats struct {
+type ResourceStats struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ResourceObjectCount `json:"items,omitempty"`
+	Items []ResourceCount `json:"items,omitempty"`
 }
 
-type ResourceObjectCount struct {
+type ResourceCount struct {
 	Repository string `json:"repository,omitempty"`
 	Group      string `json:"group"`
 	Resource   string `json:"resource"`

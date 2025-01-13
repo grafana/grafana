@@ -15,11 +15,11 @@ import (
 
 type listConnector struct {
 	getter RepoGetter
-	lister resources.ObjectLister
+	lister resources.ResourceLister
 }
 
 func (*listConnector) New() runtime.Object {
-	return &provisioning.ObjectList{}
+	return &provisioning.ResourceList{}
 }
 
 func (*listConnector) Destroy() {}
@@ -29,7 +29,7 @@ func (*listConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (*listConnector) ProducesObject(verb string) any {
-	return &provisioning.ObjectList{}
+	return &provisioning.ResourceList{}
 }
 
 func (*listConnector) ConnectMethods() []string {
