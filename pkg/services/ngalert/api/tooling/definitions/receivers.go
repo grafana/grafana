@@ -4,6 +4,9 @@ package definitions
 //
 // Get a receiver by name.
 //
+// This API is deprecated and will be removed in future versions.
+//
+// Deprecated: true
 //    Responses:
 //      200: GetReceiverResponse
 // 	    403: PermissionDenied
@@ -13,6 +16,9 @@ package definitions
 //
 // Get all receivers.
 //
+// This API is deprecated and will be removed in future versions.
+//
+// Deprecated: true
 //    Responses:
 //      200: GetReceiversResponse
 //      403: PermissionDenied
