@@ -1,3 +1,4 @@
+import { omit } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { routingTreeApi } from 'app/features/alerting/unified/api/notificationPoliciesApi';
@@ -25,6 +26,7 @@ import { getK8sNamespace, isK8sEntityProvisioned, shouldUseK8sApi } from '../../
 import {
   InsertPosition,
   addRouteToReferenceRoute,
+  cleanKubernetesRouteIDs,
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
@@ -119,7 +121,7 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
     return updatedNamespacedRoute({
       name: ROOT_ROUTE_NAME,
       namespace,
-      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
+      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: cleanKubernetesRouteIDs(routeObject),
     }).unwrap();
   });
 
@@ -238,7 +240,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
       return updatedNamespacedRoute({
         name: ROOT_ROUTE_NAME,
         namespace,
-        comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
+        comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: cleanKubernetesRouteIDs(routeObject),
       }).unwrap();
     }
   );
@@ -301,14 +303,17 @@ function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotific
 
 function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route {
   const { object_matchers, ...rest } = route;
-  return {
-    ...rest,
-    receiver: route.receiver ?? undefined,
-    matchers: object_matchers?.map(([label, type, value]) => ({
-      label,
-      type,
-      value,
-    })),
-    routes: route.routes?.map(routeToK8sSubRoute),
-  };
+  return omit(
+    {
+      ...rest,
+      receiver: route.receiver ?? undefined,
+      matchers: object_matchers?.map(([label, type, value]) => ({
+        label,
+        type,
+        value,
+      })),
+      routes: route.routes?.map(routeToK8sSubRoute),
+    },
+    'id'
+  );
 }

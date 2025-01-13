@@ -8,6 +8,10 @@ import { omit } from 'lodash';
 import { insertAfterImmutably, insertBeforeImmutably } from '@grafana/data/src/utils/arrayUtils';
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import {
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
+} from '../openapi/routesApi.gen';
 import { FormAmRoute } from '../types/amroutes';
 
 import { formAmRouteToAmRoute } from './amroutes';
@@ -145,7 +149,9 @@ export function findRouteInTree(
   return [matchingRoute, matchingRouteParent, matchingRoutePositionInParent];
 }
 
-export function cleanRouteIDs(route: Route | RouteWithID): Route {
+export function cleanRouteIDs<
+  T extends RouteWithID | Route | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
+>(route: T): Omit<T, 'id'> {
   return omit(
     {
       ...route,
@@ -153,6 +159,15 @@ export function cleanRouteIDs(route: Route | RouteWithID): Route {
     },
     'id'
   );
+}
+
+// remove IDs from the Kubernetes routes
+export function cleanKubernetesRouteIDs(
+  routingTree: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
+): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree {
+  return produce(routingTree, (draft) => {
+    draft.spec.routes = draft.spec.routes.map(cleanRouteIDs);
+  });
 }
 
 export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
