@@ -6,7 +6,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder, AnnoKeyFolderId, AnnoKeyFolderTitle, AnnoKeyFolderUrl } from 'app/features/apiserver/types';
 
 import { DashboardWithAccessInfo } from './types';
-import { K8sDashboardV2APIStub } from './v2';
+import { K8sDashboardV2API } from './v2';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
@@ -27,10 +27,13 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
 };
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: () => mockDashboardDto,
   }),
-  config: {},
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+  },
 }));
 
 jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
@@ -56,7 +59,7 @@ describe('v2 dashboard API', () => {
     });
 
     const convertToV1 = false;
-    const api = new K8sDashboardV2APIStub(convertToV1);
+    const api = new K8sDashboardV2API(convertToV1);
     // because the API can currently return both DashboardDTO and DashboardWithAccessInfo<DashboardV2Spec> based on the
     // parameter convertToV1, we need to cast the result to DashboardWithAccessInfo<DashboardV2Spec> to be able to
     // access
