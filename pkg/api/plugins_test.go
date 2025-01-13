@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
@@ -682,14 +682,11 @@ func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *p
 }
 
 func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
-	newStr := func(s string) *string {
-		return &s
-	}
 	pluginReg := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "grafana-test-app",
-			IAM: &pfs.IAM{
-				Permissions: []pfs.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
+			IAM: &auth.IAM{
+				Permissions: []auth.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}, {Action: ac.ActionUsersCreate}},
 			},
 		},
 	}
