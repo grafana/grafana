@@ -20,13 +20,11 @@ var _ accesscontrol.AccessControl = new(AccessControl)
 
 func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
-	m := initMetrics()
 
 	return &AccessControl{
 		features,
 		logger,
 		accesscontrol.NewResolvers(logger),
-		m,
 	}
 }
 
@@ -38,14 +36,11 @@ type AccessControl struct {
 	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
-	metrics   *acMetrics
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.Evaluate")
 	defer span.End()
-	timer := prometheus.NewTimer(a.metrics.mAccessEngineEvaluationsSeconds.WithLabelValues("grafana"))
-	defer timer.ObserveDuration()
 
 	return a.evaluate(ctx, user, evaluator)
 }
@@ -99,7 +94,6 @@ func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return &AccessControl{
 		features:  a.features,
 		log:       a.log,
-		metrics:   a.metrics,
 		resolvers: accesscontrol.NewResolvers(a.log),
 	}
 }
