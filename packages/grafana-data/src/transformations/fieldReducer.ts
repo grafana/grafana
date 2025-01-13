@@ -709,7 +709,7 @@ function calculatePercentile(field: Field, percentile: number, ignoreNulls: bool
 function calculateMedian(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   // add number
   const data = field.values;
-  let numbers: any[] = [];
+  let numbers: number[] = [];
   for (let i = 0; i < data.length; i++) {
     let currentValue = data[i];
     if (currentValue === null) {
@@ -720,7 +720,9 @@ function calculateMedian(field: Field, ignoreNulls: boolean, nullAsZero: boolean
         currentValue = 0;
       }
     }
-    numbers.push(currentValue);
+    if (typeof currentValue === "number") {
+      numbers.push(currentValue);
+    }
   }
 
   // sort numbers
