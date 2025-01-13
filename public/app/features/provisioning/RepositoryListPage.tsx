@@ -8,10 +8,12 @@ import {
   EmptySearchResult,
   EmptyState,
   FilterInput,
+  FilterPill,
   Icon,
   IconName,
   LinkButton,
   Stack,
+  Tag,
   TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -64,7 +66,11 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
         {!!filteredItems.length ? (
           filteredItems.map((item) => {
             const name = item.metadata?.name ?? '';
-            const healthy = Boolean(item.status?.health.healthy);
+            let url = 'dashboards';
+            if (item.spec?.folder?.length) {
+              url = `/d/${item.spec?.folder}`
+            }
+
             let icon: IconName = 'database'; // based on type
             let meta: ReactNode[] = [
               // TODO... add counts? and sync info
@@ -109,7 +115,14 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                     {item.spec?.title} <StatusBadge repo={item} name={name} />
                   </Stack>
                 </Card.Heading>
-                <Card.Description>{item.spec?.description}</Card.Description>
+                <Card.Description>
+                  {item.spec?.description}
+                  {item.status?.stats?.length && <Stack>
+                    {item.status.stats.map((v) => <LinkButton fill='outline' size='md'
+                      href={url}>{v.count} {v.resource}</LinkButton>
+                    )}
+                  </Stack>}
+                </Card.Description>
                 <Card.Meta>{meta}</Card.Meta>
                 <Card.Actions>
                   <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
@@ -118,7 +131,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
                     Edit
                   </LinkButton>
-                  {healthy && <SyncRepository repository={item} />}
+                  <SyncRepository repository={item} />
                 </Card.Actions>
                 <Card.SecondaryActions>
                   <DeleteRepositoryButton name={name} />
@@ -141,14 +154,24 @@ interface StatusBadgeProps {
 function StatusBadge({ repo, name }: StatusBadgeProps) {
   const state = repo.status?.sync?.state;
 
-  if (!state) {
-    return null;
-  }
-
-  let color: BadgeColor = 'green';
-  let text = 'Synced';
-  let icon: IconName = 'check';
+  let tooltip: string | undefined = undefined;
+  let color: BadgeColor = 'purple';
+  let text = 'Unknown';
+  let icon: IconName = 'exclamation-triangle';
   switch (state) {
+    case 'success':
+      icon = 'check';
+      text = 'In sync';
+      color = 'green';
+      break;
+    case null:
+    case undefined:
+    case '':
+      color = 'orange';
+      text = 'Pending';
+      icon = 'spinner';
+      tooltip = 'Waiting for health check to run'
+      break;
     case 'working':
     case 'pending':
       color = 'orange';
@@ -169,6 +192,7 @@ function StatusBadge({ repo, name }: StatusBadgeProps) {
       icon={icon}
       text={text}
       style={{ cursor: 'pointer' }}
+      tooltip={tooltip}
       onClick={() => {
         locationService.push(`${PROVISIONING_URL}/${name}/?tab=health`);
       }}

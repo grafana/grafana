@@ -477,7 +477,7 @@ export type SyncStatus = {
   message?: string[];
   scheduled?: number;
   started?: number;
-  state: 'error' | 'pending' | 'success' | 'working';
+  state?: 'error' | 'pending' | 'success' | 'working' | '';
 };
 export type WebhookStatus = {
   id?: number;
@@ -489,7 +489,13 @@ export type RepositoryStatus = {
   health: HealthStatus;
   observedGeneration: number;
   sync: SyncStatus;
+  stats?: ResourceCount[];
   webhook: WebhookStatus;
+};
+export type ResourceCount = {
+  group: string;
+  resource: string;
+  count: number;
 };
 export type Repository = {
   apiVersion?: string;

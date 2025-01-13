@@ -58,9 +58,15 @@ export function SyncRepository({ repository }: Props) {
     return <Loader />;
   }
 
+  const isHealthy = Boolean(repository.status?.health.healthy);
+
   return (
     <>
-      <Button variant={'secondary'} onClick={() => setIsModalOpen(true)} disabled={syncQuery.isLoading || !name}>
+      <Button
+        variant={'secondary'} 
+        tooltip={ isHealthy ? undefined : 'Unable to sync an unhealthy repository'}
+        disabled={syncQuery.isLoading || !name || !isHealthy}
+        onClick={() => setIsModalOpen(true)}>
         Sync
       </Button>
       <ConfirmModal
