@@ -476,14 +476,11 @@ message ListRepositoryObjectsRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
-  // All results exist within this resource namespace+name
-  ResourceKey key = 2;
-
+  // Namespace (tenant)
+  string namespace = 2;
+  
   // The name of the repository
   string name = 3;
-
-  // Maximum number of items to return
-  int64 limit = 4;
 }
 
 message ListRepositoryObjectsResponse {
@@ -523,20 +520,21 @@ message CountRepositoryObjectsRequest {
   string namespace = 1;
   
   // The name of the repository
-  // (eventually empty to count across all repositories)
-  string repository = 2;
+  // empty to count across all repositories
+  string name = 2;
 }
 
 // Count the items that exist with
 message CountRepositoryObjectsResponse {
-  message KindCount {
-    string group = 1;
-    string resource = 2;
-    int64 count = 3;
+  message ResourceCount {
+    string repository = 1;
+    string group = 2;
+    string resource = 3;
+    int64 count = 4;
   }
 
-  // Stats keyed by the repository name
-  map<string,KindCount> stats = 1;
+  // Resource counts
+  repeated ResourceCount items = 1;
 
   // Error details
   ErrorResult error = 2;
