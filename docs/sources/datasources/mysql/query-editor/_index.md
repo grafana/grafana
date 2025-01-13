@@ -381,7 +381,7 @@ Read more about variable formatting options in the [Variables](ref:variable-synt
 
 ## Annotations
 
-[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. You add annotation queries via the **Dashboard  > Annotations view**.
+[Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. You add annotation queries via the **Dashboard settings > Annotations view**.
 
 **Example query using a`time` column with epoch values:**
 
