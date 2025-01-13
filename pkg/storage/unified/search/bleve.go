@@ -625,26 +625,19 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		return query.NewDisjunctionQuery(disjuncts), nil
 	case selection.NotIn:
-		if len(req.Values) == 0 {
-			return query.NewMatchNoneQuery(), nil
-		}
+		boolQuery := bleve.NewBooleanQuery()
 
-		// TODO: (STEPHANIE) this is not correct
-		// TODO: make sure that this is not including empty string
-		if len(req.Values) == 1 {
-			q := query.NewMatchQuery(req.Values[0])
-			q.FieldVal = prefix + req.Key
-			return q, nil
+		var mustNotQueries []query.Query
+		for _, value := range req.Values {
+			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(value))
 		}
+		boolQuery.AddMustNot(mustNotQueries...)
 
-		disjuncts := []query.Query{}
-		for _, v := range req.Values {
-			q := query.NewMatchQuery(v)
-			q.FieldVal = prefix + req.Key
-			disjuncts = append(disjuncts, q)
-		}
+		// must still have a value
+		notEmptyQuery := bleve.NewWildcardQuery("*")
+		boolQuery.AddMust(notEmptyQuery)
 
-		return query.NewDisjunctionQuery(disjuncts), nil
+		return boolQuery, nil
 	}
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),

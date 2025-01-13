@@ -114,7 +114,15 @@ func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 
 	var provisionedDashboard dashboards.DashboardProvisioning
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Where("dashboard_uid = ? AND org_id = ?", dashboardUID, orgID).Get(&provisionedDashboard)
+		var dashboard dashboards.Dashboard
+		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return dashboards.ErrDashboardNotFound
+		}
+		exists, err = sess.Where("dashboard_id = ?", dashboard.ID).Get(&provisionedDashboard)
 		if err != nil {
 			return err
 		}
@@ -141,8 +149,7 @@ func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *das
 	ctx, span := tracer.Start(ctx, "dashboards.database.SaveProvisionedDashboard")
 	defer span.End()
 
-	var err error
-	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if provisioning.Updated == 0 {
 			provisioning.Updated = dash.Updated.Unix()
 		}
@@ -211,6 +218,7 @@ func (d *dashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context
 		return nil
 	})
 }
+
 func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.Count")
 	defer span.End()
@@ -640,6 +648,45 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		}
 	}
 	return nil
+}
+
+func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {
+	type statement struct {
+		SQL  string
+		args []any
+	}
+	sqlStatements := []statement{
+		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
+		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},
+		{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{cmd.ID, cmd.OrgID}},
+	}
+
+	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+			for _, stmnt := range sqlStatements {
+				_, err := sess.Exec(append([]any{stmnt.SQL}, stmnt.args...)...)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := d.deleteResourcePermissions(sess, cmd.OrgID, ac.GetResourceScopeUID("dashboards", cmd.UID)); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (d *dashboardStore) DeleteAllDashboards(ctx context.Context, orgID int64) error {

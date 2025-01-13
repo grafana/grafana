@@ -429,8 +429,9 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
-	ProvisionedRepo string
-	NotInRepos      []string
+	ProvisionedRepo       string
+	ProvisionedPath       string
+	ProvisionedReposNotIn []string
 
 	Filters []any
 

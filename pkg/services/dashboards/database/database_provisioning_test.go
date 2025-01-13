@@ -61,7 +61,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		err = dashboardStore.SaveProvisionedDashboard(context.Background(), dash, provisioning)
 		require.Nil(t, err)
 
-		t.Run("Getting orphaned provisioned dashboards", func(t *testing.T) {
+		t.Run("Deleting orphaned provisioned dashboards", func(t *testing.T) {
 			saveCmd := dashboards.SaveDashboardCommand{
 				OrgID:     1,
 				IsFolder:  false,
@@ -89,16 +89,14 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			require.NotNil(t, queryResult)
 
 			deleteCmd := &dashboards.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-			received, err := dashboardStore.GetOrphanedProvisionedDashboards(context.Background(), deleteCmd)
+			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
+
+			query = &dashboards.GetDashboardsQuery{DashboardIDs: []int64{dash.ID, anotherDash.ID}}
+			queryResult, err = dashboardStore.GetDashboards(context.Background(), query)
 			require.Nil(t, err)
-			require.Equal(t, 1, len(received))
-			require.Equal(t, &dashboards.DashboardProvisioning{
-				ID:          2,
-				DashboardID: 3,
-				Name:        provisioning.Name,
-				ExternalID:  provisioning.ExternalID,
-				Updated:     provisioning.Updated,
-			}, received[0])
+
+			require.Equal(t, 1, len(queryResult))
+			require.Equal(t, dashId, queryResult[0].ID)
 		})
 
 		t.Run("Can query for provisioned dashboards", func(t *testing.T) {
