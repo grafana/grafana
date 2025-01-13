@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1036,19 +1037,12 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
-	var res []dashboards.DashboardSearchProjection
-	var err error
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
-		res, err = dr.FindDashboardsZanzana(ctx, query)
-	} else {
-		res, err = dr.FindDashboards(ctx, query)
-	}
+	res, err := dr.FindDashboards(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	hits := makeQueryResult(query, res)
-
 	return hits, nil
 }
 

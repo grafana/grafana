@@ -4,8 +4,6 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 )
 
 const (
@@ -16,8 +14,6 @@ const (
 type acMetrics struct {
 	// mAccessEngineEvaluationsSeconds is a summary for evaluating access for a specific engine (RBAC and zanzana)
 	mAccessEngineEvaluationsSeconds *prometheus.HistogramVec
-	// mZanzanaEvaluationStatusTotal is a metric for zanzana evaluation status
-	mZanzanaEvaluationStatusTotal *prometheus.CounterVec
 }
 
 var once sync.Once
@@ -34,19 +30,6 @@ func initMetrics() *acMetrics {
 			Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 		},
 			[]string{"engine"},
-		)
-
-		m.mZanzanaEvaluationStatusTotal = metricutil.NewCounterVecStartingAtZero(
-			prometheus.CounterOpts{
-				Name:      "zanzana_evaluation_status_total",
-				Help:      "evaluation status (success or error) for zanzana",
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-			}, []string{"status"}, map[string][]string{"status": {"success", "error"}})
-
-		prometheus.MustRegister(
-			m.mAccessEngineEvaluationsSeconds,
-			m.mZanzanaEvaluationStatusTotal,
 		)
 	})
 	return m
