@@ -742,7 +742,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				},
 			}
 			getHS(&usertest.FakeUserService{
-				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
+				ExpectedSignedInUser: &user.SignedInUser{Login: "test-user"},
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
@@ -818,8 +818,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	var err error
 	if dashboardStore == nil {
 		sql, cfg := db.InitTestDBWithCfg(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err = database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql))
 		require.NoError(t, err)
 	}
 
@@ -832,20 +831,21 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	db := db.InitTestDB(t)
 	fStore := folderimpl.ProvideStore(db)
+	quotaService := quotatest.New(false, nil)
 	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashboardStore, folderStore, db, features,
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil,
+			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, err)
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil,
+		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, err)
 

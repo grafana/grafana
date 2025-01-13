@@ -13,6 +13,7 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -43,6 +44,18 @@ const dashboardDs: DataSourceApi = {
   uid: SHARED_DASHBOARD_QUERY,
   getRef: () => {
     return { type: SHARED_DASHBOARD_QUERY, uid: SHARED_DASHBOARD_QUERY };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+const mixedDs: DataSourceApi = {
+  meta: {
+    id: 'mixed',
+  },
+  name: MIXED_DATASOURCE_NAME,
+  type: MIXED_DATASOURCE_NAME,
+  uid: MIXED_DATASOURCE_NAME,
+  getRef: () => {
+    return { type: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME };
   },
 } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 
@@ -83,6 +96,10 @@ jest.mock('@grafana/runtime', () => ({
 
         if (ref.uid === SHARED_DASHBOARD_QUERY) {
           return dashboardDs;
+        }
+
+        if (ref.uid === MIXED_DATASOURCE_NAME) {
+          return mixedDs;
         }
 
         return null;
@@ -449,6 +466,7 @@ describe('DashboardDatasourceBehaviour', () => {
     });
 
     it('should wait for library panel to load before running queries', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: false,
         title: 'Panel title',
@@ -508,6 +526,74 @@ describe('DashboardDatasourceBehaviour', () => {
       });
 
       expect(spyRunQueries).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('DashboardDS within MixedDS', () => {
+    it('Should re-run query of MixedDS panel that contains a dashboardDS when source query re-runs', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const sourcePanel = new VizPanel({
+        title: 'Panel A',
+        pluginId: 'table',
+        key: 'panel-1',
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: 'grafana' },
+            queries: [{ refId: 'A', queryType: 'randomWalk' }],
+          }),
+        }),
+      });
+
+      const dashboardDSPanel = new VizPanel({
+        title: 'Panel B',
+        pluginId: 'table',
+        key: 'panel-2',
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: MIXED_DATASOURCE_NAME },
+            queries: [
+              {
+                datasource: { uid: SHARED_DASHBOARD_QUERY },
+                refId: 'B',
+                panelId: 1,
+              },
+            ],
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+        }),
+      });
+
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        meta: {
+          canEdit: true,
+        },
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+      });
+
+      const sceneDeactivate = activateFullSceneTree(scene);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      // spy on runQueries that will be called by the behaviour
+      const spy = jest
+        .spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries')
+        .mockImplementation();
+
+      // deactivate scene to mimic going into panel edit
+      sceneDeactivate();
+      // run source panel queries and update request ID
+      (sourcePanel.state.$data!.state.$data as SceneQueryRunner).runQueries();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      // activate scene to mimic coming back from panel edit
+      activateFullSceneTree(scene);
+
+      expect(spy).toHaveBeenCalled();
     });
   });
 });
