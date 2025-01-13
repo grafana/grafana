@@ -142,11 +142,13 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  chunkRequestId = 1;
+
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
     const controller = new AbortController();
-    const requestId = options.requestId ?? `chunked-${Date.now()}`;
+    const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     return new Observable((observer) => {
-      let disconnect = false;
+      let disconnect = () => {};
       const sub = this.fetch<ReadableStream<Uint8Array>>({
         ...options,
         requestId,
@@ -157,40 +159,48 @@ export class BackendSrv implements BackendService {
         abortSignal: controller.signal,
       }).subscribe((result) => {
         const reader = result.data.getReader();
+        disconnect = () => {
+          console.log('chunked, disconnect', requestId);
+
+          // Send all the cancel messages
+          reader.cancel('disconnect').catch((e) => {
+            console.log('reader.cancel', requestId, e);
+          });
+
+          // this happens when we unsubscribe before the connection is done
+          // Catch the error because it may be locked from the abort controller
+          result.data.cancel('disconnect').catch((e) => {
+            console.log('result.data.cancel', requestId, e);
+          });
+        };
         async function process() {
-          while (!disconnect) {
-            try {
-              const chunk = await reader.read();
-              observer.next({
-                ...result,
-                data: chunk.value,
-              });
-              if (chunk.done) {
-                break;
-              }
-            } catch (err) {
-              console.warn('error while reading chunked stream', options.url, err);
-              reader.cancel('error');
-              observer.error(err);
+          while (true) {
+            const chunk = await reader.read();
+            observer.next({
+              ...result,
+              data: chunk.value,
+            });
+            if (chunk.done) {
+              console.log('chunked, done', requestId);
+              return Promise.resolve();
             }
           }
-          if (disconnect) {
-            // Send all the cancel messages
-            reader.cancel('disconnect').catch(() => {});
-
-            // this happens when we unsubscribe before the connection is done
-            // Catch the error because it may be locked from the abort controller
-            result.data.cancel('disconnect').catch(() => {});
-          }
-          observer.complete();
         }
-        process(); // runs in background
+        process()
+          .catch((e) => {
+            console.error('error running process', e);
+          })
+          .then(() => {
+            console.log('complete', requestId);
+            observer.complete();
+          }); // runs in background
       });
 
       return function unsubscribe() {
-        sub.unsubscribe();
-        disconnect = true;
         controller.abort('unsubscribe');
+        disconnect();
+        console.log('chunked, unsubscribe', requestId);
+        sub.unsubscribe();
       };
     });
   }

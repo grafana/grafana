@@ -221,7 +221,7 @@ export function runWatchStream(
       .subscribe({
         next: (chunk) => {
           if (!chunk.data || !chunk.ok) {
-            console.log('chunk missing data', chunk);
+            console.info('chunk missing data', chunk);
             return;
           }
           decoder
@@ -251,7 +251,7 @@ export function runWatchStream(
           console.warn('error in stream', streamId, err);
         },
         complete: () => {
-          console.warn('complete stream', streamId);
+          console.info('complete stream', streamId);
         },
       });
 
