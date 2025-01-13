@@ -8,16 +8,19 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/slices"
+	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
@@ -237,18 +240,31 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 		}
 
 		results := []*dashboards.DashboardProvisioning{}
+		var mu sync.Mutex
+		g, ctx := errgroup.WithContext(ctx)
 		for _, org := range orgs {
-			res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, dashboards.FindPersistedDashboardsQuery{
-				ProvisionedRepo: name,
-				OrgId:           org.ID,
-			})
-			if err != nil {
-				return nil, err
-			}
+			func(orgID int64) {
+				g.Go(func() error {
+					res, err := dr.searchProvisionedDashboardsThroughK8s(ctx, dashboards.FindPersistedDashboardsQuery{
+						ProvisionedRepo: name,
+						OrgId:           orgID,
+					})
+					if err != nil {
+						return err
+					}
 
-			for _, r := range res {
-				results = append(results, &r.DashboardProvisioning)
-			}
+					mu.Lock()
+					for _, r := range res {
+						results = append(results, &r.DashboardProvisioning)
+					}
+					mu.Unlock()
+					return nil
+				})
+			}(org.ID)
+		}
+
+		if err := g.Wait(); err != nil {
+			return nil, err
 		}
 
 		return results, nil
@@ -1524,7 +1540,9 @@ func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.C
 
 	var out *unstructured.Unstructured
 	current, err := client.Get(newCtx, obj.GetName(), v1.GetOptions{})
-	if current == nil || err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
+		return nil, err
+	} else if current == nil || (err != nil && apierrors.IsNotFound(err)) {
 		out, err = client.Create(newCtx, &obj, v1.CreateOptions{})
 		if err != nil {
 			return nil, err
@@ -1707,7 +1725,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.DashboardUIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
 			Key:      "key.name",
-			Operator: "in",
+			Operator: string(selection.In),
 			Values:   query.DashboardUIDs,
 		}}
 	} else if len(query.DashboardIds) > 0 {
@@ -1718,7 +1736,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
 			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
-			Operator: "in",
+			Operator: string(selection.In),
 			Values:   values,
 		})
 	}
@@ -1726,7 +1744,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.FolderUIDs) > 0 {
 		req := []*resource.Requirement{{
 			Key:      "folder",
-			Operator: "in",
+			Operator: string(selection.In),
 			Values:   query.FolderUIDs,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
@@ -1735,7 +1753,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if query.ProvisionedRepo != "" {
 		req := []*resource.Requirement{{
 			Key:      "repo.name",
-			Operator: "in",
+			Operator: string(selection.In),
 			Values:   []string{query.ProvisionedRepo},
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
@@ -1744,7 +1762,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.ProvisionedReposNotIn) > 0 {
 		req := []*resource.Requirement{{
 			Key:      "repo.name",
-			Operator: "notin",
+			Operator: string(selection.NotIn),
 			Values:   query.ProvisionedReposNotIn,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
@@ -1752,7 +1770,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if query.ProvisionedPath != "" {
 		req := []*resource.Requirement{{
 			Key:      "repo.path",
-			Operator: "in",
+			Operator: string(selection.In),
 			Values:   []string{query.ProvisionedPath},
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
@@ -1765,7 +1783,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if query.Title != "" {
 		req := []*resource.Requirement{{
 			Key:      "title",
-			Operator: "in",
+			Operator: string(selection.In),
 			Values:   []string{query.Title},
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
@@ -1774,7 +1792,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	if len(query.Tags) > 0 {
 		req := []*resource.Requirement{{
 			Key:      "tags",
-			Operator: "in",
+			Operator: string(selection.In),
 			Values:   query.Tags,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
@@ -1825,44 +1843,58 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 		return nil, nil
 	}
 
+	// loop through all hits concurrently to get the repo information (if set due to file provisioning)
 	dashs := make([]*dashboardProvisioningWithUID, 0)
-	for _, hit := range searchResults.Hits {
-		// get matching dashboards
-		out, err := client.Get(newCtx, hit.Name, v1.GetOptions{}, "")
-		if err != nil {
-			return nil, err
-		} else if out == nil {
-			return nil, dashboards.ErrDashboardNotFound
-		}
+	var mu sync.Mutex
+	g, ctx := errgroup.WithContext(ctx)
+	for _, h := range searchResults.Hits {
+		func(hit v0alpha1.DashboardHit) {
+			g.Go(func() error {
+				out, err := client.Get(ctx, hit.Name, v1.GetOptions{}, "")
+				if err != nil {
+					return err
+				} else if out == nil {
+					return dashboards.ErrDashboardNotFound
+				}
 
-		meta, err := utils.MetaAccessor(out)
-		if err != nil {
-			return nil, err
-		}
+				meta, err := utils.MetaAccessor(out)
+				if err != nil {
+					return err
+				}
 
-		// ensure the repo is set due to file provisioning (starts with `file:`)
-		// otherwise we'll also return things like plugin imports in the orphaned provisioned query
-		fileRepo, found := getProvisionedFileNameFromMeta(meta)
-		if !found {
-			continue
-		}
+				// ensure the repo is set due to file provisioning, otherwise skip it
+				fileRepo, found := getProvisionedFileNameFromMeta(meta)
+				if !found {
+					return nil
+				}
 
-		provisioning := &dashboardProvisioningWithUID{
-			DashboardUID: hit.Name,
-		}
-		provisioning.Name = fileRepo
-		provisioning.ExternalID = meta.GetRepositoryPath()
-		provisioning.CheckSum = meta.GetRepositoryHash()
-		provisioning.DashboardID = meta.GetDeprecatedInternalID() // nolint:staticcheck
-		updated, err := meta.GetRepositoryTimestamp()
-		if err != nil {
-			return nil, err
-		}
-		if updated != nil {
-			provisioning.Updated = updated.Unix()
-		}
+				provisioning := &dashboardProvisioningWithUID{
+					DashboardUID: hit.Name,
+				}
+				provisioning.Name = fileRepo
+				provisioning.ExternalID = meta.GetRepositoryPath()
+				provisioning.CheckSum = meta.GetRepositoryHash()
+				provisioning.DashboardID = meta.GetDeprecatedInternalID() // nolint:staticcheck
 
-		dashs = append(dashs, provisioning)
+				updated, err := meta.GetRepositoryTimestamp()
+				if err != nil {
+					return err
+				}
+				if updated != nil {
+					provisioning.Updated = updated.Unix()
+				}
+
+				mu.Lock()
+				dashs = append(dashs, provisioning)
+				mu.Unlock()
+
+				return nil
+			})
+		}(h)
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	return dashs, nil
