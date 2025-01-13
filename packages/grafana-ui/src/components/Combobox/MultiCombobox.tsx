@@ -255,6 +255,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
                   const isAll = item.value === ALL_OPTION_VALUE;
+                  const allItemsSelected = selectedItems[0]?.value === ALL_OPTION_VALUE;
 
                   return (
                     <li
@@ -267,10 +268,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                       <Stack direction="row" alignItems="center">
                         <Checkbox
                           key={id}
-                          value={isSelected}
-                          indeterminate={
-                            isAll && selectedItems.length > 0 && selectedItems[0].value !== ALL_OPTION_VALUE
-                          }
+                          value={allItemsSelected || isSelected}
+                          indeterminate={isAll && selectedItems.length > 0 && !allItemsSelected}
                           aria-labelledby={id}
                           onClick={(e) => {
                             e.stopPropagation();
