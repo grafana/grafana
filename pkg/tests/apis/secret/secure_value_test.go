@@ -117,6 +117,19 @@ func TestIntegrationSecureValue(t *testing.T) {
 		})
 	})
 
+	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
+		keeper := mustGenerateKeeper(t, helper, nil)
+		svWithValue := mustGenerateSecureValue(t, helper, keeper.GetName())
+
+		testData := svWithValue.DeepCopy()
+		testData.Object["spec"].(map[string]any)["value"] = nil
+		testData.Object["spec"].(map[string]any)["ref"] = "some-ref"
+
+		raw, err := client.Resource.Update(ctx, testData, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Nil(t, raw)
+	})
+
 	t.Run("creating an invalid secure value fails validation and returns an error", func(t *testing.T) {
 		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 		testData.Object["spec"].(map[string]any)["title"] = ""
