@@ -6,11 +6,14 @@ import {
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
+  VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { getExploreUrl } from 'app/core/utils/explore';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 
-import { MetricActionBar, MetricScene } from '../MetricScene';
 import { AddToExplorationButton, extensionPointId } from '../MetricSelect/AddToExplorationsButton';
+import { getDataSource, getTrailFor } from '../utils';
 
 const ADD_TO_INVESTIGATION_MENU_TEXT = 'Add to investigation';
 const ADD_TO_INVESTIGATION_MENU_DIVIDER_TEXT = 'investigations_divider'; // Text won't be visible
@@ -32,6 +35,26 @@ export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPan
   constructor(state: Partial<PanelMenuState>) {
     super({ ...state, addExplorationsLink: state.addExplorationsLink ?? true });
     this.addActivationHandler(() => {
+      let exploreUrl: Promise<string | undefined> | undefined;
+      try {
+        const viz = sceneGraph.getAncestor(this, VizPanel);
+        const queryRunner = getQueryRunnerFor(viz);
+        const queries = queryRunner?.state.queries ?? [];
+        queries.forEach((query) => {
+          // removing legendFormat to get verbose legend in Explore
+          delete query.legendFormat;
+        });
+        const trail = getTrailFor(this);
+        const dsValue = getDataSource(trail);
+        const timeRange = sceneGraph.getTimeRange(this);
+        exploreUrl = getExploreUrl({
+          queries,
+          dsRef: { uid: dsValue },
+          timeRange: timeRange.state.value,
+          scopedVars: { __sceneObject: { value: viz } },
+        });
+      } catch (e) {}
+
       // Navigation options (all panels)
       const items: PanelMenuItem[] = [
         {
@@ -41,7 +64,7 @@ export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPan
         {
           text: 'Explore',
           iconClassName: 'compass',
-          onClick: () => openExploreLink(this),
+          onClick: () => exploreUrl?.then((url) => url && window.open(url, '_blank')),
           shortcut: 'p x',
         },
       ];
@@ -93,16 +116,6 @@ export class PanelMenu extends SceneObjectBase<PanelMenuState> implements VizPan
 
     return <></>;
   };
-}
-
-function openExploreLink(panel: PanelMenu) {
-  const metricScene = sceneGraph.getAncestor(panel, MetricScene);
-  const metricActionBars = sceneGraph.findDescendents(metricScene, MetricActionBar);
-  if (metricActionBars.length === 0) {
-    return;
-  }
-  const metricActionBar = metricActionBars[0] as MetricActionBar;
-  metricActionBar.openExploreLink();
 }
 
 const getInvestigationLink = (addToExplorations: AddToExplorationButton) => {
