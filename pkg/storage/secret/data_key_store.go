@@ -163,6 +163,7 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 	})
 }
 
+// TODO this doesn't past tests yet, do not use
 func (ss *encryptionStoreImpl) ReEncryptDataKeys(
 	ctx context.Context,
 	namespace string,
