@@ -17,11 +17,14 @@ import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
   AnnoKeyDashboardId,
+  AnnoKeyDashboardIsSnapshot,
+  AnnoKeyDashboardSnapshotOriginalUrl,
   AnnoKeyFolder,
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   transformCursorSynctoEnum,
@@ -55,17 +58,51 @@ export function ensureV2Response(
   const variables = getVariables(dashboard.templating?.list || []);
   const annotations = getAnnotations(dashboard.annotations?.list || []);
 
-  const accessAndMeta = isDashboardResource(dto)
-    ? {
-        ...dto.access,
-        created: dto.metadata.creationTimestamp,
-        createdBy: dto.metadata.annotations?.[AnnoKeyCreatedBy],
-        updatedBy: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
-        updated: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
-        folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
-        slug: dto.metadata.annotations?.[AnnoKeySlug],
-      }
-    : dto.meta;
+  let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
+  let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
+  let creationTimestamp;
+
+  if (isDashboardResource(dto)) {
+    accessMeta = dto.access;
+    annotationsMeta = {
+      [AnnoKeyCreatedBy]: dto.metadata.annotations?.[AnnoKeyCreatedBy],
+      [AnnoKeyUpdatedBy]: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
+      [AnnoKeyUpdatedTimestamp]: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+      [AnnoKeyFolder]: dto.metadata.annotations?.[AnnoKeyFolder],
+      [AnnoKeySlug]: dto.metadata.annotations?.[AnnoKeySlug],
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
+      [AnnoKeyDashboardIsSnapshot]: dto.metadata.annotations?.[AnnoKeyDashboardIsSnapshot],
+    };
+    creationTimestamp = dto.metadata.creationTimestamp;
+  } else {
+    accessMeta = {
+      url: dto.meta.url,
+      slug: dto.meta.slug,
+      canSave: dto.meta.canSave,
+      canEdit: dto.meta.canEdit,
+      canDelete: dto.meta.canDelete,
+      canShare: dto.meta.canShare,
+      canStar: dto.meta.canStar,
+      canAdmin: dto.meta.canAdmin,
+      annotationsPermissions: dto.meta.annotationsPermissions,
+    };
+    annotationsMeta = {
+      [AnnoKeyCreatedBy]: dto.meta.createdBy,
+      [AnnoKeyUpdatedBy]: dto.meta.updatedBy,
+      [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
+      [AnnoKeyFolder]: dto.meta.folderUid,
+      [AnnoKeySlug]: dto.meta.slug,
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
+      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
+    };
+    creationTimestamp = dto.meta.created;
+  }
+
+  if (annotationsMeta?.[AnnoKeyDashboardIsSnapshot]) {
+    annotationsMeta[AnnoKeyDashboardSnapshotOriginalUrl] = dashboard.snapshot?.originalUrl;
+  }
 
   const spec: DashboardV2Spec = {
     title: dashboard.title,
@@ -100,31 +137,13 @@ export function ensureV2Response(
     apiVersion: 'v2alpha1',
     kind: 'DashboardWithAccessInfo',
     metadata: {
-      creationTimestamp: accessAndMeta.created || '', // TODO verify this empty string is valid
+      creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
       name: dashboard.uid,
       resourceVersion: dashboard.version?.toString() || '0',
-      annotations: {
-        [AnnoKeyCreatedBy]: accessAndMeta.createdBy,
-        [AnnoKeyUpdatedBy]: accessAndMeta.updatedBy,
-        [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
-        [AnnoKeyFolder]: accessAndMeta.folderUid,
-        [AnnoKeySlug]: accessAndMeta.slug,
-        [AnnoKeyDashboardId]: dashboard.id ?? undefined,
-        [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      },
+      annotations: annotationsMeta,
     },
     spec,
-    access: {
-      url: accessAndMeta.url || '',
-      canAdmin: accessAndMeta.canAdmin,
-      canDelete: accessAndMeta.canDelete,
-      canEdit: accessAndMeta.canEdit,
-      canSave: accessAndMeta.canSave,
-      canShare: accessAndMeta.canShare,
-      canStar: accessAndMeta.canStar,
-      slug: accessAndMeta.slug,
-      annotationsPermissions: accessAndMeta.annotationsPermissions,
-    },
+    access: accessMeta,
   };
 }
 
@@ -226,6 +245,11 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 
   // iterate over panels
   for (const p of panels) {
+    // FIXME: for now we should skip row panels
+    if (p.type === 'row') {
+      continue;
+    }
+
     const queries = getPanelQueries(
       (p.targets as unknown as DataQuery[]) || [],
       p.datasource || getDefaultDatasource()
@@ -291,20 +315,23 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 }
 
 function getDefaultDatasourceType() {
-  const datasources = config.datasources;
-  // find default datasource in datasources
-  return Object.values(datasources).find((ds) => ds.isDefault)!.type;
+  // if there is no default datasource, return 'grafana' as default
+  return getDefaultDataSourceRef()?.type ?? 'grafana';
 }
 
-function getDefaultDatasource(): DataSourceRef {
-  const datasources = config.datasources;
+export function getDefaultDatasource(): DataSourceRef {
+  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
 
-  // find default datasource in datasources
-  const defaultDs = Object.values(datasources).find((ds) => ds.isDefault)!;
+  if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
+    // get api version from config
+    const dsInstance = config.bootData.settings.datasources[configDefaultDS.uid];
+    configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
+  }
+
   return {
-    apiVersion: defaultDs.apiVersion,
-    type: defaultDs.type,
-    uid: defaultDs.uid,
+    apiVersion: configDefaultDS.apiVersion,
+    type: configDefaultDS.type,
+    uid: configDefaultDS.uid,
   };
 }
 
@@ -407,7 +434,8 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         variables.push(dv);
         break;
       default:
-        throw new Error(`Variable transformation not implemented: ${v.type}`);
+        // do not throw error, just log it
+        console.error(`Variable transformation not implemented: ${v.type}`);
     }
   }
   return variables;

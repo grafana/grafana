@@ -7,6 +7,7 @@ import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { Trans } from 'app/core/internationalization';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
@@ -224,7 +225,7 @@ export function ReceiverForm<R extends ChannelValues>({
               data-testid="cancel-button"
               href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
             >
-              Cancel
+              <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
             </LinkButton>
           </div>
         </>

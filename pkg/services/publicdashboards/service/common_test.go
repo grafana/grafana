@@ -35,7 +35,7 @@ func newPublicDashboardServiceImpl(
 	}
 	tagService := tagimpl.ProvideService(store)
 	if annotationsRepo == nil {
-		annotationsRepo = annotationsimpl.ProvideService(store, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest(), nil)
+		annotationsRepo = annotationsimpl.ProvideService(store, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest(), nil, dashboardService)
 	}
 
 	if publicDashboardStore == nil {

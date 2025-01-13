@@ -31,6 +31,7 @@ type DashboardService interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
+	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
@@ -61,6 +62,7 @@ type DashboardProvisioningService interface {
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
+	CleanupAfterDelete(ctx context.Context, cmd *DeleteDashboardCommand) error
 	DeleteAllDashboards(ctx context.Context, orgID int64) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
@@ -74,7 +76,7 @@ type Store interface {
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
-	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
+	SaveProvisionedDashboard(ctx context.Context, dash *Dashboard, provisioning *DashboardProvisioning) error
 	UnprovisionDashboard(ctx context.Context, id int64) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
@@ -86,6 +88,7 @@ type Store interface {
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
+	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error
