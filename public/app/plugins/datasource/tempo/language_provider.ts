@@ -17,9 +17,6 @@ import { Scope } from './types';
 // Limit maximum tags retrieved from the backend
 export const TAGS_LIMIT = 5000;
 
-// Limit maximum tags values retrieved from the backend
-export const TAG_VALUES_LIMIT = 5000;
-
 // Limit maximum options in select dropdowns
 export const OPTIONS_LIMIT = 1000;
 
@@ -49,10 +46,14 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
+  getTagsLimit = () => {
+    return this.datasource.instanceSettings.jsonData?.tagLimit?.limit || TAGS_LIMIT;
+  };
+
   async fetchTags() {
     let v1Resp, v2Resp;
     try {
-      v2Resp = await this.request('/api/v2/search/tags', { limit: TAGS_LIMIT });
+      v2Resp = await this.request('/api/v2/search/tags', { limit: this.getTagsLimit() });
     } catch (error) {
       v1Resp = await this.request('/api/search/tags', []);
     }
@@ -160,8 +161,8 @@ export default class TempoLanguageProvider extends LanguageProvider {
     const response = await this.request(
       `/api/v2/search/tag/${encodedTag}/values`,
       query
-        ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe), limit: TAG_VALUES_LIMIT }
-        : { limit: TAG_VALUES_LIMIT }
+        ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe), limit: this.getTagsLimit() }
+        : { limit: this.getTagsLimit() }
     );
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
