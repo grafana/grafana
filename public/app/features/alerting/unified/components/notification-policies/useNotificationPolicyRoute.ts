@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 import memoize from 'micro-memoize';
 
-import { routingTreeApi } from 'app/features/alerting/unified/api/notificationPoliciesApi';
+import { generatedRoutesApi as routingTreeApi } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
@@ -139,7 +139,6 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
-  // @TODO
   const deleteFromK8sApi = useAsync(async (id: string) => {
     const namespace = getK8sNamespace();
 
