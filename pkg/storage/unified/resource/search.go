@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
@@ -47,7 +48,7 @@ type ResourceIndex interface {
 	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
 
 	// Counts the values in a repo
-	CountRepositoryObjects(ctx context.Context) (map[string]int64, error)
+	CountRepositoryObjects(ctx context.Context) ([]*CountRepositoryObjectsResponse_ResourceCount, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
@@ -138,21 +139,98 @@ func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryRespo
 }
 
 func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
-	idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
-		Group:     req.Key.Group,
-		Namespace: req.Key.Namespace,
-		Resource:  req.Key.Resource,
-	})
-	if err != nil {
+	if req.NextPageToken != "" {
 		return &ListRepositoryObjectsResponse{
-			Error: AsErrorResult(err),
+			Error: NewBadRequestError("multiple pages not yet supported"),
 		}, nil
 	}
-	return idx.ListRepositoryObjects(ctx, req)
+
+	rsp := &ListRepositoryObjectsResponse{}
+	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+
+	for _, info := range stats {
+		idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
+			Namespace: req.Namespace,
+			Group:     info.Group,
+			Resource:  info.Resource,
+		})
+		if err != nil {
+			rsp.Error = AsErrorResult(err)
+			return rsp, nil
+		}
+
+		kind, err := idx.ListRepositoryObjects(ctx, req)
+		if err != nil {
+			rsp.Error = AsErrorResult(err)
+			return rsp, nil
+		}
+		if kind.NextPageToken != "" {
+			rsp.Error = &ErrorResult{
+				Message: "Multiple pages are not yet supported",
+			}
+			return rsp, nil
+		}
+		rsp.Items = append(rsp.Items, kind.Items...)
+	}
+
+	// Sort based on path
+	slices.SortFunc(rsp.Items, func(a, b *ListRepositoryObjectsResponse_Item) int {
+		return cmp.Compare(a.Path, b.Path)
+	})
+
+	return rsp, nil
 }
 
-func (s *searchSupport) CountRepositoryObjects(context.Context, *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
-	return nil, fmt.Errorf("not implemented yet... requires iterating kinds")
+func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	rsp := &CountRepositoryObjectsResponse{}
+	stats, err := s.storage.GetResourceStats(ctx, req.Namespace, 0)
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+
+	for _, info := range stats {
+		idx, err := s.getOrCreateIndex(ctx, NamespacedResource{
+			Namespace: req.Namespace,
+			Group:     info.Group,
+			Resource:  info.Resource,
+		})
+		if err != nil {
+			rsp.Error = AsErrorResult(err)
+			return rsp, nil
+		}
+
+		counts, err := idx.CountRepositoryObjects(ctx)
+		if err != nil {
+			rsp.Error = AsErrorResult(err)
+			return rsp, nil
+		}
+		if req.Name == "" {
+			rsp.Items = append(rsp.Items, counts...)
+		} else {
+			for _, k := range counts {
+				if k.Repository == req.Name {
+					k.Repository = "" // avoid duplicate response metadata
+					rsp.Items = append(rsp.Items, k)
+				}
+			}
+		}
+	}
+
+	// Sort based on repo/group/resource
+	slices.SortFunc(rsp.Items, func(a, b *CountRepositoryObjectsResponse_ResourceCount) int {
+		return cmp.Or(
+			cmp.Compare(a.Repository, b.Repository),
+			cmp.Compare(a.Group, b.Group),
+			cmp.Compare(a.Resource, b.Resource),
+		)
+	})
+
+	return rsp, nil
 }
 
 // Search implements ResourceIndexServer.
@@ -383,10 +461,13 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	if s == nil || s.search == nil {
+		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
+	}
+
 	// TODO???
 	// We want to block while building the index and return the same index for the key
 	// simple mutex not great... we don't want to block while anything in building, just the same key
-
 	idx, err := s.search.GetIndex(ctx, key)
 	if err != nil {
 		return nil, err

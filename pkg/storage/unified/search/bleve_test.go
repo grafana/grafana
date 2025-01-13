@@ -219,8 +219,7 @@ func TestBleveBackend(t *testing.T) {
 
 		// Now look for repositories
 		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
-			Name:  "repo-1",
-			Limit: 100,
+			Name: "repo-1",
 		})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(found, "", "  ")
@@ -259,10 +258,23 @@ func TestBleveBackend(t *testing.T) {
 
 		counts, err := index.CountRepositoryObjects(ctx)
 		require.NoError(t, err)
-		require.Equal(t, map[string]int64{
-			"repo-1": 2,
-			"repo2":  1,
-		}, counts)
+		jj, err = json.MarshalIndent(counts, "", "  ")
+		require.NoError(t, err)
+		fmt.Printf("%s\n", string(jj))
+		require.JSONEq(t, `[
+			{
+				"repository": "repo-1",
+				"group": "dashboard.grafana.app",
+				"resource": "dashboards",
+				"count": 2
+			},
+			{
+				"repository": "repo2",
+				"group": "dashboard.grafana.app",
+				"resource": "dashboards",
+				"count": 1
+			}
+		]`, string(jj))
 	})
 
 	t.Run("build folders", func(t *testing.T) {
