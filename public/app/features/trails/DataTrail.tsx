@@ -432,7 +432,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       label: 'Select label',
       hide: VariableHide.hideLabel,
     });
-    // Resetting the otel experience filters means clearing both the otel resources var and the otemmetricsvar
+    // Resetting the otel experience filters means clearing both the otel resources var and the otelMetricsVar
     // hide the super otel and metric filter and reset it
     otelAndMetricsFiltersVariable.setState({
       filters: [],
