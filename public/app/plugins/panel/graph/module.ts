@@ -9,7 +9,7 @@ import { auto } from 'angular';
 import { defaults, find, without } from 'lodash';
 
 import { DataFrame, FieldConfigProperty, PanelEvents, PanelPlugin } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+// import { locationService } from '@grafana/runtime';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
@@ -29,7 +29,7 @@ import { axesEditorComponent } from './axes_editor';
 import { DataProcessor } from './data_processor';
 import template from './template';
 import { DataWarning, GraphFieldConfig, GraphPanelOptions } from './types';
-import { getDataTimeRange } from './utils';
+// import { getDataTimeRange } from './utils';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
