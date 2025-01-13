@@ -148,7 +148,6 @@ export class BackendSrv implements BackendService {
     const controller = new AbortController();
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     return new Observable((observer) => {
-      let disconnect = () => {};
       const sub = this.fetch<ReadableStream<Uint8Array>>({
         ...options,
         requestId,
@@ -159,16 +158,11 @@ export class BackendSrv implements BackendService {
         abortSignal: controller.signal,
       }).subscribe((result) => {
         const reader = result.data.getReader();
-        disconnect = () => {
-          console.log('disconnect', requestId);
-
-          // Send all the cancel messages
-          reader.cancel('disconnect').catch((e) => {
-            console.log('reader.cancel', requestId, e);
-          });
-        };
         async function process() {
           while (true) {
+            if (controller.signal.aborted) {
+              throw new Error('aborted')
+            }
             const chunk = await reader.read();
             observer.next({
               ...result,
@@ -176,15 +170,12 @@ export class BackendSrv implements BackendService {
             });
             if (chunk.done) {
               console.log('chunked, done', requestId);
-              disconnect = () => {}
               return Promise.resolve();
             }
           }
         }
         process()
-          .catch((e) => {
-            console.error('error running process', requestId, e);
-          })
+          .catch((e) => {})
           .then(() => {
             console.log('complete', requestId);
             observer.complete();
@@ -193,8 +184,6 @@ export class BackendSrv implements BackendService {
 
       return function unsubscribe() {
         console.log('chunked, unsubscribe', requestId);
-        disconnect();
-
         controller.abort('unsubscribe');
         sub.unsubscribe();
       };
