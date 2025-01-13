@@ -71,7 +71,6 @@
 /conf/provisioning/sample @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 /scripts/parse-generated-api.ts @grafana/grafana-git-ui-sync-team
-/pkg/slogctx @grafana/grafana-git-ui-sync-team
 
 /apps/alerting/ @grafana/alerting-backend @grafana/alerting-frontend
 /apps/playlist/ @grafana/grafana-app-platform-squad

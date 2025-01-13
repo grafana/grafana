@@ -26,8 +26,8 @@ func NewObjectLister(index resource.RepositoryIndexClient) ObjectLister {
 // List implements ObjectLister.
 func (o *objectListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ObjectList, error) {
 	objects, err := o.index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
-		Namespace:  namespace,
-		Repository: repository,
+		Namespace: namespace,
+		Name:      repository,
 	})
 	if err != nil {
 		return nil, err
@@ -55,8 +55,8 @@ func (o *objectListerFromSearch) List(ctx context.Context, namespace, repository
 // Stats implements ObjectLister.
 func (o *objectListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ObjectStats, error) {
 	counts, err := o.index.CountRepositoryObjects(ctx, &resource.CountRepositoryObjectsRequest{
-		Namespace:  namespace,
-		Repository: repository,
+		Namespace: namespace,
+		Name:      repository,
 	})
 	if err != nil {
 		return nil, err

@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/slogctx"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -103,8 +103,8 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 
 // Reads the queue until no jobs remain
 func (s *jobStore) drainPending() {
-	logger := slogctx.From(context.Background()).With("logger", "job-store")
-	ctx := slogctx.To(context.Background(), logger)
+	logger := logging.DefaultLogger.With("logger", "job-store")
+	ctx := logging.Context(context.Background(), logger)
 
 	var err error
 	for {
@@ -115,7 +115,7 @@ func (s *jobStore) drainPending() {
 			return // done
 		}
 		logger := logger.With("job", job.GetName(), "namespace", job.GetNamespace())
-		ctx := slogctx.To(ctx, logger)
+		ctx := logging.Context(ctx, logger)
 
 		started := time.Now()
 		var status *provisioning.JobStatus
@@ -129,7 +129,7 @@ func (s *jobStore) drainPending() {
 		} else {
 			status, err = s.worker.Process(ctx, *job)
 			if err != nil {
-				logger.ErrorContext(ctx, "error processing job", "error", err)
+				logger.Error("error processing job", "error", err)
 				status = &provisioning.JobStatus{
 					State:  provisioning.JobStateError,
 					Errors: []string{err.Error()},
@@ -137,7 +137,7 @@ func (s *jobStore) drainPending() {
 			} else if status.State == "" {
 				status.State = provisioning.JobStateSuccess
 			}
-			logger.DebugContext(ctx, "job processing finished", "status", status.State)
+			logger.Debug("job processing finished", "status", status.State)
 		}
 
 		status.Started = started.UnixMilli()
@@ -145,9 +145,9 @@ func (s *jobStore) drainPending() {
 
 		err = s.Complete(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
-			logger.ErrorContext(ctx, "error running job", "error", err)
+			logger.Error("error running job", "error", err)
 		}
-		logger.DebugContext(ctx, "job has been fully completed")
+		logger.Debug("job has been fully completed")
 	}
 }
 

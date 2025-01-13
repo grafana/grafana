@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/slogctx"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
@@ -60,8 +60,8 @@ func NewJobWorker(
 }
 
 func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
-	logger := slogctx.From(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	ctx = slogctx.To(ctx, logger)
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	ctx = logging.Context(ctx, logger)
 
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {
@@ -74,7 +74,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		return nil, fmt.Errorf("missing repository name in label")
 	}
 	logger = logger.With("repository", repoName)
-	ctx = slogctx.To(ctx, logger)
+	ctx = logging.Context(ctx, logger)
 
 	repo, err := g.getter.GetRepository(ctx, repoName)
 	if err != nil {

@@ -219,7 +219,7 @@ func TestBleveBackend(t *testing.T) {
 
 		// Now look for repositories
 		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
-			Repository: "repo-1",
+			Name: "repo-1",
 		})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(found, "", "  ")
