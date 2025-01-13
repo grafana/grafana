@@ -29,6 +29,7 @@ import (
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
+	RepositoryIndexServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -205,19 +206,24 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	// Initialize the blob storage
 	blobstore := opts.Blob.Backend
-	if blobstore == nil && opts.Blob.URL != "" {
-		ctx := context.Background()
-		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-		if err != nil {
-			return nil, err
-		}
+	if blobstore == nil {
+		if opts.Blob.URL != "" {
+			ctx := context.Background()
+			bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
+			if err != nil {
+				return nil, err
+			}
 
-		blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-			Tracer: opts.Tracer,
-			Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
-		})
-		if err != nil {
-			return nil, err
+			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+				Tracer: opts.Tracer,
+				Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Check if the backend supports blob storage
+			blobstore, _ = opts.Backend.(BlobSupport)
 		}
 	}
 
@@ -1068,9 +1074,12 @@ func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResp
 	return s.search.History(ctx, req)
 }
 
-// Origin implements ResourceServer.
-func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	return s.search.Origin(ctx, req)
+func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return s.search.ListRepositoryObjects(ctx, req)
+}
+
+func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return s.search.CountRepositoryObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

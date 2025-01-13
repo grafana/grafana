@@ -299,7 +299,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db), quotatest.New(false, nil))
+	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
@@ -326,7 +326,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(), folder.NewFakeStore(), nil, zanzana.NewNoopClient(), nil, nil, nil,
+		foldertest.NewFakeService(), folder.NewFakeStore(), nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil,
 	)
 	require.NoError(t, err)
 
