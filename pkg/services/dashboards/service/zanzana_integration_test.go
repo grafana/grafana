@@ -101,6 +101,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			db,
 			featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			supportbundlestest.NewFakeBundleService(),
+			cfg,
 			nil,
 			tracing.InitializeTracerForTest(),
 		)

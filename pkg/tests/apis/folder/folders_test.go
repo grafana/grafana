@@ -925,7 +925,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	}
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
-	folderWithoutUID := "{ \"title\": \"Folder without UID\"}"
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
 	folderWithUIDTooLong := "{ \"uid\": \"asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm\", \"title\": \"Third folder\"}"
@@ -963,17 +962,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			expectedCode:    http.StatusForbidden,
 			expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
 			permissions:     []resourcepermissions.SetResourcePermissionCommand{},
-		},
-		{
-			// #TODO This test case doesn't set up the conditions it describes. We should have created a folder with the same UID before
-			// creating a second one and failing to do so successfully.
-			description:  "folder creation fails given folder service error %s",
-			input:        folderWithoutUID,
-			expectedCode: http.StatusConflict,
-			// expectedMessage:        dashboards.ErrFolderWithSameUIDExists.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderWithSameUIDExists,
-			createSecondRecord:     true,
-			permissions:            folderCreatePermission,
 		},
 		{
 			description:            "folder creation fails given folder service error %s",
