@@ -175,6 +175,9 @@ export class BackendSrv implements BackendService {
             }
           }
           if (disconnect) {
+            // Send all the cancel messages
+            reader.cancel('disconnect').catch(() => {});
+
             // this happens when we unsubscribe before the connection is done
             // Catch the error because it may be locked from the abort controller
             result.data.cancel('disconnect').catch(() => {});
