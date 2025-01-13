@@ -245,9 +245,113 @@ func (b *bleveIndex) Flush() (err error) {
 	return err
 }
 
-// Origin implements resource.DocumentIndex.
-func (b *bleveIndex) Origin(ctx context.Context, req *resource.OriginRequest) (*resource.OriginResponse, error) {
-	panic("unimplemented")
+func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+	if req.NextPageToken != "" {
+		return nil, fmt.Errorf("next page not implemented yet")
+	}
+	if req.Name == "" {
+		return &resource.ListRepositoryObjectsResponse{
+			Error: resource.NewBadRequestError("empty repository name"),
+		}, nil
+	}
+
+	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
+		Query: &query.TermQuery{
+			Term:     req.Name,
+			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
+		},
+		Fields: []string{
+			resource.SEARCH_FIELD_TITLE,
+			resource.SEARCH_FIELD_FOLDER,
+			resource.SEARCH_FIELD_REPOSITORY_NAME,
+			resource.SEARCH_FIELD_REPOSITORY_PATH,
+			resource.SEARCH_FIELD_REPOSITORY_HASH,
+			resource.SEARCH_FIELD_REPOSITORY_TIME,
+		},
+		Sort: search.SortOrder{
+			&search.SortField{
+				Field: resource.SEARCH_FIELD_REPOSITORY_PATH,
+				Type:  search.SortFieldAsString,
+				Desc:  false,
+			},
+		},
+		Size: 1000000000, // big number
+		From: 0,          // next page token not yet supported
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	asString := func(v any) string {
+		if v == nil {
+			return ""
+		}
+		str, ok := v.(string)
+		if ok {
+			return str
+		}
+		return fmt.Sprintf("%v", v)
+	}
+
+	asTime := func(v any) int64 {
+		if v == nil {
+			return 0
+		}
+		intV, ok := v.(int64)
+		if ok {
+			return intV
+		}
+		str, ok := v.(string)
+		if ok {
+			t, _ := time.Parse(time.RFC3339, str)
+			return t.UnixMilli()
+		}
+		return 0
+	}
+
+	rsp := &resource.ListRepositoryObjectsResponse{}
+	for _, hit := range found.Hits {
+		item := &resource.ListRepositoryObjectsResponse_Item{
+			Object: &resource.ResourceKey{},
+			Hash:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_HASH]),
+			Path:   asString(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_PATH]),
+			Time:   asTime(hit.Fields[resource.SEARCH_FIELD_REPOSITORY_TIME]),
+			Title:  asString(hit.Fields[resource.SEARCH_FIELD_TITLE]),
+			Folder: asString(hit.Fields[resource.SEARCH_FIELD_FOLDER]),
+		}
+		err := item.Object.ReadSearchID(hit.ID)
+		if err != nil {
+			return nil, err
+		}
+		rsp.Items = append(rsp.Items, item)
+	}
+	return rsp, nil
+}
+
+func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.CountRepositoryObjectsResponse_ResourceCount, error) {
+	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
+		Query: bleve.NewMatchAllQuery(),
+		Size:  0,
+		Facets: bleve.FacetsRequest{
+			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_REPOSITORY_NAME, 1000), // typically less then 5
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	vals := make([]*resource.CountRepositoryObjectsResponse_ResourceCount, 0)
+	f, ok := found.Facets["count"]
+	if ok && f.Terms != nil {
+		for _, v := range f.Terms.Terms() {
+			vals = append(vals, &resource.CountRepositoryObjectsResponse_ResourceCount{
+				Repository: v.Term,
+				Group:      b.key.Group,
+				Resource:   b.key.Resource,
+				Count:      int64(v.Count),
+			})
+		}
+	}
+	return vals, nil
 }
 
 // Search implements resource.DocumentIndex.
@@ -487,6 +591,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
 		}
+
 		if len(req.Values[0]) == 1 {
 			q := query.NewMatchQuery(req.Values[0])
 			q.FieldVal = prefix + req.Key
@@ -501,6 +606,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		return query.NewConjunctionQuery(conjuncts), nil
+
 	case selection.NotEquals:
 	case selection.DoesNotExist:
 	case selection.GreaterThan:
@@ -524,7 +630,21 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		return query.NewDisjunctionQuery(disjuncts), nil
+
 	case selection.NotIn:
+		boolQuery := bleve.NewBooleanQuery()
+
+		var mustNotQueries []query.Query
+		for _, value := range req.Values {
+			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(value))
+		}
+		boolQuery.AddMustNot(mustNotQueries...)
+
+		// must still have a value
+		notEmptyQuery := bleve.NewWildcardQuery("*")
+		boolQuery.AddMust(notEmptyQuery)
+
+		return boolQuery, nil
 	}
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),

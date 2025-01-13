@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
@@ -521,8 +520,6 @@ func TestLoader_Load(t *testing.T) {
 }
 
 func TestLoader_Load_ExternalRegistration(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	t.Run("Load a plugin with service account registration", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
@@ -562,11 +559,11 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						ExposedComponents: []plugins.ExposedComponent{},
 						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
-					IAM: &pfs.IAM{
-						Permissions: []pfs.Permission{
+					IAM: &auth.IAM{
+						Permissions: []auth.Permission{
 							{
 								Action: "read",
-								Scope:  stringPtr("datasource"),
+								Scope:  "datasource",
 							},
 						},
 					},
