@@ -1,7 +1,8 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
-import { ROUTES_META_SYMBOL } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+
+export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;

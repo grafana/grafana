@@ -3,7 +3,7 @@ import memoize from 'micro-memoize';
 
 import { routingTreeApi } from 'app/features/alerting/unified/api/notificationPoliciesApi';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -71,8 +71,6 @@ export const useNotificationPolicyRoute = ({ alertmanager }: BaseAlertmanagerArg
 
   return k8sApiSupported ? k8sRouteQuery : amConfigQuery;
 };
-
-export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 
 const parseAmConfigRoute = memoize((route: Route): Route => {
   return {

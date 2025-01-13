@@ -10,7 +10,7 @@ import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { computeInheritedTree } from 'app/features/alerting/unified/utils/notification-policies';
-import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, ROUTES_META_SYMBOL, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -24,7 +24,6 @@ import { NotificationPoliciesFilter, findRoutesByMatchers, findRoutesMatchingPre
 import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal } from './Modals';
 import { Policy } from './Policy';
 import {
-  ROUTES_META_SYMBOL,
   useAddNotificationPolicy,
   useDeleteNotificationPolicy,
   useNotificationPolicyRoute,
