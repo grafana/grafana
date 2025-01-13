@@ -410,7 +410,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene, editPanel, uid } = this.state;
+    const { meta, viewPanelScene, editPanel, title, uid } = this.state;
     const isNew = uid === '';
 
     if (meta.dashboardNotFound) {
@@ -418,13 +418,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     let pageNav: NavModelItem = {
-      text: this.state.title,
+      text: title,
       url: getDashboardUrl({
-        uid: this.state.uid,
+        uid,
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !isNew,
+        isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
+        isSnapshot: meta.isSnapshot,
       }),
     };
 
