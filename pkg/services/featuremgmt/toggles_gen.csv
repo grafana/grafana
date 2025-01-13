@@ -94,6 +94,7 @@ kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,fals
 kubernetesCliDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesRestore,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
+kubernetesFoldersServiceV2,experimental,@grafana/search-and-storage,false,false,false
 grafanaAPIServerTestingWithExperimentalAPIs,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false

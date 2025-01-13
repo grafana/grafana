@@ -2083,6 +2083,18 @@
     },
     {
       "metadata": {
+        "name": "kubernetesFoldersServiceV2",
+        "resourceVersion": "1735336477446",
+        "creationTimestamp": "2024-12-27T21:54:37Z"
+      },
+      "spec": {
+        "description": "Use the Folders Service V2, and route Folder Service requests to k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesPlaylists",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-05T19:00:36Z",
