@@ -209,11 +209,11 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		if req.Repository == "" {
+		if req.Name == "" {
 			rsp.Items = append(rsp.Items, counts...)
 		} else {
 			for _, k := range counts {
-				if k.Repository == req.Repository {
+				if k.Repository == req.Name {
 					k.Repository = "" // avoid duplicate response metadata
 					rsp.Items = append(rsp.Items, k)
 				}

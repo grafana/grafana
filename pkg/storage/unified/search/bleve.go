@@ -249,10 +249,15 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	if req.NextPageToken != "" {
 		return nil, fmt.Errorf("next page not implemented yet")
 	}
+	if req.Name == "" {
+		return &resource.ListRepositoryObjectsResponse{
+			Error: resource.NewBadRequestError("empty repository name"),
+		}, nil
+	}
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: &query.TermQuery{
-			Term:     req.Repository,
+			Term:     req.Name,
 			FieldVal: resource.SEARCH_FIELD_REPOSITORY_NAME,
 		},
 		Fields: []string{

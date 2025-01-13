@@ -480,7 +480,7 @@ message ListRepositoryObjectsRequest {
   string namespace = 2;
   
   // The name of the repository
-  string repository = 3;
+  string name = 3;
 }
 
 message ListRepositoryObjectsResponse {
@@ -521,7 +521,7 @@ message CountRepositoryObjectsRequest {
   
   // The name of the repository
   // empty to count across all repositories
-  string repository = 2;
+  string name = 2;
 }
 
 // Count the items that exist with
