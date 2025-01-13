@@ -1576,13 +1576,6 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	scoreIDX := 0
 	explainIDX := 0
 
-	// Creating a k8sTable, so I can decode all the cells. How are we supposed to do this?
-	resTable := resource.ResourceTable{Columns: result.Results.Columns, Rows: result.Results.Rows}
-	k8sTable, err := resTable.ToK8s()
-	if err != nil {
-		return nil, err
-	}
-
 	for i, v := range result.Results.Columns {
 		switch v.Name {
 		case resource.SEARCH_FIELD_EXPLAIN:
@@ -1607,17 +1600,15 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	}
 
 	for i, row := range result.Results.Rows {
-		// TODO how to handle this properly??
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
-			fieldName := col.Name
-			fieldValue := k8sTable.Rows[i].Cells[colIndex]
-			// Calling Set with int32 will cause a panic
-			_, ok := fieldValue.(int32)
-			if ok {
-				fieldValue = int64(fieldValue.(int32))
+			if !slices.Contains([]string{"title", "folder", "tags"}, col.Name) {
+				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
+				if err != nil {
+					return nil, err
+				}
+				fields.Set(col.Name, val)
 			}
-			fields.Set(fieldName, fieldValue)
 		}
 
 		hit := &v0alpha1.DashboardHit{

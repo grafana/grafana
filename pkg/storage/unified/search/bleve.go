@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -384,8 +385,18 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
+
+	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
+	var fields []string
+	for _, f := range req.Fields {
+		if slices.Contains(DashboardFields(), f) {
+			f = "fields." + f
+		}
+		fields = append(fields, f)
+	}
+
 	searchrequest := &bleve.SearchRequest{
-		Fields:  req.Fields,
+		Fields:  fields,
 		Size:    int(req.Limit),
 		From:    int(req.Offset),
 		Explain: req.Explain,

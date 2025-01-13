@@ -259,7 +259,6 @@ const SEARCH_FIELD_TITLE_SORT = "title_sort"
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
-const SEARCH_FIELD_FIELDS = "fields" // Index all fields
 
 const SEARCH_FIELD_FOLDER = "folder"
 const SEARCH_FIELD_CREATED = "created"

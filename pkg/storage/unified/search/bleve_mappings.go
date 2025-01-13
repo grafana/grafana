@@ -83,7 +83,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	fieldMapper := bleve.NewDocumentMapping()
-	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_FIELDS, fieldMapper)
+	mapper.AddSubDocumentMapping("fields", fieldMapper)
 
 	return mapper
 }
