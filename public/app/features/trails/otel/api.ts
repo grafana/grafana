@@ -308,10 +308,10 @@ export async function getNonPromotedOtelResources(datasourceUid: string, timeRan
   // otel resource attributes
   const targetInfoLabels = promResponses[0].data ?? [];
   // the metric labels here
-  const metricLabels = promResponses[1].data ?? [];
+  const metricLabels = new Set(promResponses[1].data ?? []);
 
   // get all the resource attributes that are not present on metrics (have been promoted to metrics)
-  const nonPromotedResources = targetInfoLabels.filter((item) => !metricLabels.includes(item));
+  const nonPromotedResources = targetInfoLabels.filter((item) => !metricLabels.has(item));
 
   return nonPromotedResources;
 }
