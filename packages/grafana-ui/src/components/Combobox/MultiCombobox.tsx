@@ -58,7 +58,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return {
       label: t('multicombobox.all.title', 'All'),
       // Type casting needed to make this work when T is a number
-      value: ALL_OPTION_VALUE,
+      value: ALL_OPTION_VALUE as unknown as T,
     };
   }, []);
 
@@ -146,9 +146,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-          if (newSelectedItem?.value === 'all') {
-            const allSelected = selectedItems.length === items.length - 1;
-            onChange(getComboboxOptionsValues(allSelected ? [] : items.slice(1)));
+          if (newSelectedItem?.value === ALL_OPTION_VALUE) {
+            const allSelected = selectedItems.length === 1 && selectedItems[0].value === allOptionItem.value;
+            onChange(getComboboxOptionsValues(allSelected ? [] : [allOptionItem]));
             break;
           }
           if (newSelectedItem) {
@@ -198,7 +198,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               key={`${item.value}${index}`}
               {...getSelectedItemProps({ selectedItem: item, index })}
             >
-              {itemToString(item)}
+              {item.value === ALL_OPTION_VALUE ? allOptionItem.label : itemToString(item)}
             </ValuePill>
           ))}
           {selectedItems.length > shownItems && !isOpen && (
@@ -254,8 +254,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
-                  const isAll = item.value === 'all';
-                  const isEverythingSelected = selectedItems.length === items.length - 1;
+                  const isAll = item.value === ALL_OPTION_VALUE;
+
                   return (
                     <li
                       key={`${item.value}-${index}`}
@@ -267,8 +267,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                       <Stack direction="row" alignItems="center">
                         <Checkbox
                           key={id}
-                          value={isAll ? isEverythingSelected : isSelected}
-                          indeterminate={isAll && !isEverythingSelected && selectedItems.length > 0}
+                          value={isSelected}
+                          indeterminate={
+                            isAll && selectedItems.length > 0 && selectedItems[0].value !== ALL_OPTION_VALUE
+                          }
                           aria-labelledby={id}
                           onClick={(e) => {
                             e.stopPropagation();
