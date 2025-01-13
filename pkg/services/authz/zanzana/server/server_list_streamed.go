@@ -14,11 +14,11 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 	if !s.cfg.CheckQueryCache {
 		return s.listObjectsWithStream(ctx, req)
 	}
-	return s.streamedListObjectsCached(ctx, req)
+	return s.listObjectsWithStreamCached(ctx, req)
 }
 
-func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.streamedListObjectsCached")
+func (s *Server) listObjectsWithStreamCached(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "server.listObjectsWithStreamCached")
 	defer span.End()
 
 	reqHash, err := getRequestHash(req)
@@ -39,7 +39,7 @@ func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.L
 }
 
 func (s *Server) listObjectsWithStream(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.listObjectsWithStream")
+	ctx, span := tracer.Start(ctx, "server.listObjectsWithStream")
 	defer span.End()
 
 	r := &openfgav1.StreamedListObjectsRequest{
@@ -49,47 +49,32 @@ func (s *Server) listObjectsWithStream(ctx context.Context, req *openfgav1.ListO
 		Relation:             req.GetRelation(),
 		User:                 req.GetUser(),
 		Context:              req.GetContext(),
+		ContextualTuples:     req.ContextualTuples,
 	}
 
-	clientStream, err := s.openfgaClient.StreamedListObjects(ctx, r)
+	stream, err := s.openfgaClient.StreamedListObjects(ctx, r)
 	if err != nil {
 		return nil, err
 	}
 
-	done := make(chan struct{})
-	var streamedObjectIDs []string
-	var streamingErr error
-	var streamingResp *openfgav1.StreamedListObjectsResponse
-	go func() {
-		for {
-			streamingResp, streamingErr = clientStream.Recv()
-			if streamingErr == nil {
-				streamedObjectIDs = append(streamedObjectIDs, streamingResp.GetObject())
-			} else {
-				if errors.Is(streamingErr, io.EOF) {
-					streamingErr = nil
-				}
+	var objects []string
+	for {
+		res, err := stream.Recv()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
 				break
 			}
+			return nil, err
 		}
-		done <- struct{}{}
-	}()
-	<-done
-
-	if streamingErr != nil {
-		return nil, streamingErr
+		objects = append(objects, res.GetObject())
 	}
 
 	return &openfgav1.ListObjectsResponse{
-		Objects: streamedObjectIDs,
+		Objects: objects,
 	}, nil
 }
 
 func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
-	if req == nil {
-		return "", errors.New("request must not be empty")
-	}
-
 	hash := fnv.New64a()
 	_, err := hash.Write([]byte(req.String()))
 	if err != nil {
