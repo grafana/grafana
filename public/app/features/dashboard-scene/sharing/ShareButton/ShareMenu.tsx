@@ -93,14 +93,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
       renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
       onClick: () => {
-        const url = new URL(config.externalUserMngLinkUrl);
-
-        // Add query parameters to track conversion
-        url.searchParams.append('src', 'grafananet');
-        url.searchParams.append('cnt', 'share-invite');
-
-        // Open the modified URL
-        window.open(url.toString(), '_blank');
+        window.open(config.externalUserMngLinkUrl, '_blank');
       },
       renderDividerAbove: true,
       component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,
