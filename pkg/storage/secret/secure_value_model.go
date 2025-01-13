@@ -26,10 +26,11 @@ type secureValueDB struct {
 	UpdatedBy   string `xorm:"updated_by"`
 
 	// Spec
-	Title      string `xorm:"title"`
-	Keeper     string `xorm:"keeper"`
-	Audiences  string `xorm:"audiences"`
-	ExternalID string `xorm:"external_id"`
+	Title      string  `xorm:"title"`
+	Keeper     string  `xorm:"keeper"`
+	Audiences  string  `xorm:"audiences"`
+	Ref        *string `xorm:"ref"`
+	ExternalID string  `xorm:"external_id"`
 }
 
 func (*secureValueDB) TableName() string {
@@ -65,6 +66,9 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 			Keeper:    sv.Keeper,
 			Audiences: audiences,
 		},
+	}
+	if sv.Ref != nil {
+		resource.Spec.Ref = *sv.Ref
 	}
 
 	// Set all meta fields here for consistency.
@@ -176,6 +180,11 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
+	var ref *string
+	if sv.Spec.Ref != "" {
+		ref = &sv.Spec.Ref
+	}
+
 	return &secureValueDB{
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
@@ -190,6 +199,7 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Title:      sv.Spec.Title,
 		Keeper:     sv.Spec.Keeper,
 		Audiences:  audiences,
+		Ref:        ref,
 		ExternalID: externalID,
 	}, nil
 }

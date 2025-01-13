@@ -30,6 +30,7 @@ var SecureValuesResourceInfo = utils.NewResourceInfo(
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The display name of the secure value"},
 			{Name: "Keeper", Type: "string", Format: "string", Description: "Storage of the secure value"},
+			{Name: "Ref", Type: "string", Format: "string", Description: "If present, the reference to a secret"},
 		},
 		// Decodes the object into a concrete type. Return order in the slice must be the same as in `Definition`.
 		Reader: func(obj any) ([]interface{}, error) {
@@ -39,6 +40,7 @@ var SecureValuesResourceInfo = utils.NewResourceInfo(
 					r.Name,
 					r.Spec.Title,
 					r.Spec.Keeper,
+					r.Spec.Ref,
 				}, nil
 			}
 
