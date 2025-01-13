@@ -31,7 +31,6 @@ export const useDashboardRestore = (version: number) => {
         pathname: newUrl,
         state: { routeReloadCounter: prevState ? prevState + 1 : 1 },
       });
-
       notifyApp.success('Dashboard restored', `Restored from version ${version}`);
     }
   }, [state, version, notifyApp]);
