@@ -29,9 +29,7 @@ export type TracePageSearchBarProps = {
   trace: Trace;
   search: SearchProps;
   spanFilterMatches: Set<string> | undefined;
-  showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
-  showCriticalPathSpansOnly: boolean;
   setShowCriticalPathSpansOnly: (showCriticalPath: boolean) => void;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
@@ -46,9 +44,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     trace,
     search,
     spanFilterMatches,
-    showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
-    showCriticalPathSpansOnly,
     setShowCriticalPathSpansOnly,
     focusedSpanIndexForSearch,
     setFocusedSpanIndexForSearch,
@@ -70,17 +66,9 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
         return tag.key;
       }) ||
       (search.query && search.query !== '') ||
-      showSpanFilterMatchesOnly
+      search.matchesOnly
     );
-  }, [
-    search.serviceName,
-    search.spanName,
-    search.from,
-    search.to,
-    search.tags,
-    search.query,
-    showSpanFilterMatchesOnly,
-  ]);
+  }, [search.serviceName, search.spanName, search.from, search.to, search.tags, search.query, search.matchesOnly]);
 
   return (
     <div className={styles.container}>
@@ -99,13 +87,13 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
             </Button>
             <div className={styles.matchesOnly}>
               <Switch
-                value={showSpanFilterMatchesOnly}
+                value={search.matchesOnly}
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
                 label="Show matches only switch"
                 disabled={!spanFilterMatches?.size}
               />
               <Button
-                onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}
+                onClick={() => setShowSpanFilterMatchesOnly(!search.matchesOnly)}
                 className={styles.clearMatchesButton}
                 variant="secondary"
                 fill="text"
@@ -116,12 +104,12 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
             </div>
             <div className={styles.matchesOnly}>
               <Switch
-                value={showCriticalPathSpansOnly}
+                value={search.criticalPathOnly}
                 onChange={(value) => setShowCriticalPathSpansOnly(value.currentTarget.checked ?? false)}
                 label="Show critical path only switch"
               />
               <Button
-                onClick={() => setShowCriticalPathSpansOnly(!showCriticalPathSpansOnly)}
+                onClick={() => setShowCriticalPathSpansOnly(!search.criticalPathOnly)}
                 className={styles.clearMatchesButton}
                 variant="secondary"
                 fill="text"
