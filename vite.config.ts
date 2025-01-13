@@ -96,7 +96,8 @@ export default defineConfig(({ command }) => ({
       },
       // some sub-dependencies use a different version of @emotion/react and generate warnings
       // in the browser about @emotion/react loaded twice. We want to only load it once
-      { find: '@emotion/react', replacement: require.resolve('@emotion/react') },
+      // TODO: This emotion replacement breaks builds due to @jsxImportSource in packages/grafana-ui/src/components/ThemeDemos/EmotionPerfTest.tsx
+      // { find: '@emotion/react', replacement: require.resolve('@emotion/react') },
       // due to our webpack configuration not understanding package.json `exports`
       // correctly we must alias this package to the correct file
       // the alternative to this alias is to copy-paste the file into our
