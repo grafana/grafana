@@ -34,7 +34,7 @@ export interface Props {
   onClickBackdrop?: () => void;
 
   /** Where we want the overlay to render */
-  portalContainer?: Element;
+  portalContainer?: HTMLElement | null;
 }
 
 export function Modal(props: PropsWithChildren<Props>) {
