@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
 
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
@@ -63,11 +62,6 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
                           showModal(RevertDashboardModal, {
                             version: version.version,
                             hideModal,
-                          });
-                          reportInteraction('grafana_dashboards_version_restore_clicked', {
-                            version: version.version,
-                            index: idx,
-                            confirm: false,
                           });
                         }}
                       >
