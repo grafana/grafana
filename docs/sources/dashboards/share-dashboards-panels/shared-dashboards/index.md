@@ -245,6 +245,7 @@ guaranteed because plugin developers can override this functionality. The follow
 ### Unsupported
 
 - Graphite
+- Google Sheets
 - Dynatrace
 
 ### Unconfirmed
