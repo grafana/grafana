@@ -73,6 +73,7 @@ import {
   VAR_OTEL_RESOURCES,
 } from './shared';
 import { getTrailFor, limitAdhocProviders } from './utils';
+import { set } from 'lodash';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -880,6 +881,11 @@ export function nativeHistogramInfo(props: NativeHistogramInfoProps) {
   const [histogramMessage, setHistogramMessage] = useState(true);
   const [showHistogramExamples, setShowHistogramExamples] = useState(false);
   const styles = useStyles2(getStyles,0);
+
+  useEffect(() => {
+    setHistogramMessage(true);
+    setShowHistogramExamples(false);
+  },[histogramsLoaded, nativeHistograms])
 
   const selectNativeHistogram = (metric: string) => {
     trail.publishEvent(new MetricSelectedEvent(metric), true);
