@@ -135,7 +135,10 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           debounce((val) => {
             if ([LoadingState.Done, LoadingState.Error].includes(val.state!) && count === 0) {
               count++;
-              return interval(250);
+              // in the refresh scenario we need to debounce first Done/Error until Loading arrives
+              //   400ms here is a magic number that was sufficient enough with the 20x cpu throttle
+              //   this still might affect slower machines but the issue affects only panel view/edit modes
+              return interval(400);
             }
             count++;
             return interval(0);
