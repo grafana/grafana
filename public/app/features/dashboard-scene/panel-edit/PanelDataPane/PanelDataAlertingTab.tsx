@@ -86,10 +86,22 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
     );
   }
 
+  const isNew = model.getDashboardUID() === '';
+  const dashboard = model.getDashboard();
+
   return (
     <div className={styles.noRulesWrapper}>
-      <p>There are no alert rules linked to this panel.</p>
-      {canCreateRules && <ScenesNewRuleFromPanelButton panel={panel}></ScenesNewRuleFromPanelButton>}
+      {!isNew && (
+        <>
+          <p>There are no alert rules linked to this panel.</p>
+          {canCreateRules && <ScenesNewRuleFromPanelButton panel={panel}></ScenesNewRuleFromPanelButton>}
+        </>
+      )}
+      {isNew && !!dashboard.state.meta.canSave && (
+        <Alert severity="info" title="Dashboard not saved">
+          Dashboard must be saved before alerts can be added.
+        </Alert>
+      )}
     </div>
   );
 }

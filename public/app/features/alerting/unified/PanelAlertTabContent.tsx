@@ -59,16 +59,19 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     );
   }
 
+  //  For legacy architecture reasons (DashboardModel) the isNew also respects UID being null
+  const isNew = dashboard.uid === '' || dashboard.uid === null;
+
   return (
     <div data-testid={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
       {alert}
-      {!!dashboard.uid && (
+      {!isNew && (
         <>
           <p>There are no alert rules linked to this panel.</p>
           {!!dashboard.meta.canSave && canCreateRules && <NewRuleFromPanelButton panel={panel} dashboard={dashboard} />}
         </>
       )}
-      {!dashboard.uid && !!dashboard.meta.canSave && (
+      {isNew && !!dashboard.meta.canSave && (
         <Alert severity="info" title="Dashboard not saved">
           Dashboard must be saved before alerts can be added.
         </Alert>
