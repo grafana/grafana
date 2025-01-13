@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.Read")
+	ctx, span := tracer.Start(ctx, "server.Read")
 	defer span.End()
 
 	if err := authorize(ctx, req.GetNamespace()); err != nil {

@@ -56,6 +56,12 @@ func TestIntegrationServer(t *testing.T) {
 		testList(t, srv)
 	})
 
+	t.Run("test list streaming", func(t *testing.T) {
+		srv.cfg.UseStreamedListObjects = true
+		testList(t, srv)
+		srv.cfg.UseStreamedListObjects = false
+	})
+
 	t.Run("test batch check", func(t *testing.T) {
 		testBatchCheck(t, srv)
 	})

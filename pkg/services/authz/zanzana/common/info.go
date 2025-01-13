@@ -27,27 +27,54 @@ func getTypeInfo(group, resource string) (typeInfo, bool) {
 }
 
 func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
-	if info, ok := getTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return newResource(info.Type, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), r.GetSubresource(), info.Relations)
-	}
-	return newResource(TypeResource, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), r.GetSubresource(), RelationsResource)
+	typ, relations := getTypeAndRelations(r.GetGroup(), r.GetResource())
+	return newResource(
+		typ,
+		r.GetGroup(),
+		r.GetResource(),
+		r.GetName(),
+		r.GetFolder(),
+		r.GetSubresource(),
+		relations,
+	)
 }
 
 func NewResourceInfoFromBatchItem(i *authzextv1.BatchCheckItem) ResourceInfo {
-	if info, ok := getTypeInfo(i.GetGroup(), i.GetResource()); ok {
-		return newResource(info.Type, i.GetGroup(), i.GetResource(), i.GetName(), i.GetFolder(), i.GetSubresource(), info.Relations)
-	}
-	return newResource(TypeResource, i.GetGroup(), i.GetResource(), i.GetName(), i.GetFolder(), i.GetSubresource(), RelationsResource)
+	typ, relations := getTypeAndRelations(i.GetGroup(), i.GetResource())
+	return newResource(
+		typ,
+		i.GetGroup(),
+		i.GetResource(),
+		i.GetName(),
+		i.GetFolder(),
+		i.GetSubresource(),
+		relations,
+	)
 }
 
 func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {
-	if info, ok := getTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return newResource(info.Type, r.GetGroup(), r.GetResource(), "", "", r.GetSubresource(), info.Relations)
-	}
-	return newResource(TypeResource, r.GetGroup(), r.GetResource(), "", "", r.GetSubresource(), RelationsResource)
+	typ, relations := getTypeAndRelations(r.GetGroup(), r.GetResource())
+	return newResource(
+		typ,
+		r.GetGroup(),
+		r.GetResource(),
+		"",
+		"",
+		r.GetSubresource(),
+		relations,
+	)
 }
 
-func newResource(typ string, group, resource, name, folder, subresource string, relations []string) ResourceInfo {
+func getTypeAndRelations(group, resource string) (string, []string) {
+	if info, ok := getTypeInfo(group, resource); ok {
+		return info.Type, info.Relations
+	}
+	return TypeResource, RelationsResource
+}
+
+func newResource(
+	typ, group, resource, name, folder, subresource string, relations []string,
+) ResourceInfo {
 	return ResourceInfo{
 		typ:         typ,
 		group:       group,

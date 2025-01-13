@@ -12,14 +12,19 @@ import (
 )
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.List")
+	ctx, span := tracer.Start(ctx, "server.List")
 	defer span.End()
 
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
 		return nil, err
 	}
 
-	store, err := s.getStoreInfo(ctx, r.Namespace)
+	store, err := s.getStoreInfo(ctx, r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+
+	contextuals, err := s.getContextuals(ctx, r.GetSubject())
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +32,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	relation := common.VerbMapping[r.GetVerb()]
 	resource := common.NewResourceInfoFromList(r)
 
-	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
+	res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	if err != nil {
 		return nil, err
 	}
@@ -37,25 +42,20 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	}
 
 	if resource.IsGeneric() {
-		return s.listGeneric(ctx, r.GetSubject(), relation, resource, store)
+		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	}
 
-	return s.listTyped(ctx, r.GetSubject(), relation, resource, store)
+	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
 }
 
 func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	err := s.addListAuthorizationContext(ctx, req)
-	if err != nil {
-		s.logger.Error("failed to add authorization context", "error", err)
-	}
-
 	if s.cfg.UseStreamedListObjects {
 		return s.streamedListObjects(ctx, req)
 	}
 	return s.openfga.ListObjects(ctx, req)
 }
 
-func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
 	if !resource.IsValidRelation(relation) {
 		return &authzv1.ListResponse{}, nil
 	}
@@ -67,6 +67,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		Type:                 resource.Type(),
 		Relation:             relation,
 		User:                 subject,
+		ContextualTuples:     contextuals,
 	})
 	if err != nil {
 		return nil, err
@@ -77,7 +78,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, store *storeInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
 	var (
 		folderRelation = common.FolderResourceRelation(relation)
 		resourceCtx    = resource.Context()
@@ -93,6 +94,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             folderRelation,
 			User:                 subject,
 			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
 		})
 
 		if err != nil {
@@ -112,6 +114,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             relation,
 			User:                 subject,
 			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
 		})
 		if err != nil {
 			return nil, err
