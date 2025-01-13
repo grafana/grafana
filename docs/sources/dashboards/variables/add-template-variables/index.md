@@ -169,7 +169,7 @@ Query expressions are different for each data source. For more information, refe
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 
 1. (Optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex](#filter-variables-with-regex).
-1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
+1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query is used.
 1. Under **Refresh**, select when the variable should update options:
 
    - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
@@ -268,8 +268,8 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
 
    This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span. If you turn it on, then two more options appear:
 
-   - **Step count** - Select the number of times the current time range will be divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
-   - **Min interval** - The minimum threshold below which the step count intervals will not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
+   - **Step count** - Select the number of times the current time range is divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
+   - **Min interval** - The minimum threshold below which the step count intervals does not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
 
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
@@ -327,7 +327,7 @@ Now you can [filter data on the dashboard](ref:filter-dashboard).
 Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to inform the templating interpolation engine what format to use for multiple values.
 
 {{% admonition type="note" %}}
-The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If it is left blank, then Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value will be something like `*` or `all`.
+The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If it is left blank, then Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value is something like `*` or `all`.
 {{% /admonition %}}
 
 #### Multi-value variables with a Graphite data source
@@ -363,7 +363,7 @@ Enter regex, globs, or lucene syntax in the **Custom all value** field to define
 
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regex.
 
-In order to have custom regex, globs, or lucene syntax in the **Custom all value** option, it is never escaped so you will have to think about what is a valid value for your data source.
+In order to have custom regex, globs, or lucene syntax in the **Custom all value** option, it is never escaped so you have to think about what is a valid value for your data source.
 
 ## Global variables
 
@@ -393,7 +393,7 @@ You can use this variable in URLs, as well. For example, you can send a user to 
 
 You can use the `$__interval` variable as a parameter to group by time (for InfluxDB, MySQL, Postgres, MSSQL), Date histogram interval (for Elasticsearch), or as a _summarize_ function parameter (for Graphite).
 
-Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph, then queries can be made more efficient by grouping by a larger interval. It is more efficient to group by 1 day than by 10s when looking at 3 months of data and the graph will look the same and the query will be faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
+Grafana automatically calculates an interval that can be used to group by time in queries. When there are more data points than can be shown on a graph, then queries can be made more efficient by grouping by a larger interval. It is more efficient to group by 1 day than by 10s when looking at 3 months of data. The graph looks the same and the query is faster. The `$__interval` is calculated using the time range and the width of the graph (the number of pixels).
 
 Approximate Calculation: `(to - from) / resolution`
 
@@ -409,7 +409,7 @@ This variable is the `$__interval` variable in milliseconds, not a time interval
 
 ### $\_\_name
 
-This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
+This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable is replaced with the series name or alias.
 
 {{% admonition type="note" %}}
 The Singlestat panel is no longer available from Grafana 8.0.
@@ -453,7 +453,7 @@ This is used in several places, including:
 
 The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (for example, `America/New_York`).
 
-If the currently selected time zone is _Browser Time_, Grafana will try to determine your browser time zone.
+If the currently selected time zone is _Browser Time_, Grafana tries to determine your browser time zone.
 
 ## Chained variables
 
@@ -605,7 +605,7 @@ SHOW TAG VALUES WITH KEY = "cpu" WHERE "datacenter" =~ /^Europe/ AND "host" =~ /
 
 ### Best practices and tips
 
-The following practices will make your dashboards and variables easier to use.
+The following practices make your dashboards and variables easier to use.
 
 #### Creating new linked variables
 
@@ -623,7 +623,7 @@ You can change the orders of variables in the dashboard variable list by clickin
 
 #### Complexity consideration
 
-The more layers of dependency you have in variables, the longer it will take to update dashboards after you change variables.
+The more layers of dependency you have in variables, the longer it takes to update dashboards after you change variables.
 
 For example, if you have a series of four linked variables (country, region, server, metric) and you change a root variable value (country), then Grafana must run queries for all the dependent variables before it updates the visualizations in the dashboard.
 
