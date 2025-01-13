@@ -381,7 +381,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       // We only turn on otel experience when we update it the whole experience
       // The conditions to use this function are
       // 1. must be an otel data source
-      // 2. Do not trn it on if the start button was clicked
+      // 2. Do not turn it on if the start button was clicked
       // 3. Url or bookmark has previous otel filters
       // 4. We are restting OTel with the toggle switch
       if (
