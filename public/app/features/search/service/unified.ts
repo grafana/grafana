@@ -222,6 +222,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.name?.length) {
       uri += '&' + query.name.map((name) => `name=${encodeURIComponent(name)}`).join('&');
     }
+
+    if (query.uid?.length) {
+      // legacy support for filtering by dashboard uid
+      uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+    }
     return uri;
   }
 
