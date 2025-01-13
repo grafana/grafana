@@ -74,9 +74,10 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "aaa (dash)",
 				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
-					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
-					DASHBOARD_ERRORS_TODAY: 25,
+					DASHBOARD_LEGACY_ID:         12,
+					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
+					DASHBOARD_ERRORS_TODAY:      25,
+					DASHBOARD_VIEWS_LAST_1_DAYS: 50,
 				},
 				Labels: map[string]string{
 					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
@@ -96,9 +97,10 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "bbb (dash)",
 				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
-					DASHBOARD_PANEL_TYPES:  []string{"timeseries"},
-					DASHBOARD_ERRORS_TODAY: 40,
+					DASHBOARD_LEGACY_ID:         12,
+					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
+					DASHBOARD_ERRORS_TODAY:      40,
+					DASHBOARD_VIEWS_LAST_1_DAYS: 100,
 				},
 				Tags: []string{"aa"},
 				Labels: map[string]string{
@@ -201,6 +203,21 @@ func TestBleveBackend(t *testing.T) {
 			rsp.Results.Rows[0].Key.Name,
 			rsp.Results.Rows[1].Key.Name,
 		})
+
+		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+			},
+			Limit:  100000,
+			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(rsp.Results.Columns))
+		require.Equal(t, DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
+		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
+
+		val, err := resource.DecodeCell(rsp.Results.Columns[0], 0, rsp.Results.Rows[0].Cells[0])
+		require.Equal(t, int64(25), val)
 	})
 
 	t.Run("build folders", func(t *testing.T) {
