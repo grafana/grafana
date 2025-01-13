@@ -69,6 +69,126 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 				Filterable: true,
 			},
 		},
+		{
+			Name:        DASHBOARD_ERRORS_TODAY,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred today",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_LAST_1_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred in the last 1 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_LAST_7_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred in the last 7 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_LAST_30_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of errors that occurred in the last 30 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_ERRORS_TOTAL,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Total number of errors",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_TODAY,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred today",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_LAST_1_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred in the last 1 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_LAST_7_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred in the last 7 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_LAST_30_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of queries that occurred in the last 30 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_QUERIES_TOTAL,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Total number of queries",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_TODAY,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred today",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_LAST_1_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred in the last 1 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_LAST_7_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred in the last 7 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_LAST_30_DAYS,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Number of views that occurred in the last 30 days",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
+		{
+			Name:        DASHBOARD_VIEWS_TOTAL,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Total number of views",
+			Properties: &resource.ResourceTableColumnDefinition_Properties{
+				Filterable: true,
+			},
+		},
 	})
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {

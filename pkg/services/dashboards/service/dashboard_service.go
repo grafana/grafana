@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/slices"
@@ -1575,6 +1576,13 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	scoreIDX := 0
 	explainIDX := 0
 
+	// Creating a k8sTable, so I can decode all the cells. How are we supposed to do this?
+	resTable := resource.ResourceTable{Columns: result.Results.Columns, Rows: result.Results.Rows}
+	k8sTable, err := resTable.ToK8s()
+	if err != nil {
+		return nil, err
+	}
+
 	for i, v := range result.Results.Columns {
 		switch v.Name {
 		case resource.SEARCH_FIELD_EXPLAIN:
@@ -1599,11 +1607,25 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	}
 
 	for i, row := range result.Results.Rows {
+		// TODO how to handle this properly??
+		fields := &common.Unstructured{}
+		for colIndex, col := range result.Results.Columns {
+			fieldName := col.Name
+			fieldValue := k8sTable.Rows[i].Cells[colIndex]
+			// Calling Set with int32 will cause a panic
+			_, ok := fieldValue.(int32)
+			if ok {
+				fieldValue = int64(fieldValue.(int32))
+			}
+			fields.Set(fieldName, fieldValue)
+		}
+
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
 			Title:    string(row.Cells[titleIDX]),
 			Folder:   string(row.Cells[folderIDX]),
+			Field:    fields,
 		}
 		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)

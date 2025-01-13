@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -224,12 +225,18 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Limit:   int64(limit),
 		Offset:  int64(offset),
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
-		Fields: []string{
-			"title",
-			"folder",
-			"tags",
-		},
 	}
+	fields := []string{}
+	if queryParams.Has("fields") {
+		fields = []string{"title", "folder", "tags"}
+		// add fields to search and exclude duplicates
+		for _, f := range strings.Split(queryParams.Get("fields"), ",") {
+			if f != "" && !slices.Contains(fields, f) {
+				fields = append(fields, f)
+			}
+		}
+	}
+	searchRequest.Fields = fields
 
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")

@@ -237,6 +237,10 @@ func (x *searchableDocumentFields) Fields() []string {
 }
 
 func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefinition {
+	if strings.HasPrefix(name, "fields.") {
+		name = strings.TrimPrefix(name, "fields.")
+	}
+
 	f, ok := x.fields[name]
 	if ok {
 		return f.def
@@ -255,6 +259,7 @@ const SEARCH_FIELD_TITLE_SORT = "title_sort"
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
+const SEARCH_FIELD_FIELDS = "fields" // Index all fields
 
 const SEARCH_FIELD_FOLDER = "folder"
 const SEARCH_FIELD_CREATED = "created"
