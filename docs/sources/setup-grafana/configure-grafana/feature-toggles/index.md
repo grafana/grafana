@@ -230,6 +230,7 @@ Experimental features might be changed or removed without prior notice.
 | `investigationsBackend`                       | Enable the investigations backend API                                                                                                                                                                                                                                             |
 | `k8SFolderCounts`                             | Enable folder's api server counts                                                                                                                                                                                                                                                 |
 | `k8SFolderMove`                               | Enable folder's api server move                                                                                                                                                                                                                                                   |
+| `teamHttpHeadersMimir`                        | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                                                                                                                                               |
 
 ## Development feature toggles
 
