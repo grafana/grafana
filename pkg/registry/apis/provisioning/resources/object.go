@@ -56,7 +56,7 @@ func (o *objectListerFromSearch) List(ctx context.Context, namespace, repository
 func (o *objectListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ObjectStats, error) {
 	counts, err := o.index.CountRepositoryObjects(ctx, &resource.CountRepositoryObjectsRequest{
 		Namespace:  namespace,
-		Repository: repository, // ignored?
+		Repository: repository,
 	})
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (o *objectListerFromSearch) Stats(ctx context.Context, namespace, repositor
 	}
 
 	stats := &provisioning.ObjectStats{}
-	for _, v := range counts.Kinds {
+	for _, v := range counts.Items {
 		stats.Items = append(stats.Items, provisioning.ResourceObjectCount{
 			Repository: v.Repository,
 			Group:      v.Group,

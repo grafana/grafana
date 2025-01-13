@@ -526,15 +526,15 @@ message CountRepositoryObjectsRequest {
 
 // Count the items that exist with
 message CountRepositoryObjectsResponse {
-  message KindCount {
+  message ResourceCount {
     string repository = 1;
     string group = 2;
     string resource = 3;
     int64 count = 4;
   }
 
-  // Stats keyed by the repository name
-  repeated KindCount kinds = 1;
+  // Resource counts
+  repeated ResourceCount items = 1;
 
   // Error details
   ErrorResult error = 2;

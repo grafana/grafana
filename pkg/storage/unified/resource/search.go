@@ -48,7 +48,7 @@ type ResourceIndex interface {
 	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
 
 	// Counts the values in a repo
-	CountRepositoryObjects(ctx context.Context) ([]*CountRepositoryObjectsResponse_KindCount, error)
+	CountRepositoryObjects(ctx context.Context) ([]*CountRepositoryObjectsResponse_ResourceCount, error)
 
 	// Get the number of documents in the index
 	DocCount(ctx context.Context, folder string) (int64, error)
@@ -210,19 +210,19 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 			return rsp, nil
 		}
 		if req.Repository == "" {
-			rsp.Kinds = append(rsp.Kinds, counts...)
+			rsp.Items = append(rsp.Items, counts...)
 		} else {
 			for _, k := range counts {
 				if k.Repository == req.Repository {
 					k.Repository = "" // avoid duplicate response metadata
-					rsp.Kinds = append(rsp.Kinds, k)
+					rsp.Items = append(rsp.Items, k)
 				}
 			}
 		}
 	}
 
 	// Sort based on repo/group/resource
-	slices.SortFunc(rsp.Kinds, func(a, b *CountRepositoryObjectsResponse_KindCount) int {
+	slices.SortFunc(rsp.Items, func(a, b *CountRepositoryObjectsResponse_ResourceCount) int {
 		return cmp.Or(
 			cmp.Compare(a.Repository, b.Repository),
 			cmp.Compare(a.Group, b.Group),

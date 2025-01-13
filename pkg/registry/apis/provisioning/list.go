@@ -19,7 +19,7 @@ type listConnector struct {
 }
 
 func (*listConnector) New() runtime.Object {
-	return &provisioning.TestResults{}
+	return &provisioning.ObjectList{}
 }
 
 func (*listConnector) Destroy() {}
@@ -29,7 +29,7 @@ func (*listConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (*listConnector) ProducesObject(verb string) any {
-	return &provisioning.TestResults{}
+	return &provisioning.ObjectList{}
 }
 
 func (*listConnector) ConnectMethods() []string {

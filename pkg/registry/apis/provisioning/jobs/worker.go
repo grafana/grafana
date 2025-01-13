@@ -130,7 +130,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		// Update the resource stats
 		stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
 		if err != nil {
-			fmt.Printf("ERROR getting stats: %s\n", err.Error())
+			logger.Warn("unable to read stats", "error", err)
 		} else if stats != nil {
 			cfg.Status.Stats = stats.Items
 		}

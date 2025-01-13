@@ -323,7 +323,7 @@ func (b *bleveIndex) ListRepositoryObjects(ctx context.Context, req *resource.Li
 	return rsp, nil
 }
 
-func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.CountRepositoryObjectsResponse_KindCount, error) {
+func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.CountRepositoryObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
 		Query: bleve.NewMatchAllQuery(),
 		Size:  0,
@@ -334,11 +334,11 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.Co
 	if err != nil {
 		return nil, err
 	}
-	vals := make([]*resource.CountRepositoryObjectsResponse_KindCount, 0)
+	vals := make([]*resource.CountRepositoryObjectsResponse_ResourceCount, 0)
 	f, ok := found.Facets["count"]
 	if ok && f.Terms != nil {
 		for _, v := range f.Terms.Terms() {
-			vals = append(vals, &resource.CountRepositoryObjectsResponse_KindCount{
+			vals = append(vals, &resource.CountRepositoryObjectsResponse_ResourceCount{
 				Repository: v.Term,
 				Group:      b.key.Group,
 				Resource:   b.key.Resource,
