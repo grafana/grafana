@@ -21,9 +21,7 @@ type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosit
 type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
 const useAddPolicyModal = (
   handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => Promise<void>,
-  loading: boolean,
-  error: Error | undefined,
-  setError: (error: Error) => void
+  loading: boolean
 ): AddModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
   const [insertPosition, setInsertPosition] = useState<InsertPosition | undefined>(undefined);
@@ -32,6 +30,7 @@ const useAddPolicyModal = (
   const handleDismiss = useCallback(() => {
     setReferenceRoute(undefined);
     setInsertPosition(undefined);
+    setError(undefined);
     setShowModal(false);
   }, []);
 
@@ -40,6 +39,8 @@ const useAddPolicyModal = (
     setInsertPosition(position);
     setShowModal(true);
   }, []);
+
+  const [error, setError] = useState<Error | undefined>(undefined);
 
   const modalElement = useMemo(
     () =>
@@ -85,17 +86,18 @@ const useAddPolicyModal = (
 const useEditPolicyModal = (
   alertManagerSourceName: string,
   handleUpdate: (route: Partial<FormAmRoute>) => Promise<void>,
-  loading: boolean,
-  error: Error | undefined,
-  setError: (error: Error) => void
+  loading: boolean
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
 
+  const [error, setError] = useState<Error | undefined>(undefined);
+
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
     setShowModal(false);
+    setError(undefined);
   }, []);
 
   const handleShow = useCallback((route: RouteWithID, isDefaultPolicy?: boolean) => {

@@ -22,7 +22,12 @@ import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getK8sNamespace, isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
-import { InsertPosition, mergePartialAmRouteWithRouteTree } from '../../utils/routeTree';
+import {
+  InsertPosition,
+  addRouteToReferenceRoute,
+  mergePartialAmRouteWithRouteTree,
+  omitRouteFromRouteTree,
+} from '../../utils/routeTree';
 
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
@@ -128,10 +133,44 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
 export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
+  const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
   // @TODO
   const deleteFromK8sApi = useAsync(async (id: string) => {
-    // check for mutations from other users
+    const namespace = getK8sNamespace();
+
+    const result = await dispatch(
+      routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
+    );
+
+    const rootTree = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : undefined;
+
+    const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree?.[0] ?? {});
+    const newRouteTree = omitRouteFromRouteTree(id, rootRouteWithIdentifiers);
+
+    const { routes, _metadata, ...defaults } = newRouteTree;
+    // Remove provenance so we don't send it to API
+    // Convert Route to K8s compatible format
+    const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
+      defaults: {
+        ...defaults,
+        // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
+        receiver: defaults.receiver || '',
+      },
+      routes: newRouteTree.routes?.map(routeToK8sSubRoute) || [],
+    };
+
+    // Create the K8s route object
+    const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
+      spec: k8sRoute,
+      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: _metadata?.resourceVersion },
+    };
+
+    return updatedNamespacedRoute({
+      name: ROOT_ROUTE_NAME,
+      namespace,
+      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
+    }).unwrap();
   });
 
   const deleteFromAlertmanagerConfiguration = useAsync(async (id: string) => {
@@ -145,8 +184,8 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
 export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
+  const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
-  // @TODO
   const addToK8sApi = useAsync(
     async ({
       partialRoute,
@@ -156,7 +195,48 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
       partialRoute: Partial<FormAmRoute>;
       referenceRouteIdentifier: string;
       insertPosition: InsertPosition;
-    }) => {}
+    }) => {
+      const namespace = getK8sNamespace();
+
+      const result = await dispatch(
+        routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
+      );
+
+      const rootTree = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : undefined;
+
+      const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree?.[0] ?? {});
+
+      const newRouteTree = addRouteToReferenceRoute(
+        alertmanager ?? '',
+        partialRoute,
+        referenceRouteIdentifier,
+        rootRouteWithIdentifiers,
+        insertPosition
+      );
+      const { routes, _metadata, ...defaults } = newRouteTree;
+      // Remove provenance so we don't send it to API
+      // Convert Route to K8s compatible format
+      const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
+        defaults: {
+          ...defaults,
+          // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
+          receiver: defaults.receiver || '',
+        },
+        routes: newRouteTree.routes?.map(routeToK8sSubRoute) || [],
+      };
+
+      // Create the K8s route object
+      const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
+        spec: k8sRoute,
+        metadata: { name: ROOT_ROUTE_NAME, resourceVersion: _metadata?.resourceVersion },
+      };
+
+      return updatedNamespacedRoute({
+        name: ROOT_ROUTE_NAME,
+        namespace,
+        comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
+      }).unwrap();
+    }
   );
 
   const addToAlertmanagerConfiguration = useAsync(
