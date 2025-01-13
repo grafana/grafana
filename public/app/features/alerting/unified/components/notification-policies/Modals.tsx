@@ -196,9 +196,8 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
         >
           <Trans i18nKey="alerting.policies.delete.warning-1">
             Deleting this notification policy will permanently remove it.
-          </Trans>
+          </Trans>{' '}
           <Trans i18nKey="alerting.policies.delete.warning-2">Are you sure you want to delete this policy?</Trans>
-
           <Modal.ButtonRow>
             <Button type="button" variant="destructive" onClick={handleSubmit}>
               <Trans i18nKey="alerting.policies.delete.confirm">Yes, delete policy</Trans>
