@@ -13,6 +13,10 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 	ctx, span := tracer.Start(ctx, "authzServer.Read")
 	defer span.End()
 
+	if err := authorize(ctx, req.GetNamespace()); err != nil {
+		return nil, err
+	}
+
 	storeInf, err := s.getStoreInfo(ctx, req.Namespace)
 	if err != nil {
 		return nil, err
