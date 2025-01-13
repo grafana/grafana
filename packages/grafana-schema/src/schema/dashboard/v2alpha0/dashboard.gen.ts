@@ -1109,7 +1109,6 @@ export interface GroupByVariableSpec {
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
-	allValue?: string;
 	label?: string;
 	hide: VariableHide;
 	skipUrlSync: boolean;

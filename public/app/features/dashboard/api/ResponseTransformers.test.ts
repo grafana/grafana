@@ -218,6 +218,7 @@ describe('ResponseTransformers', () => {
               label: 'interval var',
               description: 'interval var description',
               skipUrlSync: false,
+              query: '1m,10m,30m,1h',
               hide: 0,
               current: {
                 value: 'auto',
