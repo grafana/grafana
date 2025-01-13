@@ -2,6 +2,12 @@ package kinds
 
 playlist: {
 	kind: "Playlist"
+	group: "playlist"
+  apiResource: {
+    groupOverride: "playlist.grafana.app"
+    mutation: operations:  ["create","update"]
+    validation: operations:  ["create","update"]
+  }
 	codegen: {
 		frontend: false
 		backend: true
@@ -30,8 +36,6 @@ playlist: {
 					items: [...#Item]
 				}
 			},
-      mutation: operations:  ["create","update"]
-      validation: operations:  ["create","update"]
 		}
 	}
 }
