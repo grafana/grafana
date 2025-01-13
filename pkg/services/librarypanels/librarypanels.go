@@ -199,7 +199,7 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
-		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element WHERE org_id = ? AND folder_id IN (%s`, strings.Repeat("?,", len(folderUIDs)-1)+"?)")
+		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element WHERE org_id = ? AND folder_uid IN (%s`, strings.Repeat("?,", len(folderUIDs)-1)+"?)")
 
 		args := make([]interface{}, 0, len(folderUIDs)+2)
 		args = append(args, orgID, orgID)
