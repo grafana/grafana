@@ -32,6 +32,9 @@ export interface Props {
 
   /** If not set will call onDismiss if that is set. */
   onClickBackdrop?: () => void;
+
+  /** Where we want the overlay to render */
+  portalContainer?: Element;
 }
 
 export function Modal(props: PropsWithChildren<Props>) {
@@ -46,6 +49,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     onDismiss,
     onClickBackdrop,
     trapFocus = true,
+    portalContainer,
   } = props;
   const styles = useStyles2(getModalStyles);
 
@@ -68,7 +72,7 @@ export function Modal(props: PropsWithChildren<Props>) {
   const headerClass = cx(styles.modalHeader, typeof title !== 'string' && styles.modalHeaderWithTabs);
 
   return (
-    <OverlayContainer>
+    <OverlayContainer portalContainer={portalContainer ?? undefined}>
       <div
         role="presentation"
         className={styles.modalBackdrop}
