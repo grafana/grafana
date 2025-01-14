@@ -40,6 +40,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setCorrelationsService,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -60,6 +61,7 @@ import { initializeCrashDetection } from './core/crash';
 import { initializeI18n } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
@@ -146,6 +148,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
+      setCorrelationsService(new CorrelationsService());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
