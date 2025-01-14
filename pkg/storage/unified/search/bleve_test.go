@@ -77,7 +77,6 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "aaa (dash)",
 				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:         12,
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
 					DASHBOARD_ERRORS_TODAY:      25,
 					DASHBOARD_VIEWS_LAST_1_DAYS: 50,
@@ -106,7 +105,6 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "bbb (dash)",
 				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:         12,
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
 					DASHBOARD_ERRORS_TODAY:      40,
 					DASHBOARD_VIEWS_LAST_1_DAYS: 100,
@@ -139,10 +137,8 @@ func TestBleveBackend(t *testing.T) {
 					Name: "repo2",
 					Path: "path/in/repo2.yaml",
 				},
-				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID: 12,
-				},
-				Tags: []string{"aa"},
+				Fields: map[string]any{},
+				Tags:   []string{"aa"},
 				Labels: map[string]string{
 					"region": "west",
 				},
