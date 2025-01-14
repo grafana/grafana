@@ -214,7 +214,7 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 
 	// TODO: Improve SQL keeper validation.
 	// SQL keeper is not allowed to use `secureValueName` in credentials fields to avoid depending on another keeper.
-	if keeper.Spec.SQL != nil && keeper.Spec.SQL.Encryption != nil {
+	if keeper.IsSqlKeeper() {
 		if keeper.Spec.SQL.Encryption.AWS != nil {
 			if keeper.Spec.SQL.Encryption.AWS.AccessKeyID.SecureValueName != "" {
 				errs = append(errs, field.Forbidden(field.NewPath("spec", "aws", "accessKeyId"), "secureValueName cannot be used with SQL keeper"))
