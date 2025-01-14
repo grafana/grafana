@@ -203,8 +203,8 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 
 		args := make([]interface{}, 0, len(folderUIDs)+2)
 		args = append(args, orgID)
-		for _, id := range folderUIDs {
-			args = append(args, id)
+		for _, uid := range folderUIDs {
+			args = append(args, uid)
 		}
 		args = append(args, int64(model.PanelElement))
 		_, err := sess.SQL(s, args...).Get(&count)
