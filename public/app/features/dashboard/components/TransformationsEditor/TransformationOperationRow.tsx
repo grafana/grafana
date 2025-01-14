@@ -217,10 +217,10 @@ export const TransformationOperationRow = ({
       >
         {showFilterEditor && (
           <TransformationFilter
-            prevTransformOutput={prevOutput}
+            data={prevOutput}
             index={index}
             config={configs[index].transformation}
-            data={data}
+            annotations={data.annotations}
             onChange={onChange}
           />
         )}

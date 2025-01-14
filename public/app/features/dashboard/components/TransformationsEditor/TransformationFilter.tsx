@@ -6,41 +6,30 @@ import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
-import { TransformationData } from './TransformationsEditor';
-
 interface TransformationFilterProps {
-  prevTransformOutput: DataFrame[];
+  /** data frames from the output of previous transformation */
+  data: DataFrame[];
   index: number;
   config: DataTransformerConfig;
-  data: TransformationData;
+  annotations?: DataFrame[];
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
-export const TransformationFilter = ({
-  index,
-  data,
-  config,
-  onChange,
-  prevTransformOutput,
-}: TransformationFilterProps) => {
+export const TransformationFilter = ({ index, annotations, config, onChange, data }: TransformationFilterProps) => {
   const styles = useStyles2(getStyles);
 
   const opts = useMemo(() => {
-    const combinedQueriesAndTransforms = index
-      ? setOutputWithoutDuplicateQueries([...data.series, ...prevTransformOutput])
-      : data.series;
-
     return {
       // eslint-disable-next-line
-      context: { data: combinedQueriesAndTransforms },
-      showTopic: true || data.annotations?.length || config.topic?.length,
+      context: { data },
+      showTopic: true || annotations?.length || config.topic?.length,
       showFilter: config.topic !== DataTopic.Annotations,
       source: [
         { value: DataTopic.Series, label: `Query and Transformation results` },
         { value: DataTopic.Annotations, label: `Annotation data` },
       ],
     };
-  }, [index, data.series, data.annotations?.length, prevTransformOutput, config.topic]);
+  }, [data, annotations?.length, config.topic]);
 
   return (
     <div className={styles.wrapper}>
@@ -90,26 +79,4 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(1),
     }),
   };
-};
-
-const setOutputWithoutDuplicateQueries = (frames: DataFrame[]) => {
-  const queryRefIdSet = new Set();
-  const filteredFrames: DataFrame[] = [];
-
-  // we receive series and transformation outputs in this order
-  // therefore if we loop forward we will get original Query A instead of modified Query A
-  // therefore looping in reverse to have the most accurate data serries
-  for (let i = frames.length - 1; i >= 0; i--) {
-    const frame = frames[i];
-    if (!frame.refId) {
-      filteredFrames.push(frame);
-      continue;
-    }
-
-    if (frame.refId && !queryRefIdSet.has(frame.refId)) {
-      filteredFrames.push(frame);
-      queryRefIdSet.add(frame.refId);
-    }
-  }
-  return filteredFrames;
 };
