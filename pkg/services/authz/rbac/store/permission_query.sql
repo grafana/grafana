@@ -1,4 +1,4 @@
-SELECT p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
+SELECT p.action, p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
 WHERE
   {{ if .Query.ActionSets }}
   p.action IN ({{ .ArgList .Query.ActionSets }}, {{ .Arg .Query.Action }})
