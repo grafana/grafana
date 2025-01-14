@@ -149,7 +149,6 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 	})
 
 	t.Run("with dual writer mode 4", func(t *testing.T) {
-		t.Skip("skipping test because of authorizer issue")
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
