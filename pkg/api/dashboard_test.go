@@ -742,7 +742,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				},
 			}
 			getHS(&usertest.FakeUserService{
-				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
+				ExpectedSignedInUser: &user.SignedInUser{Login: "test-user"},
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)
@@ -834,7 +834,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	quotaService := quotatest.New(false, nil)
 	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashboardStore, folderStore, db, features,
-		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
