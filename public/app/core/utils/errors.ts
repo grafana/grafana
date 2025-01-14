@@ -47,7 +47,8 @@ export function getMessageIdFromError(err: unknown): string | undefined {
     } else if (isFetchError(err)) {
       return err.data?.messageId;
     } else if (err.hasOwnProperty('messageId')) {
-      return (err as any).messageId;
+      // @ts-expect-error
+      return err.messageId;
     }
   }
 
