@@ -28,7 +28,7 @@ import (
 const authzServiceAudience = "authzService"
 
 type Client interface {
-	authzlib.AccessChecker
+	authzlib.AccessClient
 }
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
@@ -92,7 +92,7 @@ func ProvideStandaloneAuthZClient(
 	return newCloudLegacyClient(authCfg, tracer)
 }
 
-func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
+func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzlib.AccessClient, error) {
 	// For in-proc use-case authorize add fake service claims - it should be able to access every namespace, as there is only one
 	staticAuth := func(ctx context.Context) (context.Context, error) {
 		ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
@@ -121,7 +121,7 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzli
 	)
 }
 
-func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
+func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessClient, error) {
 	// This client interceptor is a noop, as we don't send an access token
 	clientConfig := authnlib.GrpcClientConfig{}
 	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
@@ -151,7 +151,7 @@ func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessCh
 	return client, nil
 }
 
-func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
+func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessClient, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{
 		TokenClientConfig: &authnlib.TokenExchangeConfig{
 			Token:            authCfg.token,

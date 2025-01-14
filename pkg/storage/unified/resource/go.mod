@@ -11,7 +11,7 @@ replace (
 require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib v0.0.0-20250107102310-3edeb9fc9d5f
+	github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884
 	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
