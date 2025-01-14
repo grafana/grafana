@@ -32,10 +32,10 @@
 /devenv/README.md @grafana/docs-grafana
 
 # START Technical documentation
+/.vale.ini
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 /docs/                                                                            @grafana/docs-tooling
 
-/docs/.codespellignore                                                            @grafana/docs-tooling
 /docs/sources/                                                                    @irenerl24
 
 /docs/sources/alerting/                                                           @brendamuir
@@ -267,6 +267,7 @@
 /devenv/docker/blocks/prometheus/ @grafana/oss-big-tent
 /devenv/docker/blocks/prometheus_random_data/ @grafana/oss-big-tent
 /devenv/docker/blocks/prometheus_high_card/ @grafana/oss-big-tent
+/devenv/docker/blocks/prometheus_utf8/ @grafana/oss-big-tent
 /devenv/docker/blocks/pyroscope/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/redis/ @bergquist
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
@@ -363,7 +364,7 @@
 /pkg/services/datasourceproxy/ @grafana/plugins-platform-backend
 /pkg/services/datasources/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
-/pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
+/pkg/plugins/codegen/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/plugins-platform-backend
 /pkg/tsdb/Magefile.go @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
@@ -420,8 +421,6 @@
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
-
-/plugins-bundled/ @grafana/plugins-platform-frontend
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
@@ -758,6 +757,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
+/.github/workflows/documentation-ci.yml @grafana/docs-tooling
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina

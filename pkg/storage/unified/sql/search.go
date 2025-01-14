@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -62,14 +63,12 @@ func (b *backend) History(context.Context, *resource.HistoryRequest) (*resource.
 	}, nil
 }
 
-// Origin implements resource.ResourceIndexServer.
-func (b *backend) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
-	return &resource.OriginResponse{
-		Error: &resource.ErrorResult{
-			Code:    http.StatusNotImplemented,
-			Message: "SQL backend does not implement Origin",
-		},
-	}, nil
+func (b *backend) RepositoryList(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("SQL backend does not implement RepositoryList")
+}
+
+func (b *backend) RepositoryStats(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("SQL backend does not implement RepositoryStats")
 }
 
 // Search implements resource.ResourceIndexServer.
