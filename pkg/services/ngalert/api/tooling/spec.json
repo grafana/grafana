@@ -299,7 +299,7 @@
     },
     "/alertmanager/grafana/config/api/v1/alerts": {
       "get": {
-        "description": "This API is deprecated and will be removed in future versions.",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
@@ -322,7 +322,7 @@
         }
       },
       "post": {
-        "description": "This API is deprecated and will be removed in future versions.",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
@@ -354,7 +354,7 @@
         }
       },
       "delete": {
-        "description": "This API is deprecated and will be removed in future versions.",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
@@ -502,7 +502,7 @@
     },
     "/alertmanager/grafana/config/history": {
       "get": {
-        "description": "This API is deprecated and will be removed in future versions.",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
@@ -527,7 +527,7 @@
     },
     "/alertmanager/grafana/config/history/{id}/_activate": {
       "post": {
-        "description": "This API is deprecated and will be removed in future versions.",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
@@ -2099,7 +2099,7 @@
     },
     "/v1/notifications/receivers": {
       "get": {
-        "description": "This API is deprecated and will be removed in future versions.",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
@@ -2148,7 +2148,7 @@
     },
     "/v1/notifications/receivers/{Name}": {
       "get": {
-        "description": "This API is deprecated and will be removed in future versions.",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
@@ -2189,11 +2189,13 @@
     },
     "/v1/notifications/time-intervals": {
       "get": {
-        "description": "Get all the time intervals",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
+        "summary": "Get all the time intervals",
         "operationId": "RouteNotificationsGetTimeIntervals",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/GetAllIntervalsResponse"
@@ -2209,11 +2211,13 @@
     },
     "/v1/notifications/time-intervals/{name}": {
       "get": {
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
         "summary": "Get a time interval by name.",
         "operationId": "RouteNotificationsGetTimeInterval",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",

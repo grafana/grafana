@@ -4,7 +4,7 @@ package definitions
 //
 // Get a receiver by name.
 //
-// This API is deprecated and will be removed in future versions.
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
 //
 // Deprecated: true
 //    Responses:
@@ -16,7 +16,7 @@ package definitions
 //
 // Get all receivers.
 //
-// This API is deprecated and will be removed in future versions.
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
 //
 // Deprecated: true
 //    Responses:

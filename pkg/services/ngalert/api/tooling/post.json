@@ -5472,7 +5472,7 @@
   "/alertmanager/grafana/config/api/v1/alerts": {
    "delete": {
     "deprecated": true,
-    "description": "This API is deprecated and will be removed in future versions.",
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteDeleteGrafanaAlertingConfig",
     "responses": {
      "200": {
@@ -5495,7 +5495,7 @@
    },
    "get": {
     "deprecated": true,
-    "description": "This API is deprecated and will be removed in future versions.",
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetGrafanaAlertingConfig",
     "responses": {
      "200": {
@@ -5518,7 +5518,7 @@
    },
    "post": {
     "deprecated": true,
-    "description": "This API is deprecated and will be removed in future versions.",
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RoutePostGrafanaAlertingConfig",
     "parameters": [
      {
@@ -5675,7 +5675,7 @@
   "/alertmanager/grafana/config/history": {
    "get": {
     "deprecated": true,
-    "description": "This API is deprecated and will be removed in future versions.",
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetGrafanaAlertingConfigHistory",
     "parameters": [
      {
@@ -5700,7 +5700,7 @@
   "/alertmanager/grafana/config/history/{id}/_activate": {
    "post": {
     "deprecated": true,
-    "description": "This API is deprecated and will be removed in future versions.",
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RoutePostGrafanaAlertingConfigHistoryActivate",
     "parameters": [
      {
@@ -7272,7 +7272,7 @@
   "/v1/notifications/receivers": {
    "get": {
     "deprecated": true,
-    "description": "This API is deprecated and will be removed in future versions.",
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetReceivers",
     "parameters": [
      {
@@ -7321,7 +7321,7 @@
   "/v1/notifications/receivers/{Name}": {
    "get": {
     "deprecated": true,
-    "description": "This API is deprecated and will be removed in future versions.",
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteGetReceiver",
     "parameters": [
      {
@@ -7361,7 +7361,8 @@
   },
   "/v1/notifications/time-intervals": {
    "get": {
-    "description": "Get all the time intervals",
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteNotificationsGetTimeIntervals",
     "responses": {
      "200": {
@@ -7374,6 +7375,7 @@
       }
      }
     },
+    "summary": "Get all the time intervals",
     "tags": [
      "notifications"
     ]
@@ -7381,6 +7383,8 @@
   },
   "/v1/notifications/time-intervals/{name}": {
    "get": {
+    "deprecated": true,
+    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
     "operationId": "RouteNotificationsGetTimeInterval",
     "parameters": [
      {

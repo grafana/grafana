@@ -21,7 +21,7 @@ import (
 //
 // sets an Alerting config
 //
-// This API is deprecated and will be removed in future versions.
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
 //
 // Deprecated: true
 //     Responses:
@@ -41,7 +41,7 @@ import (
 //
 // gets an Alerting config
 //
-// This API is deprecated and will be removed in future versions.
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
 //
 // Deprecated: true
 //
@@ -62,7 +62,7 @@ import (
 //
 // gets Alerting configurations that were successfully applied in the past
 //
-// This API is deprecated and will be removed in future versions.
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
 //
 // Deprecated: true
 //     Responses:
@@ -72,7 +72,7 @@ import (
 //
 // revert Alerting configuration to the historical configuration specified by the given id
 //
-// This API is deprecated and will be removed in future versions.
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
 //
 // Deprecated: true
 //     Responses:
@@ -84,7 +84,7 @@ import (
 //
 // deletes the Alerting config for a tenant
 //
-// This API is deprecated and will be removed in future versions.
+// This API is designated to internal use only and can be removed or changed at any time without prior notice.
 //
 // Deprecated: true
 //     Responses:
