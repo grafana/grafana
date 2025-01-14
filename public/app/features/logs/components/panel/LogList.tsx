@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { debounce } from 'lodash';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { ListChildComponentProps, VariableSizeList } from 'react-window';
 
 import { CoreApp, LogRowModel } from '@grafana/data';
@@ -18,15 +19,20 @@ export const LogList = ({ containerElement, logs }: Props) => {
   const theme = useTheme2();
 
   useEffect(() => {
-    const letterSpacing = theme.typography.body.letterSpacing
-      ? theme.typography.fontSize * parseFloat(theme.typography.body.letterSpacing)
-      : undefined;
-    initVirtualization(theme.typography.fontFamilyMonospace, theme.typography.fontSize, letterSpacing);
-  }, [theme.typography.body.letterSpacing, theme.typography.fontFamilyMonospace, theme.typography.fontSize]);
+    initVirtualization(theme);
+  }, [theme]);
 
   useEffect(() => {
     setListKey(`${Math.random()}`);
   }, [logs]);
+
+  useLayoutEffect(() => {
+    const handleResize = debounce(() => setListKey(`${Math.random()}`), 500);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
