@@ -7578,27 +7578,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rspack/cli@npm:^1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/cli@npm:1.1.5"
-  dependencies:
-    "@discoveryjs/json-ext": "npm:^0.5.7"
-    "@rspack/dev-server": "npm:1.0.9"
-    colorette: "npm:2.0.19"
-    exit-hook: "npm:^4.0.0"
-    interpret: "npm:^3.1.1"
-    rechoir: "npm:^0.8.0"
-    semver: "npm:^7.6.2"
-    webpack-bundle-analyzer: "npm:4.6.1"
-    yargs: "npm:17.6.2"
-  peerDependencies:
-    "@rspack/core": ^1.0.0-alpha || ^1.x
-  bin:
-    rspack: bin/rspack.js
-  checksum: 10/bbc8017630ee2dac003da55fdaf652af386b3c76f4db918f0074994ba0a9dc55efe315fa43475fc54355a01f98479857d60844ad0004b845595ce10a6477a5d0
-  languageName: node
-  linkType: hard
-
 "@rspack/core@npm:1.2.0-beta.0":
   version: 1.2.0-beta.0
   resolution: "@rspack/core@npm:1.2.0-beta.0"
@@ -7632,25 +7611,6 @@ __metadata:
   peerDependencies:
     "@rspack/core": "*"
   checksum: 10/c8354f1c71bc790cb3f9d9496a674e1b18bbd9c2c70bded81369187a5593469141c608fbc037f35fc9d628b2616f6266eaecc626fb07797a2d79d3a1ecb58598
-  languageName: node
-  linkType: hard
-
-"@rspack/dev-server@npm:1.0.9":
-  version: 1.0.9
-  resolution: "@rspack/dev-server@npm:1.0.9"
-  dependencies:
-    chokidar: "npm:^3.6.0"
-    connect-history-api-fallback: "npm:^2.0.0"
-    express: "npm:^4.19.2"
-    http-proxy-middleware: "npm:^2.0.6"
-    mime-types: "npm:^2.1.35"
-    p-retry: "npm:4.6.2"
-    webpack-dev-middleware: "npm:^7.4.2"
-    webpack-dev-server: "npm:5.0.4"
-    ws: "npm:^8.16.0"
-  peerDependencies:
-    "@rspack/core": "*"
-  checksum: 10/9f993c1d1110dd451347cd92b9b5d6bbb4b1bf72c64bab35a16bc797232d8ed39da7b65f21e63ff972448c9e377d5caceb25092983695f9259388f7bca1925ba
   languageName: node
   linkType: hard
 
@@ -9480,7 +9440,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@types/lodash": "npm:4.17.7"
     "@types/node": "npm:22.10.2"
     "@types/prismjs": "npm:1.26.4"
