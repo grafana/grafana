@@ -6,7 +6,7 @@ import { compact } from 'lodash';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import {
   DataSourceRuleGroupIdentifier,
-  ExternalRulesSourceIdentifier,
+  DataSourceRulesSourceIdentifier,
   GrafanaRuleGroupIdentifier,
 } from 'app/types/unified-alerting';
 import {
@@ -54,10 +54,10 @@ export function useFilteredRulesIteratorProvider() {
     const normalizedFilterState = normalizeFilterState(filterState);
 
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
-      ? filterState.dataSourceNames.map<ExternalRulesSourceIdentifier>((ds) => ({
+      ? filterState.dataSourceNames.map<DataSourceRulesSourceIdentifier>((ds) => ({
           name: ds,
           uid: getDatasourceAPIUid(ds),
-          ruleSourceType: 'external',
+          ruleSourceType: 'datasource',
         }))
       : allExternalRulesSources;
 
@@ -86,7 +86,7 @@ export function useFilteredRulesIteratorProvider() {
 }
 
 function mapRuleToRuleWithOrigin(
-  rulesSource: ExternalRulesSourceIdentifier,
+  rulesSource: DataSourceRulesSourceIdentifier,
   group: PromRuleGroupDTO,
   rule: PromRuleDTO
 ): PromRuleWithOrigin {

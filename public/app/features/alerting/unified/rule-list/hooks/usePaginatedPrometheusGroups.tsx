@@ -4,6 +4,15 @@ import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { isLoading, useAsync } from '../../hooks/useAsync';
 
+/**
+ * Provides pagination functionality for rule groups with lazy loading.
+ * Instead of loading all groups at once, it uses a generator to fetch them in batches as needed,
+ * which helps with performance when dealing with large numbers of rules.
+ *
+ * @param groupsGenerator - An async generator that yields rule groups in batches
+ * @param pageSize - Number of groups to display per page
+ * @returns Pagination state and controls for navigating through rule groups
+ */
 export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
   groupsGenerator: AsyncGenerator<TGroup, void, unknown>,
   pageSize: number

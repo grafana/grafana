@@ -2,7 +2,7 @@ import { BaseQueryFn } from '@reduxjs/toolkit/query';
 import { TypedLazyQueryTrigger } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
-import { ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { BaseQueryFnArgs } from '../../api/alertingApi';
 import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
@@ -18,7 +18,7 @@ export function usePrometheusGroupsGenerator() {
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
-    async function* (ruleSource: ExternalRulesSourceIdentifier, groupLimit: number) {
+    async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
       const getRuleSourceGroups = (options: FetchGroupsOptions) =>
         getGroups({ ruleSource: { uid: ruleSource.uid }, ...options });
 

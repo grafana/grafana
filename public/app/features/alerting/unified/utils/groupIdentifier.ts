@@ -16,7 +16,7 @@ function fromCombinedRule(rule: CombinedRule): RuleGroupIdentifierV2 {
   const rulesSourceName = getRulesSourceName(rule.namespace.rulesSource);
   const rulesSourceUid = getDatasourceAPIUid(rulesSourceName);
   return {
-    rulesSource: { uid: rulesSourceUid, name: rulesSourceName, ruleSourceType: 'external' },
+    rulesSource: { uid: rulesSourceUid, name: rulesSourceName, ruleSourceType: 'datasource' },
     namespace: { name: rule.namespace.name },
     groupName: rule.group.name,
     groupOrigin: 'datasource',

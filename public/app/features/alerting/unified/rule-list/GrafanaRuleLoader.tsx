@@ -1,13 +1,13 @@
 import { GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { GrafanaRulesSource } from '../utils/datasource';
+import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
 
 interface GrafanaRuleLoaderProps {
   rule: GrafanaPromRuleDTO;
   groupName: string;
-  // TODO: How to improve this?
   namespaceName: string;
 }
 
@@ -19,7 +19,7 @@ export function GrafanaRuleLoader({ rule, groupName, namespaceName }: GrafanaRul
     rulesSource: GrafanaRulesSource,
     group: groupName,
     namespace: namespaceName,
-    href: '',
+    href: createRelativeUrl(`/alerting/grafana/${rule.uid}/view`),
     health: rule.health,
     error: rule.lastError,
     labels: rule.labels,

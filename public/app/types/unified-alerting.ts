@@ -103,7 +103,7 @@ export interface DataSourceRuleGroup {
 }
 
 export interface DataSourceRuleNamespace {
-  rulesSource: ExternalRulesSourceIdentifier;
+  rulesSource: DataSourceRulesSourceIdentifier;
   id: DataSourceNamespaceIdentifier;
   groups: DataSourceRuleGroup[];
 }
@@ -177,11 +177,11 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
 export const GrafanaRulesSourceSymbol = Symbol('grafana');
 export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
 
-export interface ExternalRulesSourceIdentifier {
+export interface DataSourceRulesSourceIdentifier {
   uid: string;
   name: string;
   // discriminator
-  ruleSourceType: 'external';
+  ruleSourceType: 'datasource';
 }
 export interface GrafanaRulesSourceIdentifier {
   uid: typeof GrafanaRulesSourceSymbol;
@@ -190,7 +190,7 @@ export interface GrafanaRulesSourceIdentifier {
   ruleSourceType: 'grafana';
 }
 
-export type RulesSourceIdentifier = ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
+export type RulesSourceIdentifier = DataSourceRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
 
 /** @deprecated use RuleGroupIdentifierV2 instead */
 export interface RuleGroupIdentifier {
@@ -216,7 +216,7 @@ export interface GrafanaRuleGroupIdentifier {
 }
 
 export interface DataSourceRuleGroupIdentifier {
-  rulesSource: ExternalRulesSourceIdentifier;
+  rulesSource: DataSourceRulesSourceIdentifier;
   groupName: string;
   namespace: DataSourceNamespaceIdentifier;
   groupOrigin: 'datasource';

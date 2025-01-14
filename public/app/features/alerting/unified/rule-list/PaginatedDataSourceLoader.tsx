@@ -2,7 +2,7 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Icon, Stack, Text } from '@grafana/ui';
-import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
+import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
 import { hashRule } from '../utils/rule-id';
 
@@ -18,7 +18,7 @@ import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGrou
 const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 
 interface PaginatedDataSourceLoaderProps extends Required<Pick<DataSourceSectionProps, 'application'>> {
-  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
+  rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
 }
 export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }: PaginatedDataSourceLoaderProps) {
   const { uid, name } = rulesSourceIdentifier;
@@ -61,7 +61,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
           >
             {groups.map((group) => (
               <RuleGroupListItem
-                key={`${String(rulesSourceIdentifier.uid)}-${namespace}-${group.name}`}
+                key={`${rulesSourceIdentifier.uid}-${namespace}-${group.name}`}
                 group={group}
                 rulesSourceIdentifier={rulesSourceIdentifier}
                 namespaceName={namespace}
@@ -82,7 +82,7 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
 
 interface RuleGroupListItemProps {
   group: RuleGroup;
-  rulesSourceIdentifier: ExternalRulesSourceIdentifier;
+  rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   namespaceName: string;
 }
 function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: RuleGroupListItemProps) {
