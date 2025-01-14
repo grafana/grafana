@@ -191,8 +191,6 @@ In Grafana, you can use [templates](ref:templates) to dynamically pull in specif
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="How templating works" >}}
 
-_Overview of how templating works_
-
 ### Templating alert rule labels and annotations
 
 [Labels and annotations](ref:template-labels-annotations) are key fields where templates are applied. Annotations are especially useful for providing additional context about the alert, such as a summary or description, which helps users quickly understand the alert rule’s meaning and cause. By using templating in annotations, you can customize the content of each alert instance, such as including instance names and metric values, so the notification becomes more informative.
@@ -253,8 +251,6 @@ Now that we've introduced how templating works, let’s move on to the next step
 
    {{< figure src="/media/docs/alerting/part-4-firing-instances-preview.png" max-width="1200px" caption="Preview of a query returning alert instances" >}}
 
-   _Preview of a query returning alert instances in Grafana_
-
 1. Add folders and labels section:
 
    - In **Folder**, click **+ New folder** and enter a name. For example: `System metrics` . This folder contains our alerts.
@@ -297,8 +293,6 @@ Now that we've introduced how templating works, let’s move on to the next step
 Now that we’ve configured an alert rule with dynamic templates for the **summary** annotation, the next step is to customize the alert notifications themselves. While the default notification message includes the summary annotation and works well, it can often be too verbose.
 
 {{< figure src="/media/docs/alerting/templated-annotation-alert.png" max-width="1200px" caption="Default email alert notification with templated annotation" >}}
-
-_Default email alert notification with templated annotation for CPU and memory usage_
 
 To make our alert notifications more concise and tailored to our needs, we’ll create a custom **notification template** that references the summary annotation we just set up. Notification templates are especially useful for reusability, as they can be applied across multiple contact points, ensuring consistent alert messages.
 
@@ -360,9 +354,7 @@ In the **Preview** area, you can see a sample of how the notification would look
 
    The alert instance is added to the bottom of the preview.
 
-   {{< figure src="/media/docs/alerting/alert-instance-preview-in-template.png" max-width="1200px" caption="How templating works" >}}
-
-   _Preview of an alert instance in a notification template._
+   {{< figure src="/media/docs/alerting/alert-instance-preview-in-template.png" max-width="1200px" caption="Preview of an alert instance in a notification template" >}}
 
 1. Click **Save**.
 
@@ -391,9 +383,7 @@ Now that the template has been applied to the contact point, you should receive 
 
 Note: you might need to pause the alert rule evaluation and resume it to trigger the notification.
 
-{{< figure src="/media/docs/alerting/templated-notification-cpu.png" max-width="1200px" caption="How templating works" >}}
-
-_Templated email notification for CPU and memory usage_
+{{< figure src="/media/docs/alerting/templated-notification-cpu.png" max-width="1200px" caption="Templated email notification for CPU and memory usage" >}}
 
 In the screen capture, you can see how the notification template groups the alert instances into two sections: **firing alerts** and **resolved alerts**. Each section includes only the key details for each alert, ensuring the message remains concise and focused. Additionally, the summary and description annotations we created earlier are included, providing affected instance and CPU usage.
 
