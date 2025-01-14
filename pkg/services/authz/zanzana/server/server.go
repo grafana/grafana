@@ -20,13 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	resourceType     = "resource"
-	namespaceType    = "namespace"
-	folderTypePrefix = "folder:"
-
-	cacheCleanInterval = 2 * time.Minute
-)
+const cacheCleanInterval = 2 * time.Minute
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)

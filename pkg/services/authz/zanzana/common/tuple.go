@@ -1,7 +1,7 @@
 package common
 
 import (
-	"fmt"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -26,6 +26,12 @@ const (
 	TypeFolder       string = "folder"
 	TypeResource     string = "resource"
 	TypeGroupResouce string = "group_resource"
+)
+
+const (
+	TypeFolderPrefix       string = TypeFolder + ":"
+	TypeResourcePrefix     string = TypeResource + ":"
+	TypeGroupResoucePrefix string = TypeGroupResouce + ":"
 )
 
 const (
@@ -140,31 +146,37 @@ func isValidRelation(relation string, valid []string) bool {
 }
 
 func FolderResourceRelation(relation string) string {
-	return fmt.Sprintf("%s_%s", TypeResource, relation)
+	return TypeResource + "_" + relation
 }
 
 func NewTypedIdent(typ string, name string) string {
-	return fmt.Sprintf("%s:%s", typ, name)
+	return typ + ":" + name
 }
 
 func NewResourceIdent(group, resource, subresource, name string) string {
-	return fmt.Sprintf("%s:%s/%s", TypeResource, FormatGroupResource(group, resource, subresource), name)
+	return TypeResourcePrefix + FormatGroupResource(group, resource, subresource) + "/" + name
 }
 
 func NewFolderIdent(name string) string {
-	return fmt.Sprintf("%s:%s", TypeFolder, name)
+	return TypeFolderPrefix + name
 }
 
 func NewGroupResourceIdent(group, resource, subresource string) string {
-	return fmt.Sprintf("%s:%s", TypeGroupResouce, FormatGroupResource(group, resource, subresource))
+	return TypeGroupResoucePrefix + FormatGroupResource(group, resource, subresource)
 }
 
 func FormatGroupResource(group, resource, subresource string) string {
+	b := strings.Builder{}
+	b.WriteString(group)
+	b.WriteRune('/')
+	b.WriteString(resource)
+
 	if subresource != "" {
-		return fmt.Sprintf("%s/%s/%s", group, resource, subresource)
+		b.WriteRune('/')
+		b.WriteString(subresource)
 	}
 
-	return fmt.Sprintf("%s/%s", group, resource)
+	return b.String()
 }
 
 func NewResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
