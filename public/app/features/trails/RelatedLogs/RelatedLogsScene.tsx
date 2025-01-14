@@ -25,7 +25,6 @@ import { reportExploreMetrics } from '../interactions';
 import { VAR_FILTERS, VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
 import { NoRelatedLogsScene } from './NoRelatedLogsFoundScene';
-import { LogQLCombiner } from './logqlCombiner';
 
 export interface RelatedLogsSceneState extends SceneObjectState {
   controls: SceneObject[];
@@ -37,7 +36,6 @@ const LOGS_PANEL_CONTAINER_KEY = 'related_logs/logs_panel_container';
 const RELATED_LOGS_QUERY_KEY = 'related_logs/logs_query';
 
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
-  logqlQueryCombiner = new LogQLCombiner();
   constructor(state: Partial<RelatedLogsSceneState>) {
     super({
       controls: [],
@@ -107,34 +105,23 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   private updateLokiQuery() {
     const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
     const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
-    const lokiQueries = this.state.connectors.reduce<string[]>((acc, connector) => {
+    const lokiQueries = this.state.connectors.reduce<Record<string, string>>((acc, connector, idx) => {
       const lokiExpr = connector.getLokiQueryExpr(selectedMetric, selectedDatasourceUid);
 
       if (lokiExpr) {
-        acc.push(lokiExpr);
+        acc[connector.name ?? `connector-${idx}`] = lokiExpr;
       }
 
       return acc;
-    }, []);
-
-    // Compose the loki query expressions from all connectors into a single query.
-    // We rely on a proper LogQL parsing solution here to ensure that the resulting
-    // query is well-formed. Without this, it'd be tricky to do things like merging
-    // query expressions that contain the same label.
-    const lokiQuery = this.logqlQueryCombiner.combineQueries(lokiQueries);
-
-    if (lokiQuery) {
-      const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);
-      relatedLogsQuery.setState({
-        queries: [
-          {
-            refId: 'A',
-            expr: lokiQuery,
-            maxLines: 100,
-          },
-        ],
-      });
-    }
+    }, {});
+    const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);
+    relatedLogsQuery.setState({
+      queries: Object.keys(lokiQueries).map((connectorName) => ({
+        refId: `RelatedLogs-${connectorName}`,
+        expr: lokiQueries[connectorName],
+        maxLines: 100,
+      })),
+    });
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {

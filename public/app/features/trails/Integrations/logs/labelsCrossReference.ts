@@ -77,6 +77,7 @@ async function hasMatchingLabels(datasourceUid: string, filters: AdHocVariableFi
 
 export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => {
   return createMetricsLogsConnector({
+    name: 'labelsCrossReference',
     async getDataSources(): Promise<FoundLokiDataSource[]> {
       const trail = getTrailFor(scene);
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
