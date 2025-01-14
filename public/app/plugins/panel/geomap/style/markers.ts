@@ -251,7 +251,7 @@ const makers: SymbolMaker[] = [
   },
 ];
 
-export async function prepareSVG(url: string, size?: number, textValue?: string): Promise<string> {
+export async function prepareSVG(url: string, size?: number): Promise<string> {
   return fetch(url, { method: 'GET' })
     .then((res) => {
       return res.text();
@@ -274,14 +274,6 @@ export async function prepareSVG(url: string, size?: number, textValue?: string)
       svg.setAttribute('fill', '#fff');
       svg.setAttribute('width', `${width}px`);
       svg.setAttribute('height', `${height}px`);
-
-      const textElement = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
-      textElement.innerHTML = textValue ?? '';
-      textElement.setAttribute('fill', '#fff');
-      textElement.setAttribute('font-size', '10');
-      textElement.setAttribute('y', '12');
-      textElement.setAttribute('x', '0');
-      svg.appendChild(textElement);
 
       const svgString = new XMLSerializer().serializeToString(svg);
       const svgURI = encodeURIComponent(svgString);

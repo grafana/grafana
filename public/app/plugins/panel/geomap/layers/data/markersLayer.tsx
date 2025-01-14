@@ -1,6 +1,9 @@
 import Map from 'ol/Map';
 import { Point } from 'ol/geom';
+import LayerGroup from 'ol/layer/Group';
+import VectorLayer from 'ol/layer/Vector';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
+import { Fill, Style, Text } from 'ol/style';
 import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
@@ -75,13 +78,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
     const style = await getStyleConfigState(config.style);
     //TODO make this more robust and handle webgl supported shapes: circle, square, triangle, RegularShape
-    const src = await prepareSVG(
-      getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''),
-      undefined,
-      config.style.text?.fixed
-    );
+    const src = await prepareSVG(getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''));
 
-    // TODO support alignment
     const vectorStyle = {
       symbol: {
         symbolType: 'image',
@@ -96,6 +94,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
     const vectorLayer = new WebGLPointsLayer({ source, style: vectorStyle });
+    const textLayer = new VectorLayer({ source });
+    const layers = new LayerGroup({
+      layers: [vectorLayer, textLayer],
+    });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
     let legend: ReactNode = null;
@@ -104,7 +106,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     return {
-      init: () => vectorLayer,
+      init: () => layers,
       legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
@@ -157,6 +159,18 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             feature.setProperties({ opacity: values.opacity });
             feature.setProperties({ offsetX: displacement[0] });
             feature.setProperties({ offsetY: displacement[1] });
+
+            const textStyle = new Style({
+              text: new Text({
+                font: '12px Calibri,sans-serif',
+                fill: new Fill({
+                  color: 'rgba(255, 255, 255, 1)',
+                }),
+                text: values.text,
+              }),
+            });
+
+            feature.setStyle(textStyle);
           });
           break; // Only the first frame for now!
         }
