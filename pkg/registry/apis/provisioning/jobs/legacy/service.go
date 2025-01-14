@@ -110,26 +110,32 @@ func (job *legacyExporter) Export(ctx context.Context, opts ExportOptions) (stri
 		// NOTE: we will ignore things that are not in a known folder!!!
 		helper.folders, err = job.exportFolders(helper)
 		if err != nil {
-			return "", err
+			return rootDir, err
 		}
 	}
 
 	if false {
-		job.exportDataSources(helper)
+		err = job.exportDataSources(helper)
+		if err != nil {
+			return rootDir, err
+		}
 	}
 
 	if true {
 		job.exportDashboards(helper, true)
+		if err != nil {
+			return rootDir, err
+		}
 	}
 
 	return rootDir, nil
 }
 
-func (e *legacyExporter) loadUsers(ctx context.Context, orgId int64) (map[int64]*userInfo, error) {
-	db := e.sql.GetSqlxSession()
+func (job *legacyExporter) loadUsers(ctx context.Context, orgId int64) (map[int64]*userInfo, error) {
+	db := job.sql.GetSqlxSession()
 	rsp := make(map[int64]*userInfo, 100)
 	// 1. Get users
-	rows, err := db.Query(ctx, "SELECT id,login,email,login FROM "+e.sql.Quote("user")+" WHERE org_id=?", orgId)
+	rows, err := db.Query(ctx, "SELECT id,login,email,login FROM "+job.sql.Quote("user")+" WHERE org_id=?", orgId)
 	if err != nil {
 		return nil, err
 	}

@@ -52,18 +52,24 @@ func (job *legacyExporter) exportFolders(helper *commitHelper) (map[string]strin
 	// Write the folders
 	folders := make(map[string]string)
 	for _, f := range root {
-		traverseFolders(helper, f, []string{}, folders)
+		err = traverseFolders(helper, f, []string{}, folders)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return folders, nil
 }
 
-func traverseFolders(helper *commitHelper, f *folderInfo, path []string, folders map[string]string) {
+func traverseFolders(helper *commitHelper, f *folderInfo, path []string, folders map[string]string) error {
 	slug := cleanFileName(f.title)
 
 	path = append(path, slug) // slug
 	dir := filepath.Join(helper.orgDir, filepath.Join(path...))
-	os.MkdirAll(dir, 0600)
+	err := os.MkdirAll(dir, 0600)
+	if err != nil {
+		return err
+	}
 	folders[f.uid] = dir
 
 	info := map[string]any{
@@ -71,7 +77,7 @@ func traverseFolders(helper *commitHelper, f *folderInfo, path []string, folders
 		"uid":   f.uid,
 	}
 
-	helper.add(commitOptions{
+	err = helper.add(commitOptions{
 		body: []commitBody{{
 			fpath: dir + ".json",
 			body:  prettyJSON(info),
@@ -79,8 +85,15 @@ func traverseFolders(helper *commitHelper, f *folderInfo, path []string, folders
 		userID: f.updateBy,
 		when:   f.update,
 	})
+	if err != nil {
+		return err
+	}
 
 	for _, f := range f.children {
-		traverseFolders(helper, f, path, folders)
+		err = traverseFolders(helper, f, path, folders)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
