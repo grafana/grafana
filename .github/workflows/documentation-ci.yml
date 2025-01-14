@@ -1,0 +1,19 @@
+name: Documentation CI
+on:
+  pull_request:
+    paths: ["docs/sources/**"]
+  workflow_dispatch:
+jobs:
+  vale:
+    runs-on: ubuntu-latest
+    container:
+      image: grafana/vale:latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: grafana/writers-toolkit/vale-action@4b1248585248751e3b12fd020cf7ac91540ca09c # vale-action/v1.0.0
+        with:
+          filter: |
+            '.Name in ["Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]'
+          token: ${{ secrets.GITHUB_TOKEN }}
