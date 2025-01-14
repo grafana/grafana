@@ -193,13 +193,13 @@ In Grafana, you can use [templates](ref:templates) to dynamically pull in specif
 
 ### Templating alert rule labels and annotations
 
-[Labels and annotations](ref:template-labels-annotations) are key fields where templates are applied. Annotations are especially useful for providing additional context about the alert, such as a summary or description, which helps users quickly understand the alert rule’s meaning and cause. By using templating in annotations, you can customize the content of each alert instance, such as including instance names and metric values, so the notification becomes more informative.
+[Labels and annotations](ref:template-labels-annotations) are key fields where templates are applied. One of the main advantages of using templating in annotations is the ability to incorporate dynamic data from queries, allowing alerts to reflect real-time information relevant to the triggered condition. By using templating in annotations, you can customize the content of each alert instance, such as including instance names and metric values, so the notification becomes more informative.
 
 ### Notification templates
 
-The real power of templating comes when you want to format the output in your notifications. [Notification templates](ref:template-notifications) allow you to create custom message layouts by referencing your annotations, thus creating a consistent and readable format across multiple alert notifications.
+The real power of templating lies in how it helps you format notifications with dynamic alert data. [Notification templates](ref:template-notifications) let you pull in details from annotations to create clear and consistent messages. They also make it simple to reuse the same format across different contact points, saving time and effort.
 
-For instance, if you want to group multiple alert instances into one notification, you can use a notification template to organize alert instances efficiently. Instead of sending separate notifications for each firing or resolved alert instance, you can structure a single notification to show all firing alerts and all resolved alerts in one place.
+Notification templates allow you to customize how information is presented in each notification. For example, you can use templates to organize and format details about firing or resolved alerts, making it easier for recipients to understand the status of each alert at a glance—all within a single notification.
 
 This particular notification template pulls in summary and description annotations for each alert instance and organizes them into separate sections, such as "firing" and "resolved." This way, instead of getting a long list of individual alert notifications, users can receive one well-structured message with all the relevant details grouped together.
 
@@ -274,7 +274,9 @@ Now that we've introduced how templating works, let’s move on to the next step
    - **Summary** annotation: Enter the following code as the value for the annotation.:
 
      ```go
-     {{ index $labels "instance" }}{{- "\t" -}}{{ index $values "A"}}{{- "\n" -}}
+     {{- "\n" -}}
+     Instance: {{ index $labels "instance" }} 
+     {{- "\t" -}} Usage: {{ index $values "A"}}%{{- "\n" -}}
      ```
 
      This template automatically adds the instance name (from the [$labels](ref:template-labels-annotations-ref-labels-variable) data) and its current CPU usage (from [$values["A"]](ref:template-labels-annotations-ref-values-variable)) into the alert summary. `\t`: Adds a tab space between the instance name and the value. And, `\n`: Inserts a new line after the value.
