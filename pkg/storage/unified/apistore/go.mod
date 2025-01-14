@@ -117,7 +117,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/elazarl/goproxy v1.2.6 // indirect
+	github.com/elazarl/goproxy v1.3.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
@@ -176,7 +176,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.261.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.262.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect

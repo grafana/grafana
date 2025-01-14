@@ -1067,8 +1067,8 @@ github.com/edsrzf/mmap-go v1.2.0/go.mod h1:19H/e8pUPLicwkyNgOykDXkJ9F0MHE+Z52B8E
 github.com/efficientgo/core v1.0.0-rc.3 h1:X6CdgycYWDcbYiJr1H1+lQGzx13o7bq3EUkbB9DsSPc=
 github.com/efficientgo/core v1.0.0-rc.3/go.mod h1:FfGdkzWarkuzOlY04VY+bGfb1lWrjaL6x/GLcQ4vJps=
 github.com/elazarl/goproxy v0.0.0-20170405201442-c4fc26588b6e/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
-github.com/elazarl/goproxy v1.2.6 h1:jk1cwYYz96HhB985lQ1FFv7UcYVQHV84w8lWtpxW7WE=
-github.com/elazarl/goproxy v1.2.6/go.mod h1:yBhqz1/IaNA5tCayHGVfFmuzyanF6YeDNGIwPhfvtp8=
+github.com/elazarl/goproxy v1.3.0 h1:hpDH1r1qJgM3eusz7lP+BiMPnLiWPa6hDjIFF5WVCjE=
+github.com/elazarl/goproxy v1.3.0/go.mod h1:X/5W/t+gzDyLfHW4DrMdpjqYjpXsURlBt9lpBDxZZZQ=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/emicklei/go-restful/v3 v3.11.0 h1:rAQeMHw1c7zTmncogyy8VvRZwtkmkZ4FxERmMY4rD+g=
 github.com/emicklei/go-restful/v3 v3.11.0/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
@@ -1521,8 +1521,8 @@ github.com/grafana/grafana-google-sdk-go v0.2.1 h1:XeFdKnkXBjOJjXc1gf4iMx4h5aCHT
 github.com/grafana/grafana-google-sdk-go v0.2.1/go.mod h1:RiITSHwBhqVTTd3se3HQq5Ncs/wzzhTB9OK5N0J0PEU=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
-github.com/grafana/grafana-plugin-sdk-go v0.261.0 h1:pGGpPbKRWZcLxwNATEiVDhILbYGYwlWOEXFLhmUkBMo=
-github.com/grafana/grafana-plugin-sdk-go v0.261.0/go.mod h1:QsLK0kAbmDXuX/QncFBTETPHCzw5g9hZnzqOPkoB3Yo=
+github.com/grafana/grafana-plugin-sdk-go v0.262.0 h1:R2DV6lwBQE5zaogxX3PorD9Seo8CXA8YuStf84oqwkk=
+github.com/grafana/grafana-plugin-sdk-go v0.262.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 h1:JFB5dvs0XwBh/RiDNA5OrqcF3eWCQmTYBm6Hy79PDMQ=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7/go.mod h1:AVvGgNqHsruJINRjKkhhY5NZMh5ke6Ei2bywuQ4Uuus=
 github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6 h1:KsHIuuPGww1U0G2CB1JYTasDaboJn0Cq91Je1aluEuc=
