@@ -1321,10 +1321,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   return state;
 };
 
-export const processQueryResponse = (
-  state: ExploreItemState,
-  action: PayloadAction<QueryEndedPayload>
-): ExploreItemState => {
+const processQueryResponse = (state: ExploreItemState, action: PayloadAction<QueryEndedPayload>): ExploreItemState => {
   const { response } = action.payload;
   const {
     request,
