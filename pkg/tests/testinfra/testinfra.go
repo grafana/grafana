@@ -453,18 +453,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
-	if opts.GrafanaComAPIURL != "" {
-		grafanaComSection, err := getOrCreateSection("grafana_com")
-		require.NoError(t, err)
-		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
-		require.NoError(t, err)
-	}
-	if opts.GrafanaComSSOAPIToken != "" {
-		grafanaComSection, err := getOrCreateSection("grafana_com")
-		require.NoError(t, err)
-		_, err = grafanaComSection.NewKey("sso_api_token", opts.GrafanaComSSOAPIToken)
-		require.NoError(t, err)
-	}
+	createGcomApiNToken(t, opts, cfg)
+
 	if opts.UnifiedStorageConfig != nil {
 		for k, v := range opts.UnifiedStorageConfig {
 			section, err := getOrCreateSection(fmt.Sprintf("unified_storage.%s", k))
@@ -491,6 +481,29 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 
 	return tmpDir, cfgPath
+}
+
+func createGcomApiNToken(t *testing.T, opts GrafanaOpts, cfg *ini.File) {
+	getOrCreateSection := func(name string) (*ini.Section, error) {
+		section, err := cfg.GetSection(name)
+		if err != nil {
+			return cfg.NewSection(name)
+		}
+		return section, err
+	}
+
+	if opts.GrafanaComAPIURL != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
+		require.NoError(t, err)
+	}
+	if opts.GrafanaComSSOAPIToken != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("sso_api_token", opts.GrafanaComSSOAPIToken)
+		require.NoError(t, err)
+	}
 }
 
 func SQLiteIntegrationTest(t *testing.T) {
@@ -525,8 +538,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
-
-	GrafanaComSSOAPIToken string
+	GrafanaComSSOAPIToken                 string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
