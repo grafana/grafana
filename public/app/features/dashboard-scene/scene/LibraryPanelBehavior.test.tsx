@@ -8,7 +8,6 @@ import { LibraryPanel } from '@grafana/schema';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -183,7 +182,7 @@ async function buildTestSceneWithLibraryPanel() {
     model: {
       title: 'LibraryPanel A title',
       type: 'table',
-      links: [{ ...NEW_LINK, title: 'link1' }],
+      links: [{ title: 'link1', url: 'http://link1' }],
       options: { showHeader: true },
       fieldConfig: { defaults: {}, overrides: [] },
       datasource: { uid: 'abcdef' },

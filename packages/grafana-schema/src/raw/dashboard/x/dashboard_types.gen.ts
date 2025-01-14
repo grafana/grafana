@@ -338,6 +338,25 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
   targetBlank: false,
 };
 
+export interface DataLink {
+  /**
+   * If true, the link will be opened in a new tab
+   */
+  targetBlank?: boolean;
+  /**
+   * Title to display with the link
+   */
+  title: string;
+  /**
+   * Link URL
+   */
+  url: string;
+}
+
+export const defaultDataLink: Partial<DataLink> = {
+  targetBlank: false,
+};
+
 /**
  * Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
  */
@@ -739,7 +758,7 @@ export interface Panel {
   /**
    * Panel links.
    */
-  links?: Array<DashboardLink>;
+  links?: Array<DataLink>;
   /**
    * The maximum number of data points that the panel queries are retrieving.
    */

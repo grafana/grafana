@@ -283,6 +283,18 @@ type Link struct {
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 type LinkType string
 
+// DataLink defines model for DataLink.
+type DataLink struct {
+	// If true, the link will be opened in a new tab
+	TargetBlank *bool `json:"targetBlank,omitempty"`
+
+	// Title to display with the link
+	Title string `json:"title"`
+
+	// Link URL
+	Url string `json:"url"`
+}
+
 // Ref to a DataSource instance
 type DataSourceRef struct {
 	// The plugin type-id
@@ -547,7 +559,7 @@ type Panel struct {
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.
-	Links []Link `json:"links,omitempty"`
+	Links []DataLink `json:"links,omitempty"`
 
 	// The maximum number of data points that the panel queries are retrieving.
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`

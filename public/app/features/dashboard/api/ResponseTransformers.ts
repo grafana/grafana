@@ -27,7 +27,7 @@ import {
   ThresholdsMode,
   SpecialValueMatch,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
-import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -514,17 +514,10 @@ function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spe
       options: panel.vizConfig.spec.options,
       pluginVersion: panel.vizConfig.spec.pluginVersion,
       links:
-        panel.links?.map<DashboardLink>((l) => ({
-          title: l.title || '',
-          url: l.url || '',
-          targetBlank: l.targetBlank || false,
-          asDropdown: false,
-          icon: '',
-          includeVars: false,
-          keepTime: false,
-          tags: [],
-          tooltip: '',
-          type: 'link',
+        panel.links?.map((l) => ({
+          title: l.title,
+          url: l.url,
+          targetBlank: l.targetBlank,
         })) || [],
       targets: panel.data.spec.queries.map((q) => {
         return {
