@@ -34,7 +34,7 @@ export class MetricDatasourceHelper {
     return ds;
   }
 
-  private _metricsMetadata?: Promise<PromMetricsMetadata | undefined>;
+  _metricsMetadata?: Promise<PromMetricsMetadata | undefined>;
 
   private async _getMetricsMetadata() {
     const ds = await this.getDatasource();
@@ -62,10 +62,7 @@ export class MetricDatasourceHelper {
   }
 
   /**
-   * Used for filtering label names for OTel resources to add custom match filters
-   * - target_info metric
-   * - deployment_environment label
-   * - all other OTel filters
+   * Used for additional filtering for adhoc vars labels in Explore metrics.
    * @param options
    * @returns
    */
@@ -81,10 +78,7 @@ export class MetricDatasourceHelper {
   }
 
   /**
-   * Used for filtering label values for OTel resources to add custom match filters
-   * - target_info metric
-   * - deployment_environment label
-   * - all other OTel filters
+   * Used for additional filtering for adhoc vars label values in Explore metrics.
    * @param options
    * @returns
    */
