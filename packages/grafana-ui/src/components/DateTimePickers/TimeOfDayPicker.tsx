@@ -138,7 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => {
             color: theme.colors.text.primary,
           },
 
-          // TODO check this
           '&.rc-picker-time-panel-cell-disabled': {
             color: theme.colors.action.disabledText,
           },
