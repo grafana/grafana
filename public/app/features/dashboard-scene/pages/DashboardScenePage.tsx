@@ -6,10 +6,9 @@ import { usePrevious } from 'react-use';
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box } from '@grafana/ui';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
@@ -53,15 +52,6 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     let errorElement;
     if (loadError) {
       errorElement = <DashboardPageError error={loadError} />;
-      if (loadError.status === 404) {
-        errorElement = <EntityNotFound entity="Dashboard" />;
-      } else {
-        errorElement = (
-          <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-page-error">
-            {loadError.message}
-          </Alert>
-        );
-      }
     }
 
     return (
