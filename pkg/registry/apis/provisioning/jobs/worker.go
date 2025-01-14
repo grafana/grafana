@@ -32,6 +32,7 @@ type JobWorker struct {
 	parsers     *resources.ParserFactory
 	identities  auth.BackgroundIdentityService
 	render      rendering.Service
+	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
 }
@@ -42,6 +43,7 @@ func NewJobWorker(
 	client client.ProvisioningV0alpha1Interface,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	lister resources.ResourceLister,
 	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
@@ -51,6 +53,7 @@ func NewJobWorker(
 		parsers:     parsers,
 		identities:  identities,
 		render:      render,
+		lister:      lister,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
 	}
@@ -122,6 +125,14 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		if syncError != nil {
 			status.State = provisioning.JobStateError
 			status.Message = append(status.Message, syncError.Error())
+		}
+
+		// Update the resource stats
+		stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
+		if err != nil {
+			logger.Warn("unable to read stats", "error", err)
+		} else if stats != nil {
+			cfg.Status.Stats = stats.Items
 		}
 
 		cfg.Status.Sync = *status

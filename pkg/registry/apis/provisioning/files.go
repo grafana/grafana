@@ -32,14 +32,6 @@ func (*filesConnector) New() runtime.Object {
 
 func (*filesConnector) Destroy() {}
 
-func (*filesConnector) NamespaceScoped() bool {
-	return true
-}
-
-func (*filesConnector) GetSingularName() string {
-	return "Resource"
-}
-
 func (*filesConnector) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
@@ -269,9 +261,7 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 }
 
 var (
-	_ rest.Storage              = (*filesConnector)(nil)
-	_ rest.Connecter            = (*filesConnector)(nil)
-	_ rest.Scoper               = (*filesConnector)(nil)
-	_ rest.SingularNameProvider = (*filesConnector)(nil)
-	_ rest.StorageMetadata      = (*filesConnector)(nil)
+	_ rest.Storage         = (*filesConnector)(nil)
+	_ rest.Connecter       = (*filesConnector)(nil)
+	_ rest.StorageMetadata = (*filesConnector)(nil)
 )

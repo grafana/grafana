@@ -164,7 +164,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	obj.SetNamespace(cfg.GetNamespace())
 	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 		Name:      cfg.Name,
-		Path:      joinPathWithRef(info.Path, info.Ref),
+		Path:      info.Path, // joinPathWithRef(info.Path, info.Ref),
 		Hash:      info.Hash,
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
@@ -287,13 +287,4 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		wrap.Errors = append(wrap.Errors, err.Error())
 	}
 	return wrap
-}
-
-// Matches the frontend logic that pulls ref from the path
-// public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx#L32
-func joinPathWithRef(p, r string) string {
-	if r == "" {
-		return p
-	}
-	return fmt.Sprintf("%s#%s", p, r)
 }
