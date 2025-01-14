@@ -78,11 +78,12 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 	ctxLogger := s.logger.FromContext(req.Context())
 	ctxLogger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
+	header := rw.Header()
+	header.Set("Cache-Control", "no-store")
+	header.Set("X-Content-Type-Options", "nosniff")
+	header.Set("Content-Type", "text/plain")
+
 	writeError := func(code int, message string) {
-		header := rw.Header()
-		header.Set("Cache-Control", "no-store")
-		header.Set("Content-Type", "text/plain")
-		header.Set("X-Content-Type-Options", "nosniff")
 		rw.WriteHeader(code)
 		_, _ = rw.Write([]byte(message))
 	}
@@ -134,9 +135,6 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	rw.Header().Set("Content-Type", "text/plain")
-	rw.WriteHeader(http.StatusOK)
-
 	line := func(i int) string {
 		return fmt.Sprintf("Message #%d", i)
 	}
@@ -151,6 +149,7 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 			return fmt.Sprintf("measurement,tag1=value1,tag2=value2 message=%d,value=%.3f %d", i, val, time.Now().UnixMilli())
 		}
 	}
+	rw.WriteHeader(http.StatusOK)
 
 	for i := start; i <= count; i++ {
 		if _, err := io.WriteString(rw, line(i)+"\n"); err != nil {
