@@ -25,7 +25,7 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { getSelectedScopes } from 'app/features/scopes';
 
@@ -486,9 +486,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   public onToggleOtelExperience = () => {
     const trail = getTrailFor(this);
     const useOtelExperience = trail.state.useOtelExperience;
-
+    // set the startButtonClicked to null as we have gone past the owrkflow this is needed for
+    let startButtonClicked = false;
+    let resettingOtel = true;
+    if (useOtelExperience) {
+      reportExploreMetrics('otel_experience_toggled', { value: 'off' });
+      // if turning off OTel
+      resettingOtel = false;
+      trail.resetOtelExperience();
+    } else {
+      reportExploreMetrics('otel_experience_toggled', { value: 'on' });
+    }
     setOtelExperienceToggleState(!useOtelExperience);
-    trail.setState({ useOtelExperience: !useOtelExperience });
+    trail.setState({ useOtelExperience: !useOtelExperience, resettingOtel, startButtonClicked });
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
@@ -564,19 +574,28 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           {hasOtelResources && (
             <Field
               label={
-                <div className={styles.displayOptionTooltip}>
-                  <Trans i18nKey="trails.metric-select.filter-by">Filter by</Trans>
-                  <IconButton
-                    name={'info-circle'}
-                    size="sm"
-                    variant={'secondary'}
-                    tooltip={
-                      <Trans i18nKey="trails.metric-select.otel-switch">
-                        This switch enables filtering by OTel resources for OTel native data sources.
-                      </Trans>
-                    }
-                  />
-                </div>
+                <>
+                  <div className={styles.displayOptionTooltip}>
+                    <Trans i18nKey="trails.metric-select.filter-by">Filter by</Trans>
+                    <IconButton
+                      name={'info-circle'}
+                      size="sm"
+                      variant={'secondary'}
+                      tooltip={
+                        <Trans i18nKey="trails.metric-select.otel-switch">
+                          This switch enables filtering by OTel resources for OTel native data sources.
+                        </Trans>
+                      }
+                    />
+                    <div>
+                      <Badge
+                        text={<Trans i18nKey="trails.metric-select.new-badge">New</Trans>}
+                        color={'blue'}
+                        className={styles.badgeStyle}
+                      ></Badge>
+                    </div>
+                  </div>
+                </>
               }
               className={styles.displayOption}
             >
@@ -667,6 +686,17 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     warningIcon: css({
       color: theme.colors.warning.main,
+    }),
+    badgeStyle: css({
+      display: 'flex',
+      height: '1rem',
+      padding: '0rem 0.25rem 0 0.30rem',
+      alignItems: 'center',
+      borderRadius: theme.shape.radius.pill,
+      border: `1px solid ${theme.colors.info.text}`,
+      background: theme.colors.info.transparent,
+      marginTop: '4px',
+      marginLeft: '-3px',
     }),
   };
 }

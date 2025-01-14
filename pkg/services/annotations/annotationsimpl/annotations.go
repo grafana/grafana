@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -31,6 +32,7 @@ func ProvideService(
 	tagService tag.Service,
 	tracer tracing.Tracer,
 	ruleStore *alertingStore.DBstore,
+	dashSvc dashboards.DashboardService,
 ) *RepositoryImpl {
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
@@ -51,7 +53,7 @@ func ProvideService(
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
-		authZ:    accesscontrol.NewAuthService(db, features),
+		authZ:    accesscontrol.NewAuthService(db, features, dashSvc),
 		reader:   read,
 		writer:   write,
 	}
