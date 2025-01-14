@@ -3875,7 +3875,7 @@ __metadata:
     ol: "npm:7.4.0"
     prismjs: "npm:1.29.0"
     process: "npm:^0.11.10"
-    rc-cascader: "npm:3.31.0"
+    rc-cascader: "npm:3.33.0"
     rc-drawer: "npm:7.2.0"
     rc-slider: "npm:11.1.8"
     rc-time-picker: "npm:^3.7.3"
@@ -24832,19 +24832,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-cascader@npm:3.31.0":
-  version: 3.31.0
-  resolution: "rc-cascader@npm:3.31.0"
+"rc-cascader@npm:3.33.0":
+  version: 3.33.0
+  resolution: "rc-cascader@npm:3.33.0"
   dependencies:
     "@babel/runtime": "npm:^7.25.7"
     classnames: "npm:^2.3.1"
     rc-select: "npm:~14.16.2"
-    rc-tree: "npm:~5.11.0"
+    rc-tree: "npm:~5.13.0"
     rc-util: "npm:^5.43.0"
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/e0ffd71141630cd2f813a44ae9df57495c0118a80785a05e8faef374ea2a49a1ab6f5f21584f57911c22611c1431be2d76bd3d0c9b304d95931ac6fb2f5e0ad5
+  checksum: 10/54bc57bb7dcfe96ceea39545a050a6a3963e328795313289e40068daf2a89c2e9244be10b56b44e5c2091dd9010a726f3cf0cd3f9e2dd472d66d95f94777b4e9
   languageName: node
   linkType: hard
 
@@ -24983,7 +24983,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.11.0, rc-tree@npm:~5.11.0":
+"rc-tree@npm:5.11.0":
   version: 5.11.0
   resolution: "rc-tree@npm:5.11.0"
   dependencies:
@@ -24996,6 +24996,22 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: 10/d1a8d544354c4345a352811e5db57a10b1e7c2bf237bc394eb94256bdfc071fc0aefd6b201fe526d127e315b1ed2ab4ca7a363a05ab2d12a12fafcf7fdcbdf05
+  languageName: node
+  linkType: hard
+
+"rc-tree@npm:~5.13.0":
+  version: 5.13.0
+  resolution: "rc-tree@npm:5.13.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.10.1"
+    classnames: "npm:2.x"
+    rc-motion: "npm:^2.0.1"
+    rc-util: "npm:^5.16.1"
+    rc-virtual-list: "npm:^3.5.1"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 10/c8615773780f6855e8bd5398620187a3956c1a3a145c07bbbcd3a73a6d6c3f6b5d74c38dafdfea4f82cfd51846b1358ca3e98279a353dfa2814617bc5ab7abc0
   languageName: node
   linkType: hard
 
