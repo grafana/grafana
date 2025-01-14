@@ -118,8 +118,8 @@ func TestIntegrationSecureValue(t *testing.T) {
 	})
 
 	t.Run("creating a secure value with a `value` then updating it to a `ref` returns an error", func(t *testing.T) {
-		keeper := mustGenerateKeeper(t, helper, nil)
-		svWithValue := mustGenerateSecureValue(t, helper, keeper.GetName())
+		keeper := mustGenerateKeeper(t, helper, helper.Org1.Admin, nil)
+		svWithValue := mustGenerateSecureValue(t, helper, helper.Org1.Admin, keeper.GetName())
 
 		testData := svWithValue.DeepCopy()
 		testData.Object["spec"].(map[string]any)["value"] = nil
