@@ -12,6 +12,7 @@ import {
   sceneGraph,
   GroupByVariable,
   AdHocFiltersVariable,
+  SceneDataTransformer,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -25,15 +26,18 @@ import {
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
-import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import { AnnoKeyDashboardIsNew } from 'app/features/apiserver/types';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
@@ -43,11 +47,20 @@ const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
-    resourceVersion: '',
-    creationTimestamp: '',
+    resourceVersion: '123',
+    creationTimestamp: 'creationTs',
+    annotations: {
+      'grafana.app/createdBy': 'user:createBy',
+      'grafana.app/folder': 'folder-uid',
+      'grafana.app/updatedBy': 'user:updatedBy',
+      'grafana.app/updatedTimestamp': 'updatedTs',
+    },
   },
   spec: handyTestingSchema,
-  access: {},
+  access: {
+    url: '/d/abc',
+    slug: 'what-a-dashboard',
+  },
   apiVersion: 'v2',
 };
 
@@ -77,7 +90,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(scene.state.description).toEqual(dash.description);
     expect(scene.state.editable).toEqual(dash.editable);
     expect(scene.state.preload).toEqual(false);
-    expect(scene.state.version).toEqual(dash.schemaVersion);
+    expect(scene.state.version).toEqual(123);
     expect(scene.state.tags).toEqual(dash.tags);
 
     const liveNow = scene.state.$behaviors?.find((b) => b instanceof behaviors.LiveNowTimer);
@@ -208,12 +221,25 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanel = vizPanels[0];
     validateVizPanel(vizPanel, dash);
 
-    // FIXME: Tests for layout
+    // Layout
+    const layout = scene.state.body as DefaultGridLayoutManager;
+    expect(layout.state.grid.state.children.length).toBe(1);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
+    const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
+    expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
+    expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
+    expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
+    expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
+
+    // Transformations
+    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+    );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -241,7 +267,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -269,7 +295,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -289,5 +315,182 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanels.length).toBe(1);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  describe('When creating a snapshot dashboard scene', () => {
+    it('should initialize a dashboard scene with SnapshotVariables', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            'grafana.app/dashboard-is-snapshot': true,
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      // check variables were converted to snapshot variables
+      expect(scene.state.$variables?.state.variables).toHaveLength(8);
+      expect(scene.state.$variables?.getByName('customVar')).toBeInstanceOf(SnapshotVariable);
+      expect(scene.state.$variables?.getByName('adhocVar')).toBeInstanceOf(AdHocFiltersVariable);
+      expect(scene.state.$variables?.getByName('intervalVar')).toBeInstanceOf(SnapshotVariable);
+      // custom snapshot
+      const customSnapshot = scene.state.$variables?.getByName('customVar') as SnapshotVariable;
+      expect(customSnapshot.state.value).toBe('option1');
+      expect(customSnapshot.state.text).toBe('option1');
+      expect(customSnapshot.state.isReadOnly).toBe(true);
+      // adhoc snapshot
+      const adhocSnapshot = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      const adhocVariable = snapshot.spec.variables[7] as AdhocVariableKind;
+      expect(adhocSnapshot.state.filters).toEqual(adhocVariable.spec.filters);
+      expect(adhocSnapshot.state.readOnly).toBe(true);
+      // interval snapshot
+      const intervalSnapshot = scene.state.$variables?.getByName('intervalVar') as SnapshotVariable;
+      expect(intervalSnapshot.state.value).toBe('1m');
+      expect(intervalSnapshot.state.text).toBe('1m');
+      expect(intervalSnapshot.state.isReadOnly).toBe(true);
+    });
+  });
+
+  describe('meta', () => {
+    describe('initializes meta based on k8s resource', () => {
+      it('handles undefined access values', () => {
+        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+        // when access metadata undefined
+        expect(scene.state.meta.canShare).toBe(true);
+        expect(scene.state.meta.canSave).toBe(true);
+        expect(scene.state.meta.canStar).toBe(true);
+        expect(scene.state.meta.canEdit).toBe(true);
+        expect(scene.state.meta.canDelete).toBe(true);
+        expect(scene.state.meta.canAdmin).toBe(true);
+        expect(scene.state.meta.annotationsPermissions).toBe(undefined);
+
+        expect(scene.state.meta.url).toBe('/d/abc');
+        expect(scene.state.meta.slug).toBe('what-a-dashboard');
+        expect(scene.state.meta.created).toBe('creationTs');
+        expect(scene.state.meta.createdBy).toBe('user:createBy');
+        expect(scene.state.meta.updated).toBe('updatedTs');
+        expect(scene.state.meta.updatedBy).toBe('user:updatedBy');
+        expect(scene.state.meta.folderUid).toBe('folder-uid');
+        expect(scene.state.meta.version).toBe(123);
+      });
+
+      it('handles access metadata values', () => {
+        const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          access: {
+            canSave: false,
+            canEdit: false,
+            canDelete: false,
+            canShare: false,
+            canStar: false,
+            canAdmin: false,
+            annotationsPermissions: {
+              dashboard: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false,
+              },
+              organization: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false,
+              },
+            },
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        expect(scene.state.meta.canShare).toBe(false);
+        expect(scene.state.meta.canSave).toBe(false);
+        expect(scene.state.meta.canStar).toBe(false);
+        expect(scene.state.meta.canEdit).toBe(false);
+        expect(scene.state.meta.canDelete).toBe(false);
+        expect(scene.state.meta.canAdmin).toBe(false);
+        expect(scene.state.meta.annotationsPermissions).toEqual(dashboard.access.annotationsPermissions);
+        expect(scene.state.meta.version).toBe(123);
+      });
+    });
+
+    describe('Editable false dashboard', () => {
+      let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
+
+      beforeEach(() => {
+        dashboard = {
+          ...cloneDeep(defaultDashboard),
+          spec: {
+            ...defaultDashboard.spec,
+            editable: false,
+          },
+        };
+      });
+      it('Should set meta canEdit and canSave to false', () => {
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        expect(scene.state.meta.canMakeEditable).toBe(true);
+
+        expect(scene.state.meta.canSave).toBe(false);
+        expect(scene.state.meta.canEdit).toBe(false);
+        expect(scene.state.meta.canDelete).toBe(false);
+      });
+
+      describe('when does not have save permissions', () => {
+        it('Should set meta correct meta', () => {
+          dashboard.access.canSave = false;
+          const scene = transformSaveModelSchemaV2ToScene(dashboard);
+          expect(scene.state.meta.canMakeEditable).toBe(false);
+
+          expect(scene.state.meta.canSave).toBe(false);
+          expect(scene.state.meta.canEdit).toBe(false);
+          expect(scene.state.meta.canDelete).toBe(false);
+        });
+      });
+    });
+
+    describe('Editable true dashboard', () => {
+      let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
+
+      beforeEach(() => {
+        dashboard = {
+          ...cloneDeep(defaultDashboard),
+          spec: {
+            ...defaultDashboard.spec,
+            editable: true,
+          },
+        };
+      });
+      it('Should set meta canEdit and canSave to false', () => {
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        expect(scene.state.meta.canMakeEditable).toBe(false);
+
+        expect(scene.state.meta.canSave).toBe(true);
+        expect(scene.state.meta.canEdit).toBe(true);
+        expect(scene.state.meta.canDelete).toBe(true);
+      });
+    });
+
+    describe('is new dashboard handling', () => {
+      it('handles undefined is new dashbaord annotation', () => {
+        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+        expect(scene.state.meta.isNew).toBe(false);
+      });
+      it('handles defined is new dashbaord annotation', () => {
+        const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          metadata: {
+            ...defaultDashboard.metadata,
+            annotations: {
+              ...defaultDashboard.metadata.annotations,
+              [AnnoKeyDashboardIsNew]: true,
+            },
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        expect(scene.state.meta.isNew).toBe(true);
+      });
+    });
   });
 });

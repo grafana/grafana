@@ -13,8 +13,6 @@ If you don't find a helper for an endpoint you're looking for, please add it.
 
 ### Common API requests
 
-- `/buildinfo`
-  Use `mockFeatureDiscoveryApi` and `buildInfoResponse` object to mock the endpoint response according to your needs
 - `api/v1/eval` used by AlertingQueryRunner
   Use `mockApi.eval` Usually an empty response should do the trick
 

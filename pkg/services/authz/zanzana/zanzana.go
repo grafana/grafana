@@ -14,11 +14,12 @@ const (
 	TypeUser           = common.TypeUser
 	TypeServiceAccount = common.TypeServiceAccount
 	TypeRenderService  = common.TypeRenderService
+	TypeAnonymous      = common.TypeAnonymous
 	TypeTeam           = common.TypeTeam
 	TypeRole           = common.TypeRole
 	TypeFolder         = common.TypeFolder
 	TypeResource       = common.TypeResource
-	TypeNamespace      = common.TypeNamespace
+	TypeNamespace      = common.TypeGroupResouce
 )
 
 const (
@@ -48,14 +49,16 @@ const (
 
 var (
 	RelationsFolder         = common.RelationsFolder
-	RelationsFolderResource = common.RelationsFolder
 	RelationsResouce        = common.RelationsResource
+	RelationsFolderResource = common.RelationsFolderResource
 )
 
 const (
 	KindDashboards string = "dashboards"
 	KindFolders    string = "folders"
 )
+
+var ClusterNamespace = common.ClusterNamespace
 
 var (
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
@@ -67,8 +70,6 @@ var (
 	ToOpenFGATuples                   = common.ToOpenFGATuples
 	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
 	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
-
-	FormatGroupResource = common.FormatGroupResource
 )
 
 // NewTupleEntry constructs new openfga entry type:name[#relation].
@@ -95,16 +96,16 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	if name == "*" {
-		return common.NewNamespaceResourceTuple(subject, m.relation, translation.group, translation.resource), true
+		return common.NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
 	}
 
 	if translation.typ == TypeResource {
-		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, name), true
+		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
 	}
 
 	if translation.typ == TypeFolder {
 		if m.group != "" && m.resource != "" {
-			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, name), true
+			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
 		}
 
 		return common.NewFolderTuple(subject, m.relation, name), true
@@ -174,7 +175,7 @@ func TranslateToGroupResource(kind string) string {
 	if !ok {
 		return ""
 	}
-	return common.FormatGroupResource(translation.group, translation.resource)
+	return common.FormatGroupResource(translation.group, translation.resource, "")
 }
 
 func TranslateBasicRole(name string) string {

@@ -134,7 +134,6 @@ type Cfg struct {
 	DataPath              string
 	LogsPath              string
 	PluginsPath           string
-	BundledPluginsPath    string
 	EnterpriseLicensePath string
 
 	// SMTP email settings
@@ -302,11 +301,7 @@ type Cfg struct {
 	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
-	AnonymousEnabled     bool
-	AnonymousOrgName     string
-	AnonymousOrgRole     string
-	AnonymousHideVersion bool
-	AnonymousDeviceLimit int64
+	Anonymous AnonymousSettings
 
 	DateFormats DateFormats
 
@@ -334,6 +329,9 @@ type Cfg struct {
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
 	ConcurrentQueryCount int
+	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+	DefaultDatasourceManageAlertsUIToggle bool
 
 	// IP range access control
 	IPRangeACEnabled     bool
@@ -527,17 +525,25 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage     map[string]UnifiedStorageConfig
-	IndexPath          string
-	IndexWorkers       int
-	IndexMaxBatchSize  int
-	IndexFileThreshold int
-	IndexMinCount      int
+	UnifiedStorage              map[string]UnifiedStorageConfig
+	IndexPath                   string
+	IndexWorkers                int
+	IndexMaxBatchSize           int
+	IndexFileThreshold          int
+	IndexMinCount               int
+	SprinklesApiServer          string
+	SprinklesApiServerPageLimit int
+	CACertPath                  string
+	HttpsSkipVerify             bool
 }
 
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
+	DataSyncerInterval time.Duration
+	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
+	DataSyncerRecordsLimit int
 }
 
 type InstallPlugin struct {
@@ -1094,7 +1100,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
-	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
@@ -1650,12 +1655,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	// anonymous access
-	anonSection := iniFile.Section("auth.anonymous")
-	cfg.AnonymousEnabled = anonSection.Key("enabled").MustBool(false)
-	cfg.AnonymousOrgName = valueAsString(anonSection, "org_name", "")
-	cfg.AnonymousOrgRole = valueAsString(anonSection, "org_role", "")
-	cfg.AnonymousHideVersion = anonSection.Key("hide_version").MustBool(false)
-	cfg.AnonymousDeviceLimit = anonSection.Key("device_limit").MustInt64(0)
+	cfg.readAnonymousSettings()
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
@@ -1915,6 +1915,7 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {

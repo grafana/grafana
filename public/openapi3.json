@@ -1405,16 +1405,6 @@
         },
         "description": "(empty)"
       },
-      "getUsers": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/GetUsersBody"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "goneError": {
         "content": {
           "application/json": {
@@ -2672,6 +2662,9 @@
       },
       "AlertRuleEditorSettings": {
         "properties": {
+          "simplified_notifications_section": {
+            "type": "boolean"
+          },
           "simplified_query_and_expressions_section": {
             "type": "boolean"
           }
@@ -5124,21 +5117,6 @@
         },
         "type": "object"
       },
-      "EmailSchema": {
-        "description": "Implementation of SCIM specification email schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.2",
-        "properties": {
-          "primary": {
-            "type": "boolean"
-          },
-          "type": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "EmbeddedContactPoint": {
         "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
         "properties": {
@@ -5161,23 +5139,23 @@
           "type": {
             "enum": [
               "alertmanager",
-              " dingding",
-              " discord",
-              " email",
-              " googlechat",
-              " kafka",
-              " line",
-              " opsgenie",
-              " pagerduty",
-              " pushover",
-              " sensugo",
-              " slack",
-              " teams",
-              " telegram",
-              " threema",
-              " victorops",
-              " webhook",
-              " wecom"
+              "dingding",
+              "discord",
+              "email",
+              "googlechat",
+              "kafka",
+              "line",
+              "opsgenie",
+              "pagerduty",
+              "pushover",
+              "sensugo",
+              "slack",
+              "teams",
+              "telegram",
+              "threema",
+              "victorops",
+              "webhook",
+              "wecom"
             ],
             "example": "webhook",
             "type": "string"
@@ -5250,10 +5228,6 @@
           "message"
         ],
         "type": "object"
-      },
-      "ErrorSource": {
-        "description": "ErrorSource type defines the source of the error",
-        "type": "string"
       },
       "ErrorType": {
         "title": "ErrorType models the different API error types.",
@@ -5849,35 +5823,6 @@
           },
           "uid": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "GetUsersBody": {
-        "properties": {
-          "Resources": {
-            "items": {
-              "$ref": "#/components/schemas/UserSchema"
-            },
-            "type": "array"
-          },
-          "itemsPerPage": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "schemas": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "startIndex": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "totalResults": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -6541,6 +6486,10 @@
           "isStarred": {
             "type": "boolean"
           },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
           "permanentlyDeleteDate": {
             "format": "date-time",
             "type": "string"
@@ -7178,29 +7127,6 @@
         },
         "type": "array"
       },
-      "MetaSchema": {
-        "description": "Implementation of SCIM specification meta schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-3.1",
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "lastModified": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "location": {
-            "type": "string"
-          },
-          "resourceType": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "Metadata": {
         "additionalProperties": {
           "type": "boolean"
@@ -7278,7 +7204,6 @@
               "RESOURCE_CONFLICT",
               "UNEXPECTED_STATUS_CODE",
               "INTERNAL_SERVICE_ERROR",
-              "ONLY_CORE_DATA_SOURCES",
               "GENERIC_ERROR"
             ],
             "type": "string"
@@ -7315,7 +7240,8 @@
               "CONTACT_POINT",
               "NOTIFICATION_POLICY",
               "NOTIFICATION_TEMPLATE",
-              "MUTE_TIMING"
+              "MUTE_TIMING",
+              "PLUGIN"
             ],
             "type": "string"
           }
@@ -7423,24 +7349,6 @@
               "type": "string"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "NameSchema": {
-        "description": "Implementation of SCIM specification name schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
-        "properties": {
-          "familyName": {
-            "type": "string"
-          },
-          "formatted": {
-            "type": "string"
-          },
-          "givenName": {
-            "type": "string"
-          },
-          "middleName": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -10019,6 +9927,9 @@
       },
       "RuleDiscovery": {
         "properties": {
+          "groupNextToken": {
+            "type": "string"
+          },
           "groups": {
             "items": {
               "$ref": "#/components/schemas/RuleGroup"
@@ -12306,45 +12217,6 @@
         },
         "type": "object"
       },
-      "UserSchema": {
-        "description": "Implementation of SCIM specification user schema\nhttps://datatracker.ietf.org/doc/html/rfc7643#section-4.1.1",
-        "properties": {
-          "active": {
-            "type": "boolean"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "emails": {
-            "items": {
-              "$ref": "#/components/schemas/EmailSchema"
-            },
-            "type": "array"
-          },
-          "externalId": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/MetaSchema"
-          },
-          "name": {
-            "$ref": "#/components/schemas/NameSchema"
-          },
-          "schemas": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "userName": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "UserSearchHitDTO": {
         "properties": {
           "authLabels": {
@@ -12848,6 +12720,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -22617,113 +22490,6 @@
         ]
       }
     },
-    "/scim/users/": {
-      "delete": {
-        "operationId": "deleteUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Deletes user.",
-        "tags": [
-          "user",
-          "enterprise"
-        ]
-      },
-      "get": {
-        "operationId": "getUsers",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getUsers"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Fetches all users in UserSchema format.",
-        "tags": [
-          "users",
-          "enterprise"
-        ]
-      },
-      "post": {
-        "operationId": "createUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Creates user.",
-        "tags": [
-          "users",
-          "enterprise"
-        ]
-      }
-    },
-    "/scim/users/:id": {
-      "get": {
-        "operationId": "getUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Gets user by id.",
-        "tags": [
-          "user",
-          "enterprise"
-        ]
-      }
-    },
     "/search": {
       "get": {
         "operationId": "search",
@@ -26476,7 +26242,7 @@
             "description": "NotificationTemplates"
           }
         },
-        "summary": "Get all notification templates.",
+        "summary": "Get all notification template groups.",
         "tags": [
           "provisioning"
         ]
@@ -26487,7 +26253,7 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26519,7 +26285,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Delete a template.",
+        "summary": "Delete a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26528,7 +26294,7 @@
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26559,7 +26325,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Get a notification template.",
+        "summary": "Get a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26568,7 +26334,7 @@
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26626,7 +26392,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Updates an existing notification template.",
+        "summary": "Updates an existing notification template group.",
         "tags": [
           "provisioning"
         ]

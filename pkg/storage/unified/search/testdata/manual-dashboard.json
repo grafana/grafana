@@ -68,21 +68,21 @@
   "rows": [
     {
       "cells": [
-        "ns/g/dash/ccc",
+        "ns/dashboard.grafana.app/dashboards/ccc",
         "ccc (dash)",
         [
           "aa"
         ],
-        "xxx",
-        3,
-        0,
+        "zzz",
+        null,
+        null,
         null,
         null,
         null
       ],
       "object": {
-        "kind": "dash",
-        "apiVersion": "g",
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
         "metadata": {
           "name": "ccc",
           "namespace": "ns",
@@ -92,24 +92,23 @@
     },
     {
       "cells": [
-        "ns/g/dash/aaa",
+        "ns/dashboard.grafana.app/dashboards/bbb",
         "bbb (dash)",
         [
-          "aa",
-          "bb"
+          "aa"
         ],
         "xxx",
-        1,
-        0,
+        null,
+        null,
         null,
         null,
         null
       ],
       "object": {
-        "kind": "dash",
-        "apiVersion": "g",
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
         "metadata": {
-          "name": "aaa",
+          "name": "bbb",
           "namespace": "ns",
           "creationTimestamp": null
         }
@@ -117,23 +116,24 @@
     },
     {
       "cells": [
-        "ns/g/dash/bbb",
+        "ns/dashboard.grafana.app/dashboards/aaa",
         "aaa (dash)",
         [
-          "aa"
+          "aa",
+          "bb"
         ],
         "xxx",
-        2,
-        0,
+        null,
+        null,
         null,
         null,
         null
       ],
       "object": {
-        "kind": "dash",
-        "apiVersion": "g",
+        "kind": "dashboards",
+        "apiVersion": "dashboard.grafana.app",
         "metadata": {
-          "name": "bbb",
+          "name": "aaa",
           "namespace": "ns",
           "creationTimestamp": null
         }

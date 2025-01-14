@@ -82,7 +82,6 @@ function parseKeyValuePairs(raw: string): Record<string, string> {
       case `'`:
       // whitespace
       case ` `:
-      case `\n`:
       case `\t`:
       case `\r`:
       case `\n`:

@@ -40,6 +40,7 @@ import {
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
+  setCorrelationsService,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -57,10 +58,10 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
-import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
@@ -138,7 +139,6 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
-      initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
@@ -148,6 +148,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
+      setCorrelationsService(new CorrelationsService());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
