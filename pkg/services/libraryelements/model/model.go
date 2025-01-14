@@ -120,7 +120,6 @@ type LibraryElementConnectionWithMeta struct {
 	Kind           int64  `xorm:"kind"`
 	ConnectionID   int64  `xorm:"connection_id"`
 	ConnectionUID  string `xorm:"connection_uid"`
-	FolderUID      string `xorm:"folder_uid"`
 	Created        time.Time
 	CreatedBy      int64
 	CreatedByName  string
