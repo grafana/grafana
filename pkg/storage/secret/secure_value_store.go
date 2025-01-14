@@ -40,10 +40,9 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	// This should come from the keeper. From this point on, we should not have a need to read value/ref.
+	// This should come from the keeper. From this point on, we should not have a need to read value.
 	externalID := "TODO"
 	sv.Spec.Value = ""
-	sv.Spec.Ref = ""
 
 	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
 	if err != nil {
@@ -114,7 +113,6 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 	// This should come from the keeper.
 	externalID := "TODO2"
 	newSecureValue.Spec.Value = ""
-	newSecureValue.Spec.Ref = ""
 
 	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), externalID)
 	if err != nil {
@@ -134,7 +132,9 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 			return contracts.ErrKeeperNotFound
 		}
 
-		if _, err := sess.Update(newRow); err != nil {
+		cond := &secureValueDB{Name: nn.Name, Namespace: nn.Namespace.String()}
+
+		if _, err := sess.Update(newRow, cond); err != nil {
 			return fmt.Errorf("update row: %w", err)
 		}
 

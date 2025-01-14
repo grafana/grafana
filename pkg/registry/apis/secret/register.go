@@ -166,7 +166,18 @@ func (b *SecretAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch typedObj := obj.(type) {
 	case *secretv0alpha1.SecureValue:
-		if errs := reststorage.ValidateSecureValue(typedObj, operation); len(errs) > 0 {
+		var oldObj *secretv0alpha1.SecureValue
+
+		if a.GetOldObject() != nil {
+			var ok bool
+
+			oldObj, ok = a.GetOldObject().(*secretv0alpha1.SecureValue)
+			if !ok {
+				return apierrors.NewBadRequest(fmt.Sprintf("old object is not a SecureValue, found %T", a.GetOldObject()))
+			}
+		}
+
+		if errs := reststorage.ValidateSecureValue(typedObj, oldObj, operation); len(errs) > 0 {
 			return apierrors.NewInvalid(groupKind, a.GetName(), errs)
 		}
 

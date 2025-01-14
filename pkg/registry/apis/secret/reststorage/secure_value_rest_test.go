@@ -24,7 +24,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
 			sv.Spec.Title = ""
 
-			errs := ValidateSecureValue(sv, admission.Create)
+			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.title", errs[0].Field)
 		})
@@ -33,7 +33,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
 			sv.Spec.Keeper = ""
 
-			errs := ValidateSecureValue(sv, admission.Create)
+			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.keeper", errs[0].Field)
 		})
@@ -43,14 +43,14 @@ func TestValidateSecureValue(t *testing.T) {
 			sv.Spec.Value = ""
 			sv.Spec.Ref = ""
 
-			errs := ValidateSecureValue(sv, admission.Create)
+			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 
 			sv.Spec.Value = "value"
 			sv.Spec.Ref = "value"
 
-			errs = ValidateSecureValue(sv, admission.Create)
+			errs = ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 		})
@@ -59,22 +59,99 @@ func TestValidateSecureValue(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
 			sv.Spec.Audiences = make([]string, 0)
 
-			errs := ValidateSecureValue(sv, admission.Create)
+			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.audiences", errs[0].Field)
 		})
 	})
 
 	t.Run("when updating a securevalue", func(t *testing.T) {
-		t.Run("both `value` and `ref` must not be present", func(t *testing.T) {
-			sv := &secretv0alpha1.SecureValue{
+		t.Run("when trying to switch from a `value` (old) to a `ref` (new), it returns an error", func(t *testing.T) {
+			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Value: "value",
-					Ref:   "value",
+					Ref: "", // empty `ref` means a `value` was present.
 				},
 			}
 
-			errs := ValidateSecureValue(sv, admission.Update)
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Ref: "ref",
+				},
+			}
+
+			errs := ValidateSecureValue(sv, oldSv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec", errs[0].Field)
+		})
+
+		t.Run("when trying to switch from a `ref` (old) to a `value` (new), it returns an error", func(t *testing.T) {
+			oldSv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Ref: "non-empty",
+				},
+			}
+
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Value: "value",
+				},
+			}
+
+			errs := ValidateSecureValue(sv, oldSv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec", errs[0].Field)
+		})
+
+		t.Run("when both `value` and `ref` are set, it returns an error", func(t *testing.T) {
+			oldSv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Ref: "non-empty",
+				},
+			}
+
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Value: "value",
+					Ref:   "ref",
+				},
+			}
+
+			errs := ValidateSecureValue(sv, oldSv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec", errs[0].Field)
+
+			oldSv = &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Value: "non-empty",
+				},
+			}
+
+			errs = ValidateSecureValue(sv, oldSv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec", errs[0].Field)
+		})
+
+		t.Run("when no changes are made, it returns no errors", func(t *testing.T) {
+			oldSv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Title: "old-title",
+				},
+			}
+
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Title: "new-title",
+				},
+			}
+
+			errs := ValidateSecureValue(sv, oldSv, admission.Update)
+			require.Empty(t, errs)
+		})
+
+		t.Run("when the old object is `nil` it returns an error", func(t *testing.T) {
+			sv := &secretv0alpha1.SecureValue{}
+
+			errs := ValidateSecureValue(sv, nil, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 		})
@@ -84,6 +161,8 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("with regular group-names", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
+					Title: "title", Keeper: "keeper", Ref: "ref",
+
 					Audiences: []string{
 						"my.grafana.app/app-1",
 						"my.grafana.app/app-1",
@@ -92,7 +171,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			errs := ValidateSecureValue(sv, admission.Update)
+			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.audiences.[1]", errs[0].Field)
 		})
@@ -100,6 +179,8 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("with the wildcard name", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
+					Title: "title", Keeper: "keeper", Ref: "ref",
+
 					Audiences: []string{
 						"my.grafana.app/*",
 						"my.grafana.app/*",
@@ -107,7 +188,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			errs := ValidateSecureValue(sv, admission.Update)
+			errs := ValidateSecureValue(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.audiences.[1]", errs[0].Field)
 		})
@@ -116,6 +197,8 @@ func TestValidateSecureValue(t *testing.T) {
 	t.Run("`audiences` must match the expected format", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
+				Title: "title", Keeper: "keeper", Ref: "ref",
+
 				Audiences: []string{
 					"/app-name",       // Missing Group
 					"my.grafana.app/", // Missing Name
@@ -124,7 +207,7 @@ func TestValidateSecureValue(t *testing.T) {
 			},
 		}
 
-		errs := ValidateSecureValue(sv, admission.Update)
+		errs := ValidateSecureValue(sv, nil, admission.Create)
 		require.Len(t, errs, 3)
 
 		for i, err := range errs {
@@ -135,6 +218,8 @@ func TestValidateSecureValue(t *testing.T) {
 	t.Run("`audiences` with redundant group-names are reported", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
+				Title: "title", Keeper: "keeper", Ref: "ref",
+
 				Audiences: []string{
 					// "app-1" and "app-2" lines are not needed as "*" takes precedence for the whole group.
 					"my.grafana.app/app-1",
@@ -144,7 +229,7 @@ func TestValidateSecureValue(t *testing.T) {
 			},
 		}
 
-		errs := ValidateSecureValue(sv, admission.Update)
+		errs := ValidateSecureValue(sv, nil, admission.Create)
 		require.Len(t, errs, 2)
 
 		actualBadValues := make([]string, 0, 2)

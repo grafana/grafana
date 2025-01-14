@@ -655,14 +655,14 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					},
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The raw value is only valid for write. Read/List will always be empty Writing with an empty value will always fail",
+							Description: "The raw value is only valid for write. Read/List will always be empty. There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When using a remote Key manager, the ref is used to reference a value inside the remote storage This value is only expected on write.",
+							Description: "When using a remote Key manager, the ref is used to reference a value inside the remote storage. This should not contain sensitive information.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
