@@ -2,14 +2,12 @@ import { css } from '@emotion/css';
 import moment, { Moment } from 'moment/moment';
 import { useState } from 'react';
 
-import { getTimeZoneInfo, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, FieldSet, Select, Stack, TimeZonePicker, useStyles2 } from '@grafana/ui';
+import { DateTime, dateTimeAsMoment, getTimeZoneInfo, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Button, Field, FieldSet, Select, Stack, TimeOfDayPicker, TimeZonePicker, useStyles2 } from '@grafana/ui';
 import { TimeZoneOffset } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-
-import { TimePickerInput } from './TimePickerInput';
 
 interface Props {
   value: TimeRegionConfig;
@@ -74,7 +72,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     return timezone;
   };
 
-  const onTimeChange = (v: Moment, field: string) => {
+  const onTimeChange = (v: Moment | undefined, field: string) => {
     const time = v ? v.format('HH:mm') : undefined;
     if (field === 'from') {
       onChange({ ...value, from: time });
@@ -134,13 +132,16 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
             onChange={(v) => onFromDayOfWeekChange(v)}
             width={20}
           />
-          <TimePickerInput
-            value={getTime(value.from)}
-            onChange={(v) => onTimeChange(v, 'from')}
-            allowEmpty={true}
-            placeholder="HH:mm"
-            width={100}
-          />
+          <Stack direction="column">
+            <TimeOfDayPicker
+              // TODO
+              value={getTime(value.from) as DateTime}
+              onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
+              allowEmpty={true}
+              placeholder="HH:mm"
+              size="sm"
+            />
+          </Stack>
         </Stack>
       </Field>
       <Field label="To">
@@ -155,12 +156,13 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
               width={20}
             />
           )}
-          <TimePickerInput
-            value={getTime(value.to)}
-            onChange={(v) => onTimeChange(v, 'to')}
+          <TimeOfDayPicker
+            // TODO
+            value={getTime(value.to) as DateTime}
+            onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
             allowEmpty={true}
             placeholder="HH:mm"
-            width={100}
+            size="sm"
           />
         </Stack>
       </Field>

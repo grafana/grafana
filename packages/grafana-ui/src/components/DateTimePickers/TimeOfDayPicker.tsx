@@ -1,5 +1,8 @@
 import { css, cx } from '@emotion/css';
-import RcTimePicker from 'rc-time-picker';
+import { Moment } from 'moment';
+import RcPicker, { PickerProps } from 'rc-picker';
+import generateConfig from 'rc-picker/lib/generate/moment';
+import locale from 'rc-picker/lib/locale/en_US';
 
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
@@ -8,11 +11,10 @@ import { getFocusStyles } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 import { Icon } from '../Icon/Icon';
-
-import 'rc-time-picker/assets/index.css';
+import 'rc-picker/assets/index.css';
 
 export interface Props {
-  onChange: (value: DateTime) => void;
+  onChange: (value?: DateTime) => void;
   value?: DateTime;
   showHour?: boolean;
   showSeconds?: boolean;
@@ -22,6 +24,8 @@ export interface Props {
   disabledHours?: () => number[];
   disabledMinutes?: () => number[];
   disabledSeconds?: () => number[];
+  placeholder?: string;
+  allowEmpty?: boolean;
 }
 
 export const POPUP_CLASS_NAME = 'time-of-day-picker-panel';
@@ -37,32 +41,50 @@ export const TimeOfDayPicker = ({
   disabledHours,
   disabledMinutes,
   disabledSeconds,
+  placeholder,
+  allowEmpty = false,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <RcTimePicker
+    <RcPicker<Moment>
+      // TODO figure out these
+      generateConfig={generateConfig}
+      locale={locale}
+      allowClear={allowEmpty}
       className={cx(inputSizes()[size], styles.input)}
-      popupClassName={cx(styles.picker, POPUP_CLASS_NAME)}
-      defaultValue={dateTimeAsMoment()}
+      classNames={{
+        popup: cx(styles.picker, POPUP_CLASS_NAME),
+      }}
+      defaultValue={allowEmpty ? undefined : dateTimeAsMoment()}
+      disabled={disabled}
+      disabledTime={() => ({
+        disabledHours,
+        disabledMinutes,
+        disabledSeconds,
+      })}
+      format={generateFormat(showHour, showSeconds)}
+      minuteStep={minuteStep as PickerProps['minuteStep']}
       onChange={(value) => {
         if (isDateTimeInput(value)) {
-          return onChange(dateTime(value));
+          return onChange(value ? dateTime(value) : undefined);
         }
       }}
-      allowEmpty={false}
-      showSecond={showSeconds}
-      value={dateTimeAsMoment(value)}
-      showHour={showHour}
-      minuteStep={minuteStep}
-      inputIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      disabled={disabled}
-      disabledHours={disabledHours}
-      disabledMinutes={disabledMinutes}
-      disabledSeconds={disabledSeconds}
+      picker="time"
+      placeholder={placeholder}
+      showNow={false}
+      needConfirm={false}
+      suffixIcon={<Caret wrapperStyle={styles.caretWrapper} />}
+      value={value ? dateTimeAsMoment(value) : undefined}
     />
   );
 };
+
+function generateFormat(showHour = true, showSeconds = false) {
+  const maybeHour = showHour ? 'HH:' : '';
+  const maybeSecond = showSeconds ? ':ss' : '';
+  return maybeHour + 'mm' + maybeSecond;
+}
 
 interface CaretProps {
   wrapperStyle?: string;
@@ -79,7 +101,7 @@ const Caret = ({ wrapperStyle = '' }: CaretProps) => {
 const getStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.components.input.background;
   const menuShadowColor = theme.v1.palette.black;
-  const optionBgHover = theme.colors.background.secondary;
+  const optionBgHover = theme.colors.action.hover;
   const borderRadius = theme.shape.radius.default;
   const borderColor = theme.components.input.borderColor;
   return {
@@ -93,14 +115,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
     }),
     picker: css({
-      '.rc-time-picker-panel-select': {
+      '&.rc-picker-dropdown': {
+        boxShadow: 'none',
+        zIndex: theme.zIndex.dropdown,
+      },
+      '.rc-picker-time-panel-column': {
         fontSize: '14px',
         backgroundColor: bgColor,
         color: theme.colors.text.secondary,
         borderColor,
         li: {
           outlineWidth: '2px',
-          '&.rc-time-picker-panel-select-option-selected': {
+          '&.rc-picker-time-panel-cell-selected': {
             backgroundColor: 'inherit',
             border: `1px solid ${theme.v1.palette.orange}`,
             borderRadius,
@@ -112,40 +138,38 @@ const getStyles = (theme: GrafanaTheme2) => {
             color: theme.colors.text.primary,
           },
 
-          '&.rc-time-picker-panel-select-option-disabled': {
+          // TODO check this
+          '&.rc-picker-time-panel-cell-disabled': {
             color: theme.colors.action.disabledText,
           },
         },
+
+        '.rc-picker-time-panel-cell-inner': {
+          color: 'inherit',
+        },
       },
 
-      '.rc-time-picker-panel-inner': {
+      '.rc-picker-panel': {
         boxShadow: `0px 4px 4px ${menuShadowColor}`,
         backgroundColor: bgColor,
         borderColor,
         borderRadius,
-        marginTop: '3px',
-
-        '.rc-time-picker-panel-input-wrap': {
-          marginRight: '2px',
-
-          '&, .rc-time-picker-panel-input': {
-            backgroundColor: bgColor,
-            paddingTop: '2px',
-          },
-        },
-
-        '.rc-time-picker-panel-combobox': {
-          display: 'flex',
-        },
       },
     }),
     input: css({
-      '.rc-time-picker-input': {
+      '&.rc-picker-focused': {
+        border: 'none',
+      },
+
+      input: {
         backgroundColor: bgColor,
         borderRadius,
         borderColor,
+        borderStyle: 'solid',
+        borderWidth: '1px',
         color: theme.colors.text.primary,
         height: theme.spacing(4),
+        padding: theme.spacing(0, 1),
 
         '&:focus': getFocusStyles(theme),
 
@@ -156,6 +180,10 @@ const getStyles = (theme: GrafanaTheme2) => {
           '&:focus': {
             boxShadow: 'none',
           },
+        },
+
+        '&::placeholder': {
+          color: theme.colors.text.disabled,
         },
       },
     }),
