@@ -111,6 +111,9 @@ func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string
 		if el.FolderName == "" {
 			el.FolderName = dashboards.RootFolderName
 		}
+		if el.FolderUID == "" {
+			el.FolderUID = ac.GeneralFolderUID
+		}
 	}
 
 	return elements[0], nil
@@ -681,13 +684,12 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		if err != nil {
 			return err
 		}
+
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
-		// dashboard.uid AS connection_uid"
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
-		// builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
 		if signedInUser.GetOrgRole() != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
@@ -698,12 +700,11 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 
 		for _, connection := range libraryElementConnections {
 			connections = append(connections, model.LibraryElementConnectionDTO{
-				ID:            connection.ID,
-				Kind:          connection.Kind,
-				ElementID:     connection.ElementID,
-				ConnectionID:  connection.ConnectionID,
-				ConnectionUID: connection.ConnectionUID,
-				Created:       connection.Created,
+				ID:           connection.ID,
+				Kind:         connection.Kind,
+				ElementID:    connection.ElementID,
+				ConnectionID: connection.ConnectionID,
+				Created:      connection.Created,
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        connection.CreatedBy,
 					Name:      connection.CreatedByName,
