@@ -107,7 +107,6 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   private updateLokiQuery() {
     const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
     const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
-    // Merge the loki query expressions from all connectors
     const lokiQueries = this.state.connectors.reduce<string[]>((acc, connector) => {
       const lokiExpr = connector.getLokiQueryExpr(selectedMetric, selectedDatasourceUid);
 
@@ -118,6 +117,10 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
       return acc;
     }, []);
 
+    // Compose the loki query expressions from all connectors into a single query.
+    // We rely on a proper LogQL parsing solution here to ensure that the resulting
+    // query is well-formed. Without this, it'd be tricky to do things like merging
+    // query expressions that contain the same label.
     const lokiQuery = this.logqlQueryCombiner.combineQueries(lokiQueries);
 
     if (lokiQuery) {
