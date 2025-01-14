@@ -35,7 +35,7 @@ const initialize = (on, config) => {
   });
 
   on('task', {
-    async compareImages({expectedImageFilepath, newImageContent, updateExpectedImage = false}) {
+    async compareImages({ expectedImageFilepath, newImageContent, updateExpectedImage = false }) {
       const inputBuffer = Buffer.from(newImageContent.data);
       if (updateExpectedImage) {
         fs.writeFileSync(expectedImageFilepath, inputBuffer);
@@ -43,11 +43,11 @@ const initialize = (on, config) => {
       }
 
       return compareImages(expectedImageFilepath, inputBuffer);
-    }
+    },
   });
 
   on('task', {
-    async compareCSVs({expectedCSVFilepath, newCSVContent, updateExpectedCSV = false}) {
+    async compareCSVs({ expectedCSVFilepath, newCSVContent, updateExpectedCSV = false }) {
       const inputBuffer = Buffer.from(newCSVContent.data);
       if (updateExpectedCSV) {
         await fs.writeFileSync(expectedCSVFilepath, inputBuffer);
@@ -71,11 +71,11 @@ const initialize = (on, config) => {
       }
 
       return true;
-    }
+    },
   });
 
   on('task', {
-    async comparePDFs({expectedPDFFilepath, newPDFContent, updateExpectedPDF = false}) {
+    async comparePDFs({ expectedPDFFilepath, newPDFContent, updateExpectedPDF = false }) {
       const inputBuffer = Buffer.from(newPDFContent.data);
       if (updateExpectedPDF) {
         fs.writeFileSync(expectedPDFFilepath, inputBuffer);
@@ -85,8 +85,11 @@ const initialize = (on, config) => {
       const inputDoc = await pdf(inputBuffer);
       const expectedDoc = await pdf(expectedPDFFilepath);
 
+      cleanUpPDFText(inputDoc);
+      cleanUpPDFText(expectedDoc);
+
       return inputDoc.numpages === expectedDoc.numpages && inputDoc.text === expectedDoc.text;
-    }
+    },
   });
 };
 
@@ -94,15 +97,26 @@ const compareImages = async (expectedImageBufferOrFilePath, inputImageBuffer) =>
   const inputImage = await Jimp.read(inputImageBuffer);
   const expectedImage = await Jimp.read(expectedImageBufferOrFilePath);
 
-  const pixelDiff = diff(expectedImage, inputImage, .3);
-  return pixelDiff.percent <= .01;
-}
+  const pixelDiff = diff(expectedImage, inputImage, 0.3);
+  return pixelDiff.percent <= 0.01;
+};
 
 const toCSV = (buffer) => {
-  return buffer.toString()
+  return buffer
+    .toString()
     .split('\n')
-    .map(e => e.trim())
-    .map(e => e.split(',').map(e => e.trim()));
-}
+    .map((e) => e.trim())
+    .map((e) => e.split(',').map((e) => e.trim()));
+};
+
+const replacer = (match, p1, p2, p3) => {
+  return `${p1} ${p3}`;
+};
+
+// clean up the "generated on" timestamp in PDF as it's too complicated to set it to a fixed date
+const cleanUpPDFText = (pdfDoc) => {
+  const regex = /(Generated on )(.*)(Data time range)/;
+  pdfDoc.text = pdfDoc.text.replace(regex, replacer);
+};
 
 exports.initialize = initialize;
