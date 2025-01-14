@@ -40,6 +40,7 @@ export function SyncRepository({ repository }: Props) {
       return;
     }
     syncResource({ name });
+    setIsModalOpen(false);
   };
 
   if (query.isLoading) {

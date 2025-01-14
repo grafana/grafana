@@ -113,8 +113,8 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   {item.spec?.description}
                   {item.status?.stats?.length && (
                     <Stack>
-                      {item.status.stats.map((v) => (
-                        <LinkButton fill="outline" size="md" href={getListURL(item, v)}>
+                      {item.status.stats.map((v, index) => (
+                        <LinkButton key={index} fill="outline" size="md" href={getListURL(item, v)}>
                           {v.count} {v.resource}
                         </LinkButton>
                       ))}
