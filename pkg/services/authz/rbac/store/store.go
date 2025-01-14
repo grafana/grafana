@@ -60,7 +60,7 @@ func (s *StoreImpl) GetUserPermissions(ctx context.Context, ns claims.NamespaceI
 	var perms []accesscontrol.Permission
 	for res.Next() {
 		var perm accesscontrol.Permission
-		if err := res.Scan(&perm.Action, &perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope); err != nil {
+		if err := res.Scan(&perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope); err != nil {
 			return nil, err
 		}
 		perms = append(perms, perm)
