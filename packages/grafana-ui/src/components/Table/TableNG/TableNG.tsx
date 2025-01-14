@@ -190,7 +190,12 @@ export function TableNG(props: TableNGProps) {
         const lastElement = headerCellParent.lastElementChild;
         if (lastElement) {
           const handleMouseUp = () => {
-            console.log('update size');
+            let newWidth = headerCellParent.clientWidth;
+            const columnMinWidth = column.minWidth;
+            if (columnMinWidth && newWidth < columnMinWidth) {
+              newWidth = columnMinWidth;
+            }
+            onColumnResize?.(column.key as string, newWidth);
           };
 
           lastElement.addEventListener('click', handleMouseUp);
@@ -202,7 +207,7 @@ export function TableNG(props: TableNGProps) {
       }
       // to handle "Not all code paths return a value." error
       return;
-    }, []);
+    }, [column]);
 
     return (
       <div ref={headerRef} style={{ display: 'flex', justifyContent }}>
@@ -275,6 +280,12 @@ export function TableNG(props: TableNGProps) {
     main.fields.map((field, fieldIndex) => {
       const key = field.name;
 
+      // get column width from overrides
+      const override = fieldConfig?.overrides?.find(
+        (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
+      );
+      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config.custom.width;
+
       const justifyColumnContent = getTextAlign(field);
       const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -330,7 +341,7 @@ export function TableNG(props: TableNGProps) {
           />
         ),
         // TODO these anys are making me sad
-        width: field.config.custom.width ?? columnWidth,
+        width: width ?? columnWidth,
         minWidth: field.config.custom.minWidth ?? columnMinWidth,
       });
     });
