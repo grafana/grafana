@@ -1,5 +1,5 @@
 import { baseAPI as api } from './baseAPI';
-export const addTagTypes = ['Job', 'Repository', 'Search'] as const;
+export const addTagTypes = ['Job', 'Repository'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -231,7 +231,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/stats`,
         }),
-        providesTags: ['Search'],
+        providesTags: ['Repository'],
       }),
     }),
     overrideExisting: false,
@@ -378,7 +378,12 @@ export type CreateRepositoryWebhookResponse = WebhookResponse;
 export type CreateRepositoryWebhookArg = {
   name: string;
 };
-export type GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsResponse = any;
+export type GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsResponse = {
+  apiVersion?: string;
+  items?: any[];
+  kind?: string;
+  metadata?: any;
+};
 export type GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsArg = {};
 export type Time = string;
 export type FieldsV1 = object;
