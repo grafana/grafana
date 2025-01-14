@@ -3,7 +3,6 @@ import { Point } from 'ol/geom';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
-import { Fill, Style, Text } from 'ol/style';
 import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
@@ -23,7 +22,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { prepareSVG } from '../../style/markers';
+import { prepareSVG, textMarker } from '../../style/markers';
 import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
 import { getDisplacement, getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
@@ -160,16 +159,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             feature.setProperties({ offsetX: displacement[0] });
             feature.setProperties({ offsetY: displacement[1] });
 
-            const textStyle = new Style({
-              text: new Text({
-                font: '12px Calibri,sans-serif',
-                fill: new Fill({
-                  color: 'rgba(255, 255, 255, 1)',
-                }),
-                text: values.text,
-              }),
-            });
-
+            // Set style to be used by VectorLayer (text only)
+            const textStyle = textMarker(values);
             feature.setStyle(textStyle);
           });
           break; // Only the first frame for now!
