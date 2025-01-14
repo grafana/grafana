@@ -79,6 +79,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.NoError(t, err)
 
 		err = store.Delete(ctx, obtainedEV.UID)
+		require.NoError(t, err)
 
 		obtainedEV, err = store.Get(ctx, createdEV.UID)
 		require.Error(t, err)
