@@ -145,7 +145,7 @@ export class BackendSrv implements BackendService {
   chunkRequestId = 1;
 
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
-    const requestId = options.requestId ?? `XXXchunked-${this.chunkRequestId++}`;
+    const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
     const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions({
@@ -155,6 +155,7 @@ export class BackendSrv implements BackendService {
     });
 
     return new Observable((observer) => {
+      let done = false;
       // Calling fromFetch explicitly avoids the request queue
       const sub = this.dependencies.fromFetch(url, init).subscribe({
         next: (response) => {
@@ -168,50 +169,50 @@ export class BackendSrv implements BackendService {
             redirected: response.redirected,
             config: options,
             traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
-            data: undefined
-          }
+            data: undefined,
+          };
 
           if (!response.body) {
-            observer.next(rsp)
-            observer.complete()
-            return
+            observer.next(rsp);
+            observer.complete();
+            return;
           }
 
           const reader = response.body.getReader();
           async function process() {
-            while (reader) {
+            while (reader && !done) {
               if (controller.signal.aborted) {
                 reader.cancel(controller.signal.reason);
-                console.log('aborted', requestId);
-                return
+                console.log(requestId, 'signal.aborted');
+                return;
               }
-              const chunk = await reader.read()
+              const chunk = await reader.read();
               observer.next({
                 ...rsp,
                 data: chunk.value,
               });
               if (chunk.done) {
-                console.log('chunked, done', requestId);
-                return
+                done = true;
+                console.log(requestId, 'done');
               }
             }
           }
           process()
             .catch((e) => {
-              console.log('catch', requestId, e);
+              console.log(requestId, 'catch', e);
             }) // from abort
             .then(() => {
-              console.log('complete', requestId);
+              console.log(requestId, 'complete');
               observer.complete();
             }); // runs in background
         },
         error: (e) => {
           observer.error(e);
-        }
-      })
+        },
+      });
 
       return function unsubscribe() {
-        console.log('chunked, unsubscribe', requestId);
+        console.log(requestId, 'unsubscribe');
         controller.abort('unsubscribe');
         sub.unsubscribe();
       };
