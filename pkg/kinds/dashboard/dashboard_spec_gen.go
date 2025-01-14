@@ -60,18 +60,6 @@ func NewTimePickerConfig() *TimePickerConfig {
 // type directly to achieve the same effect.
 type Target map[string]any
 
-// DataLink defines model for DataLink.
-type DataLink struct {
-	// If true, the link will be opened in a new tab
-	TargetBlank *bool `json:"targetBlank,omitempty"`
-
-	// Title to display with the link
-	Title string `json:"title"`
-
-	// Link URL
-	Url string `json:"url"`
-}
-
 // Ref to a DataSource instance
 type DataSourceRef struct {
 	// The plugin type-id
@@ -109,45 +97,19 @@ func NewGridPos() *GridPos {
 	}
 }
 
-// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-type DashboardLinkType string
-
-const (
-	DashboardLinkTypeLink       DashboardLinkType = "link"
-	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
-)
-
-// Links with references to other dashboards or external resources
-type DashboardLink struct {
+type DataLink struct {
 	// Title to display with the link
 	Title string `json:"title"`
-	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-	Type DashboardLinkType `json:"type"`
-	// Icon name to be displayed with the link
-	Icon string `json:"icon"`
-	// Tooltip to display when the user hovers their mouse over it
-	Tooltip string `json:"tooltip"`
-	// Link URL. Only required/valid if the type is link
-	Url *string `json:"url,omitempty"`
-	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-	Tags []string `json:"tags"`
-	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
-	AsDropdown bool `json:"asDropdown"`
+	// Link URL
+	Url string `json:"url"`
 	// If true, the link will be opened in a new tab
-	TargetBlank bool `json:"targetBlank"`
-	// If true, includes current template variables values in the link as query params
-	IncludeVars bool `json:"includeVars"`
-	// If true, includes current time range in the link as query params
-	KeepTime bool `json:"keepTime"`
+	TargetBlank *bool `json:"targetBlank,omitempty"`
 }
 
-// NewDashboardLink creates a new DashboardLink object.
-func NewDashboardLink() *DashboardLink {
-	return &DashboardLink{
-		AsDropdown:  false,
-		TargetBlank: false,
-		IncludeVars: false,
-		KeepTime:    false,
+// NewDataLink creates a new DataLink object.
+func NewDataLink() *DataLink {
+	return &DataLink{
+		TargetBlank: (func(input bool) *bool { return &input })(false),
 	}
 }
 
@@ -514,7 +476,7 @@ type Panel struct {
 	// Grid position.
 	GridPos *GridPos `json:"gridPos,omitempty"`
 	// Panel links.
-	Links []DashboardLink `json:"links,omitempty"`
+	Links []DataLink `json:"links,omitempty"`
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`
 	// Direction to repeat in if 'repeat' is set.
@@ -534,41 +496,6 @@ type Panel struct {
 	// identifier like: "40s", "3d", etc.
 	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	Interval *string `json:"interval,omitempty"`
-
-	// A library panel is a reusable panel that you can use in any dashboard.
-	// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
-	// Library panels streamline reuse of panels across multiple dashboards.
-	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
-
-	// Panel links.
-	Links []DataLink `json:"links,omitempty"`
-
-	// The maximum number of data points that the panel queries are retrieving.
-	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
-
-	// Option for repeated panels that controls max items per row
-	// Only relevant for horizontally repeated panels
-	MaxPerRow *float32 `json:"maxPerRow,omitempty"`
-
-	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
-	Options map[string]any `json:"options,omitempty"`
-
-	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
-	PluginVersion *string `json:"pluginVersion,omitempty"`
-
-	// Overrides the data source configured time-to-live for a query cache item in milliseconds
-	QueryCachingTTL *float32 `json:"queryCachingTTL,omitempty"`
-
-	// Name of template variable to repeat for.
-	Repeat *string `json:"repeat,omitempty"`
-
-	// Direction to repeat in if 'repeat' is set.
-	// `h` for horizontal, `v` for vertical.
-	RepeatDirection *PanelRepeatDirection `json:"repeatDirection,omitempty"`
-
-	// Depends on the panel plugin. See the plugin documentation for details.
-	Targets []Target `json:"targets,omitempty"`
-
 	// Overrides the relative time range for individual panels,
 	// which causes them to be different than what is selected in
 	// the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different
@@ -852,6 +779,48 @@ type AnnotationContainer struct {
 // NewAnnotationContainer creates a new AnnotationContainer object.
 func NewAnnotationContainer() *AnnotationContainer {
 	return &AnnotationContainer{}
+}
+
+// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+type DashboardLinkType string
+
+const (
+	DashboardLinkTypeLink       DashboardLinkType = "link"
+	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
+)
+
+// Links with references to other dashboards or external resources
+type DashboardLink struct {
+	// Title to display with the link
+	Title string `json:"title"`
+	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+	Type DashboardLinkType `json:"type"`
+	// Icon name to be displayed with the link
+	Icon string `json:"icon"`
+	// Tooltip to display when the user hovers their mouse over it
+	Tooltip string `json:"tooltip"`
+	// Link URL. Only required/valid if the type is link
+	Url *string `json:"url,omitempty"`
+	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+	Tags []string `json:"tags"`
+	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+	AsDropdown bool `json:"asDropdown"`
+	// If true, the link will be opened in a new tab
+	TargetBlank bool `json:"targetBlank"`
+	// If true, includes current template variables values in the link as query params
+	IncludeVars bool `json:"includeVars"`
+	// If true, includes current time range in the link as query params
+	KeepTime bool `json:"keepTime"`
+}
+
+// NewDashboardLink creates a new DashboardLink object.
+func NewDashboardLink() *DashboardLink {
+	return &DashboardLink{
+		AsDropdown:  false,
+		TargetBlank: false,
+		IncludeVars: false,
+		KeepTime:    false,
+	}
 }
 
 // A dashboard snapshot shares an interactive dashboard publicly.
