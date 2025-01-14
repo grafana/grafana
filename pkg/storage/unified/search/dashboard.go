@@ -346,10 +346,10 @@ func DashboardFields() []string {
 		DASHBOARD_TRANSFORMATIONS,
 	}
 
-	return append(baseFields, SprinklesFields()...)
+	return append(baseFields, UsageInsightsFields()...)
 }
 
-func SprinklesFields() []string {
+func UsageInsightsFields() []string {
 	return []string{
 		DASHBOARD_VIEWS_LAST_1_DAYS,
 		DASHBOARD_VIEWS_LAST_7_DAYS,
