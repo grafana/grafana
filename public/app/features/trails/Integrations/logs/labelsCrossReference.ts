@@ -72,6 +72,7 @@ async function hasMatchingLabels(datasourceUid: string, filters: AdHocVariableFi
     })
   );
 
+  // If any of the filters have no matching values, return false
   return results.every(Boolean);
 }
 
