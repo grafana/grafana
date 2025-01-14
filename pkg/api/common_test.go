@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -271,7 +270,7 @@ func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 		Cfg:             cfg,
 		Features:        features,
 		License:         &licensing.OSSLicensingService{},
-		AccessControl:   acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		AccessControl:   acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
 		authInfoService: &authinfotest.FakeService{
 			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
@@ -314,7 +313,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	}
 
 	if hs.AccessControl == nil {
-		hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+		hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	}
 
 	hs.registerRoutes()

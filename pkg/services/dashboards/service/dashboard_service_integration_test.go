@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -884,7 +883,6 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			foldertest.NewFakeService(),
 			folder.NewFakeStore(),
 			nil,
-			zanzana.NewNoopClient(),
 			nil,
 			nil,
 			nil,
@@ -956,7 +954,6 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
-		zanzana.NewNoopClient(),
 		nil,
 		nil,
 		nil,
@@ -987,7 +984,6 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
-		zanzana.NewNoopClient(),
 		nil,
 		nil,
 		nil,
@@ -1037,7 +1033,6 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
-		zanzana.NewNoopClient(),
 		nil,
 		nil,
 		nil,
@@ -1094,7 +1089,6 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
-		zanzana.NewNoopClient(),
 		nil,
 		nil,
 		nil,

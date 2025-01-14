@@ -19,7 +19,6 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardsservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -59,12 +58,12 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+		ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
 	require.NoError(t, err)
 
 	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc)
@@ -240,13 +239,13 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+		ac := acimpl.ProvideAccessControl(features)
 		fStore := folderimpl.ProvideStore(sql)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+			ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
 		require.NoError(t, err)
 
 		cfg.AnnotationMaximumTagsLength = 60

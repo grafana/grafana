@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -326,7 +325,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(), folder.NewFakeStore(), nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil,
+		foldertest.NewFakeService(), folder.NewFakeStore(), nil, nil, nil, nil, quotatest.New(false, nil), nil,
 	)
 	require.NoError(t, err)
 

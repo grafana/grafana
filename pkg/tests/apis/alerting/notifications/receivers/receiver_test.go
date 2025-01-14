@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -864,7 +863,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	admin := org.Admin
 	adminClient := newClient(t, helper.Org1.Admin)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -1164,7 +1163,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
@@ -1474,7 +1473,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
