@@ -101,6 +101,17 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Indices: []*migrator.Index{},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: TableNameEncryptedValue,
+		Columns: []*migrator.Column{
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
+			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{},
+	})
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
