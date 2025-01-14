@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
@@ -54,6 +56,12 @@ func TestIntegrationServer(t *testing.T) {
 		testList(t, srv)
 	})
 
+	t.Run("test list streaming", func(t *testing.T) {
+		srv.cfg.UseStreamedListObjects = true
+		testList(t, srv)
+		srv.cfg.UseStreamedListObjects = false
+	})
+
 	t.Run("test batch check", func(t *testing.T) {
 		testBatchCheck(t, srv)
 	})
@@ -101,4 +109,14 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	})
 	require.NoError(t, err)
 	return srv
+}
+
+func newContextWithNamespace() context.Context {
+	ctx := context.Background()
+	ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+		Rest: authnlib.AccessTokenClaims{
+			Namespace: "*",
+		},
+	}))
+	return ctx
 }

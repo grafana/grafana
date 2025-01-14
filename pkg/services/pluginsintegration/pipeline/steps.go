@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -57,7 +56,7 @@ func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.P
 
 	ctxLogger := r.log.FromContext(ctx)
 
-	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, pfs.Type(p.Type), p.IAM)
+	s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, string(p.Type), p.IAM)
 	if err != nil {
 		ctxLogger.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 		span.SetStatus(codes.Error, fmt.Sprintf("could not register external service: %v", err))
@@ -122,9 +121,9 @@ func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*
 	return p, nil
 }
 
-// ReportBuildMetrics reports build information for all plugins, except core and bundled plugins.
+// ReportBuildMetrics reports build information for all plugins, except core plugins.
 func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if !p.IsCorePlugin() && !p.IsBundledPlugin() {
+	if !p.IsCorePlugin() {
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 

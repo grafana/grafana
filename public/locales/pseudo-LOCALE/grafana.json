@@ -3216,6 +3216,12 @@
     "url-column-header": "Ŝŉäpşĥőŧ ūřľ",
     "view-button": "Vįęŵ"
   },
+  "table": {
+    "container": {
+      "show-all-series": "Ŝĥőŵ äľľ čőľūmŉş",
+      "show-only-series": "Ŝĥőŵįŉģ őŉľy {{MAX_NUMBER_OF_COLUMNS}} čőľūmŉş"
+    }
+  },
   "tag-filter": {
     "clear-button": "Cľęäř ŧäģş",
     "loading": "Ŀőäđįŉģ...",
@@ -3320,6 +3326,7 @@
     },
     "metric-select": {
       "filter-by": "Fįľŧęř þy",
+      "new-badge": "Ńęŵ",
       "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
     },
     "recent-metrics": {

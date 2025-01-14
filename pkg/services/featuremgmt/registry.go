@@ -715,6 +715,12 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
+			Name:        "kubernetesFoldersServiceV2",
+			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:        "grafanaAPIServerTestingWithExperimentalAPIs",
 			Description: "Facilitate integration testing of experimental APIs",
 			Stage:       FeatureStageExperimental,
@@ -1376,14 +1382,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "cloudwatchMetricInsightsCrossAccount",
-			Description:  "Enables cross account observability for Cloudwatch Metric Insights query builder",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        awsDatasourcesSquad,
-			FrontendOnly: true,
-			Expression:   "true",
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.",
 			Stage:       FeatureStageDeprecated,
@@ -1720,6 +1718,37 @@ var (
 			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
+		},
+		{
+			Name:           "teamHttpHeadersMimir",
+			Description:    "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
+			Stage:          FeatureStageExperimental,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
+			Owner:          identityAccessTeam,
+		},
+		{
+			Name:         "ABTestFeatureToggleA",
+			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "ABTestFeatureToggleB",
+			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:           "queryLibraryDashboards",
+			Description:    "Enables Query Library feature in Dashboards",
+			Stage:          FeatureStageExperimental,
+			Owner:          grafanaFrontendPlatformSquad,
+			AllowSelfServe: false,
 		},
 	}
 )
