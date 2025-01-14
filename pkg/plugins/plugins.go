@@ -494,19 +494,14 @@ func (p *Plugin) IsCorePlugin() bool {
 	return p.Class == ClassCore
 }
 
-func (p *Plugin) IsBundledPlugin() bool {
-	return p.Class == ClassBundled
-}
-
 func (p *Plugin) IsExternalPlugin() bool {
-	return !p.IsCorePlugin() && !p.IsBundledPlugin()
+	return !p.IsCorePlugin()
 }
 
 type Class string
 
 const (
 	ClassCore     Class = "core"
-	ClassBundled  Class = "bundled"
 	ClassExternal Class = "external"
 	ClassCDN      Class = "cdn"
 )

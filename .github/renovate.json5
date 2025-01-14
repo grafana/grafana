@@ -19,7 +19,7 @@
     "nx"
   ],
   includePaths: ["package.json", "packages/**", "public/app/plugins/**"],
-  ignorePaths: ["emails/**", "plugins-bundled/**", "**/mocks/**"],
+  ignorePaths: ["emails/**", "**/mocks/**"],
   labels: ["area/frontend", "dependencies", "no-changelog"],
   postUpdateOptions: ["yarnDedupeHighest"],
   packageRules: [
