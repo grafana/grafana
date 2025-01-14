@@ -26,6 +26,7 @@ type CommandLine interface {
 	PluginDirectory() string
 	PluginRepoURL() string
 	PluginURL() string
+	GcomToken() string
 }
 
 type ApiClient interface {
@@ -90,6 +91,24 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 	}
 	// fallback to default value
 	return c.String("repo")
+}
+
+func (c *ContextCommandLine) GcomToken() string {
+	if c.ConfigFile() != "" {
+		configOptions := strings.Split(c.String("configOverrides"), " ")
+		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+			Config:   c.ConfigFile(),
+			HomePath: c.HomePath(),
+			Args:     append(configOptions, c.Args().Slice()...),
+		})
+
+		if err != nil {
+			logger.Debug("Could not parse config file", err)
+		}
+		return cfg.GrafanaComSSOAPIToken
+	}
+
+	return ""
 }
 
 func (c *ContextCommandLine) PluginURL() string {
