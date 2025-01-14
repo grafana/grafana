@@ -164,7 +164,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	obj.SetNamespace(cfg.GetNamespace())
 	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 		Name:      cfg.Name,
-		Path:      joinPathWithRef(info.Path, info.Ref),
+		Path:      info.Path, // joinPathWithRef(info.Path, info.Ref),
 		Hash:      info.Hash,
 		Timestamp: nil, // ???&info.Modified.Time,
 	})

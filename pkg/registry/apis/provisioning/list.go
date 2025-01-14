@@ -47,20 +47,11 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Has("count") {
-			rsp, err := s.lister.Stats(ctx, ns, name)
-			if err != nil {
-				responder.Error(err)
-			} else {
-				responder.Object(200, rsp)
-			}
+		rsp, err := s.lister.List(ctx, ns, name)
+		if err != nil {
+			responder.Error(err)
 		} else {
-			rsp, err := s.lister.List(ctx, ns, name)
-			if err != nil {
-				responder.Error(err)
-			} else {
-				responder.Object(200, rsp)
-			}
+			responder.Object(200, rsp)
 		}
 	}), nil
 }

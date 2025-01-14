@@ -1864,13 +1864,13 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/list": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/resources": {
       "get": {
         "tags": [
           "Repository"
         ],
-        "description": "connect GET requests to list of Repository",
-        "operationId": "getRepositoryList",
+        "description": "connect GET requests to resources of Repository",
+        "operationId": "getRepositoryResources",
         "responses": {
           "200": {
             "description": "OK",

@@ -193,7 +193,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					]
 				},
 				{
-					"name": "repositories/list",
+					"name": "repositories/resources",
 					"singularName": "",
 					"namespaced": true,
 					"kind": "ResourceList",

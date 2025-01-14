@@ -25,18 +25,27 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
-import { useGetRepositoryStatusQuery, useListJobQuery, useGetRepositoryFilesQuery, Repository } from './api';
+import {
+  useGetRepositoryStatusQuery,
+  useListJobQuery,
+  useGetRepositoryFilesQuery,
+  Repository,
+  ResourceListItem,
+  useGetRepositoryResourcesQuery,
+} from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
 
 enum TabSelection {
+  Resources = 'resources',
   Files = 'files',
   Jobs = 'jobs',
   Health = 'health',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
-  { value: TabSelection.Files, label: 'Files' },
+  { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
+  { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
   { value: TabSelection.Health, label: 'Repository health' },
 ];
@@ -47,7 +56,7 @@ export default function RepositoryStatusPage() {
 
   const location = useLocation();
   const [queryParams] = useQueryParams();
-  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Files;
+  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Resources;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
@@ -76,10 +85,12 @@ export default function RepositoryStatusPage() {
                       key={t.value}
                       label={t.label!}
                       active={tab === t.value}
+                      title={t.title}
                     />
                   ))}
                 </TabsBar>
                 <TabContent>
+                  {tab === TabSelection.Resources && <ResourcesView repo={query.data} />}
                   {tab === TabSelection.Files && <FilesView repo={query.data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
                   {tab === TabSelection.Health && <RepositoryHealth name={name} />}
@@ -98,7 +109,7 @@ interface RepoProps {
   repo: Repository;
 }
 
-type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
+type FileCell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
 
 function FilesView({ repo }: RepoProps) {
   const name = repo.metadata?.name ?? '';
@@ -113,7 +124,7 @@ function FilesView({ repo }: RepoProps) {
         id: 'path',
         header: 'Path',
         sortType: 'string',
-        cell: ({ row: { original } }: Cell<'path'>) => {
+        cell: ({ row: { original } }: FileCell<'path'>) => {
           const { path } = original;
           return <a href={`${PROVISIONING_URL}/${name}/file/${path}`}>{path}</a>;
         },
@@ -121,7 +132,7 @@ function FilesView({ repo }: RepoProps) {
       {
         id: 'size',
         header: 'Size (KB)',
-        cell: ({ row: { original } }: Cell<'size'>) => {
+        cell: ({ row: { original } }: FileCell<'size'>) => {
           const { size } = original;
           return (parseInt(size, 10) / 1024).toFixed(2);
         },
@@ -135,7 +146,7 @@ function FilesView({ repo }: RepoProps) {
       {
         id: 'actions',
         header: '',
-        cell: ({ row: { original } }: Cell<'path'>) => {
+        cell: ({ row: { original } }: FileCell<'path'>) => {
           const { path } = original;
           return (
             <Stack>
@@ -162,11 +173,85 @@ function FilesView({ repo }: RepoProps) {
       <Stack gap={2}>
         <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
       </Stack>
+      <InteractiveTable columns={columns} data={data} pageSize={25} getRowId={(f: FileDetails) => String(f.path)} />
+    </Stack>
+  );
+}
+
+type ResourceCell<T extends keyof ResourceListItem = keyof ResourceListItem> = CellProps<
+  ResourceListItem,
+  ResourceListItem[T]
+>;
+
+function ResourcesView({ repo }: RepoProps) {
+  const name = repo.metadata?.name ?? '';
+  const query = useGetRepositoryResourcesQuery({ name });
+  const [searchQuery, setSearchQuery] = useState('');
+  const data = [...(query.data?.items ?? [])].filter((Resource) =>
+    Resource.path.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const columns: Array<Column<ResourceListItem>> = useMemo(
+    () => [
+      {
+        id: 'title',
+        header: 'Title',
+        sortType: 'string',
+        cell: ({ row: { original } }: ResourceCell<'title'>) => {
+          const { resource, name, title } = original;
+          if (resource === 'dashboards') {
+            return <a href={`/d/${name}`}>{title}</a>;
+          }
+          return <span>{title}</span>;
+        },
+      },
+      {
+        id: 'path',
+        header: 'Path',
+        sortType: 'string',
+        cell: ({ row: { original } }: ResourceCell<'path'>) => {
+          const { resource, name, path } = original;
+          if (resource === 'dashboards') {
+            return <a href={`/d/${name}`}>{path}</a>;
+          }
+          return <span>{path}</span>;
+        },
+      },
+      {
+        id: 'hash',
+        header: 'Hash',
+        sortType: 'string',
+        cell: ({ row: { original } }: ResourceCell<'hash'>) => {
+          const { hash } = original;
+          return <span title={hash}>{hash.substring(0, 7)}</span>;
+        },
+      },
+      {
+        id: 'folder',
+        header: 'Folder',
+        sortType: 'string',
+      },
+    ],
+    []
+  );
+
+  if (query.isLoading) {
+    return (
+      <Stack justifyContent={'center'} alignItems={'center'}>
+        <Spinner />
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack grow={1} direction={'column'} gap={2}>
+      <Stack gap={2}>
+        <FilterInput placeholder="Search" autoFocus={true} value={searchQuery} onChange={setSearchQuery} />
+      </Stack>
       <InteractiveTable
         columns={columns}
         data={data}
         pageSize={25}
-        getRowId={(file: FileDetails) => String(file.hash)}
+        getRowId={(r: ResourceListItem) => String(r.path)}
       />
     </Stack>
   );

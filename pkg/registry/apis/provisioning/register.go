@@ -205,7 +205,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		getter:  b,
 		parsers: b.parsers,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("list")] = &listConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.lister,
 	}

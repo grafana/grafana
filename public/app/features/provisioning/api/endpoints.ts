@@ -167,9 +167,9 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      getRepositoryList: build.query<GetRepositoryListResponse, GetRepositoryListArg>({
+      getRepositoryResources: build.query<GetRepositoryResourcesResponse, GetRepositoryResourcesArg>({
         query: (queryArg) => ({
-          url: `/repositories/${queryArg.name}/list`,
+          url: `/repositories/${queryArg.name}/resources`,
         }),
         providesTags: ['Repository'],
       }),
@@ -334,8 +334,8 @@ export type GetRepositoryHistoryWithPathArg = {
   path: string;
   ref?: string;
 };
-export type GetRepositoryListResponse = ResourceList;
-export type GetRepositoryListArg = {
+export type GetRepositoryResourcesResponse = ResourceList;
+export type GetRepositoryResourcesArg = {
   name: string;
 };
 export type GetRepositoryStatusResponse = Repository;
@@ -651,7 +651,7 @@ export const {
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
-  useGetRepositoryListQuery,
+  useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
   useCreateRepositorySyncMutation,
