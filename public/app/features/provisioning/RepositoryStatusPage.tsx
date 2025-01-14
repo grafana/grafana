@@ -25,6 +25,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
+import { ExportToRepository } from './ExportToRepository';
 import {
   useGetRepositoryStatusQuery,
   useListJobQuery,
@@ -41,6 +42,7 @@ enum TabSelection {
   Files = 'files',
   Jobs = 'jobs',
   Health = 'health',
+  Export = 'export',
 }
 
 const tabInfo: SelectableValue<TabSelection> = [
@@ -48,6 +50,7 @@ const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
   { value: TabSelection.Health, label: 'Repository health' },
+  { value: TabSelection.Export, label: 'Export' },
 ];
 
 export default function RepositoryStatusPage() {
@@ -94,6 +97,7 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Files && <FilesView repo={query.data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
                   {tab === TabSelection.Health && <RepositoryHealth name={name} />}
+                  {tab === TabSelection.Export && <ExportToRepository repository={query.data} />}
                 </TabContent>
               </>
             ) : (
