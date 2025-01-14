@@ -1592,8 +1592,8 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "exploreMetricsRemoveOverviewTab",
-			Description:  "Remove overview tab from selected metric view.",
+			Name:         "exploreMetricsEnableLegacyOverviewTab",
+			Description:  "Enables the Overview tab in the selected metric view.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
 			FrontendOnly: true,
