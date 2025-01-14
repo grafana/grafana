@@ -2,9 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { Team } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
-
-import { Team } from '../../types';
 
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
