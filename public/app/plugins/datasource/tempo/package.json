@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@grafana/plugin-configs": "11.6.0-pre",
-    "@rspack/cli": "^1.1.5",
+    "@rspack/cli": "1.2.0-beta.0",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.2.0",

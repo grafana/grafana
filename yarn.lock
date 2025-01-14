@@ -2746,8 +2746,7 @@ __metadata:
     "@grafana/schema": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
     "@kusto/monaco-kusto": "npm:^10.0.0"
-    "@rspack/cli": "npm:^1.1.5"
-    "@rspack/core": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -2791,7 +2790,7 @@ __metadata:
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/sql": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -2820,7 +2819,7 @@ __metadata:
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/schema": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -2861,7 +2860,7 @@ __metadata:
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/schema": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -2901,7 +2900,7 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -2944,7 +2943,7 @@ __metadata:
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/sql": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -2975,7 +2974,7 @@ __metadata:
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/sql": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -3004,7 +3003,7 @@ __metadata:
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/schema": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -3039,7 +3038,7 @@ __metadata:
     "@grafana/runtime": "npm:11.6.0-pre"
     "@grafana/schema": "npm:11.6.0-pre"
     "@grafana/ui": "npm:11.6.0-pre"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -3093,7 +3092,7 @@ __metadata:
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.28.0"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -3144,7 +3143,7 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -3540,7 +3539,8 @@ __metadata:
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
+    "@rspack/core": "npm:1.2.0-beta.0"
     "@swc/core": "npm:1.10.12"
     "@types/eslint": "npm:9.6.1"
     eslint: "npm:9.19.0"
@@ -5362,39 +5362,49 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@module-federation/runtime-tools@npm:0.5.1":
-  version: 0.5.1
-  resolution: "@module-federation/runtime-tools@npm:0.5.1"
-  dependencies:
-    "@module-federation/runtime": "npm:0.5.1"
-    "@module-federation/webpack-bundler-runtime": "npm:0.5.1"
-  checksum: 10/3c88a7ac45b369e82ccea104db952ab81709a11733b602cf5f1d35b299d1d2f0ce679afc0fd4105386345e727a8f67e141480f708f244fa8c40f898a917c694b
+"@module-federation/error-codes@npm:0.8.4":
+  version: 0.8.4
+  resolution: "@module-federation/error-codes@npm:0.8.4"
+  checksum: 10/1550fccd7ff88f0e23b83717ff45784298b65300482c234a1347aefc4bc6761e222abb81eb0f8a0369d84e032ecdbc2d742811916ed0146489391802cba877bb
   languageName: node
   linkType: hard
 
-"@module-federation/runtime@npm:0.5.1":
-  version: 0.5.1
-  resolution: "@module-federation/runtime@npm:0.5.1"
+"@module-federation/runtime-tools@npm:0.8.4":
+  version: 0.8.4
+  resolution: "@module-federation/runtime-tools@npm:0.8.4"
   dependencies:
-    "@module-federation/sdk": "npm:0.5.1"
-  checksum: 10/c5b998fdbf6c8ceee2f204d501f8cbe8b4356e4d0a03e767c49107ff6b2a11a077bb4fd17d042dfb050d483eca1baf9b50663e53d3ee9bd8148865be3bb63dcc
+    "@module-federation/runtime": "npm:0.8.4"
+    "@module-federation/webpack-bundler-runtime": "npm:0.8.4"
+  checksum: 10/a1b38be13e849c81319bd7e6070fd6f335f146ae372d7eff3e244ad47f7c058ec030bb2502e069bc5ac347fb90e1b37315d2b43233c927f8685d688a9b40b897
   languageName: node
   linkType: hard
 
-"@module-federation/sdk@npm:0.5.1":
-  version: 0.5.1
-  resolution: "@module-federation/sdk@npm:0.5.1"
-  checksum: 10/7569f53f7e0d64ecfb57750d44dac93ba267f35b18921ff84ef2cc12a600690a28460cb2a5b9f2a3e0218b5e45879c16ab980c48930f82065f2c27f476ac3c6e
+"@module-federation/runtime@npm:0.8.4":
+  version: 0.8.4
+  resolution: "@module-federation/runtime@npm:0.8.4"
+  dependencies:
+    "@module-federation/error-codes": "npm:0.8.4"
+    "@module-federation/sdk": "npm:0.8.4"
+  checksum: 10/57f702afa22ae4f497fd8f2542ad1c4ab6aeda2b6ddc3fea74b74fb4f69ddac04bdf5e155e699a8d6a99bda59a8227b955fecf13492b967873121797553fc0d2
   languageName: node
   linkType: hard
 
-"@module-federation/webpack-bundler-runtime@npm:0.5.1":
-  version: 0.5.1
-  resolution: "@module-federation/webpack-bundler-runtime@npm:0.5.1"
+"@module-federation/sdk@npm:0.8.4":
+  version: 0.8.4
+  resolution: "@module-federation/sdk@npm:0.8.4"
   dependencies:
-    "@module-federation/runtime": "npm:0.5.1"
-    "@module-federation/sdk": "npm:0.5.1"
-  checksum: 10/ba09e67a6d8f49a88a1660fbd2553de0d6a3524064cd12870688c79a04ac139ed8faf1657f8f805008b29c56db7c0254b64c0793ffc96d522ab1177d28a365bf
+    isomorphic-rslog: "npm:0.0.6"
+  checksum: 10/9b83139e8de0bb2bbb143d6a870aa10d81b740d2b1363bf56448ba0b61bd2d1c2328b9b936a1aff1975359fe8689cdac528b7f7ae60fd6d288d33823c39afc31
+  languageName: node
+  linkType: hard
+
+"@module-federation/webpack-bundler-runtime@npm:0.8.4":
+  version: 0.8.4
+  resolution: "@module-federation/webpack-bundler-runtime@npm:0.8.4"
+  dependencies:
+    "@module-federation/runtime": "npm:0.8.4"
+    "@module-federation/sdk": "npm:0.8.4"
+  checksum: 10/d4336e1408c1006e518adb24b3165201e770ac14844f6ea892c626c1d65a9554f53d96ee01cb833f60813a952a28fd23703614ffa0f23b7fdd1dd6f16a269002
   languageName: node
   linkType: hard
 
@@ -7449,82 +7459,82 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rspack/binding-darwin-arm64@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-darwin-arm64@npm:1.1.5"
+"@rspack/binding-darwin-arm64@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-darwin-arm64@npm:1.2.0-beta.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rspack/binding-darwin-x64@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-darwin-x64@npm:1.1.5"
+"@rspack/binding-darwin-x64@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-darwin-x64@npm:1.2.0-beta.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-arm64-gnu@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-linux-arm64-gnu@npm:1.1.5"
+"@rspack/binding-linux-arm64-gnu@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-linux-arm64-gnu@npm:1.2.0-beta.0"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-arm64-musl@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-linux-arm64-musl@npm:1.1.5"
+"@rspack/binding-linux-arm64-musl@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-linux-arm64-musl@npm:1.2.0-beta.0"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-x64-gnu@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-linux-x64-gnu@npm:1.1.5"
+"@rspack/binding-linux-x64-gnu@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-linux-x64-gnu@npm:1.2.0-beta.0"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-x64-musl@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-linux-x64-musl@npm:1.1.5"
+"@rspack/binding-linux-x64-musl@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-linux-x64-musl@npm:1.2.0-beta.0"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rspack/binding-win32-arm64-msvc@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-win32-arm64-msvc@npm:1.1.5"
+"@rspack/binding-win32-arm64-msvc@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-win32-arm64-msvc@npm:1.2.0-beta.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rspack/binding-win32-ia32-msvc@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-win32-ia32-msvc@npm:1.1.5"
+"@rspack/binding-win32-ia32-msvc@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-win32-ia32-msvc@npm:1.2.0-beta.0"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@rspack/binding-win32-x64-msvc@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding-win32-x64-msvc@npm:1.1.5"
+"@rspack/binding-win32-x64-msvc@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding-win32-x64-msvc@npm:1.2.0-beta.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@rspack/binding@npm:1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/binding@npm:1.1.5"
+"@rspack/binding@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/binding@npm:1.2.0-beta.0"
   dependencies:
-    "@rspack/binding-darwin-arm64": "npm:1.1.5"
-    "@rspack/binding-darwin-x64": "npm:1.1.5"
-    "@rspack/binding-linux-arm64-gnu": "npm:1.1.5"
-    "@rspack/binding-linux-arm64-musl": "npm:1.1.5"
-    "@rspack/binding-linux-x64-gnu": "npm:1.1.5"
-    "@rspack/binding-linux-x64-musl": "npm:1.1.5"
-    "@rspack/binding-win32-arm64-msvc": "npm:1.1.5"
-    "@rspack/binding-win32-ia32-msvc": "npm:1.1.5"
-    "@rspack/binding-win32-x64-msvc": "npm:1.1.5"
+    "@rspack/binding-darwin-arm64": "npm:1.2.0-beta.0"
+    "@rspack/binding-darwin-x64": "npm:1.2.0-beta.0"
+    "@rspack/binding-linux-arm64-gnu": "npm:1.2.0-beta.0"
+    "@rspack/binding-linux-arm64-musl": "npm:1.2.0-beta.0"
+    "@rspack/binding-linux-x64-gnu": "npm:1.2.0-beta.0"
+    "@rspack/binding-linux-x64-musl": "npm:1.2.0-beta.0"
+    "@rspack/binding-win32-arm64-msvc": "npm:1.2.0-beta.0"
+    "@rspack/binding-win32-ia32-msvc": "npm:1.2.0-beta.0"
+    "@rspack/binding-win32-x64-msvc": "npm:1.2.0-beta.0"
   dependenciesMeta:
     "@rspack/binding-darwin-arm64":
       optional: true
@@ -7544,7 +7554,27 @@ __metadata:
       optional: true
     "@rspack/binding-win32-x64-msvc":
       optional: true
-  checksum: 10/2e5f3f564b4651676856982df699829e3d4cfede61cf9784f80f50ca791eba5ca85b3a1899e8b905399ef472228c83611dcd6da46dd463a7cfff11a695e2fa9b
+  checksum: 10/74e3003d708d2bc07b5e9746ef584430442a9d9e58d7f2f76324d6358309e7851c206e54bb68945fb7c14483a5d99c57ea8a3d74964f0d6692319a63b370e56a
+  languageName: node
+  linkType: hard
+
+"@rspack/cli@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/cli@npm:1.2.0-beta.0"
+  dependencies:
+    "@discoveryjs/json-ext": "npm:^0.5.7"
+    "@rspack/dev-server": "npm:1.0.10"
+    colorette: "npm:2.0.19"
+    exit-hook: "npm:^4.0.0"
+    interpret: "npm:^3.1.1"
+    rechoir: "npm:^0.8.0"
+    webpack-bundle-analyzer: "npm:4.6.1"
+    yargs: "npm:17.6.2"
+  peerDependencies:
+    "@rspack/core": ^1.0.0-alpha || ^1.x
+  bin:
+    rspack: bin/rspack.js
+  checksum: 10/a703814131ea08aa3bc290a58ed33d5cb629d983857d2798377b193b012fb1d6b0448a0d3e3e94946665a7476c041a7f491a37404abb9f5bd5c8d923a8a77970
   languageName: node
   linkType: hard
 
@@ -7569,12 +7599,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rspack/core@npm:^1.1.5":
-  version: 1.1.5
-  resolution: "@rspack/core@npm:1.1.5"
+"@rspack/core@npm:1.2.0-beta.0":
+  version: 1.2.0-beta.0
+  resolution: "@rspack/core@npm:1.2.0-beta.0"
   dependencies:
-    "@module-federation/runtime-tools": "npm:0.5.1"
-    "@rspack/binding": "npm:1.1.5"
+    "@module-federation/runtime-tools": "npm:0.8.4"
+    "@rspack/binding": "npm:1.2.0-beta.0"
     "@rspack/lite-tapable": "npm:1.0.1"
     caniuse-lite: "npm:^1.0.30001616"
   peerDependencies:
@@ -7582,7 +7612,26 @@ __metadata:
   peerDependenciesMeta:
     "@swc/helpers":
       optional: true
-  checksum: 10/e195ebd1cff46b060c1cf9474046e3f6249f1cc01ced24e308f54be832a8da821d7f1ca34d5b9f4d8f2fa5d7a61529517453dd35b8725a32d34c22951f1015f7
+  checksum: 10/ef656706dda651e9f761273a40b6b2ef38508efb2f6f84fd687bc861f20e1baac03d87482b534f4448a96a6d209054c20e436d17ad823a161375653f57544b67
+  languageName: node
+  linkType: hard
+
+"@rspack/dev-server@npm:1.0.10":
+  version: 1.0.10
+  resolution: "@rspack/dev-server@npm:1.0.10"
+  dependencies:
+    chokidar: "npm:^3.6.0"
+    connect-history-api-fallback: "npm:^2.0.0"
+    express: "npm:^4.19.2"
+    http-proxy-middleware: "npm:^2.0.6"
+    mime-types: "npm:^2.1.35"
+    p-retry: "npm:4.6.2"
+    webpack-dev-middleware: "npm:^7.4.2"
+    webpack-dev-server: "npm:5.0.4"
+    ws: "npm:^8.16.0"
+  peerDependencies:
+    "@rspack/core": "*"
+  checksum: 10/c8354f1c71bc790cb3f9d9496a674e1b18bbd9c2c70bded81369187a5593469141c608fbc037f35fc9d628b2616f6266eaecc626fb07797a2d79d3a1ecb58598
   languageName: node
   linkType: hard
 
@@ -9463,7 +9512,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@rspack/cli": "npm:^1.1.5"
+    "@rspack/cli": "npm:1.2.0-beta.0"
     "@types/lodash": "npm:4.17.7"
     "@types/node": "npm:22.10.2"
     "@types/prismjs": "npm:1.26.4"
@@ -20812,6 +20861,13 @@ __metadata:
   version: 1.0.2
   resolution: "isomorphic-base64@npm:1.0.2"
   checksum: 10/68780627db2382bffa847990fab4f0c1aee8a89dae4acd69aa423c9de46f51ca04a1ed216eb656b33c676eb4696b177fe4379f2cbe05ccb6e6699c01db83dfa5
+  languageName: node
+  linkType: hard
+
+"isomorphic-rslog@npm:0.0.6":
+  version: 0.0.6
+  resolution: "isomorphic-rslog@npm:0.0.6"
+  checksum: 10/3845525005054dde6876e844a2a499eb715628e57d7389ff6a5dac21a482e643b8e0e3abfbb0e6ed7613720e321d17befade4b42e1c2d62fbb76103a530c9c8f
   languageName: node
   linkType: hard
 
