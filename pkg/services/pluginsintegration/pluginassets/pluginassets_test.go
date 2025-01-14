@@ -2,6 +2,7 @@ package pluginassets
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -74,10 +75,7 @@ func TestService_Calculate(t *testing.T) {
 				CreatePluginVersionCfgKey: incompatVersion,
 				// NOTE: cdn key is not set
 			}),
-			plugin: newPlugin(pluginID, withAngular(false), func(p pluginstore.Plugin) pluginstore.Plugin {
-				p.Class = plugins.ClassExternal
-				return p
-			}),
+			plugin:   newPlugin(pluginID, withAngular(false), withClass(plugins.ClassExternal)),
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
@@ -121,10 +119,7 @@ func TestService_Calculate(t *testing.T) {
 				"cdn":                     "true",
 				CreatePluginVersionCfgKey: incompatVersion,
 			}),
-			plugin: newPlugin(pluginID, withAngular(false), func(p pluginstore.Plugin) pluginstore.Plugin {
-				p.Class = plugins.ClassExternal
-				return p
-			}),
+			plugin:   newPlugin(pluginID, withAngular(false), withClass(plugins.ClassExternal)),
 			expected: plugins.LoadingStrategyFetch,
 		},
 		{
@@ -149,10 +144,7 @@ func TestService_Calculate(t *testing.T) {
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				CreatePluginVersionCfgKey: incompatVersion,
 			}),
-			plugin: newPlugin(pluginID, withAngular(false), func(p pluginstore.Plugin) pluginstore.Plugin {
-				p.Class = plugins.ClassCDN
-				return p
-			}),
+			plugin:   newPlugin(pluginID, withAngular(false), withClass(plugins.ClassCDN)),
 			expected: plugins.LoadingStrategyFetch,
 		},
 		{
@@ -187,10 +179,16 @@ func TestService_ModuleHash(t *testing.T) {
 		parentPluginID = "grafana-test-app"
 	)
 	for _, tc := range []struct {
-		name          string
-		features      *config.Features
-		store         []pluginstore.Plugin
-		plugin        pluginstore.Plugin
+		name     string
+		features *config.Features
+		store    []pluginstore.Plugin
+
+		// Can be used to configure plugin's class
+		// cdn class = loaded from CDN with no files on disk
+		// external class = files on disk but served from CDN only if cdn=true
+		plugin pluginstore.Plugin
+
+		// When true, set cdn=true in config
 		cdn           bool
 		expModuleHash string
 	}{
@@ -202,18 +200,28 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 		{
-			name: "feature flag on with cdn on should return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+				withClass(plugins.ClassCDN),
 			),
 			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
 		},
 		{
-			name: "feature flag on with cdn off should return module hash",
+			plugin: newPlugin(
+				pluginID,
+				withSignatureStatus(plugins.SignatureStatusValid),
+				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+				withClass(plugins.ClassExternal),
+			),
+			cdn:           true,
+			features:      &config.Features{SriChecksEnabled: true},
+			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
+		},
+		{
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -221,21 +229,20 @@ func TestService_ModuleHash(t *testing.T) {
 			),
 			cdn:           false,
 			features:      &config.Features{SriChecksEnabled: true},
-			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
+			expModuleHash: "",
 		},
 		{
-			name: "feature flag off with cdn on should not return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+				withClass(plugins.ClassCDN),
 			),
 			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: false},
 			expModuleHash: "",
 		},
 		{
-			name: "feature flag off with cdn off should not return module hash",
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -254,6 +261,7 @@ func TestService_ModuleHash(t *testing.T) {
 					parentPluginID,
 					withSignatureStatus(plugins.SignatureStatusValid),
 					withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested"))),
+					withClass(plugins.ClassCDN),
 				),
 			},
 			plugin: newPlugin(
@@ -261,8 +269,9 @@ func TestService_ModuleHash(t *testing.T) {
 				withSignatureStatus(plugins.SignatureStatusValid),
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested", "datasource"))),
 				withParent(parentPluginID),
+				withClass(plugins.ClassCDN),
 			),
-			cdn:           false,
+			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "04d70db091d96c4775fb32ba5a8f84cc22893eb43afdb649726661d4425c6711"),
 		},
@@ -275,6 +284,7 @@ func TestService_ModuleHash(t *testing.T) {
 					parentPluginID,
 					withSignatureStatus(plugins.SignatureStatusValid),
 					withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested"))),
+					withClass(plugins.ClassCDN),
 				),
 			},
 			plugin: newPlugin(
@@ -282,8 +292,9 @@ func TestService_ModuleHash(t *testing.T) {
 				withSignatureStatus(plugins.SignatureStatusValid),
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested", "panels", "one"))),
 				withParent(parentPluginID),
+				withClass(plugins.ClassCDN),
 			),
-			cdn:           false,
+			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "cbd1ac2284645a0e1e9a8722a729f5bcdd2b831222728709c6360beecdd6143f"),
 		},
@@ -297,12 +308,14 @@ func TestService_ModuleHash(t *testing.T) {
 					"grand-parent-app",
 					withSignatureStatus(plugins.SignatureStatusValid),
 					withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-deeply-nested"))),
+					withClass(plugins.ClassCDN),
 				),
 				newPlugin(
 					"parent-datasource",
 					withSignatureStatus(plugins.SignatureStatusValid),
 					withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-deeply-nested", "datasource"))),
 					withParent("grand-parent-app"),
+					withClass(plugins.ClassCDN),
 				),
 			},
 			plugin: newPlugin(
@@ -310,8 +323,9 @@ func TestService_ModuleHash(t *testing.T) {
 				withSignatureStatus(plugins.SignatureStatusValid),
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-deeply-nested", "datasource", "panels", "one"))),
 				withParent("parent-datasource"),
+				withClass(plugins.ClassCDN),
 			),
-			cdn:           false,
+			cdn:           true,
 			features:      &config.Features{SriChecksEnabled: true},
 			expModuleHash: newSRIHash(t, "cbd1ac2284645a0e1e9a8722a729f5bcdd2b831222728709c6360beecdd6143f"),
 		},
@@ -351,12 +365,24 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: "",
 		},
 	} {
+		if tc.name == "" {
+			var expS string
+			if tc.expModuleHash == "" {
+				expS = "should not return module hash"
+			} else {
+				expS = "should return module hash"
+			}
+			tc.name = fmt.Sprintf("feature=%v, cdn_config=%v, class=%v %s", tc.features.SriChecksEnabled, tc.cdn, tc.plugin.Class, expS)
+		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			var pluginSettings setting.PluginSettings
 			if tc.cdn {
 				pluginSettings = newPluginSettings(pluginID, map[string]string{
 					"cdn": "true",
 				})
+			} else {
+				require.NotEqual(t, plugins.ClassCDN, tc.plugin.Class, "plugin should not have the CDN class because CDN is disabled")
 			}
 			features := tc.features
 			if features == nil {
@@ -413,6 +439,7 @@ func TestService_ModuleHash_Cache(t *testing.T) {
 			withInfo(plugins.Info{Version: "1.0.0"}),
 			withSignatureStatus(plugins.SignatureStatusValid),
 			withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+			withClass(plugins.ClassCDN),
 		)
 		k := svc.moduleHashCacheKey(pV1)
 
@@ -434,6 +461,7 @@ func TestService_ModuleHash_Cache(t *testing.T) {
 				withSignatureStatus(plugins.SignatureStatusValid),
 				// different fs for different hash
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested"))),
+				withClass(plugins.ClassCDN),
 			)
 			mhV2 := svc.ModuleHash(context.Background(), pV2)
 			require.NotEqual(t, mhV2, mhV1, "different version should have different hash")
@@ -518,6 +546,13 @@ func withAngular(angular bool) func(p pluginstore.Plugin) pluginstore.Plugin {
 func withParent(parentID string) func(p pluginstore.Plugin) pluginstore.Plugin {
 	return func(p pluginstore.Plugin) pluginstore.Plugin {
 		p.Parent = &pluginstore.ParentPlugin{ID: parentID}
+		return p
+	}
+}
+
+func withClass(class plugins.Class) func(p pluginstore.Plugin) pluginstore.Plugin {
+	return func(p pluginstore.Plugin) pluginstore.Plugin {
+		p.Class = class
 		return p
 	}
 }
