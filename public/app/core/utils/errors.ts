@@ -19,3 +19,37 @@ export function getMessageFromError(err: unknown): string {
 
   return JSON.stringify(err);
 }
+
+export function getStatusFromError(err: unknown): number | undefined {
+  if (typeof err === 'string') {
+    return undefined;
+  }
+
+  if (err) {
+    if (err instanceof Error) {
+      return undefined;
+    } else if (isFetchError(err)) {
+      return err.status;
+    }
+  }
+
+  return undefined;
+}
+
+export function getMessageIdFromError(err: unknown): string | undefined {
+  if (typeof err === 'string') {
+    return undefined;
+  }
+
+  if (err) {
+    if (err instanceof Error) {
+      return undefined;
+    } else if (isFetchError(err)) {
+      return err.data?.messageId;
+    } else if (err.hasOwnProperty('messageId')) {
+      return (err as any).messageId;
+    }
+  }
+
+  return undefined;
+}

@@ -9,6 +9,7 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
@@ -48,15 +49,23 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type]);
 
   if (!dashboard) {
+    let errorElement;
+    if (loadError) {
+      if (loadError.status === 404) {
+        errorElement = <EntityNotFound entity="Dashboard" />;
+      } else {
+        errorElement = (
+          <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-not-found">
+            {loadError.message}
+          </Alert>
+        );
+      }
+    }
     return (
       <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
         <Box paddingY={4} display="flex" direction="column" alignItems="center">
           {isLoading && <PageLoader />}
-          {loadError && (
-            <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-not-found">
-              {loadError}
-            </Alert>
-          )}
+          {errorElement}
         </Box>
       </Page>
     );

@@ -1,8 +1,13 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
+import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Alert, Box } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScenePage';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardRoutes } from 'app/types';
@@ -46,8 +51,16 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       return null;
     }
 
-    return stateManager.fetchDashboard({ route: props.route.routeName as DashboardRoutes, uid: params.uid ?? '' });
+    return stateManager.fetchDashboard({
+      route: props.route.routeName as DashboardRoutes,
+      uid: params.uid ?? '',
+      type: params.type,
+    });
   }, [params.uid, props.route.routeName]);
+
+  if (dashboard.error) {
+    return <DashboardPageProxyError error={dashboard.error} />;
+  }
 
   if (dashboard.loading) {
     return null;
@@ -73,3 +86,21 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
 }
 
 export default DashboardPageProxy;
+
+function DashboardPageProxyError({ error }: { error: Error }) {
+  const status = getStatusFromError(error);
+  const message = getMessageFromError(error);
+  return (
+    <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
+      <Box paddingY={4} display="flex" direction="column" alignItems="center">
+        {status === 404 ? (
+          <EntityNotFound entity="Dashboard" />
+        ) : (
+          <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-not-found">
+            {message}
+          </Alert>
+        )}
+      </Box>
+    </Page>
+  );
+}
