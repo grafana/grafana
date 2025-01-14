@@ -79,7 +79,10 @@ func (s *Service) testStreamHandler(rw http.ResponseWriter, req *http.Request) {
 	ctxLogger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	writeError := func(code int, message string) {
-		rw.Header().Set("Content-Type", "text/plain")
+		header := rw.Header()
+		header.Set("Cache-Control", "no-store")
+		header.Set("Content-Type", "text/plain")
+		header.Set("X-Content-Type-Options", "nosniff")
 		rw.WriteHeader(code)
 		_, _ = rw.Write([]byte(message))
 	}
