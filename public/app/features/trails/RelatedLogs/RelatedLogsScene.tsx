@@ -68,7 +68,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   private setLogsDataSourceVar() {
     const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
     Promise.all(this.state.connectors.map((connector) => connector.getDataSources(selectedMetric))).then((results) => {
-      const lokiDataSources = results.flat();
+      const lokiDataSources = results.flat().slice(0, 10); // limit to the first ten matching Loki data sources
       const logsPanelContainer = sceneGraph.findByKeyAndType(this, LOGS_PANEL_CONTAINER_KEY, SceneFlexItem);
 
       if (!lokiDataSources?.length) {
