@@ -19,6 +19,7 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { FetchError } from '@grafana/runtime';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
@@ -28,6 +29,17 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jes
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
     loadSnapshot: loadSnapshotMock,
+  } as unknown as DashboardLoaderSrv);
+  return loadDashboardMock;
+}
+export function setupLoadDashboardMockReject(rsp: DeepPartial<FetchError>, spy?: jest.Mock) {
+  const loadDashboardMock = (spy || jest.fn()).mockRejectedValue(rsp);
+  // const loadSnapshotMock = (spy || jest.fn()).mockResolvedValue(rsp);
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: loadDashboardMock,
+    // loadSnapshot: loadSnapshotMock,
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
 }
