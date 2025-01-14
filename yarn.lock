@@ -3151,7 +3151,7 @@ __metadata:
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.46"
     ol: "npm:7.4.0"
-    papaparse: "npm:5.4.1"
+    papaparse: "npm:5.5.1"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-use: "npm:17.6.0"
@@ -3573,7 +3573,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.1.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.1"
-    sass: "npm:1.83.1"
+    sass: "npm:1.83.4"
     sass-loader: "npm:16.0.4"
     semver: "npm:7.6.3"
     style-loader: "npm:4.0.0"
@@ -17616,7 +17616,7 @@ __metadata:
     ol: "npm:7.4.0"
     ol-ext: "npm:4.0.24"
     pluralize: "npm:^8.0.0"
-    postcss: "npm:8.4.49"
+    postcss: "npm:8.5.0"
     postcss-loader: "npm:8.1.1"
     postcss-reporter: "npm:7.1.0"
     postcss-scss: "npm:4.0.9"
@@ -17666,7 +17666,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rudder-sdk-js: "npm:2.48.43"
     rxjs: "npm:7.8.1"
-    sass: "npm:1.83.1"
+    sass: "npm:1.83.4"
     sass-loader: "npm:16.0.4"
     selecto: "npm:1.26.3"
     semver: "npm:7.6.3"
@@ -22204,7 +22204,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.7":
+"nanoid@npm:^3.3.8":
   version: 3.3.8
   resolution: "nanoid@npm:3.3.8"
   bin:
@@ -23354,10 +23354,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"papaparse@npm:5.4.1":
-  version: 5.4.1
-  resolution: "papaparse@npm:5.4.1"
-  checksum: 10/5e6dc978187182ad2efa1d264ffe73d2042cd23b8fb1dcb0b0f5c8c7c772c11e3eb4e166fb0893880ed24529a96abe9065d704cc5b4cb96abf037413cfe43788
+"papaparse@npm:5.5.1":
+  version: 5.5.1
+  resolution: "papaparse@npm:5.5.1"
+  checksum: 10/6c3b47bd316cf11936641abe5590c6fb1e5b04297d1c594965a44dba89cc0f26b4e4d61eb1933352c538a30c4915d110628d14cf4d60cef0b8245c9a26477602
   languageName: node
   linkType: hard
 
@@ -24262,14 +24262,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.4.49, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.49":
-  version: 8.4.49
-  resolution: "postcss@npm:8.4.49"
+"postcss@npm:8.5.0, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.49":
+  version: 8.5.0
+  resolution: "postcss@npm:8.5.0"
   dependencies:
-    nanoid: "npm:^3.3.7"
+    nanoid: "npm:^3.3.8"
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
-  checksum: 10/28fe1005b1339870e0a5006375ba5ac1213fd69800f79e7db09c398e074421ba6e162898e94f64942fed554037fd292db3811d87835d25ab5ef7f3c9daacb6ca
+  checksum: 10/608c77ae01eeece1c5dfa46637823f7957bd124c183faafa98944ba383e16f25747e91da83bc197d963e03cc1cc0b72a8d49c3e08822a174a9eb4ecda6b7a487
   languageName: node
   linkType: hard
 
@@ -26981,9 +26981,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.83.1":
-  version: 1.83.1
-  resolution: "sass@npm:1.83.1"
+"sass@npm:1.83.4":
+  version: 1.83.4
+  resolution: "sass@npm:1.83.4"
   dependencies:
     "@parcel/watcher": "npm:^2.4.1"
     chokidar: "npm:^4.0.0"
@@ -26994,7 +26994,7 @@ __metadata:
       optional: true
   bin:
     sass: sass.js
-  checksum: 10/ee4ea5573faddeed375479eda6ac87a6f34dc6fc5391c6cc2743993f24827f4709f950fba6ef1ad0694215a1df40d43f4ed9006327daa3743c8e3ad1979d3c32
+  checksum: 10/9a7d1c6be1a9e711a1c561d189b9816aa7715f6d0ec0b2ec181f64163788d0caaf4741924eeadce558720b58b1de0e9b21b9dae6a0d14489c4d2a142d3f3b12e
   languageName: node
   linkType: hard
 
