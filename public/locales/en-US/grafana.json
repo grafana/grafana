@@ -3216,6 +3216,12 @@
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
+  "table": {
+    "container": {
+      "show-all-series": "Show all columns",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
+    }
+  },
   "tag-filter": {
     "clear-button": "Clear tags",
     "loading": "Loading...",
