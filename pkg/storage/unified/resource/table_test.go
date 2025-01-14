@@ -323,5 +323,6 @@ func TestDecodeCell(t *testing.T) {
 
 	res, err := DecodeCell(colDef, 0, buf.Bytes())
 
+	require.NoError(t, err)
 	require.Equal(t, int64(123), res)
 }

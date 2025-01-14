@@ -491,7 +491,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	}
 
 	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
-	var fields []string
+	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
 		if slices.Contains(DashboardFields(), f) {
 			f = "fields." + f

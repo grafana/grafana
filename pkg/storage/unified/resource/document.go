@@ -237,9 +237,7 @@ func (x *searchableDocumentFields) Fields() []string {
 }
 
 func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefinition {
-	if strings.HasPrefix(name, "fields.") {
-		name = strings.TrimPrefix(name, "fields.")
-	}
+	name = strings.TrimPrefix(name, "fields.")
 
 	f, ok := x.fields[name]
 	if ok {

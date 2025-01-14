@@ -234,6 +234,7 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
 
 		val, err := resource.DecodeCell(rsp.Results.Columns[0], 0, rsp.Results.Rows[0].Cells[0])
+		require.NoError(t, err)
 		require.Equal(t, int64(25), val)
 
 		// Now look for repositories
