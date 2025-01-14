@@ -34,7 +34,6 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
   for (let i = 0; i < chars.length; i++) {
     // chars[i+1] !== undefined means the \n is not the last character
     if (chars[i] === '\n' && chars[i + 1] !== undefined) {
-      console.log(line);
       lines += 1;
       line = '';
       continue;
@@ -44,7 +43,6 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
     const metrics = ctx.measureText(testLine);
 
     if (metrics.width >= maxWidth) {
-      console.log(line, metrics.width);
       lines += 1;
       line = chars[i];
     } else {
@@ -52,7 +50,6 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
     }
   }
 
-  console.log(line);
   const height = lines * lineHeight;
 
   return {
