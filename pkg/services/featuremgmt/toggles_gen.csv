@@ -233,3 +233,4 @@ improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,
 teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,false
 ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
+queryLibraryDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
