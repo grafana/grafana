@@ -14,15 +14,10 @@ import { Spinner } from '../Spinner/Spinner';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
 
-import {
-  ComboboxOption,
-  ComboboxBaseProps,
-  AutoSizeConditionals,
-  itemToString,
-  VIRTUAL_OVERSCAN_ITEMS,
-} from './Combobox';
+import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, VIRTUAL_OVERSCAN_ITEMS } from './Combobox';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
+import { itemFilter, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
@@ -53,6 +48,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [value, options, isAsync]);
 
   const styles = useStyles2(getComboboxStyles);
+  const [inputValue, setInputValue] = useState('');
 
   const allOptionItem = useMemo(() => {
     return {
@@ -61,12 +57,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       value: ALL_OPTION_VALUE as unknown as T,
     };
   }, []);
-
   const getOptionsToSet = useCallback(() => {
     return isAsync ? [] : enableAllOption ? [allOptionItem, ...options] : options;
   }, [options, enableAllOption, allOptionItem, isAsync]);
 
-  const [items, baseSetItems] = useState(getOptionsToSet());
+  const [baseItems, baseSetItems] = useState(getOptionsToSet());
+
+  const items = useMemo(() => baseItems.filter(itemFilter(inputValue)), [baseItems, inputValue]);
   const [isOpen, setIsOpen] = useState(false);
 
   // TODO: Improve this with async
@@ -88,8 +85,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
     [selectedItems]
   );
-
-  const [inputValue, setInputValue] = useState('');
 
   const { getSelectedItemProps, getDropdownProps, removeSelectedItem } = useMultipleSelection({
     selectedItems, //initally selected items,
@@ -136,7 +131,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useCombobox.stateChangeTypes.InputBlur:
           setInputValue('');
           setIsOpen(false);
-          return changes;
         default:
           return changes;
       }
