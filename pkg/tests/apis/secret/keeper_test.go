@@ -222,4 +222,45 @@ func TestIntegrationKeeper(t *testing.T) {
 			require.Empty(t, rawList.Items)
 		})
 	})
+
+	t.Run("creating a keeper that references a securevalue that is stored in a non-SQL type Keeper returns an error", func(t *testing.T) {
+		// 1. Create a non-SQL keeper without using `secureValueName`.
+		keeperAWS := mustGenerateKeeper(t, helper, nil)
+
+		// 2. Create a secureValue that is stored in the previously created keeper (non-SQL).
+		secureValue := mustGenerateSecureValue(t, helper, keeperAWS.GetName())
+
+		// 3. Create another keeper that uses the secureValue, which fails.
+		testDataAnotherKeeper := keeperAWS.DeepCopy()
+		testDataAnotherKeeper.Object["spec"].(map[string]any)["aws"].(map[string]any)["accessKeyId"] = map[string]any{
+			"secureValueName": secureValue.GetName(),
+		}
+
+		keeperAnother, err := client.Resource.Create(ctx, testDataAnotherKeeper, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, keeperAnother)
+	})
+
+	t.Run("creating a keeper that references a securevalue that is stored in a SQL type Keeper returns no error", func(t *testing.T) {
+		// 1. Create a SQL keeper.
+		keeperSQL := mustGenerateKeeper(t, helper, map[string]any{
+			"title": "SQL Keeper",
+			"sql": map[string]any{
+				"encryption": map[string]any{"envelope": map[string]any{}},
+			},
+		})
+
+		// 2. Create a secureValue that is stored in the previously created keeper (SQL).
+		secureValue := mustGenerateSecureValue(t, helper, keeperSQL.GetName())
+
+		// 3. Create a non-SQL keeper that uses the secureValue.
+		keeperAWS := mustGenerateKeeper(t, helper, map[string]any{
+			"title": "AWS Keeper",
+			"aws": map[string]any{
+				"accessKeyId":     map[string]any{"secureValueName": secureValue.GetName()},
+				"secretAccessKey": map[string]any{"valueFromEnv": "SECRET_ACCESS_KEY_XYZ"},
+			},
+		})
+		require.NotNil(t, keeperAWS)
+	})
 }
