@@ -2662,6 +2662,9 @@
       },
       "AlertRuleEditorSettings": {
         "properties": {
+          "simplified_notifications_section": {
+            "type": "boolean"
+          },
           "simplified_query_and_expressions_section": {
             "type": "boolean"
           }
@@ -5136,23 +5139,23 @@
           "type": {
             "enum": [
               "alertmanager",
-              " dingding",
-              " discord",
-              " email",
-              " googlechat",
-              " kafka",
-              " line",
-              " opsgenie",
-              " pagerduty",
-              " pushover",
-              " sensugo",
-              " slack",
-              " teams",
-              " telegram",
-              " threema",
-              " victorops",
-              " webhook",
-              " wecom"
+              "dingding",
+              "discord",
+              "email",
+              "googlechat",
+              "kafka",
+              "line",
+              "opsgenie",
+              "pagerduty",
+              "pushover",
+              "sensugo",
+              "slack",
+              "teams",
+              "telegram",
+              "threema",
+              "victorops",
+              "webhook",
+              "wecom"
             ],
             "example": "webhook",
             "type": "string"
@@ -5225,10 +5228,6 @@
           "message"
         ],
         "type": "object"
-      },
-      "ErrorSource": {
-        "description": "ErrorSource type defines the source of the error",
-        "type": "string"
       },
       "ErrorType": {
         "title": "ErrorType models the different API error types.",
@@ -9928,6 +9927,9 @@
       },
       "RuleDiscovery": {
         "properties": {
+          "groupNextToken": {
+            "type": "string"
+          },
           "groups": {
             "items": {
               "$ref": "#/components/schemas/RuleGroup"
@@ -12718,6 +12720,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -26239,7 +26242,7 @@
             "description": "NotificationTemplates"
           }
         },
-        "summary": "Get all notification templates.",
+        "summary": "Get all notification template groups.",
         "tags": [
           "provisioning"
         ]
@@ -26250,7 +26253,7 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26282,7 +26285,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Delete a template.",
+        "summary": "Delete a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26291,7 +26294,7 @@
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26322,7 +26325,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Get a notification template.",
+        "summary": "Get a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26331,7 +26334,7 @@
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26389,7 +26392,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Updates an existing notification template.",
+        "summary": "Updates an existing notification template group.",
         "tags": [
           "provisioning"
         ]
