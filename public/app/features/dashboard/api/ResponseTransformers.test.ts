@@ -228,17 +228,27 @@ describe('ResponseTransformers', () => {
               options: [
                 {
                   selected: true,
-                  text: 'auto',
-                  value: 'auto',
+                  text: '1m',
+                  value: '1m',
                 },
                 {
                   selected: false,
-                  text: '5s',
-                  value: '5s',
+                  text: '10m',
+                  value: '10m',
+                },
+                {
+                  selected: false,
+                  text: '30m',
+                  value: '30m',
+                },
+                {
+                  selected: false,
+                  text: '1h',
+                  value: '1h',
                 },
               ],
               // @ts-expect-error
-              auto: true,
+              auto: false,
               auto_min: '1s',
               auto_count: 1,
             },
