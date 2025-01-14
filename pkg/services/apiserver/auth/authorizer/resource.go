@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type FolderLookup = func(group, resource, namespace, name string) (string, error)
@@ -32,11 +33,14 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 
 	ident, ok := claims.From(ctx)
 	if !ok {
-		return authorizer.DecisionDeny, "", errors.New("no identity found for request")
+		return authorizer.DecisionDeny, "", errors.New("no auth info found for request")
 	}
 
+	verb := attr.GetVerb()
 	folder := ""
-	if r.lookup != nil {
+
+	// Create will not (yet) have a folder -- it may be in the payload for this request
+	if r.lookup != nil && verb != utils.VerbCreate {
 		var err error
 		folder, err = r.lookup(
 			attr.GetAPIGroup(),
@@ -50,7 +54,7 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	}
 
 	res, err := r.client.Check(ctx, ident, authz.CheckRequest{
-		Verb:        attr.GetVerb(),
+		Verb:        verb,
 		Group:       attr.GetAPIGroup(),
 		Resource:    attr.GetResource(),
 		Namespace:   attr.GetNamespace(),
