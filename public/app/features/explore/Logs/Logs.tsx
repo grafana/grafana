@@ -1044,8 +1044,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
               <LogList
                 app={CoreApp.Explore}
-                logs={dedupedRows}
                 containerElement={logsContainerRef.current}
+                logs={dedupedRows}
+                wrapLogMessage={wrapLogMessage}
               />
             </div>
           )}

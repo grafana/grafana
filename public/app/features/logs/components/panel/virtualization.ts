@@ -27,21 +27,25 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
   }
 
   let lines = 1;
-  const textLines = text.split(`\n`);
-  for (const textLine of textLines) {
-    const chars = textLine.split('');
+  let line = '';
+  let chars = text.split('');
+  for (let i = 0; i < chars.length; i++) {
+    if (chars[i] === '\n') {
+      console.log(line);
+      lines += 1;
+      line = '';
+      continue;
+    }
 
-    let line = '';
-    for (let i = 0; i < chars.length; i++) {
-      const testLine = line + chars[i];
-      const metrics = ctx.measureText(testLine);
+    const testLine = line + chars[i];
+    const metrics = ctx.measureText(testLine);
 
-      if (metrics.width > maxWidth) {
-        lines += 1;
-        line = chars[i];
-      } else {
-        line = testLine;
-      }
+    if (Math.floor(metrics.width) > maxWidth) {
+      console.log(line);
+      lines += 1;
+      line = chars[i];
+    } else {
+      line = testLine;
     }
   }
 
