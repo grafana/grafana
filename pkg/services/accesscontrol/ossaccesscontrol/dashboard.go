@@ -93,12 +93,12 @@ func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
+	license licensing.Licensing, dashboardSvc dashboards.DashboardGetService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-		queryResult, err := dashboardStore.GetDashboard(ctx, query)
+		queryResult, err := dashboardSvc.GetDashboard(ctx, query)
 		if err != nil {
 			return nil, err
 		}
@@ -139,7 +139,7 @@ func ProvideDashboardPermissions(
 			// nolint:staticcheck
 			if dashboard.FolderUID != "" {
 				query := &dashboards.GetDashboardQuery{UID: dashboard.FolderUID, OrgID: orgID}
-				queryResult, err := dashboardStore.GetDashboard(ctx, query)
+				queryResult, err := dashboardSvc.GetDashboard(ctx, query)
 				if err != nil {
 					return nil, err
 				}
