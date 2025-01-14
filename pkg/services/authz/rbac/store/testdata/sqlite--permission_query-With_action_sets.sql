@@ -1,4 +1,4 @@
-SELECT p.kind, p.attribute, p.identifier, p.scope FROM "grafana"."permission" as p
+SELECT p.action, p.kind, p.attribute, p.identifier, p.scope FROM "grafana"."permission" as p
 WHERE
   p.action IN ('folders:edit', 'folders:admin', 'folders:create')
 AND p.role_id IN (
