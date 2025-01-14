@@ -380,7 +380,7 @@ func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefini
 func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	statsResult := defs["github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
+	statsResult := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -389,8 +389,8 @@ func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Search"},
-							Description: "Stats",
+							Tags:        []string{"Repository"},
+							Description: "Get resource stats for this namespace",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{

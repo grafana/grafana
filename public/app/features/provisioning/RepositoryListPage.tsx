@@ -154,7 +154,7 @@ interface StatusBadgeProps {
   name: string;
 }
 function StatusBadge({ repo, name }: StatusBadgeProps) {
-  const state = repo.status?.sync?.state;
+  const state = repo.status?.sync?.state ?? '';
 
   let tooltip: string | undefined = undefined;
   let color: BadgeColor = 'purple';

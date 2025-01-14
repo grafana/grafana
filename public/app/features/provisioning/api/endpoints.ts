@@ -1,5 +1,5 @@
 import { baseAPI as api } from './baseAPI';
-export const addTagTypes = ['Job', 'Repository'] as const;
+export const addTagTypes = ['Job', 'Repository', 'Search'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -167,6 +167,12 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
+      getRepositoryList: build.query<GetRepositoryListResponse, GetRepositoryListArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/list`,
+        }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
@@ -217,6 +223,15 @@ const injectedRtkApi = api
           method: 'POST',
         }),
         invalidatesTags: ['Repository'],
+      }),
+      getApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStats: build.query<
+        GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsResponse,
+        GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsArg
+      >({
+        query: (queryArg) => ({
+          url: `/stats`,
+        }),
+        providesTags: ['Search'],
       }),
     }),
     overrideExisting: false,
@@ -270,7 +285,7 @@ export type CreateRepositoryExportArg = {
 };
 export type GetRepositoryFilesResponse = {
   apiVersion?: string;
-  files?: any[];
+  items?: any[];
   kind?: string;
   metadata?: any;
 };
@@ -322,6 +337,10 @@ export type GetRepositoryHistoryWithPathArg = {
   path: string;
   ref?: string;
 };
+export type GetRepositoryListResponse = ResourceList;
+export type GetRepositoryListArg = {
+  name: string;
+};
 export type GetRepositoryStatusResponse = Repository;
 export type GetRepositoryStatusArg = {
   name: string;
@@ -359,6 +378,8 @@ export type CreateRepositoryWebhookResponse = WebhookResponse;
 export type CreateRepositoryWebhookArg = {
   name: string;
 };
+export type GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsResponse = any;
+export type GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsArg = {};
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {
@@ -470,6 +491,12 @@ export type HealthStatus = {
   healthy: boolean;
   message?: string[];
 };
+export type ResourceCount = {
+  count: number;
+  group: string;
+  repository?: string;
+  resource: string;
+};
 export type SyncStatus = {
   finished?: number;
   hash?: string;
@@ -477,7 +504,7 @@ export type SyncStatus = {
   message?: string[];
   scheduled?: number;
   started?: number;
-  state?: 'error' | 'pending' | 'success' | 'working' | '';
+  state: 'error' | 'pending' | 'success' | 'working';
 };
 export type WebhookStatus = {
   id?: number;
@@ -488,14 +515,9 @@ export type WebhookStatus = {
 export type RepositoryStatus = {
   health: HealthStatus;
   observedGeneration: number;
-  sync: SyncStatus;
   stats?: ResourceCount[];
+  sync: SyncStatus;
   webhook: WebhookStatus;
-};
-export type ResourceCount = {
-  group: string;
-  resource: string;
-  count: number;
 };
 export type Repository = {
   apiVersion?: string;
@@ -580,6 +602,22 @@ export type ResourceWrapper = {
   resource: ResourceObjects;
   timestamp?: Time;
 };
+export type ResourceListItem = {
+  folder?: string;
+  group: string;
+  hash: string;
+  name: string;
+  path: string;
+  resource: string;
+  time?: number;
+  title?: string;
+};
+export type ResourceList = {
+  apiVersion?: string;
+  items?: ResourceListItem[];
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type TestResults = {
   apiVersion?: string;
   code: number;
@@ -611,10 +649,12 @@ export const {
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
+  useGetRepositoryListQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
   useCreateRepositorySyncMutation,
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,
+  useGetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsQuery,
 } = injectedRtkApi;

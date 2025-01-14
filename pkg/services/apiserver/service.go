@@ -524,7 +524,7 @@ func (s *service) GetRestConfigForBackgroundWorker(requester func() identity.Req
 				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
-				fmt.Printf("WORKER: %s/%v\n", req.Method, req.URL)
+				fmt.Printf("WORKER: %-5s %v\n", req.Method, req.URL)
 				ctx := identity.WithRequester(context.Background(), requester())
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
