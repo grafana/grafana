@@ -42,27 +42,31 @@ export function PaginatedGrafanaLoader() {
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
       <Stack direction="column" gap={1}>
-        {Object.entries(groupsByFolder).map(([folderUid, groups]) => (
-          <ListSection
-            key={folderUid}
-            title={
-              <Stack direction="row" gap={1} alignItems="center">
-                <Icon name="folder" />{' '}
-                <Text variant="body" element="h3">
-                  {groups[0].file}
-                </Text>
-              </Stack>
-            }
-          >
-            {groups.map((group) => (
-              <GrafanaRuleGroupListItem
-                key={`grafana-ns-${folderUid}-${group.name}`}
-                group={group}
-                namespaceName={groups[0].file}
-              />
-            ))}
-          </ListSection>
-        ))}
+        {Object.entries(groupsByFolder).map(([folderUid, groups]) => {
+          // Groups are grouped by folder, so we can use the first group to get the folder name
+          const folderName = groups[0].file;
+          return (
+            <ListSection
+              key={folderUid}
+              title={
+                <Stack direction="row" gap={1} alignItems="center">
+                  <Icon name="folder" />{' '}
+                  <Text variant="body" element="h3">
+                    {folderName}
+                  </Text>
+                </Stack>
+              }
+            >
+              {groups.map((group) => (
+                <GrafanaRuleGroupListItem
+                  key={`grafana-ns-${folderUid}-${group.name}`}
+                  group={group}
+                  namespaceName={folderName}
+                />
+              ))}
+            </ListSection>
+          );
+        })}
         <LazyPagination
           nextPage={nextPage}
           previousPage={previousPage}

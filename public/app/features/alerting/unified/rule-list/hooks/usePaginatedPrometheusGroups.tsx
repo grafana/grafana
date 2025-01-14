@@ -46,7 +46,8 @@ export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
   // lastPage could be computed from groups.length and pageSize
   const fetchInProgress = isLoading(groupsRequestState);
   const canMoveForward = !fetchInProgress && (!lastPage || currentPage < lastPage);
-  const canMoveBackward = currentPage > 1 && !fetchInProgress;
+  // When going backward we already have the groups loaded, so no need to check if fetchInProgress
+  const canMoveBackward = currentPage > 1;
 
   const nextPage = useCallback(async () => {
     if (canMoveForward) {
