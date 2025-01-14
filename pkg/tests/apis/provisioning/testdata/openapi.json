@@ -2400,6 +2400,7 @@
           "Repository"
         ],
         "description": "Get resource stats for this namespace",
+        "operationId": "getResourceStats",
         "parameters": [
           {
             "name": "namespace",

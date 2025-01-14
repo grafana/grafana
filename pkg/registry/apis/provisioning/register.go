@@ -389,6 +389,7 @@ func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
+							OperationId: "getResourceStats", // used for RTK client
 							Tags:        []string{"Repository"},
 							Description: "Get resource stats for this namespace",
 							Parameters: []*spec3.Parameter{

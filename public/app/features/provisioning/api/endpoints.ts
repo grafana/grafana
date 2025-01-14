@@ -224,10 +224,7 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      getApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStats: build.query<
-        GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsResponse,
-        GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsArg
-      >({
+      getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
         query: (queryArg) => ({
           url: `/stats`,
         }),
@@ -378,13 +375,13 @@ export type CreateRepositoryWebhookResponse = WebhookResponse;
 export type CreateRepositoryWebhookArg = {
   name: string;
 };
-export type GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsResponse = {
+export type GetResourceStatsResponse = {
   apiVersion?: string;
   items?: any[];
   kind?: string;
   metadata?: any;
 };
-export type GetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsArg = {};
+export type GetResourceStatsArg = {};
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {
@@ -661,5 +658,5 @@ export const {
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,
-  useGetApisProvisioningGrafanaAppV0Alpha1NamespacesByNamespaceStatsQuery,
+  useGetResourceStatsQuery,
 } = injectedRtkApi;
