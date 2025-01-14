@@ -267,6 +267,7 @@
 /devenv/docker/blocks/prometheus/ @grafana/oss-big-tent
 /devenv/docker/blocks/prometheus_random_data/ @grafana/oss-big-tent
 /devenv/docker/blocks/prometheus_high_card/ @grafana/oss-big-tent
+/devenv/docker/blocks/prometheus_utf8/ @grafana/oss-big-tent
 /devenv/docker/blocks/pyroscope/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/redis/ @bergquist
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
