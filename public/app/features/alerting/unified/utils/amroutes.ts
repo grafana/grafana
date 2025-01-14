@@ -66,7 +66,6 @@ export const emptyRoute: FormAmRoute = {
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
 // ⚠️ make sure this function uses _stable_ identifiers!
 export function addUniqueIdentifierToRoute(route: Route, position = '0'): RouteWithID {
-  // @TODO we should probably sort the keys to make this more stable?
   const routeHash = hashObject(route);
   const routes = route.routes ?? [];
 
