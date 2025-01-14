@@ -140,7 +140,7 @@ func (s *SecureValueRest) Update(
 ) (runtime.Object, bool, error) {
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, false, fmt.Errorf("get securevalue: %w", err)
+		return nil, false, err
 	}
 
 	// Makes sure the UID and ResourceVersion are OK.

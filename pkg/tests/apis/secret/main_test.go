@@ -54,7 +54,7 @@ func TestIntegrationDiscoveryClient(t *testing.T) {
 	})
 }
 
-func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, keeperName string) *unstructured.Unstructured {
+func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName string) *unstructured.Unstructured {
 	t.Helper()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -62,7 +62,7 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, keeperNam
 
 	secureValueClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		// #TODO: figure out permissions topic
-		User: helper.Org1.Admin,
+		User: user,
 		GVR:  gvrSecureValues,
 	})
 
@@ -80,7 +80,7 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, keeperNam
 	return raw
 }
 
-func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, specType map[string]any) *unstructured.Unstructured {
+func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User, specType map[string]any) *unstructured.Unstructured {
 	t.Helper()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -88,7 +88,7 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, specType map[s
 
 	keeperClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		// #TODO: figure out permissions topic
-		User: helper.Org1.Admin,
+		User: user,
 		GVR:  gvrKeepers,
 	})
 
