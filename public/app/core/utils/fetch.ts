@@ -115,7 +115,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
 
 export async function parseResponseBody<T>(
   response: Response,
-  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'body'
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob'
 ): Promise<T> {
   if (responseType) {
     switch (responseType) {
@@ -128,11 +128,6 @@ export async function parseResponseBody<T>(
         // this specifically returns a Promise<Blob>
         // TODO refactor this function to remove the type assertions
         return response.blob() as Promise<T>;
-
-      case 'body':
-        // Return the raw body -- useful for streaming
-        // TODO refactor this function to remove the type assertions
-        return Promise.resolve(response.body) as Promise<T>;
 
       case 'json':
         // An empty string is not a valid JSON.

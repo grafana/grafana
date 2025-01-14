@@ -145,47 +145,73 @@ export class BackendSrv implements BackendService {
   chunkRequestId = 1;
 
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
+    const requestId = options.requestId ?? `XXXchunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
-    const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
+    const url = parseUrlFromOptions(options);
+    const init = parseInitFromOptions({
+      ...options,
+      requestId,
+      abortSignal: controller.signal,
+    });
+
     return new Observable((observer) => {
-      const sub = this.fetch<ReadableStream<Uint8Array>>({
-        ...options,
-        requestId,
-        responseType: 'body',
-        showErrorAlert: false,
-        showSuccessAlert: false,
-        hideFromInspector: true,
-        abortSignal: controller.signal,
-      }).subscribe((result) => {
-        const reader = result.data.getReader();
-        async function process() {
-          while (true) {
-            if (controller.signal.aborted) {
-              throw controller.signal.reason;
-            }
-            const chunk = await reader.read();
-            observer.next({
-              ...result,
-              data: chunk.value,
-            });
-            if (chunk.done) {
-              console.log('chunked, done', requestId);
-              return Promise.resolve();
+      // Calling fromFetch explicitly avoids the request queue
+      const sub = this.dependencies.fromFetch(url, init).subscribe({
+        next: (response) => {
+          const rsp = {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: response.headers,
+            url: response.url,
+            type: response.type,
+            redirected: response.redirected,
+            config: options,
+            traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+            data: undefined
+          }
+
+          if (!response.body) {
+            observer.next(rsp)
+            observer.complete()
+            return
+          }
+
+          const reader = response.body.getReader();
+          async function process() {
+            while (reader) {
+              if (controller.signal.aborted) {
+                reader.cancel(controller.signal.reason);
+                console.log('aborted', requestId);
+                return
+              }
+              const chunk = await reader.read()
+              observer.next({
+                ...rsp,
+                data: chunk.value,
+              });
+              if (chunk.done) {
+                console.log('chunked, done', requestId);
+                return
+              }
             }
           }
+          process()
+            .catch((e) => {
+              console.log('catch', requestId, e);
+            }) // from abort
+            .then(() => {
+              console.log('complete', requestId);
+              observer.complete();
+            }); // runs in background
+        },
+        error: (e) => {
+          observer.error(e);
         }
-        process()
-          .catch((e) => {
-            console.log('catch', requestId, e);
-          }) // from abort
-          .then(() => {
-            console.log('complete', requestId);
-            observer.complete();
-          }); // runs in background
-      });
+      })
 
       return function unsubscribe() {
-        console.log('unsubscribe', requestId);
+        console.log('chunked, unsubscribe', requestId);
         controller.abort('unsubscribe');
         sub.unsubscribe();
       };
