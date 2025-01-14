@@ -223,15 +223,19 @@ func TestBleveBackend(t *testing.T) {
 			},
 			Limit:  100000,
 			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+			},
 		}, nil)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(rsp.Results.Columns))
 		require.Equal(t, DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
 		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
 
-		val, err := resource.DecodeCell(rsp.Results.Columns[0], 0, rsp.Results.Rows[0].Cells[0])
+		// sorted descending so should start with highest dashboard_views_last_1_days (100)
+		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
 		require.NoError(t, err)
-		require.Equal(t, int64(25), val)
+		require.Equal(t, int64(100), val)
 
 		// Now look for repositories
 		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
