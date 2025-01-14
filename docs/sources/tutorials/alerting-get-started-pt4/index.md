@@ -222,7 +222,7 @@ Now that we've introduced how templating works, let’s move on to the next step
    - **OSS users**: Go to [http://localhost:3000](http://localhost:3000).
 
 1. Create an alert rule that includes a summary and description annotation:
-   - Navigate to** Alerting** > _Alert rules_.
+   - Navigate to **Alerting** > **Alert rules**.
    - Click **+ New alert rule**.
    - Enter an **alert rule name**. High CPU usage
 1. **Define query an alert condition** section:
