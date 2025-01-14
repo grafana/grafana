@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -887,7 +886,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
@@ -1005,7 +1004,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 
