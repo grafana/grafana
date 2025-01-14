@@ -1,5 +1,16 @@
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, DataQuery, DataSourceRef, Panel, VariableModel } from '@grafana/schema';
+import {
+  AnnotationQuery,
+  DataQuery,
+  DataSourceRef,
+  Panel,
+  VariableModel,
+  FieldConfigSource as FieldConfigSourceV1,
+  FieldColorModeId as FieldColorModeIdV1,
+  ThresholdsMode as ThresholdsModeV1,
+  MappingType as MappingTypeV1,
+  SpecialValueMatch as SpecialValueMatchV1,
+} from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -11,8 +22,12 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TransformationKind,
+  FieldColorModeId,
+  FieldConfigSource,
+  ThresholdsMode,
+  SpecialValueMatch,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
-import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -171,6 +186,7 @@ export function ensureV1Response(
     };
   } else {
     // if dashboard is on v2 schema convert to v1 schema
+    const annotations = getAnnotationsV1(spec.annotations);
     return {
       meta: {
         created: dashboard.metadata.creationTimestamp,
@@ -216,8 +232,8 @@ export function ensureV1Response(
         weekStart: spec.timeSettings.weekStart,
         version: parseInt(dashboard.metadata.resourceVersion, 10),
         links: spec.links,
-        annotations: { list: [] }, // TODO
-        panels: [], // TODO
+        annotations: { list: annotations },
+        panels: getPanelsV1(spec.elements, spec.layout), // TODO
         templating: { list: [] }, // TODO
       },
     };
@@ -463,4 +479,195 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
     };
     return aq;
   });
+}
+
+function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): AnnotationQuery[] {
+  // @ts-expect-error
+  // TODO: fix to ensure that spec.query.spec is always a DataQuery
+  return annotations.map((a) => {
+    return {
+      name: a.spec.name,
+      datasource: a.spec.datasource,
+      enable: a.spec.enable,
+      hide: a.spec.hide,
+      iconColor: a.spec.iconColor,
+      builtIn: a.spec.builtIn,
+      target: a.spec.query?.spec,
+      filter: a.spec.filter,
+    };
+  });
+}
+
+function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spec['layout']): Panel[] {
+  // TODO: need to get gridPos from layout
+  // const gridPos;
+
+  return Object.values(panels).map((p) => {
+    const panel = p.spec;
+    const gridPos = { x: 0, y: 0, w: 0, h: 0 }; // TODO: get gridPos from layout
+    return {
+      id: panel.id,
+      type: panel.vizConfig.kind,
+      title: panel.title,
+      description: panel.description,
+      fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
+      options: panel.vizConfig.spec.options,
+      pluginVersion: panel.vizConfig.spec.pluginVersion,
+      links:
+        panel.links?.map<DashboardLink>((l) => ({
+          title: l.title || '',
+          url: l.url || '',
+          targetBlank: l.targetBlank || false,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          tooltip: '',
+          type: 'link',
+        })) || [],
+      targets: panel.data.spec.queries.map((q) => {
+        return {
+          refId: q.spec.refId,
+          hide: q.spec.hidden,
+          datasource: q.spec.datasource,
+          ...q.spec.query.spec,
+        };
+      }),
+      transformations: panel.data.spec.transformations.map((t) => t.spec),
+      gridPos,
+      cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+      maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
+      interval: panel.data.spec.queryOptions.interval,
+      hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
+      queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+      timeFrom: panel.data.spec.queryOptions.timeFrom,
+      timeShift: panel.data.spec.queryOptions.timeShift,
+    };
+  });
+}
+
+export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
+  const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
+    switch (mode) {
+      case 'absolute':
+        return ThresholdsModeV1.Absolute;
+      case 'percentage':
+        return ThresholdsModeV1.Percentage;
+      default:
+        return ThresholdsModeV1.Absolute;
+    }
+  };
+
+  const transformedDefaults: any = {
+    ...fieldConfig.defaults,
+  };
+
+  if (fieldConfig.defaults.mappings) {
+    transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
+      switch (mapping.type) {
+        case 'value':
+          return {
+            ...mapping,
+            type: MappingTypeV1.ValueToText,
+          };
+        case 'range':
+          return {
+            ...mapping,
+            type: MappingTypeV1.RangeToText,
+          };
+        case 'regex':
+          return {
+            ...mapping,
+            type: MappingTypeV1.RegexToText,
+          };
+        case 'special':
+          return {
+            ...mapping,
+            options: {
+              ...mapping.options,
+              match: transformSpecialValueMatchToV1(mapping.options.match),
+            },
+            type: MappingTypeV1.SpecialValue,
+          };
+        default:
+          return mapping;
+      }
+    });
+  }
+
+  if (fieldConfig.defaults.thresholds) {
+    transformedDefaults.thresholds = {
+      ...fieldConfig.defaults.thresholds,
+      mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
+    };
+  }
+
+  if (fieldConfig.defaults.color?.mode) {
+    transformedDefaults.color = {
+      ...fieldConfig.defaults.color,
+      mode: colorIdToEnumv1(fieldConfig.defaults.color.mode),
+    };
+  }
+
+  return {
+    ...fieldConfig,
+    defaults: transformedDefaults,
+  };
+}
+
+function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
+  switch (colorId) {
+    case 'thresholds':
+      return FieldColorModeIdV1.Thresholds;
+    case 'palette-classic':
+      return FieldColorModeIdV1.PaletteClassic;
+    case 'palette-classic-by-name':
+      return FieldColorModeIdV1.PaletteClassicByName;
+    case 'continuous-GrYlRd':
+      return FieldColorModeIdV1.ContinuousGrYlRd;
+    case 'continuous-RdYlGr':
+      return FieldColorModeIdV1.ContinuousRdYlGr;
+    case 'continuous-BlYlRd':
+      return FieldColorModeIdV1.ContinuousBlYlRd;
+    case 'continuous-YlRd':
+      return FieldColorModeIdV1.ContinuousYlRd;
+    case 'continuous-BlPu':
+      return FieldColorModeIdV1.ContinuousBlPu;
+    case 'continuous-YlBl':
+      return FieldColorModeIdV1.ContinuousYlBl;
+    case 'continuous-blues':
+      return FieldColorModeIdV1.ContinuousBlues;
+    case 'continuous-reds':
+      return FieldColorModeIdV1.ContinuousReds;
+    case 'continuous-greens':
+      return FieldColorModeIdV1.ContinuousGreens;
+    case 'continuous-purples':
+      return FieldColorModeIdV1.ContinuousPurples;
+    case 'fixed':
+      return FieldColorModeIdV1.Fixed;
+    case 'shades':
+      return FieldColorModeIdV1.Shades;
+    default:
+      return FieldColorModeIdV1.Thresholds;
+  }
+}
+
+function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 {
+  switch (match) {
+    case 'true':
+      return SpecialValueMatchV1.True;
+    case 'false':
+      return SpecialValueMatchV1.False;
+    case 'null':
+      return SpecialValueMatchV1.Null;
+    case 'nan':
+      return SpecialValueMatchV1.NaN;
+    case 'null+nan':
+      return SpecialValueMatchV1.NullAndNan;
+    case 'empty':
+      return SpecialValueMatchV1.Empty;
+    default:
+      throw new Error(`Unknown match type: ${match}`);
+  }
 }
