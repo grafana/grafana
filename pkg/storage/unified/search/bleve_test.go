@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -342,5 +343,28 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(disp))
+	})
+}
+
+func TestToBleveSearchRequest(t *testing.T) {
+	t.Run("will prepend 'fields.' to all dashboard fields", func(t *testing.T) {
+		fields := []string{"title", "name", "folder"}
+		fields = append(fields, DashboardFields()...)
+		resReq := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{},
+			Fields:  fields,
+		}
+		bleveReq, err := toBleveSearchRequest(resReq, nil)
+		if err != nil {
+			t.Fatalf("error creating bleve search request: %v", err)
+		}
+
+		require.Equal(t, len(fields), len(bleveReq.Fields))
+		for _, field := range DashboardFields() {
+			require.True(t, slices.Contains(bleveReq.Fields, "fields."+field))
+		}
+		require.Contains(t, bleveReq.Fields, "title")
+		require.Contains(t, bleveReq.Fields, "name")
+		require.Contains(t, bleveReq.Fields, "folder")
 	})
 }
