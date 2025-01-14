@@ -1717,7 +1717,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.DashboardUIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
-			Key:      "key.name",
+			Key:      "name",
 			Operator: string(selection.In),
 			Values:   query.DashboardUIDs,
 		}}
@@ -1789,6 +1789,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 			Values:   query.Tags,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
+	}
+
+	if query.Limit > 0 {
+		request.Limit = query.Limit
 	}
 
 	res, err := dr.k8sclient.getSearcher().Search(ctx, request)
