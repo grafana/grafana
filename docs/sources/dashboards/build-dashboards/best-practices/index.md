@@ -124,7 +124,7 @@ This method is similar to the RED method, but it includes saturation.
 
 ## Dashboard management maturity model
 
-_Dashboard management maturity_ refers to how well-designed and efficient your dashboard ecosystem is. We recommend periodically reviewing your dashboard setup to gauge where you are and how you can improve.
+_Dashboard management maturity_ refers to how well-designed and efficient your dashboard ecosystem is. It's recommended that you periodically review your dashboard setup to gauge where you are and how you can improve.
 
 Broadly speaking, dashboard maturity can be defined as low, medium, or high.
 
@@ -167,7 +167,7 @@ How can you tell you are here?
   - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds](ref:thresholds) can help with that.
   - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because machines can have a different number of cores. Normalizing CPU usage by the number of cores reduces cognitive load because the viewer can trust that at 100% all cores are being used, without having to know the number of CPUs.
 - Directed browsing cuts down on "guessing."
-  - Template variables make it harder to “just browse” randomly or aimlessly.
+  - Template variables make it harder to "just browse" randomly or aimlessly.
   - Most dashboards should be linked to by alerts.
   - Browsing is directed with links. For more information, refer to [Manage dashboard links](ref:manage-dashboard-links).
 - Version-controlled dashboard JSON.
@@ -204,12 +204,16 @@ Keep your graphs simple and focused on answering the question that you are askin
 
 #### Dashboards should reduce cognitive load, not add to it
 
-_Cognitive load_ is basically how hard you need to think about something in order to figure it out. Make your dashboard easy to interpret. Other users and future you (when you're trying to figure out what broke at 2AM) will appreciate it.
+<!-- vale Grafana.GoogleWill = NO -->
+
+_Cognitive load_ is basically how hard you need to think about something in order to figure it out. Make your dashboard easy to interpret. Other users and future you (when you're trying to figure out what broke at 2 AM) will appreciate it.
 
 Ask yourself:
 
 - Can I tell what exactly each graph represents? Is it obvious, or do I have to think about it?
 - If I show this to someone else, how long will it take them to figure it out? Will they get lost?
+
+<!-- vale Grafana.GoogleWill = YES -->
 
 #### Have a monitoring strategy
 
@@ -233,9 +237,9 @@ Once you have a strategy or design guidelines, write them down to help maintain 
 - Use the left and right Y-axes when displaying time series with different units or ranges.
 - Add documentation to dashboards and panels.
   - To add documentation to a dashboard, add a [Text panel visualization](ref:text-panel-visualization) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
-  - To add documentation to a panel, edit the panel settings and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
+  - To add documentation to a panel, edit the panel settings and add a description. Any text you add appears if you hover your cursor over the small `i` in the top left corner of the panel.
 - Reuse your dashboards and enforce consistency by using [templates and variables](ref:templates-and-variables).
-- Be careful with stacking graph data. The visualizations can be misleading, and hide important data. We recommend turning it off in most cases.
+- Be careful with stacking graph data. The visualizations can be misleading, and hide important data. It's recommended that you turn it off in most cases.
 
 ## Best practices for managing dashboards
 
@@ -257,9 +261,9 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
 
 ### Best practices to follow
 
-- Avoid dashboard sprawl, meaning the uncontrolled growth of dashboards. Dashboard sprawl negatively affects time to find the right dashboard. Duplicating dashboards and changing “one thing” (worse: keeping original tags) is the easiest kind of sprawl.
+- Avoid dashboard sprawl, meaning the uncontrolled growth of dashboards. Dashboard sprawl negatively affects time to find the right dashboard. Duplicating dashboards and changing "one thing" (worse: keeping original tags) is the easiest kind of sprawl.
   - Periodically review the dashboards and remove unnecessary ones.
-  - If you create a temporary dashboard, perhaps to test something, prefix the name with `TEST: `. Delete the dashboard when you are finished.
+  - If you create a temporary dashboard, perhaps to test something, prefix the name with `TEST:`. Delete the dashboard when you are finished.
 - Copying dashboards with no significant changes is not a good idea.
   - You miss out on updates to the original dashboard, such as documentation changes, bug fixes, or additions to metrics.
   - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters](ref:url-parameters).
