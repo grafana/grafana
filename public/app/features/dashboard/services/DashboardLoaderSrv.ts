@@ -8,7 +8,6 @@ import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alp
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
-import { AnnoKeyDashboardNotFound } from 'app/features/apiserver/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
@@ -192,9 +191,9 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     const promise = getDashboardSnapshotSrv().getSnapshot(slug);
 
     promise.then((result: DashboardDTO) => {
-      if (result.meta.dashboardNotFound !== true) {
-        impressionSrv.addDashboardImpression(result.dashboard.uid);
-      }
+      // if (result.meta.dashboardNotFound !== true) {
+      impressionSrv.addDashboardImpression(result.dashboard.uid);
+      // }
 
       return result;
     });
@@ -244,13 +243,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       throw new Error('Dashboard uid or slug required');
     }
 
-    debugger;
     promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      debugger;
       impressionSrv.addDashboardImpression(result.metadata.name);
-      // if (result.metadata.annotations?.[AnnoKeyDashboardNotFound] !== true) {
-      // }
-
       return result;
     });
 
@@ -263,9 +257,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       .then((r) => ResponseTransformers.ensureV2Response(r));
 
     promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      if (result.metadata.annotations?.[AnnoKeyDashboardNotFound] !== true) {
-        impressionSrv.addDashboardImpression(result.metadata.name);
-      }
+      impressionSrv.addDashboardImpression(result.metadata.name);
 
       return result;
     });

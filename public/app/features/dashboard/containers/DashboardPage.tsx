@@ -9,7 +9,6 @@ import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
@@ -373,14 +372,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       [styles.fullScreenPanel]: Boolean(viewPanel),
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
-
-    if (dashboard.meta.dashboardNotFound) {
-      return (
-        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
-          <EntityNotFound entity="Dashboard" />
-        </Page>
-      );
-    }
 
     const migrationFeatureFlags = new Set([
       'autoMigrateOldPanels',
