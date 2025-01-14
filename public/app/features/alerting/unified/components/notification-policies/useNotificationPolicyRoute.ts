@@ -269,7 +269,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
         partialRoute,
         referenceRouteIdentifier,
         insertPosition,
-        selectedAlertmanager: alertmanager,
+        alertmanager,
       });
       return produceNewAlertmanagerConfiguration(action);
     }

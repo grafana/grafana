@@ -15,7 +15,7 @@ import {
 export const updateRouteAction = createAction<{ update: Partial<FormAmRoute>; alertmanager: string }>('routes/update');
 export const deleteRouteAction = createAction<{ id: string }>('routes/delete');
 export const addRouteAction = createAction<{
-  selectedAlertmanager: string;
+  alertmanager: string;
   partialRoute: Partial<FormAmRoute>;
   referenceRouteIdentifier: string;
   insertPosition: InsertPosition;
@@ -61,7 +61,7 @@ export const routesReducer = createReducer(initialState, (builder) => {
     })
     // add a new route to given position
     .addCase(addRouteAction, (draft, { payload }) => {
-      const { partialRoute, referenceRouteIdentifier, insertPosition, selectedAlertmanager } = payload;
+      const { partialRoute, referenceRouteIdentifier, insertPosition, alertmanager } = payload;
       const { alertmanager_config } = draft;
 
       if (!alertmanager_config.route) {
@@ -70,7 +70,7 @@ export const routesReducer = createReducer(initialState, (builder) => {
 
       const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(alertmanager_config.route);
       const updatedPolicyTree = addRouteToReferenceRoute(
-        selectedAlertmanager,
+        alertmanager,
         partialRoute,
         referenceRouteIdentifier,
         rootRouteWithIdentifiers,
