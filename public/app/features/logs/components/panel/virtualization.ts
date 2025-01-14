@@ -1,5 +1,7 @@
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { ProcessedLogModel } from './processing';
+
 let ctx: CanvasRenderingContext2D | null = null;
 
 export function init(theme: GrafanaTheme2) {
@@ -31,7 +33,7 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
   let chars = text.split('');
   for (let i = 0; i < chars.length; i++) {
     // chars[i+1] !== undefined means the \n is not the last character
-    if (chars[i] === "\n" && chars[i+1] !== undefined) {
+    if (chars[i] === '\n' && chars[i + 1] !== undefined) {
       console.log(line);
       lines += 1;
       line = '';
@@ -41,18 +43,56 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
     const testLine = line + chars[i];
     const metrics = ctx.measureText(testLine);
 
-    if (metrics.width > maxWidth) {
+    if (metrics.width >= maxWidth) {
+      console.log(line, metrics.width);
       lines += 1;
       line = chars[i];
     } else {
       line = testLine;
-    } 
+    }
   }
 
+  console.log(line);
   const height = lines * lineHeight;
 
   return {
     lines,
     height,
   };
+}
+
+const scrollBarWidth = getScrollbarWidth();
+
+export function getLogLineSize(
+  logs: ProcessedLogModel[],
+  container: HTMLDivElement | null,
+  theme: GrafanaTheme2,
+  wrapLogMessage: boolean,
+  index: number
+) {
+  if (!container) {
+    return 0;
+  }
+  const lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
+  if (!wrapLogMessage) {
+    return lineHeight;
+  }
+  const { height } = measureText(logs[index].body, container.clientWidth - scrollBarWidth, lineHeight);
+  return height;
+}
+
+export function getScrollbarWidth() {
+  const hiddenDiv = document.createElement('div');
+
+  hiddenDiv.style.width = '100px';
+  hiddenDiv.style.height = '100px';
+  hiddenDiv.style.overflow = 'scroll';
+  hiddenDiv.style.position = 'absolute';
+  hiddenDiv.style.top = '-9999px';
+
+  document.body.appendChild(hiddenDiv);
+  const width = hiddenDiv.offsetWidth - hiddenDiv.clientWidth;
+  document.body.removeChild(hiddenDiv);
+
+  return width;
 }
