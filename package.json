@@ -50,7 +50,7 @@
     "themes-generate": "esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
-    "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
+    "plugins:build-bundled": "echo 'bundled plugins are no longer supported'",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
@@ -213,7 +213,7 @@
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
     "nx": "19.8.2",
-    "postcss": "8.4.49",
+    "postcss": "8.5.1",
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
@@ -437,7 +437,6 @@
     "packages": [
       "packages/*",
       "packages/!(grafana-icons)/**",
-      "plugins-bundled/internal/*",
       "public/app/plugins/*/*",
       "e2e/test-plugins/*"
     ]
