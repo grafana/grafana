@@ -21,11 +21,14 @@ SEE:
 */
 
 type ExportOptions struct {
-	OrgID      int64
-	Dashboards bool
+	OrgID       int64
+	Dashboards  bool
+	KeepHistory bool
 }
 
 type LegacyExporter interface {
+	// A long running process that will export dashboards and their history to a new
+	// git repository
 	Export(ctx context.Context, opts ExportOptions) (string, error)
 }
 

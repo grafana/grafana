@@ -57,7 +57,7 @@ func (c *exportConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
+	repo, err := c.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +69,7 @@ func (c *exportConnector) Connect(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logger.WithContext(ctx)
 		ctx := logging.Context(r.Context(), logger)
+		query := r.URL.Query()
 
 		job, err := c.queue.Add(ctx, &provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{
@@ -79,6 +80,10 @@ func (c *exportConnector) Connect(
 			},
 			Spec: provisioning.JobSpec{
 				Action: provisioning.JobActionExport,
+				Export: &provisioning.ExportOptions{
+					Folder:  query.Get("folder"),
+					History: query.Get("history") == "true",
+				},
 			},
 		})
 		if err != nil {

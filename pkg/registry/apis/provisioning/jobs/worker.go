@@ -9,11 +9,13 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -27,14 +29,15 @@ type RepoGetter interface {
 var _ Worker = (*JobWorker)(nil)
 
 type JobWorker struct {
-	client      client.ProvisioningV0alpha1Interface
-	getter      RepoGetter
-	parsers     *resources.ParserFactory
-	identities  auth.BackgroundIdentityService
-	render      rendering.Service
-	lister      resources.ResourceLister
-	blobstore   blob.PublicBlobStore
-	urlProvider func(namespace string) string
+	client         client.ProvisioningV0alpha1Interface
+	getter         RepoGetter
+	parsers        *resources.ParserFactory
+	identities     auth.BackgroundIdentityService
+	render         rendering.Service
+	lister         resources.ResourceLister
+	blobstore      blob.PublicBlobStore
+	legacyExporter legacy.LegacyExporter
+	urlProvider    func(namespace string) string
 }
 
 func NewJobWorker(
@@ -45,23 +48,26 @@ func NewJobWorker(
 	render rendering.Service,
 	lister resources.ResourceLister,
 	blobstore blob.PublicBlobStore,
+	legacyExporter legacy.LegacyExporter,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
 	return &JobWorker{
-		getter:      getter,
-		client:      client,
-		parsers:     parsers,
-		identities:  identities,
-		render:      render,
-		lister:      lister,
-		blobstore:   blobstore,
-		urlProvider: urlProvider,
+		getter:         getter,
+		client:         client,
+		parsers:        parsers,
+		identities:     identities,
+		render:         render,
+		lister:         lister,
+		blobstore:      blobstore,
+		legacyExporter: legacyExporter,
+		urlProvider:    urlProvider,
 	}
 }
 
 func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace(), "action", job.Spec.Action)
 	ctx = logging.Context(ctx, logger)
+	started := time.Now().UnixMilli()
 
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {
@@ -96,14 +102,12 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		started := time.Now()
-
 		// Update the status to indicate that we are working on it
 		cfg := repo.Config().DeepCopy()
 		status := &provisioning.SyncStatus{
 			State:   provisioning.JobStateWorking,
 			JobID:   job.GetName(),
-			Started: started.UnixMilli(),
+			Started: started,
 		}
 		cfg.Status.Sync = *status
 		cfg, err := g.client.Repositories(cfg.GetNamespace()).UpdateStatus(ctx, cfg, v1.UpdateOptions{})
@@ -117,7 +121,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			State:    provisioning.JobStateSuccess,
 			JobID:    job.GetName(),
 			Hash:     ref,
-			Started:  started.UnixMilli(),
+			Started:  started,
 			Finished: time.Now().UnixMilli(),
 			Message:  []string{},
 		}
@@ -170,7 +174,36 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		if err := commenter.Process(ctx, job); err != nil {
 			return nil, fmt.Errorf("error processing pull request: %w", err)
 		}
+
 	case provisioning.JobActionExport:
+		if job.Spec.Export != nil && job.Spec.Export.History {
+			if repo.Config().Spec.Type != provisioning.GitHubRepositoryType {
+				return nil, fmt.Errorf("export with history only supported for github (right now)")
+			}
+			if job.Spec.Export.Folder != "" {
+				return nil, fmt.Errorf("selective folders are not yet supported")
+			}
+			info, err := claims.ParseNamespace(job.Namespace)
+			if err != nil {
+				return nil, err
+			}
+			folder, err := g.legacyExporter.Export(ctx, legacy.ExportOptions{
+				OrgID:       info.OrgID,
+				Dashboards:  true,
+				KeepHistory: true,
+			})
+			if err != nil {
+				return nil, err
+			}
+			logger.Info("exported", "directory", folder)
+			logger.Info("TODO! push the repository to the remote")
+			return &provisioning.JobStatus{
+				State:   provisioning.JobStateSuccess,
+				Message: "Exported to: " + folder,
+			}, nil
+		}
+
+		// Uses k8s API against the configured folder
 		err := replicator.Export(ctx)
 		if err != nil {
 			return nil, err

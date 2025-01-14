@@ -30,7 +30,7 @@ import (
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -478,6 +478,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				b.render,
 				b.lister,
 				b.blobstore,
+				b.legacyExporter,
 				b.urlProvider,
 			))
 
@@ -509,25 +510,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
 
-	// TODO: we might want to register some extras for subresources here.
-	sub := oas.Paths.Paths[repoprefix+"/hello"]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Description = "Get a nice hello :)"
-		sub.Get.Parameters = []*spec3.Parameter{
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "whom",
-					In:          "query",
-					Example:     "World!",
-					Description: "Who should get the nice greeting?",
-					Schema:      spec.StringProperty(),
-					Required:    false,
-				},
-			},
-		}
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/test"]
+	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
 		repoSchema := defs[defsBase+"Repository"].Schema
 		sub.Post.Description = "Check if the configuration is valid"
@@ -699,6 +682,26 @@ spec:
 		}
 		// POST and put have the same request
 		sub.Put.RequestBody = sub.Post.RequestBody
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/export"]
+	if sub != nil {
+		sub.Post.Description = "Export from grafana into the remote repository"
+		sub.Post.Parameters = append(sub.Post.Parameters,
+			&spec3.Parameter{ParameterProps: spec3.ParameterProps{
+				Name:        "folder",
+				In:          "query",
+				Description: "optional source folder",
+				Schema:      spec.StringProperty(),
+				Required:    false,
+			}},
+			&spec3.Parameter{ParameterProps: spec3.ParameterProps{
+				Name:        "history",
+				In:          "query",
+				Description: "Keep the resource history",
+				Schema:      spec.BoolProperty(),
+				Required:    false,
+			}})
 	}
 
 	// The root API discovery list
