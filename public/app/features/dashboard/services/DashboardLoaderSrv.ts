@@ -146,6 +146,14 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
+      // needed for the old architecture
+      // in scenes this is handled through loadSnapshot method
+    } else if (type === 'snapshot' && slug) {
+      promise = getDashboardSnapshotSrv()
+        .getSnapshot(slug)
+        .catch(() => {
+          return this._dashboardLoadFailed('Snapshot not found', true);
+        });
     } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
