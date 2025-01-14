@@ -15,13 +15,13 @@ import (
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
 	// GraphPeriod needs to be explicitly disabled.
 	// If not set, the default behavior is to set an automatic value
-	if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod != "disabled" {
-		if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod == "auto" || *timeSeriesQuery.parameters.GraphPeriod == "" {
+	if timeSeriesQuery.parameters.GraphPeriod != "disabled" {
+		if timeSeriesQuery.parameters.GraphPeriod == "auto" || timeSeriesQuery.parameters.GraphPeriod == "" {
 			intervalCalculator := gcmTime.NewCalculator(gcmTime.CalculatorOptions{})
 			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
-			timeSeriesQuery.parameters.GraphPeriod = &interval.Text
+			timeSeriesQuery.parameters.GraphPeriod = interval.Text
 		}
-		return fmt.Sprintf(" | graph_period %s", *timeSeriesQuery.parameters.GraphPeriod)
+		return fmt.Sprintf(" | graph_period %s", timeSeriesQuery.parameters.GraphPeriod)
 	}
 	return ""
 }

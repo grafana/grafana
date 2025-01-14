@@ -7,66 +7,138 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package rolebinding
 
-// Defines values for BuiltinRoleRefKind.
-const (
-	BuiltinRoleRefKindBuiltinRole BuiltinRoleRefKind = "BuiltinRole"
+import (
+	json "encoding/json"
+	errors "errors"
+	fmt "fmt"
 )
 
-// Defines values for BuiltinRoleRefName.
-const (
-	BuiltinRoleRefNameAdmin  BuiltinRoleRefName = "admin"
-	BuiltinRoleRefNameEditor BuiltinRoleRefName = "editor"
-	BuiltinRoleRefNameViewer BuiltinRoleRefName = "viewer"
-)
-
-// Defines values for CustomRoleRefKind.
-const (
-	CustomRoleRefKindRole CustomRoleRefKind = "Role"
-)
-
-// Defines values for SubjectKind.
-const (
-	SubjectKindTeam SubjectKind = "Team"
-	SubjectKindUser SubjectKind = "User"
-)
-
-// BuiltinRoleRef defines model for BuiltinRoleRef.
 type BuiltinRoleRef struct {
-	Kind BuiltinRoleRefKind `json:"kind"`
+	Kind string             `json:"kind"`
 	Name BuiltinRoleRefName `json:"name"`
 }
 
-// BuiltinRoleRefKind defines model for BuiltinRoleRef.Kind.
-type BuiltinRoleRefKind string
-
-// BuiltinRoleRefName defines model for BuiltinRoleRef.Name.
-type BuiltinRoleRefName string
-
-// CustomRoleRef defines model for CustomRoleRef.
-type CustomRoleRef struct {
-	Kind CustomRoleRefKind `json:"kind"`
-	Name string            `json:"name"`
+// NewBuiltinRoleRef creates a new BuiltinRoleRef object.
+func NewBuiltinRoleRef() *BuiltinRoleRef {
+	return &BuiltinRoleRef{
+		Kind: "BuiltinRole",
+	}
 }
 
-// CustomRoleRefKind defines model for CustomRoleRef.Kind.
-type CustomRoleRefKind string
+type CustomRoleRef struct {
+	Kind string `json:"kind"`
+	Name string `json:"name"`
+}
 
-// Subject defines model for Subject.
-type Subject struct {
-	Kind SubjectKind `json:"kind"`
+// NewCustomRoleRef creates a new CustomRoleRef object.
+func NewCustomRoleRef() *CustomRoleRef {
+	return &CustomRoleRef{
+		Kind: "Role",
+	}
+}
 
+type RoleBindingSubject struct {
+	Kind RoleBindingSubjectKind `json:"kind"`
 	// The team/user identifier name
 	Name string `json:"name"`
 }
 
-// SubjectKind defines model for Subject.Kind.
-type SubjectKind string
+// NewRoleBindingSubject creates a new RoleBindingSubject object.
+func NewRoleBindingSubject() *RoleBindingSubject {
+	return &RoleBindingSubject{}
+}
 
-// Spec defines model for Spec.
 type Spec struct {
 	// The role we are discussing
-	Role    any     `json:"role"`
-	Subject Subject `json:"subject"`
+	Role BuiltinRoleRefOrCustomRoleRef `json:"role"`
+	// The team or user that has the specified role
+	Subject RoleBindingSubject `json:"subject"`
+}
+
+// NewSpec creates a new Spec object.
+func NewSpec() *Spec {
+	return &Spec{
+		Role:    *NewBuiltinRoleRefOrCustomRoleRef(),
+		Subject: *NewRoleBindingSubject(),
+	}
+}
+
+type BuiltinRoleRefName string
+
+const (
+	BuiltinRoleRefNameViewer BuiltinRoleRefName = "viewer"
+	BuiltinRoleRefNameEditor BuiltinRoleRefName = "editor"
+	BuiltinRoleRefNameAdmin  BuiltinRoleRefName = "admin"
+)
+
+type RoleBindingSubjectKind string
+
+const (
+	RoleBindingSubjectKindTeam RoleBindingSubjectKind = "Team"
+	RoleBindingSubjectKindUser RoleBindingSubjectKind = "User"
+)
+
+type BuiltinRoleRefOrCustomRoleRef struct {
+	BuiltinRoleRef *BuiltinRoleRef `json:"BuiltinRoleRef,omitempty"`
+	CustomRoleRef  *CustomRoleRef  `json:"CustomRoleRef,omitempty"`
+}
+
+// NewBuiltinRoleRefOrCustomRoleRef creates a new BuiltinRoleRefOrCustomRoleRef object.
+func NewBuiltinRoleRefOrCustomRoleRef() *BuiltinRoleRefOrCustomRoleRef {
+	return &BuiltinRoleRefOrCustomRoleRef{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `BuiltinRoleRefOrCustomRoleRef` as JSON.
+func (resource BuiltinRoleRefOrCustomRoleRef) MarshalJSON() ([]byte, error) {
+	if resource.BuiltinRoleRef != nil {
+		return json.Marshal(resource.BuiltinRoleRef)
+	}
+	if resource.CustomRoleRef != nil {
+		return json.Marshal(resource.CustomRoleRef)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of refs")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `BuiltinRoleRefOrCustomRoleRef` from JSON.
+func (resource *BuiltinRoleRefOrCustomRoleRef) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]any)
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return errors.New("discriminator field 'kind' not found in payload")
+	}
+
+	switch discriminator {
+	case "BuiltinRole":
+		var builtinRoleRef BuiltinRoleRef
+		if err := json.Unmarshal(raw, &builtinRoleRef); err != nil {
+			return err
+		}
+
+		resource.BuiltinRoleRef = &builtinRoleRef
+		return nil
+	case "Role":
+		var customRoleRef CustomRoleRef
+		if err := json.Unmarshal(raw, &customRoleRef); err != nil {
+			return err
+		}
+
+		resource.CustomRoleRef = &customRoleRef
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
 }
