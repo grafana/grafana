@@ -9,7 +9,7 @@ import {
   UpdatesChangeLogs,
 } from 'app/percona/shared/core/reducers/updates';
 import { setSnoozedVersion } from 'app/percona/shared/core/reducers/user/user';
-import { getPerconaUser, getUpdatesInfo } from 'app/percona/shared/core/selectors';
+import { getPerconaSettings, getPerconaUser, getUpdatesInfo } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
@@ -18,13 +18,15 @@ import { getStyles } from './PerconaUpdateVersion.styles';
 
 const PerconaUpdateVersion = () => {
   const { updateAvailable, installed, latest, changeLogs, showUpdateModal } = useSelector(getUpdatesInfo);
+  const { result: settings } = useSelector(getPerconaSettings);
+  const { updatesEnabled } = settings!;
   const { snoozedPmmVersion } = useSelector(getPerconaUser);
   const dispatch = useAppDispatch();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const prepareModal = async () => {
-      if (installed?.version === latest?.version || snoozedPmmVersion === latest?.version) {
+      if (installed?.version === latest?.version || snoozedPmmVersion === latest?.version || !updatesEnabled) {
         dispatch(setShowUpdateModal(false));
       } else {
         await dispatch(checkUpdatesChangeLogs());
@@ -34,7 +36,7 @@ const PerconaUpdateVersion = () => {
     if (updateAvailable) {
       prepareModal();
     }
-  }, [dispatch, updateAvailable, installed, latest, snoozedPmmVersion]);
+  }, [dispatch, updatesEnabled, updateAvailable, installed, latest, snoozedPmmVersion]);
 
   const snoozeUpdate = async () => {
     if (latest && latest.version) {

@@ -1,4 +1,3 @@
-import { EnhancedStore } from '@reduxjs/toolkit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -17,9 +16,20 @@ const checkUpdatesChangeLogsSpy = jest.spyOn(GrafanaUpdates, 'checkUpdatesChange
 const setSnoozedVersionSpy = jest.spyOn(User, 'setSnoozedVersion');
 
 describe('PerconaUpdateVersion', () => {
-  const setup = (store: EnhancedStore) =>
+  const setup = (state: Partial<StoreState['percona']>, updatesEnabled = true) =>
     render(
-      <Provider store={store}>
+      <Provider
+        store={configureStore({
+          percona: {
+            settings: {
+              result: {
+                updatesEnabled,
+              },
+            },
+            ...state,
+          },
+        } as StoreState)}
+      >
         <PerconaUpdateVersion />
       </Provider>
     );
@@ -52,15 +62,7 @@ describe('PerconaUpdateVersion', () => {
     };
     jest.spyOn(UpdatesService, 'getUpdatesChangelogs').mockReturnValue(Promise.resolve({ ...changeLogsAPIResponse }));
 
-    const defaultState = configureStore().getState();
-    const store = configureStore({
-      ...defaultState,
-      percona: {
-        ...defaultState.percona,
-        ...state,
-      },
-    } as StoreState);
-    setup(store);
+    setup(state);
     await waitFor(() => {
       expect(checkUpdatesChangeLogsSpy).toHaveBeenCalled();
     });
@@ -100,16 +102,7 @@ describe('PerconaUpdateVersion', () => {
     };
     jest.spyOn(UpdatesService, 'getUpdatesChangelogs').mockReturnValue(Promise.resolve({ ...changeLogsAPIResponse }));
 
-    const defaultState = configureStore().getState();
-    const store = configureStore({
-      ...defaultState,
-      percona: {
-        ...defaultState.percona,
-        ...state,
-      },
-    } as StoreState);
-
-    setup(store);
+    setup(state);
     await waitFor(() => {
       expect(checkUpdatesChangeLogsSpy).toHaveBeenCalled();
     });
@@ -142,15 +135,7 @@ describe('PerconaUpdateVersion', () => {
     };
     jest.spyOn(UpdatesService, 'getUpdatesChangelogs').mockReturnValue(Promise.resolve({ ...changeLogsAPIResponse }));
 
-    const defaultState = configureStore().getState();
-    const store = configureStore({
-      ...defaultState,
-      percona: {
-        ...defaultState.percona,
-        ...state,
-      },
-    } as StoreState);
-    setup(store);
+    setup(state);
     await waitFor(() => {
       expect(checkUpdatesChangeLogsSpy).toHaveBeenCalled();
     });
@@ -160,5 +145,25 @@ describe('PerconaUpdateVersion', () => {
     await waitFor(() => {
       expect(setSnoozedVersionSpy).toHaveBeenCalled();
     });
+  });
+
+  it("shouldn't render modal when updates are disabled", async () => {
+    const state = {
+      updates: {
+        isLoading: false,
+        updateAvailable: true,
+        latest: { version: '3.0.1' },
+        lastChecked: '',
+        showUpdateModal: true,
+      },
+    };
+
+    setup(state, false);
+    await waitFor(() => {
+      expect(checkUpdatesChangeLogsSpy).not.toHaveBeenCalled();
+    });
+
+    expect(screen.queryByTestId('one-update-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('multiple-updates-modal')).not.toBeInTheDocument();
   });
 });

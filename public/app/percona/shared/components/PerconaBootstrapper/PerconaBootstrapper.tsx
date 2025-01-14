@@ -64,8 +64,9 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
   useEffect(() => {
     const getSettings = async () => {
       try {
-        await dispatch(fetchSettingsAction()).unwrap();
+        const settings = await dispatch(fetchSettingsAction()).unwrap();
         dispatch(setAuthorized(true));
+        return settings;
       } catch (e) {
         // @ts-ignore
         if (e.response?.status === 401) {
@@ -74,6 +75,8 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
           logger.error(e);
         }
       }
+
+      return null;
     };
 
     const getUserDetails = async () => {
@@ -87,10 +90,13 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
 
     const bootstrap = async () => {
       if (isPmmAdmin(user)) {
-        await getSettings();
+        const settings = await getSettings();
         await dispatch(fetchUserStatusAction());
         await dispatch(fetchAdvisors({ disableNotifications: true }));
-        await dispatch(checkUpdatesAction());
+
+        if (settings?.updatesEnabled) {
+          await dispatch(checkUpdatesAction());
+        }
       }
 
       await getUserDetails();
