@@ -3151,7 +3151,7 @@ __metadata:
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.46"
     ol: "npm:7.4.0"
-    papaparse: "npm:5.4.1"
+    papaparse: "npm:5.5.1"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-use: "npm:17.6.0"
@@ -23354,10 +23354,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"papaparse@npm:5.4.1":
-  version: 5.4.1
-  resolution: "papaparse@npm:5.4.1"
-  checksum: 10/5e6dc978187182ad2efa1d264ffe73d2042cd23b8fb1dcb0b0f5c8c7c772c11e3eb4e166fb0893880ed24529a96abe9065d704cc5b4cb96abf037413cfe43788
+"papaparse@npm:5.5.1":
+  version: 5.5.1
+  resolution: "papaparse@npm:5.5.1"
+  checksum: 10/6c3b47bd316cf11936641abe5590c6fb1e5b04297d1c594965a44dba89cc0f26b4e4d61eb1933352c538a30c4915d110628d14cf4d60cef0b8245c9a26477602
   languageName: node
   linkType: hard
 
