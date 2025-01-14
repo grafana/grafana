@@ -14,5 +14,5 @@ jobs:
           persist-credentials: false
       - uses: grafana/writers-toolkit/vale-action@c21c67bc79ebe44a30321d501a21eaf1b9885805 # vale-action/v1.0.0
         with:
-          filter: .Name in ["Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]
+          filter: '.Name in ["Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]'
           token: ${{ secrets.GITHUB_TOKEN }}
