@@ -126,11 +126,11 @@ export const TransformationOperationRow = ({
       interpolate: (v: string) => getTemplateSrv().replace(v),
     };
 
-    const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((v) => {
+    const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((data) => {
       if (matcher) {
-        v = data.series.filter((v) => matcher(v));
+        data = data.filter((frame) => matcher(frame));
       }
-      setInput(v);
+      setInput(data);
     });
     const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
