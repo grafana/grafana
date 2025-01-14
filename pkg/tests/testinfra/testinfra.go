@@ -149,6 +149,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 // CreateGrafDir creates the Grafana directory.
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
+//
+//nolint:gocyclo
 func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
@@ -453,7 +455,18 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
-	createGcomApiNToken(t, opts, cfg)
+	if opts.GrafanaComAPIURL != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
+		require.NoError(t, err)
+	}
+	if opts.GrafanaComSSOAPIToken != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("sso_api_token", opts.GrafanaComSSOAPIToken)
+		require.NoError(t, err)
+	}
 
 	if opts.UnifiedStorageConfig != nil {
 		for k, v := range opts.UnifiedStorageConfig {
@@ -481,29 +494,6 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 
 	return tmpDir, cfgPath
-}
-
-func createGcomApiNToken(t *testing.T, opts GrafanaOpts, cfg *ini.File) {
-	getOrCreateSection := func(name string) (*ini.Section, error) {
-		section, err := cfg.GetSection(name)
-		if err != nil {
-			return cfg.NewSection(name)
-		}
-		return section, err
-	}
-
-	if opts.GrafanaComAPIURL != "" {
-		grafanaComSection, err := getOrCreateSection("grafana_com")
-		require.NoError(t, err)
-		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
-		require.NoError(t, err)
-	}
-	if opts.GrafanaComSSOAPIToken != "" {
-		grafanaComSection, err := getOrCreateSection("grafana_com")
-		require.NoError(t, err)
-		_, err = grafanaComSection.NewKey("sso_api_token", opts.GrafanaComSSOAPIToken)
-		require.NoError(t, err)
-	}
 }
 
 func SQLiteIntegrationTest(t *testing.T) {
