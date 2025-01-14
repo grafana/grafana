@@ -27,7 +27,7 @@ func TestSearchHandlerFields(t *testing.T) {
 
 	t.Run("Multiple comma separated fields will be appended to default dashboard search fields", func(t *testing.T) {
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?fields=field1,field2,field3", nil)
+		req := httptest.NewRequest("GET", "/search?field=field1&field=field2&field=field3", nil)
 		req.Header.Add("content-type", "application/json")
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 
@@ -44,7 +44,7 @@ func TestSearchHandlerFields(t *testing.T) {
 
 	t.Run("Single field will be appended to default dashboard search fields", func(t *testing.T) {
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search?fields=field1", nil)
+		req := httptest.NewRequest("GET", "/search?field=field1", nil)
 		req.Header.Add("content-type", "application/json")
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 

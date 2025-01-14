@@ -230,9 +230,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
 	fields := []string{"title", "folder", "tags"}
-	if queryParams.Has("fields") {
+	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
-		for _, f := range strings.Split(queryParams.Get("fields"), ",") {
+		for _, f := range queryParams["field"] {
 			if f != "" && !slices.Contains(fields, f) {
 				fields = append(fields, f)
 			}
