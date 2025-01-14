@@ -428,7 +428,7 @@ func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					u, ok := claims.From(r.Context())
 					if !ok {
 						w.WriteHeader(400)
-						w.Write([]byte("expected user"))
+						_, _ = w.Write([]byte("expected user"))
 						return
 					}
 					stats, err := b.lister.Stats(r.Context(), u.GetNamespace(), "")
