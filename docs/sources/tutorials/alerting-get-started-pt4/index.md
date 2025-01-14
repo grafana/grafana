@@ -33,12 +33,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting-rules/templates/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting-rules/templates/reference/
- template-labels-annotations-ref-labels-variable:
+  template-labels-annotations-ref-labels-variable:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting-rules/templates/reference/#labels
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting-rules/templates/reference/#labels
- template-labels-annotations-ref-values-variable:
+  template-labels-annotations-ref-values-variable:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting-rules/templates/reference/#values
     - pattern: /docs/grafana-cloud/
