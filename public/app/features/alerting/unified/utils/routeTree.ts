@@ -93,7 +93,9 @@ export const addRouteToReferenceRoute = (
     const [routeInTree, parentRoute, positionInParent] = findRouteInTree(draftTree, referenceRouteIdentifier);
 
     if (routeInTree === undefined || parentRoute === undefined || positionInParent === undefined) {
-      throw new Error(`could not find reference route "${referenceRouteIdentifier}" in tree`);
+      throw new Error(`could not find reference route "${referenceRouteIdentifier}" in tree`, {
+        cause: ERROR_NEWER_CONFIGURATION,
+      });
     }
 
     // if user wants to insert new child policy, append to the bottom of children
