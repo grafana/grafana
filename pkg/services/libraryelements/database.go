@@ -29,7 +29,7 @@ import (
 const (
 	selectLibraryElementDTOWithMeta = `
 SELECT DISTINCT
-	le.name, le.id, le.org_id, le.folder_id, le.uid, le.kind, le.type, le.description, le.model, le.created, le.created_by, le.updated, le.updated_by, le.version
+	le.name, le.id, le.org_id, le.folder_id, le.folder_uid, le.uid, le.kind, le.type, le.description, le.model, le.created, le.created_by, le.updated, le.updated_by, le.version
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
 	, u2.login AS updated_by_name
@@ -93,10 +93,7 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (model.LibraryElementWithMeta, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
-		", coalesce(dashboard.title, 'General') AS folder_name" +
-		", coalesce(dashboard.uid, '') AS folder_uid" +
 		getFromLibraryElementDTOWithMeta(dialect) +
-		" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id" +
 		" WHERE le.uid=? AND le.org_id=?"
 	sess := session.SQL(sql, uid, orgID)
 	err := sess.Find(&elements)
@@ -108,6 +105,12 @@ func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string
 	}
 	if len(elements) > 1 {
 		return model.LibraryElementWithMeta{}, fmt.Errorf("found %d elements, while expecting at most one", len(elements))
+	}
+
+	for _, el := range elements {
+		if el.FolderName == "" {
+			el.FolderName = dashboards.RootFolderName
+		}
 	}
 
 	return elements[0], nil
