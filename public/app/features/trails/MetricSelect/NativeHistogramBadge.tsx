@@ -26,6 +26,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.info.transparent,
       cursor: 'auto',
       width: '112px',
+      padding: '0rem 0.25rem 0 0.35rem',
     }),
   };
 }
