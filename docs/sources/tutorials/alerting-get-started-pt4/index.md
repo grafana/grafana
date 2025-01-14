@@ -25,14 +25,14 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
   template-labels-annotations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/annotation-label/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
   template-labels-annotations-ref:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting-rules/templates/reference/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting-rules/templates/reference/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/
   template-labels-annotations-ref-labels-variable:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting-rules/templates/reference/#labels
@@ -45,12 +45,12 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting-rules/templates/reference/#values
   template-labels-annotations-lang:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting-rules/templates/language/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting-rules/templates/language/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/
   template-notifications:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/annotation-label/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications//
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
   template-notifications-ref:
@@ -65,7 +65,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
   templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/template-notifications/annotation-label/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/templates/
 ---
@@ -103,7 +103,7 @@ There are different ways you can follow along with this tutorial.
 
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
 
-  Continue to [how templating works.](#how-templating-works).
+  Continue to [how templating works](#how-templating-works).
 
 - **Interactive learning environment**
 
@@ -220,42 +220,47 @@ Now that we've introduced how templating works, let’s move on to the next step
 
    - **Grafana Cloud** users: Log in via Grafana Cloud.
    - **OSS users**: Go to [http://localhost:3000](http://localhost:3000).
+
 1. Create an alert rule that includes a summary and description annotation:
-   - Navigate to** Alerting** > *Alert rules*.
+   - Navigate to** Alerting** > _Alert rules_.
    - Click **+ New alert rule**.
    - Enter an **alert rule name**. High CPU usage
 1. **Define query an alert condition** section:
+
    - Select TestData data source from the drop-down menu.
-   
-        [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) is included in the demo environment. If you’re working in Grafana Cloud or your own local Grafana instance, you can add the data source through the Connections menu
+
+     [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) is included in the demo environment. If you’re working in Grafana Cloud or your own local Grafana instance, you can add the data source through the Connections menu
 
    - From **Scenario** select **CSV Content**.
    - Copy in the following CSV data:
 
-        ```
-        region,cpu-usage,service,instance
-        us-west,88,web-server-1,server-01
-        us-west,81,web-server-1,server-02
-        us-east,79,web-server-2,server-03
-        us-east,52,web-server-2,server-04
-        ```
+     ```
+     region,cpu-usage,service,instance
+     us-west,88,web-server-1,server-01
+     us-west,81,web-server-1,server-02
+     us-east,79,web-server-2,server-03
+     us-east,52,web-server-2,server-04
+     ```
 
-        This dataset simulates a data source returning multiple time series, with each time series generating a separate alert instance.
-1. **Alert condition** section: 
-    - Keep Last as the value for the reducer function (`WHEN`), and `75` as the threshold value, representing CPU usage above 75% .This is the value above which the alert rule should trigger.
+     This dataset simulates a data source returning multiple time series, with each time series generating a separate alert instance.
+
+1. **Alert condition** section:
+
+   - Keep Last as the value for the reducer function (`WHEN`), and `75` as the threshold value, representing CPU usage above 75% .This is the value above which the alert rule should trigger.
    - Click **Preview** to run the queries.
 
-    It should return 3 series in Firing state, and 1 in Normal state.
+   It should return 3 series in Firing state, and 1 in Normal state.
 
-    {{< figure src="/media/docs/alerting/part-4-firing-instances-preview.png" max-width="1200px" caption="Preview of a query returning alert instances" >}}
+   {{< figure src="/media/docs/alerting/part-4-firing-instances-preview.png" max-width="1200px" caption="Preview of a query returning alert instances" >}}
 
-    _Preview of a query returning alert instances in Grafana_
+   _Preview of a query returning alert instances in Grafana_
 
 1. Add folders and labels section:
 
    - In **Folder**, click **+ New folder** and enter a name. For example: `System metrics` . This folder contains our alerts.
 
-        Note: while it's possible to template labels here, in this tutorial, we focus on templating the summary and annotations fields instead.
+     Note: while it's possible to template labels here, in this tutorial, we focus on templating the summary and annotations fields instead.
+
 1. **Set evaluation behaviour** section:
    - In the **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it `High usage`.
    - Choose an **Evaluation interval** (how often the alert will be evaluated). Choose `1m`.
@@ -265,29 +270,31 @@ Now that we've introduced how templating works, let’s move on to the next step
    Select who should receive a notification when an alert rule fires.
 
    - Select a **Contact point**. If you don’t have any contact points, click _View or create contact points_.
+
 1. **Configure notification message** section:
 
-    In this step, you’ll configure the **summary** and **description** annotations to make your alert notifications informative and easy to understand. These annotations use templates to dynamically include key information about the alert.
+   In this step, you’ll configure the **summary** and **description** annotations to make your alert notifications informative and easy to understand. These annotations use templates to dynamically include key information about the alert.
+
    - **Summary** annotation: Enter the following code as the value for the annotation.:
 
-        ``` go
-        {{ index $labels "instance" }}{{- "\t" -}}{{ index $values "A"}}{{- "\n" -}}
-        ```
+     ```go
+     {{ index $labels "instance" }}{{- "\t" -}}{{ index $values "A"}}{{- "\n" -}}
+     ```
 
-        This template automatically adds the instance name (from the [$labels](ref:template-labels-annotations-ref-labels-variable) data) and its current CPU usage (from [$values["A"]](ref:template-labels-annotations-ref-values-variable)) into the alert summary.  `\t`: Adds a tab space between the instance name and the value. And, `\n`: Inserts a new line after the value.
+     This template automatically adds the instance name (from the [$labels](ref:template-labels-annotations-ref-labels-variable) data) and its current CPU usage (from [$values["A"]](ref:template-labels-annotations-ref-values-variable)) into the alert summary. `\t`: Adds a tab space between the instance name and the value. And, `\n`: Inserts a new line after the value.
 
-        Output example:
+     Output example:
 
-        ```
-        server-01	88
-        ```
+     ```
+     server-01	88
+     ```
 
-        This output helps you quickly see which instance is affected and its usage level.
+     This output helps you quickly see which instance is affected and its usage level.
 
 1. Optional: Add a description to help the on-call engineer to better understand what the alert rule is about. Eg. This alert monitors CPU usage across instances and triggers if any instance exceeds a usage threshold of 75%.
 1. Click **Save rule and exit**.
 
-Now that we’ve configured an alert rule with dynamic templates for the **summary** annotation, the next step is to customize the alert notifications themselves. While the default notification message includes the summary annotation and works well, it can often be too verbose. 
+Now that we’ve configured an alert rule with dynamic templates for the **summary** annotation, the next step is to customize the alert notifications themselves. While the default notification message includes the summary annotation and works well, it can often be too verbose.
 
 {{< figure src="/media/docs/alerting/templated-annotation-alert.png" max-width="1200px" caption="Default email alert notification with templated annotation" >}}
 
@@ -300,8 +307,7 @@ To make our alert notifications more concise and tailored to our needs, we’ll 
 
 ## Step 2: Template notifications
 
-In this step, we use a built-in notification template to format alert notifications in a clear and organized way. Notification templates allow us to customize the structure of alert messages, making them easier to read and more relevant. 
-
+In this step, we use a built-in notification template to format alert notifications in a clear and organized way. Notification templates allow us to customize the structure of alert messages, making them easier to read and more relevant.
 
 Without a notification template, the alert messages would include the default Grafana formatting (`default.message`, see image above).
 
@@ -310,7 +316,7 @@ Without a notification template, the alert messages would include the default Gr
 1. Navigate to **Alerts & IRM** > **Alerting** > **Contact point**s.
 1. Select the **Notification Templates** tab.
 1. Click **+ Add notification template group**.
-1. Enter a name. E.g  _instance-cpu-summary_.
+1. Enter a name. E.g _instance-cpu-summary_.
 1. From the **Add example** dropdown menu, choose `Print firing and resolved alerts`.
 
 This template prints out alert instances into two sections: **firing alerts** and **resolved alerts**, and includes only the key details for each. In addition it adds our summary and description annotations.
@@ -346,17 +352,17 @@ In the **Preview** area, you can see a sample of how the notification would look
 1. To do that, click **Edit payload**.
 1. Click **Use existing alert instance**.
 
-    You should see our alert rule listed on the left.
+   You should see our alert rule listed on the left.
 
 1. Click the alert rule.
 1. Select an instance.
 1. Click **Add alert data to payload**.
 
-    The alert instance is added to the bottom of the preview.
+   The alert instance is added to the bottom of the preview.
 
-    {{< figure src="/media/docs/alerting/alert-instance-preview-in-template.png" max-width="1200px" caption="How templating works" >}}
+   {{< figure src="/media/docs/alerting/alert-instance-preview-in-template.png" max-width="1200px" caption="How templating works" >}}
 
-    _Preview of an alert instance in a notification template._
+   _Preview of an alert instance in a notification template._
 
 1. Click **Save**.
 
@@ -368,12 +374,12 @@ With the notification template ready, the next step is to apply it to your conta
 ### Apply the template to your contact point
 
 1. Apply the template to your contact point.
-    - Navigate to **Alerts & IRM** > **Alerting** > **Contact points**.
-    - Edit your contact point.
+   - Navigate to **Alerts & IRM** > **Alerting** > **Contact points**.
+   - Edit your contact point.
 1. **Optional** [Email] **settings** section:
-    - Click **Edit Message**.
-    - Under **Select notification template**, search `custom.firing_and_resolved_alerts`.
-    - Click **Save**.
+   - Click **Edit Message**.
+   - Under **Select notification template**, search `custom.firing_and_resolved_alerts`.
+   - Click **Save**.
 1. Save your contact point.
 
 <!-- INTERACTIVE page step5.md END -->
@@ -400,10 +406,10 @@ In this tutorial, we learned how to use templating in Grafana Alerting to create
 
 To deepen your understanding of Grafana’s templating, explore the following resources:
 
-- **Overview of the functions and operators used in templates**: 
+- **Overview of the functions and operators used in templates**:
 
-    - [Notification template language](ref:template-notifications-lang)
-    - [Alert rule template language](ref:template-labels-annotations-lang)
+  - [Notification template language](ref:template-notifications-lang)
+  - [Alert rule template language](ref:template-labels-annotations-lang)
 
 - [**Notification template reference**](ref:template-notifications-ref): Lists the data available for use in notification templates and explores specific functions.
 - [**Alert rule template reference**](ref:template-labels-annotations-ref): Covers the specifics of creating dynamic labels and annotations for alert rules using elements such as variables and functions.
