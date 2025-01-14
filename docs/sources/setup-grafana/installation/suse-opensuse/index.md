@@ -143,8 +143,11 @@ Complete the following steps to install Grafana using the standalone binaries:
    /usr/local/grafana/bin/grafana-server --homepath /usr/local/grafana
    ```
 
-1. Press `CTRL+C` to stop the Grafana server.
+   {{% admonition type="note" %}}
+   Manually invoking the binary in this step automatically creates the `/usr/local/grafana/data` directory, which needs to be created and configured before the installation can be considered complete.
+   {{% /admonition %}}
 
+1. Press `CTRL+C` to stop the Grafana server.
 1. Change the owner of `/usr/local/grafana` to Grafana users again to apply the ownership to the newly created `/usr/local/grafana/data` directory:
 
    ```shell
