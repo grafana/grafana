@@ -207,6 +207,9 @@ This particular notification template pulls in summary and description annotatio
 
 This approach is helpful when you want to reduce notification noise, especially in situations where multiple instances of an alert are firing at the same time (e.g., high CPU usage across several instances). You can leverage templates to create a unified, easy-to-read notification that includes all the pertinent details.
 
+<!-- INTERACTIVE page step2.md END -->
+<!-- INTERACTIVE page step3.md START -->
+
 ## Step 1: Template labels and annotations
 
 Now that we've introduced how templating works, let’s move on to the next step, where we guide you through creating an alert rule with a summary and description annotation, incorporating CPU usage and instance names, which we later use in our notification template.
@@ -292,6 +295,9 @@ _Default email alert notification with templated annotation for CPU and memory u
 
 To make our alert notifications more concise and tailored to our needs, we’ll create a custom **notification template** that references the summary annotation we just set up. Notification templates are especially useful for reusability, as they can be applied across multiple contact points, ensuring consistent alert messages.
 
+<!-- INTERACTIVE page step3.md END -->
+<!-- INTERACTIVE page step4.md START -->
+
 ## Step 2: Template notifications
 
 In this step, we use a built-in notification template to format alert notifications in a clear and organized way. Notification templates allow us to customize the structure of alert messages, making them easier to read and more relevant. 
@@ -356,6 +362,9 @@ In the **Preview** area, you can see a sample of how the notification would look
 
 With the notification template ready, the next step is to apply it to your contact point to see it in action.
 
+<!-- INTERACTIVE page step4.md END -->
+<!-- INTERACTIVE page step5.md START -->
+
 ### Apply the template to your contact point
 
 1. Apply the template to your contact point.
@@ -366,6 +375,9 @@ With the notification template ready, the next step is to apply it to your conta
     - Under **Select notification template**, search `custom.firing_and_resolved_alerts`.
     - Click **Save**.
 1. Save your contact point.
+
+<!-- INTERACTIVE page step5.md END -->
+<!-- INTERACTIVE page step6.md START -->
 
 ### Receiving a templated notification
 
@@ -378,6 +390,9 @@ Note: you might need to pause the alert rule evaluation and resume it to trigger
 _Templated email notification for CPU and memory usage_
 
 In the screen capture, you can see how the notification template groups the alert instances into two sections: **firing alerts** and **resolved alerts**. Each section includes only the key details for each alert, ensuring the message remains concise and focused. Additionally, the summary and description annotations we created earlier are included, providing affected instance and CPU usage.
+
+<!-- INTERACTIVE page step6.md END -->
+<!-- INTERACTIVE page finish.md START -->
 
 ## Conclusion
 
@@ -392,3 +407,5 @@ To deepen your understanding of Grafana’s templating, explore the following re
 
 - [**Notification template reference**](ref:template-notifications-ref): Lists the data available for use in notification templates and explores specific functions.
 - [**Alert rule template reference**](ref:template-labels-annotations-ref): Covers the specifics of creating dynamic labels and annotations for alert rules using elements such as variables and functions.
+
+<!-- INTERACTIVE page finish.md END -->
