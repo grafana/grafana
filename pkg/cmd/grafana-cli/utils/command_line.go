@@ -104,6 +104,7 @@ func (c *ContextCommandLine) GcomToken() string {
 
 		if err != nil {
 			logger.Debug("Could not parse config file", err)
+			return ""
 		}
 		return cfg.GrafanaComSSOAPIToken
 	}
