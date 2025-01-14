@@ -41,7 +41,7 @@ func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	}
 
 	// This should come from the keeper. From this point on, we should not have a need to read value.
-	externalID := secret.ExternalID("TODO")
+	externalID := "TODO"
 	sv.Spec.Value = ""
 
 	row, err := toCreateRow(sv, authInfo.GetUID(), externalID)
