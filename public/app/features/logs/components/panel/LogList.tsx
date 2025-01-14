@@ -5,9 +5,9 @@ import { ListChildComponentProps, VariableSizeList } from 'react-window';
 import { CoreApp, LogRowModel } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
-import { getLogLineSize, LogLine } from './LogLine';
+import { LogLine } from './LogLine';
 import { preProcessLogs } from './processing';
-import { init as initVirtualization } from './virtualization';
+import { getLogLineSize, init as initVirtualization } from './virtualization';
 
 interface Props {
   app?: CoreApp;
@@ -58,8 +58,9 @@ export const LogList = ({ containerElement, logs, wrapLogMessage }: Props) => {
       itemCount={processedLogs.length}
       itemSize={getLogLineSize.bind(null, processedLogs, containerElement, theme, wrapLogMessage)}
       itemKey={(index: number) => index}
-      width={'100%'}
       layout="vertical"
+      style={{ overflowY: 'scroll' }}
+      width="100%"
     >
       {Renderer}
     </VariableSizeList>
