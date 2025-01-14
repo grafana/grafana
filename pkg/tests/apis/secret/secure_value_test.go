@@ -205,8 +205,6 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			require.NoError(t, clientOrg1.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-
 			// OrgB creating a securevalue with the same name from Org1.
 			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			testData.SetName(secureValueOrg1.GetName())
@@ -216,6 +214,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
+			require.NoError(t, clientOrg1.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
 			require.NoError(t, clientOrgB.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
 		})
 

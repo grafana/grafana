@@ -284,8 +284,6 @@ func TestIntegrationKeeper(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			require.NoError(t, clientOrg1.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-
 			// OrgB creating a keeper with the same name from Org1.
 			testData = helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 			testData.SetName(keeperOrg1.GetName())
@@ -294,6 +292,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
+			require.NoError(t, clientOrg1.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
 			require.NoError(t, clientOrgB.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
 		})
 
