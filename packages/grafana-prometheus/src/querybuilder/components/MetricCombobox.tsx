@@ -2,8 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
-import { Button, InlineField, InlineFieldRow } from '@grafana/ui';
-import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
+import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
