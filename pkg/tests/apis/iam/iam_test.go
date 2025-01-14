@@ -97,10 +97,10 @@ func TestIntegrationIdentity(t *testing.T) {
 			}
 		]`, found)
 
-		// OrgB users
+		// Org2 users
 		userClient = helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,                                        // super admin
-			Namespace: helper.Namespacer(helper.OrgB.Admin.Identity.GetOrgID()), // list values for orgB with super admin user
+			Namespace: helper.Namespacer(helper.Org2.Admin.Identity.GetOrgID()), // list values for org2 with super admin user
 			GVR:       gvrUsers,
 		})
 		rsp, err = userClient.Resource.List(ctx, metav1.ListOptions{})

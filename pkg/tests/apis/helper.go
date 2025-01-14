@@ -58,7 +58,7 @@ type K8sTestHelper struct {
 	Namespacer request.NamespaceMapper
 
 	Org1 OrgUsers // default
-	OrgB OrgUsers // some other id
+	Org2 OrgUsers // some other id
 
 	// // Registered groups
 	groups []metav1.APIGroup
@@ -87,7 +87,7 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	}
 
 	c.Org1 = c.createTestUsers(Org1)
-	c.OrgB = c.createTestUsers("OrgB")
+	c.Org2 = c.createTestUsers("Org2")
 
 	c.loadAPIGroups()
 
