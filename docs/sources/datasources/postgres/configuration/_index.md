@@ -60,8 +60,7 @@ refs:
 
 # Configure the PostgreSQL data source
 
-
-
+This document provides instructions for configuring the PostgreSSQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
 
 ## Before you begin
 
@@ -71,9 +70,8 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 Grafana comes with a built-in PostgreSQL data source plugin, eliminating the need to install a plugin.
 
 {{< admonition type="note" >}}
-When adding a data source, the database user you specify should have only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, that could be executed. To mitigate this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
+When adding a data source, the database user you specify should have only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, that could be executed. To mitigate this risk, Grafana strongly recommends creating a dedicated PostgreSQL user with restricted permissions.
 {{< /admonition >}}
-
 
 ## Add the PostgreSQL data source
 
@@ -104,13 +102,30 @@ Following is a list of PostgreSQL configuration options:
 - **Username** - Enter the username used to connect to your PostgreSQL database.
 - **Password** - Enter the password used to connect to the PostgreSQL database.
 - **TLS/SSL Mode** - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When **TLS/SSL Mode** is disabled, **TLS/SSL Method** and **TLS/SSL Auth Details** aren't visible options.
-- **TLS/SSL Method** - Determines how TLS/SSL certificates are configured. Selecting the **File system path** option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process. Selecting the **Certificate content** option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem. 
+- **TLS/SSL Method** - Determines how TLS/SSL certificates are configured. 
+  - **File system path** - This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.
+  - **Certificate content** - This option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem. 
+
+<!-- Selecting the **File system path** option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process. Selecting the **Certificate content** option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem.  -->
 
 **TLS/SSL Auth Details**
 
--  
+If you select the TLS/SSL Mode options **require**, **verify-ca** or **verify-full** and **file system path** the following are required:
 
+- **TLS/SSL Root Certificate** - Specify the path to the root certificate file.
+- **TLS/SSL Client Certificate** - Specify the path to the client certificate and ensure the file is accessible to the user running the Grafana process.
+- **TLS/SSL Client Key** - Specify the path to the client key file and ensure the file is accessible to the user running the Grafana process.
 
+If you select the TLS/SSL Mode option **require** and  TLS/SSL Method certificate content the following are required:
+
+ - **TLS/SSL Client Certificate** - Provide the client certificate.
+ - **TLS/SSL Client Key** - Provide the client key.
+
+If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the TLS/SSL Method certificate content the following are required:
+
+ - **TLS/SSL Client Certificate** - Provide the client certificate.
+ - **TLS/SSL Root Certificate** - Provide the root certificate.
+ - **TLS/SSL Client Key** - Provide the client key.
 
 **PostgreSQL Options:**
 
@@ -131,7 +146,7 @@ Click **Manage private data source connect** to be taken to your PDC connection 
 
 Once you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
 
-
+<!-- 
 
 
 
@@ -155,14 +170,13 @@ Once you have added your MySQL connection settings, click **Save & test** to tes
 | **Auto (max idle)**         | If set will set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                                                   |
 | **Max lifetime**            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                                                                                                                                                                                                                                                                             |
 | **Version**                 | Determines which functions are available in the query builder.                                                                                                                                                                                                                                                                                                                         |
-| **TimescaleDB**             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder. For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). |
+| **TimescaleDB**             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder. For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). | -->
 
 ### Min time interval
 
-A lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
-Recommended to be set to write frequency, for example `1m` if your data is written every minute.
-This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
-number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
+
+This value must be formatted as a number followed by a valid time identifier:
 
 | Identifier | Description |
 | ---------- | ----------- |
@@ -177,22 +191,14 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 
 
 
-Example:
+You can override this setting in a dashboard panel under its data source options.
 
-```sql
- CREATE USER grafanareader WITH PASSWORD 'password';
- GRANT USAGE ON SCHEMA schema TO grafanareader;
- GRANT SELECT ON schema.table TO grafanareader;
-```
+## Provision the data source
 
-Make sure the user does not get any unwanted privileges from the public role.
+You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+For more information about provisioning, and available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
-
-### Provision the data source
-
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](ref:provisioning-data-sources).
-
-#### Provisioning example
+### PostgreSQL provisioning example
 
 ```yaml
 apiVersion: 1
@@ -216,13 +222,38 @@ datasources:
 ```
 
 {{% admonition type="note" %}}
-In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
+<!-- In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above. -->
+In the preceding example, the `postgresVersion` value of `10` indicates PostgreSQL version 10 or later.
 {{% /admonition %}}
 
-#### Troubleshoot provisioning
+#### Troubleshoot provisioning issues
+
+<!-- If you encounter metric request errors or other issues:
+
+- Make sure your data source YAML file parameters exactly match the example. This includes parameter names and use of quotation marks.
+- Make sure the `database` name is not included in the `url`. -->
 
 If you encounter metric request errors or other issues:
 
-- Make sure your data source YAML file parameters exactly match the example. This includes parameter names and use of quotation marks.
-- Make sure the `database` name is not included in the `url`.
+- Ensure that the parameters in your data source YAML file precisely match the example provided, including parameter names and the correct use of quotation marks.
+- Verify that the database name is not included in the URL.
 
+
+
+<!-- ### Min time interval
+
+A lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
+Recommended to be set to write frequency, for example `1m` if your data is written every minute.
+This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
+number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
+
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | year        |
+| `M`        | month       |
+| `w`        | week        |
+| `d`        | day         |
+| `h`        | hour        |
+| `m`        | minute      |
+| `s`        | second      |
+| `ms`       | millisecond | -->

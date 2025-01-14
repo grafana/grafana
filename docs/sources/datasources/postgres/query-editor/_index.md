@@ -64,6 +64,22 @@ refs:
 
 The PostgreSQL query builder is available when editing a panel using a PostgreSQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
+
+# SEE MYSQL and copy
+
+Database user permissions (Important!)
+The database user you specify when you add the data source should only be granted SELECT permissions on the specified database and tables you want to query. Grafana does not validate that the query is safe. The query could include any SQL statement. For example, statements like DELETE FROM user; and DROP TABLE user; would be executed. To protect against this we highly recommend you create a specific PostgreSQL user with restricted permissions.
+
+Example:
+
+```sql
+ CREATE USER grafanareader WITH PASSWORD 'password';
+ GRANT USAGE ON SCHEMA schema TO grafanareader;
+ GRANT SELECT ON schema.table TO grafanareader;
+```
+<!-- Make sure the user does not get any unwanted privileges from the public role. -->
+Ensure the user does not inherit any unintended privileges from the `public` role.
+
 ### Format
 
 The response from PostgreSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
