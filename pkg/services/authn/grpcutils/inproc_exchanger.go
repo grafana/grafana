@@ -5,8 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
@@ -20,7 +18,8 @@ var (
 )
 
 const (
-	tokenLifetime = 5 * time.Minute
+	tokenLifetime       = 5 * time.Minute
+	inProcTokenCacheKey = "in-proc-access-token"
 )
 
 type inProcExchanger struct {
@@ -36,16 +35,13 @@ func ProvideInProcExchanger() *inProcExchanger {
 }
 
 func (e *inProcExchanger) Exchange(ctx context.Context, r authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
-	key := hash(r)
-	tokenData, ok := e.cache.Get(key)
+	tokenData, ok := e.cache.Get(inProcTokenCacheKey)
 
-	token := tokenData.(string)
-
-	if ok && token != "" {
-		return &authn.TokenExchangeResponse{Token: token}, nil
+	if ok {
+		return &authn.TokenExchangeResponse{Token: tokenData.(string)}, nil
 	}
 
-	resp, err, _ := e.singlef.Do(key, func() (interface{}, error) {
+	resp, err, _ := e.singlef.Do(inProcTokenCacheKey, func() (interface{}, error) {
 		now := timeNow()
 		tokenExpiration := now.Add(tokenLifetime)
 		claims := authn.Claims[authn.AccessTokenClaims]{
@@ -82,18 +78,8 @@ func (e *inProcExchanger) Exchange(ctx context.Context, r authn.TokenExchangeReq
 			Token: token,
 		}
 
-		e.cache.Set(key, token, time.Until(tokenExpiration))
+		e.cache.Set(inProcTokenCacheKey, token, time.Until(tokenExpiration))
 		return response, nil
 	})
 	return resp.(*authn.TokenExchangeResponse), err
-}
-
-func hash(req authn.TokenExchangeRequest) string {
-	br := strings.Builder{}
-	br.WriteString(req.Namespace)
-	br.WriteByte('-')
-	sort.Strings(req.Audiences)
-	br.WriteString(strings.Join(req.Audiences, "-"))
-
-	return br.String()
 }

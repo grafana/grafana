@@ -72,8 +72,10 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
-		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
+		// TODO: remove this after authnlib supports in-proc auth
+		authnlib.WithDisableAccessTokenOption(),
+		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
