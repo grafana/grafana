@@ -12,7 +12,7 @@ import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/
 import { computeInheritedTree } from 'app/features/alerting/unified/utils/notification-policies';
 import { ObjectMatcher, ROUTES_META_SYMBOL, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { isError } from '../../hooks/useAsync';
+import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 
@@ -136,20 +136,6 @@ export const NotificationPoliciesList = () => {
     handleActionResult({ error: updateExistingNotificationPolicyState.error });
   }
 
-  function handleActionResult({ error }: { error?: Error }) {
-    if (!error) {
-      appNotification.success('Updated notification policies');
-    }
-    if (selectedAlertmanager) {
-      refetchAlertGroups();
-    }
-
-    // close all modals
-    closeEditModal();
-    closeAddModal();
-    closeDeleteModal();
-  }
-
   async function handleDelete(route: RouteWithID) {
     await deleteNotificationPolicy.execute(route.id);
     handleActionResult({ error: deleteNotificationPolicyState.error });
@@ -168,10 +154,25 @@ export const NotificationPoliciesList = () => {
     handleActionResult({ error: addNotificationPolicyState.error });
   }
 
-  const updatingTree =
-    updateExistingNotificationPolicyState.status === 'loading' ||
-    deleteNotificationPolicyState.status === 'loading' ||
-    addNotificationPolicyState.status === 'loading';
+  function handleActionResult({ error }: { error?: Error }) {
+    if (!error) {
+      appNotification.success('Updated notification policies');
+    }
+    if (selectedAlertmanager) {
+      refetchAlertGroups();
+    }
+
+    // close all modals
+    closeEditModal();
+    closeAddModal();
+    closeDeleteModal();
+  }
+
+  const updatingTree = anyOfRequestState(
+    updateExistingNotificationPolicyState,
+    deleteNotificationPolicyState,
+    addNotificationPolicyState
+  ).loading;
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(handleAdd, updatingTree);
