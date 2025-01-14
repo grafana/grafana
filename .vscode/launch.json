@@ -9,12 +9,7 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": [
-        "server", 
-        "--homepath", "${workspaceFolder}", 
-        "--packaging", "dev", 
-        "cfg:app_mode=development",
-      ]
+      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"]
     },
     {
       "name": "Attach to Test Process",
@@ -23,7 +18,7 @@
       "mode": "remote",
       "host": "127.0.0.1",
       "port": 50480,
-      "apiVersion": 2,
+      "apiVersion": 2
     },
     {
       "name": "Run API Server (testdata)",
@@ -69,6 +64,16 @@
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": { "GF_DEFAULT_TARGET": "storage-server", "GF_SERVER_HTTP_PORT": "3001" },
+      "cwd": "${workspaceFolder}",
+      "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    },
+    {
+      "name": "Run Authz server",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": { "GF_DEFAULT_TARGET": "zanzana-server", "GF_SERVER_HTTP_PORT": "3001" },
       "cwd": "${workspaceFolder}",
       "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
