@@ -91,7 +91,7 @@ Complete the following steps to install Grafana from the APT repository:
 
 ## Install Grafana using a deb package
 
-If you choose not to install Grafana using APT, you can download and install Grafana using the deb package or as a standalone binary.
+If you install Grafana manually using the deb package, then you must manually update Grafana for each new version.
 
 Complete the following steps to install Grafana using DEB:
 

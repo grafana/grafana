@@ -96,6 +96,8 @@ If you install Grafana manually using YUM or RPM, then you must manually update 
 
 ## Install Grafana as a standalone binary
 
+If you install Grafana manually using the standalone binaries, then you must manually update Grafana for each new version.
+
 Complete the following steps to install Grafana using the standalone binaries:
 
 1. Navigate to the [Grafana download page](/grafana/download).
