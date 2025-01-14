@@ -53,10 +53,9 @@ DashboardV2Spec: {
   // changes to said schema.
   schemaVersion: uint16 | *39
 
-
-  // version: will rely on k8s resource versioning, via metadata.resorceVersion
-  // revision?: int // for plugins only
-  // gnetId?: string // ??? Wat is this used for?
+  // Plugins only. The version of the dashboard installed together with the plugin.
+  // This is used to determine if the dashboard should be updated when the plugin is updated.
+  revision?: uint16
 }
 
 
@@ -369,13 +368,13 @@ VizConfigKind: {
 
 AnnotationQuerySpec: {
   datasource?: DataSourceRef
-  query: DataQueryKind
-  builtIn?: bool
+  query?: DataQueryKind
   enable: bool
-  filter: AnnotationPanelFilter
   hide: bool
   iconColor: string
   name: string
+  builtIn?: bool | *false
+  filter?: AnnotationPanelFilter
 }
 
 AnnotationQueryKind: {
@@ -456,12 +455,22 @@ TimeSettingsSpec: {
   nowDelay?: string // v1: timepicker.nowDelay
 }
 
+RepeatMode: "variable" // other repeat modes will be added in the future: label, frame
+
+RepeatOptions: {
+  mode: RepeatMode
+  value: string
+  direction?: "h" | "v"
+  maxPerRow?: int
+}
+
 GridLayoutItemSpec: {
   x: int
   y: int
   width: int
   height: int
   element: ElementReference // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+  repeat?: RepeatOptions
 }
 
 GridLayoutItemKind: {
@@ -672,7 +681,6 @@ DatasourceVariableSpec: {
     text: ""
     value: ""
   }
-  defaultOptionEnabled: bool | *false
   options: [...VariableOption] | *[]
   multi: bool | *false
   includeAll: bool | *false

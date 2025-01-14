@@ -169,15 +169,6 @@ The query variables saved with a report might become of date if the results of t
 
 You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
 
-#### Caveats
-
-- Rendering repeating panels for dynamic variable types (for example, `query` variables) with selected `All` value is currently not supported. As a workaround, select all the values.
-- If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue
-  - use the dashboard's original template variables for the report, or make a copy of the dashboard
-  - select the new set of template variables
-  - generate a report based on the copied dashboard.
-- Rendering of the repeating panels inside collapsed rows in reports is not supported.
-
 ### Report time range
 
 > **Note:** You can set custom report time ranges in [Grafana Enterprise](ref:grafana-enterprise) 7.2+ and [Grafana Cloud](/docs/grafana-cloud/).
@@ -310,7 +301,7 @@ These options are available in the [configuration](ref:configuration) file.
 [reporting]
 # Use this option to enable or disable the reporting feature. When disabled, no reports are generated, and the UI is hidden. By default, reporting is enabled.
 enabled = true
-# Set timeout for each panel rendering request
+# Set timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files.
 rendering_timeout = 10s
 # Set maximum number of concurrent calls to the rendering service
 concurrent_render_limit = 4
@@ -327,7 +318,7 @@ font_regular = DejaVuSansCondensed.ttf
 font_bold = DejaVuSansCondensed-Bold.ttf
 # Name of the TrueType font file with italic style
 font_italic = DejaVuSansCondensed-Oblique.ttf
-# Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+# Maximum number of times the following reporting rendering requests are retried before returning an error: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
 max_retries_per_panel = 3
 # Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 allowed_domains = *
