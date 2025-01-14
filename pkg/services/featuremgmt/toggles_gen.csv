@@ -94,6 +94,7 @@ kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,fals
 kubernetesCliDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesRestore,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
+kubernetesFoldersServiceV2,experimental,@grafana/search-and-storage,false,false,false
 grafanaAPIServerTestingWithExperimentalAPIs,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -231,3 +232,5 @@ k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,false,false
 teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,false
+ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
+ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false

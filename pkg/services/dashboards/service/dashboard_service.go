@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -83,7 +83,6 @@ type DashboardServiceImpl struct {
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
-	zclient              zanzana.Client
 	k8sclient            dashboardK8sHandler
 	metrics              *dashboardsMetrics
 }
@@ -109,7 +108,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
+	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
 	quotaService quota.Service, orgService org.Service,
 ) (*DashboardServiceImpl, error) {
@@ -128,7 +127,6 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
 		ac:                   ac,
-		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
 		orgService:           orgService,
@@ -372,13 +370,15 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	// Validate folder
 	if dash.FolderUID != "" {
-		folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
-		if err != nil {
-			return nil, err
+		if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+			folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
+			if err != nil {
+				return nil, err
+			}
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+			// nolint:staticcheck
+			dash.FolderID = folder.ID
 		}
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		dash.FolderID = folder.ID
 	} else if dash.FolderID != 0 { // nolint:staticcheck
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
@@ -1212,19 +1212,12 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
-	var res []dashboards.DashboardSearchProjection
-	var err error
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
-		res, err = dr.FindDashboardsZanzana(ctx, query)
-	} else {
-		res, err = dr.FindDashboards(ctx, query)
-	}
+	res, err := dr.FindDashboards(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	hits := makeQueryResult(query, res)
-
 	return hits, nil
 }
 

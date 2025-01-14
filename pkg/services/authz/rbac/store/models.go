@@ -14,6 +14,7 @@ type PermissionsQuery struct {
 	OrgID         int64
 	UserID        int64
 	Action        string
+	ActionSets    []string
 	TeamIDs       []int64
 	Role          string
 	IsServerAdmin bool
