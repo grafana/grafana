@@ -252,4 +252,5 @@ export interface FeatureToggles {
   teamHttpHeadersMimir?: boolean;
   ABTestFeatureToggleA?: boolean;
   ABTestFeatureToggleB?: boolean;
+  queryLibraryDashboards?: boolean;
 }

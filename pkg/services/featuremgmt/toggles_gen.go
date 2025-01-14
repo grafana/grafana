@@ -942,4 +942,8 @@ const (
 	// FlagABTestFeatureToggleB
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
+
+	// FlagQueryLibraryDashboards
+	// Enables Query Library feature in Dashboards
+	FlagQueryLibraryDashboards = "queryLibraryDashboards"
 )
