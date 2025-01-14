@@ -150,7 +150,7 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
   if (stats.resource === 'playlists') {
     return '/playlists';
   }
-  if (repo.spec?.folder?.length) {
+  if (repo.spec?.folder) {
     return `/d/${repo.spec?.folder}`;
   }
   return '/dashboards';
