@@ -283,10 +283,46 @@ func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceS
 	fmt.Println("res ", res)
 	list := &resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
-			Rows:    nil,
-			Columns: nil,
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{
+					Name:        "title",
+					Type:        resource.ResourceTableColumnDefinition_STRING,
+					Description: "Display name for the resource",
+				},
+				{
+					Name:        "folder",
+					Type:        resource.ResourceTableColumnDefinition_STRING,
+					Description: "Kubernetes name for the folder",
+				},
+				// TODO add these to add extra fields
+				// &resource.ResourceTableColumnDefinition{
+				// 	Name: "tags",
+				// 	Type: resource.ResourceTableColumnDefinition_STRING,
+				// 	Description: "Unique tags",
+				// },
+				// &resource.ResourceTableColumnDefinition{
+				// 	Name: "_score",
+				// 	Type: resource.ResourceTableColumnDefinition_DOUBLE,
+				// 	Description: "The search score",
+				// },
+			},
 		},
 	}
+
+	for _, dashboard := range res {
+		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
+			Key: &resource.ResourceKey{
+				Namespace: "default",               // TODO fix - get this from some config
+				Group:     "dashboard.grafana.app", // TODO fix - get this from some config
+				Resource:  "dashboards",            // TODO fix - this may be folder
+				Name:      dashboard.UID,
+			},
+			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID)}, // TODO add remaining fields
+		})
+	}
+	// TODO sort if query.Sort == "" see sortedHits in services/search/service.go
+	// TODO set starred dashboards attribute
+	// TODO if requested filter by starred dashboards
 
 	return list, nil
 }
