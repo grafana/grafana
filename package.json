@@ -213,7 +213,7 @@
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
     "nx": "19.8.2",
-    "postcss": "8.4.49",
+    "postcss": "8.5.0",
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
