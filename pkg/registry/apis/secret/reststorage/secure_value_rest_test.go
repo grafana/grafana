@@ -102,6 +102,35 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Equal(t, "spec", errs[0].Field)
 		})
 
+		t.Run("when both `value` and `ref` are set, it returns an error", func(t *testing.T) {
+			oldSv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Ref: "non-empty",
+				},
+			}
+
+			sv := &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Value: "value",
+					Ref:   "ref",
+				},
+			}
+
+			errs := ValidateSecureValue(sv, oldSv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec", errs[0].Field)
+
+			oldSv = &secretv0alpha1.SecureValue{
+				Spec: secretv0alpha1.SecureValueSpec{
+					Value: "non-empty",
+				},
+			}
+
+			errs = ValidateSecureValue(sv, oldSv, admission.Update)
+			require.Len(t, errs, 1)
+			require.Equal(t, "spec", errs[0].Field)
+		})
+
 		t.Run("when no changes are made, it returns no errors", func(t *testing.T) {
 			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
