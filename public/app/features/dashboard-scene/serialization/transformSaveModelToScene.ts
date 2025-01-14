@@ -73,7 +73,6 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
   scene.setInitialSaveModel(rsp.dashboard);
-
   return scene;
 }
 
@@ -291,9 +290,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
 export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
-        variableName: panel.repeat,
-        repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
-      }
+      variableName: panel.repeat,
+      repeatDirection: panel.repeatDirection === 'v' ? 'v' : 'h',
+    }
     : {};
 
   const titleItems: SceneObject[] = [];

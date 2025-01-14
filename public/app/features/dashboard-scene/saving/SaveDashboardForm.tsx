@@ -29,6 +29,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
     folderUid: dashboard.state.meta.folderUid,
+    k8s: dashboard.state.meta.k8s,
   });
 
   const onSave = async (overwrite: boolean) => {

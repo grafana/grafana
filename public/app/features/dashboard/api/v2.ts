@@ -96,14 +96,17 @@ export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<D
     }
 
     // check we have the uid from metadata
+    console.log('v2 metadata', obj.metadata);
 
-    const uid = obj.metadata.name;
-
-    if (!uid) {
+    if (dashboard.k8s?.uid) {
+      obj.metadata.name = dashboard.k8s.uid;
+    }
+    if (!obj.metadata.name) {
       throw new Error('Dashboard uid is required');
     }
 
     const savedDashboard = await this.client.create(obj);
     console.log('dashboard is saved in backend!', savedDashboard);
+    return savedDashboard;
   }
 }

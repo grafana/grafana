@@ -19,6 +19,8 @@ export interface SaveDashboardOptions extends CloneOptions {
   overwrite?: boolean;
   message?: string;
   makeEditable?: boolean;
+  // for schema v2 we need to pass the k8s metadata
+  k8s?: Partial<ObjectMeta>;
 }
 
 export interface SaveDashboardAsOptions {

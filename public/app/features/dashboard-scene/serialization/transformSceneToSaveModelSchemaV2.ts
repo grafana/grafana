@@ -113,6 +113,9 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       },
     },
     // EOF layout
+    k8s: {
+      uid: oldDash.uid,
+    },
   };
 
   try {
