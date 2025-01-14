@@ -55,15 +55,11 @@ func TestIntegrationPluginManager(t *testing.T) {
 	staticRootPath, err := filepath.Abs("../../../public/")
 	require.NoError(t, err)
 
-	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
-	require.NoError(t, err)
-
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
-		Raw:                ini.Empty(),
-		StaticRootPath:     staticRootPath,
-		BundledPluginsPath: bundledPluginsPath,
-		Azure:              &azsettings.AzureSettings{},
+		Raw:            ini.Empty(),
+		StaticRootPath: staticRootPath,
+		Azure:          &azsettings.AzureSettings{},
 		PluginSettings: map[string]map[string]string{
 			"test-app": {
 				"path": "../../plugins/manager/testdata/test-app",
