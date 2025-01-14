@@ -220,7 +220,7 @@ Now that we've introduced how templating works, let’s move on to the next step
    - **OSS users**: Go to [http://localhost:3000](http://localhost:3000).
 
 1. Create an alert rule that includes a summary and description annotation:
-   - Navigate to **Alerting** > **Alert rules**.
+   - Navigate to **Alerts & IRM > Alerting > Alert rules**.
    - Click **+ New alert rule**.
    - Enter an **alert rule name**. High CPU usage
 1. **Define query an alert condition** section:
@@ -245,7 +245,7 @@ Now that we've introduced how templating works, let’s move on to the next step
 1. **Alert condition** section:
 
    - Keep Last as the value for the reducer function (`WHEN`), and `75` as the threshold value, representing CPU usage above 75% .This is the value above which the alert rule should trigger.
-   - Click **Preview** to run the queries.
+   - Click **Preview alert rule condition** to run the queries.
 
    It should return 3 series in Firing state, and 1 in Normal state.
 
@@ -253,7 +253,7 @@ Now that we've introduced how templating works, let’s move on to the next step
 
 1. Add folders and labels section:
 
-   - In **Folder**, click **+ New folder** and enter a name. For example: `System metrics` . This folder contains our alerts.
+   - In **Folder**, click **+ New folder** and enter a name. For example: `System metrics` . This folder contains our alert rules.
 
      Note: while it's possible to template labels here, in this tutorial, we focus on templating the summary and annotations fields instead.
 
