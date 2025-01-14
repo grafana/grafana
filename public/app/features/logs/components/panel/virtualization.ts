@@ -1,6 +1,14 @@
+import { GrafanaTheme2 } from '@grafana/data';
+
 let ctx: CanvasRenderingContext2D | null = null;
 
-export function init(fontFamily: string, fontSize: number, letterSpacing: number | undefined) {
+export function init(theme: GrafanaTheme2) {
+  const letterSpacing = theme.typography.body.letterSpacing
+    ? theme.typography.fontSize * parseFloat(theme.typography.body.letterSpacing)
+    : undefined;
+  const fontFamily = theme.typography.fontFamilyMonospace;
+  const fontSize = theme.typography.fontSize;
+
   const canvas = document.createElement('canvas');
   ctx = canvas.getContext('2d');
   if (!ctx) {
