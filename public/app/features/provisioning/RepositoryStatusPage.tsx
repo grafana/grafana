@@ -104,7 +104,7 @@ function FilesView({ repo }: RepoProps) {
   const name = repo.metadata?.name ?? '';
   const query = useGetRepositoryFilesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');
-  const data = [...(query.data?.files ?? [])].filter((file) =>
+  const data = [...(query.data?.items ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const columns: Array<Column<FileDetails>> = useMemo(

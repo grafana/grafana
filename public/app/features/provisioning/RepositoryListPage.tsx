@@ -18,7 +18,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { SyncRepository } from './SyncRepository';
-import { Repository } from './api';
+import { Repository, ResourceCount } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
@@ -64,10 +64,6 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
         {!!filteredItems.length ? (
           filteredItems.map((item) => {
             const name = item.metadata?.name ?? '';
-            let url = 'dashboards';
-            if (item.spec?.folder?.length) {
-              url = `/d/${item.spec?.folder}`;
-            }
 
             let icon: IconName = 'database'; // based on type
             let meta: ReactNode[] = [
@@ -118,7 +114,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   {item.status?.stats?.length && (
                     <Stack>
                       {item.status.stats.map((v) => (
-                        <LinkButton fill="outline" size="md" href={url}>
+                        <LinkButton fill="outline" size="md" href={getListURL(item, v)}>
                           {v.count} {v.resource}
                         </LinkButton>
                       ))}
@@ -147,6 +143,18 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
       </Stack>
     </Stack>
   );
+}
+
+// This should return a URL in the UI that will show the selected values
+function getListURL(repo: Repository, stats: ResourceCount): string {
+  if (stats.resource === 'playlists') {
+    return '/playlists';
+  }
+  let url = '/dashboards';
+  if (repo.spec?.folder?.length) {
+    url = `/d/${repo.spec?.folder}`;
+  }
+  return url;
 }
 
 interface StatusBadgeProps {
