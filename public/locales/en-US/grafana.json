@@ -3320,6 +3320,7 @@
     },
     "metric-select": {
       "filter-by": "Filter by",
+      "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
     },
     "recent-metrics": {
