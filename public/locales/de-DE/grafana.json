@@ -3320,6 +3320,7 @@
     },
     "metric-select": {
       "filter-by": "",
+      "new-badge": "",
       "otel-switch": ""
     },
     "recent-metrics": {
