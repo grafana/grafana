@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/hashicorp/go-hclog"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -116,7 +117,8 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceI
 	return ds, nil
 }
 
-func writeErrorResponse(rw http.ResponseWriter, code int, msg string) {
+func writeErrorResponse(rw http.ResponseWriter, code int, msg string, logger log.Logger) {
+	logger.Debug("Writing error response", "code", code, "msg", msg, "rw", hclog.Fmt("%v", rw))
 	rw.WriteHeader(http.StatusBadRequest)
 	errorBody := map[string]string{
 		"error": msg,
@@ -130,36 +132,42 @@ func writeErrorResponse(rw http.ResponseWriter, code int, msg string) {
 
 func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+		s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method, "subDataSource", subDataSource, "rw", hclog.Fmt("%v", rw), "req", hclog.Fmt("%v", req))
 
 		newPath, err := getTarget(req.URL.Path)
-		s.logger.Debug("Resource call path", "newPath", newPath, "err", err)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusBadRequest, err.Error())
+			s.logger.Debug("Resource call errored (getTarget)", "err", err, "rw", hclog.Fmt("%v", rw), "req", hclog.Fmt("%v", req))
+			writeErrorResponse(rw, http.StatusBadRequest, err.Error(), s.logger)
 			return
 		}
+		s.logger.Debug("Resource call path", "newPath", newPath, "err", err)
 
 		dsInfo, err := s.getDataSourceFromHTTPReq(req)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			s.logger.Debug("Resource call errored (dsInfo)", "err", err, "rw", hclog.Fmt("%v", rw), "req", hclog.Fmt("%v", req))
+			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err), s.logger)
 			return
 		}
+		s.logger.Debug("dsInfo", "dsInfo", hclog.Fmt("%v", dsInfo), "err", err)
 
 		service := dsInfo.Services[subDataSource]
 		serviceURL, err := url.Parse(service.URL)
-		s.logger.Debug("Resource call serviceURL", "serviceURL", serviceURL, "err", err)
+		s.logger.Debug("Resource call service", "serviceURL", serviceURL, "service", hclog.Fmt("%v", service), "err", err)
 		if err != nil {
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			s.logger.Debug("Resource call errored (service)", "err", err, "rw", hclog.Fmt("%v", rw), "req", hclog.Fmt("%v", req))
+			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err), s.logger)
 			return
 		}
 		req.URL.Path = newPath
 		req.URL.Host = serviceURL.Host
 		req.URL.Scheme = serviceURL.Scheme
+		s.logger.Debug("Resource call reqUpdates", "req", hclog.Fmt("%v", req))
 
 		rw, err = s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
+		s.logger.Debug("Resource call", "err", err, "rw", hclog.Fmt("%v", rw), "req", hclog.Fmt("%v", req), "service", hclog.Fmt("%v", service), "executors", hclog.Fmt("%v", s.executors))
 		if err != nil {
-			s.logger.Debug("Resource call errored", "err", err, "rw", rw, "req", req)
-			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			s.logger.Debug("Resource call errored", "err", err, "rw", hclog.Fmt("%v", rw), "req", hclog.Fmt("%v", req))
+			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err), s.logger)
 			return
 		}
 	}
