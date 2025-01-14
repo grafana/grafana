@@ -129,6 +129,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			responder.Error(err)
 			return
 		}
+
+		// something failed
+		if len(obj.Errors) > 0 {
+			code = http.StatusInternalServerError
+		}
+
 		logger.Debug("request resulted in valid object", "object", obj)
 		responder.Object(code, obj)
 	}), nil
