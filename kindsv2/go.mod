@@ -2,7 +2,7 @@ module github.com/grafana/grafana/kindsv2
 
 go 1.23.1
 
-require github.com/grafana/cog v0.0.5
+require github.com/grafana/cog v0.0.10
 
 require (
 	cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565 // indirect
@@ -33,7 +33,6 @@ require (
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20241112170944-20d2c9ebc01d // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/yalue/merged_fs v1.3.0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
