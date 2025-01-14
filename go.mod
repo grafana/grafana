@@ -20,7 +20,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
-	github.com/ProtonMail/go-crypto v1.0.0 // @grafana/plugins-platform-backend
+	github.com/ProtonMail/go-crypto v1.1.3 // @grafana/plugins-platform-backend
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.33.0 // @grafana/alerting-backend
 	github.com/andybalholm/brotli v1.1.1 // @grafana/partner-datasources
@@ -464,7 +464,7 @@ require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
 
 require github.com/google/go-github/v66 v66.0.0 // @grafana/grafana-app-platform-squad
 
-require github.com/go-git/go-git/v5 v5.12.0 // @grafana/grafana-app-platform-squad
+require github.com/go-git/go-git/v5 v5.13.1 // @grafana/grafana-app-platform-squad
 
 require github.com/grafana/dashboard-linter v0.0.0-20241106223805-1e7999311752 // @grafana/grafana-app-platform-squad
 
@@ -495,12 +495,12 @@ require (
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-git/go-billy/v5 v5.5.0 // indirect
+	github.com/go-git/go-billy/v5 v5.6.1 // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/grafana/grafana-foundation-sdk/go v0.0.0-20241101005901-83e3491f2a70 // indirect
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
@@ -526,7 +526,7 @@ require (
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/sercand/kuberesolver/v5 v5.1.1 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20240102155221-e3a8590b820b // indirect
-	github.com/skeema/knownhosts v1.2.2 // indirect
+	github.com/skeema/knownhosts v1.3.0 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	go.etcd.io/bbolt v1.3.11 // indirect
