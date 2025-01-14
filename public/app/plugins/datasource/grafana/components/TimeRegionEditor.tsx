@@ -132,16 +132,14 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
             onChange={(v) => onFromDayOfWeekChange(v)}
             width={20}
           />
-          <Stack direction="column">
-            <TimeOfDayPicker
-              // TODO
-              value={getTime(value.from) as DateTime}
-              onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
-              allowEmpty={true}
-              placeholder="HH:mm"
-              size="sm"
-            />
-          </Stack>
+          <TimeOfDayPicker
+            // TODO
+            value={getTime(value.from) as DateTime}
+            onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
+            allowEmpty={true}
+            placeholder="HH:mm"
+            size="sm"
+          />
         </Stack>
       </Field>
       <Field label="To">
