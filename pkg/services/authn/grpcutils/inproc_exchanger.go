@@ -19,7 +19,7 @@ var (
 
 const (
 	tokenLifetime       = 5 * time.Minute
-	inProcTokenCacheKey = "in-proc-access-token"
+	inProcTokenCacheKey = "in-proc-access-token" // #nosec G101 not a hardcoded credential
 )
 
 type inProcExchanger struct {
