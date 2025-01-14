@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -283,6 +284,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
+			if slices.Contains(search.DashboardFields(), sort) {
+				sort = "fields." + sort
+			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
 				s.Desc = true

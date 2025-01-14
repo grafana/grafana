@@ -224,7 +224,7 @@ func TestBleveBackend(t *testing.T) {
 			Limit:  100000,
 			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
 			SortBy: []*resource.ResourceSearchRequest_Sort{
-				{Field: DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
 		}, nil)
 		require.NoError(t, err)
