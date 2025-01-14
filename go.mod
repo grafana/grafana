@@ -72,7 +72,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-app-sdk v0.23.1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.29.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.5 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
@@ -464,6 +464,8 @@ require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
 require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 // @grafana/alerting-backend
 
 require github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6 // @fcjack @matryer
+
+require github.com/grafana/grafana-app-sdk/logging v0.29.0
 
 require (
 	cel.dev/expr v0.18.0 // indirect
