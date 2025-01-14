@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -179,7 +178,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		features:     features,
 		bus:          bus.ProvideBus(tracing.InitializeTracerForTest()),
 		// db:            db,
-		accessControl: acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
+		accessControl: acimpl.ProvideAccessControl(features),
 		registry:      make(map[string]folder.RegistryService),
 		metrics:       newFoldersMetrics(nil),
 		tracer:        tracing.InitializeTracerForTest(),
