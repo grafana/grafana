@@ -1067,8 +1067,8 @@ github.com/edsrzf/mmap-go v1.2.0/go.mod h1:19H/e8pUPLicwkyNgOykDXkJ9F0MHE+Z52B8E
 github.com/efficientgo/core v1.0.0-rc.3 h1:X6CdgycYWDcbYiJr1H1+lQGzx13o7bq3EUkbB9DsSPc=
 github.com/efficientgo/core v1.0.0-rc.3/go.mod h1:FfGdkzWarkuzOlY04VY+bGfb1lWrjaL6x/GLcQ4vJps=
 github.com/elazarl/goproxy v0.0.0-20170405201442-c4fc26588b6e/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
-github.com/elazarl/goproxy v1.2.6 h1:jk1cwYYz96HhB985lQ1FFv7UcYVQHV84w8lWtpxW7WE=
-github.com/elazarl/goproxy v1.2.6/go.mod h1:yBhqz1/IaNA5tCayHGVfFmuzyanF6YeDNGIwPhfvtp8=
+github.com/elazarl/goproxy v1.3.0 h1:hpDH1r1qJgM3eusz7lP+BiMPnLiWPa6hDjIFF5WVCjE=
+github.com/elazarl/goproxy v1.3.0/go.mod h1:X/5W/t+gzDyLfHW4DrMdpjqYjpXsURlBt9lpBDxZZZQ=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/emicklei/go-restful/v3 v3.11.0 h1:rAQeMHw1c7zTmncogyy8VvRZwtkmkZ4FxERmMY4rD+g=
 github.com/emicklei/go-restful/v3 v3.11.0/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
@@ -1491,8 +1491,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20250110220613-267368fd1968 h1:dSA0aOMzNnpBmYcmwv2OT5Is4kE7rubdSxo9GZSePAY=
 github.com/grafana/alerting v0.0.0-20250110220613-267368fd1968/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
-github.com/grafana/authlib v0.0.0-20250107102310-3edeb9fc9d5f h1:BcgUTu26JtOudfpQ8LoLpZNV2CdMEyhLUZweCUgETZw=
-github.com/grafana/authlib v0.0.0-20250107102310-3edeb9fc9d5f/go.mod h1:x7df73G3xuSD35Xv9cjaMLyPJCgM9Z/Wj5ISouoAfiI=
+github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884 h1:MSRBiQrSJZ+iowjU4Tgtq8+uC5/cs9XdtUdSWCNHrNE=
+github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884/go.mod h1:x7df73G3xuSD35Xv9cjaMLyPJCgM9Z/Wj5ISouoAfiI=
 github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335 h1:3DHH81RJCi8Bcgn2MdBh7vgWUshmAFjZzBCVuxiQ0uk=
 github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
@@ -1507,8 +1507,10 @@ github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 h1:jxJJ5z0GxqhWFbQU
 github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447/go.mod h1:IxsY6mns6Q5sAnWcrptrgUrSglTZJXH/kXr9nbpb/9I=
 github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e h1:UlEET0InuoFautfaFp8lDrNF7rPHYXuBMrzwWx9XqFY=
 github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e/go.mod h1:IGRj8oOoxwJbHBYl1+OhS9UjQR0dv6SQOep7HqmtyFU=
-github.com/grafana/grafana-app-sdk v0.23.1 h1:BRpUG0bA0oVxjthkmO2thuJBo3nbjaRSSmZJHw+mA8I=
-github.com/grafana/grafana-app-sdk v0.23.1/go.mod h1:KzgPnTJfMeckGmMctv6CJb8Jr/o/5rwARDyjXoeR0Fc=
+github.com/grafana/grafana-app-sdk v0.29.0 h1:LMSm/+0LOBPd13fe1bs/4sKJmuLiixYUX9T0oqDqp4I=
+github.com/grafana/grafana-app-sdk v0.29.0/go.mod h1:XLt308EmK6kvqPlzjUyXxbwZKEk2vur/eiypUNDay5I=
+github.com/grafana/grafana-app-sdk/logging v0.29.0 h1:mgbXaAf33aFwqwGVeaX30l8rkeAJH0iACgX5Rn6YkN4=
+github.com/grafana/grafana-app-sdk/logging v0.29.0/go.mod h1:xy6ZyVXl50Z3DBDLybvBPphbykPhuVNed/VNmen9DQM=
 github.com/grafana/grafana-aws-sdk v0.31.5 h1:4HpMQx7n4Qqoi7Bgu8KHQ2QKT9fYYdHilX/Gh3FZKBE=
 github.com/grafana/grafana-aws-sdk v0.31.5/go.mod h1:5p4Cjyr5ZiR6/RT2nFWkJ8XpIKgX4lAUmUMu70m2yCM=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 h1:fV6IgVtViXcYZ4VqTAMuVBTLuGAnI27HhQkaLttzbPE=
@@ -1519,8 +1521,8 @@ github.com/grafana/grafana-google-sdk-go v0.2.1 h1:XeFdKnkXBjOJjXc1gf4iMx4h5aCHT
 github.com/grafana/grafana-google-sdk-go v0.2.1/go.mod h1:RiITSHwBhqVTTd3se3HQq5Ncs/wzzhTB9OK5N0J0PEU=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
-github.com/grafana/grafana-plugin-sdk-go v0.261.0 h1:pGGpPbKRWZcLxwNATEiVDhILbYGYwlWOEXFLhmUkBMo=
-github.com/grafana/grafana-plugin-sdk-go v0.261.0/go.mod h1:QsLK0kAbmDXuX/QncFBTETPHCzw5g9hZnzqOPkoB3Yo=
+github.com/grafana/grafana-plugin-sdk-go v0.262.0 h1:R2DV6lwBQE5zaogxX3PorD9Seo8CXA8YuStf84oqwkk=
+github.com/grafana/grafana-plugin-sdk-go v0.262.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7 h1:JFB5dvs0XwBh/RiDNA5OrqcF3eWCQmTYBm6Hy79PDMQ=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20241209165425-c324376999f7/go.mod h1:AVvGgNqHsruJINRjKkhhY5NZMh5ke6Ei2bywuQ4Uuus=
 github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6 h1:KsHIuuPGww1U0G2CB1JYTasDaboJn0Cq91Je1aluEuc=
@@ -1690,8 +1692,8 @@ github.com/influxdata/influxql v1.4.0 h1:Lf62rbAF8KWQf+4Djqf4hVXgmQuGozUoSD6kNWj
 github.com/influxdata/influxql v1.4.0/go.mod h1:VqxAKyQz5p8GzgGsxWalCWYGxEqw6kvJo2IickMQiQk=
 github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf h1:7JTmneyiNEwVBOHSjoMxiWAqB992atOeepeFYegn5RU=
 github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
-github.com/invopop/jsonschema v0.12.0 h1:6ovsNSuvn9wEQVOyc72aycBMVQFKz7cPdMJn10CvzRI=
-github.com/invopop/jsonschema v0.12.0/go.mod h1:ffZ5Km5SWWRAIN6wbDXItl95euhFz2uON45H2qjYt+0=
+github.com/invopop/jsonschema v0.13.0 h1:KvpoAJWEjR3uD9Kbm2HWJmqsEaHt8lBUpd0qHcIi21E=
+github.com/invopop/jsonschema v0.13.0/go.mod h1:ffZ5Km5SWWRAIN6wbDXItl95euhFz2uON45H2qjYt+0=
 github.com/invopop/yaml v0.3.1 h1:f0+ZpmhfBSS4MhG+4HYseMdJhoeeopbSKbq5Rpeelso=
 github.com/invopop/yaml v0.3.1/go.mod h1:PMOp3nn4/12yEZUFfmOuNHJsZToEEOwoWsT+D81KkeA=
 github.com/ionos-cloud/sdk-go/v6 v6.3.0 h1:/lTieTH9Mo/CWm3cTlFLnK10jgxjUGkAqRffGqvPteY=
