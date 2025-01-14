@@ -24,6 +24,9 @@ export function SyncRepository({ repository }: Props) {
 
   // TODO generate endpoints for this
   const { value } = useAsync(async () => {
+    if (!folder) {
+      return;
+    }
     return getBackendSrv().get(`/apis/folder.grafana.app/v0alpha1/namespaces/${config.namespace}/folders/${folder}`);
   });
 
@@ -63,10 +66,11 @@ export function SyncRepository({ repository }: Props) {
   return (
     <>
       <Button
-        variant={'secondary'} 
-        tooltip={ isHealthy ? undefined : 'Unable to sync an unhealthy repository'}
+        variant={'secondary'}
+        tooltip={isHealthy ? undefined : 'Unable to sync an unhealthy repository'}
         disabled={syncQuery.isLoading || !name || !isHealthy}
-        onClick={() => setIsModalOpen(true)}>
+        onClick={() => setIsModalOpen(true)}
+      >
         Sync
       </Button>
       <ConfirmModal
