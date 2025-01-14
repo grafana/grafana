@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/util/nameutil"
 )
 
 const maxRetrievedTokens = 300
@@ -50,7 +51,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		}
 
 		addKeyCmd := &apikey.AddCommand{
-			Name:             cmd.Name,
+			Name:             nameutil.SanitizeSAName(cmd.Name),
 			Role:             org.RoleViewer,
 			OrgID:            cmd.OrgId,
 			Key:              cmd.Key,

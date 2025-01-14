@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/nameutil"
 )
 
 type ServiceAccountsStoreImpl struct {
@@ -58,8 +59,8 @@ func generateLogin(prefix string, orgId int64, name string) string {
 
 // CreateServiceAccount creates service account
 func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgId int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	name := saForm.Name
-	login := generateLogin(serviceaccounts.ServiceAccountPrefix, orgId, saForm.Name)
+	name := nameutil.SanitizeSAName(saForm.Name)
+	login := nameutil.SanitizeSAName(generateLogin(serviceaccounts.ServiceAccountPrefix, orgId, saForm.Name))
 	isDisabled := false
 	role := org.RoleViewer
 	if saForm.IsDisabled != nil {
@@ -481,8 +482,8 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
-		Login:            generateLogin(prefix, key.OrgID, key.Name),
-		Name:             fmt.Sprintf("%v-%v", prefix, key.Name),
+		Login:            nameutil.SanitizeSAName(generateLogin(prefix, key.OrgID, key.Name)),
+		Name:             nameutil.SanitizeSAName(fmt.Sprintf("%v-%v", prefix, key.Name)),
 		OrgID:            key.OrgID,
 		DefaultOrgRole:   string(key.Role),
 		IsServiceAccount: true,
