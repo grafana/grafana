@@ -73,12 +73,12 @@ var (
 )
 
 var (
-	excludedFields = []string{
-		resource.SEARCH_FIELD_EXPLAIN,
-		resource.SEARCH_FIELD_SCORE,
-		resource.SEARCH_FIELD_TITLE,
-		resource.SEARCH_FIELD_FOLDER,
-		resource.SEARCH_FIELD_TAGS,
+	excludedFields = map[string]string{
+		resource.SEARCH_FIELD_EXPLAIN: "",
+		resource.SEARCH_FIELD_SCORE:   "",
+		resource.SEARCH_FIELD_TITLE:   "",
+		resource.SEARCH_FIELD_FOLDER:  "",
+		resource.SEARCH_FIELD_TAGS:    "",
 	}
 )
 
@@ -1964,7 +1964,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	for i, row := range result.Results.Rows {
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
-			if !slices.Contains(excludedFields, col.Name) {
+			if _, ok := excludedFields[col.Name]; ok {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
 					return nil, err
