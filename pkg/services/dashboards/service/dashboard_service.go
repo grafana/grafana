@@ -1717,7 +1717,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.DashboardUIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
-			Key:      "name",
+			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),
 			Values:   query.DashboardUIDs,
 		}}
@@ -1736,7 +1736,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.FolderUIDs) > 0 {
 		req := []*resource.Requirement{{
-			Key:      "folder",
+			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: string(selection.In),
 			Values:   query.FolderUIDs,
 		}}
@@ -1745,7 +1745,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if query.ProvisionedRepo != "" {
 		req := []*resource.Requirement{{
-			Key:      "repo.name",
+			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
 			Operator: string(selection.In),
 			Values:   []string{query.ProvisionedRepo},
 		}}
@@ -1754,7 +1754,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.ProvisionedReposNotIn) > 0 {
 		req := []*resource.Requirement{{
-			Key:      "repo.name",
+			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
 			Operator: string(selection.NotIn),
 			Values:   query.ProvisionedReposNotIn,
 		}}
@@ -1762,7 +1762,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 	if query.ProvisionedPath != "" {
 		req := []*resource.Requirement{{
-			Key:      "repo.path",
+			Key:      resource.SEARCH_FIELD_REPOSITORY_PATH,
 			Operator: string(selection.In),
 			Values:   []string{query.ProvisionedPath},
 		}}
@@ -1775,7 +1775,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	// but is currently not needed by other services in the backend
 	if query.Title != "" {
 		req := []*resource.Requirement{{
-			Key:      "title",
+			Key:      resource.SEARCH_FIELD_TITLE,
 			Operator: string(selection.In),
 			Values:   []string{query.Title},
 		}}
@@ -1784,7 +1784,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.Tags) > 0 {
 		req := []*resource.Requirement{{
-			Key:      "tags",
+			Key:      resource.SEARCH_FIELD_TAGS,
 			Operator: string(selection.In),
 			Values:   query.Tags,
 		}}
