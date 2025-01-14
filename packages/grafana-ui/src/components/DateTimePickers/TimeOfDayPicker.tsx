@@ -18,7 +18,7 @@ export interface Props {
   value?: DateTime;
   showHour?: boolean;
   showSeconds?: boolean;
-  minuteStep?: number;
+  minuteStep?: PickerProps['minuteStep'];
   size?: FormInputSize;
   disabled?: boolean;
   disabledHours?: () => number[];
@@ -64,7 +64,7 @@ export const TimeOfDayPicker = ({
         disabledSeconds,
       })}
       format={generateFormat(showHour, showSeconds)}
-      minuteStep={minuteStep as PickerProps['minuteStep']}
+      minuteStep={minuteStep}
       onChange={(value) => {
         if (isDateTimeInput(value)) {
           return onChange(value ? dateTime(value) : undefined);
