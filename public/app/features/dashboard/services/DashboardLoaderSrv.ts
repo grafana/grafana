@@ -113,22 +113,6 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
 }
 
 export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
-  // _dashboardLoadFailed(title: string, snapshot?: boolean) {
-  //   snapshot = snapshot || false;
-  //   return {
-  //     meta: {
-  //       canStar: false,
-  //       isSnapshot: snapshot,
-  //       canDelete: false,
-  //       canSave: false,
-  //       canEdit: false,
-  //       canShare: false,
-  //       dashboardNotFound: true,
-  //     },
-  //     dashboard: { title, uid: title, schemaVersion: 0 },
-  //   };
-  // }
-
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
@@ -143,11 +127,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
       // needed for the old architecture
       // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
-      promise = getDashboardSnapshotSrv()
-        .getSnapshot(slug)
-        .catch(() => {
-          return this._dashboardLoadFailed('Snapshot not found', true);
-        });
+      promise = getDashboardSnapshotSrv().getSnapshot(slug);
     } else if (type === 'public' && uid) {
       promise = backendSrv.getPublicDashboardByUid(uid).then((result) => {
         return result;

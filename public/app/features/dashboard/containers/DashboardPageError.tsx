@@ -3,16 +3,17 @@ import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
-import { LoadError } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
-export function DashboardPageError({ error }: { error: Error | LoadError }) {
+export function DashboardPageError({ error, type }: { error: unknown; type?: string }) {
   const status = getStatusFromError(error);
   const message = getMessageFromError(error);
+  const entity = type === 'snapshot' ? 'Snapshot' : 'Dashboard';
+
   return (
     <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
       <Box paddingY={4} display="flex" direction="column" alignItems="center">
         {status === 404 ? (
-          <EntityNotFound entity="Dashboard" />
+          <EntityNotFound entity={entity} />
         ) : (
           <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-page-error">
             {message}

@@ -51,7 +51,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   if (!dashboard) {
     let errorElement;
     if (loadError) {
-      errorElement = <DashboardPageError error={loadError} />;
+      errorElement = <DashboardPageError error={loadError} type={type} />;
     }
 
     return (

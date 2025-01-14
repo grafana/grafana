@@ -30,6 +30,9 @@ export function getStatusFromError(err: unknown): number | undefined {
       return undefined;
     } else if (isFetchError(err)) {
       return err.status;
+    } else if (err.hasOwnProperty('status')) {
+      // @ts-expect-error
+      return err.status;
     }
   }
 
