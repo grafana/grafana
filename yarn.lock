@@ -17616,7 +17616,7 @@ __metadata:
     ol: "npm:7.4.0"
     ol-ext: "npm:4.0.24"
     pluralize: "npm:^8.0.0"
-    postcss: "npm:8.5.0"
+    postcss: "npm:8.5.1"
     postcss-loader: "npm:8.1.1"
     postcss-reporter: "npm:7.1.0"
     postcss-scss: "npm:4.0.9"
@@ -24262,14 +24262,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.5.0, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.49":
-  version: 8.5.0
-  resolution: "postcss@npm:8.5.0"
+"postcss@npm:8.5.1, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.49":
+  version: 8.5.1
+  resolution: "postcss@npm:8.5.1"
   dependencies:
     nanoid: "npm:^3.3.8"
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
-  checksum: 10/608c77ae01eeece1c5dfa46637823f7957bd124c183faafa98944ba383e16f25747e91da83bc197d963e03cc1cc0b72a8d49c3e08822a174a9eb4ecda6b7a487
+  checksum: 10/1fbd28753143f7f03e4604813639918182b15343c7ad0f4e72f3875fc2cc0b8494c887f55dc05008fad5fbf1e1e908ce2edbbce364a91f84dcefb71edf7cd31d
   languageName: node
   linkType: hard
 
