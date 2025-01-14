@@ -145,6 +145,11 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 		return token[0], nil
 	}
 
+	// Future proofing: if we ever stop signing ID token for services
+	if !claims.IsIdentityType(authInfo.GetIdentityType(), claims.TypeAccessPolicy) {
+		return "", fmt.Errorf("no id-token found")
+	}
+
 	return "", nil
 }
 
