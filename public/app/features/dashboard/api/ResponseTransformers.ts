@@ -499,12 +499,13 @@ function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): Annotati
 }
 
 function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spec['layout']): Panel[] {
-  // TODO: need to get gridPos from layout
-  // const gridPos;
-
-  return Object.values(panels).map((p) => {
+  return Object.entries(panels).map(([key, p]) => {
     const panel = p.spec;
-    const gridPos = { x: 0, y: 0, w: 0, h: 0 }; // TODO: get gridPos from layout
+    const layoutElement = layout.spec.items.find(
+      (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === key
+    );
+    const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
+    const gridPos = { x, y, w: width, h: height };
     return {
       id: panel.id,
       type: panel.vizConfig.kind,
@@ -536,6 +537,9 @@ function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spe
       queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
       timeFrom: panel.data.spec.queryOptions.timeFrom,
       timeShift: panel.data.spec.queryOptions.timeShift,
+      ...(repeat?.value && { repeat: repeat.value }),
+      ...(repeat?.direction && { repeatDirection: repeat.direction }),
+      ...(repeat?.maxPerRow && { maxPerRow: repeat?.maxPerRow }),
     };
   });
 }
