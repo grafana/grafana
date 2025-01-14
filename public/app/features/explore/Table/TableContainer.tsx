@@ -140,9 +140,10 @@ export class TableContainer extends PureComponent<Props, State> {
                           Showing only {{ MAX_NUMBER_OF_COLUMNS }} columns
                         </Trans>
                       }
-                      tooltip={
+                      tooltip={t(
+                        'table.container.content',
                         'Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.'
-                      }
+                      )}
                       buttonLabel={<Trans i18nKey={'table.container.show-all-series'}>Show all columns</Trans>}
                     />
                   ),
