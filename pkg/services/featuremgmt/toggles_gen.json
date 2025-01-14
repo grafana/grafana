@@ -3212,6 +3212,21 @@
     },
     {
       "metadata": {
+        "name": "queryLibraryDashboards",
+        "resourceVersion": "1736850377404",
+        "creationTimestamp": "2025-01-14T10:24:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-14 10:26:17.404592 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Query Library feature in Dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryOverLive",
         "resourceVersion": "1727432782383",
         "creationTimestamp": "2022-01-26T17:44:20Z",

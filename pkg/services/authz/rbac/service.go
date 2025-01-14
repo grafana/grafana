@@ -241,8 +241,15 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
 	defer span.End()
 
+	// When checking folder creation permissions, also check edit and admin action sets for folder, as the scoped folder create actions aren't stored in the DB separately
+	var actionSets []string
+	if action == "folders:create" {
+		actionSets = append(actionSets, "folders:edit")
+		actionSets = append(actionSets, "folders:admin")
+	}
+
 	if idType == claims.TypeAnonymous {
-		return s.getAnonymousPermissions(ctx, ns, action)
+		return s.getAnonymousPermissions(ctx, ns, action, actionSets)
 	}
 
 	userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, userID)
@@ -269,6 +276,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 		userPermQuery := store.PermissionsQuery{
 			UserID:        userIdentifiers.ID,
 			Action:        action,
+			ActionSets:    actionSets,
 			TeamIDs:       teamIDs,
 			Role:          basicRoles.Role,
 			IsServerAdmin: basicRoles.IsAdmin,
@@ -293,7 +301,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	return res.(map[string]bool), nil
 }
 
-func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string) (map[string]bool, error) {
+func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getAnonymousPermissions")
 	defer span.End()
 
@@ -303,7 +311,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 	}
 
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
-		permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, Role: "Viewer"})
+		permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
 		if err != nil {
 			return nil, err
 		}
