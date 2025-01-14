@@ -102,9 +102,8 @@ func TestDashboardService(t *testing.T) {
 			t.Run("Should return validation error if a folder that is specified can't be found", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.FolderUID = "non-existing-folder"
-				folderStore := foldertest.FakeFolderStore{}
-				folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
-				service.folderStore = &folderStore
+				folderSvc := foldertest.FakeService{ExpectedError: dashboards.ErrFolderNotFound}
+				service.folderService = &folderSvc
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrFolderNotFound)
 			})
