@@ -1966,6 +1966,11 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 				if err != nil {
 					return nil, err
 				}
+				// Some of the dashboard fields come in as int32, but we need to convert them to int64 or else fields.Set() will panic
+				_, ok := val.(int32)
+				if ok {
+					val = int64(val.(int32))
+				}
 				fields.Set(col.Name, val)
 			}
 		}
