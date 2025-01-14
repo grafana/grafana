@@ -98,7 +98,3 @@ func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsReq
 func (m *MockClient) History(ctx context.Context, in *resource.HistoryRequest, opts ...grpc.CallOption) (*resource.HistoryResponse, error) {
 	return nil, nil
 }
-
-func (m *MockClient) Origin(ctx context.Context, in *resource.OriginRequest, opts ...grpc.CallOption) (*resource.OriginResponse, error) {
-	return nil, nil
-}
