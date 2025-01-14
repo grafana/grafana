@@ -154,13 +154,6 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
       promise = getDashboardAPI()
         .getDashboardDTO(uid, params)
-        .then((result) => {
-          if (result.meta.isFolder) {
-            appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
-            throw new Error('Dashboard not found');
-          }
-          return result;
-        })
         .catch((e) => {
           console.error('Failed to load dashboard', e);
           if (isFetchError(e)) {
