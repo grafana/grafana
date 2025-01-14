@@ -22,17 +22,17 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
   const isDark = useTheme().isDark;
   const images = {
     nativeHeatmap: isDark
-      ? 'public/app/features/trails/assets/Histograms/DarkModeHeatmapNativeHistogram.png'
-      : 'public/app/features/trails/assets/Histograms/LightModeHeatmapNativeHistogram.png',
+      ? 'public/img/native-histograms/DarkModeHeatmapNativeHistogram.png'
+      : 'public/img/native-histograms/LightModeHeatmapNativeHistogram.png',
     classicHeatmap: isDark
-      ? 'public/app/features/trails/assets/Histograms/DarkModeHeatmapClassicHistogram.png'
-      : 'public/app/features/trails/assets/Histograms/LightModeHeatmapClassicHistogram.png',
+      ? 'public/img/native-histograms/DarkModeHeatmapClassicHistogram.png'
+      : 'public/img/native-histograms/LightModeHeatmapClassicHistogram.png',
     nativeHistogram: isDark
-      ? 'public/app/features/trails/assets/Histograms/DarkModeHistogramNativehistogram.png'
-      : 'public/app/features/trails/assets/Histograms/LightModeHistogramClassicHistogram.png',
+      ? 'public/img/native-histograms/DarkModeHistogramNativehistogram.png'
+      : 'public/img/native-histograms/LightModeHistogramClassicHistogram.png',
     classicHistogram: isDark
-      ? 'public/app/features/trails/assets/Histograms/DarkModeHistogramClassicHistogram.png'
-      : 'public/app/features/trails/assets/Histograms/LightModeHistogramClassicHistogram.png',
+      ? 'public/img/native-histograms/DarkModeHistogramClassicHistogram.png'
+      : 'public/img/native-histograms/LightModeHistogramClassicHistogram.png',
   };
 
   useEffect(() => {
