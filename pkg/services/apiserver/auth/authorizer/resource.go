@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-type FolderLookup = func(group, resource, namespace, name string) (string, error)
+type FolderLookup = func(ctx context.Context, auth claims.AuthInfo, group, resource, namespace, name string) (string, error)
 
 func NewResourceAuthorizer(c authz.AccessClient, lookup FolderLookup) authorizer.Authorizer {
 	return ResourceAuthorizer{
@@ -31,7 +31,7 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	ident, ok := claims.From(ctx)
+	auth, ok := claims.From(ctx)
 	if !ok {
 		return authorizer.DecisionDeny, "", errors.New("no auth info found for request")
 	}
@@ -42,7 +42,7 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	// Create will not (yet) have a folder -- it may be in the payload for this request
 	if r.lookup != nil && verb != utils.VerbCreate {
 		var err error
-		folder, err = r.lookup(
+		folder, err = r.lookup(ctx, auth,
 			attr.GetAPIGroup(),
 			attr.GetResource(),
 			attr.GetNamespace(),
@@ -53,7 +53,7 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 		}
 	}
 
-	res, err := r.client.Check(ctx, ident, authz.CheckRequest{
+	res, err := r.client.Check(ctx, auth, authz.CheckRequest{
 		Verb:        verb,
 		Group:       attr.GetAPIGroup(),
 		Resource:    attr.GetResource(),

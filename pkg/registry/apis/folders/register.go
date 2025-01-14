@@ -18,6 +18,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -184,8 +186,22 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return gfauthorizer.NewResourceAuthorizer(b.authz,
-		func(group, resource, namespace, name string) (string, error) {
-			// TODO! get the parent folder value
+		func(ctx context.Context, auth claims.AuthInfo, group, resource, namespace, name string) (string, error) {
+			if name != "" && resource == v0alpha1.RESOURCE {
+				ident, ok := auth.(identity.Requester)
+				if !ok {
+					return "", errors.New("expected identity.Requester for legacy access control")
+				}
+				// Get the value... just for the parent :shrug:
+				f, err := b.folderSvc.Get(ctx, &folder.GetFolderQuery{
+					SignedInUser: ident,
+					UID:          &name,
+				})
+				if err != nil {
+					return "", err
+				}
+				return f.ParentUID, nil
+			}
 			return "", nil
 		})
 }
