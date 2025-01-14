@@ -75,7 +75,7 @@ export const TimeOfDayPicker = ({
       showNow={false}
       needConfirm={false}
       suffixIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      value={value ? dateTimeAsMoment(value) : undefined}
+      value={value ? dateTimeAsMoment(value) : value}
     />
   );
 };

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import moment, { Moment } from 'moment/moment';
 import { useState } from 'react';
 
-import { DateTime, dateTimeAsMoment, getTimeZoneInfo, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { dateTimeAsMoment, getTimeZoneInfo, GrafanaTheme2, isDateTime, SelectableValue } from '@grafana/data';
 import { Button, Field, FieldSet, Select, Stack, TimeOfDayPicker, TimeZonePicker, useStyles2 } from '@grafana/ui';
 import { TimeZoneOffset } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '@grafana/ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
@@ -120,6 +120,9 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
     );
   };
 
+  const from = getTime(value.from);
+  const to = getTime(value.to);
+
   return (
     <FieldSet className={styles.wrapper}>
       <Field label="From">
@@ -133,8 +136,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
             width={20}
           />
           <TimeOfDayPicker
-            // TODO
-            value={getTime(value.from) as DateTime}
+            value={isDateTime(from) ? from : undefined}
             onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
             allowEmpty={true}
             placeholder="HH:mm"
@@ -155,9 +157,8 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
             />
           )}
           <TimeOfDayPicker
-            // TODO
-            value={getTime(value.to) as DateTime}
-            onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
+            value={isDateTime(to) ? to : undefined}
+            onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'to')}
             allowEmpty={true}
             placeholder="HH:mm"
             size="sm"
