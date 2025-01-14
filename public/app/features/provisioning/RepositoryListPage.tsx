@@ -8,12 +8,10 @@ import {
   EmptySearchResult,
   EmptyState,
   FilterInput,
-  FilterPill,
   Icon,
   IconName,
   LinkButton,
   Stack,
-  Tag,
   TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -68,7 +66,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
             const name = item.metadata?.name ?? '';
             let url = 'dashboards';
             if (item.spec?.folder?.length) {
-              url = `/d/${item.spec?.folder}`
+              url = `/d/${item.spec?.folder}`;
             }
 
             let icon: IconName = 'database'; // based on type
@@ -117,11 +115,15 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Heading>
                 <Card.Description>
                   {item.spec?.description}
-                  {item.status?.stats?.length && <Stack>
-                    {item.status.stats.map((v) => <LinkButton fill='outline' size='md'
-                      href={url}>{v.count} {v.resource}</LinkButton>
-                    )}
-                  </Stack>}
+                  {item.status?.stats?.length && (
+                    <Stack>
+                      {item.status.stats.map((v) => (
+                        <LinkButton fill="outline" size="md" href={url}>
+                          {v.count} {v.resource}
+                        </LinkButton>
+                      ))}
+                    </Stack>
+                  )}
                 </Card.Description>
                 <Card.Meta>{meta}</Card.Meta>
                 <Card.Actions>
@@ -170,7 +172,7 @@ function StatusBadge({ repo, name }: StatusBadgeProps) {
       color = 'orange';
       text = 'Pending';
       icon = 'spinner';
-      tooltip = 'Waiting for health check to run'
+      tooltip = 'Waiting for health check to run';
       break;
     case 'working':
     case 'pending':
