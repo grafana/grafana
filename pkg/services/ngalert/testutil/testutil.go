@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -61,7 +60,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 		cfg, dashboardStore, fs,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
+		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(tb, err)
 
