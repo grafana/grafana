@@ -16,7 +16,7 @@ type SlogAdapter struct {
 	logger *slog.Logger
 }
 
-// Implement the Log method to satisfy the log.Logger interface.
+// Log implements the Log method to satisfy the log.Logger interface.
 func (s *SlogAdapter) Log(keyvals ...interface{}) error {
 	msg := ""
 	args := []interface{}{}
