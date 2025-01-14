@@ -161,7 +161,7 @@ export class BackendSrv implements BackendService {
         async function process() {
           while (true) {
             if (controller.signal.aborted) {
-              throw new Error('aborted');
+              throw controller.signal.reason;
             }
             const chunk = await reader.read();
             observer.next({
@@ -175,7 +175,9 @@ export class BackendSrv implements BackendService {
           }
         }
         process()
-          .catch((e) => {})
+          .catch((e) => {
+            console.log('catch', requestId, e);
+          }) // from abort
           .then(() => {
             console.log('complete', requestId);
             observer.complete();
@@ -183,7 +185,7 @@ export class BackendSrv implements BackendService {
       });
 
       return function unsubscribe() {
-        console.log('chunked, unsubscribe', requestId);
+        console.log('unsubscribe', requestId);
         controller.abort('unsubscribe');
         sub.unsubscribe();
       };
