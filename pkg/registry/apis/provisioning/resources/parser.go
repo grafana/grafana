@@ -228,9 +228,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
-	// TODO... should use the validated one?
-	obj := f.Obj.Object
-	delete(obj, "metadata")
+	// TODO? should we use the dryRun (validated) version?
+	obj := make(map[string]any)
+	for k, v := range f.Obj.Object {
+		if k != "metadata" {
+			obj[k] = v
+		}
+	}
 
 	switch path.Ext(f.Info.Path) {
 	// JSON pretty print
