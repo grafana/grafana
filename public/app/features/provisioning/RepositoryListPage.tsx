@@ -150,11 +150,10 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
   if (stats.resource === 'playlists') {
     return '/playlists';
   }
-  let url = '/dashboards';
   if (repo.spec?.folder?.length) {
-    url = `/d/${repo.spec?.folder}`;
+    return `/d/${repo.spec?.folder}`;
   }
-  return url;
+  return '/dashboards';
 }
 
 interface StatusBadgeProps {
