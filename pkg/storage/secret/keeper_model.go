@@ -287,3 +287,73 @@ func toProvider(keeperType KeeperType, payload string) interface{} {
 		return nil
 	}
 }
+
+// extractSecureValues extracts securevalues referenced by the keeper, if any.
+func extractSecureValues(kp *secretv0alpha1.Keeper) []string {
+	secureValuesFromAWS := func(aws secretv0alpha1.AWSCredentials) []string {
+		secureValues := make([]string, 0)
+
+		if aws.AccessKeyID.SecureValueName != "" {
+			secureValues = append(secureValues, aws.AccessKeyID.SecureValueName)
+		}
+
+		if aws.SecretAccessKey.SecureValueName != "" {
+			secureValues = append(secureValues, aws.SecretAccessKey.SecureValueName)
+		}
+
+		return secureValues
+	}
+
+	secureValuesFromAzure := func(azure secretv0alpha1.AzureCredentials) []string {
+		if azure.ClientSecret.SecureValueName != "" {
+			return []string{azure.ClientSecret.SecureValueName}
+		}
+
+		return nil
+	}
+
+	secureValuesFromHashiCorp := func(hashicorp secretv0alpha1.HashiCorpCredentials) []string {
+		if hashicorp.Token.SecureValueName != "" {
+			return []string{hashicorp.Token.SecureValueName}
+		}
+
+		return nil
+	}
+
+	switch {
+	case kp.Spec.SQL != nil && kp.Spec.SQL.Encryption != nil:
+		enc := kp.Spec.SQL.Encryption
+
+		switch {
+		case enc.AWS != nil:
+			return secureValuesFromAWS(*enc.AWS)
+
+		case enc.Azure != nil:
+			return secureValuesFromAzure(*enc.Azure)
+
+		// GCP does not reference secureValues.
+		case enc.GCP != nil:
+			return nil
+
+		case enc.HashiCorp != nil:
+			return secureValuesFromHashiCorp(*enc.HashiCorp)
+		}
+
+		return nil
+
+	case kp.Spec.AWS != nil:
+		return secureValuesFromAWS(kp.Spec.AWS.AWSCredentials)
+
+	case kp.Spec.Azure != nil:
+		return secureValuesFromAzure(kp.Spec.Azure.AzureCredentials)
+
+	// GCP does not reference secureValues.
+	case kp.Spec.GCP != nil:
+		return nil
+
+	case kp.Spec.HashiCorp != nil:
+		return secureValuesFromHashiCorp(kp.Spec.HashiCorp.HashiCorpCredentials)
+	}
+
+	return nil
+}

@@ -116,7 +116,7 @@ func (s *SecureValueRest) Create(
 	}
 
 	if err := createValidation(ctx, obj); err != nil {
-		return nil, fmt.Errorf("create validation failed: %w", err)
+		return nil, err
 	}
 
 	createdSecureValue, err := s.storage.Create(ctx, sv)
@@ -140,7 +140,7 @@ func (s *SecureValueRest) Update(
 ) (runtime.Object, bool, error) {
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, false, fmt.Errorf("get securevalue: %w", err)
+		return nil, false, err
 	}
 
 	// Makes sure the UID and ResourceVersion are OK.
@@ -151,7 +151,7 @@ func (s *SecureValueRest) Update(
 	}
 
 	if err := updateValidation(ctx, newObj, oldObj); err != nil {
-		return nil, false, fmt.Errorf("update validation failed: %w", err)
+		return nil, false, err
 	}
 
 	newSecureValue, ok := newObj.(*secretv0alpha1.SecureValue)
@@ -187,7 +187,7 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidat
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.
-func ValidateSecureValue(sv *secretv0alpha1.SecureValue, operation admission.Operation) field.ErrorList {
+func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admission.Operation) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// Operation-specific field validation.
@@ -215,8 +215,22 @@ func ValidateSecureValue(sv *secretv0alpha1.SecureValue, operation admission.Ope
 
 	// If we plan to support PATCH-style updates, we shouldn't be requiring fields to be set.
 	case admission.Update:
-		if sv.Spec.Value != "" && sv.Spec.Ref != "" {
-			errs = append(errs, field.Required(field.NewPath("spec"), "either leave both `value` and `ref` empty, or set one of them, but not both"))
+		// For updates, an `old` object is required.
+		if oldSv == nil {
+			errs = append(errs, field.InternalError(field.NewPath("spec"), errors.New("old object is nil")))
+
+			return errs
+		}
+
+		// Only validate if one of the fields is being changed/set.
+		if sv.Spec.Value != "" || sv.Spec.Ref != "" {
+			if oldSv.Spec.Ref != "" && sv.Spec.Value != "" {
+				errs = append(errs, field.Required(field.NewPath("spec"), "cannot set `value` when `ref` was already previously set"))
+			}
+
+			if oldSv.Spec.Ref == "" && sv.Spec.Ref != "" {
+				errs = append(errs, field.Required(field.NewPath("spec"), "cannot set `ref` when `value` was already previously set"))
+			}
 		}
 
 	case admission.Delete:

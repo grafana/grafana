@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -114,11 +115,16 @@ func (s *KeeperRest) Create(
 	}
 
 	if err := createValidation(ctx, obj); err != nil {
-		return nil, fmt.Errorf("create validation failed: %w", err)
+		return nil, err
 	}
 
 	createdKeeper, err := s.storage.Create(ctx, kp)
 	if err != nil {
+		var kErr xkube.ErrorLister
+		if errors.As(err, &kErr) {
+			return nil, apierrors.NewInvalid(kp.GroupVersionKind().GroupKind(), kp.Name, kErr.ErrorList())
+		}
+
 		return nil, fmt.Errorf("failed to create keeper: %w", err)
 	}
 
@@ -137,7 +143,7 @@ func (s *KeeperRest) Update(
 ) (runtime.Object, bool, error) {
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, false, fmt.Errorf("get securevalue: %w", err)
+		return nil, false, err
 	}
 
 	// Makes sure the UID and ResourceVersion are OK.
@@ -151,7 +157,7 @@ func (s *KeeperRest) Update(
 	// Each provider-specific setting of a keeper lives at the top-level, so it makes it possible to change a provider
 	// during an update. Otherwise both old and new providers would be merged in the `newObj` which is not allowed.
 	if err := updateValidation(ctx, newObj, oldObj); err != nil {
-		return nil, false, fmt.Errorf("update validation failed: %w", err)
+		return nil, false, err
 	}
 
 	newKeeper, ok := newObj.(*secretv0alpha1.Keeper)
@@ -165,6 +171,11 @@ func (s *KeeperRest) Update(
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
 	updatedKeeper, err := s.storage.Update(ctx, newKeeper)
 	if err != nil {
+		var kErr xkube.ErrorLister
+		if errors.As(err, &kErr) {
+			return nil, false, apierrors.NewInvalid(newKeeper.GroupVersionKind().GroupKind(), newKeeper.Name, kErr.ErrorList())
+		}
+
 		return nil, false, fmt.Errorf("failed to update keeper: %w", err)
 	}
 
@@ -206,9 +217,26 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 		return errs
 	}
 
-	// TODO: validation of SQL keeper, once we have a finalized spec.
-	if keeper.Spec.SQL != nil {
-		_ = keeper.Spec.SQL
+	// TODO: Improve SQL keeper validation.
+	// SQL keeper is not allowed to use `secureValueName` in credentials fields to avoid depending on another keeper.
+	if keeper.IsSqlKeeper() {
+		if keeper.Spec.SQL.Encryption.AWS != nil {
+			if keeper.Spec.SQL.Encryption.AWS.AccessKeyID.SecureValueName != "" {
+				errs = append(errs, field.Forbidden(field.NewPath("spec", "aws", "accessKeyId"), "secureValueName cannot be used with SQL keeper"))
+			}
+
+			if keeper.Spec.SQL.Encryption.AWS.SecretAccessKey.SecureValueName != "" {
+				errs = append(errs, field.Forbidden(field.NewPath("spec", "aws", "secretAccessKey"), "secureValueName cannot be used with SQL keeper"))
+			}
+		}
+
+		if keeper.Spec.SQL.Encryption.Azure != nil && keeper.Spec.SQL.Encryption.Azure.ClientSecret.SecureValueName != "" {
+			errs = append(errs, field.Forbidden(field.NewPath("spec", "azure", "clientSecret"), "secureValueName cannot be used with SQL keeper"))
+		}
+
+		if keeper.Spec.SQL.Encryption.HashiCorp != nil && keeper.Spec.SQL.Encryption.HashiCorp.Token.SecureValueName != "" {
+			errs = append(errs, field.Forbidden(field.NewPath("spec", "hashicorp", "token"), "secureValueName cannot be used with SQL keeper"))
+		}
 	}
 
 	if keeper.Spec.AWS != nil {

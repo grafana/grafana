@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestMain(m *testing.M) {
@@ -49,4 +52,58 @@ func TestIntegrationDiscoveryClient(t *testing.T) {
 		require.True(t, ok)
 		require.Len(t, apiResources, 2) // securevalue + keeper + (subresources...)
 	})
+}
+
+func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName string) *unstructured.Unstructured {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	secureValueClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		// #TODO: figure out permissions topic
+		User: user,
+		GVR:  gvrSecureValues,
+	})
+
+	testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+	testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeperName
+
+	raw, err := secureValueClient.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, raw)
+
+	t.Cleanup(func() {
+		require.NoError(t, secureValueClient.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+	})
+
+	return raw
+}
+
+func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User, specType map[string]any) *unstructured.Unstructured {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	keeperClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		// #TODO: figure out permissions topic
+		User: user,
+		GVR:  gvrKeepers,
+	})
+
+	testKeeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
+	if specType != nil {
+		testKeeper.Object["spec"] = specType
+	}
+
+	raw, err := keeperClient.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, raw)
+
+	t.Cleanup(func() {
+		require.NoError(t, keeperClient.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+	})
+
+	return raw
 }

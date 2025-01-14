@@ -21,13 +21,12 @@ type SecureValueSpec struct {
 	// Human friendly name for the secure value.
 	Title string `json:"title"`
 
-	// The raw value is only valid for write. Read/List will always be empty
-	// Writing with an empty value will always fail
+	// The raw value is only valid for write. Read/List will always be empty.
+	// There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.
 	Value ExposedSecureValue `json:"value,omitempty"`
 
-	// When using a remote Key manager, the ref is used to
-	// reference a value inside the remote storage
-	// This value is only expected on write.
+	// When using a remote Key manager, the ref is used to reference a value inside the remote storage.
+	// This should not contain sensitive information.
 	Ref string `json:"ref,omitempty"`
 
 	// Name of the keeper, being the actual storage of the secure value.

@@ -47,6 +47,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 		if s.Paths == nil {
 			return s, nil
 		}
+
 		for _, b := range builders {
 			gv := b.GetGroupVersion()
 			prefix := "/apis/" + gv.String() + "/"
@@ -63,6 +64,13 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 					ExternalDocs: s.ExternalDocs,
 					Servers:      s.Servers,
 					Paths:        s.Paths,
+				}
+
+				// Remove the growing list of kinds
+				for k, v := range copy.Components.Schemas {
+					if strings.HasPrefix(k, "io.k8s.apimachinery.pkg.apis.meta.v1") && v.Extensions != nil {
+						delete(v.Extensions, "x-kubernetes-group-version-kind") // a growing list of everything
+					}
 				}
 
 				// Optionally include raw http handlers
@@ -110,6 +118,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 				return &copy, nil
 			}
 		}
+
 		return s, nil
 	}
 }

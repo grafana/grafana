@@ -12,6 +12,7 @@ import (
 const (
 	TableNameSecureValue    = "secret_secure_value"
 	TableNameKeeper         = "secret_keeper"
+	TableNameDataKey        = "secret_data_key"
 	TableNameEncryptedValue = "secret_encrypted_value"
 )
 
@@ -49,6 +50,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "title", Type: migrator.DB_Text, Nullable: false},
 			{Name: "keeper", Type: migrator.DB_Text, Nullable: false},
 			{Name: "audiences", Type: migrator.DB_Text, Nullable: false},
+			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 		},
 		Indices: []*migrator.Index{
@@ -79,6 +81,24 @@ func initSecretStore(mg *migrator.Migrator) string {
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
 		},
+	})
+
+	// TODO -- document how the seemingly arbitrary column lengths were chosen
+	// The answer for now is that they come from the legacy secrets service, but it would be good to know that they will still work in the new service
+	tables = append(tables, migrator.Table{
+		Name: TableNameDataKey,
+		Columns: []*migrator.Column{
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: true},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // in this table, it isn't used by k8s, but we will track it for added security
+			{Name: "label", Type: migrator.DB_NVarchar, Length: 100, IsPrimaryKey: false},
+			{Name: "active", Type: migrator.DB_Bool},
+			{Name: "scope", Type: migrator.DB_NVarchar, Length: 30, Nullable: false},
+			{Name: "provider", Type: migrator.DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{},
 	})
 
 	// Initialize all tables
