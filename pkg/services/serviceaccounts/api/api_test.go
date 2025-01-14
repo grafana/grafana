@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -307,7 +306,7 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 		cfg:                  cfg,
 		service:              &satests.FakeServiceAccountService{},
 		accesscontrolService: &actest.FakeService{},
-		accesscontrol:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		accesscontrol:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		RouterRegister:       routing.NewRouteRegister(),
 		log:                  log.NewNopLogger(),
 		permissionService:    &actest.FakePermissionsService{},
