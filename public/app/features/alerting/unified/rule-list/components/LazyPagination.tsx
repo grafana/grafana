@@ -1,4 +1,5 @@
 import { Button, Icon, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 interface LazyPaginationProps {
   canMoveForward: boolean;
@@ -11,7 +12,7 @@ export function LazyPagination({ canMoveForward, canMoveBackward, nextPage, prev
   return (
     <Stack direction="row" gap={1}>
       <Button
-        aria-label={`previous page`}
+        aria-label={t('alerting.rule-list.pagination.previous-page', 'previous page')}
         size="sm"
         variant="secondary"
         onClick={previousPage}
@@ -19,7 +20,13 @@ export function LazyPagination({ canMoveForward, canMoveBackward, nextPage, prev
       >
         <Icon name="angle-left" />
       </Button>
-      <Button aria-label={`next page`} size="sm" variant="secondary" onClick={nextPage} disabled={!canMoveForward}>
+      <Button
+        aria-label={t('alerting.rule-list.pagination.next-page', 'next page')}
+        size="sm"
+        variant="secondary"
+        onClick={nextPage}
+        disabled={!canMoveForward}
+      >
         <Icon name="angle-right" />
       </Button>
     </Stack>

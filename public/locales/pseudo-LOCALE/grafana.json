@@ -492,6 +492,7 @@
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
       "ds-error-boundary": {
+        "description": "Cĥęčĸ ŧĥę đäŧä şőūřčę čőŉƒįģūřäŧįőŉ. Đőęş ŧĥę đäŧä şőūřčę şūppőřŧ Přőmęŧĥęūş ÅPĨ?",
         "title": "Ůŉäþľę ŧő ľőäđ řūľęş ƒřőm ŧĥįş đäŧä şőūřčę"
       },
       "filter-view": {
@@ -499,6 +500,10 @@
         "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
       },
       "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
+      "pagination": {
+        "next-page": "ŉęχŧ päģę",
+        "previous-page": "přęvįőūş päģę"
+      },
       "return-button": {
         "title": "Åľęřŧ řūľęş"
       }
