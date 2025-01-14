@@ -88,7 +88,7 @@ module.exports = [
             },
             {
               group: ['@grafana/*/src/*'],
-              message: 'Direct imports from @grafana/ui/src are not allowed. Please import from @grafana/ui instead.',
+              message: 'Import from the public export instead.',
             },
           ],
         },
