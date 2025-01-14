@@ -183,54 +183,54 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 	t.Run("creating securevalues in multiple namespaces", func(t *testing.T) {
 		adminOrg1 := helper.Org1.Admin
-		adminOrgB := helper.OrgB.Admin
+		adminOrg2 := helper.OrgB.Admin
 
 		keeperOrg1 := mustGenerateKeeper(t, helper, adminOrg1, nil)
-		keeperOrgB := mustGenerateKeeper(t, helper, adminOrgB, nil)
+		keeperOrg2 := mustGenerateKeeper(t, helper, adminOrg2, nil)
 
 		secureValueOrg1 := mustGenerateSecureValue(t, helper, adminOrg1, keeperOrg1.GetName())
-		secureValueOrgB := mustGenerateSecureValue(t, helper, adminOrgB, keeperOrgB.GetName())
+		secureValueOrg2 := mustGenerateSecureValue(t, helper, adminOrg2, keeperOrg2.GetName())
 
 		clientOrg1 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg1, GVR: gvrSecureValues})
-		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrgB, GVR: gvrSecureValues})
+		clientOrg2 := helper.GetResourceClient(apis.ResourceClientArgs{User: adminOrg2, GVR: gvrSecureValues})
 
 		// Create
 		t.Run("creating a securevalue with the same name as one from another namespace does not return an error", func(t *testing.T) {
-			// Org1 creating a securevalue with the same name from OrgB.
+			// Org1 creating a securevalue with the same name from Org2.
 			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-			testData.SetName(secureValueOrgB.GetName())
+			testData.SetName(secureValueOrg2.GetName())
 			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrg1.GetName()
 
 			raw, err := clientOrg1.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			// OrgB creating a securevalue with the same name from Org1.
+			// Org2 creating a securevalue with the same name from Org1.
 			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			testData.SetName(secureValueOrg1.GetName())
-			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrgB.GetName()
+			testData.Object["spec"].(map[string]any)["keeper"] = keeperOrg2.GetName()
 
-			raw, err = clientOrgB.Resource.Create(ctx, testData, metav1.CreateOptions{})
+			raw, err = clientOrg2.Resource.Create(ctx, testData, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
 			require.NoError(t, clientOrg1.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-			require.NoError(t, clientOrgB.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+			require.NoError(t, clientOrg2.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
 		})
 
 		// Read
 		t.Run("fetching a securevalue from another namespace returns not found", func(t *testing.T) {
 			var statusErr *apierrors.StatusError
 
-			// Org1 trying to fetch securevalue from OrgB.
-			raw, err := clientOrg1.Resource.Get(ctx, secureValueOrgB.GetName(), metav1.GetOptions{})
+			// Org1 trying to fetch securevalue from Org2.
+			raw, err := clientOrg1.Resource.Get(ctx, secureValueOrg2.GetName(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
-			// OrgB trying to fetch securevalue from Org1.
-			raw, err = clientOrgB.Resource.Get(ctx, secureValueOrg1.GetName(), metav1.GetOptions{})
+			// Org2 trying to fetch securevalue from Org1.
+			raw, err = clientOrg2.Resource.Get(ctx, secureValueOrg1.GetName(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
@@ -241,9 +241,9 @@ func TestIntegrationSecureValue(t *testing.T) {
 		t.Run("updating a securevalue from another namespace returns not found", func(t *testing.T) {
 			var statusErr *apierrors.StatusError
 
-			// Org1 trying to update securevalue from OrgB.
+			// Org1 trying to update securevalue from Org2.
 			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-			testData.SetName(secureValueOrgB.GetName())
+			testData.SetName(secureValueOrg2.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 
 			raw, err := clientOrg1.Resource.Update(ctx, testData, metav1.UpdateOptions{})
@@ -252,12 +252,12 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.True(t, errors.As(err, &statusErr))
 			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
-			// OrgB trying to update securevalue from Org1.
+			// Org2 trying to update securevalue from Org1.
 			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			testData.SetName(secureValueOrg1.GetName())
 			testData.Object["spec"].(map[string]any)["title"] = "New title"
 
-			raw, err = clientOrgB.Resource.Update(ctx, testData, metav1.UpdateOptions{})
+			raw, err = clientOrg2.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
 			require.Nil(t, raw)
 			require.True(t, errors.As(err, &statusErr))
@@ -266,17 +266,17 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 		// Delete
 		t.Run("deleting a securevalue from another namespace does not return an error but does not delete it", func(t *testing.T) {
-			// Org1 trying to delete securevalue from OrgB.
-			err := clientOrg1.Resource.Delete(ctx, secureValueOrgB.GetName(), metav1.DeleteOptions{})
+			// Org1 trying to delete securevalue from Org2.
+			err := clientOrg1.Resource.Delete(ctx, secureValueOrg2.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 
-			// Check that it still exists from the perspective of OrgB.
-			raw, err := clientOrgB.Resource.Get(ctx, secureValueOrgB.GetName(), metav1.GetOptions{})
+			// Check that it still exists from the perspective of Org2.
+			raw, err := clientOrg2.Resource.Get(ctx, secureValueOrg2.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			// OrgB trying to delete securevalue from Org1.
-			err = clientOrgB.Resource.Delete(ctx, secureValueOrg1.GetName(), metav1.DeleteOptions{})
+			// Org2 trying to delete securevalue from Org1.
+			err = clientOrg2.Resource.Delete(ctx, secureValueOrg1.GetName(), metav1.DeleteOptions{})
 			require.NoError(t, err)
 
 			// Check that it still exists from the perspective of Org1.
@@ -294,12 +294,12 @@ func TestIntegrationSecureValue(t *testing.T) {
 			require.Len(t, listOrg1.Items, 1)
 			require.Equal(t, *secureValueOrg1, listOrg1.Items[0])
 
-			// OrgB listing securevalues.
-			listOrgB, err := clientOrgB.Resource.List(ctx, metav1.ListOptions{})
+			// Org2 listing securevalues.
+			listOrg2, err := clientOrg2.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
-			require.NotNil(t, listOrgB)
-			require.Len(t, listOrgB.Items, 1)
-			require.Equal(t, *secureValueOrgB, listOrgB.Items[0])
+			require.NotNil(t, listOrg2)
+			require.Len(t, listOrg2.Items, 1)
+			require.Equal(t, *secureValueOrg2, listOrg2.Items[0])
 		})
 	})
 }
