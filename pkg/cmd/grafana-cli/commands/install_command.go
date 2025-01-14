@@ -86,18 +86,20 @@ func installCommand(c utils.CommandLine) error {
 }
 
 type pluginInstallOpts struct {
-	insecure  bool
-	repoURL   string
-	pluginURL string
-	pluginDir string
+	insecure           bool
+	repoURL            string
+	pluginURL          string
+	pluginDir          string
+	grafanaComAPIToken string
 }
 
 func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
 	return pluginInstallOpts{
-		insecure:  c.Bool("insecure"),
-		repoURL:   c.PluginRepoURL(),
-		pluginURL: c.PluginURL(),
-		pluginDir: c.PluginDirectory(),
+		insecure:           c.Bool("insecure"),
+		repoURL:            c.PluginRepoURL(),
+		pluginURL:          c.PluginURL(),
+		pluginDir:          c.PluginDirectory(),
+		grafanaComAPIToken: c.GrafanaComAPIToken(),
 	}
 }
 
@@ -132,9 +134,10 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	}
 
 	repository := repo.NewManager(repo.ManagerCfg{
-		SkipTLSVerify: o.insecure,
-		BaseURL:       o.repoURL,
-		Logger:        services.Logger,
+		SkipTLSVerify:      o.insecure,
+		BaseURL:            o.repoURL,
+		Logger:             services.Logger,
+		GrafanaComAPIToken: o.grafanaComAPIToken,
 	})
 
 	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.
@@ -179,9 +182,10 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Infof("Fetching %s dependency %s...", pluginID, dep.ID)
 		err = doInstallPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
-			insecure:  o.insecure,
-			repoURL:   o.repoURL,
-			pluginDir: o.pluginDir,
+			insecure:           o.insecure,
+			repoURL:            o.repoURL,
+			pluginDir:          o.pluginDir,
+			grafanaComAPIToken: o.grafanaComAPIToken,
 		}, installing)
 		if err != nil {
 			return err

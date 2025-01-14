@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+//go:generate mockery --name CommandLine --structname MockCommandLine --outpkg utils --filename command_line_mock.go --output .
 type CommandLine interface {
 	ShowHelp() error
 	ShowVersion()
@@ -26,6 +27,7 @@ type CommandLine interface {
 	PluginDirectory() string
 	PluginRepoURL() string
 	PluginURL() string
+	GrafanaComAPIToken() string
 }
 
 type ApiClient interface {
@@ -53,6 +55,16 @@ func (c *ContextCommandLine) HomePath() string { return c.String("homepath") }
 
 func (c *ContextCommandLine) ConfigFile() string { return c.String("config") }
 
+func (c *ContextCommandLine) Config() (*setting.Cfg, error) {
+	configOptions := strings.Split(c.String("configOverrides"), " ")
+	return setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   c.ConfigFile(),
+		HomePath: c.HomePath(),
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, c.Args().Slice()...),
+	})
+}
+
 func (c *ContextCommandLine) PluginDirectory() string {
 	return c.String("pluginsDir")
 }
@@ -75,13 +87,7 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 
 	// if --config flag is set, try to get the GrafanaComAPIURL setting
 	if c.ConfigFile() != "" {
-		configOptions := strings.Split(c.String("configOverrides"), " ")
-		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-			Config:   c.ConfigFile(),
-			HomePath: c.HomePath(),
-			Args:     append(configOptions, c.Args().Slice()...),
-		})
-
+		cfg, err := c.Config()
 		if err != nil {
 			logger.Debug("Could not parse config file", err)
 		} else if cfg.GrafanaComAPIURL != "" {
@@ -94,4 +100,13 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 
 func (c *ContextCommandLine) PluginURL() string {
 	return c.String("pluginUrl")
+}
+
+func (c *ContextCommandLine) GrafanaComAPIToken() string {
+	cfg, err := c.Config()
+	if err != nil {
+		logger.Debug("Could not parse config file", err)
+		return ""
+	}
+	return cfg.GrafanaComSSOAPIToken
 }

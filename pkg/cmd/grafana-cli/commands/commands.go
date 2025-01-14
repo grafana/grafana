@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/urfave/cli/v2"
 
@@ -50,13 +49,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, 
 }
 
 func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
-	configOptions := strings.Split(cmd.String("configOverrides"), " ")
-	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-		Config:   cmd.ConfigFile(),
-		HomePath: cmd.HomePath(),
-		// tailing arguments have precedence over the options string
-		Args: append(configOptions, cmd.Args().Slice()...),
-	})
+	cfg, err := cmd.Config()
 	if err != nil {
 		return server.Runner{}, err
 	}
