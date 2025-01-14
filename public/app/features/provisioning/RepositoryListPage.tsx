@@ -85,7 +85,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 );
 
                 if (item.status?.webhook?.id) {
-                  const hook = url + `/settings/hooks/${item.status?.webhook?.id}`;
+                  const hook = url + `settings/hooks/${item.status?.webhook?.id}`;
                   meta.push(
                     <TextLink key={'webhook'} style={{ color: 'inherit' }} href={hook}>
                       Webhook <Icon name={'check'} />
@@ -151,7 +151,7 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
     return '/playlists';
   }
   if (repo.spec?.folder) {
-    return `/d/${repo.spec?.folder}`;
+    return `/dashboards/f/${repo.spec?.folder}`;
   }
   return '/dashboards';
 }
