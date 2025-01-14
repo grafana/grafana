@@ -163,7 +163,7 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 				} else {
 					otherJSAssets = append(otherJSAssets, asset)
 				}
-				preloadJSAssets = getPreloadChunks(manifest, entry.Src)
+				preloadJSAssets = append(preloadJSAssets, getPreloadChunks(manifest, entry.Src)...)
 			}
 			if entry.Src == "sass/grafana.dark.scss" && entry.IsEntry {
 				darkCSS = entry.File
@@ -245,12 +245,11 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 // Create a list of all the chunks that need to be preloaded for a given entrypoint.
 func getPreloadChunks(manifest Manifest, name string) []dtos.EntryPointAsset {
 	seen := make(map[string]bool)
+	var chunks []dtos.EntryPointAsset
 
-	var getImportedChunks func(chunk ViteManifestEntry) []dtos.EntryPointAsset
+	var getImportedChunks func(chunk ViteManifestEntry)
 
-	getImportedChunks = func(chunk ViteManifestEntry) []dtos.EntryPointAsset {
-		var chunks []dtos.EntryPointAsset
-
+	getImportedChunks = func(chunk ViteManifestEntry) {
 		for _, file := range chunk.Imports {
 			importee, exists := manifest[file]
 			if !exists {
@@ -261,15 +260,16 @@ func getPreloadChunks(manifest Manifest, name string) []dtos.EntryPointAsset {
 			}
 			seen[file] = true
 
-			chunks = append(chunks, getImportedChunks(importee)...)
+			getImportedChunks(importee)
 
-			chunks = append(chunks, dtos.EntryPointAsset{
-				FilePath:  importee.File,
-				Integrity: "",
-			})
+			if !seen[importee.File] {
+				chunks = append(chunks, dtos.EntryPointAsset{
+					FilePath:  importee.File,
+					Integrity: "",
+				})
+				seen[importee.File] = true
+			}
 		}
-
-		return chunks
 	}
 
 	entryChunk, exists := manifest[name]
@@ -277,5 +277,6 @@ func getPreloadChunks(manifest Manifest, name string) []dtos.EntryPointAsset {
 		return nil
 	}
 
-	return getImportedChunks(entryChunk)
+	getImportedChunks(entryChunk)
+	return chunks
 }

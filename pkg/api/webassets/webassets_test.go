@@ -3,14 +3,27 @@ package webassets
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/stretchr/testify/require"
 )
+
+func sortAssets(assets *dtos.EntryPointAssets) {
+	sort.Slice(assets.JSFiles, func(i, j int) bool {
+		return assets.JSFiles[i].FilePath < assets.JSFiles[j].FilePath
+	})
+	sort.Slice(assets.PreloadJSFiles, func(i, j int) bool {
+		return assets.PreloadJSFiles[i].FilePath < assets.PreloadJSFiles[j].FilePath
+	})
+}
 
 func TestReadWebassets(t *testing.T) {
 	assets, err := readWebAssetsFromFile("testdata/sample-assets-manifest.json")
 	require.NoError(t, err)
+
+	sortAssets(assets)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
 	require.NoError(t, err)
@@ -18,22 +31,32 @@ func TestReadWebassets(t *testing.T) {
 
 	require.JSONEq(t, `{
 		"jsFiles": [
-		  {
-			"filePath": "public/build/index-fkCrlmGK.js",
-			"integrity": ""
-		  }
+			{
+				"filePath": "public/build/index-fkCrlmGK.js",
+				"integrity": ""
+			},
+			{
+				"filePath": "public/build/trustedTypePolicies-pOmZ7Wr2.js",
+				"integrity": ""
+			}
 		],
 		"dark": "public/build/grafana-B9F4fUOy.css",
 		"light": "public/build/grafana-Cu0f8nVU.css",
 		"preloadJsFiles":  [
-		  {
-			"filePath": "public/build/vendor-r65R1Ntf.js",
-			"integrity": ""
-		  }
+			{
+				"filePath": "public/build/braintree-CW7sY1ng.js",
+				"integrity": ""
+			},
+			{
+				"filePath": "public/build/vendor-r65R1Ntf.js",
+				"integrity": ""
+			}
 		]
 	  }`, string(dto))
 
 	assets.SetContentDeliveryURL("https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
+
+	sortAssets(assets)
 
 	dto, err = json.MarshalIndent(assets, "", "  ")
 	require.NoError(t, err)
@@ -42,20 +65,28 @@ func TestReadWebassets(t *testing.T) {
 	require.JSONEq(t, `{
 		"cdn": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/",
 		"jsFiles": [
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/index-fkCrlmGK.js",
-			"integrity": ""
-		  }
+			{
+				"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/index-fkCrlmGK.js",
+				"integrity": ""
+			},
+			{
+				"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/trustedTypePolicies-pOmZ7Wr2.js",
+				"integrity": ""
+			}
+		],
+		"preloadJsFiles": [
+			{
+				"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/braintree-CW7sY1ng.js",
+				"integrity": ""
+			},
+			{
+				"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/vendor-r65R1Ntf.js",
+				"integrity": ""
+			}
 		],
 		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-B9F4fUOy.css",
-		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-Cu0f8nVU.css",
-		"preloadJsFiles":  [
-		  {
-			"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/vendor-r65R1Ntf.js",
-			"integrity": ""
-		  }
-		]
-	  }`, string(dto))
+		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana-Cu0f8nVU.css"
+	}`, string(dto))
 }
 
 func TestReadWebassetsFromCDN(t *testing.T) {
@@ -63,6 +94,8 @@ func TestReadWebassetsFromCDN(t *testing.T) {
 
 	assets, err := readWebAssetsFromCDN(context.Background(), "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
 	require.NoError(t, err)
+
+	sortAssets(assets)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
 	require.NoError(t, err)

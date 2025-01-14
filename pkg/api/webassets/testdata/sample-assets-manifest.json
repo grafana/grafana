@@ -20,6 +20,10 @@
       "public/build/grot-completed-D-h3ZMGB.svg"
     ]
   },
+  "_braintree-CW7sY1ng.js": {
+    "file": "public/build/braintree-CW7sY1ng.js",
+    "name": "braintree"
+  },
   "_viridis--y8fz-dE.js": {
     "file": "public/build/viridis--y8fz-dE.js",
     "name": "viridis",
@@ -105,6 +109,15 @@
     ],
     "assets": [
       "public/build/outlier_bg-hJPFLdCg.wasm"
+    ]
+  },
+  "app/core/trustedTypePolicies.ts": {
+    "file": "public/build/trustedTypePolicies-pOmZ7Wr2.js",
+    "name": "trustedTypePolicies",
+    "src": "app/core/trustedTypePolicies.ts",
+    "isEntry": true,
+    "imports": [
+      "_braintree-CW7sY1ng.js"
     ]
   },
   "app/plugins/panel/flamegraph/module.tsx": {
