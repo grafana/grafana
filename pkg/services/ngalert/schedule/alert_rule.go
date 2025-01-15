@@ -196,8 +196,7 @@ func (a *alertRule) Status() ngmodels.RuleStatus {
 func (a *alertRule) Eval(eval *Evaluation) (bool, *Evaluation) {
 	if a.key.AlertRuleKey != eval.rule.GetKey() {
 		// Make sure that rule has the same key. This should not happen
-		a.logger.Error("Invalid rule sent for evaluating. Skipping", "ruleKeyToEvaluate", eval.rule.GetKey().String())
-		return false, eval
+		panic(fmt.Sprintf("Invalid rule sent for evaluating. Expected rule key %s, got %s", a.key.AlertRuleKey, eval.rule.GetKey()))
 	}
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *Evaluation
