@@ -387,6 +387,10 @@ const (
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
 
+	// FlagKubernetesFoldersServiceV2
+	// Use the Folders Service V2, and route Folder Service requests to k8s
+	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
+
 	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
 	// Facilitate integration testing of experimental APIs
 	FlagGrafanaAPIServerTestingWithExperimentalAPIs = "grafanaAPIServerTestingWithExperimentalAPIs"
@@ -930,4 +934,20 @@ const (
 	// FlagTeamHttpHeadersMimir
 	// Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
 	FlagTeamHttpHeadersMimir = "teamHttpHeadersMimir"
+
+	// FlagABTestFeatureToggleA
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
+
+	// FlagABTestFeatureToggleB
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
+
+	// FlagQueryLibraryDashboards
+	// Enables Query Library feature in Dashboards
+	FlagQueryLibraryDashboards = "queryLibraryDashboards"
+
+	// FlagElasticsearchImprovedParsing
+	// Enables less memory intensive Elasticsearch result parsing
+	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 )

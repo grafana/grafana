@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+	"errors"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -27,56 +28,40 @@ import (
 // `authzService` is hardcoded in authz-service
 const authzServiceAudience = "authzService"
 
-type Client interface {
-	authzlib.AccessChecker
-}
-
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, grpcServer grpcserver.Provider,
 	tracer tracing.Tracer, db db.DB,
-) (Client, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
-	}
-
+) (authzlib.AccessClient, error) {
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	var client Client
+	isRemoteServer := authCfg.mode == ModeCloud || authCfg.mode == ModeGRPC
+	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && isRemoteServer {
+		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
+	}
 
 	// Register the server
 	sql := legacysql.NewDatabaseProvider(db)
 	server := rbac.NewService(sql, legacy.NewLegacySQLStores(sql), log.New("authz-grpc-server"), tracer)
 
 	switch authCfg.mode {
-	case ModeInProc:
-		client, err = newInProcLegacyClient(server, tracer)
-		if err != nil {
-			return nil, err
-		}
 	case ModeGRPC:
-		client, err = newGrpcLegacyClient(authCfg, tracer)
-		if err != nil {
-			return nil, err
-		}
+		return newGrpcLegacyClient(authCfg, tracer)
 	case ModeCloud:
-		client, err = newCloudLegacyClient(authCfg, tracer)
-		if err != nil {
-			return nil, err
-		}
+		return newCloudLegacyClient(authCfg, tracer)
+	default:
+		return newInProcLegacyClient(server, tracer)
 	}
-
-	return client, err
 }
 
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
 // You need to provide a remote address in the configuration
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-) (Client, error) {
+) (authzlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}
@@ -92,7 +77,7 @@ func ProvideStandaloneAuthZClient(
 	return newCloudLegacyClient(authCfg, tracer)
 }
 
-func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
+func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzlib.AccessClient, error) {
 	// For in-proc use-case authorize add fake service claims - it should be able to access every namespace, as there is only one
 	staticAuth := func(ctx context.Context) (context.Context, error) {
 		ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
@@ -121,7 +106,7 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzli
 	)
 }
 
-func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
+func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessClient, error) {
 	// This client interceptor is a noop, as we don't send an access token
 	clientConfig := authnlib.GrpcClientConfig{}
 	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
@@ -151,7 +136,7 @@ func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessCh
 	return client, nil
 }
 
-func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
+func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessClient, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{
 		TokenClientConfig: &authnlib.TokenExchangeConfig{
 			Token:            authCfg.token,
