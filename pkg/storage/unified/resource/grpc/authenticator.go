@@ -32,7 +32,7 @@ type Authenticator struct {
 }
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
-	ctx, span := f.Tracer.Start(ctx, "grpc.Authenticator.Authenticate")
+	ctx, span := f.Tracer.Start(ctx, "legacy.grpc.Authenticator.Authenticate")
 	defer span.End()
 
 	r, err := identity.GetRequester(ctx)
