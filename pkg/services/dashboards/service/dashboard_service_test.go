@@ -417,9 +417,11 @@ func TestGetDashboard(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -636,9 +638,11 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -729,9 +733,11 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -810,9 +816,11 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -917,9 +925,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -946,9 +956,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1039,9 +1051,11 @@ func TestUnprovisionDashboard(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1095,9 +1109,11 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1303,9 +1319,11 @@ func TestDeleteDashboard(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1422,12 +1440,15 @@ func TestSearchDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "tags",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1521,9 +1542,11 @@ func TestGetDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1599,9 +1622,11 @@ func TestGetDashboardUIDByID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
