@@ -1,5 +1,3 @@
-import { PrometheusDatasource } from '@grafana/prometheus';
-
 import { DataTrail } from '../DataTrail';
 
 import { MetricDatasourceHelper } from './MetricDatasourceHelper';
