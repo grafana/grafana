@@ -1980,7 +1980,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	for i, row := range result.Results.Rows {
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
-			if _, ok := excludedFields[col.Name]; ok {
+			if _, ok := excludedFields[col.Name]; !ok {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
 					return nil, err
