@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"reflect"
 	"testing"
 	"time"
@@ -37,16 +38,18 @@ import (
 func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
+		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		defer fakeStore.AssertExpectations(t)
 
 		folderSvc := foldertest.NewFakeService()
 
 		service := &DashboardServiceImpl{
-			cfg:            setting.NewCfg(),
-			log:            log.New("test.logger"),
-			dashboardStore: &fakeStore,
-			folderService:  folderSvc,
-			features:       featuremgmt.WithFeatures(),
+			cfg:                    setting.NewCfg(),
+			log:                    log.New("test.logger"),
+			dashboardStore:         &fakeStore,
+			folderService:          folderSvc,
+			features:               featuremgmt.WithFeatures(),
+			publicDashboardService: fakePublicDashboardService,
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -225,6 +228,8 @@ func TestDashboardService(t *testing.T) {
 		t.Run("Delete dashboards in folder", func(t *testing.T) {
 			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
 			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+			fakeStore.On("GetAllDashboardsUIDsInFolders", mock.Anything, mock.Anything).Return([]string{}, nil).Once()
+			fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})

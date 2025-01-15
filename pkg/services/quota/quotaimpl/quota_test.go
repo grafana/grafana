@@ -496,7 +496,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 		dashStore, folderStore, sqlStore, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	_, err = dashService.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil)
+		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil, nil)
 
 	require.NoError(t, err)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())

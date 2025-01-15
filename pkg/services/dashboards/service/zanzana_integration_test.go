@@ -80,6 +80,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			nil,
 			quotaService,
 			nil,
+			nil,
 		)
 		require.NoError(t, err)
 

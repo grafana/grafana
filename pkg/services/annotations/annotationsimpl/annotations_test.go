@@ -64,7 +64,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil, nil)
 	require.NoError(t, err)
 
 	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc)
@@ -246,7 +246,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+			ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil, nil)
 		require.NoError(t, err)
 
 		cfg.AnnotationMaximumTagsLength = 60

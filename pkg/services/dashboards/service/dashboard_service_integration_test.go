@@ -890,6 +890,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			nil,
 			quotaService,
 			nil,
+			nil,
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -962,6 +963,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		nil,
 		quotaService,
 		nil,
+		nil,
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -992,6 +994,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		nil,
 		nil,
 		quotaService,
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1042,6 +1045,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		nil,
 		nil,
 		quotaService,
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1099,6 +1103,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		nil,
 		nil,
 		quotaService,
+		nil,
 		nil,
 	)
 	require.NoError(t, err)

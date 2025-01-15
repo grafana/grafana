@@ -1025,6 +1025,41 @@ func (d *dashboardStore) CountDashboardsInFolders(
 	return count, err
 }
 
+// GetAllDashboardsUIDsInFolders returns all dashboards associated with the given folder list and orgID.
+// this will return soft deleted dashboards too (deleted IS NOT NULL)
+func (d *dashboardStore) GetAllDashboardsUIDsInFolders(
+	ctx context.Context, req *dashboards.GetAllDashboardsInFolderRequest) ([]string, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboardsInFolders")
+	defer span.End()
+
+	var dashboardUIDs = make([]string, 0)
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+
+		s := strings.Builder{}
+		args := make([]any, 0, 3)
+		s.WriteString("SELECT uid FROM dashboard WHERE ")
+		if len(req.FolderUIDs) == 1 && req.FolderUIDs[0] == "" {
+			s.WriteString("folder_uid IS NULL")
+		} else {
+			s.WriteString(fmt.Sprintf("folder_uid IN (%s)", strings.Repeat("?,", len(req.FolderUIDs)-1)+"?"))
+			for _, folderUID := range req.FolderUIDs {
+				args = append(args, folderUID)
+			}
+		}
+
+		// this will return soft deleted dashboards too (deleted IS NOT NULL)
+		s.WriteString(" AND org_id = ? AND is_folder = ?")
+		args = append(args, req.OrgID, d.store.GetDialect().BooleanStr(false))
+		sql := s.String()
+		err := sess.SQL(sql, args...).Find(&dashboardUIDs)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashboardUIDs, nil
+}
+
 func (d *dashboardStore) DeleteDashboardsInFolders(
 	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
 	ctx, span := tracer.Start(ctx, "dashboards.database.DeleteDashboardsInFolders")

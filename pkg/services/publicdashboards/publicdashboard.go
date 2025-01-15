@@ -46,6 +46,7 @@ type Service interface {
 type ServiceWrapper interface {
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	Delete(ctx context.Context, uid string) error
+	DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
@@ -57,6 +58,7 @@ type Store interface {
 	Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
 	Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
 	Delete(ctx context.Context, uid string) (int64, error)
+	DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	FindByFolder(ctx context.Context, orgId int64, folderUid string) ([]*PublicDashboard, error)

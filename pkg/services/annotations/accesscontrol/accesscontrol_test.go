@@ -52,7 +52,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
 		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil, nil)
 	require.NoError(t, err)
 
 	u := &user.SignedInUser{

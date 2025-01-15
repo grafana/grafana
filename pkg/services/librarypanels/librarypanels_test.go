@@ -735,7 +735,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
+		nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil, nil,
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -830,7 +830,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashStore, folderStore,
 			features, acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 			foldertest.NewFakeService(), folder.NewFakeStore(),
-			nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
+			nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil, nil,
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)
