@@ -7,14 +7,14 @@ import AzureLogAnalyticsDatasource from "../../azure_log_analytics/azure_log_ana
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from "../../types";
 import { parseResourceURI } from "../ResourcePicker/utils";
 
+import KQLPreview from "./KQLPreview";
 import { TableSection } from "./TableSection";
-
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
   datasource: AzureLogAnalyticsDatasource;
   basicLogsEnabled: boolean;
-  onChange: (newQuery: AzureMonitorQuery) => void;
+  onQueryChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
   hideFormatAs?: boolean;
@@ -23,7 +23,7 @@ interface LogsQueryBuilderProps {
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
-  const { datasource, query } = props;
+  const { datasource, query, onQueryChange } = props;
   const [tables, setTables] = useState([]);
 
   const fetchTables = async () => {
@@ -39,17 +39,17 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   useEffect(() => {
     if (tables.length === 0) {
       fetchTables();
-    }
+    };
   });
 
   return (
     <EditorRows>
-      <TableSection {...props} tables={tables} />
+      <TableSection {...props} tables={tables} onChange={onQueryChange} />
       {/* <FilterSection {...props} columns={tableColumns} />
       <AggregateSection {...props} columns={tableColumns} />
       <GroupBySection {...props} columns={tableColumns} />
-      <Timeshift {...props} />
-      <KQLPreview query={props.query.query} /> */}
+      <Timeshift {...props} /> */}
+      <KQLPreview query={query.azureLogAnalytics?.query!} /> 
     </EditorRows>
   )
 };

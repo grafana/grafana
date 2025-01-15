@@ -169,6 +169,10 @@ export interface AzureLogsQuery {
    */
   basicLogsQuery?: boolean;
   /**
+   * Denotes if logs query editor is in builder mode
+   */
+  builderMode?: boolean;
+  /**
    * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
    */
   dashboardTime?: boolean;

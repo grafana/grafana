@@ -121,6 +121,9 @@ type AzureLogsQuery struct {
 	// If set to true the query will be run as a basic logs query
 	BasicLogsQuery *bool `json:"basicLogsQuery,omitempty"`
 
+	// Denotes if logs query editor is in builder mode
+	BuilderMode *bool `json:"builderMode,omitempty"`
+
 	// If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
 	DashboardTime *bool `json:"dashboardTime,omitempty"`
 

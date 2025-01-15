@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Alert, Field, LinkButton, Switch, Text, TextLink } from '@grafana/ui';
+import { Alert, Field, LinkButton, Space, Switch, Text, TextLink } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -48,7 +48,6 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
-  const [isLogsQueryBuilder, setIsLogsQueryBuilder] = useState<boolean>(false);
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
   );
@@ -149,7 +148,10 @@ const LogsQueryEditor = ({
     }
   }
 
-  const onLogsModeChange = (e: React.ChangeEvent<HTMLInputElement>) => setIsLogsQueryBuilder(e.target.checked);
+  const onLogsModeChange = () => {
+    query.azureLogAnalytics!.builderMode = !query.azureLogAnalytics!.builderMode;
+    onChange(setKustoQuery(query, ""))
+  };
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -201,17 +203,18 @@ const LogsQueryEditor = ({
             />
             <Field label="Builder Mode">
               <div>
-                <Switch aria-label="Builder Mode" onChange={onLogsModeChange} value={isLogsQueryBuilder ?? false} />
+                <Switch aria-label="Builder Mode" onChange={onLogsModeChange} value={(query.azureLogAnalytics?.builderMode !== undefined ? query.azureLogAnalytics.builderMode : false)} />
               </div>
             </Field>
           </EditorFieldGroup>
         </EditorRow>
-        {isLogsQueryBuilder ? 
+        <Space />
+        {query.azureLogAnalytics?.builderMode ? 
           <LogsQueryBuilder 
             query={query}
             datasource={datasource.azureLogAnalyticsDatasource}
             basicLogsEnabled={basicLogsEnabled}
-            onChange={onChange}
+            onQueryChange={onChange}
             variableOptionGroup={variableOptionGroup}
             setError={setError}
           /> : <QueryField
@@ -225,7 +228,7 @@ const LogsQueryEditor = ({
           />
         }
         {dataIngestedWarning}
-        <EditorRow>
+        {!query.azureLogAnalytics?.builderMode && <EditorRow>
           <EditorFieldGroup>
             {!hideFormatAs && (
               <FormatAsField
@@ -250,7 +253,7 @@ const LogsQueryEditor = ({
             {portalLinkButton}
             {migrationError && <Alert title={migrationError.title}>{migrationError.message}</Alert>}
           </EditorFieldGroup>
-        </EditorRow>
+        </EditorRow>}
       </EditorRows>
     </span>
   );

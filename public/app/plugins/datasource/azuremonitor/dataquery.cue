@@ -122,6 +122,8 @@ composableKinds: DataQuery: {
 					basicLogsQuery?: bool
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
+					// Denotes if logs query editor is in builder mode
+					builderMode?: bool
 
 					// @deprecated Use resources instead 
 					resource?: string

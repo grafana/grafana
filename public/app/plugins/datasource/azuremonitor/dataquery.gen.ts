@@ -66,7 +66,6 @@ export enum AzureQueryType {
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
   LocationsQuery = 'Azure Regions',
   LogAnalytics = 'Azure Log Analytics',
-  LogBuilderMode = 'Azure Log Builder Mode',
   MetricNamesQuery = 'Azure Metric Names',
   NamespacesQuery = 'Azure Namespaces',
   ResourceGroupsQuery = 'Azure Resource Groups',
@@ -167,6 +166,10 @@ export interface AzureLogsQuery {
    * If set to true the query will be run as a basic logs query
    */
   basicLogsQuery?: boolean;
+  /**
+   * Denotes if logs query editor is in builder mode
+   */
+  builderMode?: boolean;
   /**
    * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
    */
