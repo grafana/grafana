@@ -1750,6 +1750,12 @@ var (
 			Owner:          grafanaFrontendPlatformSquad,
 			AllowSelfServe: false,
 		},
+		{
+			Name:        "elasticsearchImprovedParsing",
+			Description: "Enables less memory intensive Elasticsearch result parsing",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+		},
 	}
 )
 
