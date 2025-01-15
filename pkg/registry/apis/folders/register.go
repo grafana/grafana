@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -63,7 +62,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
-	iam *iam.IdentityAccessManagementAPIBuilder, // Used to get the access client
+	authz authz.AccessClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFolders,
@@ -81,7 +80,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		cfg:                  cfg,
-		authz:                iam.AccessClient(),
+		authz:                authz,
 		searcher:             unified,
 	}
 	apiregistration.RegisterAPI(builder)

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/slices"
@@ -26,6 +27,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,7 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -71,6 +72,16 @@ var (
 	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
 )
 
+var (
+	excludedFields = map[string]string{
+		resource.SEARCH_FIELD_EXPLAIN: "",
+		resource.SEARCH_FIELD_SCORE:   "",
+		resource.SEARCH_FIELD_TITLE:   "",
+		resource.SEARCH_FIELD_FOLDER:  "",
+		resource.SEARCH_FIELD_TAGS:    "",
+	}
+)
+
 type DashboardServiceImpl struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
@@ -83,7 +94,6 @@ type DashboardServiceImpl struct {
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
-	zclient              zanzana.Client
 	k8sclient            dashboardK8sHandler
 	metrics              *dashboardsMetrics
 }
@@ -109,7 +119,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
+	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
 	quotaService quota.Service, orgService org.Service,
 ) (*DashboardServiceImpl, error) {
@@ -128,7 +138,6 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
 		ac:                   ac,
-		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
 		orgService:           orgService,
@@ -371,16 +380,28 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	// Validate folder
-	if dash.FolderUID != "" {
-		if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
-			folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
-			if err != nil {
-				return nil, err
-			}
-			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-			// nolint:staticcheck
-			dash.FolderID = folder.ID
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID:        dash.OrgID,
+			UID:          &dash.FolderUID,
+			ID:           &dash.FolderID, // nolint:staticcheck
+			SignedInUser: dto.User,
+		})
+		if err != nil {
+			return nil, err
 		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
+		dash.FolderUID = folder.UID
+	} else if dash.FolderUID != "" {
+		folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
+		if err != nil {
+			return nil, err
+		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
 	} else if dash.FolderID != 0 { // nolint:staticcheck
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
@@ -1214,19 +1235,12 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
-	var res []dashboards.DashboardSearchProjection
-	var err error
-	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
-		res, err = dr.FindDashboardsZanzana(ctx, query)
-	} else {
-		res, err = dr.FindDashboards(ctx, query)
-	}
+	res, err := dr.FindDashboards(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
 	hits := makeQueryResult(query, res)
-
 	return hits, nil
 }
 
@@ -1726,7 +1740,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.DashboardUIDs) > 0 {
 		request.Options.Fields = []*resource.Requirement{{
-			Key:      "key.name",
+			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: string(selection.In),
 			Values:   query.DashboardUIDs,
 		}}
@@ -1745,7 +1759,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.FolderUIDs) > 0 {
 		req := []*resource.Requirement{{
-			Key:      "folder",
+			Key:      resource.SEARCH_FIELD_FOLDER,
 			Operator: string(selection.In),
 			Values:   query.FolderUIDs,
 		}}
@@ -1754,7 +1768,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if query.ProvisionedRepo != "" {
 		req := []*resource.Requirement{{
-			Key:      "repo.name",
+			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
 			Operator: string(selection.In),
 			Values:   []string{query.ProvisionedRepo},
 		}}
@@ -1763,7 +1777,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.ProvisionedReposNotIn) > 0 {
 		req := []*resource.Requirement{{
-			Key:      "repo.name",
+			Key:      resource.SEARCH_FIELD_REPOSITORY_NAME,
 			Operator: string(selection.NotIn),
 			Values:   query.ProvisionedReposNotIn,
 		}}
@@ -1771,7 +1785,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 	if query.ProvisionedPath != "" {
 		req := []*resource.Requirement{{
-			Key:      "repo.path",
+			Key:      resource.SEARCH_FIELD_REPOSITORY_PATH,
 			Operator: string(selection.In),
 			Values:   []string{query.ProvisionedPath},
 		}}
@@ -1784,7 +1798,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	// but is currently not needed by other services in the backend
 	if query.Title != "" {
 		req := []*resource.Requirement{{
-			Key:      "title",
+			Key:      resource.SEARCH_FIELD_TITLE,
 			Operator: string(selection.In),
 			Values:   []string{query.Title},
 		}}
@@ -1793,11 +1807,15 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if len(query.Tags) > 0 {
 		req := []*resource.Requirement{{
-			Key:      "tags",
+			Key:      resource.SEARCH_FIELD_TAGS,
 			Operator: string(selection.In),
 			Values:   query.Tags,
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
+	}
+
+	if query.Limit > 0 {
+		request.Limit = query.Limit
 	}
 
 	res, err := dr.k8sclient.getSearcher().Search(ctx, request)
@@ -1942,11 +1960,11 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 			explainIDX = i
 		case resource.SEARCH_FIELD_SCORE:
 			scoreIDX = i
-		case "title":
+		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
-		case "folder":
+		case resource.SEARCH_FIELD_FOLDER:
 			folderIDX = i
-		case "tags":
+		case resource.SEARCH_FIELD_TAGS:
 			tagsIDX = i
 		}
 	}
@@ -1960,11 +1978,28 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	}
 
 	for i, row := range result.Results.Rows {
+		fields := &common.Unstructured{}
+		for colIndex, col := range result.Results.Columns {
+			if _, ok := excludedFields[col.Name]; ok {
+				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
+				if err != nil {
+					return nil, err
+				}
+				// Some of the dashboard fields come in as int32, but we need to convert them to int64 or else fields.Set() will panic
+				int32Val, ok := val.(int32)
+				if ok {
+					val = int64(int32Val)
+				}
+				fields.Set(col.Name, val)
+			}
+		}
+
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
 			Title:    string(row.Cells[titleIDX]),
 			Folder:   string(row.Cells[folderIDX]),
+			Field:    fields,
 		}
 		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
@@ -2175,6 +2210,15 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	finalObj.SetName(uid)
 	finalObj.SetNamespace(namespace)
 	finalObj.SetGroupVersionKind(v0alpha1.DashboardResourceInfo.GroupVersionKind())
+
+	if cmd.FolderUID != "" {
+		meta, err := utils.MetaAccessor(&finalObj)
+		if err != nil {
+			return finalObj, err
+		}
+
+		meta.SetFolder(cmd.FolderUID)
+	}
 
 	return finalObj, nil
 }

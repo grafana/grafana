@@ -75,11 +75,6 @@ func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAP
 	}
 }
 
-// Expose the dependency to other services (via wire)
-func (b *IdentityAccessManagementAPIBuilder) AccessClient() authz.AccessClient {
-	return b.accessClient
-}
-
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return iamv0.SchemeGroupVersion
 }

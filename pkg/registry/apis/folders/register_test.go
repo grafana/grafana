@@ -197,9 +197,8 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			require.NotNil(t, ctx)
 			require.NotNil(t, b)
+			// ctx := context.Background()
 			// out, err := authorizerFunc(identity.WithRequester(ctx, tt.input.user), authorizer.AttributesRecord{User: tt.input.user, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"})
 			// if tt.expect.err != nil {
 			// 	require.Error(t, err)

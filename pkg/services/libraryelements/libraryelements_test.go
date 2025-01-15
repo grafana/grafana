@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -172,12 +171,11 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 				return model.LibraryElementConnectionsResponse{
 					Result: []model.LibraryElementConnectionDTO{
 						{
-							ID:            sc.initialResult.Result.ID,
-							Kind:          sc.initialResult.Result.Kind,
-							ElementID:     1,
-							ConnectionID:  dashInDB.ID,
-							ConnectionUID: dashInDB.UID,
-							Created:       res.Result[0].Created,
+							ID:           sc.initialResult.Result.ID,
+							Kind:         sc.initialResult.Result.Kind,
+							ElementID:    1,
+							ConnectionID: dashInDB.ID,
+							Created:      res.Result[0].Created,
 							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
@@ -304,13 +302,16 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	var expectedFolder *folder.Folder
+	if dash.FolderUID != "" || dash.FolderID != 0 { // nolint:staticcheck
+		expectedFolder = &folder.Folder{ID: folderID, UID: folderUID}
+	}
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
-		foldertest.NewFakeService(),
+		&foldertest.FakeService{ExpectedFolder: expectedFolder},
 		folder.NewFakeStore(),
 		nil,
-		zanzana.NewNoopClient(),
 		nil,
 		nil,
 		nil,
@@ -400,12 +401,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, zanzana.NewNoopClient(),
-		nil,
-		nil,
-		nil,
-		quotaService,
-		nil,
+		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, svcErr)
 	guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -458,7 +454,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
-		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+		ac := acimpl.ProvideAccessControl(features)
 		folderPermissions := acmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
@@ -467,7 +463,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(), folder.NewFakeStore(),
-			nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil,
+			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)
