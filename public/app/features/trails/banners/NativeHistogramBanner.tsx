@@ -3,7 +3,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2, Alert, Button } from '@grafana/ui';
-import { Trans } from '@grafana/ui/src/utils/i18n';
+import { t, Trans } from '@grafana/ui/src/utils/i18n';
 
 import { DataTrail } from '../DataTrail';
 import { reportExploreMetrics } from '../interactions';
@@ -98,7 +98,7 @@ const NativeHistogramExamplesButton = ({
           setShowHistogramExamples(!showHistogramExamples);
         }}
       >
-        {showHistogramExamples ? `Hide examples` : `> See examples`}
+        {showHistogramExamples ? t(`Hide examples`, `Hide examples`) : t(`> See examples`, `> See examples`)}
       </Button>
     </div>
   );
@@ -217,7 +217,7 @@ const NativeHistogramExamples = ({ trail, nativeHistograms, setHistogramMessage 
                 fill="text"
                 className={`native-histogram-example-clicked`}
               >
-                {el}
+                {t(el,el)}
               </Button>
             </div>
           );
