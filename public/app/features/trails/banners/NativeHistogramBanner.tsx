@@ -217,7 +217,7 @@ const NativeHistogramExamples = ({ trail, nativeHistograms, setHistogramMessage 
                 fill="text"
                 className={`native-histogram-example-clicked`}
               >
-                {t(el,el)}
+                {t(el, el)}
               </Button>
             </div>
           );
