@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { t } from 'i18next';
 import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -78,6 +79,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
           {!showHistogramExamples && (
             <div>
               <Button
+                className={styles.seeExamplesButton}
                 type="button"
                 fill="text"
                 variant="primary"
@@ -85,7 +87,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                   setShowHistogramExamples(true);
                 }}
               >
-                <Trans i18nKey="trails.native-histogram-banner.see-examples">{`> See examples`}</Trans>
+                {t(`> See examples`)}
               </Button>
             </div>
           )}
@@ -177,7 +179,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                         size="sm"
                         fill="text"
                       >
-                        {el}
+                        {t(el)}
                       </Button>
                     </div>
                   );
@@ -207,6 +209,9 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
     button: css({
       // width: '100%',
       float: 'right',
+    }),
+    seeExamplesButton: css({
+      paddingLeft: '0px',
     }),
     seeExamplesRow: css({
       paddingTop: '4px',
