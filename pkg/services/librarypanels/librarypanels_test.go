@@ -90,7 +90,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
 
-			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID)
+			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID, dashInDB.UID)
 			require.NoError(t, err)
 			require.Len(t, elements, 1)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
@@ -188,7 +188,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
 
-			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID)
+			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID, dashInDB.UID)
 			require.NoError(t, err)
 			require.Len(t, elements, 2)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
@@ -319,7 +319,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
 
-			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID)
+			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID, dashInDB.UID)
 			require.NoError(t, err)
 			require.Len(t, elements, 1)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)

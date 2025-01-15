@@ -719,8 +719,8 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 	return connections, err
 }
 
-// getElementsForDashboardID gets all elements for a specific dashboard
-func (l *LibraryElementService) getElementsForDashboardID(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
+// getElementsForDashboardUID gets all elements for a specific dashboard
+func (l *LibraryElementService) getElementsForDashboardUID(c context.Context, dashboardID int64, dashboardUID string) (map[string]model.LibraryElementDTO, error) {
 	libraryElementMap := make(map[string]model.LibraryElementDTO)
 	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		var libraryElements []model.LibraryElementWithMeta
@@ -728,9 +728,9 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 			", coalesce(dashboard.title, 'General') AS folder_name" +
 			", coalesce(dashboard.uid, '') AS folder_uid" +
 			getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()) +
-			" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id" +
+			" LEFT JOIN dashboard AS dashboard ON dashboard.uid = le.folder_uid" + // #TODO: check if we still need this join
 			" INNER JOIN " + model.LibraryElementConnectionTableName + " AS lce ON lce.element_id = le.id AND lce.kind=1 AND lce.connection_id=?"
-		sess := session.SQL(sql, dashboardID)
+		sess := session.SQL(sql, dashboardUID)
 		err := sess.Find(&libraryElements)
 		if err != nil {
 			return err
