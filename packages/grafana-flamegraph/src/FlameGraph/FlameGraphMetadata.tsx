@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo, ReactNode } from 'react';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
 
@@ -63,22 +63,26 @@ const FlameGraphMetadata = memo(
     }
 
     if (focusedItem) {
-      const percentValue = Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100;
+      const percentValue = totalTicks > 0 ? Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100 : 0;
+      const iconName = percentValue > 0 ? 'eye' : 'exclamation-circle';
+
       parts.push(
-        <span key={'focus'}>
-          <Icon size={'sm'} name={'angle-right'} />
-          <div className={styles.metadataPill}>
-            <Icon size={'sm'} name={'eye'} /> {percentValue}% of total
-            <IconButton
-              className={styles.pillCloseButton}
-              name={'times'}
-              size={'sm'}
-              onClick={onFocusPillClick}
-              tooltip={'Remove focus'}
-              aria-label={'Remove focus'}
-            />
+        <Tooltip key={'focus'} content={focusedItem.label} placement="top">
+          <div>
+            <Icon size={'sm'} name={'angle-right'} />
+            <div className={styles.metadataPill}>
+              <Icon size={'sm'} name={iconName} /> {percentValue}% of total
+              <IconButton
+                className={styles.pillCloseButton}
+                name={'times'}
+                size={'sm'}
+                onClick={onFocusPillClick}
+                tooltip={'Remove focus'}
+                aria-label={'Remove focus'}
+              />
+            </div>
           </div>
-        </span>
+        </Tooltip>
       );
     }
 
