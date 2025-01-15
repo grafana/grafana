@@ -484,12 +484,8 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 		return 0, fmt.Errorf("missing group or resource")
 	}
 
-	history, err := resource.GetHistoryRequest(req)
-	if err != nil {
-		return 0, err
-	}
-	if history != nil {
-		return b.getHistory(ctx, history, cb)
+	if req.Source != resource.ListRequest_STORE {
+		return b.getHistory(ctx, req, cb)
 	}
 
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
@@ -656,11 +652,11 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 }
 
 // listLatest fetches the resources from the resource table.
-func (b *backend) getHistory(ctx context.Context, req *resource.HistoryRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	listReq := sqlGetHistoryRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
-		Key:         req.Key,
-		Trash:       req.Trash,
+		Key:         req.Options.Key,
+		Trash:       req.Source == resource.ListRequest_TRASH,
 	}
 
 	iter := &listIter{}
@@ -674,7 +670,7 @@ func (b *backend) getHistory(ctx context.Context, req *resource.HistoryRequest, 
 
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Key.Group, req.Key.Resource)
+		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
 			return err
 		}
