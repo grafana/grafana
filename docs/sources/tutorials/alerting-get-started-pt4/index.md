@@ -345,7 +345,7 @@ Here’s a breakdown of the template:
 
 In the **Preview** area, you can see a sample of how the notification would look. Since we’ve already created our alert rule, you can take it a step further by previewing how an actual alert instance from your rule would appear in the notification.
 
-1. To do that, click **Edit payload**.
+1. Click **Edit payload**.
 1. Click **Use existing alert instance**.
 
    You should see our alert rule listed on the left.
