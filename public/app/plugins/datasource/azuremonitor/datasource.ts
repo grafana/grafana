@@ -250,9 +250,6 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.LogAnalytics:
       return !!query.azureLogAnalytics;
-    
-    case AzureQueryType.LogBuilderMode:
-      return !!query.azureLogAnalytics;
 
     case AzureQueryType.AzureResourceGraph:
       return !!query.azureResourceGraph;

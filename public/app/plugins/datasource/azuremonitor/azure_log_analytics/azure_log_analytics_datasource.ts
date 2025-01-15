@@ -16,6 +16,7 @@ import {
   DatasourceValidationResult,
   Subscription,
   Workspace,
+  AzureLogAnalyticsTable,
 } from '../types';
 import { interpolateVariable, routeNames } from '../utils/common';
 
@@ -93,6 +94,20 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
     return this.getResource<AzureAPIResponse<Workspace>>(workspaceListUrl);
   }
+
+  async getTables(subscription: string, resourceGroupName: string, workspaceName: string): Promise<any> {
+    const res = await this.getTableList(subscription, resourceGroupName, workspaceName);
+    return res;
+  }
+
+  private getTableList(subscription: string, resourceGroupName: string, workspaceName: string): Promise<AzureAPIResponse<AzureLogAnalyticsTable>> {
+    const subscriptionId = this.templateSrv.replace(subscription || this.defaultSubscriptionId);
+  
+    const tableList = 
+      `loganalytics/v1/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/${workspaceName}/metadata?select=categories,solutions,tables,workspaces`;
+  
+    return this.getResource<AzureAPIResponse<AzureLogAnalyticsTable>>(tableList);
+  }  
 
   async getMetadata(resourceUri: string) {
     const path = `${this.resourcePath}/v1${resourceUri}/metadata`;

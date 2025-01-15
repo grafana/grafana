@@ -18,7 +18,6 @@ import {
 } from '../../types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
-import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import LogsQueryEditor from '../LogsQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
@@ -187,21 +186,6 @@ const EditorForQueryType = ({
           timeRange={range}
         />
       );
-
-    case AzureQueryType.LogBuilderMode:
-    return (
-      <LogsQueryBuilder
-        data={data}
-        subscriptionId={subscriptionId}
-        basicLogsEnabled={basicLogsEnabled}
-        query={query}
-        datasource={datasource}
-        onChange={onChange}
-        variableOptionGroup={variableOptionGroup}
-        setError={setError}
-        timeRange={range}
-      />
-    );
 
     case AzureQueryType.AzureResourceGraph:
       return (

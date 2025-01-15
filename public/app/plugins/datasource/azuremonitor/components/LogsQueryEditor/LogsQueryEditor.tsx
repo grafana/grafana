@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Alert, LinkButton, Text, TextLink } from '@grafana/ui';
+import { Alert, Field, LinkButton, Switch, Text, TextLink } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
+import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
@@ -47,6 +48,7 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
+  const [isLogsQueryBuilder, setIsLogsQueryBuilder] = useState<boolean>(false);
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
   );
@@ -147,6 +149,8 @@ const LogsQueryEditor = ({
     }
   }
 
+  const onLogsModeChange = (e: React.ChangeEvent<HTMLInputElement>) => setIsLogsQueryBuilder(e.target.checked);
+
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
       <EditorRows>
@@ -195,17 +199,31 @@ const LogsQueryEditor = ({
               setError={setError}
               schema={schema}
             />
+            <Field label="Builder Mode">
+              <div>
+                <Switch aria-label="Builder Mode" onChange={onLogsModeChange} value={isLogsQueryBuilder ?? false} />
+              </div>
+            </Field>
           </EditorFieldGroup>
         </EditorRow>
-        <QueryField
-          query={query}
-          datasource={datasource}
-          subscriptionId={subscriptionId}
-          variableOptionGroup={variableOptionGroup}
-          onQueryChange={onChange}
-          setError={setError}
-          schema={schema}
-        />
+        {isLogsQueryBuilder ? 
+          <LogsQueryBuilder 
+            query={query}
+            datasource={datasource.azureLogAnalyticsDatasource}
+            basicLogsEnabled={basicLogsEnabled}
+            onChange={onChange}
+            variableOptionGroup={variableOptionGroup}
+            setError={setError}
+          /> : <QueryField
+            query={query}
+            datasource={datasource}
+            subscriptionId={subscriptionId}
+            variableOptionGroup={variableOptionGroup}
+            onQueryChange={onChange}
+            setError={setError}
+            schema={schema}
+          />
+        }
         {dataIngestedWarning}
         <EditorRow>
           <EditorFieldGroup>

@@ -260,6 +260,15 @@ export interface AzureAPIResponse<T> {
   statusText?: string;
 }
 
+export interface AzureLogAnalyticsTable {
+  name: string;
+  description: string;
+}
+
+export interface MetadataResponse {
+  tables: AzureLogAnalyticsTable[];
+}
+
 export interface Location {
   id: string;
   name: string;
