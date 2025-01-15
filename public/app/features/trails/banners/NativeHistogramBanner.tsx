@@ -93,10 +93,10 @@ const NativeHistogramExamplesButton = ({
         onClick={() => {
           if (showHistogramExamples) {
             // hide the examples
-            reportExploreMetrics('native_histogram_examples_closed', {})
+            reportExploreMetrics('native_histogram_examples_closed', {});
           }
-          setShowHistogramExamples(!showHistogramExamples)}
-        }
+          setShowHistogramExamples(!showHistogramExamples);
+        }}
       >
         {showHistogramExamples ? `Hide examples` : `> See examples`}
       </Button>
@@ -113,7 +113,7 @@ const NativeHistogramExamples = ({ trail, nativeHistograms, setHistogramMessage 
   const isDark = useTheme2().isDark;
   const selectNativeHistogram = (metric: string) => {
     reportExploreMetrics('native_histogram_example_clicked', {
-      metric
+      metric,
     });
     trail.publishEvent(new MetricSelectedEvent(metric), true);
   };
@@ -207,7 +207,7 @@ const NativeHistogramExamples = ({ trail, nativeHistograms, setHistogramMessage 
           return (
             <div key={el}>
               <Button
-                onClick={() => {                  
+                onClick={() => {
                   selectNativeHistogram(el);
                   setHistogramMessage(false);
                 }}

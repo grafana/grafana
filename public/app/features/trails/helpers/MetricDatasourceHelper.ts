@@ -72,7 +72,7 @@ export class MetricDatasourceHelper {
   /**
    * Identify native histograms by querying classic histograms and all metrics,
    * then comparing the results and build the collection of native histograms.
-   * 
+   *
    * classic histogram = test_metric_bucket
    * native histogram = test_metric
    */
@@ -98,7 +98,7 @@ export class MetricDatasourceHelper {
   }
 
   /**
-   * 
+   *
    * If a metric name + _bucket exists in the classic histograms, then it is a native histogram
    *
    * classic histogram = test_metric_bucket
