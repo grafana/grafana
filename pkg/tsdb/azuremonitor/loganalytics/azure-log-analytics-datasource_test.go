@@ -708,13 +708,26 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	query := &AzureLogAnalyticsQuery{
 		TimeRange: backend.TimeRange{},
 	}
-	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
-	if err == nil {
-		t.Fatal("expecting an error")
-	}
-	if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
-		t.Error("expecting the error to inform of bad credentials")
-	}
+	t.Run("errors with azureLogAnalyticsSameAs set to false (boolean)", func(t *testing.T) {
+		_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
+		if err == nil {
+			t.Fatal("expecting an error")
+		}
+		if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
+			t.Error("expecting the error to inform of bad credentials")
+		}
+	})
+
+	t.Run("errors with azureLogAnalyticsSameAs set to false (boolean)", func(t *testing.T) {
+		dsInfo.JSONData["azureLogAnalyticsSameAs"] = "false"
+		_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
+		if err == nil {
+			t.Fatal("expecting an error")
+		}
+		if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
+			t.Error("expecting the error to inform of bad credentials")
+		}
+	})
 }
 
 func Test_exemplarsFeatureToggle(t *testing.T) {
