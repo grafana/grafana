@@ -171,7 +171,7 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, contactPoint)
 }
