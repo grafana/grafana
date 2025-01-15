@@ -40,7 +40,6 @@ func TestDashboardService(t *testing.T) {
 		defer fakeStore.AssertExpectations(t)
 
 		folderSvc := foldertest.NewFakeService()
-
 		service := &DashboardServiceImpl{
 			cfg:            setting.NewCfg(),
 			log:            log.New("test.logger"),
@@ -48,6 +47,9 @@ func TestDashboardService(t *testing.T) {
 			folderService:  folderSvc,
 			features:       featuremgmt.WithFeatures(),
 		}
+		folderStore := foldertest.FakeFolderStore{}
+		folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
+		service.folderStore = &folderStore
 
 		origNewDashboardGuardian := guardian.New
 		defer func() { guardian.New = origNewDashboardGuardian }()
@@ -102,9 +104,8 @@ func TestDashboardService(t *testing.T) {
 			t.Run("Should return validation error if a folder that is specified can't be found", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.FolderUID = "non-existing-folder"
-				folderStore := foldertest.FakeFolderStore{}
-				folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
-				service.folderStore = &folderStore
+				folderSvc := foldertest.FakeService{ExpectedError: dashboards.ErrFolderNotFound}
+				service.folderService = &folderSvc
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrFolderNotFound)
 			})
@@ -1835,6 +1836,7 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 	namespace := "test-namespace"
 	t.Run("successfully converts save command to unstructured", func(t *testing.T) {
 		cmd := &dashboards.SaveDashboardCommand{
+			FolderUID: "folder-uid",
 			Dashboard: simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "test-uid"}),
 		}
 
@@ -1845,6 +1847,7 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		assert.Equal(t, "test-namespace", result.GetNamespace())
 		spec := result.Object["spec"].(map[string]any)
 		assert.Equal(t, spec["version"], 1)
+		assert.Equal(t, result.GetAnnotations(), map[string]string{utils.AnnoKeyFolder: "folder-uid"})
 	})
 
 	t.Run("should increase version when called", func(t *testing.T) {
@@ -1856,6 +1859,8 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		assert.NotNil(t, result)
 		spec := result.Object["spec"].(map[string]any)
 		assert.Equal(t, spec["version"], float64(2))
+		// folder annotation should not be set if not inside a folder
+		assert.Equal(t, result.GetAnnotations(), map[string]string(nil))
 	})
 }
 
