@@ -350,7 +350,7 @@ func (srv RulerSrv) RouteGetRuleHistoryByUID(c *contextmodel.ReqContext, ruleUID
 	result := make(apimodels.GettableRuleHistory, 0, len(rules))
 	for _, rule := range rules {
 		// do not provide provenance status because we do not have historical changes for it
-		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}))
+		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(ctx)))
 	}
 	return response.JSON(http.StatusOK, result)
 }
