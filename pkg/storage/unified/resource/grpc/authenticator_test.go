@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func TestBasicEncodeDecode(t *testing.T) {
@@ -19,7 +20,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 		OrgRole: identity.RoleAdmin,
 	}
 
-	auth := &Authenticator{}
+	auth := &Authenticator{Tracer: tracing.NewNoopTracerService()}
 
 	md := encodeIdentityInMetadata(before)
 	after, err := auth.decodeMetadata(md)

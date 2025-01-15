@@ -12,6 +12,7 @@ import (
 	authClaims "github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 const (
@@ -27,10 +28,13 @@ const (
 // var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 type Authenticator struct {
-	// IDTokenVerifier authn.Verifier[authn.IDTokenClaims]
+	Tracer tracing.Tracer
 }
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
+	ctx, span := f.Tracer.Start(ctx, "grpc.Authenticator.Authenticate")
+	defer span.End()
+
 	r, err := identity.GetRequester(ctx)
 	if err == nil && r != nil {
 		return ctx, nil // noop, requester exists
@@ -38,10 +42,13 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "no metadata found in grpc context")
+		err := status.Error(codes.Unauthenticated, "no metadata found in grpc context")
+		span.RecordError(err)
+		return nil, err
 	}
 	user, err := f.decodeMetadata(md)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	return identity.WithRequester(ctx, user), nil
