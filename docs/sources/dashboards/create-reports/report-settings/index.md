@@ -42,11 +42,11 @@ The options in this section control the branding and theming of the report attac
 
 - **Theme** - Theme of the dashboard image embedded in the email. Defaults to **Dark**.
 
-<!-- vale Grafana.Spelling = NO -->
+<!-- vale Grafana.WordList = NO -->
 
 ## Email branding
 
-<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
 
 - **Company logo** - Company logo displayed in the report email. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
 - **Email footer** - Toggle to enable the report email footer. Select **Sent by** or **None**.
