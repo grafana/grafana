@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme, Alert, Button } from '@grafana/ui';
@@ -36,10 +36,6 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
       : 'public/img/native-histograms/LightModeHistogramClassicHistogram.png',
   };
 
-  useEffect(() => {
-    setHistogramMessage(true);
-    setShowHistogramExamples(false);
-  }, [histogramsLoaded, nativeHistograms]);
 
   const selectNativeHistogram = (metric: string) => {
     trail.publishEvent(new MetricSelectedEvent(metric), true);
