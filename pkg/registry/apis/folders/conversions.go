@@ -52,6 +52,11 @@ func LegacyUpdateCommandToUnstructured(obj *unstructured.Unstructured, cmd *fold
 	if cmd.NewDescription != nil {
 		spec["description"] = cmd.NewDescription
 	}
+	if cmd.NewParentUID != nil {
+		if err := setParentUID(obj, *cmd.NewParentUID); err != nil {
+			return &unstructured.Unstructured{}, err
+		}
+	}
 
 	return obj, nil
 }
