@@ -32,7 +32,7 @@
 /devenv/README.md @grafana/docs-grafana
 
 # START Technical documentation
-/.vale.ini
+/.vale.ini @grafana/docs-tooling
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 /docs/                                                                            @grafana/docs-tooling
 
