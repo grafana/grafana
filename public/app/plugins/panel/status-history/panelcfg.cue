@@ -31,6 +31,8 @@ composableKinds: PanelCfg: {
 
 					//Set the height of the rows
 					rowHeight: float32 & >=0 & <=1 | *0.9
+					//Controls the y axis width
+					yAxisWidth: number
 					//Show values on the columns
 					showValue: ui.VisibilityMode & (*"auto" | _)
 					//Controls the column width

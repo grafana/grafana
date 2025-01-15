@@ -107,6 +107,10 @@ Use these options to refine the visualization.
 
 Controls whether values are rendered inside the value boxes. Auto will render values if there is sufficient space.
 
+### Y Axis Width
+
+Controls the width (in pixels) of the Y axis. Useful for aligning several status history panels with the same time scale.
+
 ### Row height
 
 Controls the height of boxes. 1 = maximum space and 0 = minimum space.
