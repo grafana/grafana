@@ -169,7 +169,6 @@ interface SceneOptions {
   canDelete?: boolean;
   orgCanEdit?: boolean;
   existingFilterVariable?: boolean;
-  datasourceType?: string;
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -199,7 +198,7 @@ function buildTestScene(options: SceneOptions) {
         {
           type: 'timeseries',
           id: 4,
-          datasource: { uid: 'my-ds-uid', type: options.datasourceType ?? 'prometheus' },
+          datasource: { uid: 'my-ds-uid', type: 'prometheus' },
           targets: [],
         },
       ],
