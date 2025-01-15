@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/slices"
@@ -69,6 +70,16 @@ var (
 
 	daysInTrash = 24 * 30 * time.Hour
 	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
+)
+
+var (
+	excludedFields = map[string]string{
+		resource.SEARCH_FIELD_EXPLAIN: "",
+		resource.SEARCH_FIELD_SCORE:   "",
+		resource.SEARCH_FIELD_TITLE:   "",
+		resource.SEARCH_FIELD_FOLDER:  "",
+		resource.SEARCH_FIELD_TAGS:    "",
+	}
 )
 
 type DashboardServiceImpl struct {
@@ -1949,11 +1960,11 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 			explainIDX = i
 		case resource.SEARCH_FIELD_SCORE:
 			scoreIDX = i
-		case "title":
+		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
-		case "folder":
+		case resource.SEARCH_FIELD_FOLDER:
 			folderIDX = i
-		case "tags":
+		case resource.SEARCH_FIELD_TAGS:
 			tagsIDX = i
 		}
 	}
@@ -1967,11 +1978,28 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	}
 
 	for i, row := range result.Results.Rows {
+		fields := &common.Unstructured{}
+		for colIndex, col := range result.Results.Columns {
+			if _, ok := excludedFields[col.Name]; ok {
+				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
+				if err != nil {
+					return nil, err
+				}
+				// Some of the dashboard fields come in as int32, but we need to convert them to int64 or else fields.Set() will panic
+				int32Val, ok := val.(int32)
+				if ok {
+					val = int64(int32Val)
+				}
+				fields.Set(col.Name, val)
+			}
+		}
+
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
 			Title:    string(row.Cells[titleIDX]),
 			Folder:   string(row.Cells[folderIDX]),
+			Field:    fields,
 		}
 		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)
