@@ -9,15 +9,11 @@ import {
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
-export interface TagLimitOptions {
-  limit?: number;
+export interface TagLimitOptions extends DataSourceJsonData {
+  tagLimit?: number;
 }
 
-export interface TagLimitOptionsData extends DataSourceJsonData {
-  tagLimit?: TagLimitOptions;
-}
-
-interface Props extends DataSourcePluginOptionsEditorProps<TagLimitOptionsData> {}
+interface Props extends DataSourcePluginOptionsEditorProps<TagLimitOptions> {}
 
 export default function TagLimitSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
@@ -34,12 +30,9 @@ export default function TagLimitSettings({ options, onOptionsChange }: Props) {
             type="number"
             placeholder="5000"
             onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tagLimit', {
-                ...options.jsonData.tagLimit,
-                limit: v.currentTarget.value,
-              })
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tagLimit', v.currentTarget.value)
             }
-            value={options.jsonData.tagLimit?.limit || ''}
+            value={options.jsonData.tagLimit || ''}
             width={40}
           />
         </InlineField>

@@ -16,9 +16,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   spanBar?: {
     tag: string;
   };
-  tagLimit?: {
-    limit: number;
-  };
+  tagLimit?: number;
   traceQuery?: {
     timeShiftEnabled?: boolean;
     spanStartTimeShift?: string;

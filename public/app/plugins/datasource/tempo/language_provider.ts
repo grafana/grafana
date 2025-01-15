@@ -47,7 +47,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   getTagsLimit = () => {
-    return this.datasource.instanceSettings.jsonData?.tagLimit?.limit || TAGS_LIMIT;
+    return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;
   };
 
   async fetchTags() {
