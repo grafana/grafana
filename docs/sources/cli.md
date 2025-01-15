@@ -29,7 +29,7 @@ grafana cli -h
 
 ## Run Grafana CLI
 
-To run Grafana CLI, add the path to the grafana binaries in your `PATH` environment variable.
+To run Grafana CLI, add the path to the Grafana binaries in your `PATH` environment variable.
 Alternately, if your current directory is the `bin` directory, run `./grafana cli`.
 Otherwise, you can specify full path to the binary.
 For example, on Linux `/usr/share/grafana/bin/grafana` and on Windows `C:\Program Files\GrafanaLabs\grafana\bin\grafana.exe`, and run it with `grafana cli`.
