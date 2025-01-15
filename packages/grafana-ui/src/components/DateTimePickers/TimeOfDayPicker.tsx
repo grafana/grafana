@@ -58,12 +58,17 @@ export const TimeOfDayPicker = ({
   ...restProps
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const allowClear = restProps.allowEmpty ?? false;
 
   return (
     <RcPicker<Moment>
       generateConfig={generateConfig}
       locale={locale}
-      allowClear={restProps.allowEmpty}
+      allowClear={
+        allowClear && {
+          clearIcon: <Icon name="times" className={styles.clearIcon} />,
+        }
+      }
       className={cx(inputSizes()[size], styles.input)}
       classNames={{
         popup: cx(styles.picker, POPUP_CLASS_NAME),
@@ -122,13 +127,18 @@ const getStyles = (theme: GrafanaTheme2) => {
   const borderColor = theme.components.input.borderColor;
   return {
     caretWrapper: css({
-      position: 'absolute',
-      right: '8px',
+      position: 'relative',
       top: '50%',
       transform: 'translateY(-50%)',
       display: 'inline-block',
-      textAlign: 'right',
       color: theme.colors.text.secondary,
+    }),
+    clearIcon: css({
+      color: theme.colors.text.secondary,
+
+      '&:hover': {
+        color: theme.colors.text.maxContrast,
+      },
     }),
     picker: css({
       '&.rc-picker-dropdown': {
@@ -174,9 +184,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     input: css({
       '&.rc-picker-focused': {
         border: 'none',
+
+        '.rc-picker-input': getFocusStyles(theme),
       },
 
-      input: {
+      '&.rc-picker-disabled': {
+        '.rc-picker.input': {
+          backgroundColor: theme.colors.action.disabledBackground,
+          color: theme.colors.action.disabledText,
+          border: `1px solid ${theme.colors.action.disabledBackground}`,
+          '&:focus': {
+            boxShadow: 'none',
+          },
+        },
+      },
+
+      '.rc-picker-input': {
         backgroundColor: bgColor,
         borderRadius,
         borderColor,
@@ -186,20 +209,29 @@ const getStyles = (theme: GrafanaTheme2) => {
         height: theme.spacing(4),
         padding: theme.spacing(0, 1),
 
-        '&:focus': getFocusStyles(theme),
-
-        '&:disabled': {
-          backgroundColor: theme.colors.action.disabledBackground,
-          color: theme.colors.action.disabledText,
-          border: `1px solid ${theme.colors.action.disabledBackground}`,
-          '&:focus': {
-            boxShadow: 'none',
-          },
+        'input:focus': {
+          outline: 'none',
         },
+
+        // '&:disabled': {
+        //   backgroundColor: theme.colors.action.disabledBackground,
+        //   color: theme.colors.action.disabledText,
+        //   border: `1px solid ${theme.colors.action.disabledBackground}`,
+        //   '&:focus': {
+        //     boxShadow: 'none',
+        //   },
+        // },
 
         '&::placeholder': {
           color: theme.colors.text.disabled,
         },
+      },
+
+      '.rc-picker-clear': {
+        alignItems: 'center',
+        display: 'flex',
+        insetInlineEnd: 'unset',
+        position: 'relative',
       },
     }),
   };
