@@ -296,7 +296,7 @@ Now that we’ve configured an alert rule with dynamic templates for the **summa
 
 {{< figure src="/media/docs/alerting/templated-annotation-alert.png" max-width="1200px" caption="Default email alert notification with templated annotation" >}}
 
-To make our alert notifications more concise and tailored to our needs, we’ll create a custom **notification template** that references the summary annotation we just set up. Notification templates are especially useful for reusability, as they can be applied across multiple contact points, ensuring consistent alert messages.
+To make our alert notifications more concise and tailored to our needs, we’ll create a custom **notification template** that references the summary annotation we just set up. Notification templates are especially useful because they can be reused across multiple contact points, ensuring consistent alert messages.
 
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
@@ -370,7 +370,7 @@ With the notification template ready, the next step is to apply it to your conta
 1. Apply the template to your contact point.
    - Navigate to **Alerts & IRM** > **Alerting** > **Contact points**.
    - Edit your contact point.
-1. **Optional** [Email] **settings** section:
+1. **Optional** [email] **settings** section:
    - Click **Edit Message**.
    - Under **Select notification template**, search `custom.firing_and_resolved_alerts`.
    - Click **Save**.
@@ -379,9 +379,9 @@ With the notification template ready, the next step is to apply it to your conta
 <!-- INTERACTIVE page step5.md END -->
 <!-- INTERACTIVE page step6.md START -->
 
-### Receiving a templated notification
+### Receiving notifications
 
-Now that the template has been applied to the contact point, you should receive templated notifications in the specified contact point.
+Now that the template has been applied to the contact point, you should receive notifications in the specified contact point.
 
 Note: you might need to pause the alert rule evaluation and resume it to trigger the notification.
 
@@ -394,7 +394,7 @@ In the screen capture, you can see how the notification template groups the aler
 
 ## Conclusion
 
-In this tutorial, we learned how to use templating in Grafana Alerting to create dynamic and actionable alert notifications. We explored how to configure alert rules with templated annotations, design custom notification templates, and apply them to contact points to enhance the clarity and efficiency of alert messages. By organizing alert instances into concise notifications, you can reduce noise and ensure on-call engineers quickly understand and address critical issues.
+In this tutorial, we learned how to use templating in Grafana Alerting to create dynamic and actionable alert notifications. We explored how to configure alert rules with annotations, design custom notification templates, and apply them to contact points to enhance the clarity and efficiency of alert messages. By organizing alert instances into concise notifications, you can reduce noise and ensure on-call engineers quickly understand and address critical issues.
 
 To deepen your understanding of Grafana’s templating, explore the following resources:
 
