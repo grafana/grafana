@@ -88,7 +88,9 @@ export class MetricDatasourceHelper {
       });
 
       allMetrics.forEach((m) => {
-        this.isNativeHistogram(m.text);
+        if (this.isNativeHistogram(m.text)) {
+          this.addNativeHistogram(m.text);
+        }
       });
     }
   }
@@ -100,13 +102,12 @@ export class MetricDatasourceHelper {
    * @param metric
    * @returns
    */
-  public isNativeHistogram(metric: string) {
+  public isNativeHistogram(metric: string): boolean {
     if (!metric) {
       return false;
     }
 
     if (this._classicHistograms[`${metric}_bucket`]) {
-      this.addNativeHistogram(metric);
       return true;
     }
 
