@@ -186,18 +186,20 @@ const BrowseDashboardsPage = memo(() => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
+    label: 'BrowseDashboardsPage-pageContents',
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    height: '100%',
   }),
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
+    label: 'BrowseDashboardsPage-subView',
     height: '100%',
   }),
 
   filters: css({
+    label: 'BrowseDashboardsPage-filters',
     display: 'none',
 
     [theme.breakpoints.up('md')]: {

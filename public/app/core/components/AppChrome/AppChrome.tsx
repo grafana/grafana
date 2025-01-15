@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import classNames from 'classnames';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +9,9 @@ import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
+import { useScopesDashboardsState } from 'app/features/scopes';
+
+import { AppNotificationList } from '../AppNotifications/AppNotificationList';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -49,11 +50,6 @@ export function AppChrome({ children }: Props) {
   });
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
 
-  const contentClass = cx({
-    [styles.content]: true,
-    [styles.contentChromeless]: state.chromeless,
-  });
-
   const handleMegaMenu = () => {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
   };
@@ -77,23 +73,24 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  // PR TODO:
+  // - DashboardScopes was removed
+
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
   return (
-    <div
-      className={classNames('main-view', {
-        'main-view--chrome-hidden': state.chromeless,
-      })}
-    >
+    <>
       {!state.chromeless && (
         <>
           <LinkButton className={styles.skipLink} href="#pageContent">
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
+
           {menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
+
           <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
             <SingleTopBar
               sectionNav={state.sectionNav.node}
@@ -101,44 +98,39 @@ export function AppChrome({ children }: Props) {
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
+
             {state.actions && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
           </header>
         </>
       )}
-      <div className={contentClass}>
-        <div className={styles.panes}>
-          {!state.chromeless && (
-            <div
-              className={cx(styles.scopesDashboardsContainer, {
-                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
-              })}
-            >
-              <ScopesDashboards />
-            </div>
-          )}
-          <main
-            className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-            })}
-            id="pageContent"
-          >
-            {children}
-          </main>
-        </div>
-      </div>
+
+      <main
+        className={cx(styles.pageContainer, {
+          [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+          [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+        })}
+        id="pageContent"
+      >
+        {children}
+      </main>
+
+      <AppNotificationList />
+
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
+
       {!state.chromeless && <CommandPalette />}
+
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
-    </div>
+    </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
   return {
     content: css({
+      label: 'AppChrome-Content',
       display: 'flex',
       flexDirection: 'column',
       paddingTop: hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
@@ -146,9 +138,11 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       height: 'auto',
     }),
     contentChromeless: css({
+      label: 'AppChrome-contentChromeless',
       paddingTop: 0,
     }),
     dockedMegaMenu: css({
+      label: 'AppChrome-dockedMegaMenu',
       background: theme.colors.background.primary,
       borderRight: `1px solid ${theme.colors.border.weak}`,
       display: 'none',
@@ -163,44 +157,53 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       },
     }),
     scopesDashboardsContainer: css({
+      label: 'AppChrome-scopesDashboardsContainer',
       position: 'fixed',
       height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
       zIndex: 1,
     }),
     scopesDashboardsContainerDocked: css({
+      label: 'AppChrome-scopesDashboardsContainerDocked',
       left: MENU_WIDTH,
     }),
+
     topNav: css({
+      label: 'AppChrome-topNav',
       display: 'flex',
-      position: 'fixed',
+      position: 'sticky',
       zIndex: theme.zIndex.navbarFixed,
-      left: 0,
-      right: 0,
+      top: 0,
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
+
     topNavMenuDocked: css({
+      label: 'AppChrome-topNavMenuDocked',
       left: MENU_WIDTH,
     }),
+
     panes: css({
+      label: 'AppChrome-panes',
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-      label: 'page-panes',
     }),
     pageContainerMenuDocked: css({
+      label: 'AppChrome-pageContainerMenuDocked',
       paddingLeft: MENU_WIDTH,
     }),
     pageContainerMenuDockedScopes: css({
+      label: 'AppChrome-pageContainerMenuDockedScopes',
       paddingLeft: `calc(${MENU_WIDTH} * 2)`,
     }),
     pageContainer: css({
-      label: 'page-container',
+      label: 'AppChrome-pageContainer',
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
     }),
     skipLink: css({
+      label: 'AppChrome-skipLink',
       position: 'fixed',
       top: -1000,
 
