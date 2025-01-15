@@ -274,7 +274,6 @@ export async function prepareSVG(url: string, size?: number): Promise<string> {
       svg.setAttribute('fill', '#fff');
       svg.setAttribute('width', `${width}px`);
       svg.setAttribute('height', `${height}px`);
-
       const svgString = new XMLSerializer().serializeToString(svg);
       const svgURI = encodeURIComponent(svgString);
       return `data:image/svg+xml,${svgURI}`;
