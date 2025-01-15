@@ -235,7 +235,7 @@ You can send a report email with an image of the dashboard embedded in the email
 To use this feature in Grafana Enterprise, you must have [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0.
 {{< /admonition >}}
 
-You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:rendering-configuration).
+You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSV files larger than 10Mb are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:rendering-configuration).
 
 This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
