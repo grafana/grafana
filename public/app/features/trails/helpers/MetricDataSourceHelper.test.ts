@@ -22,8 +22,6 @@ describe('MetricDatasourceHelper', () => {
     metricDatasourceHelper['_classicHistograms'] = {
       test_metric_bucket: 1,
     };
-    const getDatasource = jest.spyOn(MetricDatasourceHelper.prototype as any, 'getDatasource');
-    getDatasource.mockImplementation(() => ({}) as PrometheusDatasource);
   });
 
   afterEach(() => {
