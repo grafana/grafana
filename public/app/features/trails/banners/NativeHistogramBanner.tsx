@@ -107,8 +107,8 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
               <div className={`${styles.histogramRow} ${styles.seeExamplesRow}`}>
                 <div className={styles.histogramImageCol}>
                   <div className={styles.histogramRow}>
-                    <div className={styles.histogramImageCol}>
-                      <div>
+                  <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
+                      <div className={styles.imageText}>
                         <Trans i18nKey="trails.native-histogram-banner.nh-heatmap">
                           Native Histogram displayed as heatmap:
                         </Trans>
@@ -117,8 +117,8 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                         <img width="100%" src={images.nativeHeatmap} alt="Native Histogram displayed as heatmap" />
                       </div>
                     </div>
-                    <div className={styles.histogramImageCol}>
-                      <div>
+                    <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
+                      <div className={styles.imageText}>
                         <Trans i18nKey="trails.native-histogram-banner.nh-histogram">
                           Native Histogram displayed as histogram:
                         </Trans>
@@ -131,8 +131,8 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                 </div>
                 <div className={`${styles.histogramImageCol} ${styles.rightImageCol} ${styles.rightCol}`}>
                   <div className={styles.histogramRow}>
-                    <div className={styles.histogramImageCol}>
-                      <div>
+                  <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
+                      <div className={styles.imageText}>
                         <Trans i18nKey="trails.native-histogram-banner.ch-heatmap">
                           Classic Histogram displayed as heatmap:
                         </Trans>
@@ -141,8 +141,8 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                         <img width="100%" src={images.classicHeatmap} alt="Classic Histogram displayed as heatmap" />
                       </div>
                     </div>
-                    <div className={styles.histogramImageCol}>
-                      <div>
+                    <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
+                      <div className={styles.imageText}>
                         <Trans i18nKey="trails.native-histogram-banner.ch-histogram">
                           Classic Histogram displayed as histogram:
                         </Trans>
@@ -197,7 +197,7 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
     histogramRow: css({
       display: 'flex',
       flexDirection: 'row',
-      gap: theme.spacing(1),
+      gap: theme.spacing(2),
     }),
     histogramSentence: css({
       width: '90%',
@@ -206,7 +206,6 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
       width: '10%',
     }),
     button: css({
-      // width: '100%',
       float: 'right',
     }),
     seeExamplesButton: css({
@@ -221,11 +220,17 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
       flexBasis: '100%',
       flex: '1',
     }),
+    fontSmall: css({
+      fontSize: theme.typography.size.sm,
+    }),
+    imageText: css({
+      paddingBottom: '4px',
+    }),
     rightImageCol: css({
       borderLeft: `1px solid ${theme.colors.secondary.borderTransparent}`,
     }),
     rightCol: css({
-      paddingLeft: '8px',
+      paddingLeft: '16px',
     }),
   };
 }
