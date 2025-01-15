@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -76,9 +77,9 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "aaa (dash)",
 				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
-					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
-					DASHBOARD_ERRORS_TODAY: 25,
+					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
+					DASHBOARD_ERRORS_TODAY:      25,
+					DASHBOARD_VIEWS_LAST_1_DAYS: 50,
 				},
 				Labels: map[string]string{
 					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
@@ -104,9 +105,9 @@ func TestBleveBackend(t *testing.T) {
 				TitleSort: "bbb (dash)",
 				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
-					DASHBOARD_PANEL_TYPES:  []string{"timeseries"},
-					DASHBOARD_ERRORS_TODAY: 40,
+					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
+					DASHBOARD_ERRORS_TODAY:      40,
+					DASHBOARD_VIEWS_LAST_1_DAYS: 100,
 				},
 				Tags: []string{"aa"},
 				Labels: map[string]string{
@@ -136,10 +137,8 @@ func TestBleveBackend(t *testing.T) {
 					Name: "repo2",
 					Path: "path/in/repo2.yaml",
 				},
-				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID: 12,
-				},
-				Tags: []string{"aa"},
+				Fields: map[string]any{},
+				Tags:   []string{"aa"},
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -216,6 +215,27 @@ func TestBleveBackend(t *testing.T) {
 			rsp.Results.Rows[0].Key.Name,
 			rsp.Results.Rows[1].Key.Name,
 		})
+
+		// can get sprinkles fields
+		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+			},
+			Limit:  100000,
+			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+			},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(rsp.Results.Columns))
+		require.Equal(t, DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
+		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
+
+		// sorted descending so should start with highest dashboard_views_last_1_days (100)
+		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
+		require.NoError(t, err)
+		require.Equal(t, int64(100), val)
 
 		// Now look for repositories
 		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
@@ -405,6 +425,29 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(disp))
+	})
+}
+
+func TestToBleveSearchRequest(t *testing.T) {
+	t.Run("will prepend 'fields.' to all dashboard fields", func(t *testing.T) {
+		fields := []string{"title", "name", "folder"}
+		fields = append(fields, DashboardFields()...)
+		resReq := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{},
+			Fields:  fields,
+		}
+		bleveReq, err := toBleveSearchRequest(resReq, nil)
+		if err != nil {
+			t.Fatalf("error creating bleve search request: %v", err)
+		}
+
+		require.Equal(t, len(fields), len(bleveReq.Fields))
+		for _, field := range DashboardFields() {
+			require.True(t, slices.Contains(bleveReq.Fields, "fields."+field))
+		}
+		require.Contains(t, bleveReq.Fields, "title")
+		require.Contains(t, bleveReq.Fields, "name")
+		require.Contains(t, bleveReq.Fields, "folder")
 	})
 }
 
