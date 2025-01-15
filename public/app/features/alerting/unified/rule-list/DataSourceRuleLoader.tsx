@@ -14,12 +14,15 @@ import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButto
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 
-interface AlertRuleLoaderProps {
+interface DataSourceRuleLoaderProps {
   rule: Rule;
   groupIdentifier: DataSourceRuleGroupIdentifier;
 }
 
-export const AlertRuleLoader = memo(function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps) {
+export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
+  rule,
+  groupIdentifier,
+}: DataSourceRuleLoaderProps) {
   const { rulesSource, namespace, groupName } = groupIdentifier;
 
   const ruleIdentifier = fromRule(rulesSource.name, namespace.name, groupName, rule);

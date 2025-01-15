@@ -432,7 +432,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 }
 
 func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]*folder.Folder, ancestor_uid string, descendantsMap map[string]*folder.Folder) {
-	for uid, _ := range tree[ancestor_uid] {
+	for uid := range tree[ancestor_uid] {
 		descendantsMap[uid] = nodes[uid]
 		getDescendants(nodes, tree, uid, descendantsMap)
 	}

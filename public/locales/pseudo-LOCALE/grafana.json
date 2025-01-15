@@ -299,6 +299,13 @@
         }
       }
     },
+    "group-actions": {
+      "actions-trigger": "Ŗūľę ģřőūp äčŧįőŉş",
+      "delete": "Đęľęŧę",
+      "edit": "Ēđįŧ",
+      "export": "Ēχpőřŧ",
+      "reorder": "Ŗę-őřđęř řūľęş"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
@@ -484,11 +491,22 @@
     },
     "rule-list": {
       "configure-datasource": "Cőŉƒįģūřę",
+      "ds-error-boundary": {
+        "description": "Cĥęčĸ ŧĥę đäŧä şőūřčę čőŉƒįģūřäŧįőŉ. Đőęş ŧĥę đäŧä şőūřčę şūppőřŧ Přőmęŧĥęūş ÅPĨ?",
+        "title": "Ůŉäþľę ŧő ľőäđ řūľęş ƒřőm ŧĥįş đäŧä şőūřčę"
+      },
       "filter-view": {
         "no-more-results": "Ńő mőřę řęşūľŧş – şĥőŵįŉģ {{numberOfRules}} řūľęş",
         "no-rules-found": "Ńő äľęřŧ őř řęčőřđįŉģ řūľęş mäŧčĥęđ yőūř čūřřęŉŧ şęŧ őƒ ƒįľŧęřş."
       },
-      "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
+      "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
+      "pagination": {
+        "next-page": "ŉęχŧ päģę",
+        "previous-page": "přęvįőūş päģę"
+      },
+      "return-button": {
+        "title": "Åľęřŧ řūľęş"
+      }
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
