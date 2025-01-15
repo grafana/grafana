@@ -189,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&.rc-picker-disabled': {
-        '.rc-picker.input': {
+        '.rc-picker-input': {
           backgroundColor: theme.colors.action.disabledBackground,
           color: theme.colors.action.disabledText,
           border: `1px solid ${theme.colors.action.disabledBackground}`,
@@ -209,21 +209,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         height: theme.spacing(4),
         padding: theme.spacing(0, 1),
 
-        'input:focus': {
-          outline: 'none',
-        },
+        input: {
+          color: 'unset',
+          backgroundColor: 'unset',
+          '&:focus': {
+            outline: 'none',
+          },
 
-        // '&:disabled': {
-        //   backgroundColor: theme.colors.action.disabledBackground,
-        //   color: theme.colors.action.disabledText,
-        //   border: `1px solid ${theme.colors.action.disabledBackground}`,
-        //   '&:focus': {
-        //     boxShadow: 'none',
-        //   },
-        // },
-
-        '&::placeholder': {
-          color: theme.colors.text.disabled,
+          '&::placeholder': {
+            color: theme.colors.text.disabled,
+          },
         },
       },
 
