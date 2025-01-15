@@ -41,7 +41,7 @@ export interface StreamingQuery {
   noise: number;
   speed: number;
   spread: number;
-  type: 'signal' | 'logs' | 'fetch' | 'traces';
+  type: 'signal' | 'logs' | 'fetch' | 'traces' | 'watch';
   url?: string;
 }
 
