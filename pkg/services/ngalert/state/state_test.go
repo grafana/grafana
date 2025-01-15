@@ -616,7 +616,7 @@ func TestShouldTakeImage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, test.previousImage, test.resolved))
+			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, test.previousImage, test.resolved) != "")
 		})
 	}
 }
