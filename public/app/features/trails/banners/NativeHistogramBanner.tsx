@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { t } from 'i18next';
 import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -87,7 +86,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                   setShowHistogramExamples(true);
                 }}
               >
-                {t(`> See examples`)}
+                {`> See examples`}
               </Button>
             </div>
           )}
@@ -179,7 +178,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                         size="sm"
                         fill="text"
                       >
-                        {t(el)}
+                        {el}
                       </Button>
                     </div>
                   );

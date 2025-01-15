@@ -3340,7 +3340,6 @@
       "nh-histogram": "Native Histogram displayed as histogram:",
       "now": "Now:",
       "previously": "Previously:",
-      "see-examples": "{`> See examples`}",
       "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana."
     },
     "recent-metrics": {
