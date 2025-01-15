@@ -56,6 +56,8 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.NoError(t, err)
 
 		updatedEV, err := store.Get(ctx, createdEV.UID)
+		require.NoError(t, err)
+
 		require.Equal(t, []byte("test-data-updated"), updatedEV.EncryptedData)
 		require.Equal(t, createdEV.Created, updatedEV.Created)
 	})
