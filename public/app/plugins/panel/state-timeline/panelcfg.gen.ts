@@ -31,10 +31,6 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    * Show timeline values on chart
    */
   showValue: ui.VisibilityMode;
-  /**
-   * Controls the y axis width
-   */
-  yAxisWidth: number;
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -45,7 +41,7 @@ export const defaultOptions: Partial<Options> = {
   showValue: ui.VisibilityMode.Auto,
 };
 
-export interface FieldConfig extends ui.HideableFieldConfig {
+export interface FieldConfig extends ui.AxisConfig, ui.HideableFieldConfig {
   fillOpacity?: number;
   lineWidth?: number;
 }

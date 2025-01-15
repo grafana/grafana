@@ -14,16 +14,12 @@ import { Stack } from '../../components/Layout/Stack/Stack';
 import { Select } from '../../components/Select/Select';
 import { graphFieldOptions } from '../../components/uPlot/config';
 
+const category = ['Axis'];
+
 /**
  * @alpha
  */
-export function addAxisConfig(
-  builder: FieldConfigEditorBuilder<AxisConfig>,
-  defaultConfig: AxisConfig,
-  hideScale?: boolean
-) {
-  const category = ['Axis'];
-
+export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, defaultConfig: AxisConfig) {
   // options for axis appearance
   builder
     .addRadio({
@@ -47,16 +43,11 @@ export function addAxisConfig(
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
       // Do not apply default settings to time and string fields which are used as x-axis fields in Time series and Bar chart panels
       shouldApply: (f) => f.type !== FieldType.time && f.type !== FieldType.string,
-    })
-    .addNumberInput({
-      path: 'axisWidth',
-      name: 'Width',
-      category,
-      settings: {
-        placeholder: 'Auto',
-      },
-      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
-    })
+    });
+
+  addYAxisWidth(builder, category);
+
+  builder
     .addRadio({
       path: 'axisGridShow',
       name: 'Show grid lines',
@@ -209,3 +200,23 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
     </Stack>
   );
 };
+
+/**
+ * @internal
+ */
+
+export function addYAxisWidth(
+  builder: FieldConfigEditorBuilder<AxisConfig>,
+  category?: string[],
+  nameOverride?: string
+) {
+  builder.addNumberInput({
+    path: 'axisWidth',
+    name: nameOverride ?? 'Width',
+    category,
+    settings: {
+      placeholder: 'Auto',
+    },
+    showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
+  });
+}

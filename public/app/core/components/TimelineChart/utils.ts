@@ -51,7 +51,7 @@ interface UPlotConfigOptions {
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
-  yAxisWidth?: number;
+  axisWidth?: number;
 }
 
 /**
@@ -85,7 +85,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   hoverMulti,
-  yAxisWidth,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -173,18 +172,22 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     grid: { show: true },
   });
 
-  builder.addAxis({
-    scaleKey: FIXED_UNIT, // y
-    isTime: false,
-    placement: AxisPlacement.Left,
-    splits: coreConfig.ySplits,
-    values: coreConfig.yValues,
-    grid: { show: false },
-    ticks: { show: false },
-    gap: 16,
-    theme,
-    size: yAxisWidth,
-  });
+  const yAxisWidth = frame.fields[0].config.custom.axisWidth;
+
+  if (yAxisWidth === undefined || yAxisWidth !== 0) {
+    builder.addAxis({
+      scaleKey: FIXED_UNIT, // y
+      isTime: false,
+      placement: AxisPlacement.Left,
+      splits: coreConfig.ySplits,
+      values: coreConfig.yValues,
+      grid: { show: false },
+      ticks: { show: false },
+      gap: 16,
+      theme,
+      size: frame.fields[0].config.custom.axisWidth,
+    });
+  }
 
   let seriesIndex = 0;
 

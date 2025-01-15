@@ -75,6 +75,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           settings: { isTime: true },
         });
 
+      commonOptionsBuilder.addYAxisWidth(builder, undefined, 'Axis Width');
       commonOptionsBuilder.addHideFrom(builder);
     },
   })
@@ -108,13 +109,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           ],
         },
         defaultValue: defaultOptions.alignValue,
-      })
-      .addNumberInput({
-        path: 'yAxisWidth',
-        name: 'Y Axis Width',
-        settings: {
-          placeholder: 'Auto',
-        },
       })
       .addSliderInput({
         path: 'rowHeight',

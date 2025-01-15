@@ -33,8 +33,6 @@ composableKinds: PanelCfg: {
 					showValue: ui.VisibilityMode & (*"auto" | _)
 					//Controls the row height
 					rowHeight: float & <=1 | *0.9
-					//Controls the y axis width
-					yAxisWidth: number
 					//Merge equal consecutive values
 					mergeValues?: bool | *true
 					//Controls value alignment on the timelines
@@ -43,6 +41,7 @@ composableKinds: PanelCfg: {
 					perPage?: number & >=1 | *20
 				} @cuetsy(kind="interface")
 				FieldConfig: {
+					ui.AxisConfig
 					ui.HideableFieldConfig
 					lineWidth?:   uint32 & <=10 | *0
 					fillOpacity?: uint32 & <=100 | *70

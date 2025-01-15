@@ -103,7 +103,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         shouldApply: () => true,
       });
 
-      commonOptionsBuilder.addAxisConfig(builder, cfg, false);
+      commonOptionsBuilder.addAxisConfig(builder, cfg);
       commonOptionsBuilder.addHideFrom(builder);
     },
   })

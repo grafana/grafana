@@ -21,7 +21,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   tooltip?: VizTooltipOptions;
   // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
   paginationRev?: string;
-  yAxisWidth?: number;
+  axisWidth?: number;
 }
 
 const propsToDiff = [
@@ -32,7 +32,7 @@ const propsToDiff = [
   'alignValue',
   'tooltip',
   'paginationRev',
-  'yAxisWidth',
+  'axisWidth',
 ];
 
 export class TimelineChart extends Component<TimelineProps> {
