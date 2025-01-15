@@ -693,6 +693,15 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	ctx, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 
+	// The history + trash queries do not yet support additional filters
+	if req.Source != ListRequest_STORE {
+		if len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0 {
+			return &ListResponse{
+				Error: NewBadRequestError("unexpected field/label selector for history query"),
+			}, nil
+		}
+	}
+
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
 		return &ListResponse{

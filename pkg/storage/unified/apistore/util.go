@@ -68,6 +68,9 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 					req.Source = resource.ListRequest_HISTORY
 					req.Options.Key.Name = vals[0]
 				}
+
+				req.Options.Labels = nil
+				req.Options.Fields = nil
 				return req, storage.Everything, nil
 			}
 
