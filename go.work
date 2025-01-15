@@ -8,7 +8,6 @@ use (
 	./apps/alerting/notifications
 	./apps/investigation
 	./apps/playlist
-	./kindsv2
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver
