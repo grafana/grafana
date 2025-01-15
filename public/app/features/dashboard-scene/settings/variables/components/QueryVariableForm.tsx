@@ -1,7 +1,7 @@
 import { FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
+import { CoreApp, DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
@@ -67,6 +67,13 @@ export function QueryVariableEditorForm({
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
+    const defaultQuery = datasource?.getDefaultQuery?.(CoreApp.Dashboard);
+
+    if (!query && defaultQuery) {
+      const query =
+        typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };
+      onQueryChange(query);
+    }
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);

@@ -35,6 +35,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
+      getDefaultQuery: () => 'default-query',
       variables: {
         getType: () => VariableSupportType.Custom,
         query: jest.fn(),
@@ -80,7 +81,7 @@ describe('QueryVariableEditor', () => {
 
     return {
       renderer: await act(() => {
-        return render(<QueryVariableEditor variable={variable} onRunQuery={onRunQueryMock} />);
+        return render(<QueryVariableEditor variable={variable} onRunQuery={onRunQueryMock} {...props} />);
       }),
       variable,
       user: userEvent.setup(),
@@ -139,6 +140,30 @@ describe('QueryVariableEditor', () => {
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom all value');
+  });
+
+  it('should update the variable with default query for the selected DS', async () => {
+    const onRunQueryMock = jest.fn();
+    const variable = new QueryVariable({ datasource: { uid: 'mock-ds-2', type: 'test' }, query: '' });
+
+    const {
+      renderer: { getByTestId },
+    } = await setup({
+      variable,
+      onRunQuery: onRunQueryMock,
+    });
+
+    const queryInput = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+    );
+
+    await waitFor(async () => {
+      expect(onRunQueryMock).toHaveBeenCalledTimes(1);
+      expect(queryInput).toHaveValue('default-query');
+
+      await lastValueFrom(variable.validateAndUpdate());
+      expect(variable.state.query).toBe('default-query');
+    });
   });
 
   it('should update variable state when changing the datasource', async () => {
