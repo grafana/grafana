@@ -36,7 +36,6 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
       : 'public/img/native-histograms/LightModeHistogramClassicHistogram.png',
   };
 
-
   const selectNativeHistogram = (metric: string) => {
     trail.publishEvent(new MetricSelectedEvent(metric), true);
   };
@@ -103,7 +102,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
               <div className={`${styles.histogramRow} ${styles.seeExamplesRow}`}>
                 <div className={styles.histogramImageCol}>
                   <div className={styles.histogramRow}>
-                  <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
+                    <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
                       <div className={styles.imageText}>
                         <Trans i18nKey="trails.native-histogram-banner.nh-heatmap">
                           Native Histogram displayed as heatmap:
@@ -127,7 +126,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                 </div>
                 <div className={`${styles.histogramImageCol} ${styles.rightImageCol} ${styles.rightCol}`}>
                   <div className={styles.histogramRow}>
-                  <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
+                    <div className={`${styles.histogramImageCol} ${styles.fontSmall}`}>
                       <div className={styles.imageText}>
                         <Trans i18nKey="trails.native-histogram-banner.ch-heatmap">
                           Classic Histogram displayed as heatmap:
