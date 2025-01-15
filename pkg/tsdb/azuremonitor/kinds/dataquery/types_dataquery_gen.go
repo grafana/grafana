@@ -49,6 +49,12 @@ const (
 	GrafanaTemplateVariableQueryTypeWorkspacesQuery            GrafanaTemplateVariableQueryType = "WorkspacesQuery"
 )
 
+// Defines values for LogsEditorMode.
+const (
+	LogsEditorModeBuilder LogsEditorMode = "builder"
+	LogsEditorModeRaw     LogsEditorMode = "raw"
+)
+
 // Defines values for MetricDefinitionsQueryKind.
 const (
 	MetricDefinitionsQueryKindMetricDefinitionsQuery MetricDefinitionsQueryKind = "MetricDefinitionsQuery"
@@ -121,14 +127,12 @@ type AzureLogsQuery struct {
 	// If set to true the query will be run as a basic logs query
 	BasicLogsQuery *bool `json:"basicLogsQuery,omitempty"`
 
-	// Denotes if logs query editor is in builder mode
-	BuilderMode *bool `json:"builderMode,omitempty"`
-
 	// If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
 	DashboardTime *bool `json:"dashboardTime,omitempty"`
 
 	// @deprecated Use dashboardTime instead
-	IntersectTime *bool `json:"intersectTime,omitempty"`
+	IntersectTime *bool           `json:"intersectTime,omitempty"`
+	Mode          *LogsEditorMode `json:"mode,omitempty"`
 
 	// KQL query to be executed.
 	Query *string `json:"query,omitempty"`
@@ -351,6 +355,9 @@ type DataQuery struct {
 
 // GrafanaTemplateVariableQueryType defines model for GrafanaTemplateVariableQueryType.
 type GrafanaTemplateVariableQueryType string
+
+// LogsEditorMode defines model for LogsEditorMode.
+type LogsEditorMode string
 
 // @deprecated Use MetricNamespaceQuery instead
 type MetricDefinitionsQuery struct {

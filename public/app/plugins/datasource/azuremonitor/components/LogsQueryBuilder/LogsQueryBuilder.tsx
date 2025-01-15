@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { EditorRows } from "@grafana/experimental";
+import { Alert } from "@grafana/ui";
 
 import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from "../../types";
 
@@ -73,10 +74,12 @@ interface LogsQueryBuilderProps {
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema } = props;
   const [tables, setTables] = useState<AzureLogAnalyticsMetadataTable[]>([]);
+  const [schemaIsLoading, setSchemaIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (schema?.database) {
-      setTables(schema.database.tables)
+      setTables(schema.database.tables);
+      setSchemaIsLoading(false);
     }
   }, [setTables, schema?.database])
 
@@ -84,7 +87,10 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   
   return (
     <EditorRows>
-      <TableSection {...props} tables={sampleData} onChange={onQueryChange} />
+      {!schemaIsLoading && tables.length === 0 && (
+        <Alert severity="warning" title="Resource loaded successfully but without any tables" />
+      )}
+      <TableSection {...props} tables={tables} onChange={onQueryChange} />
       {/* <FilterSection {...props} columns={tableColumns} />
       <AggregateSection {...props} columns={tableColumns} />
       <GroupBySection {...props} columns={tableColumns} />

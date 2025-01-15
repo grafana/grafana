@@ -210,3 +210,17 @@ type SubscriptionsResponse struct {
 }
 
 var ErrorAzureHealthCheck = errors.New("health check failed")
+
+// AzureLogAnalyticsMetadata represents the metadata response from the Azure Log Analytics API.
+type AzureLogAnalyticsMetadata struct {
+	Categories []string        `json:"categories"`
+	Solutions  []string        `json:"solutions"`
+	Tables     []MetadataTable `json:"tables"`
+	Workspaces []string        `json:"workspaces"`
+}
+
+// MetadataTable represents a table entry in the metadata response.
+type MetadataTable struct {
+	Name    string `json:"name"`
+	HasData bool   `json:"hasData"`
+}
