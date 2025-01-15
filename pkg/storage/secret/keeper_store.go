@@ -153,7 +153,26 @@ func (s *keeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) erro
 	}
 
 	row := &keeperDB{Name: nn.Name, Namespace: nn.Namespace.String()}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+
+	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		// Before deleting a keeper, we need to check that no secure values are referencing it.
+		secureValueCond := &secureValueDB{Keeper: row.Name, Namespace: row.Namespace}
+		secureValueRows := make([]*secureValueDB, 0)
+
+		if err := sess.Table(secureValueCond.TableName()).ForUpdate().Find(&secureValueRows, secureValueCond); err != nil {
+			return fmt.Errorf("check securevalues using keeper: %w", err)
+		}
+
+		// If it does we return an error with all the secure values that are still referencing the keeper.
+		if len(secureValueRows) > 0 {
+			referenced := make(map[string]struct{}, len(secureValueRows))
+			for _, svRow := range secureValueRows {
+				referenced[svRow.Name] = struct{}{}
+			}
+
+			return contracts.NewErrKeeperDeleteAliveReferences(referenced)
+		}
+
 		if _, err := sess.Delete(row); err != nil {
 			return fmt.Errorf("failed to delete row: %w", err)
 		}

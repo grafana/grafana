@@ -189,6 +189,31 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.Contains(t, err.Error(), "securevalue-does-not-exist-2")
 	})
 
+	t.Run("deleting a keeper that is still referenced by a securevalue returns an error", func(t *testing.T) {
+		keeper := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
+		keeper.SetGenerateName("kpr")
+
+		raw, err := client.Resource.Create(ctx, keeper, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, raw)
+
+		// In this order to make sure the Keeper is deleted *after* the SecureValue.
+		t.Cleanup(func() {
+			require.NoError(t, client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+		})
+
+		// Creates and (deletes on test cleanup) a SecureValue that references the Keeper.
+		mustGenerateSecureValue(t, helper, helper.Org1.Admin, raw.GetName())
+
+		// Try to delete the Keeper while it is still referenced by the SecureValue.
+		err = client.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, http.StatusUnprocessableEntity, int(statusErr.Status().Code))
+	})
+
 	t.Run("deleting a keeper that exists does not return an error", func(t *testing.T) {
 		generatePrefix := "generated-"
 

@@ -83,3 +83,30 @@ func (e *ErrKeeperInvalidSecureValuesReference) ErrorList() field.ErrorList {
 
 	return errs
 }
+
+// ErrKeeperDeleteAliveReferences is returned when a Keeper to-be-deleted still references SecureValues.
+type ErrKeeperDeleteAliveReferences struct {
+	secureValues map[string]struct{}
+}
+
+var _ xkube.ErrorLister = (*ErrKeeperDeleteAliveReferences)(nil)
+
+func NewErrKeeperDeleteAliveReferences(secureValues map[string]struct{}) *ErrKeeperDeleteAliveReferences {
+	return &ErrKeeperDeleteAliveReferences{secureValues: secureValues}
+}
+
+func (e *ErrKeeperDeleteAliveReferences) Error() string {
+	return e.ErrorList().ToAggregate().Error()
+}
+
+func (e *ErrKeeperDeleteAliveReferences) ErrorList() field.ErrorList {
+	errs := make(field.ErrorList, 0, len(e.secureValues))
+
+	path := field.NewPath("spec")
+
+	for sv := range e.secureValues {
+		errs = append(errs, field.Invalid(path, sv, "cannot delete Keeper that is being referenced by a SecureValue"))
+	}
+
+	return errs
+}
