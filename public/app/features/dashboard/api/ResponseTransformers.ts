@@ -62,8 +62,9 @@ export function ensureV2Response(
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
   const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
-  // we need to type case here because VariableModel[] doesn't have all the properties we need for specific variables
-  const variables = getVariables((dashboard.templating?.list as TypedVariableModel[]) || []);
+  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
+  // that would allow accessing unique properties for each variable type that the API returns
+  const variables = getVariables(dashboard.templating?.list || []);
   const annotations = getAnnotations(dashboard.annotations?.list || []);
 
   let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
