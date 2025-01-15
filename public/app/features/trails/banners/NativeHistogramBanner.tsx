@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme, Alert, Button } from '@grafana/ui';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { DataTrail } from '../DataTrail';
 import { MetricSelectedEvent } from '../shared';
@@ -56,8 +57,10 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
         >
           <div className={styles.histogramRow}>
             <div className={styles.histogramSentence}>
-              Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a
-              way to combine and manipulate histograms in queries and in Grafana.
+              <Trans i18nKey="trails.native-histogram-banner.sentence">
+                Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and
+                a way to combine and manipulate histograms in queries and in Grafana.
+              </Trans>
             </div>
             <div className={styles.histogramLearnMore}>
               <div>
@@ -67,7 +70,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                   }
                   className={styles.button}
                 >
-                  Learn more
+                  <Trans i18nKey="trails.native-histogram-banner.learn-more">Learn more</Trans>
                 </Button>
               </div>
             </div>
@@ -82,7 +85,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                   setShowHistogramExamples(true);
                 }}
               >
-                {`> See examples`}
+                <Trans i18nKey="trails.native-histogram-banner.see-examples">{`> See examples`}</Trans>
               </Button>
             </div>
           )}
@@ -90,23 +93,35 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
             <>
               <div className={`${styles.histogramRow} ${styles.seeExamplesRow}`}>
                 <div className={styles.histogramImageCol}>
-                  <div>Now:</div>
+                  <div>
+                    <Trans i18nKey="trails.native-histogram-banner.now">Now:</Trans>
+                  </div>
                 </div>
                 <div className={`${styles.histogramImageCol} ${styles.rightCol}`}>
-                  <div>Previously:</div>
+                  <div>
+                    <Trans i18nKey="trails.native-histogram-banner.previously">Previously:</Trans>
+                  </div>
                 </div>
               </div>
               <div className={`${styles.histogramRow} ${styles.seeExamplesRow}`}>
                 <div className={styles.histogramImageCol}>
                   <div className={styles.histogramRow}>
                     <div className={styles.histogramImageCol}>
-                      <div>Native Histogram displayed as heatmap:</div>
+                      <div>
+                        <Trans i18nKey="trails.native-histogram-banner.nh-heatmap">
+                          Native Histogram displayed as heatmap:
+                        </Trans>
+                      </div>
                       <div>
                         <img width="100%" src={images.nativeHeatmap} alt="Native Histogram displayed as heatmap" />
                       </div>
                     </div>
                     <div className={styles.histogramImageCol}>
-                      <div>Native Histogram displayed as histogram:</div>
+                      <div>
+                        <Trans i18nKey="trails.native-histogram-banner.nh-histogram">
+                          Native Histogram displayed as histogram:
+                        </Trans>
+                      </div>
                       <div>
                         <img width="100%" src={images.nativeHistogram} alt="Native Histogram displayed as histogram" />
                       </div>
@@ -116,13 +131,21 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                 <div className={`${styles.histogramImageCol} ${styles.rightImageCol} ${styles.rightCol}`}>
                   <div className={styles.histogramRow}>
                     <div className={styles.histogramImageCol}>
-                      <div>Classic Histogram displayed as heatmap:</div>
+                      <div>
+                        <Trans i18nKey="trails.native-histogram-banner.ch-heatmap">
+                          Classic Histogram displayed as heatmap:
+                        </Trans>
+                      </div>
                       <div>
                         <img width="100%" src={images.classicHeatmap} alt="Classic Histogram displayed as heatmap" />
                       </div>
                     </div>
                     <div className={styles.histogramImageCol}>
-                      <div>Classic Histogram displayed as histogram:</div>
+                      <div>
+                        <Trans i18nKey="trails.native-histogram-banner.ch-histogram">
+                          Classic Histogram displayed as histogram:
+                        </Trans>
+                      </div>
                       <div>
                         <img
                           width="100%"
@@ -135,7 +158,11 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
                 </div>
               </div>
               <br />
-              <div>Click any of the native histograms below to explore them:</div>
+              <div>
+                <Trans i18nKey="trails.native-histogram-banner.click-histogram">
+                  Click any of the native histograms below to explore them:
+                </Trans>
+              </div>
               <div>
                 {nativeHistograms.map((el) => {
                   return (
