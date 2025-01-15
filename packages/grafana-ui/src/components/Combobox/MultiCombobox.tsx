@@ -21,7 +21,7 @@ import { itemFilter, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
-import { useMeasureMulti } from './useMeasureMulti';
+import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ALL_OPTION_VALUE = '__all__';
@@ -149,9 +149,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             let newSelectedItems = allFilteredSelected && inputValue === '' ? [] : baseItems.slice(1);
 
             if (!allFilteredSelected && inputValue !== '') {
-              // Select all currently filtered items
-              console.log('Selecting filtered');
-              // Deduplication
+              // Select all currently filtered items and deduplicate
               newSelectedItems = [...new Set([...selectedItems, ...items.slice(1)])];
             }
 
@@ -192,7 +190,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
 
-  const visibleItems = isOpen ? selectedItems : selectedItems.slice(0, shownItems);
+  const visibleItems = isOpen ? selectedItems.slice(0, MAX_SHOWN_ITEMS) : selectedItems.slice(0, shownItems);
 
   return (
     <div ref={containerRef}>
@@ -215,7 +213,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               {item.value === ALL_OPTION_VALUE ? allOptionItem.label : itemToString(item)}
             </ValuePill>
           ))}
-          {selectedItems.length > shownItems && !isOpen && (
+          {selectedItems.length > visibleItems.length && (
             <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={counterMeasureRef}>
               {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text>...</Text>
@@ -223,7 +221,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 interactive
                 content={
                   <>
-                    {selectedItems.slice(shownItems).map((item) => (
+                    {selectedItems.slice(visibleItems.length).map((item) => (
                       <div key={item.value}>{itemToString(item)}</div>
                     ))}
                   </>
@@ -308,31 +306,29 @@ function getSelectedItemsFromValue<T extends string | number>(
   value: T[] | Array<ComboboxOption<T>>,
   options: Array<ComboboxOption<T>>
 ) {
-  if (!isComboboxOptions(value)) {
-    const resultingItems: Array<ComboboxOption<T> | undefined> = [];
+  if (isComboboxOptions(value)) {
+    return value;
+  }
+  const valueMap = new Map(value.map((val, index) => [val, index]));
+  const resultingItems: Array<ComboboxOption<T>> = [];
 
-    for (const item of options) {
-      for (const [index, val] of value.entries()) {
-        if (val === item.value) {
-          resultingItems[index] = item;
-        }
-      }
-      if (resultingItems.length === value.length && !resultingItems.includes(undefined)) {
-        // We found all items for the values
-        break;
-      }
+  for (const option of options) {
+    const index = valueMap.get(option.value);
+    if (index !== undefined) {
+      resultingItems[index] = option;
+      valueMap.delete(option.value);
     }
-
-    // Handle values that are not in options
-    for (const [index, val] of value.entries()) {
-      if (resultingItems[index] === undefined) {
-        resultingItems[index] = { value: val };
-      }
+    if (valueMap.size === 0) {
+      // We found all values
+      break;
     }
-    return resultingItems.filter((item) => item !== undefined); // TODO: Not actually needed, but TS complains
   }
 
-  return value;
+  // Handle items that are not in options
+  for (const [val, index] of valueMap) {
+    resultingItems[index] = { value: val };
+  }
+  return resultingItems;
 }
 
 function isComboboxOptions<T extends string | number>(
