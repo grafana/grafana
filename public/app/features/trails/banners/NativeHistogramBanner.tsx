@@ -42,7 +42,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
 
   return (
     <>
-      {histogramsLoaded && (nativeHistograms ?? []).length > 0 && histogramMessage && (
+      {histogramsLoaded && nativeHistograms.length > 0 && histogramMessage && (
         <Alert
           title={'Native Histogram Support'}
           severity={'info'}
