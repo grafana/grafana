@@ -968,13 +968,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {visualisationType === 'logs' && (
-            <div
-              className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
-              data-testid="logRows"
-              ref={logsContainerRef}
-            >
-              {hasData && (
+          {visualisationType === 'logs' && hasData && (
+            <>
+              <div
+                className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
+                data-testid="logRows"
+                ref={logsContainerRef}
+              >
                 <InfiniteScroll
                   loading={loading}
                   loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
@@ -1022,41 +1022,41 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     renderPreview
                   />
                 </InfiniteScroll>
-              )}
-            </div>
+              </div>
+              <LogsNavigation
+                logsSortOrder={logsSortOrder}
+                visibleRange={navigationRange ?? absoluteRange}
+                absoluteRange={absoluteRange}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                loading={loading}
+                queries={logsQueries ?? []}
+                scrollToTopLogs={scrollToTopLogs}
+                addResultsToCache={addResultsToCache}
+                clearCache={clearCache}
+              />
+            </>
           )}
           {!loading && !hasData && !scanning && (
-            <div className={styles.logRows}>
+            <div className={styles.noDataWrapper}>
               <div className={styles.noData}>
                 <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
-                <Button size="sm" variant="secondary" onClick={onClickScan}>
+                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
                   <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
                 </Button>
               </div>
             </div>
           )}
           {scanning && (
-            <div className={styles.logRows}>
+            <div className={styles.noDataWrapper}>
               <div className={styles.noData}>
                 <span>{scanText}</span>
-                <Button size="sm" variant="secondary" onClick={onClickStopScan}>
+                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickStopScan}>
                   <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
                 </Button>
               </div>
             </div>
           )}
-          <LogsNavigation
-            logsSortOrder={logsSortOrder}
-            visibleRange={navigationRange ?? absoluteRange}
-            absoluteRange={absoluteRange}
-            timeZone={timeZone}
-            onChangeTime={onChangeTime}
-            loading={loading}
-            queries={logsQueries ?? []}
-            scrollToTopLogs={scrollToTopLogs}
-            addResultsToCache={addResultsToCache}
-            clearCache={clearCache}
-          />
         </div>
       </PanelChrome>
     </>
@@ -1067,10 +1067,17 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    noDataWrapper: css({
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',
+      paddingBottom: theme.spacing(2),
+    }),
     noData: css({
-      '& > *': {
-        marginLeft: '0.5em',
-      },
+      display: 'inline-block',
+    }),
+    scanButton: css({
+      marginLeft: theme.spacing(1),
     }),
     logOptions: css({
       display: 'flex',
