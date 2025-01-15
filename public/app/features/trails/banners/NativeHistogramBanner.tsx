@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme, Alert, Button } from '@grafana/ui';
+import { useStyles2, useTheme2, Alert, Button } from '@grafana/ui';
 import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { DataTrail } from '../DataTrail';
