@@ -7,11 +7,6 @@ go 1.23.1
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
 replace github.com/docker/docker => github.com/moby/moby v26.0.0+incompatible
 
-// Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
-// that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
-// import that instead of v0.X even though v0.X is newer.
-replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.52.0
-
 require (
 	cloud.google.com/go/storage v1.43.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
