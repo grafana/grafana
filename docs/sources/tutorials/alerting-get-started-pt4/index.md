@@ -50,7 +50,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/
   template-notifications:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications//
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
   template-notifications-ref:
@@ -187,17 +187,17 @@ To demonstrate the observation of data using the Grafana stack, download and run
 
 ## How templating works
 
-In Grafana, you can use [templates](ref:templates) to dynamically pull in specific data about the alert rule. This results in more flexible and informative alert notification messages. You can template either alert rule labels and annotations, or notification templates. Both use the Go template language.
+In Grafana, you can use [templates](https://grafana.com/docs/grafana/latest/alerting/fundamentals/templates/) to dynamically pull in specific data about the alert rule. This results in more flexible and informative alert notification messages. You can template either alert rule labels and annotations, or notification templates. Both use the Go template language.
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="How templating works" >}}
 
 ### Templating alert rule labels and annotations
 
-[Labels and annotations](ref:template-labels-annotations) are key fields where templates are applied. One of the main advantages of using templating in annotations is the ability to incorporate dynamic data from queries, allowing alerts to reflect real-time information relevant to the triggered condition. By using templating in annotations, you can customize the content of each alert instance, such as including instance names and metric values, so the notification becomes more informative.
+[Labels and annotations](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/) are key fields where templates are applied. One of the main advantages of using templating in annotations is the ability to incorporate dynamic data from queries, allowing alerts to reflect real-time information relevant to the triggered condition. By using templating in annotations, you can customize the content of each alert instance, such as including instance names and metric values, so the notification becomes more informative.
 
 ### Notification templates
 
-The real power of templating lies in how it helps you format notifications with dynamic alert data. [Notification templates](ref:template-notifications) let you pull in details from annotations to create clear and consistent messages. They also make it simple to reuse the same format across different contact points, saving time and effort.
+The real power of templating lies in how it helps you format notifications with dynamic alert data. [Notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/) let you pull in details from annotations to create clear and consistent messages. They also make it simple to reuse the same format across different contact points, saving time and effort.
 
 Notification templates allow you to customize how information is presented in each notification. For example, you can use templates to organize and format details about firing or resolved alerts, making it easier for recipients to understand the status of each alert at a glance—all within a single notification.
 
@@ -279,7 +279,7 @@ Now that we've introduced how templating works, let’s move on to the next step
      {{- "\t" -}} Usage: {{ index $values "A"}}%{{- "\n" -}}
      ```
 
-     This template automatically adds the instance name (from the [$labels](ref:template-labels-annotations-ref-labels-variable) data) and its current CPU usage (from [$values["A"]](ref:template-labels-annotations-ref-values-variable)) into the alert summary. `\t`: Adds a tab space between the instance name and the value. And, `\n`: Inserts a new line after the value.
+     This template automatically adds the instance name (from the [$labels](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#labels) data) and its current CPU usage (from [$values["A"]](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/#values)) into the alert summary. `\t`: Adds a tab space between the instance name and the value. And, `\n`: Inserts a new line after the value.
 
      Output example:
 
@@ -411,10 +411,10 @@ To deepen your understanding of Grafana’s templating, explore the following re
 
 - **Overview of the functions and operators used in templates**:
 
-  - [Notification template language](ref:template-notifications-lang)
-  - [Alert rule template language](ref:template-labels-annotations-lang)
+  - [Notification template language](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/language/)
+  - [Alert rule template language](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/language/)
 
-- [**Notification template reference**](ref:template-notifications-ref): Lists the data available for use in notification templates and explores specific functions.
-- [**Alert rule template reference**](ref:template-labels-annotations-ref): Covers the specifics of creating dynamic labels and annotations for alert rules using elements such as variables and functions.
+- [**Notification template reference**](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/reference/): Lists the data available for use in notification templates and explores specific functions.
+- [**Alert rule template reference**](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/): Covers the specifics of creating dynamic labels and annotations for alert rules using elements such as variables and functions.
 
 <!-- INTERACTIVE page finish.md END -->
