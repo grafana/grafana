@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -39,16 +38,16 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("no metadata found")
+		return nil, status.Error(codes.Unauthenticated, "no metadata found in grpc context")
 	}
-	user, err := f.decodeMetadata(ctx, md)
+	user, err := f.decodeMetadata(md)
 	if err != nil {
 		return nil, err
 	}
 	return identity.WithRequester(ctx, user), nil
 }
 
-func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (identity.Requester, error) {
+func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, error) {
 	// Avoid NPE/panic with getting keys
 	getter := func(key string) string {
 		v := meta.Get(key)
