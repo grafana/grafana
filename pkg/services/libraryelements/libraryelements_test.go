@@ -303,10 +303,14 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	var expectedFolder *folder.Folder
+	if dash.FolderUID != "" || dash.FolderID != 0 { // nolint:staticcheck
+		expectedFolder = &folder.Folder{ID: folderID, UID: folderUID}
+	}
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
-		foldertest.NewFakeService(),
+		&foldertest.FakeService{ExpectedFolder: expectedFolder},
 		folder.NewFakeStore(),
 		nil,
 		nil,
