@@ -232,7 +232,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
       </Stack>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={onClose}>
-          Cancel
+          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
         </Button>
         <Button
           variant="primary"
@@ -248,7 +248,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
             return onClose();
           }}
         >
-          Save
+          <Trans i18nKey="common.save">Save</Trans>
         </Button>
       </div>
     </Stack>
