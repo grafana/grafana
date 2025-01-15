@@ -275,7 +275,7 @@ Now that we've introduced how templating works, let’s move on to the next step
 
      ```go
      {{- "\n" -}}
-     Instance: {{ index $labels "instance" }} 
+     Instance: {{ index $labels "instance" }}
      {{- "\t" -}} Usage: {{ index $values "A"}}%{{- "\n" -}}
      ```
 
@@ -339,13 +339,14 @@ This template prints out alert instances into two sections: **firing alerts** an
 
 {{< docs/ignore >}}
 Note: Your notification template name (`{{define "<NAME>"}}`) must be unique. You cannot have two templates with the same name in the same notification template group or in different notification template groups.
-{{< docs/ignore >}}
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="note" >}}
 Your notification template name (`{{define "<NAME>"}}`) must be unique. You cannot have two templates with the same name in the same notification template group or in different notification template groups.
 {{< /admonition >}}
+
 <!-- INTERACTIVE ignore END -->
 
 Here’s a breakdown of the template:
