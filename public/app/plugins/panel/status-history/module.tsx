@@ -58,6 +58,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         },
         defaultValue: VisibilityMode.Auto,
       })
+      .addNumberInput({
+        path: 'yAxisWidth',
+        name: 'Y Axis Width',
+        settings: {
+          placeholder: 'Auto',
+        },
+      })
       .addSliderInput({
         path: 'rowHeight',
         name: 'Row height',
