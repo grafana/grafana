@@ -153,6 +153,20 @@ describe('setDashboardPanelContext', () => {
       // Verify existing filter value updated
       expect(variable.state.filters[1].value).toBe('world2');
     });
+
+    it('Should always add on top existing filter key for elastic search', () => {
+      const { scene, context } = buildTestScene({ datasourceType: 'elasticsearch' });
+
+      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '!=' });
+      context.onAddAdHocFilter!({ key: 'hello', value: 'world2', operator: '!=' });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      expect(variable.state.filters).toEqual([
+        { key: 'hello', value: 'world', operator: '!=' },
+        { key: 'hello', value: 'world2', operator: '!=' },
+      ]);
+    });
   });
 });
 
@@ -164,6 +178,7 @@ interface SceneOptions {
   canDelete?: boolean;
   orgCanEdit?: boolean;
   existingFilterVariable?: boolean;
+  datasourceType?: string;
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -193,7 +208,7 @@ function buildTestScene(options: SceneOptions) {
         {
           type: 'timeseries',
           id: 4,
-          datasource: { uid: 'my-ds-uid', type: 'prometheus' },
+          datasource: { uid: 'my-ds-uid', type: options.datasourceType ?? 'prometheus' },
           targets: [],
         },
       ],

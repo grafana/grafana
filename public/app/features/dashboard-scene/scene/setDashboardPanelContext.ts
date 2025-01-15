@@ -114,7 +114,11 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     }
 
     const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
-    updateAdHocFilterVariable(filterVar, newFilter);
+    if (queryRunner.state.datasource?.type === 'elasticsearch') {
+      addAdHocFilterVariable(filterVar, newFilter);
+    } else {
+      updateAdHocFilterVariable(filterVar, newFilter);
+    }
   };
 
   context.onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
@@ -191,6 +195,10 @@ function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: A
   }
 
   // Add new filter
+  addAdHocFilterVariable(filterVar, newFilter);
+}
+
+function addAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
   filterVar.setState({
     filters: [...filterVar.state.filters, newFilter],
   });
