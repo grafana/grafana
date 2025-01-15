@@ -87,6 +87,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
+
 	secretkeepers.ProvideService,
 	wire.Bind(new(secretkeepers.Service), new(secretkeepers.OSSKeeperService)),
 	ldap.ProvideGroupsService,
