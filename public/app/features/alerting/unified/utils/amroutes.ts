@@ -7,9 +7,8 @@ import { MatcherFieldValue } from '../types/silence-form';
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { encodeMatcher, normalizeMatchers, parseMatcherToArray, unquoteWithUnescape } from './matchers';
-import { findExistingRoute } from './routeTree';
+import { findExistingRoute, hashRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
-import { hashObject } from './url';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -66,7 +65,7 @@ export const emptyRoute: FormAmRoute = {
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
 // ⚠️ make sure this function uses _stable_ identifiers!
 export function addUniqueIdentifierToRoute(route: Route, position = '0'): RouteWithID {
-  const routeHash = hashObject(route);
+  const routeHash = hashRoute(route);
   const routes = route.routes ?? [];
 
   return {

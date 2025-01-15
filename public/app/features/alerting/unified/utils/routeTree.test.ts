@@ -1,9 +1,16 @@
-import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 
 import { GRAFANA_DATASOURCE_NAME } from './datasource';
-import { addRouteToReferenceRoute, cleanRouteIDs, findRouteInTree, omitRouteFromRouteTree } from './routeTree';
+import {
+    addRouteToReferenceRoute,
+    cleanRouteIDs,
+    findRouteInTree,
+    hashRoute,
+    omitRouteFromRouteTree,
+    stabilizeRoute,
+} from './routeTree';
 
 describe('findRouteInTree', () => {
   it('should find the correct route', () => {
@@ -110,5 +117,48 @@ describe('cleanRouteIDs', () => {
 
   it('should also accept regular routes', () => {
     expect(cleanRouteIDs({ receiver: 'test' })).toEqual({ receiver: 'test' });
+  });
+});
+
+describe('hashRoute and stabilizeRoute', () => {
+  it('should sort the correct route properties', () => {
+    const route: Route = {
+      receiver: 'foo',
+      group_by: ['g2', 'g1'],
+      object_matchers: [
+        ['name2', MatcherOperator.equal, 'value2'],
+        ['name1', MatcherOperator.equal, 'value1'],
+      ],
+      routes: [{ receiver: 'b' }, { receiver: 'a' }],
+      match: {
+        b: 'b',
+        a: 'a',
+      },
+    };
+
+    const expected: Route = {
+      group_by: ['g1', 'g2'],
+      match: {
+        a: 'a',
+        b: 'b',
+      },
+      object_matchers: [
+        ['name1', MatcherOperator.equal, 'value1'],
+        ['name2', MatcherOperator.equal, 'value2'],
+      ],
+      receiver: 'foo',
+      routes: [{ receiver: 'b' }, { receiver: 'a' }],
+    };
+
+    // the stabilizedRoute should match what we expect
+    expect(stabilizeRoute(route)).toStrictEqual(expected);
+
+    // the hash of the route should be stable (so we assert is twice)
+    expect(hashRoute(route)).toBe('-l1cfum');
+    expect(hashRoute(route)).toBe('-l1cfum');
+
+    // the hash of the unstabilized route should be the same as the stabilized route
+    // because the hash function will stabilize the inputs
+    expect(hashRoute(route)).toBe(hashRoute(expected));
   });
 });

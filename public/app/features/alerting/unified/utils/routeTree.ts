@@ -3,7 +3,7 @@
  */
 
 import { produce } from 'immer';
-import { omit } from 'lodash';
+import { isArray, isPlainObject, omit } from 'lodash';
 
 import { insertAfterImmutably, insertBeforeImmutably } from '@grafana/data/src/utils/arrayUtils';
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -174,4 +174,84 @@ export function cleanKubernetesRouteIDs(
 
 export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
   return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
+}
+
+/**
+ * This function converts an object into a unique hash by sorting the keys and applying a simple integer hash
+ */
+export function hashRoute(route: Route): string {
+  const jsonString = JSON.stringify(stabilizeRoute(route));
+
+  // Simple hash function - convert to a number-based hash
+  let hash = 0;
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+
+  return hash.toString(36);
+}
+
+const sortableValuesForKey: Array<keyof Route> = [
+  'group_by',
+  'match',
+  'match_re',
+  'mute_time_intervals',
+  'active_time_intervals',
+  'object_matchers',
+];
+
+/**
+ * This function will sort the route's keys and sort key values if applicable
+ */
+export function stabilizeRoute(route: Route): Route {
+  const result: Route = {} as Route;
+  const sortedKeys = Object.keys(route).sort();
+
+  for (const key of sortedKeys) {
+    const value = route[key as keyof Route];
+    const isSortableKey = sortableValuesForKey.includes(key as keyof Route);
+
+    if (isSortableKey) {
+      // @ts-ignore
+      result[key] = sortValue(value);
+    } else {
+      // @ts-ignore
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
+export function sortValue<T>(input: T[] | Record<string, unknown>): T[] | Record<string, unknown> {
+  if (isArray(input)) {
+    return [...input].sort();
+  }
+
+  if (isPlainObject(input)) {
+    return sortObjectKeysRecursively(input);
+  }
+
+  return input;
+}
+
+function sortObjectKeysRecursively<T>(input: T): T {
+  if (isArray(input)) {
+    return input.map(sortObjectKeysRecursively) as T;
+  }
+
+  if (isPlainObject(input)) {
+    const sorted: Record<string, unknown> = {};
+    const keys = Object.keys(input as object).sort();
+
+    for (const key of keys) {
+      sorted[key] = sortObjectKeysRecursively((input as Record<string, unknown>)[key]);
+    }
+
+    return sorted as T;
+  }
+
+  return input;
 }
