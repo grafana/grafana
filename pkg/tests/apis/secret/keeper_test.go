@@ -317,8 +317,8 @@ func TestIntegrationKeeper(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, raw)
 
-			require.NoError(t, clientOrg1.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
-			require.NoError(t, clientOrg2.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
+			require.NoError(t, clientOrg1.Resource.Delete(ctx, keeperOrg2.GetName(), metav1.DeleteOptions{}))
+			require.NoError(t, clientOrg2.Resource.Delete(ctx, keeperOrg1.GetName(), metav1.DeleteOptions{}))
 		})
 
 		// Read
