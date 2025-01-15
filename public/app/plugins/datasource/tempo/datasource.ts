@@ -1135,6 +1135,7 @@ function makeTempoLinkServiceMap(title: string, datasourceUid: string, includeNa
   return {
     url: '',
     title,
+    targetBlank: false,
     onBuildUrl: ({ replaceVariables }) => {
       const serviceName = replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`, {});
       const serviceNamespace = replaceVariables?.(`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`, {});
