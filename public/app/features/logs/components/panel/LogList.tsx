@@ -13,13 +13,17 @@ interface Props {
   app?: CoreApp;
   logs: LogRowModel[];
   containerElement: HTMLDivElement | null;
+  forceEscape?: boolean;
   wrapLogMessage: boolean;
 }
 
-export const LogList = ({ containerElement, logs, wrapLogMessage }: Props) => {
+export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMessage }: Props) => {
   const [listKey, setListKey] = useState(`${Math.random()}`);
   const theme = useTheme2();
-  const processedLogs = useMemo(() => preProcessLogs(logs, { wrapLogMessage }), [logs, wrapLogMessage]);
+  const processedLogs = useMemo(
+    () => preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape }),
+    [forceEscape, logs, wrapLogMessage]
+  );
 
   useEffect(() => {
     initVirtualization(theme);
@@ -39,7 +43,9 @@ export const LogList = ({ containerElement, logs, wrapLogMessage }: Props) => {
 
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
-      return <LogLine log={processedLogs[index]} style={style} wrapLogMessage={wrapLogMessage} />;
+      return (
+        <LogLine log={processedLogs[index]} style={style} wrapLogMessage={wrapLogMessage} onOverflow={console.log} />
+      );
     },
     [processedLogs, wrapLogMessage]
   );
