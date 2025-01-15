@@ -442,7 +442,14 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 	users := OrgUsers{
-		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
+		Admin: c.CreateUser("admin", orgName, org.RoleAdmin, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
+				ResourceID:        "*",
+			},
+		}),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}

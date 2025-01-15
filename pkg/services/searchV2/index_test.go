@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -791,12 +790,11 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 	}
 
 	// Set up dashboard store.
-	quotaService := quotatest.New(false, nil)
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagPanelTitleSearch,
 		featuremgmt.FlagDashboardRestore,
 	)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 
 	// Soft delete "dashboard2".

@@ -299,6 +299,13 @@
         }
       }
     },
+    "group-actions": {
+      "actions-trigger": "Rule group actions",
+      "delete": "Delete",
+      "edit": "Edit",
+      "export": "Export",
+      "reorder": "Re-order rules"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
@@ -484,11 +491,22 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "ds-error-boundary": {
+        "description": "Check the data source configuration. Does the data source support Prometheus API?",
+        "title": "Unable to load rules from this data source"
+      },
       "filter-view": {
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
-      "new-alert-rule": "New alert rule"
+      "new-alert-rule": "New alert rule",
+      "pagination": {
+        "next-page": "next page",
+        "previous-page": "previous page"
+      },
+      "return-button": {
+        "title": "Alert rules"
+      }
     },
     "rule-state": {
       "creating": "Creating",
@@ -3216,6 +3234,13 @@
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
+  "table": {
+    "container": {
+      "content": "Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series": "Show all columns",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
+    }
+  },
   "tag-filter": {
     "clear-button": "Clear tags",
     "loading": "Loading...",
@@ -3320,6 +3345,7 @@
     },
     "metric-select": {
       "filter-by": "Filter by",
+      "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
     },
     "recent-metrics": {

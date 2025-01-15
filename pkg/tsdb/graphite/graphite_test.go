@@ -125,7 +125,7 @@ func TestProcessQueries(t *testing.T) {
 		assert.Equal(t, expectedInvalid, invalids[0])
 	})
 
-	t.Run("QueryData with no valid queries returns an error", func(t *testing.T) {
+	t.Run("QueryData with no valid queries returns bad request response", func(t *testing.T) {
 		queries := []backend.DataQuery{
 			{
 				RefID: "A",
@@ -142,11 +142,12 @@ func TestProcessQueries(t *testing.T) {
 		}
 
 		service.im = fakeInstanceManager{}
-		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
 			Queries: queries,
 		})
-		assert.Error(t, err)
-		assert.Equal(t, err.Error(), "no query target found for the alert rule")
+		assert.NoError(t, err)
+		expectedResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found for the alert rule")
+		assert.Equal(t, expectedResponse, rsp.Responses["A"])
 	})
 }
 

@@ -429,6 +429,10 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
+	ProvisionedRepo       string
+	ProvisionedPath       string
+	ProvisionedReposNotIn []string
+
 	Filters []any
 
 	// Skip access control checks. This field is used by OpenFGA search implementation.
