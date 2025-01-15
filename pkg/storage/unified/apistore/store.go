@@ -359,6 +359,15 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	// hymmm... or modify the protobuf so history/trash are are property
+	hhh, err := resource.GetHistoryRequest(req)
+	if err != nil {
+		return err
+	}
+	if hhh != nil {
+		predicate = storage.Everything // HACK for now so the label selector is not actually applied!
+	}
+
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
 		return err

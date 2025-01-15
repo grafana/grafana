@@ -42,6 +42,7 @@ var (
 	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
 	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -195,6 +196,23 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 		ResourceVersion: r.Response.ResourceVersion,
 		Value:           r.Response.Value,
 	}, nil
+}
+
+type getHistoryRequest struct {
+	ResourceVersion, Limit, Offset int64
+	Folder                         string
+	Options                        *resource.ListOptions
+}
+
+type sqlGetHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key     *resource.ResourceKey
+	Trash   bool  // only deleted items
+	StartRV int64 // from NextPageToken
+}
+
+func (r sqlGetHistoryRequest) Validate() error {
+	return nil // TODO
 }
 
 // update resource history

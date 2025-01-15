@@ -207,6 +207,46 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
+			sqlResourceHistoryGet: {
+				{
+					Name: "read object history",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "name",
+						},
+					},
+				},
+				{
+					Name: "read trash",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash: true,
+					},
+				},
+				{
+					Name: "read trash second page",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash:   true,
+						StartRV: 123456,
+					},
+				},
+			},
+
 			sqlResourceVersionGet: {
 				{
 					Name: "single path",

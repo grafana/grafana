@@ -17,6 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// LabelKeyGetHistory is used to select object history for an given resource
+const LabelKeyGetHistory = "grafana.app/get-history"
+
+// LabelKeyGetHistory is used to select object history for an given resource
+const LabelKeyGetTrash = "grafana.app/get-trash"
+
 // Annotation keys
 
 const AnnoKeyCreatedBy = "grafana.app/createdBy"
