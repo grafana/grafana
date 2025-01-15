@@ -114,11 +114,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     }
 
     const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
-    if (queryRunner.state.datasource?.type === 'elasticsearch') {
-      addAdHocFilterVariable(filterVar, newFilter);
-    } else {
-      updateAdHocFilterVariable(filterVar, newFilter);
-    }
+    updateAdHocFilterVariable(filterVar, newFilter);
   };
 
   context.onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
@@ -179,27 +175,23 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
 }
 
 function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
-  // Check if we need to update an existing filter
-  for (const filter of filterVar.state.filters) {
-    if (filter.key === newFilter.key) {
-      filterVar.setState({
-        filters: filterVar.state.filters.map((f) => {
-          if (f.key === newFilter.key) {
-            return newFilter;
-          }
-          return f;
-        }),
-      });
-      return;
-    }
+  // This function handles 'Filter for value' and 'Filter out value' from table cell
+  // We are allowing to add filters with the same key because elastic search ds supports that
+
+  // Update is only required when we change operator and keep key and value the same
+  //   key1 = value1 -> key1 != value1
+  const updateIndex = filterVar.state.filters.findIndex(
+    (filter) =>
+      filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+  );
+
+  if (updateIndex >= 0) {
+    const updatedFilters = filterVar.state.filters.slice();
+    updatedFilters.splice(updateIndex, 1, newFilter);
+    filterVar.updateFilters(updatedFilters);
+    return;
   }
 
   // Add new filter
-  addAdHocFilterVariable(filterVar, newFilter);
-}
-
-function addAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
-  filterVar.setState({
-    filters: [...filterVar.state.filters, newFilter],
-  });
+  filterVar.updateFilters([...filterVar.state.filters, newFilter]);
 }
