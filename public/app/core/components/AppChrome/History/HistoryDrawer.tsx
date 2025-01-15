@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2, Text, Box } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
@@ -13,25 +14,26 @@ const MENU_WIDTH = '300px';
 const DOCK_HISTORY_BUTTON_ID = 'dock-history-button';
 const HISTORY_HEADER_TOGGLE_ID = 'history-header-toggle';
 
-export const HistoryDrawer = ({ onClose }: { onClose: () => void }) => {
+export const HistoryDrawer = () => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.drawer}>
-      <MegaMenuHeader onClose={onClose} />
-      <HistoryWrapper onClose={onClose} />
+      <MegaMenuHeader />
+      <HistoryWrapper />
     </div>
   );
 };
 
-export const MegaMenuHeader = ({ onClose }: { onClose: () => void }) => {
+export const MegaMenuHeader = () => {
   const styles = useStyles2(getStyles);
-  const [docked, setDocked] = useState(false);
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
   const handleMegaMenu = () => {
-    onClose();
+    chrome.setHistoryOpen(!state.historyOpen);
   };
 
   const handleDockedMenu = () => {
-    setDocked(!docked);
+    chrome.setHistoryDocked(!state.historyDocked);
   };
 
   return (
@@ -40,14 +42,16 @@ export const MegaMenuHeader = ({ onClose }: { onClose: () => void }) => {
       <Box justifyContent={'center'} display={'flex'}>
         <IconButton
           id={DOCK_HISTORY_BUTTON_ID}
-          tooltip={docked ? t('navigation.megamenu.undock', 'Undock') : t('navigation.megamenu.dock', 'Dock')}
+          tooltip={
+            state.historyDocked ? t('nav.history-drawer.undock', 'Undock') : t('nav.history-drawer.dock', 'Dock')
+          }
           name="web-section-alt"
           onClick={handleDockedMenu}
           variant="secondary"
         />
         <IconButton
           id={HISTORY_HEADER_TOGGLE_ID}
-          tooltip={t('navigation.megamenu.close', 'Close')}
+          tooltip={t('nav.history-drawer.close', 'Close')}
           name="times"
           onClick={handleMegaMenu}
           size="xl"

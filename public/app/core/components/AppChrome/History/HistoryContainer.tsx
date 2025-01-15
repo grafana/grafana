@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useToggle } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { RecordHistoryEntryEvent } from 'app/types/events';
 
@@ -15,7 +15,9 @@ import { HistoryEntry } from '../types';
 import { HistoryDrawer } from './HistoryDrawer';
 
 export function HistoryContainer() {
-  const [showHistoryDrawer, onToggleShowHistoryDrawer] = useToggle(false);
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
+  const showHistoryDrawer = state.historyOpen;
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -50,13 +52,13 @@ export function HistoryContainer() {
   return (
     <>
       <ToolbarButton
-        onClick={onToggleShowHistoryDrawer}
+        onClick={() => chrome.setHistoryOpen(!showHistoryDrawer)}
         iconOnly
         icon="history"
         aria-label={t('nav.history-container.drawer-tittle', 'History')}
       />
       <NavToolbarSeparator className={styles.separator} />
-      {showHistoryDrawer && <HistoryDrawer onClose={() => onToggleShowHistoryDrawer(false)} />}
+      {showHistoryDrawer && <HistoryDrawer />}
     </>
   );
 }

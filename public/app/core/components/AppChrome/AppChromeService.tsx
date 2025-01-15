@@ -28,11 +28,15 @@ export interface AppChromeState {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
   };
+  historyOpen: boolean;
+  historyDocked: boolean;
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 export const HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history';
+export const OPEN_HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history.open';
+export const DOCKED_HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history.docked';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -47,6 +51,14 @@ export class AppChromeService {
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
 
+  private historyDocked = Boolean(
+    window.innerWidth >= config.theme2.breakpoints.values.xl &&
+      store.getBool(
+        DOCKED_HISTORY_LOCAL_STORAGE_KEY,
+        Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl)
+      )
+  );
+
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
@@ -55,6 +67,8 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
+    historyOpen: this.historyDocked && store.getBool(OPEN_HISTORY_LOCAL_STORAGE_KEY, true),
+    historyDocked: this.historyDocked,
   });
 
   public headerHeightObservable = this.state
@@ -158,6 +172,7 @@ export class AppChromeService {
 
     return entries;
   }
+
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
       return true;
@@ -203,6 +218,25 @@ export class AppChromeService {
     reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
     this.update({
       megaMenuDocked: newDockedState,
+    });
+  };
+
+  public setHistoryOpen = (newOpenState: boolean) => {
+    const { historyDocked } = this.state.getValue();
+    if (historyDocked) {
+      store.set(OPEN_HISTORY_LOCAL_STORAGE_KEY, newOpenState);
+    }
+    this.update({
+      historyOpen: newOpenState,
+    });
+  };
+
+  public setHistoryDocked = (newDockedState: boolean, updatePersistedState = true) => {
+    if (updatePersistedState) {
+      store.set(DOCKED_HISTORY_LOCAL_STORAGE_KEY, newDockedState);
+    }
+    this.update({
+      historyDocked: newDockedState,
     });
   };
 
