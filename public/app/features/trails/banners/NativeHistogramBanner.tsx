@@ -98,7 +98,9 @@ const NativeHistogramExamplesButton = ({
           setShowHistogramExamples(!showHistogramExamples);
         }}
       >
-        {showHistogramExamples ? t(`Hide examples`, `Hide examples`) : t(`> See examples`, `> See examples`)}
+        {showHistogramExamples
+          ? t(`trails.native-histogram-banner.hide-examples`, `Hide examples`)
+          : t(`trails.native-histogram-banner.see-examples`, `> See examples`)}
       </Button>
     </div>
   );
@@ -217,7 +219,7 @@ const NativeHistogramExamples = ({ trail, nativeHistograms, setHistogramMessage 
                 fill="text"
                 className={`native-histogram-example-clicked`}
               >
-                {t(el, el)}
+                {t('trails.native-histogram-banner.metric-examples', el)}
               </Button>
             </div>
           );
