@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Alert, Field, LinkButton, Space, Switch, Text, TextLink } from '@grafana/ui';
+import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 
+import { LogsEditorMode } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
@@ -148,11 +149,6 @@ const LogsQueryEditor = ({
     }
   }
 
-  const onLogsModeChange = () => {
-    query.azureLogAnalytics!.builderMode = !query.azureLogAnalytics!.builderMode;
-    onChange(setKustoQuery(query, ""))
-  };
-
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
       <EditorRows>
@@ -201,15 +197,10 @@ const LogsQueryEditor = ({
               setError={setError}
               schema={schema}
             />
-            <Field label="Builder Mode">
-              <div>
-                <Switch aria-label="Builder Mode" onChange={onLogsModeChange} value={(query.azureLogAnalytics?.builderMode !== undefined ? query.azureLogAnalytics.builderMode : false)} />
-              </div>
-            </Field>
           </EditorFieldGroup>
         </EditorRow>
         <Space />
-        {query.azureLogAnalytics?.builderMode ? 
+        {query.azureLogAnalytics?.mode === LogsEditorMode.Builder ? 
           <LogsQueryBuilder 
             query={query}
             datasource={datasource.azureLogAnalyticsDatasource}
@@ -228,7 +219,7 @@ const LogsQueryEditor = ({
           />
         }
         {dataIngestedWarning}
-        {!query.azureLogAnalytics?.builderMode && <EditorRow>
+        {!query.azureLogAnalytics?.mode && <EditorRow>
           <EditorFieldGroup>
             {!hideFormatAs && (
               <FormatAsField

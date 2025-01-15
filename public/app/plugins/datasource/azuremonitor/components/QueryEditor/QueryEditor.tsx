@@ -1,11 +1,10 @@
-import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, CodeEditor, Space } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, CodeEditor, Space } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -97,26 +96,7 @@ const QueryEditor = ({
         onClose={() => setAzureLogsCheatSheetModalOpen(false)}
         onChange={(a) => onChange({ ...a, queryType: AzureQueryType.LogAnalytics })}
       />
-      <div className={css({ display: 'flex', alignItems: 'center' })}>
-        <QueryHeader query={query} onQueryChange={onQueryChange} />
-        {(query.queryType === AzureQueryType.LogAnalytics && !query.azureLogAnalytics?.builderMode) && (
-          <Button
-            aria-label="Azure logs kick start your query button"
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setAzureLogsCheatSheetModalOpen((prevValue) => !prevValue);
-
-              reportInteraction('grafana_azure_logs_query_patterns_opened', {
-                version: 'v2',
-                editorMode: query.azureLogAnalytics,
-              });
-            }}
-          >
-            Kick start your query
-          </Button>
-        )}
-      </div>
+      <QueryHeader query={query} onQueryChange={onQueryChange} setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen} />
       <EditorForQueryType
         data={data}
         subscriptionId={subscriptionId}
@@ -128,7 +108,6 @@ const QueryEditor = ({
         setError={setError}
         range={range}
       />
-
       {errorMessage && (
         <>
           <Space v={2} />

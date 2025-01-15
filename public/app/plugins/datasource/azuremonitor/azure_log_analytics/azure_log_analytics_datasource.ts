@@ -105,7 +105,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   
     const tableList = 
       `loganalytics/v1/subscriptions/${subscriptionId}/resourceGroups/${resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/${workspaceName}/metadata?select=categories,solutions,tables,workspaces`;
-  
     return this.getResource<AzureAPIResponse<AzureLogAnalyticsTable>>(tableList);
   }  
 

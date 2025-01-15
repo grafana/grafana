@@ -167,10 +167,6 @@ export interface AzureLogsQuery {
    */
   basicLogsQuery?: boolean;
   /**
-   * Denotes if logs query editor is in builder mode
-   */
-  builderMode?: boolean;
-  /**
    * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
    */
   dashboardTime?: boolean;
@@ -178,6 +174,10 @@ export interface AzureLogsQuery {
    * @deprecated Use dashboardTime instead
    */
   intersectTime?: boolean;
+  /**
+   * Denotes if logs query editor is in builder mode
+   */
+  mode?: LogsEditorMode;
   /**
    * KQL query to be executed.
    */
@@ -268,6 +268,11 @@ export enum ResultFormat {
   Table = 'table',
   TimeSeries = 'time_series',
   Trace = 'trace',
+}
+
+export enum LogsEditorMode {
+  Builder = 'builder',
+  Raw = 'raw',
 }
 
 export interface AzureResourceGraphQuery {
