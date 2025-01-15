@@ -1,7 +1,7 @@
 // This is specified in runtime Emotion GlobalStyles but we need them for the preloader styles
 html {
   font-size: $font-size-base;
-  height: 100%;
+  // height: 100%;
 }
 
 // This is specified in runtime Emotion GlobalStyles but we need them for the preloader styles
@@ -11,7 +11,7 @@ body {
   line-height: $line-height-base;
   color: $text-color;
   background-color: $body-bg;
-  height: 100%;
+  // height: 100%;
   width: 100%;
   margin: 0;
   position: absolute;
