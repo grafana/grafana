@@ -753,16 +753,6 @@ def frontend_metrics_step(trigger = None):
         step = dict(step, when = trigger)
     return step
 
-def codespell_step():
-    return {
-        "name": "codespell",
-        "image": images["python"],
-        "commands": [
-            "pip3 install codespell",
-            "codespell -I docs/.codespellignore docs/",
-        ],
-    }
-
 def grafana_server_step():
     """Runs the grafana-server binary as a service.
 
