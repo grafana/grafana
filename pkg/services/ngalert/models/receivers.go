@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/alerting/notify"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
@@ -548,7 +549,7 @@ func ValidateIntegration(ctx context.Context, integration alertingNotify.Grafana
 		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
 			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
 		},
-	}, decryptFunc)
+	}, notify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
 		return err
 	}
