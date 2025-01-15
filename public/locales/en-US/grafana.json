@@ -299,6 +299,13 @@
         }
       }
     },
+    "group-actions": {
+      "actions-trigger": "Rule group actions",
+      "delete": "Delete",
+      "edit": "Edit",
+      "export": "Export",
+      "reorder": "Re-order rules"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
@@ -484,11 +491,22 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "ds-error-boundary": {
+        "description": "Check the data source configuration. Does the data source support Prometheus API?",
+        "title": "Unable to load rules from this data source"
+      },
       "filter-view": {
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
-      "new-alert-rule": "New alert rule"
+      "new-alert-rule": "New alert rule",
+      "pagination": {
+        "next-page": "next page",
+        "previous-page": "previous page"
+      },
+      "return-button": {
+        "title": "Alert rules"
+      }
     },
     "rule-state": {
       "creating": "Creating",
