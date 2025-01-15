@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -489,8 +490,18 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
+
+	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
+	fields := make([]string, 0, len(req.Fields))
+	for _, f := range req.Fields {
+		if slices.Contains(DashboardFields(), f) {
+			f = "fields." + f
+		}
+		fields = append(fields, f)
+	}
+
 	searchrequest := &bleve.SearchRequest{
-		Fields:  req.Fields,
+		Fields:  fields,
 		Size:    int(req.Limit),
 		From:    int(req.Offset),
 		Explain: req.Explain,
@@ -720,7 +731,14 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
 			default:
-				v := match.Fields[f.Name]
+				fieldName := f.Name
+				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
+				// if a specific field is named the same as a common field
+				v := match.Fields[fieldName]
+				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
+				if v == nil {
+					v = match.Fields["fields."+fieldName]
+				}
 				if v != nil {
 					// Encode the value to protobuf
 					row.Cells[i], err = encoders[i](v)
