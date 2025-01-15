@@ -315,7 +315,7 @@ Without a notification template, the alert messages would include the default Gr
 1. Enter a name. E.g _instance-cpu-summary_.
 1. From the **Add example** dropdown menu, choose `Print firing and resolved alerts`.
 
-This template prints out alert instances into two sections: **firing alerts** and **resolved alerts**, and includes only the key details for each. In addition it adds our summary and description annotations.
+This template prints out alert instances into two sections: **firing alerts** and **resolved alerts**, and includes only the key details for each. In addition, it adds our summary and description annotations.
 
 ```
 {{- /* Example displaying firing and resolved alerts separately in the notification. */ -}}
