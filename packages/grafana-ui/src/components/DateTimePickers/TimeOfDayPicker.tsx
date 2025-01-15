@@ -13,8 +13,8 @@ import { FormInputSize } from '../Forms/types';
 import { Icon } from '../Icon/Icon';
 import 'rc-picker/assets/index.css';
 
-export interface Props {
-  onChange: (value?: DateTime) => void;
+interface BaseProps {
+  onChange: (value: DateTime) => void | ((value?: DateTime) => void);
   value?: DateTime;
   showHour?: boolean;
   showSeconds?: boolean;
@@ -28,13 +28,24 @@ export interface Props {
   allowEmpty?: boolean;
 }
 
+interface AllowEmptyProps extends BaseProps {
+  allowEmpty: true;
+  onChange: (value?: DateTime) => void;
+}
+
+interface NoAllowEmptyProps extends BaseProps {
+  allowEmpty?: false;
+  onChange: (value: DateTime) => void;
+}
+
+export type Props = AllowEmptyProps | NoAllowEmptyProps;
+
 export const POPUP_CLASS_NAME = 'time-of-day-picker-panel';
 
 export const TimeOfDayPicker = ({
   minuteStep = 1,
   showHour = true,
   showSeconds = false,
-  onChange,
   value,
   size = 'auto',
   disabled,
@@ -42,21 +53,22 @@ export const TimeOfDayPicker = ({
   disabledMinutes,
   disabledSeconds,
   placeholder,
-  allowEmpty = false,
+  // note: we can't destructure allowEmpty/onChange here
+  // in order to discriminate the types properly later in the onChange handler
+  ...restProps
 }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
     <RcPicker<Moment>
-      // TODO figure out these
       generateConfig={generateConfig}
       locale={locale}
-      allowClear={allowEmpty}
+      allowClear={restProps.allowEmpty}
       className={cx(inputSizes()[size], styles.input)}
       classNames={{
         popup: cx(styles.picker, POPUP_CLASS_NAME),
       }}
-      defaultValue={allowEmpty ? undefined : dateTimeAsMoment()}
+      defaultValue={restProps.allowEmpty ? undefined : dateTimeAsMoment()}
       disabled={disabled}
       disabledTime={() => ({
         disabledHours,
@@ -67,7 +79,11 @@ export const TimeOfDayPicker = ({
       minuteStep={minuteStep}
       onChange={(value) => {
         if (isDateTimeInput(value)) {
-          return onChange(value ? dateTime(value) : undefined);
+          if (restProps.allowEmpty) {
+            return restProps.onChange(value ? dateTime(value) : undefined);
+          } else {
+            return restProps.onChange(dateTime(value));
+          }
         }
       }}
       picker="time"
