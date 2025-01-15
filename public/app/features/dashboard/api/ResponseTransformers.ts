@@ -5,6 +5,8 @@ import {
   DataSourceRef,
   Panel,
   VariableModel,
+  VariableType,
+  VariableHide,
   FieldConfigSource as FieldConfigSourceV1,
   FieldColorModeId as FieldColorModeIdV1,
   ThresholdsMode as ThresholdsModeV1,
@@ -39,6 +41,7 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
   transformCursorSyncV2ToV1,
@@ -192,7 +195,7 @@ export function ensureV1Response(
   } else {
     // if dashboard is on v2 schema convert to v1 schema
     const annotations = getAnnotationsV1(spec.annotations);
-    const variables = getVariablesv1(spec.variables);
+    const variables = getVariablesV1(spec.variables);
     const panels = getPanelsV1(spec.elements, spec.layout);
     return {
       meta: {
@@ -488,73 +491,144 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
   });
 }
 
-function getVariablesv1(vars: DashboardV2Spec['variables']): VariableModel[] {
+function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
   const variables: VariableModel[] = [];
+
   for (const v of vars) {
+    const commonProperties = {
+      name: v.spec.name,
+      label: v.spec.label,
+      ...(v.spec.description && { description: v.spec.description }),
+      skipUrlSync: v.spec.skipUrlSync,
+      hide: transformVariableHideToEnumV1(v.spec.hide),
+      type: transformToV1VariableTypes(v),
+    };
+
     switch (v.kind) {
       case 'QueryVariable':
         const qv: VariableModel = {
-          type: 'query',
-          name: v.spec.name,
-          label: v.spec.label,
-          hide: transformVariableHideToEnumV1(v.spec.hide),
-          skipUrlSync: Boolean(v.spec.skipUrlSync),
-          multi: Boolean(v.spec.multi),
-          includeAll: Boolean(v.spec.includeAll),
-          allValue: v.spec.allValue,
+          ...commonProperties,
           current: v.spec.current,
           options: v.spec.options,
-          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
+          // @ts-expect-error - target v2 query is not compatible with v1 target
+          query: v.spec.query,
+          definition: v.spec.definition,
           datasource: v.spec.datasource,
-          regex: v.spec.regex,
           sort: transformSortVariableToEnumV1(v.spec.sort),
-          query: {},
+          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
+          regex: v.spec.regex,
+          allValue: v.spec.allValue,
+          includeAll: v.spec.includeAll,
+          multi: v.spec.multi,
         };
         variables.push(qv);
         break;
       case 'DatasourceVariable':
         const dv: VariableModel = {
-          type: 'datasource',
-          name: v.spec.name,
-          label: v.spec.label,
-          hide: transformVariableHideToEnumV1(v.spec.hide),
-          skipUrlSync: Boolean(v.spec.skipUrlSync),
-          multi: Boolean(v.spec.multi),
-          includeAll: Boolean(v.spec.includeAll),
-          allValue: v.spec.allValue,
+          ...commonProperties,
           current: v.spec.current,
-          options: v.spec.options,
+          options: [],
+          regex: v.spec.regex,
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           query: v.spec.pluginId,
-          regex: v.spec.regex,
-          description: v.spec.description,
+          multi: v.spec.multi,
+          allValue: v.spec.allValue,
+          includeAll: v.spec.includeAll,
         };
         variables.push(dv);
         break;
       case 'CustomVariable':
         const cv: VariableModel = {
-          type: 'custom',
-          name: v.spec.name,
-          label: v.spec.label,
-          hide: transformVariableHideToEnumV1(v.spec.hide),
-          skipUrlSync: Boolean(v.spec.skipUrlSync),
-          multi: Boolean(v.spec.multi),
-          includeAll: Boolean(v.spec.includeAll),
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          options: v.spec.options,
+          query: v.spec.query,
+          multi: v.spec.multi,
           allValue: v.spec.allValue,
+          includeAll: v.spec.includeAll,
+        };
+        variables.push(cv);
+      case 'ConstantVariable':
+        const constant: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          hide: VariableHide.hideVariable,
+          // @ts-expect-error
+          query: v.spec.current.value,
+        };
+        variables.push(constant);
+        break;
+      case 'IntervalVariable':
+        const iv: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          hide: VariableHide.hideVariable,
+          query: v.spec.query,
+          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
+          options: v.spec.options,
+          // @ts-expect-error
+          auto: v.spec.auto,
+          auto_min: v.spec.auto_min,
+          auto_count: v.spec.auto_count,
+        };
+        variables.push(iv);
+        break;
+      case 'TextVariable':
+        const current = {
+          text: v.spec.current.value,
+          value: v.spec.current.value,
+        };
+
+        const tv: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          options: [{ ...current, selected: true }],
+          query: v.spec.query,
+        };
+        variables.push(tv);
+        break;
+      case 'GroupByVariable':
+        const gv: VariableModel = {
+          ...commonProperties,
+          datasource: v.spec.datasource,
           current: v.spec.current,
           options: v.spec.options,
         };
-        variables.push(cv);
+        variables.push(gv);
+        break;
+      case 'AdhocVariable':
+        const av: VariableModel = {
+          ...commonProperties,
+          datasource: v.spec.datasource,
+          // @ts-expect-error
+          baseFilters: v.spec.baseFilters,
+          filters: v.spec.filters,
+          defaultKeys: v.spec.defaultKeys,
+        };
+        variables.push(av);
+        break;
       default:
         // do not throw error, just log it
-        console.error(`Variable transformation not implemented: ${v.kind}`);
+        console.error(`Variable transformation not implemented: ${v}`);
     }
   }
   return variables;
 }
 
 function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): AnnotationQuery[] {
-  // @ts-expect-error target v2 query is not compatible with v1 target
+  // @ts-expect-error - target v2 query is not compatible with v1 target
   return annotations.map((a) => {
     return {
       name: a.spec.name,
@@ -738,5 +812,28 @@ function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueM
       return SpecialValueMatchV1.Empty;
     default:
       throw new Error(`Unknown match type: ${match}`);
+  }
+}
+
+function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableType {
+  switch (variable.kind) {
+    case 'QueryVariable':
+      return 'query';
+    case 'DatasourceVariable':
+      return 'datasource';
+    case 'CustomVariable':
+      return 'custom';
+    case 'ConstantVariable':
+      return 'constant';
+    case 'IntervalVariable':
+      return 'interval';
+    case 'TextVariable':
+      return 'textbox';
+    case 'GroupByVariable':
+      return 'groupby';
+    case 'AdhocVariable':
+      return 'adhoc';
+    default:
+      throw new Error(`Unknown variable type: ${variable}`);
   }
 }
