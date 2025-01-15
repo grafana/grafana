@@ -151,7 +151,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             if (!allFilteredSelected && inputValue !== '') {
               // Select all currently filtered items
               console.log('Selecting filtered');
-              newSelectedItems = [...selectedItems, ...items.slice(1)];
+              // Deduplication
+              newSelectedItems = [...new Set([...selectedItems, ...items.slice(1)])];
             }
 
             if (allFilteredSelected && inputValue !== '') {
