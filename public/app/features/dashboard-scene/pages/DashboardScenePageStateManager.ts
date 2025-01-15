@@ -537,7 +537,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       if (isFetchError(e) && e.cancelled) {
         return null;
       }
-      debugger;
       throw e;
     }
     return rsp;
