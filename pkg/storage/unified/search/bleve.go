@@ -13,8 +13,13 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
+	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
+	index "github.com/blevesearch/bleve_index_api"
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -88,17 +93,17 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 func (b *bleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
-	// When the size is known, it will be passed along here
-	// Depending on the size, the backend may choose different options (eg: memory vs disk)
+// When the size is known, it will be passed along here
+// Depending on the size, the backend may choose different options (eg: memory vs disk)
 	size int64,
 
-	// The last known resource version can be used to know that we can skip calling the builder
+// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
 
-	// the non-standard searchable fields
+// the non-standard searchable fields
 	fields resource.SearchableDocumentFields,
 
-	// The builder will write all documents before returning
+// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
@@ -383,7 +388,7 @@ func (b *bleveIndex) Search(
 	}
 
 	// convert protobuf request to bleve request
-	searchrequest, e := toBleveSearchRequest(req, access)
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
 	if e != nil {
 		response.Error = e
 		return response, nil
@@ -485,7 +490,7 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
 	facets := bleve.FacetsRequest{}
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
@@ -536,15 +541,6 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		queries = append(queries, bleve.NewFuzzyQuery(req.Query))
 	}
 
-	if access != nil {
-		// TODO AUTHZ!!!!
-		// Need to add an authz filter into the mix
-		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
-		// NOTE, we likely want to pass in the already called checker because the resource server
-		// will first need to check if we can see anything (or everything!) for this resource
-		fmt.Printf("TODO... check authorization\n")
-	}
-
 	switch len(queries) {
 	case 0:
 		searchrequest.Query = bleve.NewMatchAllQuery()
@@ -553,6 +549,57 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	default:
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
 	}
+
+	auth, ok := claims.From(ctx)
+	if !ok {
+		fmt.Errorf("missing claims")
+	}
+	folderChecker, err := access.Compile(ctx, auth, authz.ListRequest{
+		Namespace: b.key.Namespace,
+		Group:     b.key.Group,
+		Resource:  "folder",
+		Verb:      utils.VerbList,
+	})
+	if err != nil {
+		fmt.Errorf("error compiling folder checker: %v", err)
+	}
+	dashboardChecker, err := access.Compile(ctx, auth, authz.ListRequest{
+		Namespace: b.key.Namespace,
+		Group:     b.key.Group,
+		Resource:  "dashboard",
+		Verb:      utils.VerbList,
+	})
+	if err != nil {
+		fmt.Errorf("error compiling dashboard checker: %v", err)
+	}
+
+	permissionsQuery := &permissionScopedQuery{
+		Query: searchrequest.Query,
+		permissionsFilter: func(d *search.DocumentMatch) bool {
+			if access != nil {
+				id := string(d.IndexInternalID)
+				parts := strings.Split(id, "/")
+				// TODO return error if name doesnt have 4 parts
+				name := parts[len(parts)-1]
+				resourceType := parts[2]
+				if resourceType == "folders" {
+					if !folderChecker(b.key.Namespace, name, id) {
+						return false
+					}
+				}
+				if resourceType == "dashboards" {
+					if !dashboardChecker(b.key.Namespace, name, id) {
+						return false
+					}
+				}
+				return true
+			}
+
+			return false
+		},
+	}
+
+	searchrequest.Query = permissionsQuery
 
 	for k, v := range req.Facet {
 		if searchrequest.Facets == nil {
@@ -795,4 +842,20 @@ func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Fa
 		}
 	}
 	return f
+}
+
+type permissionScopedQuery struct {
+	query.Query
+	permissionsFilter func(*search.DocumentMatch) bool
+}
+
+func (f *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReader, m mapping.IndexMapping, options search.SearcherOptions) (search.Searcher, error) {
+	searcher, err := f.Query.Searcher(ctx, i, m, options)
+	if err != nil {
+		return nil, err
+	}
+
+	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, f.permissionsFilter)
+
+	return filteringSearcher, nil
 }

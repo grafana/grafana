@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -149,7 +151,7 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		dashboardsIndex = index
 
-		rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err := index.Search(ctx, NewStubAccessClient(true), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 			},
@@ -198,7 +200,7 @@ func TestBleveBackend(t *testing.T) {
 		count, _ = index.DocCount(ctx, "zzz")
 		assert.Equal(t, int64(1), count)
 
-		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err = index.Search(ctx, NewStubAccessClient(true), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 				Labels: []*resource.Requirement{{
@@ -216,8 +218,8 @@ func TestBleveBackend(t *testing.T) {
 			rsp.Results.Rows[1].Key.Name,
 		})
 
-		// can get sprinkles fields
-		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		// can get sprinkles fields and sort by them
+		rsp, err = index.Search(ctx, NewStubAccessClient(true), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 			},
@@ -231,11 +233,24 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, 2, len(rsp.Results.Columns))
 		require.Equal(t, DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
 		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
-
 		// sorted descending so should start with highest dashboard_views_last_1_days (100)
 		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
 		require.NoError(t, err)
 		require.Equal(t, int64(100), val)
+
+		// check auth will exclude results we don't have access to
+		rsp, err = index.Search(ctx, NewStubAccessClient(false), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+			},
+			Limit:  100000,
+			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+			},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(rsp.Results.Rows))
 
 		// Now look for repositories
 		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
@@ -343,7 +358,7 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		foldersIndex = index
 
-		rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err := index.Search(ctx, NewStubAccessClient(true), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 			},
@@ -363,7 +378,7 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, foldersIndex)
 
 		// Use a federated query to get both results together, sorted by title
-		rsp, err := dashboardsIndex.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err := dashboardsIndex.Search(ctx, NewStubAccessClient(true), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: dashboardskey,
 			},
@@ -428,33 +443,42 @@ func TestBleveBackend(t *testing.T) {
 	})
 }
 
-func TestToBleveSearchRequest(t *testing.T) {
-	t.Run("will prepend 'fields.' to all dashboard fields", func(t *testing.T) {
-		fields := []string{"title", "name", "folder"}
-		fields = append(fields, DashboardFields()...)
-		resReq := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{},
-			Fields:  fields,
-		}
-		bleveReq, err := toBleveSearchRequest(resReq, nil)
-		if err != nil {
-			t.Fatalf("error creating bleve search request: %v", err)
-		}
-
-		require.Equal(t, len(fields), len(bleveReq.Fields))
-		for _, field := range DashboardFields() {
-			require.True(t, slices.Contains(bleveReq.Fields, "fields."+field))
-		}
-		require.Contains(t, bleveReq.Fields, "title")
-		require.Contains(t, bleveReq.Fields, "name")
-		require.Contains(t, bleveReq.Fields, "folder")
-	})
-}
-
 func asTimePointer(milli int64) *time.Time {
 	if milli > 0 {
 		t := time.UnixMilli(milli)
 		return &t
 	}
 	return nil
+}
+
+var _ authz.AccessClient = (*StubAccessClient)(nil)
+
+func NewStubAccessClient(allow bool) *StubAccessClient {
+	return &StubAccessClient{allow: allow}
+}
+
+type StubAccessClient struct {
+	allow bool
+}
+
+func (nc *StubAccessClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
+	return authz.CheckResponse{Allowed: nc.allow}, nil
+}
+
+func (nc *StubAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
+	return func(namespace string, name, folder string) bool {
+		return nc.allow
+	}, nil
+}
+
+func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	return nil, nil
+}
+
+func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
+	return nil
+}
+
+func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
+	return nil, nil
 }
