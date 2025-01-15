@@ -602,10 +602,16 @@ func TestShouldTakeImage(t *testing.T) {
 		state:         eval.Pending,
 		previousState: eval.Normal,
 	}, {
-		name:          "should not take image for alerting state with image",
+		name:          "should not take image for alerting state with valid image",
 		state:         eval.Alerting,
 		previousState: eval.Alerting,
-		previousImage: &ngmodels.Image{URL: "https://example.com/foo.png"},
+		previousImage: &ngmodels.Image{URL: "https://example.com/foo.png", ExpiresAt: time.Now().Add(time.Hour)},
+	}, {
+		name:          "should take image for alerting state with expired image",
+		state:         eval.Alerting,
+		previousState: eval.Alerting,
+		previousImage: &ngmodels.Image{URL: "https://example.com/foo.png", ExpiresAt: time.Now().Add(-time.Hour)},
+		expected:      true,
 	}}
 
 	for _, test := range tests {
