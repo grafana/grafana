@@ -369,12 +369,22 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	// Validate folder
-	if dash.FolderUID != "" {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
 		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
+			ID:           &dash.FolderID, // nolint:staticcheck
 			SignedInUser: dto.User,
 		})
+		if err != nil {
+			return nil, err
+		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
+		dash.FolderUID = folder.UID
+	} else if dash.FolderUID != "" {
+		folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
 		if err != nil {
 			return nil, err
 		}
