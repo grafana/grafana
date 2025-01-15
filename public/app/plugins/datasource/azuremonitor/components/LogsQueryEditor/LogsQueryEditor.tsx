@@ -45,7 +45,6 @@ const LogsQueryEditor = ({
   onChange,
   setError,
   hideFormatAs,
-  timeRange,
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
@@ -203,11 +202,9 @@ const LogsQueryEditor = ({
         {query.azureLogAnalytics?.mode === LogsEditorMode.Builder ? 
           <LogsQueryBuilder 
             query={query}
-            datasource={datasource.azureLogAnalyticsDatasource}
+            schema={schema!}
             basicLogsEnabled={basicLogsEnabled}
             onQueryChange={onChange}
-            variableOptionGroup={variableOptionGroup}
-            setError={setError}
           /> : <QueryField
             query={query}
             datasource={datasource}

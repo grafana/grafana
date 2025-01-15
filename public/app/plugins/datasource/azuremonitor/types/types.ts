@@ -427,8 +427,3 @@ export type DropdownCategories = {
   [key: string]: boolean;
 };
 
-// export enum LogsEditorMode {
-//   Builder = 'builder',
-//   Raw = 'raw',
-// }
-

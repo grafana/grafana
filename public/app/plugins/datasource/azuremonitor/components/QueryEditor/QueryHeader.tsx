@@ -96,12 +96,12 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
           </Button>
         )}
         <FlexItem grow={1} />
-        <RadioButtonGroup
+        {query.azureLogAnalytics?.mode === LogsEditorMode.Builder && <RadioButtonGroup
           size="sm"
           options={EDITOR_MODES}
           value={query.azureLogAnalytics?.mode || LogsEditorMode.Builder}
           onChange={(newMode) => onLogsModeChange(newMode as LogsEditorMode)}
-        />
+        />}
       </EditorHeader>
     </span>
   );

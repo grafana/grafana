@@ -1,50 +1,90 @@
 import { useEffect, useState } from "react";
 
-import { PanelData, TimeRange } from "@grafana/data";
 import { EditorRows } from "@grafana/experimental";
 
-import AzureLogAnalyticsDatasource from "../../azure_log_analytics/azure_log_analytics_datasource";
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from "../../types";
-import { parseResourceURI } from "../ResourcePicker/utils";
+import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from "../../types";
 
 import KQLPreview from "./KQLPreview";
 import { TableSection } from "./TableSection";
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
-  datasource: AzureLogAnalyticsDatasource;
   basicLogsEnabled: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
-  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
-  setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
-  hideFormatAs?: boolean;
-  timeRange?: TimeRange;
-  data?: PanelData;
+  schema: EngineSchema;
 }
 
-export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
-  const { datasource, query, onQueryChange } = props;
-  const [tables, setTables] = useState([]);
+  export const sampleData: AzureLogAnalyticsMetadataTable[] = [
+    {
+      id: "1",
+      name: "Perf",
+      description: "Performance data for resources",
+      timespanColumn: "TimeGenerated",
+      columns: [
+        { name: "TimeGenerated", type: "datetime", description: "The timestamp of the record" },
+        { name: "CounterName", type: "string", description: "The name of the performance counter" },
+        { name: "CounterValue", type: "real", description: "The value of the performance counter" },
+      ],
+      related: {
+        categories: ["Performance"],
+        solutions: ["AzureMonitor"],
+        functions: ["calculatePerformance"],
+      },
+      isTroubleshootingAllowed: true,
+      hasData: true,
+    },
+    {
+      id: "2",
+      name: "Heartbeat",
+      description: "Heartbeat data for monitored computers",
+      timespanColumn: "TimeGenerated",
+      columns: [
+        { name: "TimeGenerated", type: "datetime", description: "The timestamp of the record" },
+        { name: "Computer", type: "string", description: "The name of the computer" },
+        { name: "OSName", type: "string", description: "The operating system name" },
+      ],
+      related: {
+        categories: ["Monitoring"],
+        solutions: ["LogAnalytics"],
+        functions: ["getHeartbeatDetails"],
+      },
+      isTroubleshootingAllowed: true,
+      hasData: true,
+    },
+    {
+      id: "3",
+      name: "EmptyTable",
+      description: "A table with no data",
+      timespanColumn: "TimeGenerated",
+      columns: [
+        { name: "TimeGenerated", type: "datetime", description: "The timestamp of the record" },
+        { name: "DummyColumn", type: "string", description: "A dummy column for testing" },
+      ],
+      related: {
+        categories: ["Testing"],
+        solutions: ["TestSolution"],
+        functions: ["noFunction"],
+      },
+      isTroubleshootingAllowed: false,
+      hasData: false,
+    },
+  ];
 
-  const fetchTables = async () => {
-    let resourceURI;
-    if (query.azureLogAnalytics?.resources) {
-      resourceURI = parseResourceURI(query.azureLogAnalytics.resources[0])
-      await datasource.getTables(resourceURI.subscription!, resourceURI.resourceGroup!, resourceURI.resourceName!).then((result) => {
-        setTables(result.tables);
-      });
-    }
-  };
+export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
+  const { query, onQueryChange, schema } = props;
+  const [tables, setTables] = useState<AzureLogAnalyticsMetadataTable[]>([]);
 
   useEffect(() => {
-    if (tables.length === 0) {
-      fetchTables();
-    };
-  });
+    if (schema?.database) {
+      setTables(schema.database.tables)
+    }
+  }, [setTables, schema?.database])
 
+  // NOTE: use function to create query (same as ADX) in table section? or pass it up to here to build!!
+  
   return (
     <EditorRows>
-      <TableSection {...props} tables={tables} onChange={onQueryChange} />
+      <TableSection {...props} tables={sampleData} onChange={onQueryChange} />
       {/* <FilterSection {...props} columns={tableColumns} />
       <AggregateSection {...props} columns={tableColumns} />
       <GroupBySection {...props} columns={tableColumns} />
