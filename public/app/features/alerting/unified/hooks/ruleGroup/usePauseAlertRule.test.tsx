@@ -1,17 +1,17 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
-import { byText, byRole } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
-import { mockGrafanaRulerRule, mockCombinedRule, mockCombinedRuleGroup, grantUserPermissions } from '../../mocks';
-import { grafanaRulerNamespace, grafanaRulerRule, grafanaRulerGroupName } from '../../mocks/grafanaRulerApi';
+import { grantUserPermissions, mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule } from '../../mocks';
+import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setUpdateRulerRuleNamespaceHandler } from '../../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
-import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
+import { groupIdentifier } from '../../utils/groupIdentifier';
 import { SerializeState } from '../useAsync';
 
 import { usePauseRuleInGroup } from './usePauseAlertRule';
@@ -83,9 +83,13 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
     rulerRule,
     group: mockCombinedRuleGroup(grafanaRulerGroupName, []),
   });
-  const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
+  const ruleGroupID = groupIdentifier.fromCombinedRule(rule);
 
   const onClick = () => {
+    if (ruleGroupID.groupOrigin !== 'grafana') {
+      throw new Error('not a Grafana rule');
+    }
+
     // always handle your errors!
     pauseRule.execute(ruleGroupID, rulerRule.grafana_alert.uid, true).catch(() => {});
   };

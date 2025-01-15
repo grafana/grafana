@@ -2,16 +2,18 @@ package sql
 
 import (
 	"context"
+	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/grafana/authlib/authz"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -21,7 +23,7 @@ import (
 // Creates a new ResourceServer
 func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, docs resource.DocumentBuilderSupplier,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
+	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.AccessClient) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -54,41 +56,42 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
-	opts.Search = resource.SearchOptions{
-		Resources: docs,
-	}
 
+	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
+		root := cfg.IndexPath
+		if root == "" {
+			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
+		}
+		err = os.MkdirAll(root, 0750)
+		if err != nil {
+			return nil, err
+		}
+		bleve, err := search.NewBleveBackend(search.BleveOptions{
+			Root:          root,
+			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
+		}, tracer)
+		if err != nil {
+			return nil, err
+		}
+
+		opts.Search = resource.SearchOptions{
+			Backend:       bleve,
+			Resources:     docs,
+			WorkerThreads: cfg.IndexWorkers,
+			InitMinCount:  cfg.IndexMinCount,
+		}
+
+		err = reg.Register(resource.NewIndexMetrics(cfg.IndexPath, opts.Search.Backend))
+		if err != nil {
+			slog.Warn("Failed to register indexer metrics", "error", err)
+		}
 	}
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {
 		return nil, err
-	}
-
-	// Initialize the indexer if one is configured
-	if opts.Index != nil {
-		// TODO: Create a proper identity for the indexer
-		orgId := int64(1)
-		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-			Type:           claims.TypeServiceAccount, // system:apiserver
-			UserID:         1,
-			OrgID:          int64(1),
-			Name:           "admin",
-			Login:          "admin",
-			OrgRole:        identity.RoleAdmin,
-			IsGrafanaAdmin: true,
-			Permissions: map[int64]map[string][]string{
-				orgId: {
-					"*": {"*"}, // all resources, all scopes
-				},
-			},
-		})
-		_, err = rs.(resource.ResourceIndexer).Index(ctx)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return rs, nil

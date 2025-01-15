@@ -153,10 +153,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
       return t('nav.k6.title', 'Performance');
-    case 'monitoring':
-      return t('nav.observability.title', 'Observability');
     case 'plugin-page-grafana-k8s-app':
       return t('nav.kubernetes.title', 'Kubernetes');
+    case 'plugin-page-grafana-dbo11y-app':
+      return t('nav.databases.title', 'Databases');
     case 'plugin-page-grafana-app-observability-app':
       return t('nav.application.title', 'Application');
     case 'plugin-page-grafana-pyroscope-app':
@@ -234,7 +234,10 @@ export function getNavSubTitle(navId: string | undefined) {
         'Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting'
       );
     case 'alerting-admin':
-      return t('nav.alerting-admin.subtitle', 'Manage Alertmanager configurations');
+      return t(
+        'nav.alerting-admin.subtitle',
+        'Manage Alertmanager configurations and enable receiving Grafana-managed alerts'
+      );
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':

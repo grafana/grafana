@@ -18,11 +18,11 @@ import {
 
 import { ExportFormats } from '../components/export/providers';
 import { Folder } from '../types/rule-form';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { alertingApi, WithNotificationOptions } from './alertingApi';
+import { WithNotificationOptions, alertingApi } from './alertingApi';
 import {
   FetchPromRulesFilter,
   getRulesFilterSearchParams,

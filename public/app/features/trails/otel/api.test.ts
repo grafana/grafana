@@ -1,13 +1,20 @@
 import { RawTimeRange } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
-import {
-  getOtelResources,
-  totalOtelResources,
-  isOtelStandardization,
-  getDeploymentEnvironments,
-  getFilteredResourceAttributes,
-} from './api';
+import { totalOtelResources, getDeploymentEnvironments, getFilteredResourceAttributes } from './api';
+
+jest.mock('./util', () => ({
+  ...jest.requireActual('./util'),
+  limitOtelMatchTerms: jest.fn().mockImplementation(() => {
+    return {
+      jobsRegex: 'job=~"job1|job2"',
+      instancesRegex: 'instance=~"instance1|instance2"',
+      // this flag is used when the values exceed 2000 characters
+      // in this mock we are not including more, just flipping the flag
+      missingOtelTargets: true,
+    };
+  }),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -24,9 +31,7 @@ jest.mock('@grafana/runtime', () => ({
         options?: Partial<BackendSrvRequest>
       ) => {
         // explore-metrics-otel-resources
-        if (requestId === 'explore-metrics-otel-resources') {
-          return Promise.resolve({ data: ['job', 'instance', 'deployment_environment'] });
-        } else if (
+        if (
           requestId === 'explore-metrics-otel-check-total-count(target_info{}) by (job, instance)' ||
           requestId === 'explore-metrics-otel-check-total-count(metric) by (job, instance)'
         ) {
@@ -36,12 +41,6 @@ jest.mock('@grafana/runtime', () => ({
                 { metric: { job: 'job1', instance: 'instance1' } },
                 { metric: { job: 'job2', instance: 'instance2' } },
               ],
-            },
-          });
-        } else if (requestId === 'explore-metrics-otel-check-standard') {
-          return Promise.resolve({
-            data: {
-              result: [{ metric: { job: 'job1', instance: 'instance1' } }],
             },
           });
         } else if (requestId === 'explore-metrics-otel-resources-deployment-env') {
@@ -72,16 +71,8 @@ describe('OTEL API', () => {
     to: 'now',
   };
 
-  afterAll(() => {
+  afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('getOtelResources', () => {
-    it('should fetch and filter OTEL resources', async () => {
-      const resources = await getOtelResources(dataSourceUid, timeRange);
-
-      expect(resources).toEqual(['job', 'instance']);
-    });
   });
 
   describe('totalOtelResources', () => {
@@ -95,18 +86,6 @@ describe('OTEL API', () => {
     });
   });
 
-  describe('isOtelStandardization', () => {
-    // keeping for reference because standardization for OTel by series on target_info for job&instance is not consistent
-    // There is a bug currently where there is stale data in Prometheus resulting in duplicate series for job&instance at random times
-    // When this is resolved, we can check for standardization again
-    xit('should check if OTEL standardization is met when there are no duplicate series on target_info for job&instance', async () => {
-      // will return duplicates, see mock above
-      const isStandard = await isOtelStandardization(dataSourceUid, timeRange);
-
-      expect(isStandard).toBe(false);
-    });
-  });
-
   describe('getDeploymentEnvironments', () => {
     it('should fetch deployment environments', async () => {
       const environments = await getDeploymentEnvironments(dataSourceUid, timeRange, []);
@@ -117,11 +96,16 @@ describe('OTEL API', () => {
 
   describe('getFilteredResourceAttributes', () => {
     it('should fetch and filter OTEL resources with excluded filters', async () => {
-      const resources = await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
+      const { attributes } = await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
       // promotedResourceAttribute will be filtered out because even though it is a resource attribute, it is also a metric label and wee prioritize metric labels
-      expect(resources).not.toEqual(['promotedResourceAttribute', 'resourceAttribute']);
+      expect(attributes).not.toEqual(['promotedResourceAttribute', 'resourceAttribute']);
       // the resource attributes returned are the ones only present on target_info
-      expect(resources).toEqual(['resourceAttribute']);
+      expect(attributes).toEqual(['resourceAttribute']);
+    });
+
+    it('should return a boolean true if the job and instance list for matching is truncated', async () => {
+      const { missingOtelTargets } = await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
+      expect(missingOtelTargets).toBe(true);
     });
   });
 });

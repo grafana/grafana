@@ -1,4 +1,8 @@
-package dashboard
+package v2alpha0
+
+import (
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+)
 
 DashboardV2Spec: {
   // Unique numeric identifier for the dashboard.
@@ -32,12 +36,12 @@ DashboardV2Spec: {
   links: [...DashboardLink]
 
   // Tags associated with dashboard.
-  tags?: [...string]
+  tags: [...string]
 
   timeSettings: TimeSettingsSpec
 
   // Configured template variables.
-  variables: [...QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind]
+  variables: [...VariableKind]
 
   elements: [ElementReference.name]: PanelKind // |* more element types in the future
 
@@ -49,10 +53,9 @@ DashboardV2Spec: {
   // changes to said schema.
   schemaVersion: uint16 | *39
 
-
-  // version: will rely on k8s resource versioning, via metadata.resorceVersion
-  // revision?: int // for plugins only
-  // gnetId?: string // ??? Wat is this used for?
+  // Plugins only. The version of the dashboard installed together with the plugin.
+  // This is used to determine if the dashboard should be updated when the plugin is updated.
+  revision?: uint16
 }
 
 
@@ -113,10 +116,16 @@ DataTransformerConfig: {
   // Optional frame matcher. When missing it will be applied to all results
   filter?: MatcherConfig
   // Where to pull DataFrames from as input to transformation
-  topic?: "series" | "annotations" | "alertStates" // replaced with common.DataTopic
+  topic?: common.DataTopic
   // Options to be passed to the transformer
   // Valid options depend on the transformer id
   options: _
+}
+
+DataLink: {
+  title: string
+  url: string
+  targetBlank?: bool
 }
 
 // The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -217,7 +226,7 @@ MatcherConfig: {
 }
 
 Threshold: {
-  value: number | null
+  value: number
   color: string
 }
 
@@ -235,7 +244,7 @@ ValueMapping: ValueMap | RangeMap | RegexMap | SpecialValueMap
 // `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-MappingType: "value" | "range" | "regex" | "special"
+MappingType: "value" | "range" | "regex" | "special" @cog(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue")
 
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
@@ -287,7 +296,7 @@ SpecialValueMap: {
 }
 
 // Special value types supported by the `SpecialValueMap`
-SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty"
+SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cog(kind="enum",memberNames="True|False|Null|NaN|NullAndNaN|Empty")
 
 // Result used as replacement with text and color when the value matches
 ValueMappingResult: {
@@ -358,17 +367,14 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-  datasource: DataSourceRef
-  query: DataQueryKind
-
-  // TODO: Should be figured out based on datasource (Grafana ds)
-  // builtIn?: int
-  // Below are currently existing options for annotation queries
+  datasource?: DataSourceRef
+  query?: DataQueryKind
   enable: bool
-  filter: AnnotationPanelFilter
   hide: bool
   iconColor: string
   name: string
+  builtIn?: bool | *false
+  filter?: AnnotationPanelFilter
 }
 
 AnnotationQueryKind: {
@@ -383,6 +389,7 @@ QueryOptionsSpec: {
   queryCachingTTL?: int
   interval?: string
   cacheTimeout?: string
+  hideTimeOverride?: bool
 }
 
 DataQueryKind: {
@@ -393,7 +400,7 @@ DataQueryKind: {
 
 PanelQuerySpec: {
   query: DataQueryKind
-  datasource: DataSourceRef
+  datasource?: DataSourceRef
 
   refId: string
   hidden: bool
@@ -448,12 +455,22 @@ TimeSettingsSpec: {
   nowDelay?: string // v1: timepicker.nowDelay
 }
 
+RepeatMode: "variable" // other repeat modes will be added in the future: label, frame
+
+RepeatOptions: {
+  mode: RepeatMode
+  value: string
+  direction?: "h" | "v"
+  maxPerRow?: int
+}
+
 GridLayoutItemSpec: {
   x: int
   y: int
   width: int
   height: int
   element: ElementReference // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+  repeat?: RepeatOptions
 }
 
 GridLayoutItemKind: {
@@ -471,12 +488,13 @@ GridLayoutKind: {
 }
 
 PanelSpec: {
-  uid: string
+  id: number
   title: string
   description: string
-  links: [...DashboardLink]
+  links: [...DataLink]
   data: QueryGroupKind
   vizConfig: VizConfigKind
+  transparent?: bool
 }
 
 PanelKind: {
@@ -539,6 +557,8 @@ VariableCustomFormatterFn: {
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
 			"system" | "snapshot"
 
+VariableKind: QueryVariableKind  | TextVariableKind  | ConstantVariableKind  | DatasourceVariableKind  | IntervalVariableKind  | CustomVariableKind  | GroupByVariableKind  | AdhocVariableKind
+
 // Sort variable options
 // Accepted values are:
 // `disabled`: No sorting
@@ -593,7 +613,7 @@ QueryVariableSpec: {
   refresh: VariableRefresh
   skipUrlSync: bool | *false
   description?: string
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   query: string | DataQueryKind | *""
   regex: string | *""
   sort: VariableSort
@@ -661,7 +681,6 @@ DatasourceVariableSpec: {
     text: ""
     value: ""
   }
-  defaultOptionEnabled: bool | *false
   options: [...VariableOption] | *[]
   multi: bool | *false
   includeAll: bool | *false
@@ -727,7 +746,7 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   current: VariableOption | *{
     text: ""
     value: ""
@@ -751,7 +770,7 @@ GroupByVariableKind: {
 // Adhoc variable specification
 AdhocVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   baseFilters: [...AdHocFilterWithLabels] | *[]
   filters: [...AdHocFilterWithLabels] | *[]
   defaultKeys: [...MetricFindValue] | *[]

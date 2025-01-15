@@ -1,8 +1,9 @@
-import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { Meta, Canvas, ArgTypes } from '@storybook/blocks';
 import { Text } from './Text';
 import { TextLink } from '../Link/TextLink.tsx';
 import { Basic } from './Text.story.tsx';
 import { Tooltip } from '../Tooltip';
+import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 <Meta title="MDX|Text" component={Text} />
 
@@ -65,14 +66,14 @@ The following is the default behaviour and so, it will be applied according to i
 
 The Text component is mainly comprised by itself. In occasions, the Text component can have another Text or TextLink component as a child.
 
-<Preview>
+<ExampleFrame>
   <Text color="primary" element="p">
     {'If you need more help of how to write in Grafana you can go to our '}
     <TextLink href="https://grafana.com/docs/writers-toolkit/" external>
       {'Writer’s Toolkit'}
     </TextLink>
   </Text>
-</Preview>
+</ExampleFrame>
 
 ```jsx
 <Text color="primary" element="p">
@@ -83,12 +84,12 @@ The Text component is mainly comprised by itself. In occasions, the Text compone
 </Text>
 ```
 
-<Preview>
+<ExampleFrame>
   <Text color="primary" element="p">
     {'And Forrest Gump said: '}
     <Text italic>{"Life is like a box of chocolates. You never know what you're gonna get."}</Text>
   </Text>
-</Preview>
+</ExampleFrame>
 
 ```jsx
 <Text color="primary" element="p">
@@ -104,23 +105,23 @@ The Text component can be truncated. However, the Text component element rendere
 1. The parent element is a Text component: the user just has to set the element prop to another value and the truncate prop to true.
    As a result, the Text will be truncated but when the user hovers over it the full text will be seen on a tooltip.
 
-<Preview>
+<ExampleFrame>
   <Text color="primary" element="p" truncate>
     {'And Forrest Gump said: '}
     <Text italic>{'Life is like a box of chocolates. You never know what you are gonna get.'}</Text>
   </Text>
-</Preview>
+</ExampleFrame>
 
 ```jsx
 <Text color="primary" element="p" truncate>
   And Forrest Gump said:
-  <Text italic>{'Life is like a box of chocolates. You never know what you are gonna get.'}</Text>
+  <Text italic>Life is like a box of chocolates. You never know what you are gonna get.</Text>
 </Text>
 ```
 
 2. The parent element is not a Text component: the user has to add `overflow: hidden`, `text-overflow: ellipsis` and `whiteSpace: 'nowrap'` to it. In this case, the user should wrap up this container with a Tooltip, so when the text is truncated its content can still be seen hovering on the text.
 
-<Preview>
+<ExampleFrame>
   <Tooltip content="This is a example of a span element truncated by its parent container">
     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
       <Text color="primary" variant="body">
@@ -128,7 +129,7 @@ The Text component can be truncated. However, the Text component element rendere
       </Text>
     </div>
   </Tooltip>
-</Preview>
+</ExampleFrame>
 ```jsx
 <Tooltip content="This is a example of a span element truncated by its parent container">
   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

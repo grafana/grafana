@@ -98,7 +98,7 @@ Related links:
 
 When you are finished, the Grafana configuration might look like this example:
 
-```bash
+```ini
 [server]
 root_url = https://grafana.example.com
 
@@ -373,6 +373,27 @@ SAML's single logout feature allows users to log out from all applications assoc
 `HTTP-Redirect` and `HTTP-POST` bindings are supported for single logout.
 When using `HTTP-Redirect` bindings the query should include a request signature.
 
+#### Configure single logout
+
+To configure single logout in Grafana:
+
+1. Enable the `single_logout` option in your configuration.
+2. Ensure the `name_id_format` matches the format your IdP expects (e.g., `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`).
+3. Enable the `improvedExternalSessionHandlingSAML` feature toggle for complete NameID and SessionIndex support (Grafana v11.5+).
+4. After enabling the feature, users may need to log in again to establish a new session.
+
+#### `NameID` and `SessionIndex` changes in Grafana v11.5
+
+Before Grafana version 11.5, the `Login` attribute value (extracted from the SAML assertion using the `assertion_attribute_login` configuration) was used as the `NameID` in the logout request. This could cause issues with single logout if the `assertion_attribute_login` value differed from what the Identity Provider (IdP) expected.
+
+Additionally, Grafana did not support IdP sessions and could not include the `SessionIndex` (a unique identifier for the user session on the IdP side) value in the logout request. This could result in issues such as the user being logged out from all of their applications/IdP sessions when logging out from Grafana.
+
+Starting from Grafana version 11.5, Grafana uses the `NameID` from the SAML assertion to create the logout request. If the `NameID` is not present in the assertion, Grafana defaults to using the user's `Login` attribute. Additionally, Grafana supports including the `SessionIndex` in the logout request if it is provided in the SAML assertion by the IdP.
+
+{{% admonition type="note" %}}
+These improvements are available in public preview behind the `improvedExternalSessionHandling` feature toggle, starting from Grafana v11.5. To enable it, refer to the [Configure feature toggles]({{< relref "../../../../setup-grafana/configure-grafana/feature-toggles/" >}})
+{{% /admonition %}}
+
 ### Assertion mapping
 
 During the SAML SSO authentication flow, Grafana receives the ACS callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
@@ -498,14 +519,35 @@ skip_org_role_sync = true
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
 1. In configuration file, set [`assertion_attribute_org`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_org" >}}) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
-1. Set [`org_mapping`]({{< relref "../../../configure-grafana/enterprise-configuration#org_mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
+1. Set [`org_mapping`]({{< relref "../../../configure-grafana/enterprise-configuration#org_mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by ID. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.
 
-For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` as Editor and users from `Sales` - to the org with id `3` as Admin, based on `Org` assertion attribute value:
+For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with ID `2` as Editor and users from `Sales` - to the org with ID `3` as Admin, based on `Org` assertion attribute value:
 
-```bash
+```ini
 [auth.saml]
 assertion_attribute_org = Org
 org_mapping = Engineering:2:Editor, Sales:3:Admin
+```
+
+Starting from Grafana version 11.5, you can use the organization name instead of the organization ID in the `org_mapping` option. Ensure that the organization name you configure matches exactly with the organization name in Grafana, as it is case-sensitive. If the organization name is not found in Grafana, the mapping will be ignored. If the external organization or the organization name contains spaces, use the JSON syntax for the `org_mapping` option:
+
+```ini
+org_mapping = ["Org 1:2:Editor", "ExternalOrg:ACME Corp.:Admin"]
+```
+
+If one of the mappings contains a `:`, use the JSON syntax and escape the `:` with a backslash:
+
+```ini
+# Assign users from "External:Admin" to the organization with name "ACME Corp" as Admin
+org_mapping = ["External\:Admin:ACME Corp:Admin"]
+```
+
+For example, to assign users from `Engineering` organization to the Grafana organization with name `ACME Corp` as Editor and users from `Sales` - to the org with id `3` as Admin, based on `Org` assertion attribute value:
+
+```ini
+[auth.saml]
+assertion_attribute_org = Org
+org_mapping = ["Engineering:ACME Corp:Editor", "Sales:3:Admin"]
 ```
 
 You can specify multiple organizations both for the IdP and Grafana:
@@ -534,7 +576,7 @@ allowed_organizations = ["org 1", "second org"]
 
 ### Example SAML configuration
 
-```bash
+```ini
 [auth.saml]
 enabled = true
 auto_login = false
@@ -596,7 +638,7 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 To troubleshoot and get more log information, enable SAML debug logging in the configuration file. Refer to [Configuration]({{< relref "../../../configure-grafana#filters" >}}) for more information.
 
-```bash
+```ini
 [log]
 filters = saml.auth:debug
 ```
@@ -654,7 +696,7 @@ To solve this issue, you can configure either the [`csrf_trusted_origins`]({{< r
 
 Example of a configuration file:
 
-```bash
+```ini
 # config.ini
 ...
 [security]

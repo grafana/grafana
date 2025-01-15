@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -54,15 +55,11 @@ func TestIntegrationPluginManager(t *testing.T) {
 	staticRootPath, err := filepath.Abs("../../../public/")
 	require.NoError(t, err)
 
-	bundledPluginsPath, err := filepath.Abs("../../../plugins-bundled/internal")
-	require.NoError(t, err)
-
 	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
-		Raw:                ini.Empty(),
-		StaticRootPath:     staticRootPath,
-		BundledPluginsPath: bundledPluginsPath,
-		Azure:              &azsettings.AzureSettings{},
+		Raw:            ini.Empty(),
+		StaticRootPath: staticRootPath,
+		Azure:          &azsettings.AzureSettings{},
 		PluginSettings: map[string]map[string]string{
 			"test-app": {
 				"path": "../../plugins/manager/testdata/test-app",
@@ -92,7 +89,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
 	sv2 := searchV2.ProvideService(cfg, db, nil, nil, tracer, features, nil, nil, nil)
-	graf := grafanads.ProvideService(sv2, nil, nil, features)
+	graf := grafanads.ProvideService(sv2, nil, features)
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
 	zipkin := zipkin.ProvideService(hcp)

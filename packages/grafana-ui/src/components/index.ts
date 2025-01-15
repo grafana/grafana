@@ -85,6 +85,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
+export { TableCellInspector, TableCellInspectorMode } from './Table/TableCellInspector';
 export {
   type TableCustomCellOptions,
   type CustomCellRendererProps,
@@ -322,3 +323,10 @@ export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
 
 export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
 export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';
+
+export {
+  ElementSelectionContext,
+  useElementSelection,
+  type ElementSelectionContextState,
+  type ElementSelectionContextItem,
+} from './ElementSelectionContext/ElementSelectionContext';

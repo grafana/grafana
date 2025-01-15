@@ -1,13 +1,21 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { PERMISSIONS_TIME_INTERVALS } from 'app/features/alerting/unified/components/mute-timings/permissions';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import {
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { RulesSource } from 'app/types/unified-alerting';
+import {
+  DataSourceRulesSourceIdentifier as DataSourceRulesSourceIdentifier,
+  GrafanaRulesSourceIdentifier,
+  GrafanaRulesSourceSymbol,
+  RulesSource,
+  RulesSourceUid,
+} from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
@@ -21,7 +29,11 @@ import { getAllDataSources } from './config';
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
 
-export type RulesSourceIdentifier = { rulesSourceName: string } | { uid: string };
+export const GrafanaRulesSource: GrafanaRulesSourceIdentifier = {
+  uid: GrafanaRulesSourceSymbol,
+  name: GRAFANA_RULES_SOURCE_NAME,
+  ruleSourceType: 'grafana',
+};
 
 export enum DataSourceType {
   Alertmanager = 'alertmanager',
@@ -160,7 +172,9 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   const builtinAlertmanagerPermissions = [
     ...Object.values(permissions).flatMap((permissions) => permissions.grafana),
     ...PERMISSIONS_CONTACT_POINTS,
+    ...PERMISSIONS_NOTIFICATION_POLICIES,
     ...PERMISSIONS_TEMPLATES,
+    ...PERMISSIONS_TIME_INTERVALS,
   ];
 
   const hasPermissionsForInternalAlertmanager = builtinAlertmanagerPermissions.some((permission) =>
@@ -205,6 +219,14 @@ export function getAllRulesSourceNames(): string[] {
   }
 
   return availableRulesSources;
+}
+
+export function getExternalRulesSources(): DataSourceRulesSourceIdentifier[] {
+  return getRulesDataSources().map((ds) => ({
+    name: ds.name,
+    uid: ds.uid,
+    ruleSourceType: 'datasource',
+  }));
 }
 
 export function getAllRulesSources(): RulesSource[] {
@@ -289,13 +311,13 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   return ds.uid;
 }
 
-export function getDataSourceUID(rulesSourceIdentifier: RulesSourceIdentifier) {
+export function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: string } | { uid: RulesSourceUid }) {
   if ('uid' in rulesSourceIdentifier) {
     return rulesSourceIdentifier.uid;
   }
 
   if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GRAFANA_RULES_SOURCE_NAME;
+    return GrafanaRulesSourceSymbol;
   }
 
   const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);

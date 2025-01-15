@@ -1,0 +1,47 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "notices": [
+//          {
+//              "severity": "warning",
+//              "text": "Some logs may have been dropped by Adaptive Logs sampling"
+//          }
+//      ]
+//  }
+//  Name: Warnings
+//  Dimensions: 0 Fields by 0 Rows
+//  +
+//  +
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "Warnings",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "notices": [
+            {
+              "severity": "warning",
+              "text": "Some logs may have been dropped by Adaptive Logs sampling"
+            }
+          ]
+        },
+        "fields": []
+      },
+      "data": {
+        "values": []
+      }
+    }
+  ]
+}
