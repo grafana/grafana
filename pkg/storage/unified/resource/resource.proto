@@ -22,22 +22,6 @@ message ResourceWrapper {
   bytes value = 2;
 }
 
-// The history and trash commands need access to commit messages
-message ResourceMeta {
-  // The resource version
-  int64 resource_version = 1;
-
-  // Size of the full resource body
-  int32 size = 3;
-
-  // Hash for the resource
-  string hash = 4;
-
-  // The kubernetes metadata section (not the full resource)
-  // https://github.com/kubernetes/kubernetes/blob/v1.30.2/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L1496
-  bytes partial_object_meta = 6;
-}
-
 // Status structure is copied from:
 // https://github.com/kubernetes/apimachinery/blob/v0.30.1/pkg/apis/meta/v1/generated.proto#L979
 // However, this is only used for error handling, never for succesful results
@@ -443,33 +427,6 @@ message ResourceSearchResponse {
   map<string,Facet> facet = 7;
 }
 
-message HistoryRequest {
-  // Starting from the requested page (other query parameters must match!)
-  string next_page_token = 1;
-
-  // Maximum number of items to return
-  int64 limit = 2;
-
-  // Resource identifier
-  ResourceKey key = 3;
-
-  // List the deleted values (eg, show trash)
-  bool show_deleted = 4;
-}
-
-message HistoryResponse {
-  repeated ResourceMeta items = 1;
-
-  // More results exist... pass this in the next request
-  string next_page_token = 2;
-
-  // ResourceVersion of the list response
-  int64 resource_version = 3;
-
-  // Error details
-  ErrorResult error = 4;
-}
-
 // List items within a resource type & repository name
 // Access control is managed above this request
 message ListRepositoryObjectsRequest {
@@ -791,9 +748,6 @@ service ResourceIndex {
 
   // Get the resource stats
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
-
-  // Show resource history (and trash)
-  rpc History(HistoryRequest) returns (HistoryResponse);
 }
 
 // Query repository info from the search index.  

@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
@@ -251,6 +249,7 @@ func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceS
 	return nil, fmt.Errorf("not yet (filter)")
 }
 
+/**
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -329,6 +328,7 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	}
 	return list, err
 }
+	**/
 
 func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")

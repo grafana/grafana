@@ -42,11 +42,6 @@ func (d *directResourceClient) GetStats(ctx context.Context, in *resource.Resour
 	return d.server.GetStats(ctx, in)
 }
 
-// History implements ResourceClient.
-func (d *directResourceClient) History(ctx context.Context, in *resource.HistoryRequest, opts ...grpc.CallOption) (*resource.HistoryResponse, error) {
-	return d.server.History(ctx, in)
-}
-
 // IsHealthy implements ResourceClient.
 func (d *directResourceClient) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
 	return d.server.IsHealthy(ctx, in)
