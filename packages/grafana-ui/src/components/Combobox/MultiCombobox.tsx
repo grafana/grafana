@@ -24,7 +24,7 @@ import { useComboboxFloat } from './useComboboxFloat';
 import { useMeasureMulti } from './useMeasureMulti';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ALL_OPTION_VALUE = '__all__';
+export const ALL_OPTION_VALUE = '__all__';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -52,11 +52,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const allOptionItem = useMemo(() => {
     return {
-      label: t('multicombobox.all.title', 'All'),
+      label:
+        inputValue === ''
+          ? t('multicombobox.all.title', 'All')
+          : t('multicombobox.all.title-filtered', 'All (filtered)'),
       // Type casting needed to make this work when T is a number
       value: ALL_OPTION_VALUE as unknown as T,
     };
-  }, []);
+  }, [inputValue]);
   const getOptionsToSet = useCallback(() => {
     return isAsync ? [] : enableAllOption ? [allOptionItem, ...options] : options;
   }, [options, enableAllOption, allOptionItem, isAsync]);
@@ -140,9 +143,25 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
-            const allSelected = selectedItems.length === 1 && selectedItems[0].value === allOptionItem.value;
-            onChange(getComboboxOptionsValues(allSelected ? [] : [allOptionItem]));
+            const allFilteredSelected = selectedItems.length === items.length - 1;
+            let newSelectedItems = allFilteredSelected && inputValue === '' ? [] : baseItems.slice(1);
+
+            if (!allFilteredSelected && inputValue !== '') {
+              // Select all currently filtered items
+              console.log('Selecting filtered');
+              newSelectedItems = [...selectedItems, ...items.slice(1)];
+            }
+
+            if (allFilteredSelected && inputValue !== '') {
+              console.log('Deselecting');
+              // Deselect all currently filtered items
+              const filteredSet = new Set(items.slice(1).map((item) => item.value));
+              newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
+            }
+
+            onChange(getComboboxOptionsValues(newSelectedItems));
             break;
           }
           if (newSelectedItem) {
@@ -249,7 +268,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
                   const isAll = item.value === ALL_OPTION_VALUE;
-                  const allItemsSelected = selectedItems[0]?.value === ALL_OPTION_VALUE;
+                  const allItemsSelected =
+                    items[0]?.value === ALL_OPTION_VALUE && selectedItems.length === items.length - 1;
 
                   return (
                     <li
