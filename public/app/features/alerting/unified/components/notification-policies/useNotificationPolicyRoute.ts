@@ -3,7 +3,6 @@ import memoize from 'micro-memoize';
 import { generatedRoutesApi as routingTreeApi } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useAsync } from '../../hooks/useAsync';
@@ -32,7 +31,11 @@ import {
 
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
-const { useListNamespacedRoutingTreeQuery, useReplaceNamespacedRoutingTreeMutation } = routingTreeApi;
+const {
+  useListNamespacedRoutingTreeQuery,
+  useReplaceNamespacedRoutingTreeMutation,
+  useLazyListNamespacedRoutingTreeQuery,
+} = routingTreeApi;
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
@@ -81,18 +84,14 @@ const parseAmConfigRoute = memoize((route: Route): Route => {
 });
 
 export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
-  const dispatch = useDispatch();
-
-  // for k8s api
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [listNamespacedRoutingTree] = useLazyListNamespacedRoutingTreeQuery();
 
   const updateUsingK8sApi = useAsync(async (update: Partial<FormAmRoute>) => {
     const namespace = getK8sNamespace();
-
-    const result = await dispatch(
-      routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
-    );
+    const result = await listNamespacedRoutingTree({ namespace });
 
     const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
     if (!rootTree) {
@@ -127,9 +126,6 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
     }).unwrap();
   });
 
-  // for alertmanager config api
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
-
   const updateFromAlertmanagerConfiguration = useAsync(async (update: Partial<FormAmRoute>) => {
     const action = updateRouteAction({ update, alertmanager });
     return produceNewAlertmanagerConfiguration(action);
@@ -139,18 +135,14 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
 }
 
 export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
-  const dispatch = useDispatch();
-
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [listNamespacedRoutingTree] = useLazyListNamespacedRoutingTreeQuery();
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
   const deleteFromK8sApi = useAsync(async (id: string) => {
     const namespace = getK8sNamespace();
-
-    const result = await dispatch(
-      routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
-    );
+    const result = await listNamespacedRoutingTree({ namespace });
 
     const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
     if (!rootTree) {
@@ -194,10 +186,9 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
 }
 
 export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
-  const dispatch = useDispatch();
-
-  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
+  const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [listNamespacedRoutingTree] = useLazyListNamespacedRoutingTreeQuery();
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
   const addToK8sApi = useAsync(
@@ -211,10 +202,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
       insertPosition: InsertPosition;
     }) => {
       const namespace = getK8sNamespace();
-
-      const result = await dispatch(
-        routingTreeApi.endpoints.listNamespacedRoutingTree.initiate({ namespace: getK8sNamespace() }, {})
-      );
+      const result = await listNamespacedRoutingTree({ namespace });
 
       const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
       if (!rootTree) {
