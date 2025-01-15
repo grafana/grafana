@@ -40,7 +40,6 @@ func TestDashboardService(t *testing.T) {
 		defer fakeStore.AssertExpectations(t)
 
 		folderSvc := foldertest.NewFakeService()
-
 		service := &DashboardServiceImpl{
 			cfg:            setting.NewCfg(),
 			log:            log.New("test.logger"),
@@ -48,6 +47,9 @@ func TestDashboardService(t *testing.T) {
 			folderService:  folderSvc,
 			features:       featuremgmt.WithFeatures(),
 		}
+		folderStore := foldertest.FakeFolderStore{}
+		folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(nil, dashboards.ErrFolderNotFound).Once()
+		service.folderStore = &folderStore
 
 		origNewDashboardGuardian := guardian.New
 		defer func() { guardian.New = origNewDashboardGuardian }()
