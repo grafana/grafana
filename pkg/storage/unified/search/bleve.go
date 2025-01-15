@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/authz"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -138,10 +139,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 			index, err = bleve.New(dir, mapper)
 		}
 
-		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
+		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
-		resource.IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
+		resource.IndexMetrics.IndexTenants.WithLabelValues("memory").Inc()
 	}
 	if err != nil {
 		return nil, err

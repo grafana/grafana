@@ -72,7 +72,7 @@ func NewIndexMetrics(indexDir string, searchBackend SearchBackend) *BleveIndexMe
 				Namespace: "index_server",
 				Name:      "index_tenants",
 				Help:      "Number of tenants in the index",
-			}, []string{"namespace", "index_storage"}), // index_storage is either "file" or "memory"
+			}, []string{"index_storage"}), // index_storage is either "file" or "memory"
 		}
 	})
 
