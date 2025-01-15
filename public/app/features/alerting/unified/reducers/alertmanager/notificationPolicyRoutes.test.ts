@@ -4,7 +4,6 @@ import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/da
 
 import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
-import { findExistingRoute } from '../../utils/routeTree';
 
 import { addRouteAction, deleteRouteAction, routesReducer, updateRouteAction } from './notificationPolicyRoutes';
 
@@ -46,7 +45,7 @@ describe('routes', () => {
     alertmanager_config: {
       time_intervals: [],
       mute_time_intervals: [],
-      route: rootRouteWithIdentifiers,
+      route: defaultRoute,
     },
     template_files: {},
   };
