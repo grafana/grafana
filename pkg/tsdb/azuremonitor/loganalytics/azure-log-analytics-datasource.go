@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -267,8 +268,15 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
-	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, backend.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
+	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok {
+		val, ok := sameAs.(bool)
+		if !ok {
+			stringVal := sameAs.(string)
+			val, _ = strconv.ParseBool(stringVal)
+		}
+		if !val {
+			return nil, backend.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
+		}
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
