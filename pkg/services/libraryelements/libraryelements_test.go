@@ -171,12 +171,11 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 				return model.LibraryElementConnectionsResponse{
 					Result: []model.LibraryElementConnectionDTO{
 						{
-							ID:            sc.initialResult.Result.ID,
-							Kind:          sc.initialResult.Result.Kind,
-							ElementID:     1,
-							ConnectionID:  dashInDB.ID,
-							ConnectionUID: dashInDB.UID,
-							Created:       res.Result[0].Created,
+							ID:           sc.initialResult.Result.ID,
+							Kind:         sc.initialResult.Result.Kind,
+							ElementID:    1,
+							ConnectionID: dashInDB.ID,
+							Created:      res.Result[0].Created,
 							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 								Id:        1,
 								Name:      userInDbName,
