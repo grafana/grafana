@@ -14,8 +14,7 @@ import (
 )
 
 type Manager struct {
-	client  *Client
-	baseURL string
+	client *Client
 
 	log log.PrettyLogger
 }
@@ -43,9 +42,8 @@ type ManagerCfg struct {
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		baseURL: cfg.BaseURL,
-		client:  NewClient(cfg.SkipTLSVerify, cfg.GrafanaComAPIToken, cfg.Logger),
-		log:     cfg.Logger,
+		client: NewClient(cfg.SkipTLSVerify, cfg.GrafanaComAPIToken, cfg.BaseURL, cfg.Logger),
+		log:    cfg.Logger,
 	}
 }
 
@@ -101,12 +99,12 @@ func (m *Manager) PluginVersion(ctx context.Context, pluginID, version string, c
 }
 
 func (m *Manager) downloadURL(pluginID, version string) string {
-	return fmt.Sprintf("%s/%s/versions/%s/download", m.baseURL, pluginID, version)
+	return fmt.Sprintf("%s/%s/versions/%s/download", m.client.grafanaComAPIURL, pluginID, version)
 }
 
 // grafanaCompatiblePluginVersions will get version info from /api/plugins/$pluginID/versions
 func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID string, compatOpts CompatOpts) ([]Version, error) {
-	u, err := url.Parse(m.baseURL)
+	u, err := url.Parse(m.client.grafanaComAPIURL)
 	if err != nil {
 		return nil, err
 	}
