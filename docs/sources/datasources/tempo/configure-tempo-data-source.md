@@ -335,7 +335,7 @@ You can choose one of three options:
 
 ### Tag limit
 
-The **Tag limit** setting modifies the max number of tags and tag values to display in the Tempo editor. Default: 5000
+The **Tag limit** setting modifies the max number of tags and tag values to retrieve from Tempo. Default: 5000
 
 ### Private data source connect
 
