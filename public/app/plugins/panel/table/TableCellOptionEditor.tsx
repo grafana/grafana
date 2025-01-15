@@ -88,6 +88,7 @@ const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
   { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
+  { value: { type: TableCellDisplayMode.InspectableDataLink }, label: 'Inspectable Data Link' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
 ];
