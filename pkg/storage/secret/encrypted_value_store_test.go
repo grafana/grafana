@@ -21,8 +21,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("creating an encrypted value returns it", func(t *testing.T) {
-		testEV := &EncryptedValue{EncryptedData: []byte("test-data")}
-		createdEV, err := store.Create(ctx, testEV)
+		createdEV, err := store.Create(ctx, []byte("test-data"))
 		require.NoError(t, err)
 		require.NotEmpty(t, createdEV.UID)
 		require.NotEmpty(t, createdEV.Created)
@@ -31,8 +30,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 	})
 
 	t.Run("get an existent encrypted value returns it", func(t *testing.T) {
-		testEV := &EncryptedValue{EncryptedData: []byte("test-data")}
-		createdEV, err := store.Create(ctx, testEV)
+		createdEV, err := store.Create(ctx, []byte("test-data"))
 		require.NoError(t, err)
 
 		obtainedEV, err := store.Get(ctx, createdEV.UID)
@@ -50,29 +48,25 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.Nil(t, obtainedEV)
 	})
 
-	t.Run("updating an existing encrypted value returns it", func(t *testing.T) {
-		testEV := &EncryptedValue{EncryptedData: []byte("test-data")}
-		createdEV, err := store.Create(ctx, testEV)
+	t.Run("updating an existing encrypted value returns no error", func(t *testing.T) {
+		createdEV, err := store.Create(ctx, []byte("test-data"))
 		require.NoError(t, err)
 
-		createdEV.EncryptedData = []byte("test-data-updated")
-
-		updatedEV, err := store.Update(ctx, createdEV)
+		err = store.Update(ctx, createdEV.UID, []byte("test-data-updated"))
 		require.NoError(t, err)
-		require.Equal(t, createdEV.UID, updatedEV.UID)
-		require.Equal(t, createdEV.EncryptedData, updatedEV.EncryptedData)
+
+		updatedEV, err := store.Get(ctx, createdEV.UID)
+		require.Equal(t, []byte("test-data-updated"), updatedEV.EncryptedData)
+		require.Equal(t, createdEV.Created, updatedEV.Created)
 	})
 
-	t.Run("updating a non existing encrypted value returns it", func(t *testing.T) {
-		testEV := &EncryptedValue{EncryptedData: []byte("test-data"), UID: "test-uid"}
-
-		_, err := store.Update(ctx, testEV)
+	t.Run("updating a non existing encrypted value returns error", func(t *testing.T) {
+		err := store.Update(ctx, "test-uid", []byte("test-data"))
 		require.Error(t, err)
 	})
 
 	t.Run("delete an existing encrypted value returns error", func(t *testing.T) {
-		testEV := &EncryptedValue{EncryptedData: []byte("ttttest-data")}
-		createdEV, err := store.Create(ctx, testEV)
+		createdEV, err := store.Create(ctx, []byte("ttttest-data"))
 		require.NoError(t, err)
 
 		obtainedEV, err := store.Get(ctx, createdEV.UID)

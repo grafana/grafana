@@ -18,8 +18,8 @@ var (
 )
 
 type EncryptedValueStorage interface {
-	Create(ctx context.Context, encryptedValue *EncryptedValue) (*EncryptedValue, error)
-	Update(ctx context.Context, newEncryptedValue *EncryptedValue) (*EncryptedValue, error)
+	Create(ctx context.Context, encryptedData []byte) (*EncryptedValue, error)
+	Update(ctx context.Context, uid string, encryptedData []byte) error
 	Get(ctx context.Context, uid string) (*EncryptedValue, error)
 	Delete(ctx context.Context, uid string) error
 }
@@ -37,12 +37,16 @@ type encryptedValStorage struct {
 	db db.DB
 }
 
-func (s *encryptedValStorage) Create(ctx context.Context, encryptedValue *EncryptedValue) (*EncryptedValue, error) {
-	encryptedValue.UID = uuid.New().String()
-	encryptedValue.Created = time.Now().Unix()
-	encryptedValue.Updated = encryptedValue.Created
+func (s *encryptedValStorage) Create(ctx context.Context, encryptedData []byte) (*EncryptedValue, error) {
+	createdTime := time.Now().Unix()
+	encryptedValue := &EncryptedValue{
+		UID:           uuid.New().String(),
+		EncryptedData: encryptedData,
+		Created:       createdTime,
+		Updated:       createdTime,
+	}
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Insert(encryptedValue); err != nil {
 			return fmt.Errorf("insert row: %w", err)
 		}
@@ -56,40 +60,28 @@ func (s *encryptedValStorage) Create(ctx context.Context, encryptedValue *Encryp
 	return encryptedValue, nil
 }
 
-func (s *encryptedValStorage) Update(ctx context.Context, newEncryptedValue *EncryptedValue) (*EncryptedValue, error) {
-	// First find if the encrypted value exists
-	encryptedValueRow := &EncryptedValue{UID: newEncryptedValue.UID}
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(encryptedValueRow)
+func (s *encryptedValStorage) Update(ctx context.Context, uid string, encryptedData []byte) error {
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		updateEncryptedValue := &EncryptedValue{
+			EncryptedData: encryptedData,
+			Updated:       time.Now().Unix(),
+		}
+		rowsAffected, err := sess.Where("uid = ?", uid).Update(updateEncryptedValue)
 		if err != nil {
-			return fmt.Errorf("failed to get row: %w", err)
+			return fmt.Errorf("update row: %w", err)
 		}
 
-		if !found {
+		if rowsAffected == 0 {
 			return ErrEncryptedValueNotFound
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+		return fmt.Errorf("db failure: %w", err)
 	}
 
-	// Update the encrypted value
-	newEncryptedValue.Updated = time.Now().Unix()
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		cond := &EncryptedValue{UID: newEncryptedValue.UID}
-
-		if _, err := sess.Update(newEncryptedValue, cond); err != nil {
-			return fmt.Errorf("update row: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
-	}
-	return newEncryptedValue, nil
+	return nil
 }
 
 func (s *encryptedValStorage) Get(ctx context.Context, uid string) (*EncryptedValue, error) {
