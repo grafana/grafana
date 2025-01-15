@@ -70,8 +70,8 @@ export const Trans = (props: TransProps): ReactElement => {
 
 /**
  * This is a simple wrapper over i18n.t() to provide default namespaces and enforce a consistent API.
- * Note: Because this wrapper needs initialization it will throw if used before. That initialization is done during
- * Grafana startup and means this should not be used in top level scope of modules.
+ * Note: Don't use this in the top level module scope. This wrapper needs initialization, which is done during Grafana
+ * startup, and it will throw if used before.
  * @param id ID of the translation string
  * @param defaultMessage Default message to use if the translation is missing
  * @param values Values to be interpolated into the string
