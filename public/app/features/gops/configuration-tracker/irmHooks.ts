@@ -128,8 +128,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
         description: 'Configure Grafana Alerting',
         steps: [
           {
-            title: 'Update default email contact point',
-            description: 'Add a valid email to the default email contact point.',
+            title: 'Update default contact point',
+            description: 'Update the default contact point to a method other than the example email address.',
             button: {
               type: 'openLink',
               urlLink: {
