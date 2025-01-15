@@ -14,6 +14,9 @@ export function getMessageFromError(err: unknown): string {
       } else if (err.statusText) {
         return err.statusText;
       }
+    } else if (err.hasOwnProperty('message')) {
+      // @ts-expect-error
+      return err.message;
     }
   }
 

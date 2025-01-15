@@ -106,12 +106,16 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
+      const status = getStatusFromError(err);
+      const message = getMessageFromError(err);
+      const messageId = getMessageIdFromError(err);
+
       this.setState({
         isLoading: false,
         loadError: {
-          status: getStatusFromError(err),
-          message: getMessageFromError(err),
-          messageId: getMessageIdFromError(err),
+          status,
+          message,
+          messageId,
         },
       });
     }
@@ -142,12 +146,15 @@ abstract class DashboardScenePageStateManagerBase<T>
         });
       }
     } catch (err) {
+      const status = getStatusFromError(err);
+      const message = getMessageFromError(err);
+      const messageId = getMessageIdFromError(err);
       this.setState({
         isLoading: false,
         loadError: {
-          status: getStatusFromError(err),
-          message: getMessageFromError(err),
-          messageId: getMessageIdFromError(err),
+          status,
+          message,
+          messageId,
         },
       });
     }
@@ -530,6 +537,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       if (isFetchError(e) && e.cancelled) {
         return null;
       }
+      debugger;
       throw e;
     }
     return rsp;
