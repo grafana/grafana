@@ -4,6 +4,7 @@ import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/da
 
 import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
+import { findExistingRoute } from '../../utils/routeTree';
 
 import { addRouteAction, deleteRouteAction, routesReducer, updateRouteAction } from './notificationPolicyRoutes';
 
@@ -64,7 +65,19 @@ describe('routes', () => {
       insertPosition: 'child',
     });
 
-    expect(routesReducer(initialConfig, action)).toMatchSnapshot();
+    const result = routesReducer(initialConfig, action);
+
+    expect(result.alertmanager_config.route?.routes).toHaveLength(
+      (initialConfig.alertmanager_config.route?.routes?.length ?? 0) + 1
+    );
+
+    // the last route if the root route should have receiver E
+    expect(result.alertmanager_config.route?.routes?.at(-1)).toMatchObject({
+      receiver: 'E',
+    });
+
+    // assert the rest of the configuration
+    expect(result).toMatchSnapshot();
   });
 
   it('Should not add a new route with receiver E as a child of route with receiver A, if data has been updated by another user', () => {
