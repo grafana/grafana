@@ -11,7 +11,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/claims"
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -262,6 +262,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetCreatedBy(getUserID(createdBy, createdByID))
 		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
+		meta.SetDeprecatedInternalID(dashboard_id) //nolint:staticcheck
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
@@ -278,21 +279,24 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		if origin_name.String != "" {
 			ts := time.Unix(origin_ts.Int64, 0)
 
-			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
-			originPath, err := filepath.Rel(
-				resolvedPath,
-				origin_path.String,
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+			repo := &utils.ResourceRepositoryInfo{
 				Name:      origin_name.String,
-				Path:      originPath,
 				Hash:      origin_hash.String,
 				Timestamp: &ts,
-			})
+			}
+			// if the reader cannot be found, it may be an orphaned provisioned dashboard
+			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
+			if resolvedPath != "" {
+				originPath, err := filepath.Rel(
+					resolvedPath,
+					origin_path.String,
+				)
+				if err != nil {
+					return nil, err
+				}
+				repo.Path = originPath
+			}
+			meta.SetRepositoryInfo(repo)
 		} else if plugin_id != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name: "plugin",
@@ -306,8 +310,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				return row, err
 			}
 		}
-		// add it so we can get it from the body later
-		dash.Spec.Set("id", dashboard_id)
+		dash.Spec.Remove("id")
 	}
 	return row, err
 }
@@ -339,14 +342,9 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 		return dash, false, err
 	}
 
-	id := dash.Spec.GetNestedInt64("id")
-	if id == 0 {
-		return nil, false, fmt.Errorf("could not find id in saved body")
-	}
-
 	err = a.dashStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
 		OrgID: orgId,
-		ID:    id,
+		UID:   uid,
 	})
 	if err != nil {
 		return nil, false, err
@@ -396,6 +394,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
+		PluginID:  service.GetPluginIDFromMeta(meta),
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
@@ -408,14 +407,18 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
 	}
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
+	if err != nil {
+		return nil, false, err
+	}
 
 	// stash the raw value in context (if requested)
+	finalMeta, err := utils.MetaAccessor(dash)
+	if err != nil {
+		return nil, false, err
+	}
 	access := GetLegacyAccess(ctx)
 	if access != nil {
-		id, ok, _ := unstructured.NestedInt64(dash.Spec.Object, "id")
-		if ok {
-			access.DashboardID = id
-		}
+		access.DashboardID = finalMeta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
 	return dash, created, err
 }

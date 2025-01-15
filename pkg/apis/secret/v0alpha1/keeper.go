@@ -19,6 +19,10 @@ type Keeper struct {
 	Spec KeeperSpec `json:"spec,omitempty" patchStrategy:"replace" patchMergeKey:"name"`
 }
 
+func (k *Keeper) IsSqlKeeper() bool {
+	return k.Spec.SQL != nil && k.Spec.SQL.Encryption != nil
+}
+
 type KeeperSpec struct {
 	// Human friendly name for the keeper.
 	Title string `json:"title"`

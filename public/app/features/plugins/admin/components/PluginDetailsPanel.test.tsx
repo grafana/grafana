@@ -64,7 +64,8 @@ const mockPlugin: CatalogPlugin = {
 };
 
 const mockInfo = [
-  { label: 'Version', value: '1.1.0' },
+  { label: 'Installed version', value: '1.0.0' },
+  { label: 'Latest version', value: '1.2.0' },
   { label: 'Author', value: 'Test Author' },
 ];
 
@@ -81,7 +82,7 @@ describe('PluginDetailsPanel', () => {
   it('should render latest version information', () => {
     render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
     expect(screen.getByText('Latest version:')).toBeInTheDocument();
-    expect(screen.getByText('1.1.0')).toBeInTheDocument();
+    expect(screen.getByText('1.2.0')).toBeInTheDocument();
   });
 
   it('should render links section when plugin has links', () => {

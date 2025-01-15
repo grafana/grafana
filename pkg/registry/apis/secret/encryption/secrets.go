@@ -20,17 +20,6 @@ type Service interface {
 	ReEncryptDataKeys(ctx context.Context) error
 }
 
-// Store defines methods to interact with encryption storage
-type Store interface {
-	GetDataKey(ctx context.Context, id string) (*DataKey, error)
-	GetCurrentDataKey(ctx context.Context, label string) (*DataKey, error)
-	GetAllDataKeys(ctx context.Context) ([]*DataKey, error)
-	CreateDataKey(ctx context.Context, dataKey *DataKey) error
-	DisableDataKeys(ctx context.Context) error
-	DeleteDataKey(ctx context.Context, id string) error
-	ReEncryptDataKeys(ctx context.Context, providers map[ProviderID]Provider, currProvider ProviderID) error
-}
-
 // Provider is a key encryption key provider for envelope encryption
 type Provider interface {
 	Encrypt(ctx context.Context, blob []byte) ([]byte, error)

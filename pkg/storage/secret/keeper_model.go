@@ -23,7 +23,7 @@ const (
 	HashiCorpKeeperType KeeperType = "hashicorp"
 )
 
-type Keeper struct {
+type keeperDB struct {
 	// Kubernetes Metadata
 	GUID        string `xorm:"pk 'guid'"`
 	Name        string `xorm:"name"`
@@ -41,12 +41,12 @@ type Keeper struct {
 	Payload string     `xorm:"payload"`
 }
 
-func (*Keeper) TableName() string {
+func (*keeperDB) TableName() string {
 	return TableNameKeeper
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
-func (kp *Keeper) toKubernetes() (*secretv0alpha1.Keeper, error) {
+func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 	annotations := make(map[string]string, 0)
 	if kp.Annotations != "" {
 		if err := json.Unmarshal([]byte(kp.Annotations), &annotations); err != nil {
@@ -105,7 +105,7 @@ func (kp *Keeper) toKubernetes() (*secretv0alpha1.Keeper, error) {
 }
 
 // toKeeperCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
+func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*keeperDB, error) {
 	row, err := toKeeperRow(kp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map to row: %w", err)
@@ -123,7 +123,7 @@ func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*Keeper, err
 }
 
 // toKeeperUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
-func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, actorUID string) (*Keeper, error) {
+func toKeeperUpdateRow(currentRow *keeperDB, newKeeper *secretv0alpha1.Keeper, actorUID string) (*keeperDB, error) {
 	row, err := toKeeperRow(newKeeper)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map to row: %w", err)
@@ -141,7 +141,7 @@ func toKeeperUpdateRow(currentRow *Keeper, newKeeper *secretv0alpha1.Keeper, act
 }
 
 // toKeeperRow maps a Kubernetes Keeper resource into a Keeper DB row.
-func toKeeperRow(kp *secretv0alpha1.Keeper) (*Keeper, error) {
+func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
 	var annotations string
 	if len(kp.Annotations) > 0 {
 		cleanedAnnotations := xkube.CleanAnnotations(kp.Annotations)
@@ -186,7 +186,7 @@ func toKeeperRow(kp *secretv0alpha1.Keeper) (*Keeper, error) {
 		return nil, fmt.Errorf("failed to obtain type and payload: %w", err)
 	}
 
-	return &Keeper{
+	return &keeperDB{
 		// Kubernetes Metadata
 		GUID:        string(kp.UID),
 		Name:        kp.Name,
@@ -286,4 +286,74 @@ func toProvider(keeperType KeeperType, payload string) interface{} {
 	default:
 		return nil
 	}
+}
+
+// extractSecureValues extracts securevalues referenced by the keeper, if any.
+func extractSecureValues(kp *secretv0alpha1.Keeper) []string {
+	secureValuesFromAWS := func(aws secretv0alpha1.AWSCredentials) []string {
+		secureValues := make([]string, 0)
+
+		if aws.AccessKeyID.SecureValueName != "" {
+			secureValues = append(secureValues, aws.AccessKeyID.SecureValueName)
+		}
+
+		if aws.SecretAccessKey.SecureValueName != "" {
+			secureValues = append(secureValues, aws.SecretAccessKey.SecureValueName)
+		}
+
+		return secureValues
+	}
+
+	secureValuesFromAzure := func(azure secretv0alpha1.AzureCredentials) []string {
+		if azure.ClientSecret.SecureValueName != "" {
+			return []string{azure.ClientSecret.SecureValueName}
+		}
+
+		return nil
+	}
+
+	secureValuesFromHashiCorp := func(hashicorp secretv0alpha1.HashiCorpCredentials) []string {
+		if hashicorp.Token.SecureValueName != "" {
+			return []string{hashicorp.Token.SecureValueName}
+		}
+
+		return nil
+	}
+
+	switch {
+	case kp.Spec.SQL != nil && kp.Spec.SQL.Encryption != nil:
+		enc := kp.Spec.SQL.Encryption
+
+		switch {
+		case enc.AWS != nil:
+			return secureValuesFromAWS(*enc.AWS)
+
+		case enc.Azure != nil:
+			return secureValuesFromAzure(*enc.Azure)
+
+		// GCP does not reference secureValues.
+		case enc.GCP != nil:
+			return nil
+
+		case enc.HashiCorp != nil:
+			return secureValuesFromHashiCorp(*enc.HashiCorp)
+		}
+
+		return nil
+
+	case kp.Spec.AWS != nil:
+		return secureValuesFromAWS(kp.Spec.AWS.AWSCredentials)
+
+	case kp.Spec.Azure != nil:
+		return secureValuesFromAzure(kp.Spec.Azure.AzureCredentials)
+
+	// GCP does not reference secureValues.
+	case kp.Spec.GCP != nil:
+		return nil
+
+	case kp.Spec.HashiCorp != nil:
+		return secureValuesFromHashiCorp(kp.Spec.HashiCorp.HashiCorpCredentials)
+	}
+
+	return nil
 }

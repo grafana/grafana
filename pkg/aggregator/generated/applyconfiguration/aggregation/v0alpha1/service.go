@@ -5,15 +5,15 @@
 package v0alpha1
 
 import (
-	v0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
+	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 )
 
 // ServiceApplyConfiguration represents a declarative configuration of the Service type for use
 // with apply.
 type ServiceApplyConfiguration struct {
-	Type   *v0alpha1.ServiceType `json:"type,omitempty"`
-	Method *string               `json:"method,omitempty"`
-	Path   *string               `json:"path,omitempty"`
+	Type   *aggregationv0alpha1.ServiceType `json:"type,omitempty"`
+	Method *string                          `json:"method,omitempty"`
+	Path   *string                          `json:"path,omitempty"`
 }
 
 // ServiceApplyConfiguration constructs a declarative configuration of the Service type for use with
@@ -25,7 +25,7 @@ func Service() *ServiceApplyConfiguration {
 // WithType sets the Type field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Type field is set to the value of the last call.
-func (b *ServiceApplyConfiguration) WithType(value v0alpha1.ServiceType) *ServiceApplyConfiguration {
+func (b *ServiceApplyConfiguration) WithType(value aggregationv0alpha1.ServiceType) *ServiceApplyConfiguration {
 	b.Type = &value
 	return b
 }

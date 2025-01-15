@@ -81,10 +81,11 @@ export class SidecarService_EXPERIMENTAL {
     );
 
     this.mainLocationService.getLocationObservable().subscribe((location) => {
+      this.mainOnAllowedRoute = ALLOW_ROUTES.some((prefix) => location.pathname.match(prefix));
+
       if (!this.activePluginId) {
         return;
       }
-      this.mainOnAllowedRoute = ALLOW_ROUTES.some((prefix) => location.pathname.match(prefix));
 
       if (!this.mainOnAllowedRoute) {
         this.closeApp();
