@@ -174,7 +174,14 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 	}, nil
 }
 
-func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
+// Gets all files in the repository tree under the ref and base.
+//
+// The base is a path to the base directory where the files are wanted. Empty string means `/`. Trailing slashes are ignored.
+func (r *githubRepository) ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error) {
+	if base == "" {
+		base = "/"
+	}
+	base = strings.TrimSuffix(base, "/")
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
@@ -182,7 +189,12 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 	repo := r.config.Spec.GitHub.Repository
 	ctx, logger := r.logger(ctx, ref)
 
-	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, ref, true)
+	baseTreeRef, err := r.findBaseRef(ctx, ref, base)
+	if err != nil {
+		return nil, err // err is already a status error
+	}
+
+	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, baseTreeRef, true)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -192,15 +204,20 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 				},
 			}
 		}
+		return nil, apierrors.NewInternalError(err)
 	}
 	if truncated {
 		logger.Warn("tree from github was truncated")
 	}
 
+	pathPrefix := ""
+	if base != "" {
+		pathPrefix = base + "/"
+	}
 	entries := make([]FileTreeEntry, 0, len(tree))
 	for _, entry := range tree {
 		converted := FileTreeEntry{
-			Path: entry.GetPath(),
+			Path: pathPrefix + entry.GetPath(),
 			Size: entry.GetSize(),
 			Hash: entry.GetSHA(),
 			Blob: !entry.IsDirectory(),
@@ -208,6 +225,55 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 		entries = append(entries, converted)
 	}
 	return entries, nil
+}
+
+func (r *githubRepository) findBaseRef(ctx context.Context, ref, base string) (string, error) {
+	if base == "" {
+		base = "/"
+	}
+	base = strings.Trim(base, "/")
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+
+	baseTreeRef := ref
+	for base != "" {
+		entries, truncated, err := r.gh.GetTree(ctx, owner, repo, baseTreeRef, false)
+		if err != nil {
+			if errors.Is(err, pgh.ErrResourceNotFound) {
+				return "", &apierrors.StatusError{
+					ErrStatus: metav1.Status{
+						Message: fmt.Sprintf("tree not found; ref=%s (truncated=%t)", ref, truncated),
+						Code:    http.StatusNotFound,
+					},
+				}
+			}
+			return "", apierrors.NewInternalError(err)
+		}
+
+		expectedPath, newBase, _ := strings.Cut(base, "/")
+		found := false
+		for _, entry := range entries {
+			if entry.GetPath() == expectedPath {
+				found = true
+				baseTreeRef = entry.GetSHA()
+				break
+			}
+		}
+		base = newBase
+		if !found {
+			return "", &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: fmt.Sprintf("tree not found; ref=%s (truncated=%t)", ref, truncated),
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
+	}
+
+	return baseTreeRef, nil
 }
 
 func (r *githubRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {

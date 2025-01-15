@@ -593,7 +593,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		oas.Paths.Paths[repoprefix+"/files/"] = sub // add the trailing final slash
 		sub.Get.Description = "Get the files and content hash"
 		sub.Get.Summary = "File listing"
-		sub.Get.Parameters = []*spec3.Parameter{ref}
+		sub.Get.Parameters = []*spec3.Parameter{ref, {ParameterProps: spec3.ParameterProps{Name: "base", In: "query", Schema: spec.StringProperty(), Required: false}}}
 		sub.Post = nil
 		sub.Put = nil
 		sub.Delete = nil

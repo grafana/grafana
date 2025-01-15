@@ -223,7 +223,8 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
+func (r *localRepository) ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error) {
+	// TODO: Implement base
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}

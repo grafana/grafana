@@ -61,7 +61,7 @@ func (r *s3Repository) Read(ctx context.Context, path string, ref string) (*File
 	}
 }
 
-func (r *s3Repository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
+func (r *s3Repository) ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read file tree resource is not yet implemented",

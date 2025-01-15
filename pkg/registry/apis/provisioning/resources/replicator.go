@@ -101,7 +101,7 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 
 // replicateTree replicates all files in the repository.
 func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
-	tree, err := r.repository.ReadTree(ctx, ref)
+	tree, err := r.repository.ReadTree(ctx, ref, "/") // TODO: Use base
 	if err != nil {
 		return fmt.Errorf("read tree: %w", err)
 	}

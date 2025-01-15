@@ -79,10 +79,11 @@ type Repository interface {
 
 	// Read all file names from the tree.
 	// This data will be parsed and validated before it is shown.
+	// The base is a path to the base directory where the files are wanted. Empty string means `/`. Trailing slashes are ignored.
 	//
 	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
 	// TODO: Test scale: do we want to stream entries instead somehow?
-	ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error)
+	ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error)
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
