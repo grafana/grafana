@@ -1,8 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { logMeasurement } from '@grafana/runtime/src/utils/logging';
+import { config, logMeasurement, reportInteraction } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
