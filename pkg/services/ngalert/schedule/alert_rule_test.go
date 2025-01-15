@@ -220,6 +220,10 @@ func TestAlertRule(t *testing.T) {
 			}
 		}()
 
+		rule := gen.GenerateRef()
+		rule.UID = r.key.UID
+		rule.OrgID = r.key.OrgID
+
 		for i := 0; i < 10; i++ {
 			wg.Add(1)
 			go func() {
@@ -234,7 +238,7 @@ func TestAlertRule(t *testing.T) {
 					case 2:
 						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
-							rule:        gen.GenerateRef(),
+							rule:        rule,
 							folderTitle: util.GenerateShortUID(),
 						})
 					case 3:
