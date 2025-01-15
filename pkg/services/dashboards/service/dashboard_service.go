@@ -369,16 +369,28 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	// Validate folder
-	if dash.FolderUID != "" {
-		if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
-			folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
-			if err != nil {
-				return nil, err
-			}
-			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-			// nolint:staticcheck
-			dash.FolderID = folder.ID
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID:        dash.OrgID,
+			UID:          &dash.FolderUID,
+			ID:           &dash.FolderID, // nolint:staticcheck
+			SignedInUser: dto.User,
+		})
+		if err != nil {
+			return nil, err
 		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
+		dash.FolderUID = folder.UID
+	} else if dash.FolderUID != "" {
+		folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
+		if err != nil {
+			return nil, err
+		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
 	} else if dash.FolderID != 0 { // nolint:staticcheck
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
@@ -2170,6 +2182,15 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	finalObj.SetName(uid)
 	finalObj.SetNamespace(namespace)
 	finalObj.SetGroupVersionKind(v0alpha1.DashboardResourceInfo.GroupVersionKind())
+
+	if cmd.FolderUID != "" {
+		meta, err := utils.MetaAccessor(&finalObj)
+		if err != nil {
+			return finalObj, err
+		}
+
+		meta.SetFolder(cmd.FolderUID)
+	}
 
 	return finalObj, nil
 }
