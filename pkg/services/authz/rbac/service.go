@@ -80,7 +80,6 @@ func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.Legac
 func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.Check")
 	defer span.End()
-	start := time.Now()
 	ctxLogger := s.logger.FromContext(ctx)
 
 	deny := &authzv1.CheckResponse{Allowed: false}
@@ -89,7 +88,6 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		s.metrics.checkRequestDuration.WithLabelValues("true", req.GetVerb(), req.GetGroup(), req.GetResource()).Observe(time.Since(start).Seconds())
 		return deny, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
@@ -98,7 +96,6 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		s.metrics.checkRequestDuration.WithLabelValues("true", req.GetVerb(), req.GetGroup(), req.GetResource()).Observe(time.Since(start).Seconds())
 		return deny, err
 	}
 
@@ -106,26 +103,22 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	if err != nil {
 		ctxLogger.Error("could not check permission", "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		s.metrics.checkRequestDuration.WithLabelValues("true", req.GetVerb(), req.GetGroup(), req.GetResource()).Observe(time.Since(start).Seconds())
 		return deny, err
 	}
 
 	s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-	s.metrics.checkRequestDuration.WithLabelValues("false", req.GetVerb(), req.GetGroup(), req.GetResource()).Observe(time.Since(start).Seconds())
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
 
 func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.List")
 	defer span.End()
-	start := time.Now()
 	ctxLogger := s.logger.FromContext(ctx)
 
 	listReq, err := s.validateListRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		s.metrics.listRequestDuration.WithLabelValues("true", req.GetGroup(), req.GetResource()).Observe(time.Since(start).Seconds())
 		return &authzv1.ListResponse{}, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
@@ -134,13 +127,11 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-		s.metrics.listRequestDuration.WithLabelValues("true", req.GetGroup(), req.GetResource()).Observe(time.Since(start).Seconds())
 		return nil, err
 	}
 
 	resp, err := s.listPermission(ctx, permissions, listReq)
 	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
-	s.metrics.listRequestDuration.WithLabelValues(strconv.FormatBool(err != nil), req.GetGroup(), req.GetResource()).Observe(time.Since(start).Seconds())
 	return resp, err
 }
 

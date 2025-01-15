@@ -11,34 +11,12 @@ const (
 )
 
 type metrics struct {
-	checkRequestDuration *prometheus.HistogramVec
-	listRequestDuration  *prometheus.HistogramVec
 	requestCount         *prometheus.CounterVec
 	permissionCacheUsage *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *metrics {
 	return &metrics{
-		checkRequestDuration: promauto.With(reg).NewHistogramVec(
-			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "check_request_duration_seconds",
-				Help:      "AuthZ service check request duration",
-				Buckets:   prometheus.DefBuckets,
-			},
-			[]string{"is_error", "verb", "group", "resource"},
-		),
-		listRequestDuration: promauto.With(reg).NewHistogramVec(
-			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "list_request_duration_seconds",
-				Help:      "AuthZ service list request duration",
-				Buckets:   prometheus.DefBuckets,
-			},
-			[]string{"is_error", "group", "resource"},
-		),
 		requestCount: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: metricsNamespace,
