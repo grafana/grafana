@@ -184,9 +184,12 @@ export function TableNG(props: TableNGProps) {
       }
     }, [headerRef, column.key]);
 
+    // TODO: this is a workaround to handle manual column resize;
     useEffect(() => {
       const headerCellParent = headerRef.current?.parentElement;
       if (headerCellParent) {
+        // `lastElement` is an HTML element added by react-data-grid for resizing columns.
+        // We add a click event listener to `lastElement` to handle the end of the resize operation.
         const lastElement = headerCellParent.lastElementChild;
         if (lastElement) {
           const handleMouseUp = () => {
@@ -492,9 +495,11 @@ export function TableNG(props: TableNGProps) {
         // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
         bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
         onColumnResize={() => {
-          // TODO: this is a hack to force rowHeight re-calculation
+          // NOTE: This method is called continuously during the column resize drag operation,
+          // providing the current column width. There is no separate event for the end of the drag operation.
           if (textWrap) {
             // This is needed only when textWrap is enabled
+            // TODO: this is a hack to force rowHeight re-calculation
             setResizeTrigger((prev) => prev + 1);
           }
         }}
