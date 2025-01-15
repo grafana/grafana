@@ -550,36 +550,42 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
 	}
 
-	auth, ok := claims.From(ctx)
-	if !ok {
-		fmt.Errorf("missing claims")
-	}
-	folderChecker, err := access.Compile(ctx, auth, authz.ListRequest{
-		Namespace: b.key.Namespace,
-		Group:     b.key.Group,
-		Resource:  "folder",
-		Verb:      utils.VerbList,
-	})
-	if err != nil {
-		fmt.Errorf("error compiling folder checker: %v", err)
-	}
-	dashboardChecker, err := access.Compile(ctx, auth, authz.ListRequest{
-		Namespace: b.key.Namespace,
-		Group:     b.key.Group,
-		Resource:  "dashboard",
-		Verb:      utils.VerbList,
-	})
-	if err != nil {
-		fmt.Errorf("error compiling dashboard checker: %v", err)
-	}
+	// Can we remove this? Is access ever nil?
+	if access != nil {
+		auth, ok := claims.From(ctx)
+		if !ok {
+			return nil, resource.AsErrorResult(fmt.Errorf("missing claims"))
+		}
+		folderChecker, err := access.Compile(ctx, auth, authz.ListRequest{
+			Namespace: b.key.Namespace,
+			Group:     b.key.Group,
+			Resource:  "folder",
+			Verb:      utils.VerbList,
+		})
+		if err != nil {
+			return nil, resource.AsErrorResult(err)
+		}
+		dashboardChecker, err := access.Compile(ctx, auth, authz.ListRequest{
+			Namespace: b.key.Namespace,
+			Group:     b.key.Group,
+			Resource:  "dashboard",
+			Verb:      utils.VerbList,
+		})
+		if err != nil {
+			return nil, resource.AsErrorResult(err)
+		}
 
-	permissionsQuery := &permissionScopedQuery{
-		Query: searchrequest.Query,
-		permissionsFilter: func(d *search.DocumentMatch) bool {
-			if access != nil {
+		permissionsQuery := &permissionScopedQuery{
+			Query: searchrequest.Query,
+			permissionsFilter: func(d *search.DocumentMatch) bool {
+				// The internal ID has the format: <namespace>/<group>/<resourceType>/<name>
+				// Only the internal ID is present on the document match here
 				id := string(d.IndexInternalID)
 				parts := strings.Split(id, "/")
-				// TODO return error if name doesnt have 4 parts
+				// Exclude doc if id isn't expected format
+				if len(parts) != 4 {
+					return false
+				}
 				name := parts[len(parts)-1]
 				resourceType := parts[2]
 				if resourceType == "folders" {
@@ -593,13 +599,10 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 					}
 				}
 				return true
-			}
-
-			return false
-		},
+			},
+		}
+		searchrequest.Query = permissionsQuery
 	}
-
-	searchrequest.Query = permissionsQuery
 
 	for k, v := range req.Facet {
 		if searchrequest.Facets == nil {
