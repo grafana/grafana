@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeAsMoment, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
@@ -86,15 +86,16 @@ describe('Date time picker', () => {
 
       // open the time of day overlay
       await userEvent.click(screen.getAllByRole('textbox')[1]);
+      const hourList = screen.getAllByRole('list')[0];
 
       // change the hour
-      await userEvent.click(screen.getAllByText('00')[0]);
+      await userEvent.click(within(hourList).getByText('00'));
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
 
       // change the hour
-      await userEvent.click(screen.getAllByText('23')[0]);
+      await userEvent.click(within(hourList).getByText('23'));
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
