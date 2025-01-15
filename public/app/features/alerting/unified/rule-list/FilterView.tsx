@@ -25,7 +25,7 @@ interface FilterViewProps {
 }
 
 const FRONTENT_PAGE_SIZE = 40;
-const API_PAGE_SIZE = 500;
+const API_PAGE_SIZE = 2000;
 
 export function FilterView({ filterState }: FilterViewProps) {
   // ⚠️ We use a key to force the component to unmount and remount when the filter state changes
