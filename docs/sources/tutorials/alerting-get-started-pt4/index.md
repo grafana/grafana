@@ -222,7 +222,7 @@ Now that we've introduced how templating works, let’s move on to the next step
 1. Create an alert rule that includes a summary and description annotation:
    - Navigate to **Alerts & IRM > Alerting > Alert rules**.
    - Click **+ New alert rule**.
-   - Enter an **alert rule name**. High CPU usage
+   - Enter an **alert rule name**. Name it `High CPU usage`
 1. **Define query an alert condition** section:
 
    - Select TestData data source from the drop-down menu.
@@ -312,7 +312,7 @@ Without a notification template, the alert messages would include the default Gr
 1. Navigate to **Alerts & IRM** > **Alerting** > **Contact point**s.
 1. Select the **Notification Templates** tab.
 1. Click **+ Add notification template group**.
-1. Enter a name. E.g _instance-cpu-summary_.
+1. Enter a name. E.g `instance-cpu-summary`.
 1. From the **Add example** dropdown menu, choose `Print firing and resolved alerts`.
 
 This template prints out alert instances into two sections: **firing alerts** and **resolved alerts**, and includes only the key details for each. In addition, it adds our summary and description annotations.
@@ -336,6 +336,17 @@ This template prints out alert instances into two sections: **firing alerts** an
   Description: {{.Annotations.description}}
 {{ end -}}
 ```
+
+{{< docs/ignore >}}
+Note: Your notification template name (`{{define "<NAME>"}}`) must be unique. You cannot have two templates with the same name in the same notification template group or in different notification template groups.
+{{< docs/ignore >}}
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="note" >}}
+Your notification template name (`{{define "<NAME>"}}`) must be unique. You cannot have two templates with the same name in the same notification template group or in different notification template groups.
+{{< /admonition >}}
+<!-- INTERACTIVE ignore END -->
 
 Here’s a breakdown of the template:
 
