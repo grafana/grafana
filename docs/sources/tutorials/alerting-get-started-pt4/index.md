@@ -210,7 +210,7 @@ This approach is helpful when you want to reduce notification noise, especially 
 
 ## Step 1: Template labels and annotations
 
-Now that we've introduced how templating works, let’s move on to the next step, where we guide you through creating an alert rule with a summary and description annotation, incorporating CPU usage and instance names, which we later use in our notification template.
+Now that we've introduced how templating works, let’s move on to the next step. We guide you through creating an alert rule with a summary and description annotation. In doing so, we incorporate CPU usage and instance names, which we later use in our notification template.
 
 ### Create an alert rule
 
