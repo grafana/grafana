@@ -88,21 +88,13 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getAllByRole('textbox')[1]);
 
       // change the hour
-      await userEvent.click(
-        screen.getAllByRole('button', {
-          name: '00',
-        })[0]
-      );
+      await userEvent.click(screen.getAllByText('00')[0]);
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
 
       // change the hour
-      await userEvent.click(
-        screen.getAllByRole('button', {
-          name: '23',
-        })[0]
-      );
+      await userEvent.click(screen.getAllByText('23')[0]);
 
       // Check the active day is the 5th
       expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
@@ -123,7 +115,6 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getByRole('button', { name: 'May 15, 2021' }));
 
       const timeInput = screen.getAllByRole('textbox')[1];
-      expect(timeInput).toHaveClass('rc-time-picker-input');
       expect(timeInput).not.toHaveDisplayValue('00:00:00');
     }
   );
@@ -216,9 +207,7 @@ describe('Date time picker', () => {
       await userEvent.click(screen.getAllByRole('textbox')[1]);
 
       // check the hour element is visible
-      const hourElement = screen.getAllByRole('button', {
-        name: '00',
-      })[0];
+      const hourElement = screen.getAllByText('00')[0];
       expect(hourElement).toBeVisible();
 
       // select the hour value and check it's still visible
@@ -227,11 +216,7 @@ describe('Date time picker', () => {
 
       // click outside the overlay and check the hour element is no longer visible
       await userEvent.click(document.body);
-      expect(
-        screen.queryByRole('button', {
-          name: '00',
-        })
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText('00')).not.toBeInTheDocument();
     }
   );
 

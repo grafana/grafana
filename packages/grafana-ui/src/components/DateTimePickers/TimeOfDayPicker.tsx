@@ -143,7 +143,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     picker: css({
       '&.rc-picker-dropdown': {
         boxShadow: 'none',
-        zIndex: theme.zIndex.dropdown,
+        zIndex: theme.zIndex.portal,
       },
       '.rc-picker-time-panel-column': {
         fontSize: '14px',
