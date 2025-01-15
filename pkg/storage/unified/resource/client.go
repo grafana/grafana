@@ -71,7 +71,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{},
+		&authnlib.GrpcClientConfig{TokenRequest: &authnlib.TokenExchangeRequest{}},
 		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
 		// TODO: paniciking if commented out
 		// authnlib.WithDisableAccessTokenOption(),
