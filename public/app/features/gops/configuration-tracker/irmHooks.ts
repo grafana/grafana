@@ -6,7 +6,7 @@ import { useNotificationPolicyRoute } from 'app/features/alerting/unified/compon
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
-import { isOnCallContactPointReady, useGetDefaultContactPoint, useIsCreateAlertRuleDone } from './alerting/hooks';
+import { isOnCallContactPointReady, useIsCreateAlertRuleDone } from './alerting/hooks';
 import { isContactPointReady } from './alerting/utils';
 import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
 import { useGetIncidentPluginConfig } from './incidents/hooks';
