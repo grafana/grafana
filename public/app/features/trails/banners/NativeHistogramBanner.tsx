@@ -20,7 +20,7 @@ export function NativeHistogramBanner(props: NativeHistogramInfoProps) {
   const [showHistogramExamples, setShowHistogramExamples] = useState(false);
   const styles = useStyles2(getStyles, 0);
 
-  const isDark = useTheme().isDark;
+  const isDark = useTheme2().isDark;
   const images = {
     nativeHeatmap: isDark
       ? 'public/img/native-histograms/DarkModeHeatmapNativeHistogram.png'
