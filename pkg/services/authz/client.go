@@ -10,6 +10,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -34,7 +35,7 @@ type Client interface {
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, grpcServer grpcserver.Provider,
-	tracer tracing.Tracer, db db.DB,
+	tracer tracing.Tracer, reg prometheus.Registerer, db db.DB,
 ) (Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -49,7 +50,7 @@ func ProvideAuthZClient(
 
 	// Register the server
 	sql := legacysql.NewDatabaseProvider(db)
-	server := rbac.NewService(sql, legacy.NewLegacySQLStores(sql), log.New("authz-grpc-server"), tracer)
+	server := rbac.NewService(sql, legacy.NewLegacySQLStores(sql), log.New("authz-grpc-server"), tracer, reg)
 
 	switch authCfg.mode {
 	case ModeInProc:
