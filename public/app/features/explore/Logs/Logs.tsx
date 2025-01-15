@@ -1045,6 +1045,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               <LogList
                 app={CoreApp.Explore}
                 containerElement={logsContainerRef.current}
+                forceEscape={forceEscape}
                 logs={dedupedRows}
                 wrapLogMessage={wrapLogMessage}
               />
