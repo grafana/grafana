@@ -193,45 +193,11 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 	// Operation-specific field validation.
 	switch operation {
 	case admission.Create:
-		if sv.Spec.Title == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
-		}
-
-		if sv.Spec.Keeper == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "keeper"), "a `keeper` is required"))
-		}
-
-		if sv.Spec.Value == "" && sv.Spec.Ref == "" {
-			errs = append(errs, field.Required(field.NewPath("spec"), "either a `value` or `ref` is required"))
-		}
-
-		if sv.Spec.Value != "" && sv.Spec.Ref != "" {
-			errs = append(errs, field.Required(field.NewPath("spec"), "only one of `value` or `ref` can be set"))
-		}
-
-		if len(sv.Spec.Audiences) == 0 {
-			errs = append(errs, field.Required(field.NewPath("spec", "audiences"), "an `audiences` is required"))
-		}
+		errs = validateSecureValueCreate(sv)
 
 	// If we plan to support PATCH-style updates, we shouldn't be requiring fields to be set.
 	case admission.Update:
-		// For updates, an `old` object is required.
-		if oldSv == nil {
-			errs = append(errs, field.InternalError(field.NewPath("spec"), errors.New("old object is nil")))
-
-			return errs
-		}
-
-		// Only validate if one of the fields is being changed/set.
-		if sv.Spec.Value != "" || sv.Spec.Ref != "" {
-			if oldSv.Spec.Ref != "" && sv.Spec.Value != "" {
-				errs = append(errs, field.Required(field.NewPath("spec"), "cannot set `value` when `ref` was already previously set"))
-			}
-
-			if oldSv.Spec.Ref == "" && sv.Spec.Ref != "" {
-				errs = append(errs, field.Required(field.NewPath("spec"), "cannot set `ref` when `value` was already previously set"))
-			}
-		}
+		errs = validateSecureValueUpdate(sv, oldSv)
 
 	case admission.Delete:
 	case admission.Connect:
@@ -310,6 +276,58 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 					),
 				)
 			}
+		}
+	}
+
+	return errs
+}
+
+// validateSecureValueCreate does basic spec validation of a securevalue for the Create operation.
+func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	if sv.Spec.Title == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
+	}
+
+	if sv.Spec.Keeper == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "keeper"), "a `keeper` is required"))
+	}
+
+	if sv.Spec.Value == "" && sv.Spec.Ref == "" {
+		errs = append(errs, field.Required(field.NewPath("spec"), "either a `value` or `ref` is required"))
+	}
+
+	if sv.Spec.Value != "" && sv.Spec.Ref != "" {
+		errs = append(errs, field.Required(field.NewPath("spec"), "only one of `value` or `ref` can be set"))
+	}
+
+	if len(sv.Spec.Audiences) == 0 {
+		errs = append(errs, field.Required(field.NewPath("spec", "audiences"), "an `audiences` is required"))
+	}
+
+	return errs
+}
+
+// validateSecureValueUpdate does basic spec validation of a securevalue for the Update operation.
+func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	// For updates, an `old` object is required.
+	if oldSv == nil {
+		errs = append(errs, field.InternalError(field.NewPath("spec"), errors.New("old object is nil")))
+
+		return errs
+	}
+
+	// Only validate if one of the fields is being changed/set.
+	if sv.Spec.Value != "" || sv.Spec.Ref != "" {
+		if oldSv.Spec.Ref != "" && sv.Spec.Value != "" {
+			errs = append(errs, field.Required(field.NewPath("spec"), "cannot set `value` when `ref` was already previously set"))
+		}
+
+		if oldSv.Spec.Ref == "" && sv.Spec.Ref != "" {
+			errs = append(errs, field.Required(field.NewPath("spec"), "cannot set `ref` when `value` was already previously set"))
 		}
 	}
 
