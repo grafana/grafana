@@ -8,12 +8,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 )
 
-func TransformMetricsResponse(query *dataquery.TempoQuery, resp tempopb.QueryRangeResponse) []*data.Frame {
+func TransformMetricsResponse(query string, resp tempopb.QueryRangeResponse) []*data.Frame {
 	// prealloc frames
 	frames := make([]*data.Frame, len(resp.Series))
 	var exemplarFrames []*data.Frame
@@ -40,7 +39,7 @@ func TransformMetricsResponse(query *dataquery.TempoQuery, resp tempopb.QueryRan
 			},
 		}
 
-		isHistogram := isHistogramQuery(*query.Query)
+		isHistogram := isHistogramQuery(query)
 		if isHistogram {
 			frame.Meta.PreferredVisualizationPluginID = "heatmap"
 		}

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
   DataFrame,
+  dataFrameFromJSON,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -25,7 +26,7 @@ function getLiveStreamKey(): string {
   return uuidv4();
 }
 
-export function doTempoChannelStream(
+export function doTempoSearchStreaming(
   query: TempoQuery,
   ds: TempoDatasource,
   options: DataQueryRequest<TempoQuery>,
@@ -98,6 +99,106 @@ export function doTempoChannelStream(
         };
       })
     );
+}
+
+export function doTempoMetricsStreaming(
+  query: TempoQuery,
+  ds: TempoDatasource,
+  options: DataQueryRequest<TempoQuery>
+): Observable<DataQueryResponse> {
+  const range = options.range;
+
+  let frames: DataFrame[] = [];
+  let state: LoadingState = LoadingState.NotStarted;
+
+  return getGrafanaLiveSrv()
+    .getStream<MutableDataFrame>({
+      scope: LiveChannelScope.DataSource,
+      namespace: ds.uid,
+      path: `metrics/${getLiveStreamKey()}`,
+      data: {
+        ...query,
+        timeRange: {
+          from: range.from.toISOString(),
+          to: range.to.toISOString(),
+        },
+      },
+    })
+    .pipe(
+      takeWhile((evt) => {
+        if ('message' in evt && evt?.message) {
+          const frameState: SearchStreamingState = evt.message.data.values[2][0];
+          if (frameState === SearchStreamingState.Done || frameState === SearchStreamingState.Error) {
+            return false;
+          }
+        }
+        return true;
+      }, true)
+    )
+    .pipe(
+      map((evt) => {
+        if ('message' in evt && evt?.message) {
+          // Schema should be [traces, metrics, state, error]
+          const traces = evt.message.data.values[0][0];
+          const frameState: SearchStreamingState = evt.message.data.values[2][0];
+          const error = evt.message.data.values[3][0];
+
+          switch (frameState) {
+            case SearchStreamingState.Done:
+              state = LoadingState.Done;
+              break;
+            case SearchStreamingState.Streaming:
+              state = LoadingState.Streaming;
+              break;
+            case SearchStreamingState.Error:
+              throw new Error(error);
+          }
+
+          mergeFrames(frames, traces?.map(dataFrameFromJSON));
+        }
+        return {
+          data: frames,
+          state,
+        };
+      })
+    );
+}
+
+function mergeFrames(acc: DataFrame[], frames?: DataFrame[]): DataFrame[] {
+  frames?.forEach((frame) => {
+    const accFrame = acc.find((f) => f.name === frame.name);
+    if (accFrame) {
+      frame.fields.forEach((field) => {
+        const accField = accFrame.fields.find((f) => f.name === field.name);
+        if (accField) {
+          accField.values = accField.values.concat(field.values);
+        } else {
+          accFrame.fields.push(field);
+        }
+      });
+      const timeField = accFrame.fields.find((f) => f.type === FieldType.time);
+      if (timeField) {
+        const duplicatesMap = timeField.values.reduce((acc: Record<number, number[]>, value, index) => {
+          if (acc[value]) {
+            acc[value].push(index);
+          } else {
+            acc[value] = [index];
+          }
+          return acc;
+        }, {});
+
+        const indexesToRemove = Object.values(duplicatesMap)
+          .filter((indexes) => indexes.length > 1)
+          .map((indexes) => indexes[0]);
+        accFrame.fields.forEach((field) => {
+          field.values = field.values.filter((_, index) => !indexesToRemove.includes(index));
+        });
+      }
+    } else {
+      acc.push(frame);
+    }
+  });
+  return acc;
 }
 
 function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState, elapsedTime: number) {
