@@ -3561,11 +3561,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.9.6, @grafana/plugin-ui@npm:^0.9.3":
   version: 0.9.6
-  resolution: "@grafana/plugin-ui@npm:0.9.6"
-  dependencies:
-    "@hello-pangea/dnd": "npm:^17.0.0"
     lodash: "npm:^4.17.21"
     prismjs: "npm:^1.29.0"
     prompts: "npm:^2.4.2"
