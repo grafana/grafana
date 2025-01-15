@@ -388,7 +388,6 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 const (
 	ResourceIndex_Search_FullMethodName   = "/resource.ResourceIndex/Search"
 	ResourceIndex_GetStats_FullMethodName = "/resource.ResourceIndex/GetStats"
-	ResourceIndex_History_FullMethodName  = "/resource.ResourceIndex/History"
 )
 
 // ResourceIndexClient is the client API for ResourceIndex service.
@@ -401,8 +400,6 @@ type ResourceIndexClient interface {
 	Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error)
 	// Get the resource stats
 	GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error)
-	// Show resource history (and trash)
-	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 }
 
 type resourceIndexClient struct {
@@ -433,16 +430,6 @@ func (c *resourceIndexClient) GetStats(ctx context.Context, in *ResourceStatsReq
 	return out, nil
 }
 
-func (c *resourceIndexClient) History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(HistoryResponse)
-	err := c.cc.Invoke(ctx, ResourceIndex_History_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ResourceIndexServer is the server API for ResourceIndex service.
 // All implementations should embed UnimplementedResourceIndexServer
 // for forward compatibility
@@ -453,8 +440,6 @@ type ResourceIndexServer interface {
 	Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error)
 	// Get the resource stats
 	GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error)
-	// Show resource history (and trash)
-	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 }
 
 // UnimplementedResourceIndexServer should be embedded to have forward compatible implementations.
@@ -466,9 +451,6 @@ func (UnimplementedResourceIndexServer) Search(context.Context, *ResourceSearchR
 }
 func (UnimplementedResourceIndexServer) GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
-}
-func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
 }
 
 // UnsafeResourceIndexServer may be embedded to opt out of forward compatibility for this service.
@@ -518,24 +500,6 @@ func _ResourceIndex_GetStats_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ResourceIndex_History_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HistoryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResourceIndexServer).History(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ResourceIndex_History_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).History(ctx, req.(*HistoryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ResourceIndex_ServiceDesc is the grpc.ServiceDesc for ResourceIndex service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -550,10 +514,6 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStats",
 			Handler:    _ResourceIndex_GetStats_Handler,
-		},
-		{
-			MethodName: "History",
-			Handler:    _ResourceIndex_History_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
