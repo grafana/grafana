@@ -10,6 +10,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { getMessageFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
 import { AnnoKeyDashboardIsSnapshot, AnnoKeyDashboardNotFound } from 'app/features/apiserver/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
@@ -42,6 +43,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     uid: string | undefined,
     params?: UrlQueryMap
   ): Promise<T>;
+  abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
@@ -144,6 +146,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug);
+      // needed for the old architecture
+      // in scenes this is handled through loadSnapshot method
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv()
         .getSnapshot(slug)
@@ -213,6 +217,24 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
 
     return promise;
   }
+
+  loadSnapshot(slug: string): Promise<DashboardDTO> {
+    const promise = getDashboardSnapshotSrv()
+      .getSnapshot(slug)
+      .catch(() => {
+        return this._dashboardLoadFailed('Snapshot not found', true);
+      });
+
+    promise.then((result: DashboardDTO) => {
+      if (result.meta.dashboardNotFound !== true) {
+        impressionSrv.addDashboardImpression(result.dashboard.uid);
+      }
+
+      return result;
+    });
+
+    return promise;
+  }
 }
 
 export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAccessInfo<DashboardV2Spec>> {
@@ -257,13 +279,6 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
 
     if (type === 'script' && slug) {
       promise = this.loadScriptedDashboard(slug).then((r) => ResponseTransformers.ensureV2Response(r));
-    } else if (type === 'snapshot' && slug) {
-      promise = getDashboardSnapshotSrv()
-        .getSnapshot(slug)
-        .then((r) => ResponseTransformers.ensureV2Response(r))
-        .catch(() => {
-          return this._dashboardLoadFailed('Snapshot not found', true);
-        });
     } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
@@ -316,6 +331,26 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
     } else {
       throw new Error('Dashboard uid or slug required');
     }
+
+    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      if (result.metadata.annotations?.[AnnoKeyDashboardNotFound] !== true) {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      }
+
+      return result;
+    });
+
+    return promise;
+  }
+
+  loadSnapshot(slug: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    const promise = getDashboardSnapshotSrv()
+      .getSnapshot(slug)
+      .then((r) => ResponseTransformers.ensureV2Response(r))
+      .catch((e) => {
+        const msg = getMessageFromError(e);
+        throw new Error(`Failed to load snapshot: ${msg}`);
+      });
 
     promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
       if (result.metadata.annotations?.[AnnoKeyDashboardNotFound] !== true) {

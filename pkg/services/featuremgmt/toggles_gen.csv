@@ -51,7 +51,7 @@ faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
-pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false
+pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,true
 pluginsDetailsRightPanel,experimental,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
@@ -94,6 +94,7 @@ kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,fals
 kubernetesCliDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesRestore,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
+kubernetesFoldersServiceV2,experimental,@grafana/search-and-storage,false,false,false
 grafanaAPIServerTestingWithExperimentalAPIs,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -162,7 +163,6 @@ queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
-notificationBanner,GA,@grafana/grafana-frontend-platform,false,false,false
 dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
@@ -181,7 +181,6 @@ reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,fals
 enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,GA,@grafana/alerting-squad,false,true,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
-cloudwatchMetricInsightsCrossAccount,GA,@grafana/aws-datasources,false,false,true
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -205,7 +204,7 @@ pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,fals
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 prometheusUsesCombobox,experimental,@grafana/oss-big-tent,false,false,false
-userStorageAPI,experimental,@grafana/plugins-platform-backend,false,false,false
+userStorageAPI,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -230,3 +229,8 @@ lokiLabelNamesQueryApi,GA,@grafana/observability-logs,false,false,false
 investigationsBackend,experimental,@grafana/grafana-app-platform-squad,false,false,false
 k8SFolderCounts,experimental,@grafana/search-and-storage,false,false,false
 k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
+improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,false,false
+teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,false
+ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
+ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
+queryLibraryDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false

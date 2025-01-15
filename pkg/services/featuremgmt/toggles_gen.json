@@ -5,6 +5,34 @@
   "items": [
     {
       "metadata": {
+        "name": "ABTestFeatureToggleA",
+        "resourceVersion": "1736782112674",
+        "creationTimestamp": "2025-01-13T15:28:32Z"
+      },
+      "spec": {
+        "description": "Test feature toggle to see how cohorts could be set up AB testing",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "ABTestFeatureToggleB",
+        "resourceVersion": "1736782112674",
+        "creationTimestamp": "2025-01-13T15:28:32Z"
+      },
+      "spec": {
+        "description": "Test feature toggle to see how cohorts could be set up AB testing",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "accessActionSets",
         "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
@@ -869,6 +897,7 @@
         "name": "cloudwatchMetricInsightsCrossAccount",
         "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
+        "deletionTimestamp": "2025-01-10T15:06:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }
@@ -1803,14 +1832,29 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandling",
-        "resourceVersion": "1736255708514",
+        "resourceVersion": "1736440595516",
         "creationTimestamp": "2024-09-17T10:54:39Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-07 13:15:08.514525 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-09 16:36:35.516462 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enable improved support for OAuth and SAML external sessions in Grafana",
+        "description": "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "improvedExternalSessionHandlingSAML",
+        "resourceVersion": "1736440619329",
+        "creationTimestamp": "2025-01-09T16:33:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-09 16:36:59.329967 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
@@ -2033,6 +2077,18 @@
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesFoldersServiceV2",
+        "resourceVersion": "1735336477446",
+        "creationTimestamp": "2024-12-27T21:54:37Z"
+      },
+      "spec": {
+        "description": "Use the Folders Service V2, and route Folder Service requests to k8s",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
       }
@@ -2554,6 +2610,7 @@
         "name": "notificationBanner",
         "resourceVersion": "1727777007488",
         "creationTimestamp": "2024-05-13T09:32:34Z",
+        "deletionTimestamp": "2025-01-10T06:02:47Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-01 10:03:27.48823 +0000 UTC"
         }
@@ -2582,17 +2639,17 @@
     {
       "metadata": {
         "name": "onPremToCloudMigrations",
-        "resourceVersion": "1721693547668",
+        "resourceVersion": "1736458171023",
         "creationTimestamp": "2024-01-22T16:09:08Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-23 00:12:27.668899 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-09 21:29:31.023464 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.",
+        "description": "Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2830,15 +2887,15 @@
     {
       "metadata": {
         "name": "pluginsFrontendSandbox",
-        "resourceVersion": "1728388793917",
+        "resourceVersion": "1736502809108",
         "creationTimestamp": "2023-06-05T08:51:36Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-10-08 11:59:53.917243 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-10 09:53:29.108375 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the plugins frontend sandbox",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     },
@@ -3149,6 +3206,21 @@
       },
       "spec": {
         "description": "Enables Query Library feature in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryLibraryDashboards",
+        "resourceVersion": "1736850377404",
+        "creationTimestamp": "2025-01-14T10:24:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-14 10:26:17.404592 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Query Library feature in Dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
@@ -3551,6 +3623,18 @@
     },
     {
       "metadata": {
+        "name": "teamHttpHeadersMimir",
+        "resourceVersion": "1736763800062",
+        "creationTimestamp": "2025-01-13T10:23:20Z"
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1728565214224",
         "creationTimestamp": "2024-10-10T13:00:14Z"
@@ -3823,13 +3907,17 @@
     {
       "metadata": {
         "name": "userStorageAPI",
-        "resourceVersion": "1730204321785",
-        "creationTimestamp": "2024-10-29T12:18:41Z"
+        "resourceVersion": "1736438999910",
+        "creationTimestamp": "2024-10-29T12:18:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-09 16:09:59.910083 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the user storage API",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {

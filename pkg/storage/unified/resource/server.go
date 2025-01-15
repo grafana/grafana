@@ -29,6 +29,7 @@ import (
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
+	RepositoryIndexServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -371,7 +372,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	check := authz.CheckRequest{
-		Verb:      "create",
+		Verb:      utils.VerbCreate,
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -385,7 +386,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
-		check.Verb = "update"
+		check.Verb = utils.VerbUpdate
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -436,8 +437,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
+	// We only set name for update checks
+	if check.Verb == utils.VerbUpdate {
+		check.Name = key.Name
+	}
+
 	check.Folder = obj.GetFolder()
-	check.Name = key.Name
 	a, err := s.access.Check(ctx, user, check)
 	if err != nil {
 		return nil, AsErrorResult(err)
@@ -1073,9 +1078,12 @@ func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResp
 	return s.search.History(ctx, req)
 }
 
-// Origin implements ResourceServer.
-func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	return s.search.Origin(ctx, req)
+func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return s.search.ListRepositoryObjects(ctx, req)
+}
+
+func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return s.search.CountRepositoryObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

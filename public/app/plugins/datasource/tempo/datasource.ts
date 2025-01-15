@@ -54,7 +54,12 @@ import {
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
-import { formatTraceQLResponse, transformFromOTLP as transformFromOTEL, transformTrace } from './resultTransformer';
+import {
+  enhanceTraceQlMetricsResponse,
+  formatTraceQLResponse,
+  transformFromOTLP as transformFromOTEL,
+  transformTrace,
+} from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
@@ -607,7 +612,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const request = { ...options, targets: validTargets };
     return super.query(request).pipe(
       map((response) => {
-        return response;
+        return enhanceTraceQlMetricsResponse(response, this.instanceSettings);
       }),
       catchError((err) => {
         return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });

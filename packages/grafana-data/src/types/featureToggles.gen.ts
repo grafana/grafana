@@ -113,6 +113,7 @@ export interface FeatureToggles {
   kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
   kubernetesFolders?: boolean;
+  kubernetesFoldersServiceV2?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
@@ -181,7 +182,6 @@ export interface FeatureToggles {
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
-  notificationBanner?: boolean;
   dashboardRestore?: boolean;
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
@@ -200,7 +200,6 @@ export interface FeatureToggles {
   enableScopesInMetricsExplore?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
-  cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   alertingFilterV2?: boolean;
   dataplaneAggregator?: boolean;
@@ -249,4 +248,9 @@ export interface FeatureToggles {
   investigationsBackend?: boolean;
   k8SFolderCounts?: boolean;
   k8SFolderMove?: boolean;
+  improvedExternalSessionHandlingSAML?: boolean;
+  teamHttpHeadersMimir?: boolean;
+  ABTestFeatureToggleA?: boolean;
+  ABTestFeatureToggleB?: boolean;
+  queryLibraryDashboards?: boolean;
 }
