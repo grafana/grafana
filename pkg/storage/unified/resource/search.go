@@ -133,11 +133,6 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.A
 	return support, err
 }
 
-// History implements ResourceIndexServer.
-func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
-	return nil, fmt.Errorf("not implemented yet... likely should not be the search server")
-}
-
 func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
 	if req.NextPageToken != "" {
 		return &ListRepositoryObjectsResponse{
