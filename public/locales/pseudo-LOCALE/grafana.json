@@ -3218,6 +3218,7 @@
   },
   "table": {
     "container": {
+      "content": "Ŝĥőŵįŉģ ŧőő mäŉy čőľūmŉş įŉ ä şįŉģľę ŧäþľę mäy įmpäčŧ pęřƒőřmäŉčę äŉđ mäĸę đäŧä ĥäřđęř ŧő řęäđ. Cőŉşįđęř řęƒįŉįŉģ yőūř qūęřįęş.",
       "show-all-series": "Ŝĥőŵ äľľ čőľūmŉş",
       "show-only-series": "Ŝĥőŵįŉģ őŉľy {{MAX_NUMBER_OF_COLUMNS}} čőľūmŉş"
     }

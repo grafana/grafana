@@ -3218,6 +3218,7 @@
   },
   "table": {
     "container": {
+      "content": "Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.",
       "show-all-series": "Show all columns",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
     }
