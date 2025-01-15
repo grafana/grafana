@@ -1,1 +1,1 @@
-module: "github.com/grafana/grafana/apps/playlist/kinds"
+module: "playlist.grafana.app/kinds"

@@ -1,13 +1,13 @@
-package core
+package kinds
 
-externalName: {
+playlist: {
 	kind: "Playlist"
 	group: "playlist"
-	apiResource: {
-		groupOverride: "playlist.grafana.app"
-		mutation: operations:  ["create","update"]
-		validation: operations:  ["create","update"]
-	}
+  apiResource: {
+    groupOverride: "playlist.grafana.app"
+    mutation: operations:  ["create","update"]
+    validation: operations:  ["create","update"]
+  }
 	codegen: {
 		frontend: false
 		backend: true
@@ -29,13 +29,13 @@ externalName: {
 					//  - dashboard_by_uid: The value is the dashboard UID
 					value: string
 				}
-								
+
 				spec: {
 					title: string
 					interval: string
 					items: [...#Item]
 				}
-			}
+			},
 		}
 	}
 }
