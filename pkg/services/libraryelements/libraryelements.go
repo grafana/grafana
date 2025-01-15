@@ -36,7 +36,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 type Service interface {
 	CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
 	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
-	GetElementsForDashboard(c context.Context, dashboardID int64, dashboardUID string) (map[string]model.LibraryElementDTO, error) // remove dashboardID
+	GetElementsForDashboard(c context.Context, dashboardUID string) (map[string]model.LibraryElementDTO, error)
 	ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error
 	DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
@@ -67,8 +67,8 @@ func (l *LibraryElementService) GetElement(c context.Context, signedInUser ident
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
-func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64, dashboardUID string) (map[string]model.LibraryElementDTO, error) {
-	return l.getElementsForDashboardUID(c, dashboardID, dashboardUID)
+func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashboardUID string) (map[string]model.LibraryElementDTO, error) {
+	return l.getElementsForDashboardUID(c, dashboardUID)
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
