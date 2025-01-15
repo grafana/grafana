@@ -3327,6 +3327,7 @@
     },
     "metric-select": {
       "filter-by": "Filter by",
+      "native-histogram": "Native Histogram",
       "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
     },
