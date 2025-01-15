@@ -554,23 +554,16 @@ function getVariablesv1(vars: DashboardV2Spec['variables']): VariableModel[] {
 }
 
 function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): AnnotationQuery[] {
-  // @ts-expect-error
-  // TODO: fix to ensure that spec.query.spec is always a DataQuery
+  // @ts-expect-error target v2 query is not compatible with v1 target
   return annotations.map((a) => {
-    let query = a.spec.query || {};
-
-    if (typeof query === 'string') {
-      console.error('Query variable query is a string. It needs to extend DataQuery.');
-      query = {};
-    }
     return {
       name: a.spec.name,
       datasource: a.spec.datasource,
       enable: a.spec.enable,
       hide: a.spec.hide,
       iconColor: a.spec.iconColor,
-      builtIn: a.spec.builtIn,
-      target: a.spec.query?.spec,
+      builtIn: a.spec.builtIn ? 1 : 0,
+      target: a.spec.query,
       filter: a.spec.filter,
     };
   });
