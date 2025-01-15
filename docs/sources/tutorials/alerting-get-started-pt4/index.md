@@ -227,7 +227,7 @@ Now that we've introduced how templating works, let’s move on to the next step
 
    - Select TestData data source from the drop-down menu.
 
-     [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) is included in the demo environment. If you’re working in Grafana Cloud or your own local Grafana instance, you can add the data source through the Connections menu
+     [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) is included in the demo environment. If you’re working in Grafana Cloud or your own local Grafana instance, you can add the data source through the Connections menu.
 
    - From **Scenario** select **CSV Content**.
    - Copy in the following CSV data:
