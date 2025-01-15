@@ -1,34 +1,40 @@
-import { LogRowModel } from "@grafana/data";
+import { LogRowModel } from '@grafana/data';
+
+import { escapeUnescapedString } from '../../utils';
 
 export interface ProcessedLogModel extends LogRowModel {
   body: string;
 }
 
 interface PreProcessOptions {
-  wrapLogMessage: boolean;
+  wrap: boolean;
+  escape: boolean;
 }
 
-export const preProcessLogs = (logs: LogRowModel[], { wrapLogMessage}: PreProcessOptions): ProcessedLogModel[] => {
-  return logs.map(log => ({
-    ...log,
-    body: restructureLog(log.entry, false, wrapLogMessage, false),
-  }));
-}
+export const preProcessLogs = (logs: LogRowModel[], { wrap, escape }: PreProcessOptions): ProcessedLogModel[] => {
+  return logs.map((log) => restructureLog(log, { wrap, escape, prettify: false, expanded: false }));
+};
 
+interface RestructureLogOptions extends PreProcessOptions {
+  expanded: boolean;
+  prettify: boolean;
+}
 const restructureLog = (
-  line: string,
-  prettifyLogMessage: boolean,
-  wrapLogMessage: boolean,
-  expanded: boolean
-): string => {
-  if (prettifyLogMessage) {
+  log: LogRowModel,
+  { prettify, wrap, expanded, escape }: RestructureLogOptions
+): ProcessedLogModel => {
+  const processedLog: ProcessedLogModel = { ...log, body: log.entry };
+  if (prettify) {
     try {
-      return JSON.stringify(JSON.parse(line), undefined, 2);
+      processedLog.body = JSON.stringify(JSON.parse(processedLog.body), undefined, 2);
     } catch (error) {}
   }
-  // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
-  if (!wrapLogMessage && !expanded) {
-    line = line.replace(/(\r\n|\n|\r)/g, '');
+  if (escape && log.hasUnescapedContent) {
+    processedLog.body = escapeUnescapedString(processedLog.body);
   }
-  return line;
+  // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
+  if (!wrap && !expanded) {
+    processedLog.body = processedLog.body.replace(/(\r\n|\n|\r)/g, '');
+  }
+  return processedLog;
 };
