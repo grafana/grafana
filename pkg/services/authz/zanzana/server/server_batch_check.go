@@ -4,13 +4,14 @@ import (
 	"context"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.BatchCheck")
+	ctx, span := tracer.Start(ctx, "server.BatchCheck")
 	defer span.End()
 
 	if err := authorize(ctx, r.GetNamespace()); err != nil {
@@ -26,10 +27,15 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 		return nil, err
 	}
 
+	contextuals, err := s.getContextuals(ctx, r.GetSubject())
+	if err != nil {
+		return nil, err
+	}
+
 	groupResourceAccess := make(map[string]bool)
 
 	for _, item := range r.GetItems() {
-		res, err := s.batchCheckItem(ctx, r, item, store, groupResourceAccess)
+		res, err := s.batchCheckItem(ctx, r, item, contextuals, store, groupResourceAccess)
 		if err != nil {
 			return nil, err
 		}
@@ -50,6 +56,7 @@ func (s *Server) batchCheckItem(
 	ctx context.Context,
 	r *authzextv1.BatchCheckRequest,
 	item *authzextv1.BatchCheckItem,
+	contextuals *openfgav1.ContextualTupleKeys,
 	store *storeInfo,
 	groupResourceAccess map[string]bool,
 ) (*authzv1.CheckResponse, error) {
@@ -61,7 +68,7 @@ func (s *Server) batchCheckItem(
 
 	allowed, ok := groupResourceAccess[groupResource]
 	if !ok {
-		res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, store)
+		res, err := s.checkGroupResource(ctx, r.GetSubject(), relation, resource, contextuals, store)
 		if err != nil {
 			return nil, err
 		}
@@ -75,8 +82,8 @@ func (s *Server) batchCheckItem(
 	}
 
 	if resource.IsGeneric() {
-		return s.checkGeneric(ctx, r.GetSubject(), relation, resource, store)
+		return s.checkGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	}
 
-	return s.checkTyped(ctx, r.GetSubject(), relation, resource, store)
+	return s.checkTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
 }
