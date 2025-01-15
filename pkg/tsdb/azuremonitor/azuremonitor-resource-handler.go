@@ -33,11 +33,12 @@ func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(statusCode)
 
+	// Set error response to initial error message
+	errorBody := map[string]string{"error": message}
+
 	// Attempt to locate JSON portion in error message
 	re := regexp.MustCompile(`\{.*?\}`)
 	jsonPart := re.FindString(message)
-	errorBody := map[string]string{"error": message}
-
 	if jsonPart != "" {
 		var jsonData map[string]interface{}
 		if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
