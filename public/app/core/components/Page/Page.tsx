@@ -77,6 +77,7 @@ export const Page: PageType = ({
 
       {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
 
+      {/* PR TODO: will probably put a .pageContent div around this */}
       {children}
     </div>
   );
@@ -100,35 +101,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.up('md')]: {
         padding: theme.spacing(4),
       },
-    }),
-    pageContent: css({
-      label: 'Page-content',
-      flexGrow: 1,
-    }),
-    primaryBg: css({
-      background: theme.colors.background.primary,
-    }),
-    pageInner: css({
-      label: 'Page-inner',
-      padding: theme.spacing(2),
-      borderBottom: 'none',
-      background: theme.colors.background.primary,
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      margin: theme.spacing(0, 0, 0, 0),
-
-      [theme.breakpoints.up('md')]: {
-        padding: theme.spacing(4),
-      },
-    }),
-    canvasContent: css({
-      label: 'Page-canvasContent',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: theme.spacing(2),
-      flexBasis: '100%',
-      flexGrow: 1,
     }),
   };
 };

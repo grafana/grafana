@@ -20,7 +20,6 @@ import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { SingleTopBarActions } from './TopBar/SingleTopBarActions';
-import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props extends PropsWithChildren<{}> {}
 
@@ -129,18 +128,6 @@ export function AppChrome({ children }: Props) {
 
 const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
   return {
-    content: css({
-      label: 'AppChrome-Content',
-      display: 'flex',
-      flexDirection: 'column',
-      paddingTop: hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
-      flexGrow: 1,
-      height: 'auto',
-    }),
-    contentChromeless: css({
-      label: 'AppChrome-contentChromeless',
-      paddingTop: 0,
-    }),
     dockedMegaMenu: css({
       label: 'AppChrome-dockedMegaMenu',
       background: theme.colors.background.primary,
@@ -155,16 +142,6 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       [theme.breakpoints.up('xl')]: {
         display: 'block',
       },
-    }),
-    scopesDashboardsContainer: css({
-      label: 'AppChrome-scopesDashboardsContainer',
-      position: 'fixed',
-      height: `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)`,
-      zIndex: 1,
-    }),
-    scopesDashboardsContainerDocked: css({
-      label: 'AppChrome-scopesDashboardsContainerDocked',
-      left: MENU_WIDTH,
     }),
 
     topNav: css({
@@ -182,12 +159,6 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       left: MENU_WIDTH,
     }),
 
-    panes: css({
-      label: 'AppChrome-panes',
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-    }),
     pageContainerMenuDocked: css({
       label: 'AppChrome-pageContainerMenuDocked',
       paddingLeft: MENU_WIDTH,

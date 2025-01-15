@@ -23,7 +23,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
       MsOverflowStyle: 'scrollbar',
       WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
       boxSizing: 'border-box',
-      // height: '100%',
       fontSize: `${theme.typography.htmlFontSize}px`,
       fontFamily: theme.typography.fontFamily,
       lineHeight: theme.typography.body.lineHeight,
@@ -35,9 +34,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     body: {
-      // height: '100%',
-      // width: '100%',
-      // position: 'unset',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
       // react select tries prevent scrolling by setting overflow/padding-right on the body
