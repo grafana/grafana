@@ -835,6 +835,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		var folderUIDs []struct {
 			ID int64 `xorm:"id"`
 		}
+		//
 		err := session.SQL("SELECT id from dashboard WHERE uid=? AND org_id=? AND is_folder=?", folderUID, signedInUser.GetOrgID(), l.SQLStore.GetDialect().BooleanStr(true)).Find(&folderUIDs)
 		if err != nil {
 			return err
