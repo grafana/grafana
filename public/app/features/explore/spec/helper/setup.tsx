@@ -76,6 +76,7 @@ export function setupExplore(options?: SetupOptions): {
   setBackendSrv({
     datasourceRequest: jest.fn().mockRejectedValue(undefined),
     delete: jest.fn().mockRejectedValue(undefined),
+    chunked: jest.fn().mockRejectedValue(undefined),
     fetch: jest.fn().mockImplementation((req) => {
       let data: Record<string, string | object | number> = {};
       if (req.url.startsWith('/api/datasources/correlations') && req.method === 'GET') {
