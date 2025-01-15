@@ -24,7 +24,7 @@ import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper'
 import { StyleEditor } from '../../editor/StyleEditor';
 import { prepareSVG, textMarker } from '../../style/markers';
 import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
-import { getDisplacement, getStyleConfigState } from '../../style/utils';
+import { getDisplacement, getStyleConfigState, styleUsesText } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 
 // Configuration options for Circle overlays
@@ -79,7 +79,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     //TODO make this more robust and handle webgl supported shapes: circle, square, triangle, RegularShape
     const src = await prepareSVG(getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''));
 
-    const vectorStyle = {
+    const symbolStyle = {
       symbol: {
         symbolType: 'image',
         size: ['get', 'size', 'number'],
@@ -90,12 +90,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         src,
       },
     };
+    const hasText = styleUsesText(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
-    const vectorLayer = new WebGLPointsLayer({ source, style: vectorStyle });
+    const symbolLayer = new WebGLPointsLayer({ source, style: symbolStyle });
     const textLayer = new VectorLayer({ source });
     const layers = new LayerGroup({
-      layers: [vectorLayer, textLayer],
+      layers: hasText ? [symbolLayer, textLayer] : [symbolLayer],
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
@@ -122,7 +123,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               styleConfig: style,
               size: style.dims?.size,
               layerName: options.name,
-              layer: vectorLayer,
+              layer: symbolLayer,
             });
           }
 
@@ -160,8 +161,10 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             feature.setProperties({ offsetY: displacement[1] });
 
             // Set style to be used by VectorLayer (text only)
-            const textStyle = textMarker(values);
-            feature.setStyle(textStyle);
+            if (hasText) {
+              const textStyle = textMarker(values);
+              feature.setStyle(textStyle);
+            }
           });
           break; // Only the first frame for now!
         }
