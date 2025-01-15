@@ -28,32 +28,29 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
     throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
   }
 
-  let lines = 1;
-  let line = '';
-  let chars = text.split('');
-  for (let i = 0; i < chars.length; i++) {
-    // chars[i+1] !== undefined means the \n is not the last character
-    if (chars[i] === '\n' && chars[i + 1] !== undefined) {
-      lines += 1;
-      line = '';
-      continue;
-    }
-
-    const testLine = line + chars[i];
-    const metrics = ctx.measureText(testLine);
-
-    if (metrics.width >= maxWidth) {
-      lines += 1;
-      line = chars[i];
-    } else {
-      line = testLine;
+  let logLines = 0;
+  const charWidth = ctx.measureText('a').width;
+  let logLineCharsWidth = Math.round(maxWidth / charWidth);
+  const textLines = text.split('\n');
+  for (const textLine of textLines) {
+    for (let start = 0; start < textLine.length; ) {
+      let testLogLine: string;
+      let metrics: TextMetrics;
+      let delta = 0;
+      do {
+        testLogLine = textLine.substring(start, start + logLineCharsWidth - delta);
+        metrics = ctx.measureText(testLogLine);
+        delta += 1;
+      } while (metrics.width >= maxWidth);
+      logLines += 1;
+      start += testLogLine.length;
     }
   }
 
-  const height = lines * lineHeight;
+  const height = logLines * lineHeight;
 
   return {
-    lines,
+    lines: logLines,
     height,
   };
 }
