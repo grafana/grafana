@@ -31,16 +31,15 @@ export const LogLine = ({ log, style, onOverflow, wrapLogMessage }: Props) => {
   }, [log.body, onOverflow]);
 
   let optionStyles = '';
-  if (!wrapLogMessage) {
-    optionStyles += ` ${styles.unwrappedLogLine}`;
-  }
   if (overflows) {
     optionStyles += ` ${styles.overflows}`;
   }
 
   return (
     <div style={style} className={`${styles.logLine}${optionStyles}`} ref={onOverflow ? logLineRef : undefined}>
-      {log.body}
+      <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
+        {log.body}
+      </div>
     </div>
   );
 };
@@ -59,5 +58,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   unwrappedLogLine: css({
     whiteSpace: 'pre',
+  }),
+  wrappedLogLine: css({
+    whiteSpace: 'pre-wrap',
   }),
 });
