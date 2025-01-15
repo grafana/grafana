@@ -283,7 +283,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:        "should authenticate as user using wildcard namespace for access token",
+			name:        "should authenticate as user in the user namespace",
 			accessToken: &validAccessTokenClaimsWildcard,
 			idToken:     &validIDTokenClaims,
 			orgID:       1,
@@ -293,7 +293,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaims,
-				Namespace:         "*",
+				Namespace:         "default",
 				AuthenticatedBy:   "extendedjwt",
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
