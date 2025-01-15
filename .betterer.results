@@ -414,9 +414,6 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/components/MetricCombobox.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/components/Combobox/Combobox\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "packages/grafana-prometheus/src/querybuilder/components/MetricSelect.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
