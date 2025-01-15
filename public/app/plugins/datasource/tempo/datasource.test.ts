@@ -839,6 +839,7 @@ describe('Tempo service graph view', () => {
         {
           url: '',
           title: 'View traces',
+          targetBlank: false,
           onBuildUrl: expect.any(Function),
         },
       ],
@@ -921,6 +922,7 @@ describe('Tempo service graph view', () => {
         {
           url: '',
           title: 'View traces',
+          targetBlank: false,
           onBuildUrl: expect.any(Function),
         },
       ],
@@ -1445,6 +1447,7 @@ const serviceGraphLinks = [
   {
     url: '',
     title: 'View traces',
+    targetBlank: false,
     onBuildUrl: expect.any(Function),
   },
 ];
