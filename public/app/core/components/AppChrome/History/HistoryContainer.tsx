@@ -54,7 +54,6 @@ export function HistoryContainer() {
         iconOnly
         icon="history"
         aria-label={t('nav.history-container.drawer-tittle', 'History')}
-        variant={showHistoryDrawer ? 'active' : 'default'}
       />
       <NavToolbarSeparator className={styles.separator} />
       {/* {showHistoryDrawer && <HistoryDrawer />} */}
