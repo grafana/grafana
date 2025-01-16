@@ -65,7 +65,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
               : undefined;
 
           const href = createUrl(
-            `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
+            `/grafana-app/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
             { returnTo: returnTo ?? '' }
           );
           if (alertingRule) {
