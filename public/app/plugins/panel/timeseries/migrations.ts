@@ -1,4 +1,4 @@
-import {isNil, isNumber, isString, omitBy, pickBy} from 'lodash';
+import { isNil, isNumber, isString, omitBy, pickBy } from 'lodash';
 
 import {
   ConfigOverrideRule,
@@ -35,16 +35,16 @@ import {
   TooltipDisplayMode,
   VisibilityMode,
 } from '@grafana/schema';
-import {TimeRegionConfig} from 'app/core/utils/timeRegions';
-import {getDashboardSrv} from 'app/features/dashboard/services/DashboardSrv';
-import {getTimeSrv} from 'app/features/dashboard/services/TimeSrv';
-import {DashboardAnnotationsDataLayer} from 'app/features/dashboard-scene/scene/DashboardAnnotationsDataLayer';
-import {DashboardScene} from 'app/features/dashboard-scene/scene/DashboardScene';
-import {dashboardSceneGraph} from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
-import {GrafanaQuery, GrafanaQueryType} from 'app/plugins/datasource/grafana/types';
+import { TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DashboardAnnotationsDataLayer } from 'app/features/dashboard-scene/scene/DashboardAnnotationsDataLayer';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import {defaultGraphConfig} from './config';
-import {Options} from './panelcfg.gen';
+import { defaultGraphConfig } from './config';
+import { Options } from './panelcfg.gen';
 
 let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 

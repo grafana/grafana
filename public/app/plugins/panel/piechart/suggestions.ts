@@ -1,8 +1,8 @@
-import {VisualizationSuggestionsBuilder} from '@grafana/data';
-import {LegendDisplayMode, LegendPlacement} from '@grafana/schema';
-import {SuggestionName} from 'app/types/suggestions';
+import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { SuggestionName } from 'app/types/suggestions';
 
-import {Options, PieChartLabels, PieChartType} from './panelcfg.gen';
+import { Options, PieChartLabels, PieChartType } from './panelcfg.gen';
 
 export class PieChartSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

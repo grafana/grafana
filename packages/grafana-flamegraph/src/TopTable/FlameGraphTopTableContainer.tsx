@@ -1,6 +1,7 @@
-import { css } from '@emotion/css';
-import { memo, useMemo, useState } from 'react';
+import {css} from '@emotion/css';
+import {memo, useMemo, useState} from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { FieldTextAlignment } from '@grafana/schema'
 
 import {
   applyFieldOverrides,
@@ -22,10 +23,10 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
-import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
-import { ColorScheme, ColorSchemeDiff, TableData } from '../types';
+import {diffColorBlindColors, diffDefaultColors} from '../FlameGraph/colors';
+import {FlameGraphDataContainer} from '../FlameGraph/dataTransform';
+import {TOP_TABLE_COLUMN_WIDTH} from '../constants';
+import {ColorScheme, ColorSchemeDiff, TableData} from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -239,7 +240,7 @@ function buildTableDataFrame(
 function createNumberField(name: string, unit?: string): Field {
   const tableFieldOptions: TableFieldOptions = {
     width: TOP_TABLE_COLUMN_WIDTH,
-    align: 'auto',
+    align: FieldTextAlignment.Auto,
     inspect: false,
     cellOptions: { type: TableCellDisplayMode.Auto },
   };
@@ -284,7 +285,7 @@ function createActionField(
     width: actionColumnWidth,
     hideHeader: true,
     inspect: false,
-    align: 'auto',
+    align: FieldTextAlignment.Auto,
     cellOptions: options,
   };
 

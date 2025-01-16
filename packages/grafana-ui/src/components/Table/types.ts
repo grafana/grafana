@@ -18,8 +18,6 @@ import { TableStyles } from './styles';
 
 export {
   type FieldTextAlignment,
-  TableCellBackgroundDisplayMode,
-  TableCellDisplayMode,
   type TableAutoCellOptions,
   type TableSparklineCellOptions,
   type TableBarGaugeCellOptions,

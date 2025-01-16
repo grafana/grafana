@@ -1,8 +1,8 @@
-import {VisualizationSuggestionsBuilder} from '@grafana/data';
-import {GraphDrawStyle, GraphFieldConfig, LegendDisplayMode, LegendPlacement} from '@grafana/schema';
-import {SuggestionName} from 'app/types/suggestions';
+import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import { GraphDrawStyle, GraphFieldConfig, LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { SuggestionName } from 'app/types/suggestions';
 
-import {Options} from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export class TrendSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
