@@ -176,8 +176,9 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 
 	case provisioning.JobActionExport:
 		exporter := &ExportWorker{
-			repo:       repo,
-			replicator: replicator,
+			repo:           repo,
+			replicator:     replicator,
+			legacyExporter: g.legacyExporter,
 		}
 		return exporter.Process(ctx, job)
 

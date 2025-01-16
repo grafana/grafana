@@ -72,7 +72,7 @@ func (w *ExportWorker) Process(ctx context.Context, job provisioning.Job) (*prov
 
 // This creates an empty repo
 func (w *ExportWorker) newEmptyRepo() (string, error) {
-	rootDir, err := os.MkdirTemp("grafana-provisioning", "export")
+	rootDir, err := os.MkdirTemp("", "grafana-provisioning-export-")
 	if err != nil {
 		return "", err
 	}

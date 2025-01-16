@@ -105,7 +105,8 @@ func (ch *commitHelper) add(opts commitOptions) error {
 	}
 
 	copts := &git.CommitOptions{
-		Author: &sig,
+		Author:            &sig,
+		AllowEmptyCommits: true, // ??
 	}
 
 	ch.broadcast(opts.body[0].fpath)
