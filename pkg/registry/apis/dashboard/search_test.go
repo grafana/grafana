@@ -94,7 +94,3 @@ func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequ
 func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
 	return nil, nil
 }
-
-func (m *MockClient) History(ctx context.Context, in *resource.HistoryRequest, opts ...grpc.CallOption) (*resource.HistoryResponse, error) {
-	return nil, nil
-}
