@@ -23,6 +23,12 @@ $(BRA): $(BINGO_DIR)/bra.mod
 	@echo "(re)installing $(GOBIN)/bra-v0.0.0-20200517080246-1e3013ecaff8"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=bra.mod -o=$(GOBIN)/bra-v0.0.0-20200517080246-1e3013ecaff8 "github.com/unknwon/bra"
 
+COG := $(GOBIN)/cog-v0.0.15
+$(COG): $(BINGO_DIR)/cog.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/cog-v0.0.15"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=cog.mod -o=$(GOBIN)/cog-v0.0.15 "github.com/grafana/cog/cmd/cli"
+
 CUE := $(GOBIN)/cue-v0.5.0
 $(CUE): $(BINGO_DIR)/cue.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

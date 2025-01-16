@@ -194,10 +194,9 @@ func (a *alertRule) Status() ngmodels.RuleStatus {
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
 func (a *alertRule) Eval(eval *Evaluation) (bool, *Evaluation) {
-	if a.key != eval.rule.GetKeyWithGroup() {
+	if a.key.AlertRuleKey != eval.rule.GetKey() {
 		// Make sure that rule has the same key. This should not happen
-		a.logger.Error("Invalid rule sent for evaluating. Skipping", "ruleKeyToEvaluate", eval.rule.GetKey().String())
-		return false, eval
+		panic(fmt.Sprintf("Invalid rule sent for evaluating. Expected rule key %s, got %s", a.key.AlertRuleKey, eval.rule.GetKey()))
 	}
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *Evaluation
@@ -315,6 +314,7 @@ func (a *alertRule) Run() error {
 						attribute.String("rule_fingerprint", fpStr),
 						attribute.String("tick", utcTick),
 					))
+					logger := logger.FromContext(tracingCtx)
 
 					// Check before any execution if the context was cancelled so that we don't do any evaluations.
 					if tracingCtx.Err() != nil {

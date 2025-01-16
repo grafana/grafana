@@ -134,6 +134,4 @@ Grafana Alerting is based on the Prometheus model for designing alerting systems
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-Grafana uses a custom Alertmanager to manage and deliver alert notifications, as detailed in this guide. This custom Alertmanager extends the capabilities of the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/).
-
-If you already run a Prometheus Alertmanager instance, you can configure Grafana Alerting to forward alerts to your [external Alertmanager for handling notifications](ref:configure-alertmanager).
+Grafana provides a custom Alertmanager, extending the Prometheus Alertmanager, to manage and deliver alert notifications. If you run a Prometheus or Mimir Alertmanager, you can configure Grafana Alerting to manage them and handle notifications for Grafana-managed alerts. For details, refer to [configure Alertmanagers](ref:configure-alertmanager).

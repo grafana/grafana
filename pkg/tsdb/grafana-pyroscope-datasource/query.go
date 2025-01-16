@@ -52,8 +52,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		return response
 	}
 
-	profileTypeId := depointerizer(qm.ProfileTypeId)
-	labelSelector := depointerizer(qm.LabelSelector)
+	profileTypeId := qm.ProfileTypeId
+	labelSelector := qm.LabelSelector
 
 	responseMutex := sync.Mutex{}
 	g, gCtx := errgroup.WithContext(ctx)
@@ -453,13 +453,4 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		frames = append(frames, frame)
 	}
 	return frames
-}
-
-func depointerizer[T any](v *T) T {
-	var emptyValue T
-	if v != nil {
-		emptyValue = *v
-	}
-
-	return emptyValue
 }
