@@ -39,10 +39,13 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   }
 
   public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
+    const finalOpts = opts || {};
+    finalOpts.labelSelector = this.parseListOptionsSelector(finalOpts?.labelSelector);
+    finalOpts.fieldSelector = this.parseListOptionsSelector(finalOpts?.fieldSelector);
     return getBackendSrv()
       .chunked({
-        url: opts?.name ? `${this.url}/${opts?.name}` : this.url,
-        params: opts,
+        url: finalOpts.name ? `${this.url}/${finalOpts.name}` : this.url,
+        params: finalOpts,
       })
       .pipe(
         switchMap((response) => {
