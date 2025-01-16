@@ -66,6 +66,7 @@ describe('TrailStore', () => {
           'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'start',
         description: 'Test',
@@ -80,6 +81,7 @@ describe('TrailStore', () => {
           'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -228,6 +230,7 @@ describe('TrailStore', () => {
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'start',
         description: 'Test',
@@ -242,6 +245,7 @@ describe('TrailStore', () => {
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -256,6 +260,7 @@ describe('TrailStore', () => {
           'var-ds': 'ds',
           'var-filters': [],
           refresh: '',
+          nativeHistogramMetric: '',
         },
         type: 'metric',
         description: 'Test',
@@ -506,6 +511,7 @@ describe('TrailStore', () => {
           {
             urlValues: {
               metric: 'bookmarked_metric',
+              nativeHistogramMetric: '',
               from: 'now-1h',
               to: 'now',
               timezone,
@@ -603,6 +609,7 @@ describe('TrailStore', () => {
                   'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'start',
                 description: 'Test',
@@ -616,6 +623,7 @@ describe('TrailStore', () => {
                   'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'time',
                 description: 'Test',
@@ -655,6 +663,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'start',
               },
@@ -666,6 +675,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'time',
               },
@@ -677,6 +687,7 @@ describe('TrailStore', () => {
                   'var-ds': 'prom-mock',
                   'var-filters': [],
                   refresh: '',
+                  nativeHistogramMetric: '',
                 },
                 type: 'metric',
               },
@@ -713,6 +724,7 @@ describe('TrailStore', () => {
             history: [
               {
                 urlValues: {
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
                   timezone,
@@ -728,6 +740,7 @@ describe('TrailStore', () => {
               {
                 urlValues: {
                   metric: 'bookmarked_metric',
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
                   timezone,
@@ -743,6 +756,7 @@ describe('TrailStore', () => {
               {
                 urlValues: {
                   metric: 'some_other_metric',
+                  nativeHistogramMetric: '',
                   from: 'now-1h',
                   to: 'now',
                   timezone,
@@ -766,6 +780,7 @@ describe('TrailStore', () => {
           {
             urlValues: {
               metric: 'bookmarked_metric',
+              nativeHistogramMetric: '',
               from: 'now-1h',
               to: 'now',
               timezone,
