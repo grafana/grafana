@@ -830,7 +830,7 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 }
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
-func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error { //
+func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
