@@ -22,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
-	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -36,7 +34,7 @@ const zanzanaAudience = "zanzana"
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
 func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return zclient.NewNoop(), nil
+		return zanzana.NewNoopClient(), nil
 	}
 
 	logger := log.New("zanzana")
@@ -84,12 +82,12 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		openfga, err := zserver.NewOpenFGA(cfg.ZanzanaServer, store, logger)
+		openfga, err := zanzana.NewOpenFGAServer(cfg.ZanzanaServer, store, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zserver.NewAuthzServer(cfg.ZanzanaServer, openfga)
+		srv, err := zanzana.NewServer(cfg.ZanzanaServer, openfga, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -156,12 +154,12 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	openfga, err := zserver.NewOpenFGA(z.cfg.ZanzanaServer, store, z.logger)
+	openfga, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	srv, err := zserver.NewAuthzServer(z.cfg.ZanzanaServer, openfga)
+	srv, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfga, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -219,13 +217,17 @@ func (z *Zanzana) start(ctx context.Context) error {
 
 func (z *Zanzana) running(ctx context.Context) error {
 	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
-		go func() {
-			z.logger.Info("Starting OpenFGA HTTP server")
-			err := zserver.StartOpenFGAHttpSever(z.cfg.ZanzanaServer, z.handle, z.logger)
-			if err != nil {
-				z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
-			}
-		}()
+		srv, err := zanzana.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
+		if err != nil {
+			z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
+		} else {
+			go func() {
+				z.logger.Info("Starting OpenFGA HTTP server")
+				if err != srv.ListenAndServe() {
+					z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
+				}
+			}()
+		}
 	}
 
 	// Run is blocking so we can just run it here
