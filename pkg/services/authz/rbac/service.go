@@ -51,7 +51,7 @@ type Service struct {
 	sf *singleflight.Group
 
 	// Cache for user permissions, user team memberships and user basic roles
-	cache        remotecache.CacheStorage
+	cache        remotecache.CacheStorage // TODO: Should I use authlib cache.Cache
 	idTTL        time.Duration
 	permTTL      time.Duration
 	teamTTL      time.Duration

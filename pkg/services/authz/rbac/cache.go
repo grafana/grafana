@@ -41,6 +41,7 @@ func folderCacheKey(namespace string) string {
 func (s *Service) getUserPermissionsFromCache(ctx context.Context, key string) (map[string]bool, bool) {
 	cached, err := s.cache.Get(ctx, key)
 	if err != nil {
+		// TODO: Should I use cache.ErrNotFound instead?
 		if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
 			s.logger.Warn("Failed to get user permissions from cache", "error", err)
 		}
