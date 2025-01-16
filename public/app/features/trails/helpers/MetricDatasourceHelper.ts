@@ -4,10 +4,11 @@ import {
   DataSourceGetTagValuesOptions,
   MetricFindValue,
 } from '@grafana/data';
-import PromQlLanguageProvider, {
+import {
   PrometheusDatasource,
   PromMetricsMetadata,
   PromMetricsMetadataItem,
+  PromQlLanguageProvider,
   PromQuery,
 } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
