@@ -4,6 +4,8 @@ import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
 import { getFocusStyles } from '../mixins';
 
+import { createGlobalCssVars } from './globalCssVariables';
+
 export function getElementStyles(theme: GrafanaTheme2) {
   return css({
     '*, *::before, *::after': {
@@ -32,6 +34,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     ':root': {
       colorScheme: theme.colors.mode,
+      ...createGlobalCssVars(theme),
     },
 
     body: {
