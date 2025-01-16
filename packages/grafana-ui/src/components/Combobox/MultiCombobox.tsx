@@ -57,8 +57,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           ? t('multicombobox.all.title', 'All')
           : t('multicombobox.all.title-filtered', 'All (filtered)'),
       // Type casting needed to make this work when T is a number
-      value: ALL_OPTION_VALUE as unknown as T,
-    };
+      value: ALL_OPTION_VALUE,
+    } as ComboboxOption<T>;
   }, [inputValue]);
   const getOptionsToSet = useCallback(() => {
     return isAsync ? [] : enableAllOption ? [allOptionItem, ...options] : options;
@@ -287,7 +287,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                             e.stopPropagation();
                           }}
                         />
-                        <OptionListItem option={item} id={id} />
+                        <OptionListItem
+                          label={
+                            isAll
+                              ? (item.label ?? item.value.toString()) +
+                                (isAll && inputValue !== '' ? ` (${items.length - 1})` : '')
+                              : (item.label ?? item.value.toString())
+                          }
+                          description={item?.description}
+                          id={id}
+                        />
                       </Stack>
                     </li>
                   );
