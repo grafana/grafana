@@ -174,20 +174,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   const yAxisWidth = frame.fields[0].config.custom.axisWidth;
 
-  if (yAxisWidth === undefined || yAxisWidth !== 0) {
-    builder.addAxis({
-      scaleKey: FIXED_UNIT, // y
-      isTime: false,
-      placement: AxisPlacement.Left,
-      splits: coreConfig.ySplits,
-      values: coreConfig.yValues,
-      grid: { show: false },
-      ticks: { show: false },
-      gap: 16,
-      theme,
-      size: frame.fields[0].config.custom.axisWidth,
-    });
-  }
+  builder.addAxis({
+    scaleKey: FIXED_UNIT, // y
+    isTime: false,
+    placement: AxisPlacement.Left,
+    splits: coreConfig.ySplits,
+    values: yAxisWidth === 0 ? (u, splits) => splits.map((v) => null) : coreConfig.yValues,
+    grid: { show: false },
+    ticks: { show: false },
+    gap: yAxisWidth === 0 ? 0 : 16,
+    theme,
+    size: yAxisWidth,
+  });
 
   let seriesIndex = 0;
 
