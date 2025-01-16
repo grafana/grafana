@@ -71,7 +71,7 @@ func (s *Service) setUserPermissionsToCache(ctx context.Context, key string, use
 		return
 	}
 
-	err = s.cache.Set(ctx, key, buf.Bytes(), s.permTTL)
+	err = s.cache.Set(ctx, key, buf.Bytes(), shortCacheTTL)
 	if err != nil {
 		s.logger.Warn("Failed to set user permissions to cache", "error", err)
 	}
@@ -108,7 +108,7 @@ func (s *Service) setUserIdentifiersToCache(ctx context.Context, key string, ide
 		return
 	}
 
-	err = s.cache.Set(ctx, key, buf.Bytes(), s.idTTL)
+	err = s.cache.Set(ctx, key, buf.Bytes(), longCacheTTL)
 	if err != nil {
 		s.logger.Warn("Failed to set user identifiers to cache", "error", err)
 	}
@@ -146,7 +146,7 @@ func (s *Service) setUserTeamsToCache(ctx context.Context, key string, teams []i
 		return
 	}
 
-	err = s.cache.Set(ctx, key, buf.Bytes(), s.teamTTL)
+	err = s.cache.Set(ctx, key, buf.Bytes(), shortCacheTTL)
 	if err != nil {
 		s.logger.Warn("Failed to set user teams to cache", "error", err)
 	}
@@ -184,7 +184,7 @@ func (s *Service) setUserBasicRoleToCache(ctx context.Context, key string, basic
 		return
 	}
 
-	err = s.cache.Set(ctx, key, buf.Bytes(), s.basicRoleTTL)
+	err = s.cache.Set(ctx, key, buf.Bytes(), longCacheTTL)
 	if err != nil {
 		s.logger.Warn("Failed to set user basic role to cache", "error", err)
 	}
@@ -222,7 +222,7 @@ func (s *Service) setFolderToCache(ctx context.Context, key string, folder map[s
 		return
 	}
 
-	err = s.cache.Set(ctx, key, buf.Bytes(), s.folderTTL)
+	err = s.cache.Set(ctx, key, buf.Bytes(), shortCacheTTL)
 	if err != nil {
 		s.logger.Warn("Failed to set folder to cache", "error", err)
 	}

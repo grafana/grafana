@@ -645,10 +645,6 @@ func setupService() *Service {
 		store:         &fakeStore{},
 		identityStore: &fakeIdentityStore{},
 		sf:            new(singleflight.Group),
-		permTTL:       1 * time.Minute,
-		teamTTL:       1 * time.Minute,
-		basicRoleTTL:  1 * time.Minute,
-		folderTTL:     1 * time.Minute,
 	}
 }
 
