@@ -113,6 +113,9 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperStorage, keeperResource),
+
+		// secureValueResource "decrypt" subresource.
+		secureValueResource.StoragePath("decrypt"): reststorage.NewSecureValueDecryptRest(secureValueResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
