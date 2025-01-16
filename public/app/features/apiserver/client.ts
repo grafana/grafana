@@ -13,6 +13,7 @@ import {
   ResourceList,
   ResourceClient,
   ObjectMeta,
+  WatchOptions,
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
   ResourceEvent,
@@ -37,14 +38,11 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(name?: string, resourceVersion?: string): Observable<ResourceEvent<T, S, K>> {
+  public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
     return getBackendSrv()
       .chunked({
-        url: name ? `${this.url}/${name}` : this.url,
-        params: {
-          watch: true,
-          resourceVersion,
-        },
+        url: opts?.name ? `${this.url}/${opts?.name}` : this.url,
+        params: opts,
       })
       .pipe(
         switchMap((response) => {
