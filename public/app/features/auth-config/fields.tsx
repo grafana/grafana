@@ -258,7 +258,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description: 'The client authentication method used to authenticate to the token endpoint.',
       multi: false,
       options: clientAuthenticationOptions(provider),
-      defaultValue: { value: 'client_secret_post', label: 'Client secret' },
+      defaultValue: { value: 'none', label: 'None' },
       validation: {
         required: true,
         message: 'This field is required',
@@ -683,11 +683,15 @@ function clientAuthenticationOptions(provider: string): Array<SelectableValue<st
   switch (provider) {
     case 'azuread':
       return [
+        { value: 'none', label: 'None' },
         { value: 'client_secret_post', label: 'Client secret' },
         { value: 'managed_identity', label: 'Managed identity' },
       ];
     // Other providers ...
     default:
-      return [{ value: 'client_secret_post', label: 'Client secret' }];
+      return [
+        { value: 'none', label: 'None' },
+        { value: 'client_secret_post', label: 'Client secret' },
+      ];
   }
 }

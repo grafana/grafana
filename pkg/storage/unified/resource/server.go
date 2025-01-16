@@ -372,7 +372,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	check := authz.CheckRequest{
-		Verb:      "create",
+		Verb:      utils.VerbCreate,
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -386,7 +386,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
-		check.Verb = "update"
+		check.Verb = utils.VerbUpdate
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -437,8 +437,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
+	// We only set name for update checks
+	if check.Verb == utils.VerbUpdate {
+		check.Name = key.Name
+	}
+
 	check.Folder = obj.GetFolder()
-	check.Name = key.Name
 	a, err := s.access.Check(ctx, user, check)
 	if err != nil {
 		return nil, AsErrorResult(err)
@@ -1067,11 +1071,6 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 		return nil, fmt.Errorf("search index not configured")
 	}
 	return s.search.GetStats(ctx, req)
-}
-
-// History implements ResourceServer.
-func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	return s.search.History(ctx, req)
 }
 
 func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
