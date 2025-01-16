@@ -715,6 +715,12 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
+			Name:        "kubernetesFoldersServiceV2",
+			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:        "grafanaAPIServerTestingWithExperimentalAPIs",
 			Description: "Facilitate integration testing of experimental APIs",
 			Stage:       FeatureStageExperimental,
@@ -1720,6 +1726,35 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 			Owner:          identityAccessTeam,
+		},
+		{
+			Name:         "ABTestFeatureToggleA",
+			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "ABTestFeatureToggleB",
+			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:           "queryLibraryDashboards",
+			Description:    "Enables Query Library feature in Dashboards",
+			Stage:          FeatureStageExperimental,
+			Owner:          grafanaFrontendPlatformSquad,
+			AllowSelfServe: false,
+		},
+		{
+			Name:        "elasticsearchImprovedParsing",
+			Description: "Enables less memory intensive Elasticsearch result parsing",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
 		},
 	}
 )

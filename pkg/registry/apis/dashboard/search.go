@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -226,12 +228,17 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Limit:   int64(limit),
 		Offset:  int64(offset),
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
-		Fields: []string{
-			"title",
-			"folder",
-			"tags",
-		},
 	}
+	fields := []string{"title", "folder", "tags"}
+	if queryParams.Has("field") {
+		// add fields to search and exclude duplicates
+		for _, f := range queryParams["field"] {
+			if f != "" && !slices.Contains(fields, f) {
+				fields = append(fields, f)
+			}
+		}
+	}
+	searchRequest.Fields = fields
 
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
@@ -277,6 +284,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
+			if slices.Contains(search.DashboardFields(), sort) {
+				sort = "fields." + sort
+			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
 				s.Desc = true
