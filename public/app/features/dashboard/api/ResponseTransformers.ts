@@ -637,7 +637,7 @@ function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): Annotati
       hide: a.spec.hide,
       iconColor: a.spec.iconColor,
       builtIn: a.spec.builtIn ? 1 : 0,
-      target: a.spec.query,
+      target: a.spec.query?.spec,
       filter: a.spec.filter,
     };
   });
@@ -660,11 +660,11 @@ function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spe
       options: panel.vizConfig.spec.options,
       pluginVersion: panel.vizConfig.spec.pluginVersion,
       links:
-        // @ts-expect-error Panel link is wrongly typed as DashboardLink
+        // @ts-expect-error - Panel link is wrongly typed as DashboardLink
         panel.links?.map<DashboardLink>((l) => ({
           title: l.title,
           url: l.url,
-          targetBlank: Boolean(l.targetBlank),
+          ...(l.targetBlank && { targetBlank: l.targetBlank }),
         })) || [],
       targets: panel.data.spec.queries.map((q) => {
         return {
@@ -683,6 +683,7 @@ function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spe
       queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
       timeFrom: panel.data.spec.queryOptions.timeFrom,
       timeShift: panel.data.spec.queryOptions.timeShift,
+      transparent: panel.transparent,
       ...(repeat?.value && { repeat: repeat.value }),
       ...(repeat?.direction && { repeatDirection: repeat.direction }),
       ...(repeat?.maxPerRow && { maxPerRow: repeat?.maxPerRow }),

@@ -1,5 +1,6 @@
-import { DataQuery } from '@grafana/schema';
+import { AnnotationQuery, DataQuery, Panel } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -12,7 +13,12 @@ import {
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
+import {
+  getDefaultDatasource,
+  getPanelQueries,
+  ResponseTransformers,
+  transformMappingsToV1,
+} from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -259,15 +265,10 @@ describe('ResponseTransformers', () => {
               tooltip: 'Link 1 Tooltip',
             },
           ],
-          annotations: [],
-          variables: [],
-          elements: {},
-          layout: {
-            kind: 'GridLayout',
-            spec: {
-              items: [],
-            },
-          },
+          annotations: handyTestingSchema.annotations,
+          variables: handyTestingSchema.variables,
+          elements: handyTestingSchema.elements,
+          layout: handyTestingSchema.layout,
         },
         access: {
           url: '/d/dashboard-slug',
@@ -325,7 +326,15 @@ describe('ResponseTransformers', () => {
       expect(dashboard.fiscalYearStartMonth).toBe(dashboardV2.spec.timeSettings.fiscalYearStartMonth);
       expect(dashboard.weekStart).toBe(dashboardV2.spec.timeSettings.weekStart);
       expect(dashboard.links).toEqual(dashboardV2.spec.links);
-      expect(dashboard.annotations).toEqual({ list: [] });
+      // annotations
+      validateAnnotation(dashboard.annotations!.list![0], dashboardV2.spec.annotations[0]);
+      validateAnnotation(dashboard.annotations!.list![1], dashboardV2.spec.annotations[1]);
+      validateAnnotation(dashboard.annotations!.list![2], dashboardV2.spec.annotations[2]);
+      validateAnnotation(dashboard.annotations!.list![3], dashboardV2.spec.annotations[3]);
+      // panel
+      const panelKey = 'panel-1';
+      const panelV2 = dashboardV2.spec.elements[panelKey];
+      validatePanel(dashboard.panels![0], panelV2, dashboardV2.spec.layout, panelKey);
     });
   });
 
@@ -399,3 +408,65 @@ describe('ResponseTransformers', () => {
     });
   });
 });
+
+function validateAnnotation(v1: AnnotationQuery, v2: DashboardV2Spec['annotations'][0]) {
+  const { spec: v2Spec } = v2;
+
+  expect(v1.name).toBe(v2Spec.name);
+  expect(v1.datasource).toBe(v2Spec.datasource);
+  expect(v1.enable).toBe(v2Spec.enable);
+  expect(v1.hide).toBe(v2Spec.hide);
+  expect(v1.iconColor).toBe(v2Spec.iconColor);
+  expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : 0);
+  expect(v1.target).toBe(v2Spec.query?.spec);
+  expect(v1.filter).toEqual(v2Spec.filter);
+}
+
+function validatePanel(
+  v1: Panel,
+  v2: DashboardV2Spec['elements'][0],
+  layoutV2: DashboardV2Spec['layout'],
+  panelKey: string
+) {
+  const { spec: v2Spec } = v2;
+
+  expect(v1.id).toBe(v2Spec.id);
+  expect(v1.type).toBe(v2Spec.vizConfig.kind);
+  expect(v1.title).toBe(v2Spec.title);
+  expect(v1.description).toBe(v2Spec.description);
+  expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
+  expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
+  expect(v1.pluginVersion).toBe(v2Spec.vizConfig.spec.pluginVersion);
+  expect(v1.links).toEqual(v2Spec.links);
+  expect(v1.targets).toEqual(
+    v2Spec.data.spec.queries.map((q) => {
+      return {
+        refId: q.spec.refId,
+        hide: q.spec.hidden,
+        datasource: q.spec.datasource,
+        ...q.spec.query.spec,
+      };
+    })
+  );
+  expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => t.spec));
+  const layoutElement = layoutV2.spec.items.find(
+    (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
+  );
+  expect(v1.gridPos?.x).toEqual(layoutElement?.spec.x);
+  expect(v1.gridPos?.y).toEqual(layoutElement?.spec.y);
+  expect(v1.gridPos?.w).toEqual(layoutElement?.spec.width);
+  expect(v1.gridPos?.h).toEqual(layoutElement?.spec.height);
+
+  expect(v1.repeat).toEqual(layoutElement?.spec.repeat?.value);
+  expect(v1.repeatDirection).toEqual(layoutElement?.spec.repeat?.direction);
+  expect(v1.maxPerRow).toEqual(layoutElement?.spec.repeat?.maxPerRow);
+
+  expect(v1.cacheTimeout).toBe(v2Spec.data.spec.queryOptions.cacheTimeout);
+  expect(v1.maxDataPoints).toBe(v2Spec.data.spec.queryOptions.maxDataPoints);
+  expect(v1.interval).toBe(v2Spec.data.spec.queryOptions.interval);
+  expect(v1.hideTimeOverride).toBe(v2Spec.data.spec.queryOptions.hideTimeOverride);
+  expect(v1.queryCachingTTL).toBe(v2Spec.data.spec.queryOptions.queryCachingTTL);
+  expect(v1.timeFrom).toBe(v2Spec.data.spec.queryOptions.timeFrom);
+  expect(v1.timeShift).toBe(v2Spec.data.spec.queryOptions.timeShift);
+  expect(v1.transparent).toBe(v2Spec.transparent);
+}
