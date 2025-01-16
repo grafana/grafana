@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { CustomVariable, GroupByVariable } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
