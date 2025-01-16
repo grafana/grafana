@@ -291,7 +291,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       }
 
       if (response.missingOtelTargets) {
-        metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`;
+        metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Please add or change your OTel resource attributes filters. When the OTel experience is turned on, we only show metrics that match target_info on job and instance labels. The resource call to retrieve these metrics accepts only a limited amount of job and instance labels to match for metrics because it is a GET request.`;
       }
 
       let bodyLayout = this.state.body;
