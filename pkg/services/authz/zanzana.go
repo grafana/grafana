@@ -74,7 +74,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
 
-		client, err = zclient.NewClient(context.Background(), conn, cfg)
+		client, err = zanzana.NewClient(context.Background(), conn)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
@@ -109,7 +109,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		authzv1.RegisterAuthzServiceServer(channel, srv)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
-		client, err = zclient.NewClient(context.Background(), channel, cfg)
+		client, err = zanzana.NewClient(context.Background(), channel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
