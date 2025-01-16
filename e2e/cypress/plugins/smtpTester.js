@@ -42,7 +42,11 @@ const initialize = (on, config) => {
         return true;
       }
 
-      return compareImages(expectedImageFilepath, inputBuffer);
+      const inputImage = await Jimp.read(inputBuffer);
+      const expectedImage = await Jimp.read(expectedImageFilepath);
+
+      const pixelDiff = diff(expectedImage, inputImage, 0.3);
+      return pixelDiff.percent <= 0.1;
     },
   });
 
@@ -91,14 +95,6 @@ const initialize = (on, config) => {
       return inputDoc.numpages === expectedDoc.numpages && inputDoc.text === expectedDoc.text;
     },
   });
-};
-
-const compareImages = async (expectedImageBufferOrFilePath, inputImageBuffer) => {
-  const inputImage = await Jimp.read(inputImageBuffer);
-  const expectedImage = await Jimp.read(expectedImageBufferOrFilePath);
-
-  const pixelDiff = diff(expectedImage, inputImage, 0.3);
-  return pixelDiff.percent <= 0.1;
 };
 
 const toCSV = (buffer) => {
