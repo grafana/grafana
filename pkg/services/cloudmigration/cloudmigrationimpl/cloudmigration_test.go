@@ -114,11 +114,19 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		assert.Equal(t, cloudmigration.SnapshotStatusCreating, snapshot.Status)
 		assert.Never(t, func() bool { return gmsClientFake.GetSnapshotStatusCallCount() > 0 }, time.Second, 10*time.Millisecond)
 
-		// Make the status pending processing and ensure GMS gets called
+		// Make the status pending processing to ensure GMS gets called and initialize a resource
 		err = s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       uid,
 			SessionID: sess.UID,
 			Status:    cloudmigration.SnapshotStatusPendingProcessing,
+			LocalResourcesToCreate: []cloudmigration.CloudMigrationResource{
+				{
+					Name:   "A name",
+					Type:   cloudmigration.DatasourceDataType,
+					RefID:  "A",
+					Status: cloudmigration.ItemStatusPending,
+				},
+			},
 		})
 		assert.NoError(t, err)
 

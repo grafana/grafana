@@ -245,6 +245,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
 		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
 
+		DefaultDatasourceManageAlertsUIToggle: hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
+
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
 			Version:       version,

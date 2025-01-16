@@ -25,7 +25,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -188,7 +188,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardEditPane({}),
+      editPane: new DashboardEditPane(),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
@@ -378,6 +378,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboard: new DashboardModel(version.data),
       meta: this.state.meta,
     };
+
     const dashScene = transformSaveModelToScene(dashboardDTO);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
@@ -411,20 +412,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene, editPanel } = this.state;
+    const { meta, viewPanelScene, editPanel, title, uid } = this.state;
 
     if (meta.dashboardNotFound) {
       return { text: 'Not found' };
     }
 
     let pageNav: NavModelItem = {
-      text: this.state.title,
+      text: title,
       url: getDashboardUrl({
-        uid: this.state.uid,
+        uid,
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
+        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot,
+        isSnapshot: meta.isSnapshot,
       }),
     };
 

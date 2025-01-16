@@ -15,6 +15,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
+import { itemFilter, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
@@ -85,28 +86,6 @@ export type AutoSizeConditionals =
     };
 
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
-
-export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
-  if (!item) {
-    return '';
-  }
-  if (item.label?.includes('Custom value: ')) {
-    return item.value.toString();
-  }
-  return item.label ?? item.value.toString();
-}
-
-function itemFilter<T extends string | number>(inputValue: string) {
-  const lowerCasedInputValue = inputValue.toLowerCase();
-
-  return (item: ComboboxOption<T>) => {
-    return (
-      !inputValue ||
-      item.label?.toLowerCase().includes(lowerCasedInputValue) ||
-      item.value?.toString().toLowerCase().includes(lowerCasedInputValue)
-    );
-  };
-}
 
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);

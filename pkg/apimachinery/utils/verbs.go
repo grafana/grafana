@@ -19,4 +19,8 @@ const (
 	VerbDelete = "delete"
 	// VerbDelete is mapped from HTTP DELETE for collections
 	VerbDeleteCollection = "deletecollection"
+	// VerbGetPermissions is used when fetching resource specific permissions
+	VerbGetPermissions = "get_permissions"
+	// VerbSetPermissions is used when setting resource specific permissions
+	VerbSetPermissions = "set_permissions"
 )
