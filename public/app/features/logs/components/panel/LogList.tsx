@@ -19,7 +19,6 @@ interface Props {
 export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMessage }: Props) => {
   const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
   const theme = useTheme2();
-  const scrollPositionRef = useRef(0);
   const listRef = useRef<VariableSizeList | null>(null);
 
   useEffect(() => {
@@ -27,8 +26,9 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
   }, [theme]);
 
   useEffect(() => {
-    scrollPositionRef.current = 0;
     setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape }));
+    listRef.current?.resetAfterIndex(0);
+    listRef.current?.scrollTo(0);
   }, [forceEscape, logs, wrapLogMessage]);
 
   useLayoutEffect(() => {
@@ -38,10 +38,6 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
       window.removeEventListener('resize', handleResize);
     };
   }, [processedLogs]);
-
-  const setScrollPosition = useCallback(({ scrollOffset }: ListOnScrollProps) => {
-    scrollPositionRef.current = scrollOffset;
-  }, []);
 
   const handleOverflow = useCallback(
     (index: number, id: string, height: number) => {
@@ -83,7 +79,6 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
       itemSize={getLogLineSize.bind(null, processedLogs, containerElement, theme, wrapLogMessage)}
       itemKey={(index: number) => processedLogs[index].uid}
       layout="vertical"
-      onScroll={setScrollPosition}
       ref={listRef}
       style={{ overflowY: 'scroll' }}
       width="100%"
