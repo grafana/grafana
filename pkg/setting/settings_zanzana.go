@@ -13,20 +13,21 @@ const (
 )
 
 type ZanzanaClientSettings struct {
-	// Mode can either be embedded or client
+	// Mode can either be embedded or client.
 	Mode ZanzanaMode
-	// Addr is only used when mode is set to client
+	// Addr is the address of the Zanzana server.
+	// Only used when mode is set to client.
 	Addr string
 	// Token used to perform the exchange request.
-	// Only used when mode is set to client
+	// Only used when mode is set to client.
 	Token string
 	// URL called to perform exchange request.
-	// Only used when mode is set to client
+	// Only used when mode is set to client.
 	TokenExchangeURL string
 }
 
 type ZanzanaServerSettings struct {
-	// OpenFGA http server address which allows to connect with fga cli
+	// OpenFGA http server address which allows to connect with fga cli.
 	// Can only be used in dev mode.
 	OpenFGAHttpAddr string
 	// Enable cache for Check() requests
@@ -40,8 +41,8 @@ type ZanzanaServerSettings struct {
 	// Use streamed version of list objects.
 	// Returns full list of objects, but takes more time.
 	UseStreamedListObjects bool
-	// URL for signing keys
-	// Only used when mode is set to client
+	// URL for signing keys.
+	// Only used when mode is set to client.
 	SigningKeysURL string
 }
 
