@@ -121,10 +121,10 @@ const Caret = ({ wrapperStyle = '' }: CaretProps) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.components.input.background;
-  const menuShadowColor = theme.v1.palette.black;
   const optionBgHover = theme.colors.action.hover;
   const borderRadius = theme.shape.radius.default;
   const borderColor = theme.components.input.borderColor;
+
   return {
     caretWrapper: css({
       position: 'relative',
@@ -146,15 +146,17 @@ const getStyles = (theme: GrafanaTheme2) => {
         zIndex: theme.zIndex.portal,
       },
       '.rc-picker-time-panel-column': {
-        fontSize: '14px',
+        fontSize: theme.typography.htmlFontSize,
         backgroundColor: bgColor,
         color: theme.colors.text.secondary,
-        borderColor,
+        padding: 'unset',
+        width: theme.spacing(8),
         li: {
-          outlineWidth: '2px',
+          paddingRight: theme.spacing(2),
+          width: 'auto',
           '&.rc-picker-time-panel-cell-selected': {
             backgroundColor: 'inherit',
-            border: `1px solid ${theme.v1.palette.orange}`,
+            border: `1px solid ${theme.colors.action.selectedBorder}`,
             borderRadius,
             color: theme.colors.text.primary,
           },
@@ -172,13 +174,18 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.rc-picker-time-panel-cell-inner': {
           color: 'inherit',
         },
+
+        '&:not(:last-of-type)': {
+          borderRight: `1px solid ${borderColor}`,
+        },
       },
 
       '.rc-picker-panel': {
-        boxShadow: `0px 4px 4px ${menuShadowColor}`,
+        boxShadow: theme.shadows.z3,
         backgroundColor: bgColor,
         borderColor,
         borderRadius,
+        overflow: 'hidden',
       },
     }),
     input: css({
