@@ -1,6 +1,7 @@
 import { AdHocVariableFilter, RawTimeRange, Scope } from '@grafana/data';
 import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
 import { PromQueryModeller } from '@grafana/prometheus/src/querybuilder/PromQueryModeller';
+import { utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { config, getBackendSrv } from '@grafana/runtime';
 
 import { limitOtelMatchTerms } from '../otel/util';
@@ -38,7 +39,7 @@ export async function getMetricNamesWithoutScopes(
     ? adhocFilters.map((filter) =>
         removeBrackets(queryModeller.renderLabels([{ label: filter.key, op: filter.operator, value: filter.value }]))
       )
-    : adhocFilters.map((filter) => `${filter.key}${filter.operator}"${filter.value}"`);
+    : adhocFilters.map((filter) => `${utf8Support(filter.key)}${filter.operator}"${filter.value}"`);
   let missingOtelTargets = false;
 
   if (jobs.length > 0 && instances.length > 0) {
