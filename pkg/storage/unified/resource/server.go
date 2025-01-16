@@ -720,6 +720,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &ListResponse{Error: AsErrorResult(err)}, nil
@@ -795,6 +796,7 @@ func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResp
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &RestoreResponse{Error: AsErrorResult(err)}, nil
