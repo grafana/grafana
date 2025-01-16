@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -783,11 +784,13 @@ func (fk8s *folderK8sHandler) getFolders(c *contextmodel.ReqContext) {
 			continue
 		}
 
+		repo, _, _ := unstructured.NestedString(item.Object, "metadata", "annotations", utils.AnnoKeyRepoName)
 		hits = append(hits, dtos.FolderSearchHit{
-			ID:        f.ID, // nolint:staticcheck
-			UID:       f.UID,
-			Title:     f.Title,
-			ParentUID: f.ParentUID,
+			ID:         f.ID, // nolint:staticcheck
+			UID:        f.UID,
+			Title:      f.Title,
+			ParentUID:  f.ParentUID,
+			Repository: repo,
 		})
 	}
 
@@ -1047,6 +1050,9 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	}
 
 	folderDTO.Parents = parents
+
+	// Add the repository info if it exists
+	folderDTO.Repository, _, _ = unstructured.NestedString(item.Object, "metadata", "annotations", utils.AnnoKeyRepoName)
 
 	return folderDTO, nil
 }
