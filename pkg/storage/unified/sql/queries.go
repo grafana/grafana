@@ -213,12 +213,6 @@ func (r *sqlResourceHistoryDeleteRequest) Validate() error {
 	return nil // TODO
 }
 
-type getHistoryRequest struct {
-	ResourceVersion, Limit, Offset int64
-	Folder                         string
-	Options                        *resource.ListOptions
-}
-
 type sqlGetHistoryRequest struct {
 	sqltemplate.SQLTemplate
 	Key     *resource.ResourceKey
