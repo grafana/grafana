@@ -1,8 +1,11 @@
 import { Page } from 'app/core/components/Page/Page';
 
 import { ConfigForm } from './ConfigForm';
+import { checkSetup } from './setup_warnings';
 
 export default function NewRepositoryPage() {
+  checkSetup();
+
   return (
     <Page
       navId="provisioning"

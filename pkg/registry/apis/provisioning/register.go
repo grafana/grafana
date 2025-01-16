@@ -125,10 +125,6 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 
-	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		return nil, fmt.Errorf("missing featureFlag: unifiedStorageSearch")
-	}
-
 	// TODO: use wire to initialize this storage
 	store, err := blob.ProvidePublicBlobStore(cfg)
 	if err != nil {
