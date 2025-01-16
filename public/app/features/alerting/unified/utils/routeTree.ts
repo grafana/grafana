@@ -6,7 +6,7 @@ import { produce } from 'immer';
 import { omit } from 'lodash';
 
 import { insertAfterImmutably, insertBeforeImmutably } from '@grafana/data/src/utils/arrayUtils';
-import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
@@ -196,23 +196,23 @@ export function hashRoute(route: Route): string {
 /**
  * This function will sort the route's values and set the keys in a deterministic order
  */
-export function stabilizeRoute(route: Route): Route {
-  let result: Route = {};
-
-  result = {
-    receiver: route.receiver,
-    group_by: route.group_by ? [...route.group_by].sort() : undefined,
-    continue: route.continue,
-    object_matchers: route.object_matchers ? [...route.object_matchers].sort() : undefined,
-    matchers: route.matchers ? [...route.matchers].sort() : undefined,
-    match: route.match ? sortRecord(route.match) : undefined,
-    match_re: route.match_re ? sortRecord(route.match_re) : undefined,
-    group_wait: route.group_wait,
-    group_interval: route.group_interval,
-    routes: route.routes, // routes are not sorted as if the order of the routes has changed, the hash should be different
-    mute_time_intervals: route.mute_time_intervals ? [...route.mute_time_intervals].sort() : undefined,
-    active_time_intervals: route.active_time_intervals ? [...route.active_time_intervals].sort() : undefined,
-    provenance: route.provenance,
+export function stabilizeRoute(route: Route): Required<Route> {
+  const result: Required<Route> = {
+    receiver: route.receiver ?? '',
+    group_by: route.group_by ? [...route.group_by].sort() : [],
+    continue: route.continue ?? false,
+    object_matchers: route.object_matchers ? [...route.object_matchers].sort() : [],
+    matchers: route.matchers ? [...route.matchers].sort() : [],
+    match: route.match ? sortRecord(route.match) : {},
+    match_re: route.match_re ? sortRecord(route.match_re) : {},
+    group_wait: route.group_wait ?? '',
+    group_interval: route.group_interval ?? '',
+    repeat_interval: route.repeat_interval ?? '',
+    routes: route.routes ?? [], // routes are not sorted as if the order of the routes has changed, the hash should be different
+    mute_time_intervals: route.mute_time_intervals ? [...route.mute_time_intervals].sort() : [],
+    active_time_intervals: route.active_time_intervals ? [...route.active_time_intervals].sort() : [],
+    provenance: route.provenance ?? '',
+    [ROUTES_META_SYMBOL]: {},
   };
 
   return result;
