@@ -49,24 +49,22 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         params,
       })
       .pipe(
-        switchMap((response) => {
-          const events: Array<ResourceEvent<T, S, K>> = [];
-          if (response.ok && response.data) {
-            decoder
-              .decode(response.data, { stream: true })
-              .split('\n')
-              .forEach((v) => {
-                if (v?.length) {
-                  try {
-                    events.push(JSON.parse(v));
-                  } catch (e) {
-                    console.warn('invalid response', e);
-                  }
-                }
-              });
-          }
-          return from(events);
+        filter((response) => response.ok && response.data instanceof Uint8Array),
+        map((response) => {
+          const text = decoder.decode(response.data);
+          return text.split('\n');
         }),
+        mergeMap((text) => from(text)),
+        filter((line) => line.length > 0),
+        map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            console.warn('Invalid JSON in watch stream:', e);
+            return null;
+          }
+        }),
+        filter((event): event is ResourceEvent<T, S, K> => event !== null),
         retry({ count: 3, delay: 1000 }),
         catchError((error) => {
           console.error('Watch stream error:', error);
