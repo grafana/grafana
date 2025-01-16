@@ -234,6 +234,7 @@ Experimental features might be changed or removed without prior notice.
 | `teamHttpHeadersMimir`                        | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                                                                                                                                                               |
 | `queryLibraryDashboards`                      | Enables Query Library feature in Dashboards                                                                                                                                                                                                                                       |
 | `elasticsearchImprovedParsing`                | Enables less memory intensive Elasticsearch result parsing                                                                                                                                                                                                                        |
+| `pluginsCDNSyncLoader`                        | Load plugins from CDN synchronously                                                                                                                                                                                                                                               |
 
 ## Development feature toggles
 

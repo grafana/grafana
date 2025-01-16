@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -55,11 +56,14 @@ func (l *Loader) recordError(ctx context.Context, p *plugins.Plugin, err error) 
 func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 	end := l.instrumentLoad(ctx, src)
 
+	st := time.Now()
 	discoveredPlugins, err := l.discovery.Discover(ctx, src)
 	if err != nil {
 		return nil, err
 	}
+	l.log.Debug("Discovered", "class", src.PluginClass(ctx), "duration", time.Since(st))
 
+	st = time.Now()
 	bootstrappedPlugins := []*plugins.Plugin{}
 	for _, foundBundle := range discoveredPlugins {
 		bootstrappedPlugin, err := l.bootstrap.Bootstrap(ctx, src, foundBundle)
@@ -72,17 +76,40 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		bootstrappedPlugins = append(bootstrappedPlugins, bootstrappedPlugin...)
 	}
+	l.log.Debug("Bootstrapped", "class", src.PluginClass(ctx), "duration", time.Since(st))
 
+	st = time.Now()
 	validatedPlugins := []*plugins.Plugin{}
+	type validateResult struct {
+		bootstrappedPlugin *plugins.Plugin
+		err                error
+	}
+	validateResults := make(chan validateResult, len(bootstrappedPlugins))
+	var validateWg sync.WaitGroup
+	validateWg.Add(len(bootstrappedPlugins))
 	for _, bootstrappedPlugin := range bootstrappedPlugins {
-		err := l.validation.Validate(ctx, bootstrappedPlugin)
-		if err != nil {
-			l.recordError(ctx, bootstrappedPlugin, err)
+		bootstrappedPlugin := bootstrappedPlugin
+		go func() {
+			defer validateWg.Done()
+			err := l.validation.Validate(ctx, bootstrappedPlugin)
+			validateResults <- validateResult{
+				bootstrappedPlugin: bootstrappedPlugin,
+				err:                err,
+			}
+		}()
+	}
+	validateWg.Wait()
+	close(validateResults)
+	for r := range validateResults {
+		if r.err != nil {
+			l.recordError(ctx, r.bootstrappedPlugin, r.err)
 			continue
 		}
-		validatedPlugins = append(validatedPlugins, bootstrappedPlugin)
+		validatedPlugins = append(validatedPlugins, r.bootstrappedPlugin)
 	}
+	l.log.Debug("Validated", "class", src.PluginClass(ctx), "duration", time.Since(st))
 
+	st = time.Now()
 	initializedPlugins := []*plugins.Plugin{}
 	for _, validatedPlugin := range validatedPlugins {
 		initializedPlugin, err := l.initializer.Initialize(ctx, validatedPlugin)
@@ -92,6 +119,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		initializedPlugins = append(initializedPlugins, initializedPlugin)
 	}
+	l.log.Debug("Initialized", "class", src.PluginClass(ctx), "duration", time.Since(st))
 
 	// Clean errors from registry for initialized plugins
 	for _, p := range initializedPlugins {

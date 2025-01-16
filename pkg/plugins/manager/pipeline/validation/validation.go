@@ -44,14 +44,20 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	if len(v.validateSteps) == 0 {
 		return nil
 	}
-
+	errs := make(chan error, len(v.validateSteps))
 	for _, validate := range v.validateSteps {
-		err := validate(ctx, ps)
+		validate := validate
+		go func() {
+			errs <- validate(ctx, ps)
+		}()
+	}
+	for i := 0; i < len(v.validateSteps); i++ {
+		err := <-errs
 		if err != nil {
 			v.log.Error("Plugin validation failed", "pluginId", ps.ID, "error", err)
 			return err
 		}
 	}
-
+	close(errs)
 	return nil
 }

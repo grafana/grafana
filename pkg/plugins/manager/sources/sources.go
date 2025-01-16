@@ -4,20 +4,27 @@ import (
 	"context"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/extensions/pluginsintegration/cdn/source"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	cfg *setting.Cfg
-	log log.Logger
+	cfg  *setting.Cfg
+	pCfg *config.PluginManagementCfg
+	log  log.Logger
+	cdn  *pluginscdn.Service
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService(cfg *setting.Cfg, pCfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *Service {
 	return &Service{
-		cfg: cfg,
-		log: log.New("plugin.sources"),
+		cfg:  cfg,
+		pCfg: pCfg,
+		cdn:  cdn,
+		log:  log.New("plugin.sources"),
 	}
 }
 
@@ -27,6 +34,9 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	}
 	r = append(r, s.externalPluginSources()...)
 	r = append(r, s.pluginSettingSources()...)
+	if s.pCfg.Features.PluginsCDNSyncLoaderEnabled {
+		r = append(r, source.NewCDNSource(s.pCfg, s.cdn))
+	}
 	return r
 }
 
