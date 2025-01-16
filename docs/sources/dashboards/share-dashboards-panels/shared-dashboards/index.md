@@ -266,6 +266,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Datadog
 - Dataset
 - Druid
+- DynamoDB
 - GitHub
 - Google BigQuery
 - Grafana for YNAB
