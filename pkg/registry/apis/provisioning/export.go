@@ -64,8 +64,6 @@ func (c *exportConnector) Connect(
 	ns := repo.Config().GetNamespace()
 	logger := logging.FromContext(ctx).With("logger", "export-connector", "repository", name, "namespace", ns)
 
-	// TODO: We need some way to filter what we export.
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logger.WithContext(ctx)
 		ctx := logging.Context(r.Context(), logger)
@@ -81,7 +79,7 @@ func (c *exportConnector) Connect(
 			Spec: provisioning.JobSpec{
 				Action: provisioning.JobActionExport,
 				Export: &provisioning.ExportOptions{
-					Folder:  query.Get("folder"),
+					Folder:  query.Get("folder"), // select a specific folder
 					History: query.Get("history") == "true",
 				},
 			},
