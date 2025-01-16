@@ -17,19 +17,18 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
+import { SetupWarnings } from './SetupWarnings';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
-import { checkSetup } from './setup_warnings';
-
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
-  checkSetup();
 
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
+        <SetupWarnings />
         <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>
