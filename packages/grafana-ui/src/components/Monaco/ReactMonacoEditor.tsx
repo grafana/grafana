@@ -18,6 +18,12 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
     (monaco: Monaco) => {
       defineThemes(monaco, theme);
       beforeMount?.(monaco);
+      // we use a custom font in our monaco editor
+      // we need monaco to remeasure the fonts after they are loaded to prevent alignment issues
+      // see https://github.com/microsoft/monaco-editor/issues/648#issuecomment-564978560
+      document.fonts.ready.then(() => {
+        monaco.editor.remeasureFonts();
+      });
     },
     [beforeMount, theme]
   );
