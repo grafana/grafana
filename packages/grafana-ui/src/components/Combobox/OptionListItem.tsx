@@ -1,6 +1,5 @@
 import { useStyles2 } from '../../themes';
 
-import { ComboboxOption } from './Combobox';
 import { getComboboxStyles } from './getComboboxStyles';
 
 interface Props {
