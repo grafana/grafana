@@ -1,4 +1,4 @@
-import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+import {isNil, isNumber, isString, omitBy, pickBy} from 'lodash';
 
 import {
   ConfigOverrideRule,
@@ -17,33 +17,34 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import {
-  LegendDisplayMode,
-  TooltipDisplayMode,
+  AnnotationQuery,
   AxisPlacement,
+  ComparisonOperation,
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
   GraphThresholdsStyleMode,
+  GraphTransform,
+  LegendDisplayMode,
+  LegendPlacement,
   LineInterpolation,
   LineStyle,
-  VisibilityMode,
   ScaleDistribution,
-  StackingMode,
   SortOrder,
-  GraphTransform,
-  AnnotationQuery,
-  ComparisonOperation,
+  StackingMode,
+  TooltipDisplayMode,
+  VisibilityMode,
 } from '@grafana/schema';
-import { TimeRegionConfig } from 'app/core/utils/timeRegions';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardAnnotationsDataLayer } from 'app/features/dashboard-scene/scene/DashboardAnnotationsDataLayer';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import {TimeRegionConfig} from 'app/core/utils/timeRegions';
+import {getDashboardSrv} from 'app/features/dashboard/services/DashboardSrv';
+import {getTimeSrv} from 'app/features/dashboard/services/TimeSrv';
+import {DashboardAnnotationsDataLayer} from 'app/features/dashboard-scene/scene/DashboardAnnotationsDataLayer';
+import {DashboardScene} from 'app/features/dashboard-scene/scene/DashboardScene';
+import {dashboardSceneGraph} from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+import {GrafanaQuery, GrafanaQueryType} from 'app/plugins/datasource/grafana/types';
 
-import { defaultGraphConfig } from './config';
-import { Options } from './panelcfg.gen';
+import {defaultGraphConfig} from './config';
+import {Options} from './panelcfg.gen';
 
 let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 
@@ -364,7 +365,7 @@ export function graphToTimeseriesOptions(angular: any): {
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,
-      placement: 'bottom',
+      placement: LegendPlacement.Bottom,
       calcs: [],
     },
     tooltip: {
@@ -383,7 +384,7 @@ export function graphToTimeseriesOptions(angular: any): {
     }
 
     if (legendConfig.rightSide) {
-      options.legend.placement = 'right';
+      options.legend.placement = LegendPlacement.Right;
     }
 
     if (angular.legend.values) {

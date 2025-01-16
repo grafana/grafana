@@ -1,7 +1,7 @@
-import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import {FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel} from '@grafana/data';
+import {LegendDisplayMode, LegendPlacement} from '@grafana/schema';
 
-import { Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
+import {Options, PieChartLabels, PieChartLegendValues, PieChartType} from './panelcfg.gen';
 
 export const PieChartPanelChangedHandler = (
   panel: PanelModel<Partial<Options>> | any,
@@ -46,7 +46,7 @@ export const PieChartPanelChangedHandler = (
     };
 
     options.legend = {
-      placement: 'right',
+      placement: LegendPlacement.Right,
       values: [],
       displayMode: LegendDisplayMode.Table,
       showLegend: true,
@@ -76,10 +76,10 @@ export const PieChartPanelChangedHandler = (
 
     switch (angular.legendType) {
       case 'Under graph':
-        options.legend.placement = 'bottom';
+        options.legend.placement = LegendPlacement.Bottom;
         break;
       case 'Right side':
-        options.legend.placement = 'right';
+        options.legend.placement = LegendPlacement.Right;
         break;
     }
 

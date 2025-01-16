@@ -5,7 +5,7 @@ import {
   identityOverrideProcessor,
   PanelPlugin,
 } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
+import {TimelineValueAlignment, VisibilityMode} from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';
@@ -102,9 +102,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         name: 'Align values',
         settings: {
           options: [
-            { value: 'left', label: 'Left' },
-            { value: 'center', label: 'Center' },
-            { value: 'right', label: 'Right' },
+            { value: TimelineValueAlignment.Left, label: 'Left' },
+            { value: TimelineValueAlignment.Center, label: 'Center' },
+            { value: TimelineValueAlignment.Right, label: 'Right' },
           ],
         },
         defaultValue: defaultOptions.alignValue,
