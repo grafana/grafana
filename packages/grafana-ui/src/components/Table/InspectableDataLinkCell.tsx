@@ -22,9 +22,9 @@ export const InspectableDataLinkCell= (props: TableCellProps) => {
           return (
             // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
             <span key={idx} className={tableStyles.cellLink} onClick={link.onClick}>
-              {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-              <a href="#" onClick={() => {setIsInspecting(true);}} target={link.target}>
-                {field.values}
+              {/* eslint-disable-next-line jsx-a11y/anchor-is-valid,jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
+              <a onClick={() => {setIsInspecting(true);}} target={link.target}>
+                {field.values[row.index]}
               </a>
             </span>
           );
