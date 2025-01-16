@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeepers"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	legacyEncryption "github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -50,6 +51,7 @@ func RegisterAPIService(
 	kmsProvidersService kmsproviders.Service,
 	enc legacyEncryption.Internal,
 	usageStats usagestats.Service,
+	encryptedValueStorage secretstorage.EncryptedValueStorage,
 	secureValueStorage contracts.SecureValueStorage,
 	keeperStorage contracts.KeeperStorage,
 ) (*SecretAPIBuilder, error) {
@@ -59,10 +61,15 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	// TODO need to actually do something with the encryption manager, for now just make one
-	_, err := manager.NewEncryptionManager(tracer, dataKeyStorage, kmsProvidersService, enc, cfg, usageStats)
+	encManager, err := manager.NewEncryptionManager(tracer, dataKeyStorage, kmsProvidersService, enc, cfg, usageStats)
 	if err != nil {
 		return nil, fmt.Errorf("initializing encryption manager: %w", err)
+	}
+
+	// TODO: need to actually do something with the secret keeper service, for now just make one
+	_, err = secretkeepers.ProvideService(encManager, encryptedValueStorage)
+	if err != nil {
+		return nil, fmt.Errorf("initializing keeper service: %w", err)
 	}
 
 	builder := NewSecretAPIBuilder(secureValueStorage, keeperStorage)
