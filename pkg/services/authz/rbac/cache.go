@@ -44,6 +44,8 @@ type cacheWrap[T any] struct {
 	ttl    time.Duration
 }
 
+// cacheWrap is a wrapper around remotecache.CacheStorage that provides typed Get and Set methods
+// it handles encoding/decoding for a specific type.
 func newCacheWrap[T any](cache remotecache.CacheStorage, logger log.Logger, ttl time.Duration) *cacheWrap[T] {
 	return &cacheWrap[T]{cache: cache, logger: logger, ttl: ttl}
 }
