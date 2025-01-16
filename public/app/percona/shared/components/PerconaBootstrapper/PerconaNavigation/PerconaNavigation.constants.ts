@@ -131,6 +131,7 @@ export const PMM_DUMP_PAGE: NavModelItem = {
   subTitle:
     'Simplify troubleshooting and accelerate issue resolution by securely sharing relevant data, ensuring a smoother support experience.',
   text: 'PMM Dump',
+  children: [PMM_EXPORT_DUMP_PAGE],
 };
 
 export const PMM_EDIT_INSTANCE_PAGE: NavModelItem = {

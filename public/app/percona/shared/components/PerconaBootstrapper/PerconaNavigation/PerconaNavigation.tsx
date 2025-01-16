@@ -105,9 +105,6 @@ const PerconaNavigation: FC = () => {
     // PMM Dump
     const help = updatedNavTree.find((i) => i.id === 'help');
     if (help) {
-      PMM_DUMP_PAGE.parentItem = help;
-      PMM_DUMP_PAGE.children = [PMM_EXPORT_DUMP_PAGE];
-
       help.children = help.children || [];
       help.children.push(PMM_DUMP_PAGE);
 
