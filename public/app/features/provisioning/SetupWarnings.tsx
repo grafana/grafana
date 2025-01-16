@@ -4,21 +4,28 @@ import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
+const requiredFeatureToggles: Array<keyof FeatureToggles> = [
+  'kubernetesFolders',
+  'kubernetesDashboards',
+  'unifiedStorageSearch',
+];
+
 export function SetupWarnings() {
-  const alerts: ReactNode[] = [];
-  const requiredFeatureToggles: Array<keyof FeatureToggles> = [
-    'kubernetesFolders',
-    'kubernetesDashboards',
-    'unifiedStorageSearch',
-  ];
-  for (let f of requiredFeatureToggles) {
-    if (!config.featureToggles[f]) {
-      alerts.push(
-        <Alert title="Provisioning setup error" severity="error">
-          Missing required feature toggle: {f}
-        </Alert>
-      );
-    }
+  const missingFeatures = requiredFeatureToggles.filter(
+    (feature) => !config.featureToggles[feature]
+  );
+
+  if (missingFeatures.length === 0) {
+    return null;
   }
-  return alerts;
+
+  return (
+    <>
+      {missingFeatures.map((feature) => (
+        <Alert key={feature} title="Provisioning Setup Error" severity="error">
+          Missing required feature toggle: <strong>{feature}</strong>
+        </Alert>
+      ))}
+    </>
+  );
 }
