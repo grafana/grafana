@@ -1,4 +1,4 @@
-import { QueryBuilderLabelFilter } from '@grafana/prometheus/src/querybuilder/shared/types';
+import { QueryBuilderLabelFilter } from '@grafana/prometheus';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { QueryMetric } from './getQueryMetrics'; // We only support label filters with the '=' operator
