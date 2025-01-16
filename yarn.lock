@@ -3363,6 +3363,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-logql@npm:0.2.7":
+  version: 0.2.7
+  resolution: "@grafana/lezer-logql@npm:0.2.7"
+  peerDependencies:
+    "@lezer/lr": ^1.0.0
+  checksum: 10/606a9dc77b3b3751e1f325d6b1a8994b1bafef7fe0f6f3980ee7d184244b373f828960f46a748746e765615352ed8928d10f22ff06cede588fcc9d32e70a68d8
+  languageName: node
+  linkType: hard
+
 "@grafana/lezer-traceql@npm:0.0.20":
   version: 0.0.20
   resolution: "@grafana/lezer-traceql@npm:0.0.20"
@@ -3378,6 +3387,15 @@ __metadata:
   peerDependencies:
     monaco-editor: ^0.32.1
   checksum: 10/a900e24912476997f30349e6ee24041c0cffebf6706d8b9203eb952f12c768fc0fd6be8d7abe86d02019a0d8f26b83d15ffd0fb09d97047307e2ba5b4ba43a1b
+  languageName: node
+  linkType: hard
+
+"@grafana/monaco-logql@npm:^0.0.8":
+  version: 0.0.8
+  resolution: "@grafana/monaco-logql@npm:0.0.8"
+  peerDependencies:
+    monaco-editor: ^0.32.1
+  checksum: 10/30443df2bab511e5b385cb8cd5b8ae54b09f794cd3e2b1ad9cdcd58c46d3384b90d3d738c36e63702c17d914d58ad765c93d89d1398e050fa7c9ab68d940386d
   languageName: node
   linkType: hard
 
@@ -17389,8 +17407,8 @@ __metadata:
     "@grafana/faro-web-tracing": "npm:^1.8.2"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.2"
-    "@grafana/lezer-logql": "npm:0.2.6"
-    "@grafana/monaco-logql": "npm:^0.0.7"
+    "@grafana/lezer-logql": "npm:0.2.7"
+    "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^1.11.0"
     "@grafana/prometheus": "workspace:*"
