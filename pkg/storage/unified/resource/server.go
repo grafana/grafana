@@ -29,6 +29,7 @@ import (
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
+	RepositoryIndexServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -205,19 +206,24 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	// Initialize the blob storage
 	blobstore := opts.Blob.Backend
-	if blobstore == nil && opts.Blob.URL != "" {
-		ctx := context.Background()
-		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-		if err != nil {
-			return nil, err
-		}
+	if blobstore == nil {
+		if opts.Blob.URL != "" {
+			ctx := context.Background()
+			bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
+			if err != nil {
+				return nil, err
+			}
 
-		blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-			Tracer: opts.Tracer,
-			Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
-		})
-		if err != nil {
-			return nil, err
+			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+				Tracer: opts.Tracer,
+				Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Check if the backend supports blob storage
+			blobstore, _ = opts.Backend.(BlobSupport)
 		}
 	}
 
@@ -366,7 +372,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	check := authz.CheckRequest{
-		Verb:      "create",
+		Verb:      utils.VerbCreate,
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -380,7 +386,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
-		check.Verb = "update"
+		check.Verb = utils.VerbUpdate
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -431,8 +437,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
+	// We only set name for update checks
+	if check.Verb == utils.VerbUpdate {
+		check.Name = key.Name
+	}
+
 	check.Folder = obj.GetFolder()
-	check.Name = key.Name
 	a, err := s.access.Check(ctx, user, check)
 	if err != nil {
 		return nil, AsErrorResult(err)
@@ -704,6 +714,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &ListResponse{Error: AsErrorResult(err)}, nil
@@ -779,6 +790,7 @@ func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResp
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &RestoreResponse{Error: AsErrorResult(err)}, nil
@@ -1063,14 +1075,12 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	return s.search.GetStats(ctx, req)
 }
 
-// History implements ResourceServer.
-func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	return s.search.History(ctx, req)
+func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
+	return s.search.ListRepositoryObjects(ctx, req)
 }
 
-// Origin implements ResourceServer.
-func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	return s.search.Origin(ctx, req)
+func (s *server) CountRepositoryObjects(ctx context.Context, req *CountRepositoryObjectsRequest) (*CountRepositoryObjectsResponse, error) {
+	return s.search.CountRepositoryObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

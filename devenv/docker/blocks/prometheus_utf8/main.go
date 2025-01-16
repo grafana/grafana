@@ -60,6 +60,22 @@ func main() {
 			label:        "label.with.spaß",
 			getNextValue: staticList([]string{"this_is_fun"}),
 		},
+		{
+			label:        "instance",
+			getNextValue: staticList([]string{"instance"}),
+		},
+		{
+			label:        "job",
+			getNextValue: staticList([]string{"job"}),
+		},
+		{
+			label:        "site",
+			getNextValue: staticList([]string{"LA-EPI"}),
+		},
+		{
+			label:        "room",
+			getNextValue: staticList([]string{`"Friends Don't Lie"`}),
+		},
 	}
 
 	dimensions := []string{}
@@ -77,6 +93,12 @@ func main() {
 		Help: "a metric with utf8 labels",
 	}, dimensions)
 
+	target_info := promauto.NewGauge(prometheus.GaugeOpts{
+		Name:        "target_info",
+		Help:        "an info metric model for otel",
+		ConstLabels: map[string]string{"job": "job", "instance": "instance", "resource 1": "1", "resource 2": "2", "resource ę": "e", "deployment_environment": "prod"},
+	})
+
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -93,6 +115,7 @@ func main() {
 
 			utf8Metric.WithLabelValues(labels...).Inc()
 			opsProcessed.WithLabelValues(labels...).Inc()
+			target_info.Set(1)
 
 			time.Sleep(time.Second * 5)
 		}
