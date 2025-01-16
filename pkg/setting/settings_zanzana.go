@@ -41,8 +41,7 @@ type ZanzanaServerSettings struct {
 	// Use streamed version of list objects.
 	// Returns full list of objects, but takes more time.
 	UseStreamedListObjects bool
-	// URL for signing keys.
-	// Only used when mode is set to client.
+	// URL for fetching signing keys.
 	SigningKeysURL string
 }
 
