@@ -5,7 +5,7 @@ import {
   identityOverrideProcessor,
   PanelPlugin,
 } from '@grafana/data';
-import {TimelineValueAlignment, VisibilityMode} from '@grafana/schema';
+import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';

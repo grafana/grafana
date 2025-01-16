@@ -1,7 +1,7 @@
-import {css} from '@emotion/css';
-import {memo, useMemo, useState} from 'react';
+import { css } from '@emotion/css';
+import { memo, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { FieldTextAlignment } from '@grafana/schema'
+import { FieldTextAlignment } from '@grafana/schema';
 
 import {
   applyFieldOverrides,
@@ -23,10 +23,10 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import {diffColorBlindColors, diffDefaultColors} from '../FlameGraph/colors';
-import {FlameGraphDataContainer} from '../FlameGraph/dataTransform';
-import {TOP_TABLE_COLUMN_WIDTH} from '../constants';
-import {ColorScheme, ColorSchemeDiff, TableData} from '../types';
+import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
+import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
+import { ColorScheme, ColorSchemeDiff, TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;

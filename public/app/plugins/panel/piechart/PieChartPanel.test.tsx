@@ -1,6 +1,6 @@
-import {render, screen} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {ComponentProps} from 'react';
+import { ComponentProps } from 'react';
 
 import {
   EventBusSrv,
@@ -11,10 +11,10 @@ import {
   toDataFrame,
   VizOrientation,
 } from '@grafana/data';
-import {LegendDisplayMode, LegendPlacement, SortOrder, TooltipDisplayMode} from '@grafana/schema';
+import { LegendDisplayMode, LegendPlacement, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import {PieChartPanel} from './PieChartPanel';
-import {Options, PieChartLegendValues, PieChartType} from './panelcfg.gen';
+import { PieChartPanel } from './PieChartPanel';
+import { Options, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),

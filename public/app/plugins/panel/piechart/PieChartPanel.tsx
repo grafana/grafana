@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {Subscription} from 'rxjs';
+import { useEffect, useState } from 'react';
+import { Subscription } from 'rxjs';
 
 import {
   DataHoverClearEvent,
@@ -10,8 +10,8 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
-import {PanelDataErrorView} from '@grafana/runtime';
-import {HideSeriesConfig, LegendDisplayMode, LegendPlacement} from '@grafana/schema';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { HideSeriesConfig, LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -21,9 +21,9 @@ import {
   VizLegendItem,
 } from '@grafana/ui';
 
-import {PieChart} from './PieChart';
-import {Options, PieChartLegendOptions, PieChartLegendValues} from './panelcfg.gen';
-import {filterDisplayItems, sumDisplayItemsReducer} from './utils';
+import { PieChart } from './PieChart';
+import { Options, PieChartLegendOptions, PieChartLegendValues } from './panelcfg.gen';
+import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
