@@ -56,7 +56,11 @@ func (w *ExportWorker) Process(ctx context.Context, job provisioning.Job) (*prov
 
 	repo, err := w.legacyExporter.Export(ctx, localrepo, job.Namespace, *config)
 	if err != nil {
-		return nil, err
+		logger.Error("error exporting", "error", err)
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateError,
+			Message: "Error exporting: " + localrepo + " // " + err.Error(),
+		}, nil
 	}
 	logger.Info("exported", "directory", localrepo, "git", repo)
 	logger.Info("TODO! push the repository to the remote")

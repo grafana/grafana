@@ -1,4 +1,4 @@
-package legacy
+package legacyexport
 
 import (
 	"database/sql"
