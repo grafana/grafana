@@ -42,11 +42,11 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 	logger := log.New("zanzana")
 
 	var client zanzana.Client
-	switch cfg.Zanzana.Mode {
+	switch cfg.ZanzanaClient.Mode {
 	case setting.ZanzanaModeClient:
 		tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            cfg.Zanzana.Token,
-			TokenExchangeURL: cfg.Zanzana.TokenExchangeURL,
+			Token:            cfg.ZanzanaClient.Token,
+			TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize token exchange client: %w", err)
@@ -69,7 +69,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			grpc.WithPerRPCCredentials(tokenAuthCred),
 		}
 
-		conn, err := grpc.NewClient(cfg.Zanzana.Addr, dialOptions...)
+		conn, err := grpc.NewClient(cfg.ZanzanaClient.Addr, dialOptions...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
@@ -84,12 +84,12 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		openfga, err := zserver.NewOpenFGA(&cfg.Zanzana, store, logger)
+		openfga, err := zserver.NewOpenFGA(cfg.ZanzanaServer, store, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zserver.NewAuthzServer(cfg, openfga)
+		srv, err := zserver.NewAuthzServer(cfg.ZanzanaServer, openfga)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
@@ -115,7 +115,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		}
 
 	default:
-		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.Zanzana.Mode)
+		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.ZanzanaClient.Mode)
 	}
 
 	return client, nil
@@ -156,12 +156,12 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	openfga, err := zserver.NewOpenFGA(&z.cfg.Zanzana, store, z.logger)
+	openfga, err := zserver.NewOpenFGA(z.cfg.ZanzanaServer, store, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	srv, err := zserver.NewAuthzServer(z.cfg, openfga)
+	srv, err := zserver.NewAuthzServer(z.cfg.ZanzanaServer, openfga)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -183,7 +183,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 				AllowedAudiences: []string{zanzanaAudience},
 			},
 			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
-				SigningKeysURL: z.cfg.Zanzana.SigningKeysURL,
+				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
 			}),
 		),
 	)
@@ -218,10 +218,10 @@ func (z *Zanzana) start(ctx context.Context) error {
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
-	if z.cfg.Env == setting.Dev && z.cfg.Zanzana.ListenHTTP {
+	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
 		go func() {
 			z.logger.Info("Starting OpenFGA HTTP server")
-			err := zserver.StartOpenFGAHttpSever(z.cfg, z.handle, z.logger)
+			err := zserver.StartOpenFGAHttpSever(z.cfg.ZanzanaServer, z.handle, z.logger)
 			if err != nil {
 				z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
 			}

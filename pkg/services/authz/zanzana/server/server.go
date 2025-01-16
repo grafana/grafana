@@ -34,7 +34,7 @@ type Server struct {
 	openfga       openfgav1.OpenFGAServiceServer
 	openfgaClient openfgav1.OpenFGAServiceClient
 
-	cfg      setting.ZanzanaSettings
+	cfg      setting.ZanzanaServerSettings
 	logger   log.Logger
 	modules  []transformer.ModuleFile
 	stores   map[string]storeInfo
@@ -61,11 +61,11 @@ func WithSchema(modules []transformer.ModuleFile) ServerOption {
 	}
 }
 
-func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*Server, error) {
+func NewAuthzServer(cfg setting.ZanzanaServerSettings, openfga openfgav1.OpenFGAServiceServer) (*Server, error) {
 	return NewAuthz(cfg, openfga)
 }
 
-func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
+func NewAuthz(cfg setting.ZanzanaServerSettings, openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -75,8 +75,8 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 		openfgaClient: openFGAClient,
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
-		cfg:           cfg.Zanzana,
-		cache:         localcache.New(cfg.Zanzana.CheckQueryCacheTTL, cacheCleanInterval),
+		cfg:           cfg,
+		cache:         localcache.New(cfg.CheckQueryCacheTTL, cacheCleanInterval),
 	}
 
 	for _, o := range opts {

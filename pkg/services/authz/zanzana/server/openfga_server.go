@@ -27,7 +27,7 @@ import (
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 )
 
-func NewOpenFGA(cfg *setting.ZanzanaSettings, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
+func NewOpenFGA(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
@@ -49,7 +49,7 @@ func NewOpenFGA(cfg *setting.ZanzanaSettings, store storage.OpenFGADatastore, lo
 }
 
 // StartOpenFGAHttpSever starts HTTP server which allows to use fga cli.
-func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
+func StartOpenFGAHttpSever(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider, logger log.Logger) error {
 	dialOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -95,7 +95,7 @@ func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log
 	}
 
 	httpServer := &http.Server{
-		Addr: cfg.Zanzana.HttpAddr,
+		Addr: cfg.OpenFGAHttpAddr,
 		Handler: cors.New(cors.Options{
 			AllowedOrigins:   []string{"*"},
 			AllowCredentials: true,
