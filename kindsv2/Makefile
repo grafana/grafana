@@ -4,5 +4,5 @@ include ../.bingo/Variables.mk
 all: dashboards
 
 .PHONY: dashboards
-dashboards: ## Dashboards – Typescript
+dashboards: $(COG) ## Dashboards – Typescript
 	@$(COG) generate --config ./dashboard-ts.yaml
