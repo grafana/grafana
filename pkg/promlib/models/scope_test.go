@@ -28,12 +28,6 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:      "No filters with existing utf8 filter",
-			query:     `http_requests_total{"job.name"="prometheus"}`,
-			expected:  `http_requests_total{"job.name"="prometheus"}`,
-			expectErr: false,
-		},
-		{
 			name:  "Adhoc filter with existing filter",
 			query: `http_requests_total{job="prometheus"}`,
 			adhocFilters: []ScopeFilter{
@@ -151,6 +145,37 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 	}
 }
 
+func TestApplyQueryFiltersAndGroupBy_Filters_utf8(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		adhocFilters []ScopeFilter
+		scopeFilters []ScopeFilter
+		expected     string
+		expectErr    bool
+	}{
+		{
+			name:      "No filters with existing utf8 filter",
+			query:     `http_requests_total{"job.name"="prometheus"}`,
+			expected:  `http_requests_total{"job.name"="prometheus"}`,
+			expectErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := ApplyFiltersAndGroupBy(tt.query, tt.scopeFilters, tt.adhocFilters, nil)
+
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, expr, tt.name)
+			}
+		})
+	}
+}
+
 func TestApplyQueryFiltersAndGroupBy_GroupBy(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -164,13 +189,6 @@ func TestApplyQueryFiltersAndGroupBy_GroupBy(t *testing.T) {
 			groupBy:   []string{"job"},
 			query:     `http_requests_total`,
 			expected:  `http_requests_total`,
-			expectErr: false,
-		},
-		{
-			name:      "GroupBy with no aggregate expression and utf8 metric",
-			groupBy:   []string{"job"},
-			query:     `{"http.requests_total"}`,
-			expected:  `{__name__="http.requests_total"}`,
 			expectErr: false,
 		},
 		{
@@ -194,17 +212,48 @@ func TestApplyQueryFiltersAndGroupBy_GroupBy(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:      "GroupBy with aggregate expression with existing utf8 group by",
-			groupBy:   []string{"status"},
-			query:     `sum by ("utf8.job") (http_requests_total)`,
-			expected:  `sum by ("utf8.job", status) (http_requests_total)`,
-			expectErr: false,
-		},
-		{
 			name:      "GroupBy with aggregate expression with existing group by (already exists)",
 			groupBy:   []string{"job"},
 			query:     `sum by (job) (http_requests_total)`,
 			expected:  `sum by (job) (http_requests_total)`,
+			expectErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := ApplyFiltersAndGroupBy(tt.query, nil, nil, tt.groupBy)
+
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, expr)
+			}
+		})
+	}
+}
+
+func TestApplyQueryFiltersAndGroupBy_GroupBy_utf8(t *testing.T) {
+	tests := []struct {
+		name      string
+		query     string
+		groupBy   []string
+		expected  string
+		expectErr bool
+	}{
+		{
+			name:      "GroupBy with no aggregate expression and utf8 metric",
+			groupBy:   []string{"job"},
+			query:     `{"http.requests_total"}`,
+			expected:  `{__name__="http.requests_total"}`,
+			expectErr: false,
+		},
+		{
+			name:      "GroupBy with aggregate expression with existing utf8 group by",
+			groupBy:   []string{"status"},
+			query:     `sum by ("utf8.job") (http_requests_total)`,
+			expected:  `sum by ("utf8.job", status) (http_requests_total)`,
 			expectErr: false,
 		},
 	}
@@ -247,6 +296,32 @@ func TestApplyQueryFiltersAndGroupBy(t *testing.T) {
 			expected:  `sum by (job) (capacity_bytes{job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,
 			expectErr: false,
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := ApplyFiltersAndGroupBy(tt.query, tt.scopeFilters, tt.adhocFilters, tt.groupby)
+
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, expr)
+			}
+		})
+	}
+}
+
+func TestApplyQueryFiltersAndGroupBy_utf8(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		adhocFilters []ScopeFilter
+		scopeFilters []ScopeFilter
+		groupby      []string
+		expected     string
+		expectErr    bool
+	}{
 		{
 			name:  "Adhoc filters with more complex expression and utf8 metric name",
 			query: `sum({"capacity_bytes", job="prometheus"} + {"available_bytes", job="grafana"}) / 1024`,
