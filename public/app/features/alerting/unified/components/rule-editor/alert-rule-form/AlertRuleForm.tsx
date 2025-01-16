@@ -131,6 +131,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   // @todo why is error not propagated to form?
   const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
+    const { type, evaluateEvery } = values;
+
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
       if (!existing && grafanaTypeRule) {
@@ -140,7 +142,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return;
     }
 
-    trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
+    trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: type });
 
     const ruleDefinition = grafanaTypeRule ? formValuesToRulerGrafanaRuleDTO(values) : formValuesToRulerRuleDTO(values);
 
@@ -153,7 +155,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
-      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, values.evaluateEvery);
+      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
       grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
@@ -162,7 +164,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         ruleIdentifier,
         ruleDefinition,
         targetRuleGroupIdentifier,
-        values.evaluateEvery
+        evaluateEvery
       );
     }
 
@@ -351,13 +353,16 @@ const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
 };
 
 function storeInLocalStorageValues(values: RuleFormValues) {
-  if (values.manualRouting) {
+  const { manualRouting, editorSettings } = values;
+
+  if (manualRouting) {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
   } else {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
   }
-  if (values.editorSettings) {
-    if (values.editorSettings.simplifiedQueryEditor) {
+
+  if (editorSettings) {
+    if (editorSettings.simplifiedQueryEditor) {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
     } else {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
