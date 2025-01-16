@@ -93,7 +93,7 @@ Complete the following steps to install Grafana using the standalone binaries:
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only tagged releases. If you want to install a nightly build, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
-   - **Enterprise:** This is the recommended version. It is functionally identical to the open-source version but includes features you can unlock with a license if you so choose.
+   - **Enterprise:** This is the recommended version. It is functionally identical to the open source version but includes features you can unlock with a license if you so choose.
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) into your command line and run.
