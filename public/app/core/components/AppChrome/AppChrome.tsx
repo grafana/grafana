@@ -35,7 +35,7 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const historyDockedAndOpen = !state.chromeless && state.historyDocked && state.historyOpen;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, Boolean(state.actions), historyDockedAndOpen);
+  const styles = useStyles2(getStyles, Boolean(state.actions));
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
@@ -159,7 +159,7 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isHistoryDocked: boolean) => {
+const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
   return {
     content: css({
       display: 'flex',

@@ -56,7 +56,6 @@ export function HistoryContainer() {
         aria-label={t('nav.history-container.drawer-tittle', 'History')}
       />
       <NavToolbarSeparator className={styles.separator} />
-      {/* {showHistoryDrawer && <HistoryDrawer />} */}
     </>
   );
 }

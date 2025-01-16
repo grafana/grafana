@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2, Text, Box } from '@grafana/ui';
@@ -14,9 +14,11 @@ const DOCK_HISTORY_BUTTON_ID = 'dock-history-button';
 const HISTORY_HEADER_TOGGLE_ID = 'history-header-toggle';
 
 export const HistoryDrawer = () => {
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.drawer}>
+    <div className={cx(styles.drawer, state.historyDocked && styles.dockedDrawer)}>
       <HistoryHeader />
       <HistoryWrapper />
     </div>
@@ -46,6 +48,7 @@ export const HistoryHeader = () => {
           name="web-section-alt"
           onClick={handleDockedMenu}
           variant="secondary"
+          className={styles.dockedHistoryButton}
         />
         <IconButton
           id={HISTORY_HEADER_TOGGLE_ID}
@@ -63,7 +66,9 @@ export const HistoryHeader = () => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     drawer: css({
-      width: HISTORY_DRAWER_WIDTH,
+      maxWidth: HISTORY_DRAWER_WIDTH,
+      width: '100%',
+      boxSizing: 'border-box',
       height: `calc(100vh - ${TOP_BAR_LEVEL_HEIGHT}px)`,
       overflowY: 'auto',
       overflowX: 'hidden',
@@ -78,6 +83,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       padding: theme.spacing(2),
     }),
+    dockedDrawer: css({
+      background: theme.colors.background.primary,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      display: 'none',
+      zIndex: theme.zIndex.sidemenu,
+      boxShadow: 'none',
+      [theme.breakpoints.up('xl')]: {
+        display: 'block',
+      },
+    }),
     header: css({
       alignItems: 'center',
       display: 'flex',
@@ -86,6 +101,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingBottom: theme.spacing(2),
       height: TOP_BAR_LEVEL_HEIGHT,
       minHeight: TOP_BAR_LEVEL_HEIGHT,
+    }),
+    dockedHistoryButton: css({
+      display: 'none',
+      [theme.breakpoints.up('xl')]: {
+        display: 'inline-flex',
+      },
     }),
   };
 };
