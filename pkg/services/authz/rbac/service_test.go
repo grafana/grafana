@@ -205,8 +205,7 @@ func TestService_getUserTeams(t *testing.T) {
 			s.identityStore = identityStore
 
 			if tc.cacheHit {
-				err := s.cache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), gobBytes(t, tc.expectedTeams), 1*time.Minute)
-				require.NoError(t, err)
+				s.teamCache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams)
 			}
 
 			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
@@ -282,8 +281,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 			s.store = store
 
 			if tc.cacheHit {
-				err := s.cache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), gobBytes(t, tc.expectedRole), 1*time.Minute)
-				require.NoError(t, err)
+				s.basicRoleCache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), tc.expectedRole)
 			}
 
 			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
@@ -293,7 +291,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedRole, *role)
+			require.Equal(t, tc.expectedRole, role)
 			if tc.cacheHit {
 				require.Zero(t, store.calls)
 			} else {
@@ -346,8 +344,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			action := "dashboards:read"
 
 			if tc.cacheHit {
-				err := s.cache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), gobBytes(t, tc.expectedPerms), 1*time.Minute)
-				require.NoError(t, err)
+				s.permCache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), tc.expectedPerms)
 			}
 
 			store := &fakeStore{
@@ -417,8 +414,7 @@ func TestService_buildFolderTree(t *testing.T) {
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			if tc.cacheHit {
-				err := s.cache.Set(ctx, folderCacheKey(ns.Value), gobBytes(t, tc.expectedTree), 1*time.Minute)
-				require.NoError(t, err)
+				s.folderCache.Set(ctx, folderCacheKey(ns.Value), tc.expectedTree)
 			}
 
 			store := &fakeStore{folders: tc.folders}
@@ -622,8 +618,7 @@ func TestService_listPermission(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := setupService()
 			if tc.folderTree != nil {
-				err := s.cache.Set(context.Background(), folderCacheKey("default"), gobBytes(t, tc.folderTree), 1*time.Minute)
-				require.NoError(t, err)
+				s.folderCache.Set(context.Background(), folderCacheKey("default"), tc.folderTree)
 			}
 
 			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
@@ -637,14 +632,20 @@ func TestService_listPermission(t *testing.T) {
 }
 
 func setupService() *Service {
+	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
+	logger := log.New("authz-rbac-service")
 	return &Service{
-		logger:        log.New("test"),
-		actionMapper:  mappers.NewK8sRbacMapper(),
-		tracer:        tracing.NewNoopTracerService(),
-		cache:         cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute}),
-		store:         &fakeStore{},
-		identityStore: &fakeIdentityStore{},
-		sf:            new(singleflight.Group),
+		logger:         logger,
+		actionMapper:   mappers.NewK8sRbacMapper(),
+		tracer:         tracing.NewNoopTracerService(),
+		idCache:        newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
+		permCache:      newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
+		teamCache:      newCacheWrap[[]int64](cache, logger, shortCacheTTL),
+		basicRoleCache: newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
+		folderCache:    newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
+		store:          &fakeStore{},
+		identityStore:  &fakeIdentityStore{},
+		sf:             new(singleflight.Group),
 	}
 }
 

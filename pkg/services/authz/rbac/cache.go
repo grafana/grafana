@@ -1,13 +1,13 @@
 package rbac
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
+	"encoding/json"
 	"errors"
+	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
 
 func userIdentifierCacheKey(namespace, userUID string) string {
@@ -38,192 +38,44 @@ func folderCacheKey(namespace string) string {
 	return namespace + ".folders"
 }
 
-func (s *Service) getUserPermissionsFromCache(ctx context.Context, key string) (map[string]bool, bool) {
-	cached, err := s.cache.Get(ctx, key)
-	if err != nil {
-		// TODO: Should I use cache.ErrNotFound instead?
-		if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
-			s.logger.Warn("Failed to get user permissions from cache", "error", err)
-		}
-		return nil, false
-	}
-
-	userPerm := make(map[string]bool)
-	err = gob.NewDecoder(bytes.NewBuffer(cached)).Decode(&userPerm)
-	if err != nil {
-		s.logger.Warn("Failed to decode user permissions", "error", err)
-		return nil, false
-	}
-
-	return userPerm, true
+type cacheWrap[T any] struct {
+	cache  remotecache.CacheStorage
+	logger log.Logger
+	ttl    time.Duration
 }
 
-func (s *Service) setUserPermissionsToCache(ctx context.Context, key string, userPerm map[string]bool) {
-	if userPerm == nil {
-		s.logger.Debug("Skip set user permissions to cache, user permissions is nil")
-		return
-	}
-
-	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(userPerm)
-	if err != nil {
-		s.logger.Warn("Failed to encode user permissions", "error", err)
-		return
-	}
-
-	err = s.cache.Set(ctx, key, buf.Bytes(), shortCacheTTL)
-	if err != nil {
-		s.logger.Warn("Failed to set user permissions to cache", "error", err)
-	}
+func newCacheWrap[T any](cache remotecache.CacheStorage, logger log.Logger, ttl time.Duration) *cacheWrap[T] {
+	return &cacheWrap[T]{cache: cache, logger: logger, ttl: ttl}
 }
 
-func (s *Service) getUserIdentifiersFromCache(ctx context.Context, key string) (*store.UserIdentifiers, bool) {
-	cached, err := s.cache.Get(ctx, key)
+func (c *cacheWrap[T]) Get(ctx context.Context, key string) (T, bool) {
+	var value T
+	data, err := c.cache.Get(ctx, key)
 	if err != nil {
 		if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
-			s.logger.Warn("Failed to get user identifiers from cache", "error", err)
+			c.logger.Warn("failed to get from cache", "key", key, "error", err)
 		}
-		return nil, false
+		return value, false
 	}
 
-	identifiers := &store.UserIdentifiers{}
-	err = gob.NewDecoder(bytes.NewBuffer(cached)).Decode(identifiers)
+	err = json.Unmarshal(data, &value)
 	if err != nil {
-		s.logger.Warn("Failed to decode user identifiers", "error", err)
-		return nil, false
+		c.logger.Warn("failed to unmarshal from cache", "key", key, "error", err)
+		return value, false
 	}
-	return identifiers, true
+
+	return value, true
 }
 
-func (s *Service) setUserIdentifiersToCache(ctx context.Context, key string, identifiers *store.UserIdentifiers) {
-	if identifiers == nil {
-		s.logger.Debug("Skip set user identifiers to cache, identifiers is nil")
+func (c *cacheWrap[T]) Set(ctx context.Context, key string, value T) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		c.logger.Warn("failed to marshal to cache", "key", key, "error", err)
 		return
 	}
 
-	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(identifiers)
+	err = c.cache.Set(ctx, key, data, c.ttl)
 	if err != nil {
-		s.logger.Warn("Failed to encode user identifiers", "error", err)
-		return
-	}
-
-	err = s.cache.Set(ctx, key, buf.Bytes(), longCacheTTL)
-	if err != nil {
-		s.logger.Warn("Failed to set user identifiers to cache", "error", err)
-	}
-}
-
-func (s *Service) getUserTeamsFromCache(ctx context.Context, key string) ([]int64, bool) {
-	cached, err := s.cache.Get(ctx, key)
-	if err != nil {
-		if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
-			s.logger.Warn("Failed to get user teams from cache", "error", err)
-		}
-		return nil, false
-	}
-
-	teams := []int64{}
-	err = gob.NewDecoder(bytes.NewBuffer(cached)).Decode(&teams)
-	if err != nil {
-		s.logger.Warn("Failed to decode user teams", "error", err)
-		return nil, false
-	}
-
-	return teams, true
-}
-
-func (s *Service) setUserTeamsToCache(ctx context.Context, key string, teams []int64) {
-	if teams == nil {
-		s.logger.Debug("Skip set user teams to cache, teams is nil")
-		return
-	}
-
-	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(teams)
-	if err != nil {
-		s.logger.Warn("Failed to encode user teams", "error", err)
-		return
-	}
-
-	err = s.cache.Set(ctx, key, buf.Bytes(), shortCacheTTL)
-	if err != nil {
-		s.logger.Warn("Failed to set user teams to cache", "error", err)
-	}
-}
-
-func (s *Service) getUserBasicRoleFromCache(ctx context.Context, key string) (*store.BasicRole, bool) {
-	cached, err := s.cache.Get(ctx, key)
-	if err != nil {
-		if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
-			s.logger.Warn("Failed to get user basic role from cache", "error", err)
-		}
-		return nil, false
-	}
-
-	basicRole := &store.BasicRole{}
-	err = gob.NewDecoder(bytes.NewBuffer(cached)).Decode(basicRole)
-	if err != nil {
-		s.logger.Warn("Failed to decode user basic role", "error", err)
-		return nil, false
-	}
-
-	return basicRole, true
-}
-
-func (s *Service) setUserBasicRoleToCache(ctx context.Context, key string, basicRole *store.BasicRole) {
-	if basicRole == nil {
-		s.logger.Debug("Skip set user basic role to cache, basic role is nil")
-		return
-	}
-
-	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(basicRole)
-	if err != nil {
-		s.logger.Warn("Failed to encode user basic role", "error", err)
-		return
-	}
-
-	err = s.cache.Set(ctx, key, buf.Bytes(), longCacheTTL)
-	if err != nil {
-		s.logger.Warn("Failed to set user basic role to cache", "error", err)
-	}
-}
-
-func (s *Service) getFolderFromCache(ctx context.Context, key string) (map[string]FolderNode, bool) {
-	cached, err := s.cache.Get(ctx, key)
-	if err != nil {
-		if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
-			s.logger.Warn("Failed to get folder from cache", "error", err)
-		}
-		return nil, false
-	}
-
-	folder := make(map[string]FolderNode)
-	err = gob.NewDecoder(bytes.NewBuffer(cached)).Decode(&folder)
-	if err != nil {
-		s.logger.Warn("Failed to decode folder", "error", err)
-		return nil, false
-	}
-
-	return folder, true
-}
-
-func (s *Service) setFolderToCache(ctx context.Context, key string, folder map[string]FolderNode) {
-	if folder == nil {
-		s.logger.Debug("Skip set folder to cache, folder is nil")
-		return
-	}
-
-	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(folder)
-	if err != nil {
-		s.logger.Warn("Failed to encode folder", "error", err)
-		return
-	}
-
-	err = s.cache.Set(ctx, key, buf.Bytes(), shortCacheTTL)
-	if err != nil {
-		s.logger.Warn("Failed to set folder to cache", "error", err)
+		c.logger.Warn("failed to set to cache", "key", key, "error", err)
 	}
 }
