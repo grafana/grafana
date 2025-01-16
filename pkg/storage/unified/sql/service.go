@@ -80,7 +80,8 @@ func ProvideUnifiedStorageGrpcService(
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, reg, tracing, &grpc.Authenticator{})
+	fallback := &grpc.Authenticator{Tracer: tracing}
+	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, reg, tracing, fallback)
 	if err != nil {
 		return nil, err
 	}
