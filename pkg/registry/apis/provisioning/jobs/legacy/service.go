@@ -122,7 +122,7 @@ func (job *legacyExporter) Export(ctx context.Context, opts ExportOptions) (stri
 	}
 
 	if true {
-		job.exportDashboards(helper, true)
+		err = job.exportDashboards(helper, true)
 		if err != nil {
 			return rootDir, err
 		}
