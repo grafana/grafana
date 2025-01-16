@@ -11,8 +11,8 @@ import { mimirDataSource } from '../../mocks/server/configure';
 import { alertingFactory } from '../../mocks/server/db';
 import { rulerRuleGroupHandler as grafanaRulerRuleGroupHandler } from '../../mocks/server/handlers/grafanaRuler';
 import { rulerRuleGroupHandler } from '../../mocks/server/handlers/mimirRuler';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { grantPermissionsHelper } from '../rule-viewer/RuleViewer.test';
 
 import { EditRuleGroupModal } from './EditRuleGroupModal';
 
