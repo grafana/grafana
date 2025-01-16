@@ -25,6 +25,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
+import { StatusBadge } from './StatusBadge';
 import {
   useGetRepositoryStatusQuery,
   useListJobQuery,
@@ -93,7 +94,7 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Resources && <ResourcesView repo={query.data} />}
                   {tab === TabSelection.Files && <FilesView repo={query.data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
-                  {tab === TabSelection.Health && <RepositoryHealth name={name} />}
+                  {tab === TabSelection.Health && <RepositoryHealth name={name} repo={query.data} />}
                 </TabContent>
               </>
             ) : (
@@ -311,7 +312,7 @@ function JobsView({ repo }: RepoProps) {
   );
 }
 
-function RepositoryHealth({ name }: { name: string }) {
+function RepositoryHealth({ name, repo: repo }: { name: string; repo: Repository }) {
   const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
 
   if (statusQuery.isLoading) {
@@ -332,18 +333,68 @@ function RepositoryHealth({ name }: { name: string }) {
 
   const status = statusQuery.data?.status;
 
-  if (!status?.health?.healthy) {
-    return (
-      <Alert title="Repository is unhealthy">
-        <Text>Details: </Text>
-        <ul>{status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
-      </Alert>
-    );
+  // FIXME: Add stats
+
+  let webhookURL;
+  if (repo.spec?.type === 'github' && status?.webhook?.url) {
+    const spec = repo.spec.github;
+    webhookURL = `https://github.com/${spec?.owner}/${spec?.repository}/settings/hooks/${status.webhook?.id}`;
+  }
+
+  let remoteURL;
+  if (repo.spec?.type === 'github') {
+    const spec = repo.spec.github;
+    remoteURL = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+    if (spec?.branch) {
+      remoteURL += `tree/` + spec?.branch;
+    }
   }
 
   return (
-    <Alert title="Repository is healthy" severity="success">
-      No errors found
-    </Alert>
+    <>
+      <br />
+      <h2>Health Status</h2>
+      {status?.health?.healthy ? (
+        <Alert title="Repository is healthy" severity="success">
+          No errors found
+        </Alert>
+      ) : (
+        <Alert title="Repository is unhealthy">
+          <Text>Details: </Text>
+          <ul>{status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
+        </Alert>
+      )}
+      {remoteURL && (
+        <p>
+          <TextLink key={'link'} external style={{ color: 'inherit' }} href={remoteURL}>
+            {remoteURL}
+          </TextLink>
+        </p>
+      )}
+      {webhookURL && (
+        <p>
+          <TextLink key={'webhook'} external style={{ color: 'inherit' }} href={webhookURL}>
+            Webhook
+          </TextLink>
+        </p>
+      )}
+      <h2>Sync Status</h2>
+      <StatusBadge state={status?.sync?.state} name={name} />
+      <ul>
+        <p>
+          Job ID: <b>{status?.sync.job}</b>
+        </p>
+        <p>
+          Last Ref: <b>{status?.sync.hash}</b>
+        </p>
+        <p>
+          Started: <b>{status?.sync.started ? new Date(status.sync.started * 1000).toLocaleString() : 'N/A'}</b>
+        </p>
+        <p>
+          Finished: <b>{status?.sync.finished ? new Date(status.sync.finished * 1000).toLocaleString() : 'N/A'}</b>
+        </p>
+      </ul>
+      <ul>{status?.sync?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
+    </>
   );
 }
