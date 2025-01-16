@@ -16,8 +16,8 @@ export function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?
  * 5. The branch name cannot include the following characters: `~`, `^`, `:`, `?`, `*`, `[`, `\`, or `]`.
  * 6. The branch name must have at least one character and must not be empty.
  */
-export function validateBranchName(branchName: string) {
+export function validateBranchName(branchName?: string) {
   const branchNameRegex = /^(?!\/|.*\/\/|.*\.\.|.*@{)(?!.*[~^:?*[\]\\]).+(?<!\/|\.|\s)$/;
 
-  return branchNameRegex.test(branchName);
+  return branchName && branchNameRegex.test(branchName!);
 }

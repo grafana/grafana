@@ -22,7 +22,7 @@ import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
 import { DashboardChangeInfo } from './shared';
 
 type FormData = {
-  ref: string;
+  ref?: string;
   path: string;
   comment?: string;
   repo: string;
@@ -54,12 +54,12 @@ function getDefaultValues(meta: DashboardMeta, repository = '') {
 }
 
 const getDefaultWorkflow = (config?: RepositorySpec) => {
-  return config?.github?.branchWorkflow ? WorkflowOption.PullRequest : WorkflowOption.Branch;
+  return config?.github?.branchWorkflow ? WorkflowOption.PullRequest : WorkflowOption.Direct;
 };
 
 function getWorkflowOptions(branch = 'main') {
   return [
-    { label: `Commit to ${branch}`, value: WorkflowOption.Branch },
+    { label: `Commit to ${branch}`, value: WorkflowOption.Direct },
     { label: 'Create pull request', value: WorkflowOption.PullRequest },
   ];
 }
@@ -127,14 +127,15 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       return;
     }
 
+    // The dashboard spec
     const saveModel = dashboard.getSaveAsModel({
       isNew: isNew,
       title: title,
       description: description,
     });
 
-    if (workflow === WorkflowOption.Branch) {
-      ref = repositoryConfig?.github?.branch || 'main';
+    if (workflow === WorkflowOption.Direct) {
+      ref = undefined;
     }
 
     action({ ref, name: repo, path, message: comment, body: saveModel });
