@@ -11,7 +11,9 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -45,7 +47,7 @@ func TestBleveBackend(t *testing.T) {
 	resource.NewIndexMetrics(backend.opts.Root, backend)
 
 	rv := int64(10)
-	ctx := context.Background()
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	var dashboardsIndex resource.ResourceIndex
 	var foldersIndex resource.ResourceIndex
 
