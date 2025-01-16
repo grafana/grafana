@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EmptyState, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ViewProps } from 'app/features/datasources/components/DataSourcesList';
 import { DataSourcesListCard } from 'app/features/datasources/components/DataSourcesListCard';
 import { getDataSources, useLoadDataSources } from 'app/features/datasources/state';
