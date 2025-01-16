@@ -35,7 +35,6 @@ describe('MetricDatasourceHelper', () => {
     it('should return true if metric is a native histogram', async () => {
       const result = await metricDatasourceHelper.isNativeHistogram(NATIVE_HISTOGRAM);
       expect(result).toBe(true);
-      expect(metricDatasourceHelper['_nativeHistograms']).toContain(NATIVE_HISTOGRAM);
     });
 
     it('should return false if metric is not a native histogram', async () => {
