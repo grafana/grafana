@@ -15,6 +15,7 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
     headers,
     body,
     credentials,
+    signal: options.abortSignal,
   };
 };
 
@@ -114,7 +115,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
 
 export async function parseResponseBody<T>(
   response: Response,
-  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob' | 'stream'
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob'
 ): Promise<T> {
   if (responseType) {
     switch (responseType) {
@@ -136,9 +137,6 @@ export async function parseResponseBody<T>(
           return {} as T;
         }
         return await response.json();
-
-      case 'stream':
-        return Promise.resolve(response.body) as Promise<T>;
 
       case 'text':
         // this specifically returns a Promise<string>

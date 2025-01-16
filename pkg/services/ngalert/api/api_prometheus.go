@@ -489,7 +489,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
-		File: folderFullPath,
+		File:      folderFullPath,
+		FolderUID: groupKey.NamespaceUID,
 	}
 
 	rulesTotals := make(map[string]int64, len(rules))
@@ -514,7 +515,9 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		}
 
 		newRule := apimodels.Rule{
+			UID:            rule.UID,
 			Name:           rule.Title,
+			FolderUID:      rule.NamespaceUID,
 			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
 			Health:         status.Health,
 			LastError:      errorOrEmpty(status.LastError),
