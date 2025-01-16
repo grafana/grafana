@@ -6,10 +6,14 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from 'app/features/alerting/unified/components/mute-timings/permissions';
+import {
+  PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
+  PERMISSIONS_NOTIFICATION_POLICIES_READ,
+} from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { CombinedRule, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
@@ -67,6 +71,9 @@ export enum AlertmanagerAction {
   UpdateMuteTiming = 'update-mute-timing',
   DeleteMuteTiming = 'delete-mute-timing',
   ExportMuteTimings = 'export-mute-timings',
+
+  // Alert groups
+  ViewAlertGroups = 'view-alert-groups',
 }
 
 // this enum lists all of the available actions we can take on a single alert rule
@@ -158,7 +165,7 @@ export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleActi
 
 export function useRulerRuleAbility(
   rule: RulerRuleDTO | undefined,
-  groupIdentifier: RuleGroupIdentifier,
+  groupIdentifier: RuleGroupIdentifierV2,
   action: AlertRuleAction
 ): Ability {
   const abilities = useAllRulerRuleAbilities(rule, groupIdentifier);
@@ -170,7 +177,7 @@ export function useRulerRuleAbility(
 
 export function useRulerRuleAbilities(
   rule: RulerRuleDTO,
-  groupIdentifier: RuleGroupIdentifier,
+  groupIdentifier: RuleGroupIdentifierV2,
   actions: AlertRuleAction[]
 ): Ability[] {
   const abilities = useAllRulerRuleAbilities(rule, groupIdentifier);
@@ -233,9 +240,9 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
 
 export function useAllRulerRuleAbilities(
   rule: RulerRuleDTO | undefined,
-  groupIdentifier: RuleGroupIdentifier
+  groupIdentifier: RuleGroupIdentifierV2
 ): Abilities<AlertRuleAction> {
-  const rulesSourceName = groupIdentifier.dataSourceName;
+  const rulesSourceName = groupIdentifier.rulesSource.name;
 
   const { isEditable, isRemovable, isRulerAvailable = false, loading } = useIsRuleEditable(rulesSourceName, rule);
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
@@ -344,10 +351,26 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     ),
     [AlertmanagerAction.DeleteNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
     // -- notification policies --
-    [AlertmanagerAction.CreateNotificationPolicy]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
-    [AlertmanagerAction.ViewNotificationPolicyTree]: toAbility(AlwaysSupported, notificationsPermissions.read),
-    [AlertmanagerAction.UpdateNotificationPolicyTree]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
-    [AlertmanagerAction.DeleteNotificationPolicy]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
+    [AlertmanagerAction.CreateNotificationPolicy]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.create,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
+    ),
+    [AlertmanagerAction.ViewNotificationPolicyTree]: toAbility(
+      AlwaysSupported,
+      notificationsPermissions.read,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_READ : [])
+    ),
+    [AlertmanagerAction.UpdateNotificationPolicyTree]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.update,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
+    ),
+    [AlertmanagerAction.DeleteNotificationPolicy]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.delete,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
+    ),
     [AlertmanagerAction.ExportNotificationPolicies]: toAbility(
       isGrafanaFlavoredAlertmanager,
       notificationsPermissions.read
@@ -385,6 +408,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
     [AlertmanagerAction.ExportMuteTimings]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
+    [AlertmanagerAction.ViewAlertGroups]: toAbility(AlwaysSupported, instancePermissions.read),
   };
 
   return abilities;

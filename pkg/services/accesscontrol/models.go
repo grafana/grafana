@@ -81,6 +81,7 @@ type RoleDTO struct {
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
 	Delegatable *bool        `json:"delegatable,omitempty"`
+	Mapped      bool         `json:"mapped,omitempty"`
 	Hidden      bool         `json:"hidden,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`

@@ -19,12 +19,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
@@ -89,6 +90,11 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         iconClassName: 'link',
         shortcut: 'p u',
         onClick: () => {
+          DashboardInteractions.sharingCategoryClicked({
+            item: shareDashboardType.link,
+            shareResource: getTrackingSource(panel?.getRef()),
+          });
+
           const drawer = new ShareDrawer({
             shareView: shareDashboardType.link,
             panelRef: panel.getRef(),
@@ -102,6 +108,11 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         iconClassName: 'arrow',
         shortcut: 'p e',
         onClick: () => {
+          DashboardInteractions.sharingCategoryClicked({
+            item: shareDashboardType.embed,
+            shareResource: getTrackingSource(panel.getRef()),
+          });
+
           const drawer = new ShareDrawer({
             shareView: shareDashboardType.embed,
             panelRef: panel.getRef(),
@@ -111,12 +122,21 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         },
       });
 
-      if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
+      if (
+        contextSrv.isSignedIn &&
+        config.snapshotEnabled &&
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+      ) {
         subMenu.push({
           text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
           iconClassName: 'camera',
           shortcut: 'p s',
           onClick: () => {
+            DashboardInteractions.sharingCategoryClicked({
+              item: shareDashboardType.snapshot,
+              shareResource: getTrackingSource(panel.getRef()),
+            });
+
             const drawer = new ShareDrawer({
               shareView: shareDashboardType.snapshot,
               panelRef: panel.getRef(),

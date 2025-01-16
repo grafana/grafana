@@ -13,7 +13,7 @@ import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -23,7 +23,7 @@ import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
-import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { EditRuleGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
@@ -275,7 +275,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         />
       )}
       {isEditingGroup && (
-        <EditCloudGroupModal
+        <EditRuleGroupModal
           namespace={namespace}
           group={group}
           onClose={() => closeEditModal()}

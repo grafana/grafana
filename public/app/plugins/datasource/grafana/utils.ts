@@ -3,7 +3,7 @@ import { DropEvent, FileRejection } from 'react-dropzone';
 import { DataFrame, DataFrameJSON, dataFrameToJSON } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import * as DFImport from 'app/features/dataframe-import';
 import { ShowConfirmModalEvent } from 'app/types/events';
 

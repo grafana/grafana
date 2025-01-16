@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
@@ -246,10 +244,12 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
-func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.SearchRequest) (*resource.SearchResponse, error) {
+// TODO: this needs to be implemented
+func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not yet (filter)")
 }
 
+/**
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -328,8 +328,17 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	}
 	return list, err
 }
+	**/
 
-// Used for efficient provisioning
-func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
-	return nil, fmt.Errorf("not yet (origin)")
+func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// GetStats implements ResourceServer.
+func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+	return nil, fmt.Errorf("not yet (GetStats)")
 }

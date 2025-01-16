@@ -10,8 +10,12 @@ import (
 )
 
 func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*authzextv1.WriteResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.Write")
+	ctx, span := tracer.Start(ctx, "server.Write")
 	defer span.End()
+
+	if err := authorize(ctx, req.GetNamespace()); err != nil {
+		return nil, err
+	}
 
 	storeInf, err := s.getStoreInfo(ctx, req.Namespace)
 	if err != nil {
@@ -29,8 +33,8 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	}
 
 	writeReq := &openfgav1.WriteRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
 	}
 	if len(writeTuples) > 0 {
 		writeReq.Writes = &openfgav1.WriteRequestWrites{

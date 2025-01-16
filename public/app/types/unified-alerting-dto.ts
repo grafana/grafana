@@ -149,14 +149,29 @@ export interface PromRecordingRuleDTO extends PromRuleDTOBase {
 
 export type PromRuleDTO = PromAlertingRuleDTO | PromRecordingRuleDTO;
 
-export interface PromRuleGroupDTO {
+export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
   name: string;
   file: string;
-  rules: PromRuleDTO[];
+  rules: TRule[];
   interval: number;
 
   evaluationTime?: number; // these 2 are not in older prometheus payloads
   lastEvaluation?: string;
+}
+
+export interface GrafanaPromAlertingRuleDTO extends PromAlertingRuleDTO {
+  uid: string;
+  folderUid: string;
+}
+
+export interface GrafanaPromRecordingRuleDTO extends PromRecordingRuleDTO {
+  uid: string;
+  folderUid: string;
+}
+export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
+
+export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRuleDTO> {
+  folderUid: string;
 }
 
 export interface PromResponse<T> {
@@ -169,6 +184,7 @@ export interface PromResponse<T> {
 
 export type PromRulesResponse = PromResponse<{
   groups: PromRuleGroupDTO[];
+  groupNextToken?: string;
   totals?: AlertGroupTotals;
 }>;
 
@@ -224,6 +240,7 @@ export interface GrafanaNotificationSettings {
 
 export interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
+  simplified_notifications_section: boolean;
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;

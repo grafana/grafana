@@ -17,12 +17,12 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
+import { Folder } from '../types/rule-form';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
-import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
+import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { alertingApi, WithNotificationOptions } from './alertingApi';
+import { WithNotificationOptions, alertingApi } from './alertingApi';
 import {
   FetchPromRulesFilter,
   getRulesFilterSearchParams,
@@ -323,6 +323,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           type: 'RuleGroup',
           id: `${namespace}/${payload.name}`,
         },
+        ...payload.rules
+          .filter((rule) => isGrafanaRulerRule(rule))
+          .map((rule) => ({ type: 'GrafanaRulerRule', id: rule.grafana_alert.uid }) as const),
       ],
     }),
 

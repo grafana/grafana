@@ -1,5 +1,6 @@
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import { Combobox, ComboboxOption } from './Combobox';
 
@@ -49,8 +50,17 @@ describe('Combobox', () => {
     expect(onChangeHandler).toHaveBeenCalledWith(options[0]);
   });
 
-  it("shows the placeholder with the menu open when there's no value", async () => {
+  it('shows the placeholder with the menu open when value is null', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} placeholder="Select an option" />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.click(input);
+
+    expect(input).toHaveAttribute('placeholder', 'Select an option');
+  });
+
+  it('shows the placeholder with the menu open when value is undefined', async () => {
+    render(<Combobox options={options} value={undefined} onChange={onChangeHandler} placeholder="Select an option" />);
 
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
@@ -104,6 +114,73 @@ describe('Combobox', () => {
 
     expect(onChangeHandler).toHaveBeenCalledWith(null);
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
+  });
+
+  it.each(['very valid value', '', 0])('should handle an option with %p as a value', async (val) => {
+    const options = [
+      { label: 'Second option', value: '2' },
+      { label: 'Default', value: val },
+    ];
+
+    const ControlledCombobox = () => {
+      const [value, setValue] = React.useState<string | number | null>(null);
+
+      return (
+        <Combobox
+          options={options}
+          value={value}
+          onChange={(opt) => {
+            setValue(opt.value);
+          }}
+        />
+      );
+    };
+
+    render(<ControlledCombobox />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.click(input);
+    await userEvent.click(screen.getByRole('option', { name: 'Default' }));
+    expect(screen.queryByDisplayValue('Default')).toBeInTheDocument();
+
+    await userEvent.click(input);
+
+    expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  describe('size support', () => {
+    it('should require minWidth to be set with auto width', () => {
+      // @ts-expect-error
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" />);
+    });
+
+    it('should change width when typing things with auto width', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" minWidth={2} />);
+
+      const input = screen.getByRole('combobox');
+      const inputWrapper = screen.getByTestId('input-wrapper');
+      const initialWidth = getComputedStyle(inputWrapper).width;
+
+      fireEvent.change(input, { target: { value: 'very very long value' } });
+
+      const newWidth = getComputedStyle(inputWrapper).width;
+
+      expect(initialWidth).not.toBe(newWidth);
+    });
+
+    it('should not change width when typing things with fixed width', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width={2} />);
+      const input = screen.getByRole('combobox');
+
+      const inputWrapper = screen.getByTestId('input-wrapper');
+      const initialWidth = getComputedStyle(inputWrapper).width;
+
+      fireEvent.change(input, { target: { value: 'very very long value' } });
+
+      const newWidth = getComputedStyle(inputWrapper).width;
+
+      expect(initialWidth).toBe(newWidth);
+    });
   });
 
   describe('with a value already selected', () => {

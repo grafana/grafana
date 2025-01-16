@@ -62,8 +62,7 @@ func TraceToFrame(resourceSpans []*tracev11.ResourceSpans) (*data.Frame, error) 
 			data.NewField("tags", nil, []json.RawMessage{}),
 		},
 		Meta: &data.FrameMeta{
-			// TODO: use constant once available in the SDK
-			PreferredVisualization: "trace",
+			PreferredVisualization: data.VisTypeTrace,
 		},
 	}
 

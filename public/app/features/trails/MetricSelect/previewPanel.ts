@@ -1,21 +1,37 @@
 import { PromQuery } from '@grafana/prometheus';
 import { SceneCSSGridItem, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
-import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
+import { getAutoQueriesForMetric } from '../autoQuery/getAutoQueriesForMetric';
 import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
 import { getColorByIndex } from '../utils';
 
+import { AddToExplorationButton } from './AddToExplorationsButton';
+import { NativeHistogramBadge } from './NativeHistogramBadge';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 
-export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string) {
-  const autoQuery = getAutoQueriesForMetric(metric);
+export function getPreviewPanelFor(
+  metric: string,
+  index: number,
+  currentFilterCount: number,
+  description?: string,
+  nativeHistogram?: boolean
+) {
+  const autoQuery = getAutoQueriesForMetric(metric, nativeHistogram);
+  let actions: Array<SelectMetricAction | AddToExplorationButton | NativeHistogramBadge> = [
+    new SelectMetricAction({ metric, title: 'Select' }),
+    new AddToExplorationButton({ labelName: metric }),
+  ];
+
+  if (nativeHistogram) {
+    actions.unshift(new NativeHistogramBadge({}));
+  }
 
   const vizPanel = autoQuery.preview
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setDescription(description)
-    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
+    .setHeaderActions(actions)
     .build();
 
   const queries = autoQuery.preview.queries.map((query) =>

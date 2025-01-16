@@ -4,20 +4,21 @@ import {
   DataQuery,
   DataSourceInstanceSettings,
   DataSourceRef,
-  getDefaultRelativeTimeRange,
-  getNextRefId,
   IntervalValues,
-  rangeUtil,
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
+  getDefaultRelativeTimeRange,
+  getNextRefId,
+  rangeUtil,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { VizPanel, sceneGraph } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,
@@ -40,12 +41,11 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-type KVObject = { key: string; value: string };
-
 import { EvalFunction } from '../../state/alertDef';
 import {
   AlertManagerManualRouting,
   ContactPoint,
+  KVObject,
   RuleFormType,
   RuleFormValues,
   SimplifiedEditor,
@@ -55,8 +55,8 @@ import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
 import {
   DataSourceType,
-  getDefaultOrFirstCompatibleDataSource,
   GRAFANA_RULES_SOURCE_NAME,
+  getDefaultOrFirstCompatibleDataSource,
   isGrafanaRulesSource,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
@@ -97,7 +97,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     group: '',
 
     // grafana
-    folder: null,
+    folder: undefined,
     queries: [],
     recordingRulesQueries: [],
     condition: '',
@@ -137,10 +137,12 @@ function getDefaultEditorSettings() {
   if (!editorSettingsEnabled) {
     return undefined;
   }
-  //then, check in local storage if the user has saved last rule with simplified query editor
+  //then, check in local storage if the user has saved last rule with sections simplified
   const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+  const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
   return {
     simplifiedQueryEditor: queryEditorSettings !== 'false',
+    simplifiedNotificationEditor: notificationStepSettings !== 'false',
   };
 }
 
@@ -230,6 +232,7 @@ export function getNotificationSettingsForDTO(
 function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
   return {
     simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
+    simplified_notifications_section: simplifiedEditor.simplifiedNotificationEditor,
   };
 }
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
@@ -349,11 +352,13 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   if (ga.metadata?.editor_settings) {
     return {
       simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
+      simplifiedNotificationEditor: ga.metadata.editor_settings.simplified_notifications_section,
     };
   }
 
   return {
     simplifiedQueryEditor: false,
+    simplifiedNotificationEditor: Boolean(ga.notification_settings), // in case this rule was created before the new field was added, we'll default to current routing settings
   };
 }
 
@@ -756,16 +761,18 @@ export const panelToRuleFormValues = async (
   }
 
   const { folderTitle, folderUid } = dashboard.meta;
+  const folder =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
 
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries,
     name: panel.title,
     condition: queries[queries.length - 1].refId,
@@ -827,15 +834,18 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
 
   const { folderTitle, folderUid } = dashboard.state.meta;
 
+  const folder =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
+
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries: grafanaQueries,
     name: vizPanel.state.title,
     condition: grafanaQueries[grafanaQueries.length - 1].refId,
@@ -851,6 +861,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
       },
     ],
   };
+
   return formValues;
 };
 

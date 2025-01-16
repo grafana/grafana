@@ -95,6 +95,7 @@ export const binaryScalarOperations: QueryBuilderOperationDefinition[] = binaryS
     name: opDef.name,
     params,
     defaultParams,
+    toggleable: true,
     alternativesKey: 'binary scalar operations',
     category: LokiVisualQueryOperationCategory.BinaryOps,
     renderer: getSimpleBinaryRenderer(opDef.sign),

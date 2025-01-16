@@ -1,6 +1,6 @@
 import { AnnotationEvent, AnnotationQuery, getDefaultTimeRange } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotWorker } from './SnapshotWorker';
 import { DashboardQueryRunnerOptions } from './types';

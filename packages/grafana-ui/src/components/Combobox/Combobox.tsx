@@ -15,7 +15,8 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { itemFilter, itemToString } from './filter';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
@@ -27,8 +28,11 @@ export type ComboboxOption<T extends string | number = string> = {
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-interface ComboboxBaseProps<T extends string | number>
-  extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
+export interface ComboboxBaseProps<T extends string | number>
+  extends Pick<
+    InputProps,
+    'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+  > {
   /**
    * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
    */
@@ -38,21 +42,32 @@ interface ComboboxBaseProps<T extends string | number>
    */
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-  onChange: (option: ComboboxOption<T> | null) => void;
+  onChange: (option: ComboboxOption<T>) => void;
   /**
    * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
    * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.
    */
-  value: T | ComboboxOption<T> | null;
+  value?: T | ComboboxOption<T> | null;
   /**
    * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
+  onBlur?: () => void;
 }
 
 const RECOMMENDED_ITEMS_AMOUNT = 100_000;
 
-type AutoSizeConditionals =
+type ClearableConditionals<T extends number | string> =
+  | {
+      isClearable: true;
+      /**
+       * The onChange handler is called with `null` when clearing the Combobox.
+       */
+      onChange: (option: ComboboxOption<T> | null) => void;
+    }
+  | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };
+
+export type AutoSizeConditionals =
   | {
       width: 'auto';
       /**
@@ -70,29 +85,12 @@ type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
-
-function itemToString<T extends string | number>(item: ComboboxOption<T> | null) {
-  if (item?.label?.includes('Custom value: ')) {
-    return item?.value.toString();
-  }
-  return item?.label ?? item?.value.toString() ?? '';
-}
-
-function itemFilter<T extends string | number>(inputValue: string) {
-  const lowerCasedInputValue = inputValue.toLowerCase();
-
-  return (item: ComboboxOption<T>) => {
-    return (
-      !inputValue ||
-      item?.label?.toLowerCase().includes(lowerCasedInputValue) ||
-      item?.value?.toString().toLowerCase().includes(lowerCasedInputValue)
-    );
-  };
-}
+type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
 
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
+
+export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 /**
  * A performant Select replacement.
@@ -109,8 +107,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     createCustomValue = false,
     id,
     width,
+    minWidth,
+    maxWidth,
     'aria-labelledby': ariaLabelledBy,
-    ...restProps
+    autoFocus,
+    onBlur,
+    disabled,
+    loading,
+    invalid,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -158,7 +162,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       return null;
     }
 
-    if (value === null) {
+    if (valueProp === undefined || valueProp === null) {
       return null;
     }
 
@@ -168,9 +172,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     }
 
     return index;
-  }, [options, value, isAsync]);
+  }, [valueProp, options, value, isAsync]);
 
   const selectedItem = useMemo(() => {
+    if (valueProp === undefined || valueProp === null) {
+      return null;
+    }
+
     if (selectedItemIndex !== null && !isAsync) {
       return options[selectedItemIndex];
     }
@@ -186,8 +194,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => MENU_OPTION_HEIGHT,
-    overscan: 4,
+    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
+    overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
@@ -327,9 +335,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
-  const InputComponent = width === 'auto' ? AutoSizeInput : Input;
+  const isAutoSize = width === 'auto';
+
+  const InputComponent = isAutoSize ? AutoSizeInput : Input;
 
   const suffixIcon = asyncLoading
     ? 'spinner'
@@ -341,9 +351,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
   return (
-    <div>
+    <div className={isAutoSize ? styles.addaptToParent : undefined}>
       <InputComponent
-        width={width === 'auto' ? undefined : width}
+        width={isAutoSize ? undefined : width}
+        {...(isAutoSize ? { minWidth, maxWidth } : {})}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
+        disabled={disabled}
+        loading={loading}
+        invalid={invalid}
         className={styles.input}
         suffix={
           <>
@@ -368,7 +384,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
             <Icon name={suffixIcon} />
           </>
         }
-        {...restProps}
         {...getInputProps({
           ref: inputRef,
           /*  Empty onCall to avoid TS error

@@ -119,7 +119,7 @@ To configure GitLab authentication with Grafana, follow these steps:
    a. Set `use_refresh_token` to `true` in `[auth.gitlab]` section in Grafana configuration file.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
-1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. Optional: [Configure group synchronization]({{< relref "#configure-group-synchronization" >}}).
 1. Restart Grafana.
 
    You should now see a GitLab login button on the login page and be able to log in or sign up with your GitLab accounts.
@@ -242,20 +242,20 @@ use_pkce = true
 use_refresh_token = true
 ```
 
-## Configure team synchronization
+## Configure group synchronization
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< /admonition >}}
 
-By using Team Sync, you can map GitLab groups to teams within Grafana. This will automatically assign users to the appropriate teams.
-Teams for each user are synchronized when the user logs in.
+Grafana supports synchronization of GitLab groups with Grafana teams and roles. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
+Teams and roles get synchronized when the user logs in.
 
 GitLab groups are referenced by the group name. For example, `developers`. To reference a subgroup `frontend`, use `developers/frontend`.
 Note that in GitLab, the group or subgroup name does not always match its display name, especially if the display name contains spaces or special characters.
 Make sure you always use the group or subgroup name as it appears in the URL of the group or subgroup.
 
-To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about group synchronization, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync).
 
 ## Configuration options
 

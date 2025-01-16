@@ -73,8 +73,6 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 		krb5DriverParams += "krb5-dnslookupkdc=" + kerberosAuth.EnableDNSLookupKDC + ";"
 	}
 
-	logger.Info(fmt.Sprintf("final krb connstr: %s", krb5DriverParams))
-
 	return krb5DriverParams
 }
 

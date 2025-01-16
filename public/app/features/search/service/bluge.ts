@@ -9,9 +9,8 @@ import {
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from './types';
 import { replaceCurrentFolderQuery } from './utils';
-
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.

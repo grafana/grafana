@@ -17,7 +17,7 @@ func (a RuntimeConfig) String() string {
 
 // Supported options are:
 //
-//	<group>/<version>=true|false for a specific API group and version (e.g. dashboards.grafana.app/v0alpha1=true)
+//	<group>/<version>=true|false for a specific API group and version (e.g. dashboard.grafana.app/v0alpha1=true)
 //	api/all=true|false controls all API versions
 //	api/ga=true|false controls all API versions of the form v[0-9]+
 //	api/beta=true|false controls all API versions of the form v[0-9]+beta[0-9]+

@@ -35,7 +35,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { RoutesMatchingFilters } from '../../NotificationPolicies';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
@@ -51,6 +50,7 @@ import { Spacer } from '../Spacer';
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
+import { RoutesMatchingFilters } from './NotificationPoliciesList';
 import { TIMING_OPTIONS_DEFAULTS, TimingOptions } from './timingOptions';
 
 interface PolicyComponentProps {
@@ -713,6 +713,7 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
   timings,
   alertManagerSourceName,
 }) => {
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
   /* TODO make a better mute timing overview, allow combining multiple in to one overview */
   /*
     <HoverCard
@@ -733,19 +734,22 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
   */
   return (
     <div>
-      {timings.map((timing, index) => (
-        <Fragment key={timing}>
-          <TextLink
-            href={createMuteTimingLink(timing, alertManagerSourceName)}
-            color="primary"
-            variant="bodySmall"
-            inline={false}
-          >
-            {timing}
-          </TextLink>
-          {index < timings.length - 1 && ', '}
-        </Fragment>
-      ))}
+      {timings.map((timing, index) => {
+        const Wrapper = canSeeMuteTimings ? TextLink : Text;
+        return (
+          <Fragment key={timing}>
+            <Wrapper
+              href={createMuteTimingLink(timing, alertManagerSourceName)}
+              color={canSeeMuteTimings ? 'primary' : 'secondary'}
+              variant="bodySmall"
+              inline={canSeeMuteTimings ? false : undefined}
+            >
+              {timing}
+            </Wrapper>
+            {index < timings.length - 1 && ', '}
+          </Fragment>
+        );
+      })}
     </div>
   );
 };
