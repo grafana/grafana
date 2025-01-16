@@ -66,7 +66,15 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const [baseItems, baseSetItems] = useState(getOptionsToSet());
 
-  const items = useMemo(() => baseItems.filter(itemFilter(inputValue)), [baseItems, inputValue]);
+  const items = useMemo(() => {
+    const newItems = baseItems.filter(itemFilter(inputValue));
+
+    if (enableAllOption && newItems.length === 1 && newItems[0] === allOptionItem) {
+      return [];
+    }
+
+    return newItems;
+  }, [baseItems, inputValue, enableAllOption, allOptionItem]);
   const [isOpen, setIsOpen] = useState(false);
 
   // TODO: Improve this with async
