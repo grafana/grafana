@@ -18,7 +18,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 

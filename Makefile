@@ -149,7 +149,7 @@ gen-cue: ## Do all CUE/Thema code generation
 .PHONY: gen-cuev2
 gen-cuev2: ## Do all CUE code generation
 	@echo "generate code from .cue files (v2)"
-	go generate ./kindsv2/gen.go
+	@$(MAKE) -C ./kindsv2 all
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:

@@ -37,7 +37,7 @@ import {
   AnnotationQueryKind,
   DataLink,
   RepeatOptions,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
