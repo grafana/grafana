@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
+import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { reportInteraction } from '@grafana/runtime/src';
 import { IconButton, useStyles2 } from '@grafana/ui/';
 
@@ -94,6 +95,8 @@ function getQueryValues(allLabels: Pick<instantQueryRawVirtualizedListData, 'Val
 
 const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, isExpandedView }: RawListProps) => {
   const { __name__, ...allLabels } = listItemData;
+  // We must know whether it is a utf8 metric name or not
+  const isLegacyMetric = isValidLegacyName(__name__);
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
@@ -110,10 +113,12 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   };
 
   // Convert the object back into a string
-  const stringRep = `${__name__}{${attributeValues.map((value) => {
-    // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
-    return `${value.key}="${transformCopyValue(value.value)}"`;
-  })}}`;
+  const stringRep = `${isLegacyMetric ? __name__ : ''}{${isLegacyMetric ? '' : `"${__name__}", `}${attributeValues.map(
+    (value) => {
+      // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
+      return `${utf8Support(value.key)}="${transformCopyValue(value.value)}"`;
+    }
+  )}}`;
 
   const hideFieldsWithoutValues = Boolean(valueLabels && valueLabels?.length);
 
@@ -135,8 +140,13 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
         </span>
         <span role={'cell'} className={styles.rowLabelWrapWrap}>
           <div className={styles.rowLabelWrap}>
-            <span>{__name__}</span>
+            {isLegacyMetric && <span>{__name__}</span>}
             <span>{`{`}</span>
+            {!isLegacyMetric && __name__ !== '' && (
+              <span>
+                "{__name__}"{', '}
+              </span>
+            )}
             <span>
               {attributeValues.map((value, index) => (
                 <RawListItemAttributes
