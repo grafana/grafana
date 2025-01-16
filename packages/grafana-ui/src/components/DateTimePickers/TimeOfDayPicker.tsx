@@ -150,6 +150,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundColor: bgColor,
         color: theme.colors.text.secondary,
         padding: 'unset',
+        overflowY: 'auto',
+        scrollbarWidth: 'thin',
         width: theme.spacing(8),
         li: {
           paddingRight: theme.spacing(2),
