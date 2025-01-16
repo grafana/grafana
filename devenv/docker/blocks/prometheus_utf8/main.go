@@ -60,6 +60,14 @@ func main() {
 			label:        "label.with.spaß",
 			getNextValue: staticList([]string{"this_is_fun"}),
 		},
+		{
+			label:        "site",
+			getNextValue: staticList([]string{"LA-EPI"}),
+		},
+		{
+			label:        "room",
+			getNextValue: staticList([]string{`"Friends Don't Lie"`}),
+		},
 	}
 
 	dimensions := []string{}

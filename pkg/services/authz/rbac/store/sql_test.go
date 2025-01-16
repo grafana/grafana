@@ -97,6 +97,24 @@ func TestIdentityQueries(t *testing.T) {
 						TeamIDs: []int64{1, 2},
 					}),
 				},
+				{
+					Name: "anonymous_user",
+					Data: getPermissions(&PermissionsQuery{
+						OrgID:  1,
+						Action: "folders:read",
+						Role:   "Viewer",
+					}),
+				},
+				{
+					Name: "With_action_sets",
+					Data: getPermissions(&PermissionsQuery{
+						UserID:     1,
+						OrgID:      1,
+						Action:     "folders:create",
+						ActionSets: []string{"folders:edit", "folders:admin"},
+						Role:       "Viewer",
+					}),
+				},
 			},
 			sqlFolders: {
 				{
