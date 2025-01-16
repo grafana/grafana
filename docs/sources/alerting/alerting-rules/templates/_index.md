@@ -63,14 +63,19 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
   view-alert-state:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-state-health/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/
   preview-notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
+  labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/latest/alerting/fundamentals/alert-rules/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
 ---
 
 # Template annotations and labels

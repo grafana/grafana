@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -1892,7 +1891,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 	store := ssosettingstests.NewFakeStore()
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
 	secrets := secretsFakes.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	reloadables := make(map[string]ssosettings.Reloadable)
 
 	fallbackStrategy.ExpectedIsMatch = true

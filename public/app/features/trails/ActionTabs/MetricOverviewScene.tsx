@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { PromMetricsMetadataItem } from '@grafana/prometheus';
+import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
 import {
   QueryVariable,
   SceneComponentProps,
@@ -13,9 +14,9 @@ import {
 import { Stack, Text, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { getUnitFromMetric } from '../AutomaticMetricQueries/units';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { getUnitFromMetric } from '../autoQuery/units';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
 import { VAR_DATASOURCE_EXPR, VAR_GROUP_BY, VAR_OTEL_GROUP_LEFT } from '../shared';
@@ -90,9 +91,14 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
       // when the group left variable is changed we should get all the resource attributes + labels
       const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail)?.getValue();
       if (typeof resourceAttributes === 'string') {
-        const attributeArray: VariableValueOption[] = resourceAttributes
-          .split(',')
-          .map((el) => ({ label: el, value: el }));
+        const attributeArray: VariableValueOption[] = resourceAttributes.split(',').map((el) => {
+          let label = el;
+          if (!isValidLegacyName(el)) {
+            // remove '' from label
+            label = el.slice(1, -1);
+          }
+          return { label, value: el };
+        });
         allLabelOptions = attributeArray.concat(allLabelOptions);
       }
     }

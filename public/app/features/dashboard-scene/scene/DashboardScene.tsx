@@ -25,11 +25,14 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -43,6 +46,8 @@ import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
+import { DashboardChangeInfo } from '../saving/shared';
+import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -51,7 +56,8 @@ import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { getViewPanelUrl } from '../utils/urlBuilders';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -150,10 +156,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _initialState?: DashboardSceneState;
   /**
-   * The save model which the scene was originally created from
-   */
-  private _initialSaveModel?: Dashboard;
-  /**
    * Url state before editing started
    */
   private _initialUrlState?: H.Location;
@@ -172,6 +174,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
+  private _serializer: DashboardSceneSerializerLike<
+    Dashboard | DashboardV2Spec,
+    DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  > = getDashboardSceneSerializer();
+
   public constructor(state: Partial<DashboardSceneState>) {
     super({
       title: 'Dashboard',
@@ -181,7 +188,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardEditPane({}),
+      editPane: new DashboardEditPane(),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
@@ -261,13 +268,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTracker.startTrackingChanges();
   };
 
-  public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
-    this._initialSaveModel = {
-      ...saveModel,
-      id: result.id,
-      uid: result.uid,
-      version: result.version,
-    };
+  public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
+    this._serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
 
@@ -283,6 +285,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         slug: result.slug,
         folderUid: folderUid,
         isNew: false,
+        version: result.version,
       },
     });
 
@@ -375,6 +378,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboard: new DashboardModel(version.data),
       meta: this.state.meta,
     };
+
     const dashScene = transformSaveModelToScene(dashboardDTO);
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
@@ -408,20 +412,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene, editPanel } = this.state;
+    const { meta, viewPanelScene, editPanel, title, uid } = this.state;
 
     if (meta.dashboardNotFound) {
       return { text: 'Not found' };
     }
 
     let pageNav: NavModelItem = {
-      text: this.state.title,
+      text: title,
       url: getDashboardUrl({
-        uid: this.state.uid,
+        uid,
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
+        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot,
+        isSnapshot: meta.isSnapshot,
       }),
     };
 
@@ -622,6 +627,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
+      panelName: panel?.state?.title,
       panelPluginId: panel?.state.pluginId,
       scopes: this._scopesFacade?.value,
     };
@@ -640,12 +646,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getInitialSaveModel() {
-    return this._initialSaveModel;
+    return this._serializer.initialSaveModel;
   }
 
+  public getSnapshotUrl = () => {
+    return this._serializer.getSnapshotUrl();
+  };
+
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(saveModel: Dashboard) {
-    this._initialSaveModel = saveModel;
+  setInitialSaveModel(model?: Dashboard, meta?: DashboardMeta): void;
+  setInitialSaveModel(model?: DashboardV2Spec, meta?: DashboardWithAccessInfo<DashboardV2Spec>['metadata']): void;
+  public setInitialSaveModel(
+    saveModel?: Dashboard | DashboardV2Spec,
+    meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  ): void {
+    this._serializer.initialSaveModel = saveModel;
+    this._serializer.metadata = meta;
+  }
+
+  public getTrackingInformation() {
+    return this._serializer.getTrackingInformation(this);
   }
 
   public async onDashboardDelete() {
@@ -687,6 +707,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     if (this._prevScrollPos !== undefined) {
       this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
+  }
+
+  getSaveModel(): Dashboard | DashboardV2Spec {
+    return this._serializer.getSaveModel(this);
+  }
+
+  getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
+    return this._serializer.getSaveAsModel(this, options);
+  }
+
+  getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
+    return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 }
 
@@ -750,4 +782,8 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       }
     }
   }
+}
+
+export function isV2Dashboard(model: Dashboard | DashboardV2Spec): model is DashboardV2Spec {
+  return 'elements' in model;
 }

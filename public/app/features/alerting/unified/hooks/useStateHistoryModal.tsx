@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';

@@ -782,6 +782,12 @@ On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the d
 
 <hr />
 
+## [datasources]
+
+### default_manage_alerts_ui_toggle
+
+Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source. It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+
 ## [sql_datasources]
 
 ### max_open_conns_default
@@ -1769,7 +1775,7 @@ Configures the batch size for the annotation clean-up job. This setting is used 
 
 ### tags_length
 
-Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
+Enforces the maximum allowed amount of tags for any newly introduced annotations. This value can be between 500 and 4096 (inclusive). The default value is 500. Setting it to a higher value would impact performance and is therefore not recommended.
 
 ## [annotations.dashboard]
 

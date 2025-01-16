@@ -3,20 +3,23 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestBleveBackend(t *testing.T) {
-	t.Skip("flakey tests - skipping") // sort seems different in CI... sometimes!
-
 	dashboardskey := &resource.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -27,13 +30,17 @@ func TestBleveBackend(t *testing.T) {
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
 	}
-	tmpdir, err := os.CreateTemp("", "bleve-test")
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
-	backend := NewBleveBackend(BleveOptions{
-		Root:          tmpdir.Name(),
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
 	}, tracing.NewNoopTracerService())
+	require.NoError(t, err)
+
+	// AVOID NPE in test
+	resource.NewIndexMetrics(backend.opts.Root, backend)
 
 	rv := int64(10)
 	ctx := context.Background()
@@ -46,7 +53,7 @@ func TestBleveBackend(t *testing.T) {
 			return &DashboardDocumentBuilder{
 				Namespace:        namespace,
 				Blob:             blob,
-				Stats:            NewDashboardStatsLookup(nil), // empty stats
+				Stats:            make(map[string]map[string]int64), // empty stats
 				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
 			}, nil
 		})
@@ -58,40 +65,60 @@ func TestBleveBackend(t *testing.T) {
 			Resource:  key.Resource,
 		}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) {
 			_ = index.Write(&resource.IndexableDocument{
-				RV: 1,
+				RV:   1,
+				Name: "aaa",
 				Key: &resource.ResourceKey{
 					Name:      "aaa",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "bbb (dash)",
-				Folder: "xxx",
+				Title:     "aaa (dash)",
+				TitleSort: "aaa (dash)",
+				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
-					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
-					DASHBOARD_ERRORS_TODAY: 25,
+					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
+					DASHBOARD_ERRORS_TODAY:      25,
+					DASHBOARD_VIEWS_LAST_1_DAYS: 50,
+				},
+				Labels: map[string]string{
+					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 				},
 				Tags: []string{"aa", "bb"},
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-1",
+					Path:      "path/to/aaa.json",
+					Hash:      "xyz",
+					Timestamp: asTimePointer(1609462800000), // 2021
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
-				RV: 2,
+				RV:   2,
+				Name: "bbb",
 				Key: &resource.ResourceKey{
 					Name:      "bbb",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "aaa (dash)",
-				Folder: "xxx",
+				Title:     "bbb (dash)",
+				TitleSort: "bbb (dash)",
+				Folder:    "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID:    12,
-					DASHBOARD_PANEL_TYPES:  []string{"timeseries"},
-					DASHBOARD_ERRORS_TODAY: 40,
+					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
+					DASHBOARD_ERRORS_TODAY:      40,
+					DASHBOARD_VIEWS_LAST_1_DAYS: 100,
 				},
 				Tags: []string{"aa"},
 				Labels: map[string]string{
-					"region": "east",
+					"region":                           "east",
+					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
+				},
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-1",
+					Path:      "path/to/bbb.json",
+					Hash:      "hijk",
+					Timestamp: asTimePointer(1640998800000), // 2022
 				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
@@ -99,15 +126,19 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "ccc",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "dash",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
 				},
-				Title:  "ccc (dash)",
-				Folder: "xxx",
-				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID: 12,
+				Name:      "ccc",
+				Title:     "ccc (dash)",
+				TitleSort: "ccc (dash)",
+				Folder:    "zzz",
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name: "repo2",
+					Path: "path/in/repo2.yaml",
 				},
-				Tags: []string{"aa"},
+				Fields: map[string]any{},
+				Tags:   []string{"aa"},
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -124,7 +155,7 @@ func TestBleveBackend(t *testing.T) {
 			},
 			Limit: 100000,
 			SortBy: []*resource.ResourceSearchRequest_Sort{
-				{Field: "title", Desc: true}, // ccc,bbb,aaa
+				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {
@@ -138,7 +169,6 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
 
-		// Match the results
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
 
 		// Get the tags facets
@@ -161,6 +191,110 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(disp))
+
+		count, _ := index.DocCount(ctx, "")
+		assert.Equal(t, int64(3), count)
+
+		count, _ = index.DocCount(ctx, "zzz")
+		assert.Equal(t, int64(1), count)
+
+		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+				Labels: []*resource.Requirement{{
+					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+					Operator: "in",
+					Values:   []string{"10", "11"},
+				}},
+			},
+			Limit: 100000,
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rsp.TotalHits)
+		require.Equal(t, []string{"aaa", "bbb"}, []string{
+			rsp.Results.Rows[0].Key.Name,
+			rsp.Results.Rows[1].Key.Name,
+		})
+
+		// can get sprinkles fields
+		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+			},
+			Limit:  100000,
+			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+			},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(rsp.Results.Columns))
+		require.Equal(t, DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
+		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
+
+		// sorted descending so should start with highest dashboard_views_last_1_days (100)
+		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
+		require.NoError(t, err)
+		require.Equal(t, int64(100), val)
+
+		// Now look for repositories
+		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
+			Name: "repo-1",
+		})
+		require.NoError(t, err)
+		jj, err := json.MarshalIndent(found, "", "  ")
+		require.NoError(t, err)
+		fmt.Printf("%s\n", string(jj))
+		require.JSONEq(t, `{
+			"items": [
+				{
+					"object": {
+						"namespace": "ns",
+						"group": "dashboard.grafana.app",
+						"resource": "dashboards",
+						"name": "aaa"
+					},
+					"path": "path/to/aaa.json",
+					"hash": "xyz",
+					"time": 1609462800000,
+					"title": "aaa (dash)",
+					"folder": "xxx"
+				},
+				{
+					"object": {
+						"namespace": "ns",
+						"group": "dashboard.grafana.app",
+						"resource": "dashboards",
+						"name": "bbb"
+					},
+					"path": "path/to/bbb.json",
+					"hash": "hijk",
+					"time": 1640998800000,
+					"title": "bbb (dash)",
+					"folder": "xxx"
+				}
+			]
+		}`, string(jj))
+
+		counts, err := index.CountRepositoryObjects(ctx)
+		require.NoError(t, err)
+		jj, err = json.MarshalIndent(counts, "", "  ")
+		require.NoError(t, err)
+		fmt.Printf("%s\n", string(jj))
+		require.JSONEq(t, `[
+			{
+				"repository": "repo-1",
+				"group": "dashboard.grafana.app",
+				"resource": "dashboards",
+				"count": 2
+			},
+			{
+				"repository": "repo2",
+				"group": "dashboard.grafana.app",
+				"resource": "dashboards",
+				"count": 1
+			}
+		]`, string(jj))
 	})
 
 	t.Run("build folders", func(t *testing.T) {
@@ -177,20 +311,28 @@ func TestBleveBackend(t *testing.T) {
 				Key: &resource.ResourceKey{
 					Name:      "zzz",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "folder",
+					Group:     "folder.grafana.app",
+					Resource:  "folders",
 				},
-				Title: "zzz (folder)",
+				Title:     "zzz (folder)",
+				TitleSort: "zzz (folder)",
+				RepoInfo: &utils.ResourceRepositoryInfo{
+					Name:      "repo-1",
+					Path:      "path/to/folder.json",
+					Hash:      "xxxx",
+					Timestamp: asTimePointer(300),
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
 				Key: &resource.ResourceKey{
 					Name:      "yyy",
 					Namespace: "ns",
-					Group:     "g",
-					Resource:  "folder",
+					Group:     "folder.grafana.app",
+					Resource:  "folders",
 				},
-				Title: "yyy (folder)",
+				Title:     "yyy (folder)",
+				TitleSort: "yyy (folder)",
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -284,4 +426,35 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(disp))
 	})
+}
+
+func TestToBleveSearchRequest(t *testing.T) {
+	t.Run("will prepend 'fields.' to all dashboard fields", func(t *testing.T) {
+		fields := []string{"title", "name", "folder"}
+		fields = append(fields, DashboardFields()...)
+		resReq := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{},
+			Fields:  fields,
+		}
+		bleveReq, err := toBleveSearchRequest(resReq, nil)
+		if err != nil {
+			t.Fatalf("error creating bleve search request: %v", err)
+		}
+
+		require.Equal(t, len(fields), len(bleveReq.Fields))
+		for _, field := range DashboardFields() {
+			require.True(t, slices.Contains(bleveReq.Fields, "fields."+field))
+		}
+		require.Contains(t, bleveReq.Fields, "title")
+		require.Contains(t, bleveReq.Fields, "name")
+		require.Contains(t, bleveReq.Fields, "folder")
+	})
+}
+
+func asTimePointer(milli int64) *time.Time {
+	if milli > 0 {
+		t := time.UnixMilli(milli)
+		return &t
+	}
+	return nil
 }

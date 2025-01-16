@@ -8,7 +8,6 @@ import { TextEncoder, TextDecoder } from 'util';
 
 import { EventBusSrv } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
-import { initIconCache } from 'app/core/icons/iconBundle';
 
 import 'blob-polyfill';
 import 'mutationobserver-shim';
@@ -16,10 +15,6 @@ import './mocks/workers';
 
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
-
-// icon cache needs to be initialized for test to prevent
-// libraries such as msw from throwing "unhandled resource"-errors
-initIconCache();
 
 const testAppEvents = new EventBusSrv();
 const global = window as any;
@@ -66,6 +61,9 @@ const mockIntersectionObserver = jest
     disconnect: jest.fn(),
   }));
 global.IntersectionObserver = mockIntersectionObserver;
+Object.defineProperty(document, 'fonts', {
+  value: { ready: Promise.resolve({}) },
+});
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
@@ -78,7 +76,6 @@ jest.mock('../app/core/core', () => ({
   appEvents: testAppEvents,
 }));
 jest.mock('../app/angular/partials', () => ({}));
-jest.mock('../app/features/plugins/plugin_loader', () => ({}));
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {
