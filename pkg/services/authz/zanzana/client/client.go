@@ -24,7 +24,7 @@ type Client struct {
 	authzext authzextv1.AuthzExtentionServiceClient
 }
 
-func New(ctx context.Context, cc grpc.ClientConnInterface) (*Client, error) {
+func New(cc grpc.ClientConnInterface) (*Client, error) {
 	c := &Client{
 		authz:    authzv1.NewAuthzServiceClient(cc),
 		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),

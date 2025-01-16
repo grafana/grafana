@@ -18,8 +18,8 @@ type Client interface {
 	BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error)
 }
 
-func NewClient(ctx context.Context, cc grpc.ClientConnInterface) (*client.Client, error) {
-	return client.New(ctx, cc)
+func NewClient(cc grpc.ClientConnInterface) (*client.Client, error) {
+	return client.New(cc)
 }
 
 func NewNoopClient() *client.NoopClient {
