@@ -588,15 +588,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 				}
 				name := parts[len(parts)-1]
 				resourceType := parts[2]
-				if resourceType == "folders" {
-					if !folderChecker(b.key.Namespace, name, id) {
-						return false
-					}
+                                if resourceType == "folders" {
+					return folderChecker(b.key.Namespace, name, id)
 				}
 				if resourceType == "dashboards" {
-					if !dashboardChecker(b.key.Namespace, name, id) {
-						return false
-					}
+					return dashboardChecker(b.key.Namespace, name, id) {
 				}
 				return true
 			},
