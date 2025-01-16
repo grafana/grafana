@@ -109,7 +109,7 @@ Controls whether values are rendered inside the value boxes. Auto will render va
 
 ### Y Axis Width
 
-Controls the width (in pixels) of the Y axis. Useful for aligning several status history panels with the same time scale.
+Controls the width (in pixels) of the y-axis. Useful for aligning several status history panels with the same time scale.
 
 ### Row height
 
