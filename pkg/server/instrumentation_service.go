@@ -61,7 +61,7 @@ func (s *instrumentationService) newInstrumentationServer(ctx context.Context) *
 	srv := &http.Server{
 		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
 		ReadHeaderTimeout: 5 * time.Second,
-		Addr:              ":" + s.cfg.HTTPPort,
+		Addr:              ":" + s.cfg.HTTPPort + "1",
 		Handler:           router,
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}

@@ -58,21 +58,21 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 				Subsystem: metricsSubSystem,
 				Name:      "check_duration_seconds",
 				Help:      "duration of the access check calls going through the authz service",
-			}, []string{"group", "resource", "allowed"}),
+			}, []string{"group", "resource", "verb", "allowed"}),
 		compileDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
 				Name:      "compile_duration_seconds",
 				Help:      "duration of the access compile calls going through the authz service",
-			}, []string{"group", "resource"}),
+			}, []string{"group", "resource", "verb"}),
 		errorsTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
 				Name:      "errors_total",
 				Help:      "Number of errors",
-			}, []string{"group", "resource"}),
+			}, []string{"group", "resource", "verb"}),
 	}
 
 	if reg != nil {
@@ -149,12 +149,12 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req a
 	resp, err := c.client.Check(ctx, id, req)
 	if err != nil {
 		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t), "traceid", tracing.TraceIDFromContext(ctx, false))
-		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource).Inc()
+		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
 		span.SetAttributes(attribute.String("error", err.Error()))
 		return resp, err
 	}
 	span.SetAttributes(attribute.Bool("allowed", resp.Allowed))
-	c.metrics.checkDuration.WithLabelValues(req.Group, req.Resource, fmt.Sprintf("%t", resp.Allowed)).Observe(time.Since(t).Seconds())
+	c.metrics.checkDuration.WithLabelValues(req.Group, req.Resource, req.Verb, fmt.Sprintf("%t", resp.Allowed)).Observe(time.Since(t).Seconds())
 	return resp, nil
 }
 
@@ -178,11 +178,11 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	checker, err := c.client.Compile(ctx, id, req)
 	if err != nil {
 		c.logger.Error("Compile", "group", req.Group, "resource", req.Resource, "error", err, "traceid", tracing.TraceIDFromContext(ctx, false))
-		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource).Inc()
+		c.metrics.errorsTotal.WithLabelValues(req.Group, req.Resource, req.Verb).Inc()
 		span.SetAttributes(attribute.String("error", err.Error()))
 		return nil, err
 	}
-	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource).Observe(time.Since(t).Seconds())
+	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource, req.Verb).Observe(time.Since(t).Seconds())
 	return checker, nil
 }
 
