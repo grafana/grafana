@@ -15,7 +15,8 @@ export function getPreviewPanelFor(
   index: number,
   currentFilterCount: number,
   description?: string,
-  nativeHistogram?: boolean
+  nativeHistogram?: boolean,
+  hideMenu?: boolean
 ) {
   const autoQuery = getAutoQueriesForMetric(metric, nativeHistogram);
   let actions: Array<SelectMetricAction | NativeHistogramBadge> = [
@@ -26,14 +27,19 @@ export function getPreviewPanelFor(
     actions.unshift(new NativeHistogramBadge({}));
   }
 
-  const vizPanel = autoQuery.preview
+  let vizPanelBuilder = autoQuery.preview
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setDescription(description)
     .setHeaderActions(actions)
     .setShowMenuAlways(true)
     .setMenu(new PanelMenu({ labelName: metric }))
-    .build();
+
+  if (!hideMenu) {
+    vizPanelBuilder = vizPanelBuilder.setShowMenuAlways(true).setMenu(new PanelMenu({ labelName: metric }));
+  }
+
+  const vizPanel = vizPanelBuilder.build();
 
   const queries = autoQuery.preview.queries.map((query) =>
     convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)

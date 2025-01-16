@@ -29,7 +29,6 @@ import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Too
 import { Trans } from 'app/core/internationalization';
 import { getSelectedScopes } from 'app/features/scopes';
 
-import { PanelMenu } from '../Menu/PanelMenu';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
@@ -425,7 +424,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         }
         // refactor this into the query generator in future
         const isNative = trail.isNativeHistogram(metric.name);
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative, true);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -657,8 +656,6 @@ function getCardPanelFor(metric: string, description?: string) {
     .setTitle(metric)
     .setDescription(description)
     .setHeaderActions([new SelectMetricAction({ metric, title: 'Select' })])
-    .setShowMenuAlways(true)
-    .setMenu(new PanelMenu({ labelName: metric }))
     .setOption('content', '')
     .build();
 }
