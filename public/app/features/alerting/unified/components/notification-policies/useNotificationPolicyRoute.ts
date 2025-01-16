@@ -1,6 +1,5 @@
 import memoize from 'micro-memoize';
 
-import { generatedRoutesApi as routingTreeApi } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -11,6 +10,7 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
+  generatedRoutesApi as routingTreeApi,
 } from '../../openapi/routesApi.gen';
 import {
   addRouteAction,
