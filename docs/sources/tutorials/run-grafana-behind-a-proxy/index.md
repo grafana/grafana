@@ -198,7 +198,7 @@ a2enmod proxy_http
 
 3. Finally, restart Apache for the settings to take effect.
 
-Once you've restarted, navigate to your Apache server on port 80 and you will be redirected to Grafana.
+After you've restarted, navigate to your Apache server on port 80 and you will be redirected to Grafana.
 
 To configure Grafana hosted in a sub path, replace the sub path with the following code (assuming your Grafana instance is on the sub path `your_path`):
 
