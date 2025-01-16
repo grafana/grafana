@@ -617,7 +617,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                 <InlineSwitch
                   disabled={!isStandardOtel}
                   showLabel={true}
-                  label="Otel experience"
+                  label="OTel experience"
                   value={useOtelExperience}
                   onChange={model.onToggleOtelExperience}
                 />
