@@ -59,17 +59,13 @@ const useFetchGroupsForFolder = (folderUid: string) => {
     },
     {
       refetchOnMountOrArgChange: true,
+      skip: !folderUid,
     }
   );
 };
 
 const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
-  if (!rulerNamespace) {
-    // still waiting for namespace information to be fetched
-    return [];
-  }
-
-  const folderGroups = Object.values(rulerNamespace).flat() ?? [];
+  const folderGroups = Object.values(rulerNamespace).flat();
 
   return folderGroups
     .map<SelectableValue<string>>((group) => {
@@ -153,18 +149,17 @@ export function GrafanaEvaluationBehaviorStep({
     control,
   } = useFormContext<RuleFormValues>();
 
-  const [group, type, isPaused, folderUid, folderName, evaluateEvery] = watch([
+  const [group, type, isPaused, folder, evaluateEvery] = watch([
     'group',
     'type',
     'isPaused',
-    'folder.uid',
-    'folder.title',
+    'folder',
     'evaluateEvery',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
-  const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folderUid ?? '');
+  const { currentData: rulerNamespace, isLoading: loadingGroups } = useFetchGroupsForFolder(folder?.uid ?? '');
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const groupOptions = useMemo(() => {
@@ -188,7 +183,7 @@ export function GrafanaEvaluationBehaviorStep({
   const closeEditGroupModal = () => setIsEditingGroup(false);
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
-  const editGroupDisabled = loadingGroups || isNewGroup || !folderUid || !group;
+  const editGroupDisabled = loadingGroups || isNewGroup || !folder?.uid || !group;
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
@@ -208,7 +203,7 @@ export function GrafanaEvaluationBehaviorStep({
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
   const label =
-    isGrafanaManagedRuleByType(type) && !folderUid
+    isGrafanaManagedRuleByType(type) && !folder?.uid
       ? t(
           'alerting.rule-form.evaluation.select-folder-before',
           'Select a folder before setting evaluation group and interval'
@@ -236,7 +231,7 @@ export function GrafanaEvaluationBehaviorStep({
               <Controller
                 render={({ field: { ref, ...field }, fieldState }) => (
                   <Select
-                    disabled={!folderUid || loadingGroups}
+                    disabled={!folder?.uid || loadingGroups}
                     inputId="group"
                     key={uniqueId()}
                     {...field}
@@ -244,7 +239,7 @@ export function GrafanaEvaluationBehaviorStep({
                       field.onChange(group.label ?? '');
                     }}
                     isLoading={loadingGroups}
-                    invalid={Boolean(folderUid) && !group && Boolean(fieldState.error)}
+                    invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
                     cacheOptions
                     loadingMessage={'Loading groups...'}
                     defaultValue={defaultGroupValue}
@@ -279,7 +274,7 @@ export function GrafanaEvaluationBehaviorStep({
               icon="plus"
               fill="outline"
               variant="secondary"
-              disabled={!folderUid}
+              disabled={!folder?.uid}
               data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
             >
               <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
@@ -294,12 +289,12 @@ export function GrafanaEvaluationBehaviorStep({
           )}
         </Stack>
 
-        {(folderUid || existingNamespaceName) && isEditingGroup && (
+        {(folder?.uid || existingNamespaceName) && isEditingGroup && (
           <EditRuleGroupModal
             ruleGroupIdentifier={{
               dataSourceName: GRAFANA_RULES_SOURCE_NAME,
               groupName: existingGroup?.name ?? '',
-              namespaceName: folderUid ?? existingNamespaceName,
+              namespaceName: folder?.uid ?? existingNamespaceName ?? '',
             }}
             rulerConfig={GRAFANA_RULER_CONFIG}
             onClose={() => closeEditGroupModal()}
@@ -307,7 +302,7 @@ export function GrafanaEvaluationBehaviorStep({
             hideFolder={true}
           />
         )}
-        {folderName && group && (
+        {folder?.title && group && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
