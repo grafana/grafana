@@ -67,12 +67,20 @@ export function getLogLineSize(
   if (!container) {
     return 0;
   }
+  const storedSize = retrieveLogLineSize(logs[index].uid, container);
+  if (storedSize) {
+    return storedSize;
+  }
   const lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
   if (!wrapLogMessage) {
     return lineHeight;
   }
-  const { height } = measureText(logs[index].body, container.clientWidth - scrollBarWidth, lineHeight);
+  const { height } = measureText(logs[index].body, getLogContainerWidth(container), lineHeight);
   return height;
+}
+
+export function getLogContainerWidth(container: HTMLDivElement) {
+  return container.clientWidth - scrollBarWidth;
 }
 
 export function getScrollbarWidth() {
@@ -89,4 +97,16 @@ export function getScrollbarWidth() {
   document.body.removeChild(hiddenDiv);
 
   return width;
+}
+
+const logLineSizesMap = new Map<string, number>();
+
+export function storeLogLineSize(id: string, container: HTMLDivElement, height: number) {
+  const key = `${id}_${getLogContainerWidth(container)}`;
+  logLineSizesMap.set(key, height);
+}
+
+export function retrieveLogLineSize(id: string, container: HTMLDivElement) {
+  const key = `${id}_${getLogContainerWidth(container)}`;
+  return logLineSizesMap.get(key);
 }
