@@ -205,32 +205,35 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	buildDir := filepath.Join(publicDir, "build")
 	err = os.MkdirAll(buildDir, 0750)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
-		"entrypoints": {
-		  "app": {
-			"assets": {
-			  "js": ["public/build/runtime.XYZ.js"]
-			}
-		  },
-		  "swagger": {
-			"assets": {
-			  "js": ["public/build/runtime.XYZ.js"]
-			}
-		  },
-		  "dark": {
-			"assets": {
-			  "css": ["public/build/dark.css"]
-			}
-		  },
-		  "light": {
-			"assets": {
-			  "css": ["public/build/light.css"]
-			}
-		  }
+	manifestDir := filepath.Join(buildDir, ".vite")
+	err = os.MkdirAll(manifestDir, 0750)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(manifestDir, "manifest.json"), []byte(`{
+		"app/index.ts": {
+			"file": "public/build/index-3exGqndc.js",
+			"src": "app/index.ts",
+			"isEntry": true,
+			"isDynamicEntry": true,
+			"css": ["public/build/index-Dd9uKMaJ.css"],
+			"assets": ["public/build/codicon-SZR-f31-.ttf"]
 		},
-		"runtime.50398398ecdeaf58968c.js": {
-		  "src": "public/build/runtime.XYZ.js",
-		  "integrity": "sha256-k1g7TksMHFQhhQGE"
+		"swagger/index.ts": {
+			"file": "public/build/swagger-3exGqndc.js",
+			"src": "swagger/index.ts",
+			"isEntry": true,
+			"isDynamicEntry": true,
+			"css": ["public/build/swagger-Dd9uKMaJ.css"],
+			"assets": ["public/build/codicon-SZR-f31-.ttf"]
+		},
+		"sass/grafana.dark.scss": {
+			"file": "public/build/grafana-BwD1GyB5.css",
+			"src": "sass/grafana.dark.scss",
+			"isEntry": true
+		},
+		"sass/grafana.light.scss": {
+			"file": "public/build/grafana-RC8BVZtE.css",
+			"src": "sass/grafana.light.scss",
+			"isEntry": true
 		}
 	  }
 	  `), 0750)

@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 import { isString, escape } from 'lodash';
 
 import coreModule from 'app/angular/core_module';

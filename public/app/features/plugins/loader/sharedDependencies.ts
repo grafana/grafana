@@ -25,7 +25,7 @@ import * as ticks from 'app/core/utils/ticks';
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
 // This exposes the same classes on both import paths
-const grafanaUI: Record<string, unknown> = grafanaUIraw;
+const grafanaUI: System.Module = { ...grafanaUIraw };
 grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
 grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
