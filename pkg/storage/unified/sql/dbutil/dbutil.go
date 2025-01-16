@@ -138,6 +138,9 @@ func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template,
 	}
 	query := sqltemplate.FormatSQL(rawQuery)
 
+	// fmt.Printf("QUERY: %s\n", query)
+	// fmt.Printf(" ARGS: %v\n", req.GetArgs())
+
 	args := req.GetArgs()
 	ctx = withOtelAttrs(ctx, tmpl.Name(), req.DialectName())
 	rows, err := x.QueryContext(ctx, query, args...)

@@ -103,6 +103,12 @@ func (b *backend) initLocked(ctx context.Context) error {
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
+	// Process any data manipulation migrations
+	err = b.runStartupMigrations(ctx)
+	if err != nil {
+		return err
+	}
+
 	return b.db.PingContext(ctx)
 }
 

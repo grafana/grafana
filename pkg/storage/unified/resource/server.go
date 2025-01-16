@@ -612,7 +612,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	if !ok {
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
-	marker := &DeletedMarker{}
+	marker := &unstructured.Unstructured{}
 	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
@@ -627,12 +627,9 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
 	obj.SetUpdatedBy(requester.GetUID())
-	marker.TypeMeta = metav1.TypeMeta{
-		Kind:       "DeletedMarker",
-		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
-	}
-	marker.Annotations["RestoreResourceVersion"] = fmt.Sprintf("%d", event.PreviousRV)
-	event.Value, err = json.Marshal(marker)
+	obj.SetGeneration(-1)
+	obj.SetAnnotation("kubectl.kubernetes.io/last-applied-configuration", "") // clears it
+	event.Value, err = marker.MarshalJSON()
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable creating deletion marker, %v", err))
