@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2, Text, Box } from '@grafana/ui';
@@ -10,7 +9,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { HistoryWrapper } from './HistoryWrapper';
 
-const MENU_WIDTH = '300px';
+export const HISTORY_DRAWER_WIDTH = '300px';
 const DOCK_HISTORY_BUTTON_ID = 'dock-history-button';
 const HISTORY_HEADER_TOGGLE_ID = 'history-header-toggle';
 
@@ -18,16 +17,16 @@ export const HistoryDrawer = () => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.drawer}>
-      <MegaMenuHeader />
+      <HistoryHeader />
       <HistoryWrapper />
     </div>
   );
 };
 
-export const MegaMenuHeader = () => {
-  const styles = useStyles2(getStyles);
+export const HistoryHeader = () => {
   const { chrome } = useGrafana();
   const state = chrome.useState();
+  const styles = useStyles2(getStyles);
   const handleMegaMenu = () => {
     chrome.setHistoryOpen(!state.historyOpen);
   };
@@ -35,7 +34,6 @@ export const MegaMenuHeader = () => {
   const handleDockedMenu = () => {
     chrome.setHistoryDocked(!state.historyDocked);
   };
-
   return (
     <div className={styles.header}>
       <Text element="h6">{t('nav.history-container.drawer-tittle', 'History')}</Text>
@@ -65,14 +63,14 @@ export const MegaMenuHeader = () => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     drawer: css({
-      width: MENU_WIDTH,
+      width: HISTORY_DRAWER_WIDTH,
       height: `calc(100vh - ${TOP_BAR_LEVEL_HEIGHT}px)`,
       overflowY: 'auto',
       overflowX: 'hidden',
       background: theme.colors.background.secondary,
       borderLeft: `1px solid ${theme.colors.border.medium}`,
       boxShadow: theme.shadows.z2,
-      zIndex: theme.zIndex.sidemenu,
+      zIndex: theme.zIndex.modal,
       position: 'fixed',
       top: TOP_BAR_LEVEL_HEIGHT,
       right: 0,

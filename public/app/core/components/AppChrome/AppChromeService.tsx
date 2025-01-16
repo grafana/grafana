@@ -229,6 +229,7 @@ export class AppChromeService {
     this.update({
       historyOpen: newOpenState,
     });
+    console.log('ho', newOpenState);
   };
 
   public setHistoryDocked = (newDockedState: boolean, updatePersistedState = true) => {
@@ -238,6 +239,7 @@ export class AppChromeService {
     this.update({
       historyDocked: newDockedState,
     });
+    console.log('hd', newDockedState);
   };
 
   public onToggleKioskMode = () => {

@@ -3,7 +3,8 @@ import classNames from 'classnames';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject, locationService } from '@grafana/runtime';
+import { Components } from '@grafana/e2e-selectors';
+import { locationSearchToObject, locationService, config } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
@@ -12,8 +13,14 @@ import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
 
+import { AppChromeHistory } from './AppChromeHistory';
 import { AppChromeMenu } from './AppChromeMenu';
-import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
+import {
+  DOCKED_HISTORY_LOCAL_STORAGE_KEY,
+  DOCKED_LOCAL_STORAGE_KEY,
+  DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY,
+} from './AppChromeService';
+import { HISTORY_DRAWER_WIDTH, HistoryDrawer } from './History/HistoryDrawer';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
@@ -26,12 +33,13 @@ export interface Props extends PropsWithChildren<{}> {}
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
+  const historyDockedAndOpen = !state.chromeless && state.historyDocked && state.historyOpen;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, Boolean(state.actions));
-
+  const styles = useStyles2(getStyles, Boolean(state.actions), historyDockedAndOpen);
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
+  const dockedHistoryLocalStorageState = store.getBool(DOCKED_HISTORY_LOCAL_STORAGE_KEY, true);
   const scopesDashboardsState = useScopesDashboardsState();
   const isScopesDashboardsOpen = Boolean(
     scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
@@ -44,6 +52,10 @@ export function AppChrome({ children }: Props) {
         chrome.setMegaMenuOpen(
           e.matches ? store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, state.megaMenuOpen) : false
         );
+      }
+      if (dockedHistoryLocalStorageState) {
+        chrome.setHistoryDocked(e.matches, false);
+        chrome.setHistoryOpen(e.matches ? store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, state.historyOpen) : false);
       }
     },
   });
@@ -94,7 +106,14 @@ export function AppChrome({ children }: Props) {
           {menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
+          {config.featureToggles.unifiedHistory && historyDockedAndOpen && <HistoryDrawer />}
+          <header
+            className={cx(
+              styles.topNav,
+              menuDockedAndOpen && styles.topNavMenuDocked,
+              historyDockedAndOpen && styles.topActionsHistoryDocked
+            )}
+          >
             <SingleTopBar
               sectionNav={state.sectionNav.node}
               pageNav={state.pageNav}
@@ -120,6 +139,7 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerHistoryDocked]: historyDockedAndOpen,
             })}
             id="pageContent"
           >
@@ -132,11 +152,14 @@ export function AppChrome({ children }: Props) {
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
+      {!state.chromeless && state.historyDocked === false && config.featureToggles.unifiedHistory && (
+        <AppChromeHistory />
+      )}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
+const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isHistoryDocked: boolean) => {
   return {
     content: css({
       display: 'flex',
@@ -179,6 +202,13 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
+    topActionsHistoryDocked: hasActions
+      ? css({
+          [`&[data-testid='${Components.NavToolbar.container}']`]: {
+            paddingRight: HISTORY_DRAWER_WIDTH,
+          },
+        })
+      : undefined,
     topNavMenuDocked: css({
       left: MENU_WIDTH,
     }),
@@ -193,6 +223,9 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean) => {
     }),
     pageContainerMenuDockedScopes: css({
       paddingLeft: `calc(${MENU_WIDTH} * 2)`,
+    }),
+    pageContainerHistoryDocked: css({
+      paddingRight: HISTORY_DRAWER_WIDTH,
     }),
     pageContainer: css({
       label: 'page-container',

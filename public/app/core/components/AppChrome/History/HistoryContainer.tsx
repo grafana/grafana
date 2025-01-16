@@ -12,8 +12,6 @@ import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { HistoryEntry } from '../types';
 
-import { HistoryDrawer } from './HistoryDrawer';
-
 export function HistoryContainer() {
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -58,7 +56,7 @@ export function HistoryContainer() {
         aria-label={t('nav.history-container.drawer-tittle', 'History')}
       />
       <NavToolbarSeparator className={styles.separator} />
-      {showHistoryDrawer && <HistoryDrawer />}
+      {/* {showHistoryDrawer && <HistoryDrawer />} */}
     </>
   );
 }
