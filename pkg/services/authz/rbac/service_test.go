@@ -22,22 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
 
-func setupService() *Service {
-	return &Service{
-		logger:        log.New("test"),
-		actionMapper:  mappers.NewK8sRbacMapper(),
-		tracer:        tracing.NewNoopTracerService(),
-		cache:         cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute}),
-		store:         &fakeStore{},
-		identityStore: &fakeIdentityStore{},
-		sf:            new(singleflight.Group),
-		permTTL:       1 * time.Minute,
-		teamTTL:       1 * time.Minute,
-		basicRoleTTL:  1 * time.Minute,
-		folderTTL:     1 * time.Minute,
-	}
-}
-
 func TestService_checkPermission(t *testing.T) {
 	type testCase struct {
 		name        string
@@ -221,10 +205,7 @@ func TestService_getUserTeams(t *testing.T) {
 			s.identityStore = identityStore
 
 			if tc.cacheHit {
-				buf := new(bytes.Buffer)
-				err := gob.NewEncoder(buf).Encode(tc.expectedTeams)
-				require.NoError(t, err)
-				err = s.cache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), buf.Bytes(), 1*time.Minute)
+				err := s.cache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), gobBytes(t, tc.expectedTeams), 1*time.Minute)
 				require.NoError(t, err)
 			}
 
@@ -301,10 +282,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 			s.store = store
 
 			if tc.cacheHit {
-				buf := new(bytes.Buffer)
-				err := gob.NewEncoder(buf).Encode(tc.expectedRole)
-				require.NoError(t, err)
-				err = s.cache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), buf.Bytes(), 1*time.Minute)
+				err := s.cache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), gobBytes(t, tc.expectedRole), 1*time.Minute)
 				require.NoError(t, err)
 			}
 
@@ -368,10 +346,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			action := "dashboards:read"
 
 			if tc.cacheHit {
-				buf := new(bytes.Buffer)
-				err := gob.NewEncoder(buf).Encode(tc.expectedPerms)
-				require.NoError(t, err)
-				err = s.cache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), buf.Bytes(), 1*time.Minute)
+				err := s.cache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), gobBytes(t, tc.expectedPerms), 1*time.Minute)
 				require.NoError(t, err)
 			}
 
@@ -442,10 +417,7 @@ func TestService_buildFolderTree(t *testing.T) {
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			if tc.cacheHit {
-				buf := new(bytes.Buffer)
-				err := gob.NewEncoder(buf).Encode(tc.expectedTree)
-				require.NoError(t, err)
-				err = s.cache.Set(ctx, folderCacheKey(ns.Value), buf.Bytes(), 1*time.Minute)
+				err := s.cache.Set(ctx, folderCacheKey(ns.Value), gobBytes(t, tc.expectedTree), 1*time.Minute)
 				require.NoError(t, err)
 			}
 
@@ -650,10 +622,7 @@ func TestService_listPermission(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := setupService()
 			if tc.folderTree != nil {
-				buf := new(bytes.Buffer)
-				err := gob.NewEncoder(buf).Encode(tc.folderTree)
-				require.NoError(t, err)
-				err = s.cache.Set(context.Background(), folderCacheKey("default"), buf.Bytes(), 1*time.Minute)
+				err := s.cache.Set(context.Background(), folderCacheKey("default"), gobBytes(t, tc.folderTree), 1*time.Minute)
 				require.NoError(t, err)
 			}
 
@@ -667,8 +636,31 @@ func TestService_listPermission(t *testing.T) {
 	}
 }
 
+func setupService() *Service {
+	return &Service{
+		logger:        log.New("test"),
+		actionMapper:  mappers.NewK8sRbacMapper(),
+		tracer:        tracing.NewNoopTracerService(),
+		cache:         cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute}),
+		store:         &fakeStore{},
+		identityStore: &fakeIdentityStore{},
+		sf:            new(singleflight.Group),
+		permTTL:       1 * time.Minute,
+		teamTTL:       1 * time.Minute,
+		basicRoleTTL:  1 * time.Minute,
+		folderTTL:     1 * time.Minute,
+	}
+}
+
 func strPtr(s string) *string {
 	return &s
+}
+
+func gobBytes(t *testing.T, v any) []byte {
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(v)
+	require.NoError(t, err)
+	return buf.Bytes()
 }
 
 type fakeStore struct {
