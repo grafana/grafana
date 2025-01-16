@@ -61,7 +61,6 @@ type Service struct {
 
 func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore,
 	logger log.Logger, tracer tracing.Tracer, cache remotecache.CacheStorage) *Service {
-
 	return &Service{
 		store:         store.NewStore(sql, tracer),
 		identityStore: identityStore,
