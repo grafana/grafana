@@ -79,7 +79,7 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 		return nil, ""
 	}
 
-	id := meta.GetDeprecatedInternalID()
+	id := meta.GetDeprecatedInternalID() // nolint:staticcheck
 
 	created, err := getCreated(meta)
 	if err != nil {
@@ -157,7 +157,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 
 	meta.SetUpdatedTimestamp(&v.Updated)
 	if v.ID > 0 { // nolint:staticcheck
-		meta.SetDeprecatedInternalID(v.ID)
+		meta.SetDeprecatedInternalID(v.ID) // nolint:staticcheck
 
 		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 			Name:      "SQL",
