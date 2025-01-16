@@ -958,4 +958,8 @@ const (
 	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
 	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
 	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
+
+	// FlagAlertingRuleVersionHistory
+	// Enables the alert rule version history feature
+	FlagAlertingRuleVersionHistory = "alertingRuleVersionHistory"
 )

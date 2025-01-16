@@ -1785,6 +1785,13 @@ var (
 			HideFromDocs:      true,
 			RequiresRestart:   true,
 		},
+		{
+			Name:         "alertingRuleVersionHistory",
+			Description:  "Enables the alert rule version history feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
 	}
 )
 

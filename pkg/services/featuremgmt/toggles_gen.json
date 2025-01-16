@@ -387,6 +387,19 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleVersionHistory",
+        "resourceVersion": "1737036492250",
+        "creationTimestamp": "2025-01-16T14:08:12Z"
+      },
+      "spec": {
+        "description": "Enables the alert rule version history feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingSaveStatePeriodic",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-23T16:03:30Z"
