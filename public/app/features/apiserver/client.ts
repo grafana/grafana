@@ -1,3 +1,5 @@
+import { Observable, switchMap, from, retry, catchError } from 'rxjs';
+
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
@@ -13,6 +15,7 @@ import {
   ObjectMeta,
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
+  ResourceEvent,
 } from './types';
 
 export interface GroupVersionResource {
@@ -32,6 +35,43 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
 
   public async get(name: string): Promise<Resource<T, S, K>> {
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
+  }
+
+  public watch(name?: string, resourceVersion?: string): Observable<ResourceEvent<T, S, K>> {
+    return getBackendSrv()
+      .chunked({
+        url: name ? `${this.url}/${name}` : this.url,
+        params: {
+          watch: true,
+          resourceVersion,
+        },
+      })
+      .pipe(
+        switchMap((response) => {
+          const events: Array<ResourceEvent<T, S, K>> = [];
+          if (response.ok && response.data) {
+            const decoder = new TextDecoder();
+            decoder
+              .decode(response.data)
+              .split('\n')
+              .forEach((v) => {
+                if (v?.length) {
+                  try {
+                    events.push(JSON.parse(v));
+                  } catch (e) {
+                    console.warn('invalid response', e);
+                  }
+                }
+              });
+          }
+          return from(events);
+        }),
+        retry({ count: 3, delay: 1000 }),
+        catchError((error) => {
+          console.error('Watch stream error:', error);
+          throw error;
+        })
+      );
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {
