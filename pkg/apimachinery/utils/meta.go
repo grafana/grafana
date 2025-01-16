@@ -20,7 +20,7 @@ import (
 // LabelKeyGetHistory is used to select object history for an given resource
 const LabelKeyGetHistory = "grafana.app/get-history"
 
-// LabelKeyGetHistory is used to select object history for an given resource
+// LabelKeyGetTrash is used to list objects that have been (soft) deleted
 const LabelKeyGetTrash = "grafana.app/get-trash"
 
 // Annotation keys

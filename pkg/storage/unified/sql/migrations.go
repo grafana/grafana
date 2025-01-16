@@ -45,6 +45,9 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 				}
 
 				err = find.Scan(&req.Value)
+				if err != nil {
+					return err
+				}
 				previous := &unstructured.Unstructured{}
 				err = previous.UnmarshalJSON([]byte(req.Value))
 				if err != nil {
@@ -71,10 +74,14 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 
 				// 4. Update the SQL row with this new value
 				req.Reset()
+				b.log.Info("Migrating DeletedMarker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 				_, err = dbutil.Exec(ctx, tx, sqlMigratorUpdateValueWithGUID, req)
-				b.log.Info("Migrated deletion marker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
+				if err != nil {
+					return err
+				}
 			} else {
 				// 5. If the previous version is missing, we delete it -- there is nothing to help us restore anyway
+				b.log.Warn("Removing orphan deletion marker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 				_, err = dbutil.Exec(ctx, tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
 					SQLTemplate: sqltemplate.New(b.dialect),
 					GUID:        req.GUID,
@@ -82,7 +89,6 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
-				b.log.Warn("Removing orphan deletion marker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 			}
 		}
 
