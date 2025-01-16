@@ -11,7 +11,7 @@ import type { ReactMonacoEditorProps } from './types';
 monacoEditorLoader.config({ monaco });
 
 export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
-  const { beforeMount, options, ...restProps } = props;
+  const { beforeMount, onMount, options, ...restProps } = props;
 
   const theme = useTheme2();
   const onMonacoBeforeMount = useCallback(
@@ -31,6 +31,15 @@ export const ReactMonacoEditor = (props: ReactMonacoEditorProps) => {
       }}
       theme={theme.isDark ? 'grafana-dark' : 'grafana-light'}
       beforeMount={onMonacoBeforeMount}
+      onMount={(editor, monaco) => {
+        // we use a custom font in our monaco editor
+        // we need monaco to remeasure the fonts after they are loaded to prevent alignment issues
+        // see https://github.com/microsoft/monaco-editor/issues/648#issuecomment-564978560
+        document.fonts.ready.then(() => {
+          monaco.editor.remeasureFonts();
+        });
+        onMount?.(editor, monaco);
+      }}
     />
   );
 };
