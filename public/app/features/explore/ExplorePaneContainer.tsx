@@ -22,6 +22,7 @@ const containerStyles = css({
 
 interface Props {
   exploreId: string;
+  queryBuilderOnly?: boolean;
 }
 
 /*
@@ -33,7 +34,7 @@ interface Props {
 
   You can read more about this issue here: https://react-redux.js.org/api/hooks#stale-props-and-zombie-children
 */
-function ExplorePaneContainerUnconnected({ exploreId }: Props) {
+function ExplorePaneContainerUnconnected({ exploreId, queryBuilderOnly = false }: Props) {
   useStopQueries(exploreId);
   const eventBus = useRef(new EventBusSrv());
   const ref = useRef(null);
@@ -52,6 +53,7 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
           eventBus={eventBus.current}
           showQueryInspector={showQueryInspector}
           setShowQueryInspector={setShowQueryInspector}
+          queryBuilderOnly={queryBuilderOnly}
         />
         {showQueryInspector && (
           <ExploreQueryInspector

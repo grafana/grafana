@@ -447,6 +447,7 @@ export interface QueryEditorProps<
   history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
+  queryBuilderOnly?: boolean;
 }
 
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest

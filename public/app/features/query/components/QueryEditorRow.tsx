@@ -70,6 +70,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   collapsable?: boolean;
   hideRefId?: boolean;
+  queryBuilderOnly?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -271,7 +272,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history, queryBuilderOnly } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad()) {
@@ -300,6 +301,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               queries={queries}
               app={app}
               history={history}
+              queryBuilderOnly={queryBuilderOnly}
             />
           </DataSourcePluginContextProvider>
         );
@@ -531,7 +533,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization, collapsable, hideActionButtons } = this.props;
+    const { query, index, visualization, collapsable, hideActionButtons, queryBuilderOnly } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
@@ -552,12 +554,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
-          draggable={!hideActionButtons}
+          draggable={!queryBuilderOnly && !hideActionButtons}
           collapsable={collapsable}
           index={index}
           headerElement={this.renderHeader}
           actions={hideActionButtons ? undefined : this.renderActions}
           onOpen={this.onOpen}
+          queryBuilderOnly={queryBuilderOnly}
         >
           <div className={rowClasses} id={this.id}>
             <ErrorBoundaryAlert>

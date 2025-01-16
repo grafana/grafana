@@ -107,6 +107,7 @@ export interface ExploreProps extends Themeable2 {
   eventBus: EventBus;
   setShowQueryInspector: (value: boolean) => void;
   showQueryInspector: boolean;
+  queryBuilderOnly?: boolean;
 }
 
 interface ExploreState {
@@ -534,8 +535,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationEditorHelperData,
       showQueryInspector,
       setShowQueryInspector,
+      queryBuilderOnly,
     } = this.props;
-    const { contentOutlineVisible } = this.state;
+    let { contentOutlineVisible } = this.state;
+    if (queryBuilderOnly) {
+      contentOutlineVisible = false;
+    }
+
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
@@ -566,6 +572,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
+          queryBuilderOnly={queryBuilderOnly}
         />
         <div
           style={{
@@ -589,8 +596,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
                     <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
-                        <QueryRows exploreId={exploreId} />
-                        <SecondaryActions
+                        <QueryRows exploreId={exploreId} queryBuilderOnly={queryBuilderOnly} />
+                        {!queryBuilderOnly && <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
                           addQueryRowButtonDisabled={
                             isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)
@@ -602,7 +609,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
-                        />
+                        />}
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
                     </ContentOutlineItem>
@@ -615,7 +622,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         return (
                           <main className={cx(styles.exploreMain)} style={{ width }}>
                             <ErrorBoundaryAlert>
-                              {showPanels && (
+                              {!queryBuilderOnly && showPanels && (
                                 <>
                                   {showMetrics && graphResult && (
                                     <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
