@@ -697,6 +697,7 @@ export enum TableCellDisplayMode {
   ColorText = 'color-text',
   Custom = 'custom',
   DataLinks = 'data-links',
+  InspectableDataLink = 'inspectable-data-link',
   Gauge = 'gauge',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
@@ -784,6 +785,10 @@ export interface TableDataLinksCellOptions {
   type: TableCellDisplayMode.DataLinks;
 }
 
+export interface TableInspectableDataLinkCellOptions {
+  type: TableCellDisplayMode.InspectableDataLink;
+}
+
 /**
  * Gauge cell options
  */
@@ -825,7 +830,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableJsonViewCellOptions | TableInspectableDataLinkCellOptions);
 
 /**
  * Use UTC/GMT timezone

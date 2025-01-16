@@ -36,6 +36,7 @@ import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
+import { InspectableDataLinkCell } from "./InspectableDataLinkCell";
 import { JSONViewCell } from './JSONViewCell';
 import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
@@ -191,6 +192,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return JSONViewCell;
     case TableCellDisplayMode.DataLinks:
       return DataLinksCell;
+    case TableCellDisplayMode.InspectableDataLink:
+      return InspectableDataLinkCell;
   }
 
   if (field.type === FieldType.geo) {
