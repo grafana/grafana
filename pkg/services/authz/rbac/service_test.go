@@ -224,7 +224,8 @@ func TestService_getUserTeams(t *testing.T) {
 				buf := new(bytes.Buffer)
 				err := gob.NewEncoder(buf).Encode(tc.expectedTeams)
 				require.NoError(t, err)
-				s.cache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), buf.Bytes(), 1*time.Minute)
+				err = s.cache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), buf.Bytes(), 1*time.Minute)
+				require.NoError(t, err)
 			}
 
 			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
@@ -303,7 +304,8 @@ func TestService_getUserBasicRole(t *testing.T) {
 				buf := new(bytes.Buffer)
 				err := gob.NewEncoder(buf).Encode(tc.expectedRole)
 				require.NoError(t, err)
-				s.cache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), buf.Bytes(), 1*time.Minute)
+				err = s.cache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), buf.Bytes(), 1*time.Minute)
+				require.NoError(t, err)
 			}
 
 			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
@@ -369,7 +371,8 @@ func TestService_getUserPermissions(t *testing.T) {
 				buf := new(bytes.Buffer)
 				err := gob.NewEncoder(buf).Encode(tc.expectedPerms)
 				require.NoError(t, err)
-				s.cache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), buf.Bytes(), 1*time.Minute)
+				err = s.cache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), buf.Bytes(), 1*time.Minute)
+				require.NoError(t, err)
 			}
 
 			store := &fakeStore{
@@ -442,7 +445,8 @@ func TestService_buildFolderTree(t *testing.T) {
 				buf := new(bytes.Buffer)
 				err := gob.NewEncoder(buf).Encode(tc.expectedTree)
 				require.NoError(t, err)
-				s.cache.Set(ctx, folderCacheKey(ns.Value), buf.Bytes(), 1*time.Minute)
+				err = s.cache.Set(ctx, folderCacheKey(ns.Value), buf.Bytes(), 1*time.Minute)
+				require.NoError(t, err)
 			}
 
 			store := &fakeStore{folders: tc.folders}
@@ -649,7 +653,8 @@ func TestService_listPermission(t *testing.T) {
 				buf := new(bytes.Buffer)
 				err := gob.NewEncoder(buf).Encode(tc.folderTree)
 				require.NoError(t, err)
-				s.cache.Set(context.Background(), folderCacheKey("default"), buf.Bytes(), 1*time.Minute)
+				err = s.cache.Set(context.Background(), folderCacheKey("default"), buf.Bytes(), 1*time.Minute)
+				require.NoError(t, err)
 			}
 
 			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
