@@ -54,7 +54,12 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			return nil, fmt.Errorf("failed to fetch metadata: %w", err)
 		}
 
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				e.Logger.Warn("Failed to close response body for metadata request", "err", err)
+			}
+		}()
+
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read metadata response: %w", err)
