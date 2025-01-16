@@ -122,7 +122,7 @@ Use these options to refine the visualization.
 | Merge equal consecutive values  | Controls whether Grafana merges identical values if they are next to each other. |
 | Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
-| Y Axis Width | Controls the width (in pixels) of the Y axis. Useful for aligning several state timeline panels with the same time scale. |
+| Y Axis Width | Controls the width (in pixels) of the y-axis. Useful for aligning several state timeline panels with the same time scale. |
 | Row height | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space. |
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
 | Line width | Controls line width of state regions. |
