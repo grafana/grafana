@@ -97,45 +97,19 @@ func NewGridPos() *GridPos {
 	}
 }
 
-// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-type DashboardLinkType string
-
-const (
-	DashboardLinkTypeLink       DashboardLinkType = "link"
-	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
-)
-
-// Links with references to other dashboards or external resources
-type DashboardLink struct {
+type DataLink struct {
 	// Title to display with the link
 	Title string `json:"title"`
-	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-	Type DashboardLinkType `json:"type"`
-	// Icon name to be displayed with the link
-	Icon string `json:"icon"`
-	// Tooltip to display when the user hovers their mouse over it
-	Tooltip string `json:"tooltip"`
-	// Link URL. Only required/valid if the type is link
-	Url *string `json:"url,omitempty"`
-	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-	Tags []string `json:"tags"`
-	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
-	AsDropdown bool `json:"asDropdown"`
+	// Link URL
+	Url string `json:"url"`
 	// If true, the link will be opened in a new tab
-	TargetBlank bool `json:"targetBlank"`
-	// If true, includes current template variables values in the link as query params
-	IncludeVars bool `json:"includeVars"`
-	// If true, includes current time range in the link as query params
-	KeepTime bool `json:"keepTime"`
+	TargetBlank *bool `json:"targetBlank,omitempty"`
 }
 
-// NewDashboardLink creates a new DashboardLink object.
-func NewDashboardLink() *DashboardLink {
-	return &DashboardLink{
-		AsDropdown:  false,
-		TargetBlank: false,
-		IncludeVars: false,
-		KeepTime:    false,
+// NewDataLink creates a new DataLink object.
+func NewDataLink() *DataLink {
+	return &DataLink{
+		TargetBlank: (func(input bool) *bool { return &input })(false),
 	}
 }
 
@@ -502,7 +476,7 @@ type Panel struct {
 	// Grid position.
 	GridPos *GridPos `json:"gridPos,omitempty"`
 	// Panel links.
-	Links []DashboardLink `json:"links,omitempty"`
+	Links []DataLink `json:"links,omitempty"`
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`
 	// Direction to repeat in if 'repeat' is set.
@@ -805,6 +779,48 @@ type AnnotationContainer struct {
 // NewAnnotationContainer creates a new AnnotationContainer object.
 func NewAnnotationContainer() *AnnotationContainer {
 	return &AnnotationContainer{}
+}
+
+// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+type DashboardLinkType string
+
+const (
+	DashboardLinkTypeLink       DashboardLinkType = "link"
+	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
+)
+
+// Links with references to other dashboards or external resources
+type DashboardLink struct {
+	// Title to display with the link
+	Title string `json:"title"`
+	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+	Type DashboardLinkType `json:"type"`
+	// Icon name to be displayed with the link
+	Icon string `json:"icon"`
+	// Tooltip to display when the user hovers their mouse over it
+	Tooltip string `json:"tooltip"`
+	// Link URL. Only required/valid if the type is link
+	Url *string `json:"url,omitempty"`
+	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+	Tags []string `json:"tags"`
+	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+	AsDropdown bool `json:"asDropdown"`
+	// If true, the link will be opened in a new tab
+	TargetBlank bool `json:"targetBlank"`
+	// If true, includes current template variables values in the link as query params
+	IncludeVars bool `json:"includeVars"`
+	// If true, includes current time range in the link as query params
+	KeepTime bool `json:"keepTime"`
+}
+
+// NewDashboardLink creates a new DashboardLink object.
+func NewDashboardLink() *DashboardLink {
+	return &DashboardLink{
+		AsDropdown:  false,
+		TargetBlank: false,
+		IncludeVars: false,
+		KeepTime:    false,
+	}
 }
 
 // A dashboard snapshot shares an interactive dashboard publicly.

@@ -520,41 +520,26 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       model = new DashboardModel({
+        schemaVersion: 0,
         panels: [
           {
+            type: 'graph',
             links: [
-              // @ts-expect-error
               {
-                url: 'http://mylink.com',
-                keepTime: true,
+                url: 'http://mylink.com?$__url_time_range',
                 title: 'test',
               },
               {
-                url: 'http://mylink.com?existingParam',
-                // @ts-expect-error
-                params: 'customParam',
-                title: 'test',
-              },
-              // @ts-expect-error
-              {
-                url: 'http://mylink.com?existingParam',
-                includeVars: true,
+                url: 'http://mylink.com?existingParam&customParam',
                 title: 'test',
               },
               {
-                // @ts-expect-error
-                dashboard: 'my other dashboard',
+                url: 'http://mylink.com?existingParam&$__all_variables',
                 title: 'test',
               },
               {
-                // @ts-expect-error
-                dashUri: '',
+                url: 'dashboard/db/my-other-dashboard',
                 title: 'test',
-              },
-              {
-                // @ts-expect-error
-                type: 'dashboard',
-                keepTime: true,
               },
             ],
           },

@@ -13,7 +13,6 @@ import {
 import {
   AnnotationQuery,
   Dashboard,
-  DashboardLink,
   DataTransformerConfig,
   defaultDashboard,
   defaultTimePickerConfig,
@@ -242,7 +241,7 @@ export function vizPanelToPanel(
   }
 
   const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
-  panel.links = (panelLinks?.state.rawLinks as DashboardLink[]) ?? [];
+  panel.links = panelLinks?.state.rawLinks ?? [];
 
   if (panel.links.length === 0) {
     delete panel.links;

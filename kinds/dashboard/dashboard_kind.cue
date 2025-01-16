@@ -284,6 +284,15 @@ lineage: schemas: [{
 			keepTime: bool | *false
 		} @cuetsy(kind="interface")
 
+		#DataLink: {
+			// Title to display with the link
+			title: string
+			// Link URL
+			url: string
+			// If true, the link will be opened in a new tab
+			targetBlank?: bool | *false
+		} @cuetsy(kind="interface")
+
 		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
 
@@ -548,7 +557,7 @@ lineage: schemas: [{
 			gridPos?: #GridPos
 
 			// Panel links.
-			links?: [...#DashboardLink]
+			links?: [...#DataLink]
 
 			// Name of template variable to repeat for.
 			repeat?: string
