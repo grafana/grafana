@@ -21,6 +21,8 @@ import {
 } from 'app/types';
 
 import { t } from '../../../core/internationalization';
+import { dispatch } from '../../../store/store';
+import { provisioningAPI, baseAPI } from '../../provisioning/api';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -102,6 +104,42 @@ export const browseDashboardsAPI = createApi({
         url: '/folders',
         params: { parentUid, limit, page, permission },
       }),
+    }),
+
+    //List folders with repository information, using queryFn
+    listFoldersWithRepository: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
+      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
+      queryFn: async ({ parentUid, limit, page, permission }, queryApi, extraOptions, baseQuery) => {
+        const folders = await baseQuery({
+          url: '/folders',
+          params: { parentUid, limit, page, permission },
+        });
+        console.log('f', folders);
+
+        const repositories = await dispatch(provisioningAPI.endpoints.listRepository.initiate({})).unwrap();
+        console.log('repos', repositories);
+
+        if (!folders.data?.length) {
+          return [];
+        }
+
+        if (!repositories.data?.items?.length) {
+          return folders;
+        }
+        return {
+          data: folders.data.map((folder) => {
+            const repository = repositories.items?.find((repo) => repo.spec?.folder === folder.uid);
+            if (repository) {
+              return {
+                ...folder,
+                repository: repository.metadata?.name,
+              };
+            }
+
+            return folder;
+          }),
+        };
+      },
     }),
 
     // get folder info (e.g. title, parents) but *not* children
@@ -438,6 +476,7 @@ export const {
   useSaveFolderMutation,
   useRestoreDashboardMutation,
   useHardDeleteDashboardMutation,
+  useListFoldersWithRepositoryQuery,
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';
