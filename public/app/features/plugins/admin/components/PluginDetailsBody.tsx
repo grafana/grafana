@@ -14,7 +14,7 @@ import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
-import Connections from './Connections';
+import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
 
@@ -91,7 +91,11 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     );
   }
 
-  if (pageId === PluginTabIds.DATASOURCE_CONNECTIONS && plugin.type === PluginType.datasource) {
+  if (
+    config.featureToggles.datasourceConnectionsTab &&
+    pageId === PluginTabIds.DATASOURCE_CONNECTIONS &&
+    plugin.type === PluginType.datasource
+  ) {
     return (
       <div>
         <Connections plugin={plugin} />
