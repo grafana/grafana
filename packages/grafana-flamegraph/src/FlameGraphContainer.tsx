@@ -143,35 +143,37 @@ const FlameGraphContainer = ({
   }, [setSandwichItem]);
 
   useEffect(() => {
-    if (!keepFocusOnDataChange || !dataContainer || !focusedItemData) {
+    if (!keepFocusOnDataChange) {
       resetFocus();
       resetSandwich();
       return;
     }
 
-    const item = dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
+    if (dataContainer && focusedItemData) {
+      const item = dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
 
-    if (item) {
-      setFocusedItemData({ ...focusedItemData, item });
+      if (item) {
+        setFocusedItemData({ ...focusedItemData, item });
 
-      const levels = dataContainer.getLevels();
-      const totalViewTicks = levels.length ? levels[0][0].value : 0;
-      setRangeMin(item.start / totalViewTicks);
-      setRangeMax((item.start + item.value) / totalViewTicks);
-    } else {
-      setFocusedItemData({
-        ...focusedItemData,
-        item: {
-          start: 0,
-          value: 0,
-          itemIndexes: [],
-          children: [],
-          level: 0,
-        },
-      });
+        const levels = dataContainer.getLevels();
+        const totalViewTicks = levels.length ? levels[0][0].value : 0;
+        setRangeMin(item.start / totalViewTicks);
+        setRangeMax((item.start + item.value) / totalViewTicks);
+      } else {
+        setFocusedItemData({
+          ...focusedItemData,
+          item: {
+            start: 0,
+            value: 0,
+            itemIndexes: [],
+            children: [],
+            level: 0,
+          },
+        });
 
-      setRangeMin(0);
-      setRangeMax(1);
+        setRangeMin(0);
+        setRangeMax(1);
+      }
     }
   }, [dataContainer, keepFocusOnDataChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
