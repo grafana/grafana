@@ -71,7 +71,7 @@ import {
   RawRecordingRules,
   RuleQueryMapping,
 } from './types';
-import { utf8Support, wrapUtf8Filters } from './utf8_support';
+import { utf8Support } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
@@ -931,9 +931,6 @@ export class PrometheusDatasource
       variables,
       (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
         if (typeof value === 'string' && target.fromExploreMetrics) {
-          if (variable.name === 'filters') {
-            return wrapUtf8Filters(value);
-          }
           if (variable.name === 'groupby') {
             return utf8Support(value);
           }

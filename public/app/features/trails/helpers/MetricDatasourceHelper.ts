@@ -6,6 +6,7 @@ import {
 } from '@grafana/data';
 import { PrometheusDatasource, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from '@grafana/prometheus';
 import PromQlLanguageProvider from '@grafana/prometheus/src/language_provider';
+import { utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { DataTrail } from '../DataTrail';
@@ -134,7 +135,13 @@ export class MetricDatasourceHelper {
 
     if (ds instanceof PrometheusDatasource) {
       const keys = await ds.getTagKeys(options);
-      return keys;
+      return keys.map((key) => {
+        if (typeof key.value === 'string') {
+          key.value = utf8Support(key.value);
+          key.text = utf8Support(key.text);
+        }
+        return key;
+      });
     }
 
     return [];
