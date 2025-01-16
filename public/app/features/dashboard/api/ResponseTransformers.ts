@@ -510,9 +510,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           ...commonProperties,
           current: v.spec.current,
           options: v.spec.options,
-          // @ts-expect-error - target v2 query is not compatible with v1 target
-          query: v.spec.query,
-          definition: v.spec.definition,
+          query: typeof v.spec.query === 'string' ? v.spec.query : v.spec.query.spec,
           datasource: v.spec.datasource,
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
@@ -520,6 +518,8 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           allValue: v.spec.allValue,
           includeAll: v.spec.includeAll,
           multi: v.spec.multi,
+          // @ts-expect-error - definition is not part of v1 VariableModel
+          definition: v.spec.definition,
         };
         variables.push(qv);
         break;
