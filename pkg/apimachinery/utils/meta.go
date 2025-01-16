@@ -23,6 +23,9 @@ const LabelKeyGetHistory = "grafana.app/get-history"
 // LabelKeyGetTrash is used to list objects that have been (soft) deleted
 const LabelKeyGetTrash = "grafana.app/get-trash"
 
+// DeletedGeneration is set on Resources that have been (soft) deleted
+const DeletedGeneration = int64(-999)
+
 // Annotation keys
 
 const AnnoKeyCreatedBy = "grafana.app/createdBy"

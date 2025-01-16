@@ -60,7 +60,7 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 				metaPrev.SetDeletionTimestamp(metaMarker.GetDeletionTimestamp())
 				metaPrev.SetFinalizers(nil)
 				metaPrev.SetManagedFields(nil)
-				metaPrev.SetGeneration(-999)
+				metaPrev.SetGeneration(utils.DeletedGeneration)
 				metaPrev.SetAnnotation("kubectl.kubernetes.io/last-applied-configuration", "") // clears it
 				ts, _ := metaMarker.GetUpdatedTimestamp()
 				if ts != nil {

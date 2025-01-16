@@ -627,7 +627,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
 	obj.SetUpdatedBy(requester.GetUID())
-	obj.SetGeneration(-999)
+	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation("kubectl.kubernetes.io/last-applied-configuration", "") // clears it
 	event.Value, err = marker.MarshalJSON()
 	if err != nil {
@@ -706,6 +706,13 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				Message: "no user found in context",
 				Code:    http.StatusUnauthorized,
 			}}, nil
+	}
+
+	// Do not allow label query for trash/history
+	for _, v := range req.Options.Labels {
+		if v.Key == utils.LabelKeyGetHistory || v.Key == utils.LabelKeyGetTrash {
+			return &ListResponse{Error: NewBadRequestError("history and trash must be requested as source")}, nil
+		}
 	}
 
 	if req.Limit < 1 {
