@@ -99,7 +99,7 @@ export const usePluginDetailsTabs = (
       });
     }
 
-    if (plugin?.type === PluginType.datasource) {
+    if (config.featureToggles.datasourceConnectionsTab && plugin?.type === PluginType.datasource) {
       navModelChildren.push({
         text: PluginTabLabels.DATASOURCE_CONNECTIONS,
         icon: 'database',

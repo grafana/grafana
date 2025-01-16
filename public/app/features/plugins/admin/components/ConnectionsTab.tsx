@@ -17,7 +17,7 @@ interface Props {
   plugin: CatalogPlugin;
 }
 
-export default function Connections({ plugin }: Props) {
+export default function ConnectionsTab({ plugin }: Props) {
   const { isLoading } = useLoadDataSources();
 
   const allDataSources = useSelector((state) => getDataSources(state.dataSources));

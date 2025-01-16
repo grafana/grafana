@@ -8,7 +8,7 @@ import { AccessControlAction } from 'app/types';
 
 import { datasourcePlugin } from '../__mocks__/catalogPlugin.mock';
 
-import Connections from './Connections';
+import ConnectionsTab from './ConnectionsTab';
 
 jest.mock('app/features/datasources/state', () => ({
   ...jest.requireActual('app/features/datasources/state'),
@@ -27,15 +27,18 @@ const setupContextSrv = () => {
   setContextSrv(testContextSrv);
 };
 
-describe('<Connections>', () => {
+describe('<ConnectionsTab>', () => {
   const oldExporeEnabled = config.exploreEnabled;
+  const olddatasourceConnectionsTab = config.featureToggles.datasourceConnectionsTab;
   config.exploreEnabled = true;
+  config.featureToggles.datasourceConnectionsTab = true;
   afterEach(() => {
     jest.clearAllMocks();
   });
 
   afterAll(() => {
     config.exploreEnabled = oldExporeEnabled;
+    config.featureToggles.datasourceConnectionsTab = olddatasourceConnectionsTab;
   });
 
   it('should onnly render list of datasources with type=plugin.id', async () => {
@@ -44,7 +47,7 @@ describe('<Connections>', () => {
     mockedConnections[2].type = 'other-plugin-id';
     jest.requireMock('app/features/datasources/state').getDataSources.mockReturnValue(mockedConnections);
 
-    render(<Connections plugin={datasourcePlugin} />);
+    render(<ConnectionsTab plugin={datasourcePlugin} />);
 
     expect(await screen.findAllByRole('listitem')).toHaveLength(2);
     expect(await screen.findAllByRole('heading')).toHaveLength(2);
@@ -56,7 +59,7 @@ describe('<Connections>', () => {
   it('should render add new datasource button when no datasources are defined', async () => {
     setupContextSrv();
     jest.requireMock('app/features/datasources/state').getDataSources.mockReturnValue(getMockDataSources(1));
-    render(<Connections plugin={datasourcePlugin} />);
+    render(<ConnectionsTab plugin={datasourcePlugin} />);
 
     expect(screen.getByText('Add new data source')).toBeVisible();
     expect(screen.getByText(`No data sources defined`)).toBeVisible();
