@@ -54,7 +54,6 @@ import {
 import { contextSrv } from 'app/core/core';
 import {
   AnnoKeyCreatedBy,
-  AnnoKeyDashboardNotFound,
   AnnoKeyFolder,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -147,7 +146,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     showSettings: Boolean(dto.access.canEdit),
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
-    dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
     isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
   };

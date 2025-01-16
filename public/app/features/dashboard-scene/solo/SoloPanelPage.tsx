@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Spinner, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -24,7 +24,7 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
  */
 export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
-  const { dashboard } = stateManager.useState();
+  const { dashboard, loadError } = stateManager.useState();
   const { uid = '' } = useParams();
 
   useEffect(() => {
@@ -34,6 +34,16 @@ export function SoloPanelPage({ queryParams }: Props) {
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
+  }
+
+  if (loadError) {
+    return (
+      <Box justifyContent={'center'} alignItems={'center'} display={'flex'} height={'100%'}>
+        <Alert severity="error" title="Failed to load dashboard">
+          {loadError.message}
+        </Alert>
+      </Box>
+    );
   }
 
   if (!dashboard) {
