@@ -3345,8 +3345,23 @@
     },
     "metric-select": {
       "filter-by": "Filter by",
+      "native-histogram": "Native Histogram",
       "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "Classic Histogram displayed as heatmap:",
+      "ch-histogram": "Classic Histogram displayed as histogram:",
+      "click-histogram": "Click any of the native histograms below to explore them:",
+      "hide-examples": "Hide examples",
+      "learn-more": "Learn more",
+      "metric-examples": "",
+      "nh-heatmap": "Native Histogram displayed as heatmap:",
+      "nh-histogram": "Native Histogram displayed as histogram:",
+      "now": "Now:",
+      "previously": "Previously:",
+      "see-examples": "> See examples",
+      "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana."
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "Or view a recent exploration"
