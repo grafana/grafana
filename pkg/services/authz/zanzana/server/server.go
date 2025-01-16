@@ -9,7 +9,6 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"github.com/openfga/language/pkg/go/transformer"
 	"go.opentelemetry.io/otel"
 
 	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
@@ -36,7 +35,6 @@ type Server struct {
 
 	cfg      setting.ZanzanaServerSettings
 	logger   log.Logger
-	modules  []transformer.ModuleFile
 	stores   map[string]storeInfo
 	storesMU *sync.Mutex
 	cache    *localcache.CacheService
