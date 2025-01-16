@@ -202,13 +202,11 @@ const getStyles = (theme: GrafanaTheme2, hasActions: boolean, isHistoryDocked: b
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
-    topActionsHistoryDocked: hasActions
-      ? css({
-          [`&[data-testid='${Components.NavToolbar.container}']`]: {
-            paddingRight: HISTORY_DRAWER_WIDTH,
-          },
-        })
-      : undefined,
+    topActionsHistoryDocked: css({
+      [`[data-testid='${Components.NavToolbar.container}']`]: {
+        paddingRight: HISTORY_DRAWER_WIDTH,
+      },
+    }),
     topNavMenuDocked: css({
       left: MENU_WIDTH,
     }),
