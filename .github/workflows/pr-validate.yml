@@ -1,0 +1,27 @@
+name: pr-validate
+
+on:
+
+ pull_request
+
+jobs:
+
+ unit-tests:
+
+   runs-on: ubuntu-latest
+
+   steps:
+
+     - uses: actions/checkout@v4
+
+     - name: unit-tests
+
+       continue-on-error: true
+
+       run: |
+
+         whoami
+
+         pwd
+
+         ls
