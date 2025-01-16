@@ -4,18 +4,23 @@ import (
 	"context"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	secretStorage "github.com/grafana/grafana/pkg/storage/secret"
 )
 
 type SQLKeeper struct {
-	db db.DB
+	encryptionManager *manager.EncryptionManager
+	store             secretStorage.EncryptedValueStorage
 }
 
 var _ secret.Keeper = (*SQLKeeper)(nil)
 
-func NewSQLKeeper(db db.DB) (*SQLKeeper, error) {
-	return &SQLKeeper{db: db}, nil
+func NewSQLKeeper(encryptionManager *manager.EncryptionManager, store secretStorage.EncryptedValueStorage) (*SQLKeeper, error) {
+	return &SQLKeeper{
+		encryptionManager: encryptionManager,
+		store:             store,
+	}, nil
 }
 
 func (s *SQLKeeper) Store(ctx context.Context, exposedValueOrRef string) (secret.ExternalID, error) {
