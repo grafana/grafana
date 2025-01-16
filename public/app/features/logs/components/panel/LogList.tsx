@@ -1,12 +1,11 @@
-import { debounce } from 'lodash';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ListChildComponentProps, ListOnScrollProps, VariableSizeList } from 'react-window';
 
 import { CoreApp, LogRowModel } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { LogLine } from './LogLine';
-import { preProcessLogs } from './processing';
+import { preProcessLogs, ProcessedLogModel } from './processing';
 import { getLogLineSize, init as initVirtualization, storeLogLineSize } from './virtualization';
 
 interface Props {
@@ -18,40 +17,38 @@ interface Props {
 }
 
 export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMessage }: Props) => {
-  const [listKey, setListKey] = useState(`${Math.random()}`);
+  const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
   const theme = useTheme2();
-  const processedLogs = useMemo(
-    () => preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape }),
-    [forceEscape, logs, wrapLogMessage]
-  );
   const scrollPositionRef = useRef(0);
+  const listRef = useRef<VariableSizeList | null>(null);
 
   useEffect(() => {
     initVirtualization(theme);
   }, [theme]);
 
   useEffect(() => {
-    setListKey(`${Math.random()}`);
     scrollPositionRef.current = 0;
-  }, [processedLogs]);
+    setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape }));
+  }, [forceEscape, logs, wrapLogMessage]);
 
   useLayoutEffect(() => {
-    const handleResize = debounce(() => setListKey(`${Math.random()}`), 500);
+    const handleResize = () => listRef.current?.resetAfterIndex(0);
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [processedLogs]);
 
   const setScrollPosition = useCallback(({ scrollOffset }: ListOnScrollProps) => {
     scrollPositionRef.current = scrollOffset;
   }, []);
 
   const handleOverflow = useCallback(
-    (id: string, height: number) => {
+    (index: number, id: string, height: number) => {
       if (containerElement) {
+        console.log(`overflow ${index}`);
         storeLogLineSize(id, containerElement, height);
-        setListKey(`${Math.random()}`);
+        listRef.current?.resetAfterIndex(index);
       }
     },
     [containerElement]
@@ -60,7 +57,13 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
       return (
-        <LogLine log={processedLogs[index]} style={style} wrapLogMessage={wrapLogMessage} onOverflow={handleOverflow} />
+        <LogLine
+          index={index}
+          log={processedLogs[index]}
+          style={style}
+          wrapLogMessage={wrapLogMessage}
+          onOverflow={handleOverflow}
+        />
       );
     },
     [handleOverflow, processedLogs, wrapLogMessage]
@@ -75,14 +78,13 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
 
   return (
     <VariableSizeList
-      key={listKey}
       height={height}
-      initialScrollOffset={scrollPositionRef.current}
       itemCount={processedLogs.length}
       itemSize={getLogLineSize.bind(null, processedLogs, containerElement, theme, wrapLogMessage)}
       itemKey={(index: number) => processedLogs[index].uid}
       layout="vertical"
       onScroll={setScrollPosition}
+      ref={listRef}
       style={{ overflowY: 'scroll' }}
       width="100%"
     >

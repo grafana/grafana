@@ -7,13 +7,14 @@ import { useTheme2 } from '@grafana/ui';
 import { ProcessedLogModel } from './processing';
 
 interface Props {
+  index: number;
   log: ProcessedLogModel;
   style: CSSProperties;
   wrapLogMessage: boolean;
-  onOverflow?: (id: string, height: number) => void;
+  onOverflow?: (index: number, id: string, height: number) => void;
 }
 
-export const LogLine = ({ log, style, onOverflow, wrapLogMessage }: Props) => {
+export const LogLine = ({ index, log, style, onOverflow, wrapLogMessage }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const logLineRef = useRef<HTMLDivElement | null>(null);
@@ -24,9 +25,9 @@ export const LogLine = ({ log, style, onOverflow, wrapLogMessage }: Props) => {
     }
     const hasOverflow = logLineRef.current.scrollHeight > logLineRef.current.clientHeight;
     if (hasOverflow) {
-      onOverflow(log.uid, logLineRef.current.scrollHeight);
+      onOverflow(index, log.uid, logLineRef.current.scrollHeight);
     }
-  }, [log.body, log.uid, onOverflow]);
+  }, [index, log.body, log.uid, onOverflow]);
 
   return (
     <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
