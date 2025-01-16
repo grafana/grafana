@@ -18,6 +18,7 @@ var _ DashboardGuardian = new(accessControlDashboardGuardian)
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, cfg *setting.Cfg, dashboardId int64, user identity.Requester,
 	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) (DashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardId != 0 {
@@ -58,6 +59,7 @@ func NewAccessControlDashboardGuardian(
 			user:             user,
 			ac:               ac,
 			dashboardService: dashboardService,
+			folderService:    folderService,
 		},
 		dashboard: dashboard,
 	}, nil
@@ -171,6 +173,7 @@ type accessControlBaseGuardian struct {
 	user             identity.Requester
 	ac               accesscontrol.AccessControl
 	dashboardService dashboards.DashboardService
+	folderService    folder.Service
 }
 
 type accessControlDashboardGuardian struct {
@@ -353,24 +356,24 @@ func (a *accessControlFolderGuardian) evaluate(evaluator accesscontrol.Evaluator
 	return ok, err
 }
 
-func (a *accessControlDashboardGuardian) loadParentFolder(folderID int64) (*dashboards.Dashboard, error) {
+func (a *accessControlDashboardGuardian) loadParentFolder(folderID int64) (*folder.Folder, error) {
 	if folderID == 0 {
-		return &dashboards.Dashboard{UID: accesscontrol.GeneralFolderUID}, nil
+		return &folder.Folder{UID: accesscontrol.GeneralFolderUID}, nil
 	}
-	folderQuery := &dashboards.GetDashboardQuery{ID: folderID, OrgID: a.user.GetOrgID()}
-	folderQueryResult, err := a.dashboardService.GetDashboard(a.ctx, folderQuery)
+	folderQuery := &folder.GetFolderQuery{ID: &folderID, OrgID: a.user.GetOrgID()}
+	folderQueryResult, err := a.folderService.Get(a.ctx, folderQuery)
 	if err != nil {
 		return nil, err
 	}
 	return folderQueryResult, nil
 }
 
-func (a *accessControlFolderGuardian) loadParentFolder(folderID int64) (*dashboards.Dashboard, error) {
+func (a *accessControlFolderGuardian) loadParentFolder(folderID int64) (*folder.Folder, error) {
 	if folderID == 0 {
-		return &dashboards.Dashboard{UID: accesscontrol.GeneralFolderUID}, nil
+		return &folder.Folder{UID: accesscontrol.GeneralFolderUID}, nil
 	}
-	folderQuery := &dashboards.GetDashboardQuery{ID: folderID, OrgID: a.user.GetOrgID()}
-	folderQueryResult, err := a.dashboardService.GetDashboard(a.ctx, folderQuery)
+	folderQuery := &folder.GetFolderQuery{ID: &folderID, OrgID: a.user.GetOrgID()}
+	folderQueryResult, err := a.folderService.Get(a.ctx, folderQuery)
 	if err != nil {
 		return nil, err
 	}

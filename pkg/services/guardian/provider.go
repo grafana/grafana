@@ -15,18 +15,18 @@ type Provider struct{}
 
 func ProvideService(
 	cfg *setting.Cfg, ac accesscontrol.AccessControl,
-	dashboardService dashboards.DashboardService, teamService team.Service,
+	dashboardService dashboards.DashboardService, folderService folder.Service, teamService team.Service,
 ) *Provider {
 	// TODO: Fix this hack, see https://github.com/grafana/grafana-enterprise/issues/2935
-	InitAccessControlGuardian(cfg, ac, dashboardService)
+	InitAccessControlGuardian(cfg, ac, dashboardService, folderService)
 	return &Provider{}
 }
 
 func InitAccessControlGuardian(
-	cfg *setting.Cfg, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+	cfg *setting.Cfg, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, folderService folder.Service,
 ) {
 	New = func(ctx context.Context, dashId int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-		return NewAccessControlDashboardGuardian(ctx, cfg, dashId, user, ac, dashboardService)
+		return NewAccessControlDashboardGuardian(ctx, cfg, dashId, user, ac, dashboardService, folderService)
 	}
 
 	NewByUID = func(ctx context.Context, dashUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
