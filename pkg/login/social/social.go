@@ -16,6 +16,7 @@ const (
 
 	// Values for ClientAuthentication under OAuthInfo (based on oidc spec)
 	ClientSecretPost = "client_secret_post"
+	None             = "none"
 	// Azure AD
 	ManagedIdentity = "managed_identity"
 	// Other providers...
