@@ -305,6 +305,7 @@ type SaveDashboardDTO struct {
 type DashboardSearchProjection struct {
 	ID       int64  `xorm:"id"`
 	UID      string `xorm:"uid"`
+	OrgID    int64  `xorm:"org_id"`
 	Title    string
 	Slug     string
 	Term     string
@@ -315,6 +316,7 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Tags        []string
 	Deleted     *time.Time
 }
 
@@ -426,6 +428,10 @@ type FindPersistedDashboardsQuery struct {
 	Permission dashboardaccess.PermissionType
 	Sort       model.SortOption
 	IsDeleted  bool
+
+	ProvisionedRepo       string
+	ProvisionedPath       string
+	ProvisionedReposNotIn []string
 
 	Filters []any
 
