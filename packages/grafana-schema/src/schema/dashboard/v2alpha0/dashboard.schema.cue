@@ -478,8 +478,19 @@ GridLayoutItemKind: {
   spec: GridLayoutItemSpec
 }
 
+GridLayoutRowKind: {
+  kind: "GridLayoutRow"
+  spec: GridLayoutRowSpec 
+}
+
+GridLayoutRowSpec: {
+  height: int
+  y: int
+  elements: [...GridLayoutItemKind]
+}
+
 GridLayoutSpec: {
-  items: [...GridLayoutItemKind]
+  items: [...GridLayoutItemKind | GridLayoutRowKind]
 }
 
 GridLayoutKind: {

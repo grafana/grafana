@@ -182,6 +182,60 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
+    'panel-2': {
+      kind: 'Panel',
+      spec: {
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [
+              {
+                kind: 'PanelQuery',
+                spec: {
+                  refId: 'A',
+                  datasource: {
+                    type: 'prometheus',
+                    uid: 'datasource1',
+                  },
+                  query: {
+                    kind: 'prometheus',
+                    spec: {
+                      expr: 'test-query',
+                    },
+                  },
+                  hidden: false,
+                },
+              },
+            ],
+            queryOptions: {
+              timeFrom: '1h',
+              maxDataPoints: 100,
+              timeShift: '1h',
+              queryCachingTTL: 60,
+              interval: '1m',
+              cacheTimeout: '1m',
+              hideTimeOverride: false,
+            },
+            transformations: [],
+          },
+        },
+        description: 'Test Description',
+        links: [],
+        title: 'Test Panel 2',
+        id: 2,
+        vizConfig: {
+          kind: 'timeseries',
+          spec: {
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+            options: {},
+            pluginVersion: '7.0.0',
+          },
+        },
+      },
+    },
   },
   layout: {
     kind: 'GridLayout',
@@ -203,6 +257,28 @@ export const handyTestingSchema: DashboardV2Spec = {
               value: 'customVar',
               maxPerRow: 3,
             },
+          },
+        },
+        {
+          kind: 'GridLayoutRow',
+          spec: {
+            height: 100,
+            y: 100,
+            elements: [
+              {
+                kind: 'GridLayoutItem',
+                spec: {
+                  element: {
+                    kind: 'ElementReference',
+                    name: 'panel-2',
+                  },
+                  height: 100,
+                  width: 200,
+                  x: 0,
+                  y: 0,
+                },
+              },
+            ],
           },
         },
       ],

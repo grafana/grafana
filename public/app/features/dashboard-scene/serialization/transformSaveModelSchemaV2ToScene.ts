@@ -16,6 +16,7 @@ import {
   SceneDataTransformer,
   SceneGridItemLike,
   SceneGridLayout,
+  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   SceneRefreshPicker,
@@ -256,7 +257,31 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       } else {
         throw new Error(`Unknown element kind: ${element.kind}`);
       }
+    } else if (element.kind === 'GridLayoutRow') {
+      const children = element.spec.elements.map((element) => {
+        const panel = dashboard.elements[element.spec.element.name];
+        if (panel.kind === 'Panel') {
+          const vizPanel = buildVizPanel(panel);
+
+          return new DashboardGridItem({
+            key: `grid-item-${panel.spec.id}`,
+            x: element.spec.x,
+            y: element.spec.y,
+            width: element.spec.repeat?.direction === 'h' ? 24 : element.spec.width,
+            height: element.spec.height,
+            itemHeight: element.spec.height,
+            body: vizPanel,
+            variableName: element.spec.repeat?.value,
+            repeatDirection: element.spec.repeat?.direction,
+            maxPerRow: element.spec.repeat?.maxPerRow,
+          });
+        } else {
+          throw new Error(`Unknown element kind: ${element.kind}`);
+        }
+      });
+      return new SceneGridRow({ y: element.spec.y, height: element.spec.height, children });
     } else {
+      //@ts-expect-error
       throw new Error(`Unknown layout element kind: ${element.kind}`);
     }
   });
