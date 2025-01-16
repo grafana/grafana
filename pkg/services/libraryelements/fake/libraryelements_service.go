@@ -80,7 +80,7 @@ func (l *LibraryElementService) GetElement(c context.Context, signedInUser ident
 	return libraryElement, nil
 }
 
-func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashboardUID string) (map[string]model.LibraryElementDTO, error) {
+func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
 	return map[string]model.LibraryElementDTO{}, nil
 }
 
