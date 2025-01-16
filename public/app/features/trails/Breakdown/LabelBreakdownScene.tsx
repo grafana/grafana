@@ -4,6 +4,7 @@ import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
@@ -313,7 +314,14 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       return [];
     }
 
-    const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => ({ label: el, value: el }));
+    const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => {
+      let label = el;
+      if (!isValidLegacyName(el)) {
+        // remove '' from label
+        label = el.slice(1, -1);
+      }
+      return { label, value: el };
+    });
     // shift ALL value to the front
     const all: SelectableValue = [{ label: 'All', value: ALL_VARIABLE_VALUE }];
     const firstGroup = all.concat(attributeArray);
@@ -449,7 +457,7 @@ export function buildAllLayout(
       break;
     }
 
-    const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, String(option.value));
+    const expr = queryDef.queries[0].expr.replaceAll(VAR_GROUP_BY_EXP, utf8Support(String(option.value)));
     const unit = queryDef.unit;
 
     const vizPanel = PanelBuilders.timeseries()
@@ -465,6 +473,7 @@ export function buildAllLayout(
               refId: `A-${option.label}`,
               expr,
               legendFormat: `{{${option.label}}}`,
+              fromExploreMetrics: true,
             },
           ],
         })

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { PromMetricsMetadataItem } from '@grafana/prometheus';
+import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
 import {
   QueryVariable,
   SceneComponentProps,
@@ -90,9 +91,14 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
       // when the group left variable is changed we should get all the resource attributes + labels
       const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail)?.getValue();
       if (typeof resourceAttributes === 'string') {
-        const attributeArray: VariableValueOption[] = resourceAttributes
-          .split(',')
-          .map((el) => ({ label: el, value: el }));
+        const attributeArray: VariableValueOption[] = resourceAttributes.split(',').map((el) => {
+          let label = el;
+          if (!isValidLegacyName(el)) {
+            // remove '' from label
+            label = el.slice(1, -1);
+          }
+          return { label, value: el };
+        });
         allLabelOptions = attributeArray.concat(allLabelOptions);
       }
     }

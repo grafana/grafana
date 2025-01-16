@@ -1,3 +1,5 @@
+import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
+
 import { createDefaultMetricQueryDefs } from './queryGenerators/default';
 import { createHistogramMetricQueryDefs } from './queryGenerators/histogram';
 import { createSummaryMetricQueryDefs } from './queryGenerators/summary';
@@ -5,7 +7,7 @@ import { AutoQueryContext, AutoQueryInfo } from './types';
 import { getUnit } from './units';
 
 export function getAutoQueriesForMetric(metric: string, nativeHistogram?: boolean): AutoQueryInfo {
-  const isUtf8Metric = false;
+  const isUtf8Metric = !isValidLegacyName(metric);
   const metricParts = metric.split('_');
   const suffix = metricParts.at(-1);
 

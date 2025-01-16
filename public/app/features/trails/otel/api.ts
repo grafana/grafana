@@ -1,5 +1,6 @@
 import { RawTimeRange, Scope } from '@grafana/data';
 import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
+import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
 import { config, getBackendSrv } from '@grafana/runtime';
 
 import { callSuggestionsApi } from '../utils';
@@ -40,7 +41,10 @@ export async function totalOtelResources(
 ): Promise<OtelTargetType> {
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
-
+  // check that the metric is utf8 before doing a resource query
+  if (metric && !isValidLegacyName(metric)) {
+    metric = `{"${metric}"}`;
+  }
   const query = metric ? metricOtelJobInstanceQuery(metric) : otelTargetInfoQuery(filters);
 
   const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/query`;
@@ -204,7 +208,13 @@ export async function getFilteredResourceAttributes(
   // The match param for the metric to get all possible labels for this metric
   const metricMatchTerms = limitOtelMatchTerms([], metricResources.jobs, metricResources.instances);
 
-  let metricMatchParam = `${metric}{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
+  let metricMatchParam = '';
+  // check metric is utf8 to give corrrect syntax
+  if (!isValidLegacyName(metric)) {
+    metricMatchParam = `{'${metric}',${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
+  } else {
+    metricMatchParam = `${metric}{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
+  }
 
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
