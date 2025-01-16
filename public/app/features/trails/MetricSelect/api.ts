@@ -1,7 +1,5 @@
 import { AdHocVariableFilter, RawTimeRange, Scope } from '@grafana/data';
-import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
-import { PromQueryModeller } from '@grafana/prometheus/src/querybuilder/PromQueryModeller';
-import { utf8Support } from '@grafana/prometheus/src/utf8_support';
+import { getPrometheusTime, PromQueryModeller, utf8Support } from '@grafana/prometheus';
 import { config, getBackendSrv } from '@grafana/runtime';
 
 import { limitOtelMatchTerms } from '../otel/util';

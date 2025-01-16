@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
-import { PromMetricsMetadataItem } from '@grafana/prometheus';
-import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
+import { isValidLegacyName, PromMetricsMetadataItem } from '@grafana/prometheus';
 import {
   QueryVariable,
   SceneComponentProps,
