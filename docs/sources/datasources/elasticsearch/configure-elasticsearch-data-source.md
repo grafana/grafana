@@ -42,7 +42,7 @@ You can create a variety of queries to visualize logs or metrics stored in Elast
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 
 Only users with the organization `administrator` role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](ref:provisioning-data-sources) with Grafana's provisioning system.
 
 ## Configuring permissions
 
