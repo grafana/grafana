@@ -105,7 +105,7 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
 	github.com/jeremywohl/flatten v1.0.1 // @grafana/grafana-app-platform-squad
 	github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
-	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
+	github.com/jmespath/go-jmespath v0.4.0 // @grafana/grafana-backend-group
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
@@ -213,7 +213,7 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240821161612-71f0dae39e9d // @grafana/grafana-search-and-storage
 )
 
-require github.com/blevesearch/bleve_index_api v1.1.12
+require github.com/blevesearch/bleve_index_api v1.1.12 // @grafana/grafana-search-and-storage
 
 require (
 	cel.dev/expr v0.18.0 // indirect
