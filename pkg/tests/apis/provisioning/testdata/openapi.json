@@ -1243,8 +1243,26 @@
         "tags": [
           "Repository"
         ],
-        "description": "connect POST requests to export of Repository",
+        "description": "Export from grafana into the remote repository",
         "operationId": "createRepositoryExport",
+        "parameters": [
+          {
+            "name": "folder",
+            "in": "query",
+            "description": "optional source folder",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "history",
+            "in": "query",
+            "description": "Keep the resource history",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -3575,6 +3593,19 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "description": "The source folder",
+            "type": "string"
+          },
+          "history": {
+            "description": "Preserve history (if possible)",
+            "type": "boolean"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
         "properties": {
@@ -3742,6 +3773,14 @@
               "export",
               "pr",
               "sync"
+            ]
+          },
+          "export": {
+            "description": "Relevant options when the job is \"export\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions"
+              }
             ]
           },
           "hash": {

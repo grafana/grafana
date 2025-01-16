@@ -69,6 +69,17 @@ type JobSpec struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
+
+	// Relevant options when the job is "export"
+	Export *ExportOptions `json:"export,omitempty"`
+}
+
+type ExportOptions struct {
+	// The source folder
+	Folder string `json:"folder,omitempty"`
+
+	// Preserve history (if possible)
+	History bool `json:"history,omitempty"`
 }
 
 // The job status

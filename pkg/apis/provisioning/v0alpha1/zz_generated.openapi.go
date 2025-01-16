@@ -16,6 +16,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Author":                 schema_pkg_apis_provisioning_v0alpha1_Author(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions":         schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions":          schema_pkg_apis_provisioning_v0alpha1_ExportOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem":               schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList":               schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
@@ -113,6 +114,32 @@ func schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref common.ReferenceCa
 					},
 				},
 				Required: []string{"create", "update", "delete"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ExportOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The source folder",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"history": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Preserve history (if possible)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -580,10 +607,18 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"export": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Relevant options when the job is \"export\"",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions"),
+						},
+					},
 				},
 				Required: []string{"action"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions"},
 	}
 }
 
