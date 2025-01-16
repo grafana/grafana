@@ -4,7 +4,7 @@ import { createSummaryMetricQueryDefs } from './queryGenerators/summary';
 import { AutoQueryContext, AutoQueryInfo } from './types';
 import { getUnit } from './units';
 
-export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
+export function getAutoQueriesForMetric(metric: string, nativeHistogram?: boolean): AutoQueryInfo {
   const isUtf8Metric = false;
   const metricParts = metric.split('_');
   const suffix = metricParts.at(-1);
@@ -28,7 +28,7 @@ export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {
     return createSummaryMetricQueryDefs(ctx);
   }
 
-  if (suffix === 'bucket') {
+  if (suffix === 'bucket' || nativeHistogram) {
     return createHistogramMetricQueryDefs(ctx);
   }
 

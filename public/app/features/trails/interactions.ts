@@ -131,7 +131,11 @@ type Interactions = {
   otel_experience_used: {},
   otel_experience_toggled: {
     value: ('on'| 'off')
-  }
+  },
+  native_histogram_examples_closed: {},
+  native_histogram_example_clicked: {
+    metric: string;
+  },
 };
 
 const PREFIX = 'grafana_explore_metrics_';
