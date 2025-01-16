@@ -223,7 +223,7 @@ func (z *Zanzana) running(ctx context.Context) error {
 		} else {
 			go func() {
 				z.logger.Info("Starting OpenFGA HTTP server")
-				if err != srv.ListenAndServe() {
+				if err := srv.ListenAndServe(); err != nil {
 					z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
 				}
 			}()
