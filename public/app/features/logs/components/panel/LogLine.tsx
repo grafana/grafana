@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
@@ -10,14 +10,13 @@ interface Props {
   log: ProcessedLogModel;
   style: CSSProperties;
   wrapLogMessage: boolean;
-  onOverflow?: (height: number) => void;
+  onOverflow?: (id: string, height: number) => void;
 }
 
 export const LogLine = ({ log, style, onOverflow, wrapLogMessage }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const logLineRef = useRef<HTMLDivElement | null>(null);
-  const [overflows, setOverflows] = useState(false);
 
   useEffect(() => {
     if (!onOverflow || !logLineRef.current) {
@@ -25,21 +24,13 @@ export const LogLine = ({ log, style, onOverflow, wrapLogMessage }: Props) => {
     }
     const hasOverflow = logLineRef.current.scrollHeight > logLineRef.current.clientHeight;
     if (hasOverflow) {
-      onOverflow(logLineRef.current.scrollHeight);
-      setOverflows(true);
+      onOverflow(log.uid, logLineRef.current.scrollHeight);
     }
-  }, [log.body, onOverflow]);
-
-  let optionStyles = '';
-  if (overflows) {
-    optionStyles += ` ${styles.overflows}`;
-  }
+  }, [log.body, log.uid, onOverflow]);
 
   return (
-    <div style={style} className={`${styles.logLine}${optionStyles}`} ref={onOverflow ? logLineRef : undefined}>
-      <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
-        {log.body}
-      </div>
+    <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
+      <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>{log.body}</div>
     </div>
   );
 };

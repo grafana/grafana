@@ -1,13 +1,13 @@
 import { debounce } from 'lodash';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { ListChildComponentProps, VariableSizeList } from 'react-window';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ListChildComponentProps, ListOnScrollProps, VariableSizeList } from 'react-window';
 
 import { CoreApp, LogRowModel } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { LogLine } from './LogLine';
 import { preProcessLogs } from './processing';
-import { getLogLineSize, init as initVirtualization } from './virtualization';
+import { getLogLineSize, init as initVirtualization, storeLogLineSize } from './virtualization';
 
 interface Props {
   app?: CoreApp;
@@ -24,6 +24,7 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
     () => preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape }),
     [forceEscape, logs, wrapLogMessage]
   );
+  const scrollPositionRef = useRef(0);
 
   useEffect(() => {
     initVirtualization(theme);
@@ -31,6 +32,7 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
 
   useEffect(() => {
     setListKey(`${Math.random()}`);
+    scrollPositionRef.current = 0;
   }, [processedLogs]);
 
   useLayoutEffect(() => {
@@ -41,13 +43,27 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
     };
   }, []);
 
+  const setScrollPosition = useCallback(({ scrollOffset }: ListOnScrollProps) => {
+    scrollPositionRef.current = scrollOffset;
+  }, []);
+
+  const handleOverflow = useCallback(
+    (id: string, height: number) => {
+      if (containerElement) {
+        storeLogLineSize(id, containerElement, height);
+        setListKey(`${Math.random()}`);
+      }
+    },
+    [containerElement]
+  );
+
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
       return (
-        <LogLine log={processedLogs[index]} style={style} wrapLogMessage={wrapLogMessage} onOverflow={console.log} />
+        <LogLine log={processedLogs[index]} style={style} wrapLogMessage={wrapLogMessage} onOverflow={handleOverflow} />
       );
     },
-    [processedLogs, wrapLogMessage]
+    [handleOverflow, processedLogs, wrapLogMessage]
   );
 
   const height = window.innerHeight * 0.75;
@@ -61,10 +77,12 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
     <VariableSizeList
       key={listKey}
       height={height}
+      initialScrollOffset={scrollPositionRef.current}
       itemCount={processedLogs.length}
       itemSize={getLogLineSize.bind(null, processedLogs, containerElement, theme, wrapLogMessage)}
-      itemKey={(index: number) => index}
+      itemKey={(index: number) => processedLogs[index].uid}
       layout="vertical"
+      onScroll={setScrollPosition}
       style={{ overflowY: 'scroll' }}
       width="100%"
     >
