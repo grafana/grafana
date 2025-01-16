@@ -12,7 +12,7 @@ import {
   defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 

@@ -1,5 +1,5 @@
 import { DataQuery, VariableModel, VariableRefresh } from '@grafana/schema';
-import { DashboardV2Spec, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
