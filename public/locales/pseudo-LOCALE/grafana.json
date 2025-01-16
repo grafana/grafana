@@ -3345,8 +3345,23 @@
     },
     "metric-select": {
       "filter-by": "Fįľŧęř þy",
+      "native-histogram": "Ńäŧįvę Ħįşŧőģřäm",
       "new-badge": "Ńęŵ",
       "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "Cľäşşįč Ħįşŧőģřäm đįşpľäyęđ äş ĥęäŧmäp:",
+      "ch-histogram": "Cľäşşįč Ħįşŧőģřäm đįşpľäyęđ äş ĥįşŧőģřäm:",
+      "click-histogram": "Cľįčĸ äŉy őƒ ŧĥę ŉäŧįvę ĥįşŧőģřämş þęľőŵ ŧő ęχpľőřę ŧĥęm:",
+      "hide-examples": "Ħįđę ęχämpľęş",
+      "learn-more": "Ŀęäřŉ mőřę",
+      "metric-examples": "",
+      "nh-heatmap": "Ńäŧįvę Ħįşŧőģřäm đįşpľäyęđ äş ĥęäŧmäp:",
+      "nh-histogram": "Ńäŧįvę Ħįşŧőģřäm đįşpľäyęđ äş ĥįşŧőģřäm:",
+      "now": "Ńőŵ:",
+      "previously": "Přęvįőūşľy:",
+      "see-examples": "> Ŝęę ęχämpľęş",
+      "sentence": "Přőmęŧĥęūş ŉäŧįvę ĥįşŧőģřämş őƒƒęř ĥįģĥ řęşőľūŧįőŉ, ĥįģĥ přęčįşįőŉ, şįmpľę ūşäģę įŉ įŉşŧřūmęŉŧäŧįőŉ äŉđ ä ŵäy ŧő čőmþįŉę äŉđ mäŉįpūľäŧę ĥįşŧőģřämş įŉ qūęřįęş äŉđ įŉ Ğřäƒäŉä."
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "Øř vįęŵ ä řęčęŉŧ ęχpľőřäŧįőŉ"
