@@ -67,8 +67,10 @@ export function getLogLineSize(
   if (!container) {
     return 0;
   }
+  console.log(`measuring ${index}`);
   const storedSize = retrieveLogLineSize(logs[index].uid, container);
   if (storedSize) {
+    console.log(`cached ${index} ${storedSize}`);
     return storedSize;
   }
   const lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
