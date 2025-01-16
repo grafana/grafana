@@ -191,6 +191,11 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 	}
 
 	if err := s.storage.Delete(ctx, nn); err != nil {
+		var kErr xkube.ErrorLister
+		if errors.As(err, &kErr) {
+			return nil, false, apierrors.NewInvalid(s.resource.GroupVersionKind().GroupKind(), name, kErr.ErrorList())
+		}
+
 		return nil, false, fmt.Errorf("failed to delete keeper: %w", err)
 	}
 
