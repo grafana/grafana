@@ -18,6 +18,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -250,6 +251,14 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
   return undefined;
 }
 
+export function calculateGridItemDimensions(repeater: DashboardGridItem) {
+  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const w = 24 / columnCount;
+  const h = repeater.state.itemHeight ?? 10;
+  return { h, w, columnCount };
+}
+
 /**
  * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
@@ -272,6 +281,34 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
   return () => {
     parentCancel?.();
     cancel();
+  };
+}
+
+/**
+ * Adaptation of activateSceneObjectAndParentTree specific for PanelSearchLayout use case with
+ *   with panelSearch and panelsPerRow custom panel filtering logic.
+ *
+ * Activating the whole tree because dashboard does not react to variable updates such as panel repeats
+ */
+export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
+
+  if (so.parent) {
+    parentCancel = forceActivateFullSceneObjectTree(so.parent);
+  }
+
+  if (!so.isActive) {
+    cancel = so.activate();
+    return () => {
+      parentCancel?.();
+      cancel?.();
+    };
+  }
+
+  return () => {
+    parentCancel?.();
+    cancel?.();
   };
 }
 

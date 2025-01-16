@@ -5,7 +5,9 @@ import (
 	"embed"
 	"fmt"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -46,6 +48,9 @@ var (
 	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
 	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
 	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+
+	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
+	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
 )
 
 // TxOptions.
@@ -203,6 +208,32 @@ type sqlResourceHistoryUpdateRequest struct {
 
 func (r sqlResourceHistoryUpdateRequest) Validate() error {
 	return nil // TODO
+}
+
+type sqlResourceBlobInsertRequest struct {
+	sqltemplate.SQLTemplate
+	Now         time.Time
+	Info        *utils.BlobInfo
+	Key         *resource.ResourceKey
+	Value       []byte
+	ContentType string
+}
+
+func (r sqlResourceBlobInsertRequest) Validate() error {
+	if len(r.Value) < 1 {
+		return fmt.Errorf("missing body")
+	}
+	return nil
+}
+
+type sqlResourceBlobQueryRequest struct {
+	sqltemplate.SQLTemplate
+	Key *resource.ResourceKey
+	UID string
+}
+
+func (r sqlResourceBlobQueryRequest) Validate() error {
+	return nil
 }
 
 // update RV
