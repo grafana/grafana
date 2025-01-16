@@ -428,7 +428,7 @@ export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElemen
                 onClick={() => onClose(false)}
                 fill="outline"
               >
-                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>Cancel
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
               </Button>
               <Button type="submit" disabled={!isDirty || !isValid || loading}>
                 {loading ? 'Saving...' : 'Save'}
