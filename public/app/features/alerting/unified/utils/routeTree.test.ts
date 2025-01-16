@@ -4,12 +4,12 @@ import { FormAmRoute } from '../types/amroutes';
 
 import { GRAFANA_DATASOURCE_NAME } from './datasource';
 import {
-    addRouteToReferenceRoute,
-    cleanRouteIDs,
-    findRouteInTree,
-    hashRoute,
-    omitRouteFromRouteTree,
-    stabilizeRoute,
+  addRouteToReferenceRoute,
+  cleanRouteIDs,
+  findRouteInTree,
+  hashRoute,
+  omitRouteFromRouteTree,
+  stabilizeRoute,
 } from './routeTree';
 
 describe('findRouteInTree', () => {
