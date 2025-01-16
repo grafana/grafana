@@ -39,6 +39,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   }
 
   public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
+    const decoder = new TextDecoder();
     const params = { ...opts, watch: true };
     params.labelSelector = this.parseListOptionsSelector(params.labelSelector);
     params.fieldSelector = this.parseListOptionsSelector(params.fieldSelector);
@@ -51,9 +52,8 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         switchMap((response) => {
           const events: Array<ResourceEvent<T, S, K>> = [];
           if (response.ok && response.data) {
-            const decoder = new TextDecoder();
             decoder
-              .decode(response.data)
+              .decode(response.data, { stream: true })
               .split('\n')
               .forEach((v) => {
                 if (v?.length) {
