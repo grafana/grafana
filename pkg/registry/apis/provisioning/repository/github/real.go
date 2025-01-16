@@ -67,7 +67,7 @@ func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref
 		return nil, nil, ErrPathTraversalDisallowed
 	}
 
-	fc, dc, _, err := r.gh.Repositories.GetContents(ctx, owner, repository, path, &github.RepositoryContentGetOptions{
+	fc, dc, _, err := r.gh.Repositories.GetContents(ctx, owner, repository, strings.TrimPrefix(path, "/"), &github.RepositoryContentGetOptions{
 		Ref: ref,
 	})
 	if err != nil {
@@ -137,7 +137,7 @@ func (r *realImpl) CreateFile(ctx context.Context, owner, repository, path, bran
 		message = fmt.Sprintf("Create %s", path)
 	}
 
-	_, _, err := r.gh.Repositories.CreateFile(ctx, owner, repository, path, &github.RepositoryContentFileOptions{
+	_, _, err := r.gh.Repositories.CreateFile(ctx, owner, repository, strings.TrimPrefix(path, "/"), &github.RepositoryContentFileOptions{
 		Branch:  &branch,
 		Message: &message,
 		Content: content,
@@ -165,7 +165,7 @@ func (r *realImpl) UpdateFile(ctx context.Context, owner, repository, path, bran
 		message = fmt.Sprintf("Update %s", path)
 	}
 
-	_, _, err := r.gh.Repositories.UpdateFile(ctx, owner, repository, path, &github.RepositoryContentFileOptions{
+	_, _, err := r.gh.Repositories.UpdateFile(ctx, owner, repository, strings.TrimPrefix(path, "/"), &github.RepositoryContentFileOptions{
 		Branch:  &branch,
 		Message: &message,
 		Content: content,
@@ -200,7 +200,7 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 		message = fmt.Sprintf("Delete %s", path)
 	}
 
-	_, _, err := r.gh.Repositories.DeleteFile(ctx, owner, repository, path, &github.RepositoryContentFileOptions{
+	_, _, err := r.gh.Repositories.DeleteFile(ctx, owner, repository, strings.TrimPrefix(path, "/"), &github.RepositoryContentFileOptions{
 		Branch:  &branch,
 		Message: &message,
 		SHA:     &hash,
@@ -227,7 +227,7 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 
 func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {
 	commits, _, err := r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
-		Path: path,
+		Path: strings.TrimPrefix(path, "/"),
 		SHA:  branch,
 	})
 	if err != nil {

@@ -25,6 +25,7 @@ export type RepositorySpec = {
   title?: string;
   description?: string;
   folder?: string;
+  baseDirectory?: string;
   github?: GitHubRepositoryConfig;
   local?: LocalRepositoryConfig;
   s3?: S3RepositoryConfig;

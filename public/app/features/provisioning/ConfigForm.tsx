@@ -181,9 +181,11 @@ export function ConfigForm({ data }: ConfigFormProps) {
       )}
 
       {type === 'local' && (
-        <Field label={'Local path'} error={errors?.path?.message} invalid={!!errors?.path}>
-          <Input {...register('path', { required: 'This field is required.' })} placeholder={'/path/to/repo'} />
-        </Field>
+        <>
+          <Field label={'Local path'} error={errors?.path?.message} invalid={!!errors?.path}>
+            <Input {...register('path', { required: 'This field is required.' })} placeholder={'/path/to/repo'} />
+          </Field>
+        </>
       )}
 
       {type === 's3' && (
@@ -208,6 +210,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </Field>
       <Field label={'Prefer YAML'}>
         <Switch {...register('preferYaml')} id={'preferYaml'} />
+      </Field>
+      <Field label={'Base directory'} error={errors?.baseDirectory?.message} invalid={!!errors?.baseDirectory}>
+        <Input {...register('baseDirectory')} placeholder={'/'} />
       </Field>
       <FieldSet label={'Editing options'}>
         <Field label={'Create'} description={'Enable creating files on repository'}>

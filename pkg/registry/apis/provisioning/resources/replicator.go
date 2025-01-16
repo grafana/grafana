@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -101,7 +100,7 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 
 // replicateTree replicates all files in the repository.
 func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
-	tree, err := r.repository.ReadTree(ctx, ref, "/") // TODO: Use base
+	tree, err := r.repository.ReadTree(ctx, ref, r.repository.Config().Spec.BaseDirectory)
 	if err != nil {
 		return fmt.Errorf("read tree: %w", err)
 	}
@@ -379,7 +378,7 @@ func (r *Replicator) Export(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
 		}
-		fileName := filepath.Join(folders.DirPath(folder), baseFileName)
+		fileName := path.Join(r.repository.Config().Spec.BaseDirectory, folders.DirPath(folder), baseFileName)
 		logger = logger.With("file", fileName)
 
 		var ref string
