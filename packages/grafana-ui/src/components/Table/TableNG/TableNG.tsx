@@ -53,7 +53,7 @@ export type FilterType = {
 };
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions, onColumnResize } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
   const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
@@ -158,7 +158,7 @@ export function TableNG(props: TableNGProps) {
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
   const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent }) => {
-    const headerRef = useRef(null);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     let isColumnFilterable = filterable;
     if (field.config.custom.filterable !== filterable) {
@@ -183,6 +183,34 @@ export function TableNG(props: TableNGProps) {
         headerCellRefs.current[column.key] = headerRef.current;
       }
     }, [headerRef, column.key]);
+
+    // TODO: this is a workaround to handle manual column resize;
+    useEffect(() => {
+      const headerCellParent = headerRef.current?.parentElement;
+      if (headerCellParent) {
+        // `lastElement` is an HTML element added by react-data-grid for resizing columns.
+        // We add a click event listener to `lastElement` to handle the end of the resize operation.
+        const lastElement = headerCellParent.lastElementChild;
+        if (lastElement) {
+          const handleMouseUp = () => {
+            let newWidth = headerCellParent.clientWidth;
+            const columnMinWidth = column.minWidth;
+            if (columnMinWidth && newWidth < columnMinWidth) {
+              newWidth = columnMinWidth;
+            }
+            onColumnResize?.(column.key as string, newWidth);
+          };
+
+          lastElement.addEventListener('click', handleMouseUp);
+
+          return () => {
+            lastElement.removeEventListener('click', handleMouseUp);
+          };
+        }
+      }
+      // to handle "Not all code paths return a value." error
+      return;
+    }, [column]);
 
     return (
       <div ref={headerRef} style={{ display: 'flex', justifyContent }}>
@@ -255,6 +283,12 @@ export function TableNG(props: TableNGProps) {
     main.fields.map((field, fieldIndex) => {
       const key = field.name;
 
+      // get column width from overrides
+      const override = fieldConfig?.overrides?.find(
+        (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
+      );
+      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config.custom.width;
+
       const justifyColumnContent = getTextAlign(field);
       const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -310,7 +344,7 @@ export function TableNG(props: TableNGProps) {
           />
         ),
         // TODO these anys are making me sad
-        width: field.config.custom.width ?? columnWidth,
+        width: width ?? columnWidth,
         minWidth: field.config.custom.minWidth ?? columnMinWidth,
       });
     });
@@ -461,9 +495,11 @@ export function TableNG(props: TableNGProps) {
         // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
         bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
         onColumnResize={() => {
-          // TODO: this is a hack to force rowHeight re-calculation
+          // NOTE: This method is called continuously during the column resize drag operation,
+          // providing the current column width. There is no separate event for the end of the drag operation.
           if (textWrap) {
             // This is needed only when textWrap is enabled
+            // TODO: this is a hack to force rowHeight re-calculation
             setResizeTrigger((prev) => prev + 1);
           }
         }}
