@@ -123,6 +123,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     selectedItem: null,
     stateReducer: (state, actionAndChanges) => {
       const { changes, type } = actionAndChanges;
+      //console.log(changes, type);
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
@@ -154,7 +155,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             }
 
             if (allFilteredSelected && inputValue !== '') {
-              console.log('Deselecting');
               // Deselect all currently filtered items
               const filteredSet = new Set(items.slice(1).map((item) => item.value));
               newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
@@ -174,6 +174,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
           break;
+        case useCombobox.stateChangeTypes.InputClick:
+          setIsOpen(true);
         default:
           break;
       }
@@ -198,7 +200,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         style={{ width: width === 'auto' ? undefined : width }}
         className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })}
         ref={measureRef}
-        onClick={() => !disabled && selectedItems.length > 0 && setIsOpen(!isOpen)}
+        //onClick={() => !disabled && selectedItems.length > 0 && setIsOpen(!isOpen)}
       >
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
@@ -233,13 +235,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           )}
           <input
             className={cx(multiStyles.input, {
-              [multiStyles.inputClosed]: !isOpen && selectedItems.length > 0,
+              //[multiStyles.inputClosed]: !isOpen && selectedItems.length > 0,
             })}
             {...getInputProps(
               getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: selectedItems.length > 0 ? undefined : placeholder,
+                width: 'auto',
                 onFocus: () => setIsOpen(true),
               })
             )}
