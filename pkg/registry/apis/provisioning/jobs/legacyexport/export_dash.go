@@ -1,4 +1,4 @@
-package legacy
+package legacyexport
 
 import (
 	"encoding/json"
@@ -30,7 +30,7 @@ func (job *legacyExporter) exportDashboards(helper *commitHelper, keepHistory bo
 		return err
 	}
 
-	rootDir := path.Join(helper.orgDir, "dashboards")
+	rootDir := path.Join(helper.dir, "dashboards")
 	folderStructure := commitOptions{
 		when:    time.Now(),
 		comment: "Exported folder structure",
@@ -121,11 +121,11 @@ func (job *legacyExporter) exportDashboards(helper *commitHelper, keepHistory bo
 	err = helper.add(commitOptions{
 		body: []commitBody{
 			{
-				fpath: filepath.Join(helper.orgDir, "root-alias.json"),
+				fpath: filepath.Join(helper.dir, "root-alias.json"),
 				body:  prettyJSON(alias),
 			},
 			{
-				fpath: filepath.Join(helper.orgDir, "root-ids.json"),
+				fpath: filepath.Join(helper.dir, "root-ids.json"),
 				body:  prettyJSON(ids),
 			},
 		},

@@ -9,13 +9,12 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/legacyexport"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -36,7 +35,7 @@ type JobWorker struct {
 	render         rendering.Service
 	lister         resources.ResourceLister
 	blobstore      blob.PublicBlobStore
-	legacyExporter legacy.LegacyExporter
+	legacyExporter legacyexport.LegacyExporter
 	urlProvider    func(namespace string) string
 }
 
@@ -48,7 +47,7 @@ func NewJobWorker(
 	render rendering.Service,
 	lister resources.ResourceLister,
 	blobstore blob.PublicBlobStore,
-	legacyExporter legacy.LegacyExporter,
+	legacyExporter legacyexport.LegacyExporter,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
 	return &JobWorker{
@@ -176,38 +175,12 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		}
 
 	case provisioning.JobActionExport:
-		if job.Spec.Export != nil && job.Spec.Export.History {
-			if repo.Config().Spec.Type != provisioning.GitHubRepositoryType {
-				return nil, fmt.Errorf("export with history only supported for github (right now)")
-			}
-			if job.Spec.Export.Folder != "" {
-				return nil, fmt.Errorf("selective folders are not yet supported")
-			}
-			info, err := claims.ParseNamespace(job.Namespace)
-			if err != nil {
-				return nil, err
-			}
-			folder, err := g.legacyExporter.Export(ctx, legacy.ExportOptions{
-				OrgID:       info.OrgID,
-				Dashboards:  true,
-				KeepHistory: true,
-			})
-			if err != nil {
-				return nil, err
-			}
-			logger.Info("exported", "directory", folder)
-			logger.Info("TODO! push the repository to the remote")
-			return &provisioning.JobStatus{
-				State:   provisioning.JobStateSuccess,
-				Message: "Exported to: " + folder,
-			}, nil
+		exporter := &ExportWorker{
+			repo:       repo,
+			replicator: replicator,
 		}
+		return exporter.Process(ctx, job)
 
-		// Uses k8s API against the configured folder
-		err := replicator.Export(ctx)
-		if err != nil {
-			return nil, err
-		}
 	default:
 		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
 	}

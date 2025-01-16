@@ -1,4 +1,4 @@
-package legacy
+package legacyexport
 
 import (
 	"context"
@@ -16,16 +16,15 @@ import (
 
 type commitHelper struct {
 	ctx           context.Context
-	repo          *git.Repository
 	work          *git.Worktree
-	workDir       string // same as the worktree root
-	orgDir        string
+	dir           string // same as the worktree root
 	orgID         int64
 	stopRequested bool
-	broadcast     func(path string)
 
-	users   map[int64]*userInfo
-	folders map[string]string // UID >> file path
+	// Write status to UI via websocket
+	broadcast func(path string)
+
+	users map[int64]*userInfo
 
 	counter int
 }
@@ -65,7 +64,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 	}
 
 	for _, b := range opts.body {
-		if !strings.HasPrefix(b.fpath, ch.orgDir) {
+		if !strings.HasPrefix(b.fpath, ch.dir) {
 			return fmt.Errorf("invalid path, must be within the root folder")
 		}
 
@@ -92,7 +91,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 			return err
 		}
 
-		sub := b.fpath[len(ch.workDir)+1:]
+		sub := b.fpath[len(ch.dir)+1:]
 		_, err = ch.work.Add(sub)
 		if err != nil {
 			status, e2 := ch.work.Status()

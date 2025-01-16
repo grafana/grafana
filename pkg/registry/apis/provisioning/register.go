@@ -30,7 +30,7 @@ import (
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/legacyexport"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -67,7 +67,7 @@ type ProvisioningAPIBuilder struct {
 	parsers           *resources.ParserFactory
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
-	legacyExporter    legacy.LegacyExporter
+	legacyExporter    legacyexport.LegacyExporter
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
 	lister            resources.ResourceLister
@@ -86,7 +86,7 @@ func NewProvisioningAPIBuilder(
 	index resource.RepositoryIndexClient,
 	blobstore blob.PublicBlobStore,
 	configProvider apiserver.RestConfigProvider,
-	legacyExporter legacy.LegacyExporter,
+	legacyExporter legacyexport.LegacyExporter,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	clientFactory := resources.NewFactory(identities)
@@ -120,7 +120,7 @@ func RegisterAPIService(
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
-	legacyExporter legacy.LegacyExporter,
+	legacyExporter legacyexport.LegacyExporter,
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
