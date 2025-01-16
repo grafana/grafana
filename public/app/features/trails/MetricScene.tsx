@@ -44,6 +44,7 @@ const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLog
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
   metric: string;
+  nativeHistogram?: boolean;
   actionView?: string;
 
   autoQuery: AutoQueryInfo;
@@ -54,7 +55,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
   public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery'>) {
-    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
+    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric, state.nativeHistogram);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),
