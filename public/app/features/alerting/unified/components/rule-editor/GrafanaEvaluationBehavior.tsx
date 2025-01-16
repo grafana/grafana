@@ -169,8 +169,6 @@ export function GrafanaEvaluationBehaviorStep({
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
     .find((ruleGroup) => ruleGroup.name === group);
-  const existingNamespaceName = Object.keys(rulerNamespace ?? {}).at(0);
-
   const isNewGroup = !existingGroup && !loadingGroups;
 
   // synchronize the evaluation interval with the group name when it's an existing group
@@ -289,12 +287,12 @@ export function GrafanaEvaluationBehaviorStep({
           )}
         </Stack>
 
-        {(folder?.uid || existingNamespaceName) && isEditingGroup && (
+        {folder?.uid && isEditingGroup && (
           <EditRuleGroupModal
             ruleGroupIdentifier={{
               dataSourceName: GRAFANA_RULES_SOURCE_NAME,
               groupName: existingGroup?.name ?? '',
-              namespaceName: folder?.uid ?? existingNamespaceName ?? '',
+              namespaceName: folder?.uid ?? '',
             }}
             rulerConfig={GRAFANA_RULER_CONFIG}
             onClose={() => closeEditGroupModal()}
