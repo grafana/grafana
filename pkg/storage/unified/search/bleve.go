@@ -20,6 +20,7 @@ import (
 	index "github.com/blevesearch/bleve_index_api"
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -556,48 +557,17 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing claims"))
 		}
-		folderChecker, err := access.Compile(ctx, auth, authz.ListRequest{
+		checker, err := access.Compile(ctx, auth, authz.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
-			Resource:  "folder",
-			Verb:      utils.VerbList,
-		})
-		if err != nil {
-			return nil, resource.AsErrorResult(err)
-		}
-		dashboardChecker, err := access.Compile(ctx, auth, authz.ListRequest{
-			Namespace: b.key.Namespace,
-			Group:     b.key.Group,
-			Resource:  "dashboard",
+			Resource:  b.key.Resource,
 			Verb:      utils.VerbList,
 		})
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
 		}
 
-		permissionsQuery := &permissionScopedQuery{
-			Query: searchrequest.Query,
-			permissionsFilter: func(d *search.DocumentMatch) bool {
-				// The internal ID has the format: <namespace>/<group>/<resourceType>/<name>
-				// Only the internal ID is present on the document match here
-				id := string(d.IndexInternalID)
-				parts := strings.Split(id, "/")
-				// Exclude doc if id isn't expected format
-				if len(parts) != 4 {
-					return false
-				}
-				name := parts[len(parts)-1]
-				resourceType := parts[2]
-				if resourceType == "folders" {
-					return folderChecker(b.key.Namespace, name, id)
-				}
-				if resourceType == "dashboards" {
-					return dashboardChecker(b.key.Namespace, name, id)
-				}
-				return true
-			},
-		}
-		searchrequest.Query = permissionsQuery
+		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, checker)
 	}
 
 	for k, v := range req.Facet {
@@ -845,16 +815,51 @@ func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Fa
 
 type permissionScopedQuery struct {
 	query.Query
-	permissionsFilter func(*search.DocumentMatch) bool
+	checker authz.ItemChecker
+	log     log.Logger
 }
 
-func (f *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReader, m mapping.IndexMapping, options search.SearcherOptions) (search.Searcher, error) {
-	searcher, err := f.Query.Searcher(ctx, i, m, options)
+func newPermissionScopedQuery(q query.Query, checker authz.ItemChecker) *permissionScopedQuery {
+	return &permissionScopedQuery{
+		Query:   q,
+		checker: checker,
+		log:     log.New("search_permissions"),
+	}
+}
+
+func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReader, m mapping.IndexMapping, options search.SearcherOptions) (search.Searcher, error) {
+	searcher, err := q.Query.Searcher(ctx, i, m, options)
+	if err != nil {
+		return nil, err
+	}
+	dvReader, err := i.DocValueReader([]string{"folder"})
 	if err != nil {
 		return nil, err
 	}
 
-	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, f.permissionsFilter)
+	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
+		// The internal ID has the format: <namespace>/<group>/<resourceType>/<name>
+		// Only the internal ID is present on the document match here. Need to use the dvReader for any other fields.
+		id := string(d.IndexInternalID)
+		parts := strings.Split(id, "/")
+		// Exclude doc if id isn't expected format
+		if len(parts) != 4 {
+			return false
+		}
+		ns := parts[0]
+		name := parts[len(parts)-1]
+		folder := ""
+		err = dvReader.VisitDocValues(d.IndexInternalID, func(field string, value []byte) {
+			if field == "folder" {
+				folder = string(value)
+			}
+		})
+		allowed := q.checker(ns, name, folder)
+		if !allowed {
+			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
+		}
+		return allowed
+	})
 
 	return filteringSearcher, nil
 }
