@@ -87,7 +87,7 @@ export {
 export { PrometheusVariableSupport } from './variables';
 
 // For explore metrics
-export { default } from './language_provider';
+export { default as PromQlLanguageProvider } from './language_provider';
 export { getPrometheusTime } from './language_utils';
 export { isValidLegacyName, utf8Support, wrapUtf8Filters } from './utf8_support';
 export { buildVisualQueryFromString } from './querybuilder/parsing';
