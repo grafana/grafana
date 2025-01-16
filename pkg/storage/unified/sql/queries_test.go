@@ -357,7 +357,15 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
-
+			sqlResourceHistoryDelete: {
+				{
+					Name: "guid",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUID:        `xxxx`,
+					},
+				},
+			},
 			sqlMigratorGetDeletionMarkers: {
 				{
 					Name: "list",

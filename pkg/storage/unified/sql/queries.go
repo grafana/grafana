@@ -43,6 +43,7 @@ var (
 	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
 	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -200,6 +201,16 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 		ResourceVersion: r.Response.ResourceVersion,
 		Value:           r.Response.Value,
 	}, nil
+}
+
+type sqlResourceHistoryDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	GUID string
+	// TODO, add other constraints
+}
+
+func (r *sqlResourceHistoryDeleteRequest) Validate() error {
+	return nil // TODO
 }
 
 type getHistoryRequest struct {

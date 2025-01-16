@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -21,6 +20,7 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 			MarkerQuery: `{"kind":"DeletedMarker"%`,
 		}
 
+		// 1. Find rows with the existing deletion marker
 		rows, err := dbutil.QueryRows(ctx, tx, sqlMigratorGetDeletionMarkers, req)
 		if err != nil {
 			return err
@@ -31,48 +31,58 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 				return err
 			}
 
-			marker := &unstructured.Unstructured{}
-			err = marker.UnmarshalJSON([]byte(req.Value))
-			if err != nil {
-				return err
-			}
-
+			// 2. Load the previous value referenced by that marker
 			req.Reset()
 			find, err := dbutil.QueryRows(ctx, tx, sqlMigratorGetValueFromRV, req)
 			if err != nil {
 				return err
 			}
 			if find.Next() {
-				err = find.Scan(&req.GUID, &req.Value)
+				marker := &unstructured.Unstructured{}
+				err = marker.UnmarshalJSON([]byte(req.Value))
+				if err != nil {
+					return err
+				}
+
+				err = find.Scan(&req.Value)
 				previous := &unstructured.Unstructured{}
 				err = previous.UnmarshalJSON([]byte(req.Value))
 				if err != nil {
 					return err
 				}
 
+				// 3. Prepare a new payload
 				metaMarker, _ := utils.MetaAccessor(marker)
 				metaPrev, _ := utils.MetaAccessor(previous)
 				metaPrev.SetDeletionTimestamp(metaMarker.GetDeletionTimestamp())
 				metaPrev.SetFinalizers(nil)
 				metaPrev.SetManagedFields(nil)
-				metaPrev.SetGeneration(-1)
+				metaPrev.SetGeneration(-999)
 				metaPrev.SetAnnotation("kubectl.kubernetes.io/last-applied-configuration", "") // clears it
 				ts, _ := metaMarker.GetUpdatedTimestamp()
 				if ts != nil {
 					metaPrev.SetUpdatedTimestamp(ts)
 				}
-
 				buff, err := previous.MarshalJSON()
 				if err != nil {
 					return err
 				}
 				req.Value = string(buff)
 
-				fmt.Printf("TODO: %s/%d => %s\n", req.GUID, req.RV, req.Value)
+				// 4. Update the SQL row with this new value
 				req.Reset()
+				_, err = dbutil.Exec(ctx, tx, sqlMigratorUpdateValueWithGUID, req)
+				b.log.Info("Migrated deletion marker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 			} else {
-				// DELETE values that do not match the previous?
-				fmt.Printf("????? %s\n", req.GUID)
+				// 5. If the previous version is missing, we delete it -- there is nothing to help us restore anyway
+				_, err = dbutil.Exec(ctx, tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
+					SQLTemplate: sqltemplate.New(b.dialect),
+					GUID:        req.GUID,
+				})
+				if err != nil {
+					return err
+				}
+				b.log.Warn("Removing orphan deletion marker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 			}
 		}
 

@@ -627,7 +627,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
 	obj.SetUpdatedBy(requester.GetUID())
-	obj.SetGeneration(-1)
+	obj.SetGeneration(-999)
 	obj.SetAnnotation("kubectl.kubernetes.io/last-applied-configuration", "") // clears it
 	event.Value, err = marker.MarshalJSON()
 	if err != nil {
