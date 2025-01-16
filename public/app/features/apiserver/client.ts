@@ -40,9 +40,12 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
 
   public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
     const decoder = new TextDecoder();
-    const params = { ...opts, watch: true };
-    params.labelSelector = this.parseListOptionsSelector(params.labelSelector);
-    params.fieldSelector = this.parseListOptionsSelector(params.fieldSelector);
+    const params = {
+      ...opts,
+      watch: true,
+      labelSelector: this.parseListOptionsSelector(opts?.labelSelector),
+      fieldSelector: this.parseListOptionsSelector(opts?.fieldSelector),
+    };
     return getBackendSrv()
       .chunked({
         url: params.name ? `${this.url}/${params.name}` : this.url,
