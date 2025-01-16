@@ -1,9 +1,7 @@
 package rbac
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"fmt"
 	"testing"
 	"time"
@@ -651,13 +649,6 @@ func setupService() *Service {
 
 func strPtr(s string) *string {
 	return &s
-}
-
-func gobBytes(t *testing.T, v any) []byte {
-	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(v)
-	require.NoError(t, err)
-	return buf.Bytes()
 }
 
 type fakeStore struct {
