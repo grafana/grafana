@@ -8,9 +8,11 @@ import { getPrometheusTime } from './language_utils';
 import {
   PrometheusLabelNamesRegex,
   PrometheusLabelNamesRegexWithMatch,
+  PrometheusLabelValuesRegex,
   PrometheusMetricNamesRegex,
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
+import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 export class PrometheusMetricFindQuery {
   range: TimeRange;
@@ -28,7 +30,7 @@ export class PrometheusMetricFindQuery {
     this.range = timeRange;
     const labelNamesRegex = PrometheusLabelNamesRegex;
     const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+    const labelValuesRegex = PrometheusLabelValuesRegex;
     const metricNamesRegex = PrometheusMetricNamesRegex;
     const queryResultRegex = PrometheusQueryResultRegex;
     const labelNamesQuery = this.query.match(labelNamesRegex);
@@ -83,8 +85,13 @@ export class PrometheusMetricFindQuery {
     const end = getPrometheusTime(this.range.to, true);
     const params = { ...(metric && { 'match[]': metric }), start: start.toString(), end: end.toString() };
 
+    let escapedLabel = label;
+    if (!isValidLegacyName(label)) {
+      escapedLabel = escapeForUtf8Support(label);
+    }
+
     if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
-      const url = `/api/v1/label/${label}/values`;
+      const url = `/api/v1/label/${escapedLabel}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result) => {
         return _map(result.data.data, (value) => {
