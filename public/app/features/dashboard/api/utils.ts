@@ -1,5 +1,5 @@
 import { config, locationService } from '@grafana/runtime';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
