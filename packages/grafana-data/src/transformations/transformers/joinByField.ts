@@ -42,6 +42,7 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
         }
         const joined = joinDataFrames({ frames: data, joinBy, mode: options.mode });
         if (joined) {
+          joined.refId = `${DataTransformerID.joinByField}-${data.map((frame) => frame.refId).join('-')}`;
           return [joined];
         }
       }
