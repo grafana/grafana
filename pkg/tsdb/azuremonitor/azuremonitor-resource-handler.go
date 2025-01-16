@@ -47,7 +47,12 @@ func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode
 		} else {
 			// Extract relevant fields for a formatted error message
 			errorType, _ := jsonData["error"].(string)
-			errorDescription, _ := jsonData["error_description"].(string)
+			errorDescription, ok := jsonData["error_description"].(string)
+			if !ok {
+				s.logger.Error("unable to convert error_description to string", "rawError", jsonData["error_description"])
+				// Attempt to just format the error as a string
+				errorDescription = fmt.Sprintf("%v", jsonData["error_description"])
+			}
 			if errorType == "" {
 				errorType = "UnknownError"
 			}
