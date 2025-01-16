@@ -150,7 +150,9 @@ function FilesView({ repo }: RepoProps) {
           const { path } = original;
           return (
             <Stack>
-              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
+              {(path.endsWith('.json') || path.endsWith('.yaml') || path.endsWith('.yml')) && (
+                <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
+              )}
               <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>History</LinkButton>
             </Stack>
           );
