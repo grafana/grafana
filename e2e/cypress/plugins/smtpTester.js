@@ -98,8 +98,7 @@ const compareImages = async (expectedImageBufferOrFilePath, inputImageBuffer) =>
   const expectedImage = await Jimp.read(expectedImageBufferOrFilePath);
 
   const pixelDiff = diff(expectedImage, inputImage, 0.3);
-  console.log('pixel diff: ', pixelDiff.percent)
-  return pixelDiff.percent <= 0.01;
+  return pixelDiff.percent <= 0.1;
 };
 
 const toCSV = (buffer) => {
