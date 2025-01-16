@@ -1,6 +1,7 @@
-import { UrlQueryMap } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
+import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
@@ -8,13 +9,15 @@ import {
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
+  Resource,
   ResourceClient,
   ResourceForCreate,
 } from 'app/features/apiserver/types';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDTO, SaveDashboardResponseDTO, SaveDashboardV2ResponseDTO } from 'app/types';
 
-import { SaveDashboardCommand, SaveDashboardCommandV2 } from '../components/SaveDashboard/types';
+import { SaveDashboardCommandV2 } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
@@ -98,15 +101,33 @@ export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<D
     // check we have the uid from metadata
     console.log('v2 metadata', obj.metadata);
 
-    if (dashboard.k8s?.uid) {
-      obj.metadata.name = dashboard.k8s.uid;
-    }
-    if (!obj.metadata.name) {
+    const uid = obj.metadata.name;
+    if (!uid) {
       throw new Error('Dashboard uid is required');
     }
 
-    const savedDashboard = await this.client.create(obj);
-    console.log('dashboard is saved in backend!', savedDashboard);
-    return savedDashboard;
+    if (uid) {
+      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    }
+    return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+  }
+
+  asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
+    const url = locationUtil.assureBaseUrl(
+      getDashboardUrl({
+        uid: v.metadata.name,
+        currentQueryParams: '',
+        slug: kbn.slugifyForUrl(v.spec.title),
+      })
+    );
+
+    return {
+      uid: v.metadata.name,
+      version: v.spec.version ?? 0, // FIXME: what is version?
+      id: v.spec.id ?? 0,
+      status: 'success',
+      url,
+      slug: '',
+    };
   }
 }

@@ -76,9 +76,6 @@ export function ensureV2Response(
       [AnnoKeyDashboardIsSnapshot]: dto.metadata.annotations?.[AnnoKeyDashboardIsSnapshot],
     };
     creationTimestamp = dto.metadata.creationTimestamp;
-    k8sMeta = {
-      uid: dto.metadata.name,
-    };
   } else {
     accessMeta = {
       url: dto.meta.url,
@@ -102,9 +99,6 @@ export function ensureV2Response(
       [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
     creationTimestamp = dto.meta.created;
-    k8sMeta = {
-      uid: dashboard.uid,
-    };
   }
 
   if (annotationsMeta?.[AnnoKeyDashboardIsSnapshot]) {
@@ -138,9 +132,6 @@ export function ensureV2Response(
     variables,
     elements,
     layout,
-    // fix me, we need to have this k8s that containts the dashboard uid, but it seems wrong, as it's living in the
-    // spec
-    k8s: k8sMeta,
   };
 
   return {

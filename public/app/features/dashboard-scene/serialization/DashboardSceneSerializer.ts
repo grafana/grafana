@@ -166,7 +166,10 @@ export class V2DashboardSerializer
   }
 
   onSaveComplete(saveModel: DashboardV2Spec, result: SaveDashboardResponseDTO): void {
-    throw new Error('v2 schema: Method not implemented.');
+    this.initialSaveModel = {
+      ...saveModel,
+      id: result.id,
+    };
   }
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {

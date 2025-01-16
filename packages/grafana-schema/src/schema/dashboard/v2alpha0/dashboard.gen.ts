@@ -41,9 +41,6 @@ export interface DashboardV2Spec {
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
-	k8s: {
-    uid: string;
-	}
 }
 
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({

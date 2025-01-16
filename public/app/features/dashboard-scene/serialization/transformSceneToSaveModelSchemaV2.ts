@@ -51,8 +51,8 @@ import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
+    [P in keyof T]?: DeepPartial<T[P]>;
+  }
   : T;
 
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
@@ -113,9 +113,6 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       },
     },
     // EOF layout
-    k8s: {
-      uid: oldDash.uid,
-    },
   };
 
   try {
