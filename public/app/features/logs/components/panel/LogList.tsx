@@ -42,7 +42,6 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
   const handleOverflow = useCallback(
     (index: number, id: string, height: number) => {
       if (containerElement) {
-        console.log(`overflow ${index}`);
         storeLogLineSize(id, containerElement, height);
         listRef.current?.resetAfterIndex(index);
       }
