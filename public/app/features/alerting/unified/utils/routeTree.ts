@@ -205,6 +205,7 @@ const sortableValuesForKey: Array<keyof Route> = [
 /**
  * This function will sort the route's keys and sort key values if applicable
  */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 export function stabilizeRoute(route: Route): Route {
   const result: Route = {} as Route;
   const sortedKeys = Object.keys(route).sort();
@@ -224,6 +225,7 @@ export function stabilizeRoute(route: Route): Route {
 
   return result;
 }
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
 
 export function sortValue<T>(input: T[] | Record<string, unknown>): T[] | Record<string, unknown> {
   if (isArray(input)) {
@@ -237,6 +239,7 @@ export function sortValue<T>(input: T[] | Record<string, unknown>): T[] | Record
   return input;
 }
 
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 function sortObjectKeysRecursively<T>(input: T): T {
   if (isArray(input)) {
     return input.map(sortObjectKeysRecursively) as T;
@@ -255,3 +258,4 @@ function sortObjectKeysRecursively<T>(input: T): T {
 
   return input;
 }
+/* eslint-enable @typescript-eslint/consistent-type-assertions */
