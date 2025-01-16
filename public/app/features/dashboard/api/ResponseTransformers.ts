@@ -60,7 +60,6 @@ export function ensureV2Response(
 
   let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
   let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
-  let k8sMeta;
   let creationTimestamp;
 
   if (isDashboardResource(dto)) {

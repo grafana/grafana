@@ -5,8 +5,6 @@ import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/Dashb
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { SaveDashboardResponseDTO } from 'app/types';
 
-import { DashboardWithAccessInfo } from '../../api/types';
-
 export interface SaveDashboardData {
   clone: Dashboard; // cloned copy
   diff: Diffs;
