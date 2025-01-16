@@ -2534,6 +2534,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": ""
+      },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
@@ -2547,10 +2550,6 @@
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated:"
-      },
-      "connections-tab": {
-        "title": "",
-        "description": "The data source connections below are all {{pluginName}}. You can find all of your data source connections of all types in"
       }
     },
     "empty-state": {

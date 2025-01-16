@@ -2534,6 +2534,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": ""
+      },
       "labels": {
         "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
         "dependencies": "Đępęŉđęŉčįęş",
