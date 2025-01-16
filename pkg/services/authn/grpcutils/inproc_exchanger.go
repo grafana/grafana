@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"golang.org/x/sync/singleflight"
 )
@@ -50,6 +51,7 @@ func (e *inProcExchanger) Exchange(ctx context.Context, r authn.TokenExchangeReq
 				Expiry:    jwt.NewNumericDate(tokenExpiration),
 				IssuedAt:  jwt.NewNumericDate(now),
 				Issuer:    "grafana",
+				Subject:   claims.NewTypeID(claims.TypeAccessPolicy, "1"),
 				NotBefore: jwt.NewNumericDate(now),
 			},
 			Rest: authn.AccessTokenClaims{
@@ -72,7 +74,7 @@ func (e *inProcExchanger) Exchange(ctx context.Context, r authn.TokenExchangeReq
 			return nil, fmt.Errorf("%w: %w", authn.ErrInvalidExchangeResponse, err)
 		}
 
-		token := fmt.Sprintf("%s.%s", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload))
+		token := fmt.Sprintf("%s.%s.", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload))
 
 		response := &authn.TokenExchangeResponse{
 			Token: token,
