@@ -87,7 +87,7 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
     );
   }
 
-  const isNew = model.getDashboardUID() === '';
+  const isNew = !Boolean(model.getDashboardUID());
   const dashboard = model.getDashboard();
 
   return (

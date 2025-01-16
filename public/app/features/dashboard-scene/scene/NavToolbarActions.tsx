@@ -68,7 +68,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNotFound = Boolean(meta.dashboardNotFound);
-  const isNew = uid === '';
+  const isNew = !Boolean(uid);
+
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;

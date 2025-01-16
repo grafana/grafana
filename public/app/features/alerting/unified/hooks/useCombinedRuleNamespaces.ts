@@ -494,8 +494,7 @@ export function useCombinedRules(
   result?: CombinedRuleNamespace[];
   error?: unknown;
 } {
-  //  For legacy architecture reasons (DashboardModel) the isNew also respects UID being null
-  const isNewDashboard = dashboardUID === '' || dashboardUID === null;
+  const isNewDashboard = !Boolean(dashboardUID);
 
   const {
     currentData: promRuleNs,

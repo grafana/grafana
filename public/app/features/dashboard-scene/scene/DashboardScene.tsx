@@ -200,7 +200,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
-    const isNew = this.state.uid === '';
+    const isNew = locationService.getLocation().pathname === '/dashboard/new';
+
     window.__grafanaSceneContext = this;
 
     this._initializePanelSearch();
@@ -412,7 +413,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel, title, uid } = this.state;
-    const isNew = uid === '';
+    const isNew = !Boolean(uid);
 
     if (meta.dashboardNotFound) {
       return { text: 'Not found' };
