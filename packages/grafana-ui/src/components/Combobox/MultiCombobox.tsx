@@ -24,7 +24,7 @@ import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const ALL_OPTION_VALUE = '__all__';
+export const ALL_OPTION_VALUE = '__GRAFANA_INTERNAL_MULTICOMBOBOX_ALL_OPTION__';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -200,7 +200,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         style={{ width: width === 'auto' ? undefined : width }}
         className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })}
         ref={measureRef}
-        //onClick={() => !disabled && selectedItems.length > 0 && setIsOpen(!isOpen)}
       >
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
@@ -234,16 +233,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             </Box>
           )}
           <input
-            className={cx(multiStyles.input, {
-              //[multiStyles.inputClosed]: !isOpen && selectedItems.length > 0,
-            })}
+            className={multiStyles.input}
             {...getInputProps(
               getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: selectedItems.length > 0 ? undefined : placeholder,
                 width: 'auto',
-                onFocus: () => setIsOpen(true),
+                onFocus: () => !disabled && setIsOpen(true),
               })
             )}
           />
