@@ -1,8 +1,10 @@
 import { lastValueFrom } from 'rxjs';
 
 import type { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
+import { getBackendSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { getLogQueryFromMetricsQuery } from 'app/plugins/datasource/loki/queryUtils';
+
+import { findHealthyLokiDataSources } from '../../RelatedLogs/RelatedLogsScene';
 
 import { createMetricsLogsConnector, type FoundLokiDataSource } from './base';
 
@@ -155,7 +157,7 @@ export function getLokiQueryForRelatedMetric(
  * @throws Will log an error to the console if fetching or extracting rules fails for any data source.
  */
 export async function fetchAndExtractLokiRecordingRules() {
-  const lokiDataSources = getDataSourceSrv().getList({ logs: true, type: 'loki' });
+  const lokiDataSources = await findHealthyLokiDataSources();
   const extractedRecordingRules: ExtractedRecordingRules = {};
   await Promise.all(
     lokiDataSources.map(async (dataSource) => {

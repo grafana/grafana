@@ -2,7 +2,7 @@ import { TimeRange, type AdHocVariableFilter } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 
-import { RelatedLogsScene } from '../../RelatedLogs/RelatedLogsScene';
+import { findHealthyLokiDataSources, RelatedLogsScene } from '../../RelatedLogs/RelatedLogsScene';
 import { VAR_FILTERS } from '../../shared';
 import { getTrailFor, isAdHocVariable } from '../../utils';
 
@@ -92,7 +92,7 @@ export const createLabelsCrossReferenceConnector = (scene: RelatedLogsScene) => 
       // Get current time range if available
       const timeRange = scene.state.$timeRange?.state.value;
 
-      const lokiDataSources = getDataSourceSrv().getList({ logs: true, type: 'loki' });
+      const lokiDataSources = await findHealthyLokiDataSources();
       const results = await Promise.all(
         lokiDataSources.map(async ({ uid, name }) => {
           const hasLabels = await hasMatchingLabels(uid, filters, timeRange);

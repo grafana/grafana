@@ -105,7 +105,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     fetch: fetchSpy,
     delete: jest.fn(),
-    get: jest.fn(),
+    get: jest.fn().mockResolvedValue({ status: 'OK' }), // Mock successful health checks
     patch: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
@@ -138,7 +138,7 @@ describe('LokiRecordingRulesConnector', () => {
       expect(result).toContainEqual({ name: 'Loki Secondary', uid: 'loki2' });
 
       // Verify underlying calls
-      expect(getListSpy).toHaveBeenCalledWith({ logs: true, type: 'loki' });
+      expect(getListSpy).toHaveBeenCalledWith({ logs: true, type: 'loki', filter: expect.any(Function) });
       expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 

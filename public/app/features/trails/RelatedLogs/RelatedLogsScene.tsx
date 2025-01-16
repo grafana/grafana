@@ -1,4 +1,5 @@
-import { config } from '@grafana/runtime';
+import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   CustomVariable,
   PanelBuilders,
@@ -186,4 +187,36 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
 
 export function buildRelatedLogsScene() {
   return new RelatedLogsScene({});
+}
+
+export async function findHealthyLokiDataSources() {
+  const lokiDataSources = getDataSourceSrv().getList({
+    logs: true,
+    type: 'loki',
+    filter: (ds) => ds.uid !== 'grafana',
+  });
+  const healthyLokiDataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>> = [];
+  const unhealthyLokiDataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>> = [];
+
+  await Promise.all(
+    lokiDataSources.map((ds) =>
+      getBackendSrv()
+        .get(`/api/datasources/${ds.id}/health`, undefined, undefined, {
+          showSuccessAlert: false,
+          showErrorAlert: false,
+        })
+        .then((health) =>
+          health?.status === 'OK' ? healthyLokiDataSources.push(ds) : unhealthyLokiDataSources.push(ds)
+        )
+        .catch(() => unhealthyLokiDataSources.push(ds))
+    )
+  );
+
+  if (unhealthyLokiDataSources.length) {
+    console.warn(
+      `Found ${unhealthyLokiDataSources.length} unhealthy Loki data sources: ${unhealthyLokiDataSources.map((ds) => ds.name).join(', ')}`
+    );
+  }
+
+  return healthyLokiDataSources;
 }

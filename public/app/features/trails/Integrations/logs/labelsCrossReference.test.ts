@@ -69,6 +69,9 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     getAdhocFilters: jest.fn(),
   }),
+  getBackendSrv: () => ({
+    get: jest.fn().mockResolvedValue({ status: 'OK' }), // Mock successful health checks
+  }),
 }));
 
 const getTrailForSpy = jest.spyOn(utils, 'getTrailFor');
