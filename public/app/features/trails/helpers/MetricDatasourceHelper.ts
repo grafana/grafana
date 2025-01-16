@@ -138,7 +138,6 @@ export class MetricDatasourceHelper {
       return keys.map((key) => {
         if (typeof key.value === 'string') {
           key.value = utf8Support(key.value);
-          key.text = utf8Support(key.text);
         }
         return key;
       });
