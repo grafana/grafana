@@ -2033,7 +2033,8 @@
   },
   "multicombobox": {
     "all": {
-      "title": "All"
+      "title": "All",
+      "title-filtered": "All (filtered)"
     }
   },
   "nav": {
