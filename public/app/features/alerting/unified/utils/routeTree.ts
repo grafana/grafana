@@ -3,7 +3,7 @@
  */
 
 import { produce } from 'immer';
-import { isArray, isPlainObject, omit } from 'lodash';
+import { omit } from 'lodash';
 
 import { insertAfterImmutably, insertBeforeImmutably } from '@grafana/data/src/utils/arrayUtils';
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -193,69 +193,40 @@ export function hashRoute(route: Route): string {
   return hash.toString(36);
 }
 
-const sortableValuesForKey: Array<keyof Route> = [
-  'group_by',
-  'match',
-  'match_re',
-  'mute_time_intervals',
-  'active_time_intervals',
-  'object_matchers',
-];
-
 /**
- * This function will sort the route's keys and sort key values if applicable
+ * This function will sort the route's values and set the keys in a deterministic order
  */
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 export function stabilizeRoute(route: Route): Route {
-  const result: Route = {} as Route;
-  const sortedKeys = Object.keys(route).sort();
+  let result: Route = {};
 
-  for (const key of sortedKeys) {
-    const value = route[key as keyof Route];
-    const isSortableKey = sortableValuesForKey.includes(key as keyof Route);
-
-    if (isSortableKey) {
-      // @ts-ignore
-      result[key] = sortValue(value);
-    } else {
-      // @ts-ignore
-      result[key] = value;
-    }
-  }
+  result = {
+    receiver: route.receiver,
+    group_by: route.group_by ? [...route.group_by].sort() : undefined,
+    continue: route.continue,
+    object_matchers: route.object_matchers ? [...route.object_matchers].sort() : undefined,
+    matchers: route.matchers ? [...route.matchers].sort() : undefined,
+    match: route.match ? sortRecord(route.match) : undefined,
+    match_re: route.match_re ? sortRecord(route.match_re) : undefined,
+    group_wait: route.group_wait,
+    group_interval: route.group_interval,
+    routes: route.routes, // routes are not sorted as if the order of the routes has changed, the hash should be different
+    mute_time_intervals: route.mute_time_intervals ? [...route.mute_time_intervals].sort() : undefined,
+    active_time_intervals: route.active_time_intervals ? [...route.active_time_intervals].sort() : undefined,
+    provenance: route.provenance,
+  };
 
   return result;
 }
-/* eslint-enable @typescript-eslint/consistent-type-assertions */
 
-export function sortValue<T>(input: T[] | Record<string, unknown>): T[] | Record<string, unknown> {
-  if (isArray(input)) {
-    return [...input].sort();
-  }
+// function to sort the keys of a record
+function sortRecord(record: Record<string, string>): Record<string, string> {
+  const sorted: Record<string, string> = {};
 
-  if (isPlainObject(input)) {
-    return sortObjectKeysRecursively(input);
-  }
+  Object.keys(record)
+    .sort()
+    .forEach((key) => {
+      sorted[key] = record[key];
+    });
 
-  return input;
+  return sorted;
 }
-
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-function sortObjectKeysRecursively<T>(input: T): T {
-  if (isArray(input)) {
-    return input.map(sortObjectKeysRecursively) as T;
-  }
-
-  if (isPlainObject(input)) {
-    const sorted: Record<string, unknown> = {};
-    const keys = Object.keys(input as object).sort();
-
-    for (const key of keys) {
-      sorted[key] = sortObjectKeysRecursively((input as Record<string, unknown>)[key]);
-    }
-
-    return sorted as T;
-  }
-
-  return input;
-}
-/* eslint-enable @typescript-eslint/consistent-type-assertions */
