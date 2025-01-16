@@ -211,7 +211,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               key={`${item.value}${index}`}
               {...getSelectedItemProps({ selectedItem: item, index })}
             >
-              {item.value === ALL_OPTION_VALUE ? allOptionItem.label : itemToString(item)}
+              {itemToString(item)}
             </ValuePill>
           ))}
           {selectedItems.length > visibleItems.length && (
@@ -239,7 +239,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: selectedItems.length > 0 ? undefined : placeholder,
-                width: 'auto',
                 onFocus: () => !disabled && setIsOpen(true),
               })
             )}
