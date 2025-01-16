@@ -167,13 +167,16 @@ func TestFeatureToggleFiles(t *testing.T) {
 func verifyFlagsConfiguration(t *testing.T) {
 	legacyNames := map[string]bool{
 		"live-service-web-worker": true,
+		// TODO: Remove this when removing feature toggles
+		"ABTestFeatureToggleA": true,
+		"ABTestFeatureToggleB": true,
 	}
 	invalidNames := make([]string, 0)
 
 	// Check that all flags set in code are valid
 	for _, flag := range standardFeatureFlags {
-		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
-			t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
+		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated || flag.Stage == FeatureStagePublicPreview) {
+			t.Errorf("only features that are FeatureStagePublicPreview, FeatureStageGeneralAvailability, or FeatureStageDeprecated can be enabled by default.  See: %s", flag.Name)
 		}
 		if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
 			t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)

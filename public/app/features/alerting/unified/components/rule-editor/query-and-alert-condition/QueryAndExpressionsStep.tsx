@@ -607,7 +607,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
                 {isPreviewLoading && (
                   <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
-                    Cancel
+                    <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                   </Button>
                 )}
                 {!isPreviewLoading && (

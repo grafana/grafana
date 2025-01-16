@@ -18,7 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { RuleGroupIdentifier, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -428,7 +428,7 @@ export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElemen
                 onClick={() => onClose(false)}
                 fill="outline"
               >
-                Cancel
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>Cancel
               </Button>
               <Button type="submit" disabled={!isDirty || !isValid || loading}>
                 {loading ? 'Saving...' : 'Save'}

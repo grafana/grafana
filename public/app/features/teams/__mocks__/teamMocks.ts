@@ -24,7 +24,6 @@ export const getMockTeam = (i = 1, uid = 'aaaaaa', overrides = {}): Team => {
     avatarUrl: 'some/url/',
     email: `test-${uid}@test.com`,
     memberCount: i,
-    permission: TeamPermissionLevel.Member,
     accessControl: { isEditor: false },
     orgId: 0,
     ...overrides,
