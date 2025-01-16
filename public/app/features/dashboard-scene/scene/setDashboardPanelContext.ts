@@ -180,14 +180,14 @@ function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: A
 
   // Update is only required when we change operator and keep key and value the same
   //   key1 = value1 -> key1 != value1
-  const updateIndex = filterVar.state.filters.findIndex(
+  const filterToReplaceIndex = filterVar.state.filters.findIndex(
     (filter) =>
       filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
   );
 
-  if (updateIndex >= 0) {
+  if (filterToReplaceIndex >= 0) {
     const updatedFilters = filterVar.state.filters.slice();
-    updatedFilters.splice(updateIndex, 1, newFilter);
+    updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
     filterVar.updateFilters(updatedFilters);
     return;
   }
