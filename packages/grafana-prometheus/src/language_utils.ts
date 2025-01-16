@@ -478,7 +478,10 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
 export function getRangeSnapInterval(
   cacheLevel: PrometheusCacheLevel,
   range: TimeRange
-): { start: string; end: string } {
+): {
+  start: string;
+  end: string;
+} {
   // Don't round the range if we're not caching
   if (cacheLevel === PrometheusCacheLevel.None) {
     return {
