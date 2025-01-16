@@ -68,6 +68,14 @@ func main() {
 			label:        "job",
 			getNextValue: staticList([]string{"job"}),
 		},
+		{
+			label:        "site",
+			getNextValue: staticList([]string{"LA-EPI"}),
+		},
+		{
+			label:        "room",
+			getNextValue: staticList([]string{`"Friends Don't Lie"`}),
+		},
 	}
 
 	dimensions := []string{}
