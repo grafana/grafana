@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,20 +17,22 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-
+	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
@@ -40,7 +41,6 @@ var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 var resourceInfo = v0alpha1.FolderResourceInfo
 
 var errNoUser = errors.New("valid user is required")
-var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -50,7 +50,7 @@ type FolderAPIBuilder struct {
 	folderSvc            folder.Service
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
 	storage              grafanarest.Storage
-	accessControl        accesscontrol.AccessControl
+	authz                authz.AccessClient
 	searcher             resource.ResourceIndexClient
 	cfg                  *setting.Cfg
 }
@@ -60,9 +60,9 @@ func RegisterAPIService(cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
-	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
+	authz authz.AccessClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFolders,
@@ -80,7 +80,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		cfg:                  cfg,
-		accessControl:        accessControl,
+		authz:                authz,
 		searcher:             unified,
 	}
 	apiregistration.RegisterAPI(builder)
@@ -150,7 +150,10 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		getter: storage[resourceInfo.StoragePath()].(rest.Getter), // Get the parents
 	}
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
-	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{
+		getter: storage[resourceInfo.StoragePath()].(rest.Getter),
+		authz:  b.authz,
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
@@ -180,64 +183,26 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
-type authorizerParams struct {
-	user      identity.Requester
-	evaluator accesscontrol.Evaluator
-}
-
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		in, err := authorizerFunc(ctx, attr)
-		if err != nil {
-			if errors.Is(err, errNoUser) {
-				return authorizer.DecisionDeny, "", nil
+	return gfauthorizer.NewResourceAuthorizer(b.authz,
+		func(ctx context.Context, auth claims.AuthInfo, group, resource, namespace, name string) (string, error) {
+			if name != "" && resource == v0alpha1.RESOURCE {
+				ident, ok := auth.(identity.Requester)
+				if !ok {
+					return "", errors.New("expected identity.Requester for legacy access control")
+				}
+				// Get the value... just for the parent :shrug:
+				f, err := b.folderSvc.Get(ctx, &folder.GetFolderQuery{
+					SignedInUser: ident,
+					UID:          &name,
+				})
+				if err != nil {
+					return "", err
+				}
+				return f.ParentUID, nil
 			}
-			return authorizer.DecisionNoOpinion, "", nil
-		}
-
-		ok, err := b.accessControl.Evaluate(ctx, in.user, in.evaluator)
-		if ok {
-			return authorizer.DecisionAllow, "", nil
-		}
-		return authorizer.DecisionDeny, "folder", err
-	})
-}
-
-func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
-	allowedVerbs := []string{utils.VerbCreate, utils.VerbDelete, utils.VerbList}
-	verb := attr.GetVerb()
-	name := attr.GetName()
-	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate && slices.Contains(allowedVerbs, verb)) {
-		return nil, errNoResource
-	}
-
-	// require a user
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, errNoUser
-	}
-
-	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
-	var eval accesscontrol.Evaluator
-
-	// "get" is used for sub-resources with GET http (parents, access, count)
-	switch verb {
-	case utils.VerbCreate:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
-	case utils.VerbPatch:
-		fallthrough
-	case utils.VerbUpdate:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
-	case utils.VerbDeleteCollection:
-		fallthrough
-	case utils.VerbDelete:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
-	case utils.VerbList:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead)
-	default:
-		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
-	}
-	return &authorizerParams{evaluator: eval, user: user}, nil
+			return "", nil
+		})
 }
 
 var folderValidationRules = struct {
