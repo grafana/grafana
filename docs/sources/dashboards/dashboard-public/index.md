@@ -190,6 +190,7 @@ guaranteed because plugin developers can override this functionality. The follow
   <tr>
     <td>
       <ul>
+        <li>Dynatrace</li>
         <li>Graphite</li>
         <li>Google Sheets</li>
       </ul>
@@ -221,7 +222,7 @@ guaranteed because plugin developers can override this functionality. The follow
     </td>
     <td>
       <ul>
-        <li>Dynatrace</li>
+        <li>DynamoDB</li>
         <li>GitHub</li>
         <li>Google BigQuery</li>
         <li>Grafana for YNAB</li>
