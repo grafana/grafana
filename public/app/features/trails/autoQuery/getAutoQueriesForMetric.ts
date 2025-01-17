@@ -1,4 +1,4 @@
-import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
+import { isValidLegacyName } from '@grafana/prometheus';
 
 import { createDefaultMetricQueryDefs } from './queryGenerators/default';
 import { createHistogramMetricQueryDefs } from './queryGenerators/histogram';
