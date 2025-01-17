@@ -1,7 +1,7 @@
 ---
 title: Axis options
 comments: |
-  Most visualizations with axis options use this file. Some, like state timeline and status history, should use axis-options-size as they only have the size option.
+  This file is used in the following visualizations: time series.
 ---
 
 Options under the **Axis** section control how the x- and y-axes are rendered. Some options don't take effect until you click outside of the field option box you're editing. You can also press `Enter`.
