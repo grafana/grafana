@@ -6,13 +6,12 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 const HostRedirectValidationMiddlewareName = "host-redirect-validation"
 
-func RedirectLimitMiddleware(reqValidator validations.DataSourceRequestValidator) sdkhttpclient.Middleware {
+func RedirectLimitMiddleware(reqValidator validations.DataSourceRequestURLValidator) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc(HostRedirectValidationMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			res, err := next.RoundTrip(req)
@@ -28,7 +27,7 @@ func RedirectLimitMiddleware(reqValidator validations.DataSourceRequestValidator
 					return nil, locationErr
 				}
 
-				if validationErr := reqValidator.Validate(&datasources.DataSource{URL: location.String()}, nil); validationErr != nil {
+				if validationErr := reqValidator.Validate(location.String()); validationErr != nil {
 					return nil, validationErr
 				}
 			}
