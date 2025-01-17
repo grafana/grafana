@@ -1,5 +1,6 @@
+import { TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, DataQuery, DataSourceRef, Panel, VariableModel } from '@grafana/schema';
+import { AnnotationQuery, DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -11,6 +12,12 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TransformationKind,
+  AdhocVariableKind,
+  CustomVariableKind,
+  ConstantVariableKind,
+  IntervalVariableKind,
+  TextVariableKind,
+  GroupByVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
@@ -55,6 +62,8 @@ export function ensureV2Response(
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
   const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
+  // that would allow accessing unique properties for each variable type that the API returns
   const variables = getVariables(dashboard.templating?.list || []);
   const annotations = getAnnotations(dashboard.annotations?.list || []);
 
@@ -368,9 +377,17 @@ function getPanelTransformations(transformations: DataTransformerConfig[]): Tran
   });
 }
 
-function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
+function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] {
   const variables: DashboardV2Spec['variables'] = [];
   for (const v of vars) {
+    const commonProperties = {
+      name: v.name,
+      label: v.label,
+      ...(v.description && { description: v.description }),
+      skipUrlSync: Boolean(v.skipUrlSync),
+      hide: transformVariableHideToEnum(v.hide),
+    };
+
     switch (v.type) {
       case 'query':
         let query = v.query || {};
@@ -383,17 +400,17 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         const qv: QueryVariableKind = {
           kind: 'QueryVariable',
           spec: {
-            name: v.name,
-            label: v.label,
-            hide: transformVariableHideToEnum(v.hide),
-            skipUrlSync: Boolean(v.skipUrlSync),
+            ...commonProperties,
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
-            allValue: v.allValue,
-            current: v.current || { text: '', value: '' },
+            ...(v.allValue && { allValue: v.allValue }),
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
             options: v.options || [],
             refresh: transformVariableRefreshToEnum(v.refresh),
-            datasource: v.datasource ?? undefined,
+            ...(v.datasource && { datasource: v.datasource }),
             regex: v.regex || '',
             sort: transformSortVariableToEnum(v.sort),
             query: {
@@ -416,22 +433,118 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         const dv: DatasourceVariableKind = {
           kind: 'DatasourceVariable',
           spec: {
-            name: v.name,
-            label: v.label,
-            hide: transformVariableHideToEnum(v.hide),
-            skipUrlSync: Boolean(v.skipUrlSync),
+            ...commonProperties,
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
-            allValue: v.allValue,
-            current: v.current || { text: '', value: '' },
+            ...(v.allValue && { allValue: v.allValue }),
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
             options: v.options || [],
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
             regex: v.regex || '',
-            description: v.description || '',
           },
         };
         variables.push(dv);
+        break;
+      case 'custom':
+        const cv: CustomVariableKind = {
+          kind: 'CustomVariable',
+          spec: {
+            ...commonProperties,
+            query: v.query,
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
+            options: v.options,
+            multi: v.multi,
+            includeAll: v.includeAll,
+            ...(v.allValue && { allValue: v.allValue }),
+          },
+        };
+        variables.push(cv);
+        break;
+      case 'adhoc':
+        const av: AdhocVariableKind = {
+          kind: 'AdhocVariable',
+          spec: {
+            ...commonProperties,
+            datasource: v.datasource || getDefaultDatasource(),
+            baseFilters: v.baseFilters || [],
+            filters: v.filters || [],
+            defaultKeys: v.defaultKeys || [],
+          },
+        };
+        variables.push(av);
+        break;
+      case 'constant':
+        const cnts: ConstantVariableKind = {
+          kind: 'ConstantVariable',
+          spec: {
+            ...commonProperties,
+            current: {
+              value: v.current.value,
+              // Constant variable doesn't use text state
+              text: v.current.value,
+            },
+            query: v.query,
+          },
+        };
+        variables.push(cnts);
+        break;
+      case 'interval':
+        const intrv: IntervalVariableKind = {
+          kind: 'IntervalVariable',
+          spec: {
+            ...commonProperties,
+            current: {
+              value: v.current.value,
+              // Interval variable doesn't use text state
+              text: v.current.value,
+            },
+            query: v.query,
+            refresh: 'onTimeRangeChanged',
+            options: v.options,
+            auto: v.auto,
+            auto_min: v.auto_min,
+            auto_count: v.auto_count,
+          },
+        };
+        variables.push(intrv);
+        break;
+      case 'textbox':
+        const tx: TextVariableKind = {
+          kind: 'TextVariable',
+          spec: {
+            ...commonProperties,
+            current: {
+              value: v.current.value,
+              // Text variable doesn't use text state
+              text: v.current.value,
+            },
+            query: v.query,
+          },
+        };
+        variables.push(tx);
+        break;
+      case 'groupby':
+        const gb: GroupByVariableKind = {
+          kind: 'GroupByVariable',
+          spec: {
+            ...commonProperties,
+            datasource: v.datasource || getDefaultDatasource(),
+            options: v.options,
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
+            multi: v.multi,
+          },
+        };
+        variables.push(gb);
         break;
       default:
         // do not throw error, just log it
@@ -447,7 +560,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
       kind: 'AnnotationQuery',
       spec: {
         name: a.name,
-        datasource: a.datasource ?? undefined,
+        ...(a.datasource && { datasource: a.datasource }),
         enable: a.enable,
         hide: Boolean(a.hide),
         iconColor: a.iconColor,
