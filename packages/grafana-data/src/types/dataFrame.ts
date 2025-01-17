@@ -3,7 +3,7 @@ import { HideSeriesConfig } from '@grafana/schema';
 import { ScopedVars } from './ScopedVars';
 import { Action } from './action';
 import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DataLink, LinkModel, OneClickMode } from './dataLink';
+import { DataLink, LinkModel } from './dataLink';
 import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
@@ -100,8 +100,6 @@ export interface FieldConfig<TOptions = any> {
   links?: DataLink[];
 
   actions?: Action[];
-
-  oneClickMode?: OneClickMode;
 
   // Alternative to empty string
   noValue?: string;

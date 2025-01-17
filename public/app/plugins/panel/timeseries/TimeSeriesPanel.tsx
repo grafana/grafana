@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { PanelProps, DataFrameType, DashboardCursorSync, OneClickMode } from '@grafana/data';
+import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
@@ -108,9 +108,6 @@ export const TimeSeriesPanel = ({
                 syncScope={eventsScope}
                 getDataLinks={(seriesIdx: number, dataIdx: number) =>
                   alignedFrame.fields[seriesIdx]!.getLinks?.({ valueRowIndex: dataIdx }) ?? []
-                }
-                getOneClickMode={(seriesIdx: number) =>
-                  alignedFrame.fields[seriesIdx].config.oneClickMode ?? OneClickMode.Off
                 }
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {

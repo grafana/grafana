@@ -4,7 +4,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
-import { GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
@@ -28,7 +28,6 @@ export const enum TooltipHoverMode {
 }
 
 type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
-type GetOneClickModeCallback = (seriesIdx: number) => OneClickMode;
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
@@ -44,7 +43,6 @@ interface TooltipPlugin2Props {
 
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
-  getOneClickMode?: GetOneClickModeCallback;
 
   render: (
     u: uPlot,
@@ -124,7 +122,6 @@ export const TooltipPlugin2 = ({
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
-  getOneClickMode = () => OneClickMode.Off,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -143,9 +140,6 @@ export const TooltipPlugin2 = ({
 
   const getLinksRef = useRef(getDataLinks);
   getLinksRef.current = getDataLinks;
-
-  const getOneClickRef = useRef(getOneClickMode);
-  getOneClickRef.current = getOneClickMode;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -349,14 +343,13 @@ export const TooltipPlugin2 = ({
           }
           // when within proximity to a series/point
           else if (closestSeriesIdx != null) {
-            const oneClickMode = getOneClickRef.current(closestSeriesIdx);
             dataLinks = getLinksRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
+            const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
-            if (oneClickMode === OneClickMode.Link) {
-              window.open(dataLinks[0].href, dataLinks[0].target ?? '_self');
-            } else if (oneClickMode === OneClickMode.Action) {
-              // TODO
+            if (oneClickLink) {
+              window.open(oneClickLink.href, oneClickLink.target ?? '_self');
             }
+
             // only pinnable tooltip is visible
             else if (_isHovering && !_isPinned) {
               setTimeout(() => {
@@ -537,12 +530,11 @@ export const TooltipPlugin2 = ({
       if (persistentLinks.length === 0) {
         persistentLinks = seriesIdxs.map((v, seriesIdx) => {
           if (seriesIdx > 0) {
-            const oneClickMode = getOneClickMode(seriesIdx);
+            const links = getDataLinks(seriesIdx, seriesIdxs[seriesIdx]!);
+            const oneClickLink = links.find((dataLink) => dataLink.oneClick === true);
 
-            if (oneClickMode === OneClickMode.Link) {
-              return getDataLinks(seriesIdx, 0).slice(0, 1);
-            } else if (oneClickMode === OneClickMode.Action) {
-              // TODO
+            if (oneClickLink) {
+              return [oneClickLink];
             }
           }
 
@@ -633,6 +625,13 @@ export const TooltipPlugin2 = ({
         // transition: transform 100ms;
 
         transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
+
+        // TODO: double check persistentLinks
+        if (closestSeriesIdx != null && persistentLinks[closestSeriesIdx]?.length > 0) {
+          u.over.style.cursor = 'pointer';
+        } else {
+          u.over.style.cursor = 'default';
+        }
 
         if (domRef.current != null) {
           domRef.current.style.transform = transform;

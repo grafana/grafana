@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { ActionModel, Field, GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
+import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
 import { Button, DataLinkButton, Icon, Stack } from '..';
 import { useStyles2 } from '../../themes';
@@ -11,21 +11,20 @@ interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   actions?: Array<ActionModel<Field>>;
   annotate?: () => void;
-  oneClickMode?: OneClickMode;
 }
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>, oneClickEnabled = false) => {
-  if (oneClickEnabled) {
-    const primaryLink = dataLinks[0];
+const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>) => {
+  const oneClickLink = dataLinks.find((link) => link.oneClick === true);
 
+  if (oneClickLink) {
     return (
       <Stack direction="column" justifyContent="flex-start" gap={0.5}>
         <span className={styles.oneClickWrapper}>
           <Icon name="info-circle" size="lg" className={styles.infoIcon} />
           <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-navigate">
-            Click to open {{ linkTitle: primaryLink.title }}
+            Click to open {{ linkTitle: oneClickLink.title }}
           </Trans>
         </span>
       </Stack>
@@ -51,24 +50,17 @@ const renderActions = (actions: ActionModel[]) => {
   );
 };
 
-export const VizTooltipFooter = ({
-  dataLinks,
-  actions,
-  annotate,
-  oneClickMode = OneClickMode.Off,
-}: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({ dataLinks, actions, annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
-  const oneClickEnabled = oneClickMode !== OneClickMode.Off;
+  const oneClickLink = dataLinks.find((link) => link.oneClick === true);
 
   return (
     <div className={styles.wrapper}>
-      {dataLinks.length > 0 && (
-        <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles, oneClickMode === OneClickMode.Link)}</div>
-      )}
-      {actions && actions.length > 0 && !oneClickEnabled && (
+      {dataLinks?.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
+      {actions && actions.length > 0 && !oneClickLink && (
         <div className={styles.dataLinks}>{renderActions(actions)}</div>
       )}
-      {annotate != null && !oneClickEnabled && (
+      {annotate != null && !oneClickLink && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
