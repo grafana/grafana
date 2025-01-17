@@ -23,6 +23,9 @@ const LabelKeyGetHistory = "grafana.app/get-history"
 // LabelKeyGetTrash is used to list objects that have been (soft) deleted
 const LabelKeyGetTrash = "grafana.app/get-trash"
 
+// AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
+const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
+
 // DeletedGeneration is set on Resources that have been (soft) deleted
 const DeletedGeneration = int64(-999)
 

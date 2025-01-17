@@ -96,7 +96,7 @@ func (b *backend) runStartupDataMigrations(ctx context.Context) error {
 				metaPrev.SetFinalizers(nil)
 				metaPrev.SetManagedFields(nil)
 				metaPrev.SetGeneration(utils.DeletedGeneration)
-				metaPrev.SetAnnotation("kubectl.kubernetes.io/last-applied-configuration", "") // clears it
+				metaPrev.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
 				ts, _ := metaMarker.GetUpdatedTimestamp()
 				if ts != nil {
 					metaPrev.SetUpdatedTimestamp(ts)

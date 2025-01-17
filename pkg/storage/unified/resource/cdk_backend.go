@@ -21,6 +21,8 @@ import (
 	_ "gocloud.dev/blob/memblob"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type CDKBackendOptions struct {
@@ -192,7 +194,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 			err = nil
 		}
 	}
-	if err == nil && isDeletedMarker(raw) {
+	if err == nil && isDeletedValue(raw) {
 		raw = nil
 	}
 	if raw == nil {
@@ -206,11 +208,11 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 	}
 }
 
-func isDeletedMarker(raw []byte) bool {
-	if bytes.Contains(raw, []byte(`"DeletedMarker"`)) {
+func isDeletedValue(raw []byte) bool {
+	if bytes.Contains(raw, []byte(`"generation":-999`)) {
 		tmp := &unstructured.Unstructured{}
 		err := tmp.UnmarshalJSON(raw)
-		if err == nil && tmp.GetKind() == "DeletedMarker" {
+		if err == nil && tmp.GetGeneration() == utils.DeletedGeneration {
 			return true
 		}
 	}
@@ -286,7 +288,7 @@ func (c *cdkListIterator) Next() bool {
 			c.err = err
 			return false
 		}
-		if !isDeletedMarker(raw) {
+		if !isDeletedValue(raw) {
 			c.currentRV = latest.rv
 			c.currentKey = latest.key
 			c.currentVal = raw
