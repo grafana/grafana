@@ -39,7 +39,7 @@ import {
 } from './shared';
 import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
-const { exploreMetricsRelatedLogs, exploreMetricsRemoveOverviewTab } = config.featureToggles;
+const { exploreMetricsRelatedLogs, exploreMetricsEnableLegacyOverviewTab } = config.featureToggles;
 
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
@@ -68,7 +68,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   private _onActivate() {
     if (this.state.actionView === undefined) {
-      this.setActionView(exploreMetricsRemoveOverviewTab ? 'breakdown' : 'overview');
+      this.setActionView(exploreMetricsEnableLegacyOverviewTab ? 'overview' : 'breakdown');
     }
 
     if (config.featureToggles.enableScopesInMetricsExplore) {
@@ -132,7 +132,7 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
   },
 ];
 
-if (!exploreMetricsRemoveOverviewTab) {
+if (exploreMetricsEnableLegacyOverviewTab) {
   actionViewsDefinitions.unshift({
     displayName: 'Overview',
     value: 'overview',

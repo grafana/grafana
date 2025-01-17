@@ -855,9 +855,9 @@ const (
 	// Display Related Logs in Explore Metrics
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 
-	// FlagExploreMetricsRemoveOverviewTab
-	// Remove overview tab from selected metric view.
-	FlagExploreMetricsRemoveOverviewTab = "exploreMetricsRemoveOverviewTab"
+	// FlagExploreMetricsEnableLegacyOverviewTab
+	// Enables the Overview tab in the selected metric view.
+	FlagExploreMetricsEnableLegacyOverviewTab = "exploreMetricsEnableLegacyOverviewTab"
 
 	// FlagPrometheusSpecialCharsInLabelValues
 	// Adds support for quotes and special characters in label values for Prometheus queries
