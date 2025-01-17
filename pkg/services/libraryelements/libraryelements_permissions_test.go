@@ -116,13 +116,11 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
-				result.Result.FolderUID = "general"
 				result.Result.Meta.CreatedBy.Name = userInDbName
 				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
 				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
-				result.Result.Meta.FolderUID = "general"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
 				resp = sc.service.getAllHandler(sc.reqContext)
