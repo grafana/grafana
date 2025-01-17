@@ -266,6 +266,24 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 	return u, nil
 }
 
+func (d *dashboardStore) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+	r := result{}
+	if err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.GetDialect().BooleanStr(false))
+		if _, err := sess.SQL(rawSQL, orgID).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	return r.Count, nil
+}
+
 func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	dashWithIdExists := false
 	isParentFolderChanged := false
