@@ -12,7 +12,7 @@ SELECT
   mkv."previous_resource_version",
   mkv."folder"
 FROM "resource_history" AS mkv
-WHERE 1 = 1
+WHERE "action" != 2
   AND "namespace" = 'default'
   AND "group"     = 'dashboard.grafana.app'
   AND "resource"  = 'dashboards'

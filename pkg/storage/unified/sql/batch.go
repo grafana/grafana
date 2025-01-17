@@ -92,7 +92,7 @@ func (b *backend) ProcessBatch(ctx context.Context, next func() *resource.BatchR
 		if err != nil {
 			return err
 		}
-		fmt.Printf("SELECT: %s (%d/%d)\n", lastKey.SearchID(), migrate_count)
+		fmt.Printf("SELECT: %s (%d)\n", lastKey.SearchID(), migrate_count)
 		return nil
 	})
 }
