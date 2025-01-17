@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -200,7 +200,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
-	hits, err := dashsvc.ParseResults(res, 0)
+	hits, err := dashboardsearch.ParseResults(res, 0)
 	if err != nil {
 		return nil, err
 	}
