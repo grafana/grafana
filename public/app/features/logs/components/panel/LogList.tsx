@@ -1,22 +1,31 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ListChildComponentProps, ListOnScrollProps, VariableSizeList } from 'react-window';
+import { ListChildComponentProps, VariableSizeList } from 'react-window';
 
-import { CoreApp, LogRowModel } from '@grafana/data';
+import { CoreApp, EventBus, LogRowModel, LogsSortOrder } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { LogLine } from './LogLine';
 import { preProcessLogs, ProcessedLogModel } from './processing';
-import { getLogLineSize, init as initVirtualization, storeLogLineSize } from './virtualization';
+import { getLogLineSize, init as initVirtualization, ScrollToLogsEvent, storeLogLineSize } from './virtualization';
 
 interface Props {
   app?: CoreApp;
   logs: LogRowModel[];
   containerElement: HTMLDivElement | null;
+  eventBus: EventBus;
   forceEscape?: boolean;
+  sortOrder: LogsSortOrder;
   wrapLogMessage: boolean;
 }
 
-export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMessage }: Props) => {
+export const LogList = ({
+  containerElement,
+  logs,
+  eventBus,
+  forceEscape = false,
+  sortOrder,
+  wrapLogMessage,
+}: Props) => {
   const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
@@ -26,10 +35,21 @@ export const LogList = ({ containerElement, logs, forceEscape = false, wrapLogMe
   }, [theme]);
 
   useEffect(() => {
-    setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape }));
+    const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) => {
+      if (e.payload.scrollTo === 'top') {
+        listRef.current?.scrollTo(0);
+      } else {
+        listRef.current?.scrollToItem(processedLogs.length - 1);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [eventBus, processedLogs.length]);
+
+  useEffect(() => {
+    setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape, order: sortOrder }));
     listRef.current?.resetAfterIndex(0);
     listRef.current?.scrollTo(0);
-  }, [forceEscape, logs, wrapLogMessage]);
+  }, [forceEscape, logs, sortOrder, wrapLogMessage]);
 
   useLayoutEffect(() => {
     const handleResize = () => listRef.current?.resetAfterIndex(0);

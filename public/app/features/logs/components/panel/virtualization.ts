@@ -1,4 +1,4 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { ProcessedLogModel } from './processing';
 
@@ -109,4 +109,12 @@ export function storeLogLineSize(id: string, container: HTMLDivElement, height: 
 export function retrieveLogLineSize(id: string, container: HTMLDivElement) {
   const key = `${id}_${getLogContainerWidth(container)}`;
   return logLineSizesMap.get(key);
+}
+
+export interface ScrollToLogsEventPayload {
+  scrollTo: 'top' | 'bottom';
+}
+
+export class ScrollToLogsEvent extends BusEventWithPayload<ScrollToLogsEventPayload> {
+  static type = 'logs-panel-scroll-to';
 }

@@ -10,8 +10,8 @@ interface Props {
   index: number;
   log: ProcessedLogModel;
   style: CSSProperties;
-  wrapLogMessage: boolean;
   onOverflow?: (index: number, id: string, height: number) => void;
+  wrapLogMessage: boolean;
 }
 
 export const LogLine = ({ index, log, style, onOverflow, wrapLogMessage }: Props) => {

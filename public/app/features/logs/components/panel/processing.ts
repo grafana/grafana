@@ -1,23 +1,30 @@
-import { LogRowModel } from '@grafana/data';
+import { LogRowModel, LogsSortOrder } from '@grafana/data';
 
-import { escapeUnescapedString } from '../../utils';
+import { escapeUnescapedString, sortLogRows } from '../../utils';
 
 export interface ProcessedLogModel extends LogRowModel {
   body: string;
 }
 
 interface PreProcessOptions {
-  wrap: boolean;
   escape: boolean;
+  order: LogsSortOrder;
+  wrap: boolean;
 }
 
-export const preProcessLogs = (logs: LogRowModel[], { wrap, escape }: PreProcessOptions): ProcessedLogModel[] => {
-  return logs.map((log) => restructureLog(log, { wrap, escape, prettify: false, expanded: false }));
+export const preProcessLogs = (
+  logs: LogRowModel[],
+  { escape, order, wrap }: PreProcessOptions
+): ProcessedLogModel[] => {
+  const orderedLogs = sortLogRows(logs, order);
+  return orderedLogs.map((log) => restructureLog(log, { wrap, escape, prettify: false, expanded: false }));
 };
 
-interface RestructureLogOptions extends PreProcessOptions {
+interface RestructureLogOptions {
+  escape: boolean;
   expanded: boolean;
   prettify: boolean;
+  wrap: boolean;
 }
 const restructureLog = (
   log: LogRowModel,

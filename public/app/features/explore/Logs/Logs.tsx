@@ -82,6 +82,7 @@ import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { ScrollToLogsEvent } from 'app/features/logs/components/panel/virtualization';
 
 interface Props extends Themeable2 {
   width: number;
@@ -709,8 +710,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
   );
 
+  const logsPanelV2 = true;
+
   const scrollToTopLogs = useCallback(() => {
-    if (config.featureToggles.logsInfiniteScrolling) {
+    if (logsPanelV2) {
+      eventBus.publish(
+        new ScrollToLogsEvent({
+          scrollTo: 'top',
+        })
+      );
+    } else if (config.featureToggles.logsInfiniteScrolling) {
       if (logsContainerRef.current) {
         logsContainerRef.current.scroll({
           behavior: 'auto',
@@ -719,7 +728,25 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
     }
     topLogsRef.current?.scrollIntoView();
-  }, [logsContainerRef, topLogsRef]);
+  }, [eventBus, logsPanelV2]);
+
+  const scrollToBottomLogs = useCallback(() => {
+    if (logsPanelV2) {
+      eventBus.publish(
+        new ScrollToLogsEvent({
+          scrollTo: 'bottom',
+        })
+      );
+    } else if (config.featureToggles.logsInfiniteScrolling) {
+      if (logsContainerRef.current) {
+        logsContainerRef.current.scroll({
+          behavior: 'auto',
+          top: logsContainerRef.current.scrollHeight,
+        });
+      }
+    }
+    topLogsRef.current?.scrollTo(0, topLogsRef.current.scrollHeight);
+  }, [eventBus, logsPanelV2]);
 
   const onPinToContentOutlineClick = useCallback(
     (row: LogRowModel, allowUnPin = true) => {
@@ -778,8 +805,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
     [logsQueries]
   );
-
-  const logsPanelV2 = true;
 
   return (
     <>
@@ -1041,15 +1066,32 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             </>
           )}
           {visualisationType === 'logs' && logsPanelV2 && (
-            <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
-              <LogList
-                app={CoreApp.Explore}
-                containerElement={logsContainerRef.current}
-                forceEscape={forceEscape}
-                logs={dedupedRows}
-                wrapLogMessage={wrapLogMessage}
+            <>
+              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
+                <LogList
+                  app={CoreApp.Explore}
+                  containerElement={logsContainerRef.current}
+                  eventBus={eventBus}
+                  forceEscape={forceEscape}
+                  logs={dedupedRows}
+                  sortOrder={logsSortOrder}
+                  wrapLogMessage={wrapLogMessage}
+                />
+              </div>
+              <LogsNavigation
+                logsSortOrder={logsSortOrder}
+                visibleRange={navigationRange ?? absoluteRange}
+                absoluteRange={absoluteRange}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                loading={loading}
+                queries={logsQueries ?? []}
+                scrollToTopLogs={scrollToTopLogs}
+                scrollToBottomLogs={scrollToBottomLogs}
+                addResultsToCache={addResultsToCache}
+                clearCache={clearCache}
               />
-            </div>
+            </>
           )}
           {!loading && !hasData && !scanning && (
             <div className={styles.noDataWrapper}>
