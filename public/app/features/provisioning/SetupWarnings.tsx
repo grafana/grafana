@@ -1,6 +1,6 @@
 import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, Text } from '@grafana/ui';
 
 const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'kubernetesFolders',
@@ -17,11 +17,13 @@ export function SetupWarnings() {
 
   return (
     <>
-      {missingFeatures.map((feature) => (
-        <Alert key={feature} title="Provisioning Setup Error" severity="error">
-          Missing required feature toggle: <strong>{feature}</strong>
-        </Alert>
-      ))}
+      <Alert title="Provisioning Setup Error" severity="error">
+        {missingFeatures.map((feature) => (
+          <Text key={feature} element={'p'}>
+            Missing required feature toggle: <strong>{feature}</strong>
+          </Text>
+        ))}
+      </Alert>
     </>
   );
 }
