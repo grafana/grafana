@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,6 +47,7 @@ func createExpectedJWT(t *testing.T) string {
 			Expiry:    jwt.NewNumericDate(testTime().Add(5 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(testTime()),
 			Issuer:    "grafana",
+			Subject:   claims.NewTypeID(claims.TypeAccessPolicy, "1"),
 			NotBefore: jwt.NewNumericDate(testTime()),
 		},
 		Rest: authn.AccessTokenClaims{
@@ -57,7 +59,7 @@ func createExpectedJWT(t *testing.T) string {
 	payload, err := json.Marshal(expectedClaims)
 	require.NoError(t, err)
 
-	return base64.RawURLEncoding.EncodeToString([]byte(header)) + "." + base64.RawURLEncoding.EncodeToString(payload)
+	return base64.RawURLEncoding.EncodeToString([]byte(header)) + "." + base64.RawURLEncoding.EncodeToString(payload) + "."
 }
 
 func testTime() time.Time {
