@@ -229,7 +229,6 @@ export interface FeatureToggles {
   playlistsReconciler?: boolean;
   passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
-  exploreMetricsEnableLegacyOverviewTab?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;

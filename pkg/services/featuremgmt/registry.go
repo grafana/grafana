@@ -1582,14 +1582,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "exploreMetricsEnableLegacyOverviewTab",
-			Description:  "Enables the Overview tab in the selected metric view.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-			FrontendOnly: true,
-			HideFromDocs: true,
-		},
-		{
 			Name:         "prometheusSpecialCharsInLabelValues",
 			Description:  "Adds support for quotes and special characters in label values for Prometheus queries",
 			FrontendOnly: true,

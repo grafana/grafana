@@ -1478,20 +1478,6 @@
     },
     {
       "metadata": {
-        "name": "exploreMetricsEnableLegacyOverviewTab",
-        "resourceVersion": "1736892559600",
-        "creationTimestamp": "2025-01-14T22:09:19Z"
-      },
-      "spec": {
-        "description": "Enables the Overview tab in the selected metric view.",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "exploreMetricsRelatedLogs",
         "resourceVersion": "1730125602673",
         "creationTimestamp": "2024-10-28T14:26:42Z"
@@ -1502,25 +1488,6 @@
         "codeowner": "@grafana/observability-metrics",
         "frontend": true,
         "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "exploreMetricsRemoveOverviewTab",
-        "resourceVersion": "1736892148934",
-        "creationTimestamp": "2024-11-27T13:49:00Z",
-        "deletionTimestamp": "2025-01-14T22:09:19Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-14 22:02:28.934237 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Remove overview tab from selected metric view.",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
-        "hideFromDocs": true,
-        "expression": "true"
       }
     },
     {

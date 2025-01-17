@@ -16,7 +16,6 @@ import { Box, Icon, LinkButton, Stack, Tab, TabsBar, ToolbarButton, Tooltip, use
 
 import { getExploreUrl } from '../../core/utils/explore';
 
-import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { buildLabelBreakdownActionScene } from './Breakdown/LabelBreakdownScene';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
@@ -39,7 +38,7 @@ import {
 } from './shared';
 import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
-const { exploreMetricsRelatedLogs, exploreMetricsEnableLegacyOverviewTab } = config.featureToggles;
+const { exploreMetricsRelatedLogs } = config.featureToggles;
 
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
@@ -69,7 +68,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   private _onActivate() {
     if (this.state.actionView === undefined) {
-      this.setActionView(exploreMetricsEnableLegacyOverviewTab ? 'overview' : 'breakdown');
+      this.setActionView('breakdown');
     }
 
     if (config.featureToggles.enableScopesInMetricsExplore) {
@@ -132,14 +131,6 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
     description: 'Relevant metrics based on current label filters',
   },
 ];
-
-if (exploreMetricsEnableLegacyOverviewTab) {
-  actionViewsDefinitions.unshift({
-    displayName: 'Overview',
-    value: 'overview',
-    getScene: buildMetricOverviewScene,
-  });
-}
 
 if (exploreMetricsRelatedLogs) {
   actionViewsDefinitions.push({
