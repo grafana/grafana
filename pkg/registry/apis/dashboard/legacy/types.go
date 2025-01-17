@@ -4,15 +4,17 @@ import (
 	"context"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type BatchWriteOptions struct {
-	Namespace   string
-	Store       resource.ResourceStoreClient
-	ClearFirst  bool
-	SendHistory bool
-	Progress    func(count int, msg string)
+	Namespace    string
+	Store        resource.ResourceClient
+	LargeObjects apistore.LargeObjectSupport
+	ClearFirst   bool
+	SendHistory  bool
+	Progress     func(count int, msg string)
 }
 
 // This does not check if you have permissions!

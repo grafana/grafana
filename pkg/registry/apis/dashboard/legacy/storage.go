@@ -349,6 +349,8 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 		}
 	}
 
+	large := opts.LargeObjects
+
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
@@ -358,6 +360,7 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 		if err != nil {
 			return nil, err
 		}
+
 		req := &resource.BatchRequest{
 			Key: &resource.ResourceKey{
 				Namespace: opts.Namespace,
@@ -373,6 +376,25 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 			req.Action = resource.BatchRequest_MODIFIED
 		} else if dash.Generation < 0 {
 			req.Action = resource.BatchRequest_DELETED
+		}
+
+		// With large object support
+		if large != nil && len(body) > large.Threshold() {
+			obj, err := utils.MetaAccessor(dash)
+			if err != nil {
+				return nil, err
+			}
+
+			err = large.Deconstruct(ctx, req.Key, opts.Store, obj, req.Value)
+			if err != nil {
+				return nil, err
+			}
+
+			// The smaller version (most of spec removed)
+			req.Value, err = json.Marshal(dash)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// TODO? large object support!

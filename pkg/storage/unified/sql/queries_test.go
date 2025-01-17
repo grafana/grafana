@@ -363,6 +363,16 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceHistoryDeleteRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						GUID:        `xxxx`,
+						Namespace:   "ns",
+					},
+				},
+				{
+					Name: "wipe",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "ggg",
+						Resource:    "rrr",
 					},
 				},
 			},
