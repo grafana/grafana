@@ -23,6 +23,8 @@ export interface ObjectMeta {
   namespace?: string;
   // Resource version will increase (not sequentially!) with any change to the saved value
   resourceVersion: string;
+  // Incremented by the server when the value of spec changes
+  generation?: number;
   // The first time this was saved
   creationTimestamp: string;
   // General resource annotations -- including the common grafana.app values
