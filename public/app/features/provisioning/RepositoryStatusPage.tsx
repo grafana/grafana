@@ -354,11 +354,11 @@ export function RepositoryHealth({ repo }: { repo: Repository }) {
       <Space />
       <Text element={'h2'}>Health Status</Text>
       {status?.health?.healthy ? (
-        <Alert title="Repository is healthy" severity="success" style={{ width: ' 100%' }}>
+        <Alert title="Repository is healthy" severity="success" style={{ width: '100%' }}>
           No errors found
         </Alert>
       ) : (
-        <Alert title="Repository is unhealthy" severity="warning" style={{ width: ' 100%' }}>
+        <Alert title="Repository is unhealthy" severity="warning" style={{ width: '100%' }}>
           {status?.health?.message && status.health.message.length > 0 && (
             <>
               <Text>Details:</Text>

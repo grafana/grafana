@@ -16,14 +16,12 @@ export function SetupWarnings() {
   }
 
   return (
-    <>
-      <Alert title="Provisioning Setup Error" severity="error">
-        {missingFeatures.map((feature) => (
-          <Text key={feature} element={'p'}>
-            Missing required feature toggle: <strong>{feature}</strong>
-          </Text>
-        ))}
-      </Alert>
-    </>
+    <Alert title="Provisioning Setup Error" severity="error">
+      {missingFeatures.map((feature) => (
+        <Text key={feature} element={'p'}>
+          Missing required feature toggle: <strong>{feature}</strong>
+        </Text>
+      ))}
+    </Alert>
   );
 }
