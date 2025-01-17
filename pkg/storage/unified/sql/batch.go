@@ -29,11 +29,25 @@ func (b *backend) ProcessBatch(ctx context.Context, next func() *resource.BatchR
 				if err != nil {
 					return err
 				}
-				count, err := res.RowsAffected()
+				history_count, err := res.RowsAffected()
 				if err != nil {
 					return err
 				}
-				fmt.Printf("DELETE: %s (%d)\n", req.Key.SearchID(), count)
+
+				res, err = dbutil.Exec(ctx, tx, sqlResourceDelete, &sqlResourceRequest{
+					SQLTemplate: sqltemplate.New(b.dialect),
+					WriteEvent: resource.WriteEvent{
+						Key: req.Key,
+					},
+				})
+				if err != nil {
+					return err
+				}
+				main_count, err := res.RowsAffected()
+				if err != nil {
+					return err
+				}
+				fmt.Printf("DELETE: %s (%d/%d)\n", req.Key.SearchID(), history_count, main_count)
 				continue
 			}
 
