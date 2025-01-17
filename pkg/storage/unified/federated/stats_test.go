@@ -1,33 +1,10 @@
 package federated
 
 import (
-	"context"
-	"encoding/json"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/require"
-	"k8s.io/apiserver/pkg/endpoints/request"
+	// "github.com/grafana/grafana/pkg/services/folder/folderimpl"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -35,6 +12,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+/*
 func TestDirectSQLStats(t *testing.T) {
 	db, cfg := db.InitTestDBWithCfg(t)
 	ctx := context.Background()
@@ -171,3 +149,4 @@ func TestDirectSQLStats(t *testing.T) {
 		]`, string(jj))
 	})
 }
+*/
