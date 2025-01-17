@@ -107,7 +107,7 @@ type RepositoryContent interface {
 	// Returns true if this is a symlink.
 	// If true, GetPath returns the path where this symlink leads.
 	IsSymlink() bool
-	// Returns the full path from the root of the repository.
+	// Returns the full path from the root of the ref given.
 	// This has no leading or trailing slashes.
 	// The path only uses '/' for directories. You can use the 'path' package to interact with these.
 	GetPath() string

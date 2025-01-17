@@ -223,14 +223,19 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
+func (r *localRepository) ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error) {
 	if err := r.validateRequest(ref); err != nil {
+		return nil, err
+	}
+
+	safePath, err := safepath.Join(r.path, base)
+	if err != nil {
 		return nil, err
 	}
 
 	rootlen := len(r.path)
 	entries := make([]FileTreeEntry, 0, 100)
-	err := filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
+	err = filepath.Walk(safePath, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

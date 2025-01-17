@@ -86,6 +86,12 @@ type RepositorySpec struct {
 	// If you delete and then recreate a dashboard, it will switch to the preferred format.
 	PreferYAML bool `json:"preferYaml,omitempty"`
 
+	// The directory path (under the repository) which should be regarded as the base for all resources.
+	// Set to e.g. `/grafana/` to put them all in the `grafana` directory under the root of the repository's location.
+	// This means in a local repository of `/example`, it'd use `/example/grafana`; in a Git repository, it'd use `/grafana`.
+	// Trailing and leading slashes are permitted but effectively useless.
+	BaseDirectory string `json:"baseDirectory,omitempty"`
+
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 

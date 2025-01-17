@@ -11,16 +11,17 @@ import (
 // RepositorySpecApplyConfiguration represents a declarative configuration of the RepositorySpec type for use
 // with apply.
 type RepositorySpecApplyConfiguration struct {
-	Title       *string                                   `json:"title,omitempty"`
-	Description *string                                   `json:"description,omitempty"`
-	Folder      *string                                   `json:"folder,omitempty"`
-	PreferYAML  *bool                                     `json:"preferYaml,omitempty"`
-	Editing     *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
-	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
-	Linting     *bool                                     `json:"linting,omitempty"`
-	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
-	S3          *S3RepositoryConfigApplyConfiguration     `json:"s3,omitempty"`
-	GitHub      *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
+	Title         *string                                   `json:"title,omitempty"`
+	Description   *string                                   `json:"description,omitempty"`
+	Folder        *string                                   `json:"folder,omitempty"`
+	PreferYAML    *bool                                     `json:"preferYaml,omitempty"`
+	BaseDirectory *string                                   `json:"baseDirectory,omitempty"`
+	Editing       *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
+	Type          *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
+	Linting       *bool                                     `json:"linting,omitempty"`
+	Local         *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
+	S3            *S3RepositoryConfigApplyConfiguration     `json:"s3,omitempty"`
+	GitHub        *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
 }
 
 // RepositorySpecApplyConfiguration constructs a declarative configuration of the RepositorySpec type for use with
@@ -58,6 +59,14 @@ func (b *RepositorySpecApplyConfiguration) WithFolder(value string) *RepositoryS
 // If called multiple times, the PreferYAML field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithPreferYAML(value bool) *RepositorySpecApplyConfiguration {
 	b.PreferYAML = &value
+	return b
+}
+
+// WithBaseDirectory sets the BaseDirectory field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the BaseDirectory field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithBaseDirectory(value string) *RepositorySpecApplyConfiguration {
+	b.BaseDirectory = &value
 	return b
 }
 
