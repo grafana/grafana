@@ -12,6 +12,7 @@ import {
   FilterInput,
   InteractiveTable,
   LinkButton,
+  Space,
   Spinner,
   Stack,
   Tab,
@@ -27,12 +28,12 @@ import { isNotFoundError } from '../alerting/unified/api/util';
 
 import { StatusBadge } from './StatusBadge';
 import {
-  useGetRepositoryStatusQuery,
   useListJobQuery,
   useGetRepositoryFilesQuery,
   Repository,
   ResourceListItem,
   useGetRepositoryResourcesQuery,
+  useListRepositoryQuery,
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -53,8 +54,11 @@ const tabInfo: SelectableValue<TabSelection> = [
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
-  const query = useGetRepositoryStatusQuery({ name });
-
+  const query = useListRepositoryQuery({
+    fieldSelector: `metadata.name=${name}`,
+    watch: true,
+  });
+  const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
   const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Resources;
@@ -64,7 +68,7 @@ export default function RepositoryStatusPage() {
     <Page
       navId="provisioning"
       pageNav={{
-        text: query.data?.spec?.title ?? 'Repository Status',
+        text: data?.spec?.title ?? 'Repository Status',
         subTitle: 'Check the status of configured repository.',
       }}
     >
@@ -76,7 +80,7 @@ export default function RepositoryStatusPage() {
           </EmptyState>
         ) : (
           <>
-            {query.data ? (
+            {data ? (
               <>
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
@@ -90,10 +94,10 @@ export default function RepositoryStatusPage() {
                   ))}
                 </TabsBar>
                 <TabContent>
-                  {tab === TabSelection.Resources && <ResourcesView repo={query.data} />}
-                  {tab === TabSelection.Files && <FilesView repo={query.data} />}
-                  {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
-                  {tab === TabSelection.Health && <RepositoryHealth repo={query.data} />}
+                  {tab === TabSelection.Resources && <ResourcesView repo={data} />}
+                  {tab === TabSelection.Files && <FilesView repo={data} />}
+                  {tab === TabSelection.Jobs && <JobsView repo={data} />}
+                  {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
                 </TabContent>
               </>
             ) : (
@@ -341,33 +345,14 @@ function getWebhookURL(repo: Repository): string | undefined {
 
 export function RepositoryHealth({ repo }: { repo: Repository }) {
   const name = repo.metadata?.name ?? '';
-
-  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
-
-  if (statusQuery.isLoading) {
-    return (
-      <Stack gap={2} alignItems="center">
-        <Text>Loading repository status</Text>
-        <Spinner />
-      </Stack>
-    );
-  }
-
-  if (statusQuery.isError) {
-    return (
-      <Alert title="Error loading repository status" severity="error">
-        <pre>{JSON.stringify(statusQuery.error, null, 2)}</pre>
-      </Alert>
-    );
-  }
-
-  const status = statusQuery.data?.status;
+  const status = repo.status;
   const remoteURL = getRemoteURL(repo);
   const webhookURL = getWebhookURL(repo);
 
   return (
     <Stack gap={2} direction="column" alignItems="flex-start">
-      <h2>Health Status</h2>
+      <Space />
+      <Text element={'h2'}>Health Status</Text>
       {status?.health?.healthy ? (
         <Alert title="Repository is healthy" severity="success" style={{ width: ' 100%' }}>
           No errors found
