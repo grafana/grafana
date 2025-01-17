@@ -41,7 +41,7 @@ func RegisterApp(
 		LegacyStorageGetter: provider.legacyStorageGetter,
 		ManagedKinds:        playlistapp.GetKinds(),
 		CustomConfig: any(&playlistapp.PlaylistConfig{
-			EnableWatchers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsWatcher),
+			EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 		}),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)

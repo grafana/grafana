@@ -528,6 +528,11 @@
       },
       "save-query": ""
     },
+    "silences": {
+      "affected-instances": "",
+      "only-firing-instances": "",
+      "preview-affected-instances": ""
+    },
     "simpleCondition": {
       "alertCondition": ""
     },
@@ -1766,6 +1771,22 @@
     "log-row-message": {
       "ellipsis": "",
       "more": ""
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "",
+        "message": "",
+        "title": ""
+      },
+      "disable-popover-message": {
+        "shortcut": ""
+      }
+    },
+    "popover-menu": {
+      "copy": "",
+      "disable-menu": "",
+      "line-contains": "",
+      "line-contains-not": ""
     }
   },
   "migrate-to-cloud": {
@@ -1858,7 +1879,8 @@
       "library_elements": "",
       "mute_timings": "",
       "notification_policies": "",
-      "notification_templates": ""
+      "notification_templates": "",
+      "plugins": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1909,7 +1931,9 @@
     "public-preview": {
       "button-text": "",
       "message": "",
-      "title": ""
+      "message-plugins": "",
+      "title": "",
+      "title-plugins": ""
     },
     "resource-details": {
       "dismiss-button": "",
@@ -1922,7 +1946,6 @@
         "generic-error": "",
         "internal-service-error": "",
         "library-element-name-conflict": "",
-        "only-core-data-sources": "",
         "resource-conflict": "",
         "unexpected-error": "",
         "unsupported-data-type": ""
@@ -1961,6 +1984,7 @@
       "mute_timing": "",
       "notification_policy": "",
       "notification_template": "",
+      "plugin": "",
       "unknown": "未知"
     },
     "summary": {
@@ -2494,8 +2518,7 @@
         "reportAbuse": "",
         "signature": "",
         "status": "",
-        "updatedAt": "",
-        "version": ""
+        "updatedAt": ""
       }
     },
     "empty-state": {
@@ -2760,6 +2783,12 @@
   "recentlyDeleted": {
     "filter": {
       "placeholder": ""
+    }
+  },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
     }
   },
   "refresh-picker": {
@@ -3277,6 +3306,7 @@
     },
     "metric-select": {
       "filter-by": "",
+      "new-badge": "",
       "otel-switch": ""
     },
     "recent-metrics": {
