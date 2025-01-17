@@ -34,9 +34,10 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider      db.DBProvider
-	Tracer          trace.Tracer
-	PollingInterval time.Duration
+	DBProvider        db.DBProvider
+	Tracer            trace.Tracer
+	PollingInterval   time.Duration
+	SkipDataMigration bool
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -53,12 +54,13 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		pollingInterval = defaultPollingInterval
 	}
 	return &backend{
-		done:            ctx.Done(),
-		cancel:          cancel,
-		log:             log.New("sql-resource-server"),
-		tracer:          opts.Tracer,
-		dbProvider:      opts.DBProvider,
-		pollingInterval: pollingInterval,
+		done:              ctx.Done(),
+		cancel:            cancel,
+		log:               log.New("sql-resource-server"),
+		tracer:            opts.Tracer,
+		dbProvider:        opts.DBProvider,
+		pollingInterval:   pollingInterval,
+		skipDataMigration: opts.SkipDataMigration,
 	}, nil
 }
 
@@ -74,9 +76,10 @@ type backend struct {
 	tracer trace.Tracer
 
 	// database
-	dbProvider db.DBProvider
-	db         db.DB
-	dialect    sqltemplate.Dialect
+	dbProvider        db.DBProvider
+	db                db.DB
+	dialect           sqltemplate.Dialect
+	skipDataMigration bool
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -104,7 +107,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	}
 
 	// Process any data manipulation migrations
-	err = b.runStartupMigrations(ctx)
+	err = b.runStartupDataMigrations(ctx)
 	if err != nil {
 		return err
 	}

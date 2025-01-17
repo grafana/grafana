@@ -12,7 +12,19 @@ import (
 )
 
 // This runs functions before the server is returned as healthy
-func (b *backend) runStartupMigrations(ctx context.Context) error {
+func (b *backend) runStartupDataMigrations(ctx context.Context) error {
+	if b.skipDataMigration {
+		return nil
+	}
+
+	type migrateRow struct {
+		GUID       string
+		Marker     *unstructured.Unstructured
+		Group      string
+		Resource   string
+		PreviousRV int64
+	}
+
 	// Migrate DeletedMarker to regular resource
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		req := &sqlMigrationQueryRequest{
@@ -25,37 +37,52 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-
-		migrateItems := make([]sqlMigrationQueryRequest, 0)
+		migrateRows := make([]migrateRow, 0)
 		for rows.Next() {
-			err = rows.Scan(&req.GUID, &req.Value, &req.Group, &req.Resource, &req.RV)
+			item := migrateRow{Marker: &unstructured.Unstructured{}}
+			err = rows.Scan(&item.GUID, &req.Value, &item.Group, &item.Resource, &item.PreviousRV)
 			if err != nil {
 				return err
 			}
-			migrateItems = append(migrateItems, *req)
-			req.Reset()
+
+			err = item.Marker.UnmarshalJSON([]byte(req.Value))
+			if err != nil {
+				return err
+			}
+
+			migrateRows = append(migrateRows, item)
 		}
-		rows.Close()
+		err = rows.Close()
+		if err != nil {
+			return err
+		}
 
-		for _, req := range migrateItems {
+		for _, item := range migrateRows {
 			// 2. Load the previous value referenced by that marker
-			req.Reset()
-			find, err := dbutil.QueryRows(ctx, tx, sqlMigratorGetValueFromRV, req)
+			req := &sqlMigrationQueryRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Group:       item.Group,
+				Resource:    item.Resource,
+				RV:          item.PreviousRV,
+				GUID:        item.GUID,
+			}
+			rows, err = dbutil.QueryRows(ctx, tx, sqlMigratorGetValueFromRV, req)
 			if err != nil {
 				return err
 			}
-			if find.Next() {
-				marker := &unstructured.Unstructured{}
-				err = marker.UnmarshalJSON([]byte(req.Value))
+			if rows.Next() {
+				err = rows.Scan(&req.Value)
 				if err != nil {
 					return err
 				}
+			}
+			err = rows.Close()
+			if err != nil {
+				return err
+			}
+			req.Reset()
 
-				err = find.Scan(&req.Value)
-				if err != nil {
-					return err
-				}
-				find.Close()
+			if len(req.Value) > 0 {
 				previous := &unstructured.Unstructured{}
 				err = previous.UnmarshalJSON([]byte(req.Value))
 				if err != nil {
@@ -63,7 +90,7 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 				}
 
 				// 3. Prepare a new payload
-				metaMarker, _ := utils.MetaAccessor(marker)
+				metaMarker, _ := utils.MetaAccessor(item.Marker)
 				metaPrev, _ := utils.MetaAccessor(previous)
 				metaPrev.SetDeletionTimestamp(metaMarker.GetDeletionTimestamp())
 				metaPrev.SetFinalizers(nil)
@@ -81,14 +108,12 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 				req.Value = string(buff)
 
 				// 4. Update the SQL row with this new value
-				req.Reset()
 				b.log.Info("Migrating DeletedMarker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 				_, err = dbutil.Exec(ctx, tx, sqlMigratorUpdateValueWithGUID, req)
 				if err != nil {
 					return err
 				}
 			} else {
-				find.Close()
 				// 5. If the previous version is missing, we delete it -- there is nothing to help us restore anyway
 				b.log.Warn("Removing orphan deletion marker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 				_, err = dbutil.Exec(ctx, tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
