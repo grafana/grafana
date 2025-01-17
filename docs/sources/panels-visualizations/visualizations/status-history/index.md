@@ -107,10 +107,6 @@ Use these options to refine the visualization.
 
 Controls whether values are rendered inside the value boxes. Auto will render values if there is sufficient space.
 
-### Y Axis Width
-
-Controls the width (in pixels) of the y-axis. Useful for aligning several status history panels with the same time scale.
-
 ### Row height
 
 Controls the height of boxes. 1 = maximum space and 0 = minimum space.
@@ -152,6 +148,10 @@ Controls the opacity of state regions.
 ## Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Axis options
+
+{{< docs/shared lookup="visualizations/axis-options-size.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ## Field overrides
 
