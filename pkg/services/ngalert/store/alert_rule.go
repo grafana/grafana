@@ -217,7 +217,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(sess, rules[i], err, st.Logger)
+						return ruleConstraintViolationToErr(st.SQLStore, rules[i], err, st.Logger)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -274,7 +274,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(sess, r.New, err, st.Logger)
+						return ruleConstraintViolationToErr(st.SQLStore, r.New, err, st.Logger)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -1034,29 +1034,56 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	return result, nil, st.UpdateAlertRules(ctx, updates)
 }
 
-func ruleConstraintViolationToErr(sess *db.Session, rule ngmodels.AlertRule, err error, logger log.Logger) error {
+// ruleConstraintViolationToErr converts a unique constraint violation error to a more user-friendly error
+// that includes the conflicting rule if possible.
+func ruleConstraintViolationToErr(d db.DB, rule ngmodels.AlertRule, err error, logger log.Logger) error {
 	msg := err.Error()
-	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {
-		// return verbose conflicting alert rule error response
-		// see: https://github.com/grafana/grafana/issues/89755
-		var fetched_uid string
-		var existingPartialAlertRule ngmodels.AlertRule
-		ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ?", rule.OrgID, rule.Title, rule.NamespaceUID).Get(&fetched_uid)
-		if uid_fetch_err != nil {
-			logger.Error("Error fetching uid from alert_rule table", "reason", uid_fetch_err.Error())
-		}
-		if ok {
-			existingPartialAlertRule = ngmodels.AlertRule{UID: fetched_uid, Title: rule.Title, NamespaceUID: rule.NamespaceUID}
-		}
-		return ngmodels.ErrAlertRuleConflictVerbose(existingPartialAlertRule, rule, ngmodels.ErrAlertRuleUniqueConstraintViolation)
-	} else if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
-		// return verbose conflicting alert rule error response
-		// see: https://github.com/grafana/grafana/issues/89755
-		existingPartialAlertRule := ngmodels.AlertRule{UID: rule.UID}
-		return ngmodels.ErrAlertRuleConflictVerbose(existingPartialAlertRule, rule, errors.New("rule UID under the same organisation should be unique"))
-	} else {
-		return ngmodels.ErrAlertRuleConflict(rule, err)
+
+	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") ||
+		strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {
+		return handleConflict(d, rule, logger, alertRule{
+			OrgID:        rule.OrgID,
+			NamespaceUID: rule.NamespaceUID,
+			Title:        rule.Title,
+		}, ngmodels.ErrAlertRuleUniqueConstraintViolation)
 	}
+
+	if strings.Contains(msg, "UQE_alert_rule_org_id_uid") ||
+		strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
+		return handleConflict(d, rule, logger, alertRule{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		}, errors.New("rule UID under the same organisation should be unique"))
+	}
+
+	return ngmodels.ErrAlertRuleConflict(rule, err)
+}
+
+func handleConflict(d db.DB, rule ngmodels.AlertRule, logger log.Logger, query alertRule, conflictErr error) error {
+	// Start a new DB session to avoid conflicts with the current transaction.
+	err := d.WithDbSession(context.Background(), func(sess *db.Session) error {
+		exists, err := sess.Cols("uid, title, namespace_uid").Get(&query)
+		if err != nil {
+			logger.Error("Error fetching existing alert rule", "err", err)
+			return ngmodels.ErrAlertRuleConflict(rule, errors.New("rule not found"))
+		}
+		if !exists {
+			logger.Error("Error fetching existing alert rule while handling conflict, rule not found in the database", "rule_uid", rule.UID)
+			return ngmodels.ErrAlertRuleConflict(rule, errors.New("rule not found"))
+		}
+
+		return ngmodels.ErrAlertRuleConflictVerbose(
+			ngmodels.AlertRule{
+				UID:          query.UID,
+				Title:        query.Title,
+				NamespaceUID: query.NamespaceUID,
+			},
+			rule,
+			conflictErr,
+		)
+	})
+
+	return err
 }
 
 // GetNamespacesByRuleUID returns a map of rule UIDs to their namespace UID.
