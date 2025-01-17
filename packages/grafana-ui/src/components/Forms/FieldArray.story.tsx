@@ -1,12 +1,14 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { FieldValues } from 'react-hook-form';
 
-import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
-
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
+import { Button } from '../Button/Button';
+import { Input } from '../Input/Input';
+import { HorizontalGroup } from '../Layout/Layout';
 
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
+import { Form } from './Form';
 
 const meta: Meta = {
   title: 'Forms/FieldArray',

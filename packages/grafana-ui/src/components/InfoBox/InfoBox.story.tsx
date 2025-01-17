@@ -1,9 +1,11 @@
 import { Meta, StoryFn } from '@storybook/react';
 
 import { FeatureState } from '@grafana/data';
-import { InfoBox, FeatureInfoBox, VerticalGroup } from '@grafana/ui';
 
-import { FeatureInfoBoxProps } from './FeatureInfoBox';
+import { VerticalGroup } from '../Layout/Layout';
+
+import { FeatureInfoBox, FeatureInfoBoxProps } from './FeatureInfoBox';
+import { InfoBox } from './InfoBox';
 import mdx from './InfoBox.mdx';
 
 const meta: Meta = {
