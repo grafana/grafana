@@ -39,7 +39,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public disableSelection() {
-    this.setState({ selectionContext: { ...this.state.selectionContext, enabled: false } });
+    this.setState({
+      selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
+      selectedObject: undefined,
+    });
   }
 
   private selectElement(element: ElementSelectionContextItem, multi?: boolean) {

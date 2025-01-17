@@ -95,8 +95,8 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   };
 
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, title, isCollapsed, height = 'expand' } = model.useState();
-    const { isEditing } = getDashboardSceneFor(model).useState();
+    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden } = model.useState();
+    const { isEditing, showHiddenElements } = getDashboardSceneFor(model).useState();
     const styles = useStyles2(getStyles);
     const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
     const ref = useRef<HTMLDivElement>(null);
@@ -113,22 +113,24 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
         )}
         ref={ref}
       >
-        <div className={styles.rowHeader}>
-          <button
-            onClick={model.onCollapseToggle}
-            className={styles.rowTitleButton}
-            aria-label={isCollapsed ? 'Expand row' : 'Collapse row'}
-            data-testid={selectors.components.DashboardRow.title(titleInterpolated)}
-          >
-            <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-            <span className={styles.rowTitle} role="heading">
-              {titleInterpolated}
-            </span>
-          </button>
-          {isEditing && (
-            <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={(evt) => onSelect?.(evt)} />
-          )}
-        </div>
+        {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
+          <div className={styles.rowHeader}>
+            <button
+              onClick={model.onCollapseToggle}
+              className={styles.rowTitleButton}
+              aria-label={isCollapsed ? 'Expand row' : 'Collapse row'}
+              data-testid={selectors.components.DashboardRow.title(titleInterpolated)}
+            >
+              <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
+              <span className={styles.rowTitle} role="heading">
+                {titleInterpolated}
+              </span>
+            </button>
+            {isEditing && (
+              <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={(evt) => onSelect?.(evt)} />
+            )}
+          </div>
+        )}
         {!isCollapsed && <layout.Component model={layout} />}
       </div>
     );
@@ -201,7 +203,7 @@ export function RowTitleInput({ row }: { row: RowItem }) {
 }
 
 export function RowHeaderSwitch({ row }: { row: RowItem }) {
-  const { isHeaderHidden } = row.useState();
+  const { isHeaderHidden = false } = row.useState();
 
   return (
     <Switch
