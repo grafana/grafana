@@ -286,18 +286,17 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 	err = store.WithDbSession(c, func(session *db.Session) error {
 		builder := db.NewSqlBuilder(cfg, features, store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
-		builder.Write(", ? as folder_name ", cmd.FolderName)
+		// builder.Write(", ? as folder_name ", cmd.FolderName)
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// nolint:staticcheck
-		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
-		builder.Write(" UNION ")
-		builder.Write(selectLibraryElementDTOWithMeta)
-		builder.Write(", dashboard.title as folder_name ")
-		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
-		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
-		writeParamSelectorSQL(&builder, params...)
-		builder.Write(` OR dashboard.id=0`)
+		builder.Write(`WHERE le.org_id=?`, signedInUser.GetOrgID())
+		if cmd.UID != "" {
+			builder.Write(` AND le.uid=?`, cmd.UID)
+		} else if cmd.Name != "" {
+			builder.Write(` AND le.name=?`, cmd.Name)
+		} else {
+			builder.Write(` AND (le.folder_uid="" OR le.folder_uid IS NULL OR le.folder_uid="General" OR le.folder_id = 0)`)
+		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
 		}
@@ -384,6 +383,7 @@ func (l *LibraryElementService) getLibraryElementsByName(c context.Context, sign
 	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.GetOrgID()}, {"name", name}}, l.features,
 		model.GetLibraryElementCommand{
 			FolderName: dashboards.RootFolderName,
+			Name:       name,
 		})
 }
 

@@ -16,23 +16,6 @@ type Pair struct {
 	value any
 }
 
-func selectLibraryElementByParam(params []Pair) (string, []any) {
-	conditions := make([]string, 0, len(params))
-	values := make([]any, 0, len(params))
-	for _, p := range params {
-		conditions = append(conditions, "le."+p.key+"=?")
-		values = append(values, p.value)
-	}
-	return ` WHERE ` + strings.Join(conditions, " AND "), values
-}
-
-func writeParamSelectorSQL(builder *db.SQLBuilder, params ...Pair) {
-	if len(params) > 0 {
-		conditionString, paramValues := selectLibraryElementByParam(params)
-		builder.Write(conditionString, paramValues...)
-	}
-}
-
 func writePerPageSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
 	if query.PerPage != 0 {
 		offset := query.PerPage * (query.Page - 1)
