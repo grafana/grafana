@@ -14,7 +14,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -38,6 +41,38 @@ func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource
 
 		for _, r := range requirements {
 			v := r.Key()
+
+			// Parse the history request from labels
+			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
+				if len(requirements) != 1 {
+					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
+				}
+				if !opts.Predicate.Field.Empty() {
+					return nil, predicate, apierrors.NewBadRequest("field selector not supported with: " + v)
+				}
+				if r.Operator() != selection.Equals {
+					return nil, predicate, apierrors.NewBadRequest("only = operator supported with: " + v)
+				}
+
+				vals := r.Values().List()
+				if len(vals) != 1 {
+					return nil, predicate, apierrors.NewBadRequest("expecting single value for: " + v)
+				}
+
+				if v == utils.LabelKeyGetTrash {
+					req.Source = resource.ListRequest_TRASH
+					if vals[0] != "true" {
+						return nil, predicate, apierrors.NewBadRequest("expecting true for: " + v)
+					}
+				} else {
+					req.Source = resource.ListRequest_HISTORY
+					req.Options.Key.Name = vals[0]
+				}
+
+				req.Options.Labels = nil
+				req.Options.Fields = nil
+				return req, storage.Everything, nil
+			}
 
 			req.Options.Labels = append(req.Options.Labels, &resource.Requirement{
 				Key:      v,

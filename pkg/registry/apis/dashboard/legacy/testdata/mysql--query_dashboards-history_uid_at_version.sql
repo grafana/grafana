@@ -16,5 +16,6 @@ SELECT
     LEFT OUTER JOIN `grafana`.`user` as updated_user ON dashboard.updated_by = updated_user.id
     WHERE dashboard.is_folder = false
       AND dashboard.org_id = 2
-        AND dashboard_version.version = 3
+      AND dashboard.uid = 'UUU'
+      AND dashboard_version.version = 3
     ORDER BY dashboard_version.version DESC

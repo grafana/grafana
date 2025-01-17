@@ -98,8 +98,10 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
 	q := rawQuery
-	// q = sqltemplate.RemoveEmptyLines(rawQuery)
-	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
+	// if true {
+	// 	pretty := sqltemplate.RemoveEmptyLines(rawQuery)
+	// 	fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
+	// }
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
@@ -267,6 +269,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
+			meta.SetGeneration(utils.DeletedGeneration)
 		}
 
 		if message.String != "" {
