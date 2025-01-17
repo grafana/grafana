@@ -244,8 +244,10 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ### Unsupported
 
-- Graphite
+- DynamoDB
 - Dynatrace
+- Graphite
+- Google Sheets
 
 ### Unconfirmed
 
