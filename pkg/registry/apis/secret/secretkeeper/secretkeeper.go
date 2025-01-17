@@ -11,7 +11,7 @@ import (
 )
 
 type Service interface {
-	GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, payloadConfig string) (keepertypes.Keeper, error)
+	GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, credentials any) (keepertypes.Keeper, error)
 }
 
 type OSSKeeperService struct {
@@ -26,7 +26,7 @@ func ProvideService(encryptionManager *manager.EncryptionManager, store secretst
 	}, nil
 }
 
-func (ks OSSKeeperService) GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, payloadConfig string) (keepertypes.Keeper, error) {
+func (ks OSSKeeperService) GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, credentials any) (keepertypes.Keeper, error) {
 	// Default SQL keeper
 	if keeperType != keepertypes.SQLKeeperType {
 		return nil, fmt.Errorf("missing configuration for keeper type %s", keeperType)
