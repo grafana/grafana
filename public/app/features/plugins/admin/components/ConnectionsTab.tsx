@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EmptyState, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ViewProps } from 'app/features/datasources/components/DataSourcesList';
 import { DataSourcesListCard } from 'app/features/datasources/components/DataSourcesListCard';
@@ -63,7 +63,7 @@ export function ConnectionsList({
 
   const getDataSourcesList = () => {
     if (isLoading) {
-      return new Array(20)
+      return new Array(5)
         .fill(null)
         .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />);
     }
@@ -78,17 +78,18 @@ export function ConnectionsList({
       </li>
     ));
   };
-  const linkText = `${t('nav.connections.title', 'Connections')} - ${t('nav.data-sources.title', 'Data sources')}.`;
 
   return (
     <Stack direction="column" gap={2}>
       <span>
-        {t(
-          'plugins.details.connections-tab.description',
-          `The data source connections below are all ${plugin.name}. You can find all of your data source connections of all types in`,
-          { pluginName: plugin.name }
-        )}{' '}
-        <TextLink href="/connections/datasources">{linkText}</TextLink>
+        <Trans i18nKey="plugins.details.connections-tab.description" values={{ pluginName: plugin.name }}>
+          The data source connections below are all {'{{pluginName}}'}. You can find all of your data source connections
+          of all types in{' '}
+          <TextLink href="/connections/datasources">
+            <Trans i18nKey="nav.connections.title">Connections</Trans> -{' '}
+            <Trans i18nKey="nav.data-sources.title">Data sources</Trans>.
+          </TextLink>
+        </Trans>
       </span>
       <ul className={styles.list}>{getDataSourcesList()}</ul>
     </Stack>
