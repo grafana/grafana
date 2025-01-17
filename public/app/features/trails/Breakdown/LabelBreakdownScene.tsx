@@ -4,7 +4,7 @@ import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect, useState } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
+import { isValidLegacyName, utf8Support } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
