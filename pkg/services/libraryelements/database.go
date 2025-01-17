@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -438,9 +437,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
 			return err
 		}
-		if !signedInUser.HasRole(org.RoleAdmin) {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
-		}
 		if query.SortDirection == search.SortAlphaDesc.Name {
 			builder.Write(" ORDER BY 1 DESC")
 		} else {
@@ -453,7 +449,22 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		retDTOs := make([]model.LibraryElementDTO, 0)
+		// getting all folders a user can see
+		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+		if err != nil {
+			return err
+		}
+		var folderUIDS = []string{"general"} // every signed in user can see the general folder
+		for _, f := range fs {
+			folderUIDS = append(folderUIDS, f.UID)
+		}
+		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, element := range elements {
+			if !signedInUser.HasRole(org.RoleAdmin) {
+				if !contains(folderUIDS, element.FolderUID) {
+					continue
+				}
+			}
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
@@ -683,14 +694,24 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
-		if signedInUser.GetOrgRole() != org.RoleAdmin {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
-		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
 		}
+		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
+		if err != nil {
+			return err
+		}
+		var folderUIDS = []string{"general"} // every signed in user can see the general folder
+		for _, f := range fs {
+			folderUIDS = append(folderUIDS, f.UID)
+		}
 
 		for _, connection := range libraryElementConnections {
+			if !signedInUser.HasRole(org.RoleAdmin) {
+				if !contains(folderUIDS, element.FolderUID) {
+					continue
+				}
+			}
 			connections = append(connections, model.LibraryElementConnectionDTO{
 				ID:            connection.ID,
 				Kind:          connection.Kind,
@@ -868,4 +889,13 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 
 		return nil
 	})
+}
+
+func contains(slice []string, element string) bool {
+	for _, item := range slice {
+		if item == element {
+			return true
+		}
+	}
+	return false
 }
