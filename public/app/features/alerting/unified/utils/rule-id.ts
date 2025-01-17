@@ -245,7 +245,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     .join('$');
 }
 
-function hash(value: string): number {
+export function hash(value: string): number {
   let hash = 0;
   if (value.length === 0) {
     return hash;
