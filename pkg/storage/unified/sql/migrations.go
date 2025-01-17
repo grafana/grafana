@@ -25,12 +25,19 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		migrateItems := make([]sqlMigrationQueryRequest, 0)
 		for rows.Next() {
 			err = rows.Scan(&req.GUID, &req.Value, &req.Group, &req.Resource, &req.RV)
 			if err != nil {
 				return err
 			}
+			migrateItems = append(migrateItems, *req)
+			req.Reset()
+		}
+		rows.Close()
 
+		for _, req := range migrateItems {
 			// 2. Load the previous value referenced by that marker
 			req.Reset()
 			find, err := dbutil.QueryRows(ctx, tx, sqlMigratorGetValueFromRV, req)
@@ -48,6 +55,7 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
+				find.Close()
 				previous := &unstructured.Unstructured{}
 				err = previous.UnmarshalJSON([]byte(req.Value))
 				if err != nil {
@@ -80,6 +88,7 @@ func (b *backend) runStartupMigrations(ctx context.Context) error {
 					return err
 				}
 			} else {
+				find.Close()
 				// 5. If the previous version is missing, we delete it -- there is nothing to help us restore anyway
 				b.log.Warn("Removing orphan deletion marker", "guid", req.GUID, "group", req.Group, "resource", req.Resource)
 				_, err = dbutil.Exec(ctx, tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
