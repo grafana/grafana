@@ -39,7 +39,6 @@ function useHasInternalAlertmanagerEnabled() {
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
-  const styles = useStyles2(getStyles);
 
   const [type, manualRouting] = watch(['type', 'manualRouting']);
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
@@ -116,11 +115,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           />
         </>
       )}
-      {shouldAllowSimplifiedRouting && (
-        <div className={styles.configureNotifications}>
-          <Text element="h5">Recipient</Text>
-        </div>
-      )}
+
       {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
         simplifiedModeInNotificationsStepEnabled ? ( // simplified mode is enabled
           <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
@@ -164,7 +159,7 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
 
   return (
     <Stack direction="column" gap={2}>
-      <Stack direction="column">
+      <Stack direction="column" gap={0.5}>
         <RadioButtonGroup
           data-testid={manualRouting ? 'routing-options-contact-point' : 'routing-options-notification-policy'}
           options={routingOptions}
@@ -172,9 +167,8 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
           onChange={onRoutingOptionChange}
           className={styles.routingOptions}
         />
+        <RoutingOptionDescription manualRouting={manualRouting} />
       </Stack>
-
-      <RoutingOptionDescription manualRouting={manualRouting} />
 
       {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
     </Stack>
@@ -313,10 +307,5 @@ export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDes
 const getStyles = (theme: GrafanaTheme2) => ({
   routingOptions: css({
     width: 'fit-content',
-  }),
-  configureNotifications: css({
-    display: 'flex',
-    flexDirection: 'column',
-    marginTop: theme.spacing(2),
   }),
 });

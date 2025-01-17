@@ -7,11 +7,9 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   AsyncSelect,
-  Box,
   Button,
   Field,
   Icon,
-  IconButton,
   Input,
   Label,
   Modal,
@@ -22,10 +20,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, logInfo } from '../../Analytics';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -42,7 +38,7 @@ import {
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
-import { EditRuleGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
+import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
@@ -193,7 +189,6 @@ export function GrafanaEvaluationBehaviorStep({
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
   const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
-  const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
@@ -209,23 +204,6 @@ export function GrafanaEvaluationBehaviorStep({
       setEvaluateEvery(existingGroup.interval);
     }
   }, [setEvaluateEvery, isNewGroup, setValue, existingGroup]);
-
-  const closeEditGroupModal = (saved = false) => {
-    if (!saved) {
-      logInfo(LogMessages.leavingRuleGroupEdit);
-    }
-    setIsEditingGroup(false);
-  };
-
-  const onOpenEditGroupModal = () => setIsEditingGroup(true);
-
-  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !group;
-  const emptyNamespace: CombinedRuleNamespace = {
-    name: folderName,
-    rulesSource: GRAFANA_RULES_SOURCE_NAME,
-    groups: [],
-  };
-  const emptyGroup: CombinedRuleGroup = { name: group, interval: evaluateEvery, rules: [], totals: {} };
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
@@ -272,18 +250,18 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        <Stack alignItems="center">
-          <div style={{ width: 420 }}>
-            <Field
-              label={label}
-              data-testid="group-picker"
-              className={styles.formInput}
-              error={errors.group?.message}
-              invalid={!!errors.group?.message}
-              htmlFor="group"
-            >
-              <Controller
-                render={({ field: { ref, ...field }, fieldState }) => (
+        <Field
+          label={label}
+          data-testid="group-picker"
+          className={styles.formInput}
+          error={errors.group?.message}
+          invalid={!!errors.group?.message}
+          htmlFor="group"
+        >
+          <Controller
+            render={({ field: { ref, ...field }, fieldState }) => (
+              <Stack direction="column" gap={0.5}>
+                <Stack direction="row" alignItems="center">
                   <AsyncSelect
                     disabled={!folder || loading}
                     inputId="group"
@@ -310,75 +288,48 @@ export function GrafanaEvaluationBehaviorStep({
                         )}
                       </div>
                     )}
-                    placeholder={'Select an evaluation group...'}
+                    placeholder="Select an evaluation group"
                   />
-                )}
-                name="group"
-                control={control}
-                rules={{
-                  required: { value: true, message: 'Must enter a group name' },
-                }}
-              />
-            </Field>
-          </div>
-          <Box gap={1} display={'flex'} alignItems={'center'}>
-            <Text color="secondary">or</Text>
-            <Button
-              onClick={onOpenEvaluationGroupCreationModal}
-              type="button"
-              icon="plus"
-              fill="outline"
-              variant="secondary"
-              disabled={!folder}
-              data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
-            >
-              <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
-            </Button>
-          </Box>
-          {isCreatingEvaluationGroup && (
-            <EvaluationGroupCreationModal
-              onCreate={handleEvalGroupCreation}
-              onClose={() => setIsCreatingEvaluationGroup(false)}
-              groupfoldersForGrafana={groupfoldersForGrafana?.result}
-            />
-          )}
-        </Stack>
-
-        {folderName && isEditingGroup && (
-          <EditRuleGroupModal
-            namespace={existingNamespace ?? emptyNamespace}
-            group={existingGroup ?? emptyGroup}
-            folderUid={folderUid}
-            onClose={() => closeEditGroupModal()}
-            intervalEditOnly
-            hideFolder={true}
-          />
-        )}
-        {folderName && group && (
-          <div className={styles.evaluationContainer}>
-            <Stack direction="column" gap={0}>
-              <div className={styles.marginTop}>
-                <Stack direction="column" gap={1}>
-                  {getValues('group') && getValues('evaluateEvery') && (
-                    <Stack direction="row" gap={1} alignItems="center">
+                  <Text color="secondary">or</Text>
+                  <Button
+                    onClick={onOpenEvaluationGroupCreationModal}
+                    type="button"
+                    icon="plus"
+                    fill="outline"
+                    variant="secondary"
+                    disabled={!folder}
+                    data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
+                  >
+                    <Trans i18nKey="alerting.rule-form.evaluation.new-group">New evaluation group</Trans>
+                  </Button>
+                </Stack>
+                {folderName && group && (
+                  <Text color="secondary" variant="bodySmall">
+                    {getValues('group') && getValues('evaluateEvery') && (
                       <Trans i18nKey="alerting.rule-form.evaluation.group-text" values={{ evaluateEvery }}>
                         All rules in the selected group are evaluated every {{ evaluateEvery }}.
                       </Trans>
-                      {!isNewGroup && (
-                        <IconButton
-                          name="pen"
-                          aria-label="Edit"
-                          disabled={editGroupDisabled}
-                          onClick={onOpenEditGroupModal}
-                        />
-                      )}
-                    </Stack>
-                  )}
-                </Stack>
-              </div>
-            </Stack>
-          </div>
+                    )}
+                  </Text>
+                )}
+              </Stack>
+            )}
+            name="group"
+            control={control}
+            rules={{
+              required: { value: true, message: 'Must enter a group name' },
+            }}
+          />
+        </Field>
+
+        {isCreatingEvaluationGroup && (
+          <EvaluationGroupCreationModal
+            onCreate={handleEvalGroupCreation}
+            onClose={() => setIsCreatingEvaluationGroup(false)}
+            groupfoldersForGrafana={groupfoldersForGrafana?.result}
+          />
         )}
+
         {/* Show the pending period input only for Grafana alerting rules */}
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
 
@@ -598,29 +549,29 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   };
 
   return (
-    <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-      <Field
-        label={
-          <Label
-            htmlFor={evaluateForId}
-            description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
-          >
-            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
-          </Label>
-        }
-        className={styles.inlineField}
-        error={errors.evaluateFor?.message}
-        invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
-        validationMessageHorizontalOverflow={true}
-      >
+    <Field
+      label={
+        <Label
+          htmlFor={evaluateForId}
+          description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+        >
+          <Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
+        </Label>
+      }
+      className={styles.inlineField}
+      error={errors.evaluateFor?.message}
+      invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
+      validationMessageHorizontalOverflow={true}
+    >
+      <Stack direction="row" alignItems="flex-end">
         <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
-      </Field>
-      <PendingPeriodQuickPick
-        selectedPendingPeriod={currentPendingPeriod}
-        groupEvaluationInterval={evaluateEvery}
-        onSelect={setPendingPeriod}
-      />
-    </Stack>
+        <PendingPeriodQuickPick
+          selectedPendingPeriod={currentPendingPeriod}
+          groupEvaluationInterval={evaluateEvery}
+          onSelect={setPendingPeriod}
+        />
+      </Stack>
+    </Field>
   );
 }
 
@@ -694,11 +645,6 @@ function getDescription(isGrafanaRecordingRule: boolean) {
 const getStyles = (theme: GrafanaTheme2) => ({
   inlineField: css({
     marginBottom: 0,
-  }),
-  evaluationContainer: css({
-    color: theme.colors.text.secondary,
-    maxWidth: `${theme.breakpoints.values.sm}px`,
-    fontSize: theme.typography.size.sm,
   }),
   infoIcon: css({
     marginLeft: '10px',

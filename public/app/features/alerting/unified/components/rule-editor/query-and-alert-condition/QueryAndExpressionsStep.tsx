@@ -48,7 +48,7 @@ import { ExpressionsEditor } from '../ExpressionsEditor';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
-import { RuleEditorSection } from '../RuleEditorSection';
+import { RuleEditorSection, RuleEditorSubSection } from '../RuleEditorSection';
 import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
@@ -540,7 +540,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
         {/* This is the PromQL Editor for Cloud rules */}
         {isCloudAlertRuleType && dataSourceName && (
-          <Stack direction="column">
+          <>
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
               <Controller
                 name="expression"
@@ -566,12 +566,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               rulesSourcesWithRuler={rulesSourcesWithRuler}
               onClickSwitch={onClickSwitch}
             />
-          </Stack>
+          </>
         )}
 
         {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
         {isGrafanaManagedRuleByType(type) && (
-          <Stack direction="column">
+          <>
             {/* Data Queries */}
             <QueryEditor
               queries={dataQueries}
@@ -599,6 +599,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 </Button>
               </Tooltip>
             )}
+
             {/* We only show Switch for Grafana managed alerts */}
             {isGrafanaAlertingType && !simplifiedQueryStep && (
               <SmartAlertTypeDetector
@@ -608,16 +609,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 onClickSwitch={onClickSwitch}
               />
             )}
+
             {/* Expression Queries */}
             {!simplifiedQueryStep && (
-              <>
-                <Stack direction="column" gap={0}>
-                  <Text element="h5">Expressions</Text>
-                  <Text variant="bodySmall" color="secondary">
-                    Manipulate data returned from queries with math and other operations.
-                  </Text>
-                </Stack>
-
+              <RuleEditorSubSection
+                title="Expressions"
+                description="Manipulate data returned from queries with math and other operations."
+              >
                 <ExpressionsEditor
                   queries={queries}
                   panelData={queryPreviewData}
@@ -634,42 +632,45 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                     dispatch(updateExpression(model));
                   }}
                 />
-              </>
-            )}
-            {/* action buttons */}
-            <Stack direction="column">
-              {simplifiedQueryStep && (
-                <SimpleConditionEditor
-                  simpleCondition={simpleCondition}
-                  onChange={setSimpleCondition}
-                  expressionQueriesList={expressionQueries}
-                  dispatch={dispatch}
-                  previewData={queryPreviewData[condition ?? '']}
-                />
-              )}
-              <Stack direction="row">
-                {!simplifiedQueryStep && config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
 
-                {isPreviewLoading && (
-                  <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
-                    <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-                  </Button>
-                )}
-                {!isPreviewLoading && (
-                  <Button
-                    data-testid={selectors.components.AlertRules.previewButton}
-                    icon="sync"
-                    type="button"
-                    onClick={() => runQueriesPreview()}
-                    disabled={emptyQueries}
-                  >
-                    {!simplifiedQueryStep
-                      ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
-                      : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
-                  </Button>
-                )}
-              </Stack>
-            </Stack>
+                {/* action buttons */}
+                <Stack direction="column">
+                  {simplifiedQueryStep && (
+                    <SimpleConditionEditor
+                      simpleCondition={simpleCondition}
+                      onChange={setSimpleCondition}
+                      expressionQueriesList={expressionQueries}
+                      dispatch={dispatch}
+                      previewData={queryPreviewData[condition ?? '']}
+                    />
+                  )}
+                  <Stack direction="row">
+                    {!simplifiedQueryStep && config.expressionsEnabled && (
+                      <TypeSelectorButton onClickType={onClickType} />
+                    )}
+
+                    {isPreviewLoading && (
+                      <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
+                        <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+                      </Button>
+                    )}
+                    {!isPreviewLoading && (
+                      <Button
+                        data-testid={selectors.components.AlertRules.previewButton}
+                        icon="sync"
+                        type="button"
+                        onClick={() => runQueriesPreview()}
+                        disabled={emptyQueries}
+                      >
+                        {!simplifiedQueryStep
+                          ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
+                          : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
+                      </Button>
+                    )}
+                  </Stack>
+                </Stack>
+              </RuleEditorSubSection>
+            )}
 
             {/* No Queries */}
             {emptyQueries && (
@@ -677,7 +678,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 Create at least one query or expression to be alerted on
               </Alert>
             )}
-          </Stack>
+          </>
         )}
       </RuleEditorSection>
 

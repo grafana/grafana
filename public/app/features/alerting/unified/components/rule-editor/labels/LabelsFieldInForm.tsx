@@ -30,9 +30,9 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
         <Text element="h5">Labels</Text>
-        <Stack direction={'row'} gap={1}>
+        <Stack direction="row" gap={1}>
           <Text variant="bodySmall" color="secondary">
             {text}
           </Text>

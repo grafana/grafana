@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, TagList, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
+import { Button, TagList, Text, getTagColorIndexFromName, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -53,7 +53,7 @@ function NotificationRouteHeader({
         aria-label="Expand policy route"
       />
 
-      <Stack flexGrow={1} gap={1}>
+      <Stack flexGrow={1} gap={1} alignItems="center">
         {/* TODO: fix keyboard a11y */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
@@ -66,21 +66,24 @@ function NotificationRouteHeader({
           </Stack>
         </div>
         <Spacer />
-        <Stack gap={2} direction="row" alignItems="center">
+        <Stack gap={1} direction="row" alignItems="center">
+          {/* instances count */}
           <MetaText icon="layers-alt" data-testid="matching-instances">
             {instancesCount ?? '-'} {pluralize('instance', instancesCount)}
           </MetaText>
-          <Stack gap={1} direction="row" alignItems="center">
-            <div>
-              <span className={styles.textMuted}>@ Delivered to</span> {receiver.name}
-            </div>
 
-            <div className={styles.verticalBar} />
+          {/* contact point name */}
+          <MetaText icon="at">
+            Delivered to <Text color="primary">{receiver.name}</Text>
+          </MetaText>
 
-            <Button type="button" onClick={onClickDetails} variant="secondary" fill="outline" size="sm">
-              See details
-            </Button>
-          </Stack>
+          {/* separator */}
+          <div className={styles.verticalBar} />
+
+          {/* details button */}
+          <Button type="button" onClick={onClickDetails} variant="secondary" fill="outline" size="sm">
+            See details
+          </Button>
         </Stack>
       </Stack>
       {showDetails && (

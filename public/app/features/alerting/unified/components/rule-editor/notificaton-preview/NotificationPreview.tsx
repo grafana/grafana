@@ -63,8 +63,8 @@ export const NotificationPreview = ({
 
   return (
     <Stack direction="column">
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-        <Stack direction="column" gap={1}>
+      <Stack direction="row" alignItems="flex-end" justifyContent="space-between">
+        <Stack direction="column" gap={0}>
           <Text element="h5">
             <Trans i18nKey="alerting.notification-preview.title">Alert instance routing preview</Trans>
           </Text>
