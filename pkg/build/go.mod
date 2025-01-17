@@ -35,7 +35,7 @@ require (
 	golang.org/x/text v0.21.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.9.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.216.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.69.2 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.69.4 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.1 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
