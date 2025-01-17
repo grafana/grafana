@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -33,6 +34,10 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		RuleGroupIndex:  ar.RuleGroupIndex,
 		For:             ar.For,
 		IsPaused:        ar.IsPaused,
+	}
+
+	if ar.UpdatedBy != nil {
+		result.UpdatedBy = util.Pointer(models.UserUID(*ar.UpdatedBy))
 	}
 
 	if ar.NoDataState != "" {
@@ -120,6 +125,10 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		IsPaused:        ar.IsPaused,
 	}
 
+	if ar.UpdatedBy != nil {
+		result.UpdatedBy = util.Pointer(string(*ar.UpdatedBy))
+	}
+
 	// Serialize complex types to JSON strings
 	data, err := json.Marshal(ar.Data)
 	if err != nil {
@@ -179,6 +188,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		RestoredFrom:         0,
 		Version:              rule.Version,
 		Created:              rule.Updated, // assuming the Updated time as the creation time
+		CreatedBy:            rule.UpdatedBy,
 		Title:                rule.Title,
 		Condition:            rule.Condition,
 		Data:                 rule.Data,

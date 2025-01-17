@@ -243,6 +243,8 @@ func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	})
 }
 
+type UserUID string
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64
@@ -251,6 +253,7 @@ type AlertRule struct {
 	Condition       string
 	Data            []AlertQuery
 	Updated         time.Time
+	UpdatedBy       *UserUID
 	IntervalSeconds int64
 	Version         int64
 	UID             string
