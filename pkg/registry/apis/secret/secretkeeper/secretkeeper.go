@@ -1,12 +1,12 @@
-package secretkeepers
+package secretkeeper
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeepers/sqlkeeper"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeepers/types"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
 )
 

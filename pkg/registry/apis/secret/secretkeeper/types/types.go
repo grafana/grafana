@@ -1,4 +1,4 @@
-package keepertypes
+package types
 
 import (
 	"context"

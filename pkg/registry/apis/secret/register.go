@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeepers"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	legacyEncryption "github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -67,7 +67,7 @@ func RegisterAPIService(
 	}
 
 	// TODO: need to actually do something with the secret keeper service, for now just make one
-	_, err = secretkeepers.ProvideService(encManager, encryptedValueStorage)
+	_, err = secretkeeper.ProvideService(encManager, encryptedValueStorage)
 	if err != nil {
 		return nil, fmt.Errorf("initializing keeper service: %w", err)
 	}

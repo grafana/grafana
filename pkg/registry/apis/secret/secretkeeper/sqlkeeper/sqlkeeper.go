@@ -5,7 +5,7 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeepers/types"
+	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	secretStorage "github.com/grafana/grafana/pkg/storage/secret"
 )
 
