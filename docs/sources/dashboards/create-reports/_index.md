@@ -141,7 +141,7 @@ To create a report, follow these steps:
    - [Share](#4-share)
    - [Confirm](#5-confirm)
 1. Click one of the following buttons in the top-right corner of the screen:
-   - **Send** or **Schedule send** - The report is sent according the schedule you've set.
+   - **Send now** or **Schedule send** - The report is sent according the schedule you've set.
    - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
    - **Discard** - Delete the report draft. This action can't be reversed.
 
@@ -154,7 +154,7 @@ At this step, select the dashboard or dashboards on which the report is based, a
 | Option | Description |
 | ------ | ----------- |
 | Source dashboard | Select the dashboard from which you want to generate the report. |
-| [Template variables](#template-variables) | Select the variable **Datasource** and **Instance** for the selected dashboard. This option is only displayed if the dashboard has variables. |
+| [Template variables (optional)](#template-variables) | Select the variable values for the selected dashboard. This option is only displayed if the dashboard has variables. |
 | [Time range (optional)](#time-range) | By default, reports use the saved time range of the dashboard. Optionally, you can change the time range of the report. |
 | Add another dashboard | Add more dashboards to the report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You can't add the same dashboard to a report multiple times. |
 
