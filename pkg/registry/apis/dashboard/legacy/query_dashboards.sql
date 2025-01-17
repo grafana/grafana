@@ -24,22 +24,25 @@ SELECT
     WHERE dashboard.is_folder = false
       AND dashboard.org_id = {{ .Arg .Query.OrgID }}
     {{ if .Query.UseHistoryTable }}
+      {{ if .Query.UID }}
+      AND dashboard.uid = {{ .Arg .Query.UID }}
+      {{ end }}
       {{ if .Query.Version }}
-        AND dashboard_version.version = {{ .Arg .Query.Version }}
+      AND dashboard_version.version = {{ .Arg .Query.Version }}
       {{ else if .Query.LastID }}
-        AND dashboard_version.version < {{ .Arg .Query.LastID }}
+      AND dashboard_version.version < {{ .Arg .Query.LastID }}
       {{ end }}
     ORDER BY dashboard_version.version DESC
     {{ else }}
       {{ if .Query.UID }}
-        AND dashboard.uid = {{ .Arg .Query.UID }}
+      AND dashboard.uid = {{ .Arg .Query.UID }}
       {{ else if .Query.LastID }}
-        AND dashboard.id > {{ .Arg .Query.LastID }}
+      AND dashboard.id > {{ .Arg .Query.LastID }}
       {{ end }}
       {{ if .Query.GetTrash }}
-        AND dashboard.deleted IS NOT NULL
+      AND dashboard.deleted IS NOT NULL
       {{ else if .Query.LastID }}
-        AND dashboard.deleted IS NULL
+      AND dashboard.deleted IS NULL
       {{ end }}
     ORDER BY dashboard.id DESC
     {{ end }}

@@ -207,6 +207,46 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
+			sqlResourceHistoryGet: {
+				{
+					Name: "read object history",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+							Name:      "name",
+						},
+					},
+				},
+				{
+					Name: "read trash",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash: true,
+					},
+				},
+				{
+					Name: "read trash second page",
+					Data: &sqlGetHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "nn",
+							Group:     "gg",
+							Resource:  "rr",
+						},
+						Trash:   true,
+						StartRV: 123456,
+					},
+				},
+			},
+
 			sqlResourceVersionGet: {
 				{
 					Name: "single path",
@@ -314,6 +354,45 @@ func TestUnifiedStorageQueries(t *testing.T) {
 							Group:     "g",
 							Resource:  "r",
 						},
+					},
+				},
+			},
+			sqlResourceHistoryDelete: {
+				{
+					Name: "guid",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUID:        `xxxx`,
+					},
+				},
+			},
+			sqlMigratorGetDeletionMarkers: {
+				{
+					Name: "list",
+					Data: &sqlMigrationQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						MarkerQuery: `{"kind":"DeletedMarker"%`,
+					},
+				},
+			},
+			sqlMigratorGetValueFromRV: {
+				{
+					Name: "get",
+					Data: &sqlMigrationQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Group:       "ggg",
+						Resource:    "rrr",
+						RV:          1234,
+					},
+				},
+			},
+			sqlMigratorUpdateValueWithGUID: {
+				{
+					Name: "update",
+					Data: &sqlMigrationQueryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						GUID:        "ggggg",
+						Value:       "{new value}",
 					},
 				},
 			},

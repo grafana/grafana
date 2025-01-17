@@ -192,6 +192,16 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 		return 0, err
 	}
 
+	switch req.Source {
+	case resource.ListRequest_HISTORY:
+		query.GetHistory = true
+		query.UID = req.Options.Key.Name
+	case resource.ListRequest_TRASH:
+		query.GetTrash = true
+	case resource.ListRequest_STORE:
+		// normal
+	}
+
 	listRV, err := sql.GetResourceVersion(ctx, "dashboard", "updated")
 	if err != nil {
 		return 0, err
@@ -249,87 +259,6 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not yet (filter)")
 }
-
-/**
-func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	info, err := claims.ParseNamespace(req.Key.Namespace)
-	if err == nil {
-		err = isDashboardKey(req.Key, false)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := readContinueToken(req.NextPageToken)
-	if err != nil {
-		return nil, err
-	}
-	if token.orgId > 0 && token.orgId != info.OrgID {
-		return nil, fmt.Errorf("token and orgID mismatch")
-	}
-	limit := int(req.Limit)
-	if limit < 1 {
-		limit = 15
-	}
-	query := &DashboardQuery{
-		OrgID:  info.OrgID,
-		Limit:  limit + 1,
-		LastID: token.id,
-		UID:    req.Key.Name,
-	}
-	if req.ShowDeleted {
-		query.GetTrash = true
-	} else {
-		query.GetHistory = true
-	}
-
-	sql, err := a.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := a.getRows(ctx, sql, query)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-
-	list := &resource.HistoryResponse{}
-	for rows.Next() {
-		if rows.err != nil || rows.row == nil {
-			return list, err
-		}
-		row := rows.row
-
-		partial := &metav1.PartialObjectMetadata{
-			ObjectMeta: row.Dash.ObjectMeta,
-		}
-		partial.UID = "" // it is not useful/helpful/accurate and just confusing now
-
-		val, err := json.Marshal(partial)
-		if err != nil {
-			return list, err
-		}
-
-		if len(list.Items) >= limit {
-			// if query.Requirements.Folder != nil {
-			// 	row.token.folder = *query.Requirements.Folder
-			// }
-			row.token.id = getVersionFromRV(row.RV) // Use the version as the increment
-			list.NextPageToken = row.token.String() // will skip this one but start here next time
-			return list, err
-		}
-
-		list.Items = append(list.Items, &resource.ResourceMeta{
-			ResourceVersion:   row.RV,
-			PartialObjectMeta: val,
-			Size:              int32(len(rows.Value())),
-			Hash:              "??", // hash the full?
-		})
-	}
-	return list, err
-}
-	**/
 
 func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
 	return nil, fmt.Errorf("not implemented")
