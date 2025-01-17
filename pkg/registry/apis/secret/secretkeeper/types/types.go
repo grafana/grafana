@@ -1,4 +1,4 @@
-package secret
+package types
 
 import (
 	"context"
@@ -6,8 +6,17 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
+type KeeperType string
+
+const (
+	SQLKeeperType       KeeperType = "sql"
+	AWSKeeperType       KeeperType = "aws"
+	AzureKeeperType     KeeperType = "azure"
+	GCPKeeperType       KeeperType = "gcp"
+	HashiCorpKeeperType KeeperType = "hashicorp"
+)
+
 type Keeper interface {
-	// TODO: support either .Spec.Value (ExposedSecureValue) or .Spec.Ref (string) when Storing.
 	Store(ctx context.Context, exposedValueOrRef string) (ExternalID, error)
 	Expose(ctx context.Context, id ExternalID) (secretv0alpha1.ExposedSecureValue, error)
 	Delete(ctx context.Context, id ExternalID) error
