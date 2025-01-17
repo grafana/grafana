@@ -17,7 +17,7 @@ import { Tooltip } from '../Tooltip';
 type CommonProps = {
   /** Icon name */
   icon?: IconName | React.ReactNode;
-  /** Icon size */
+  /** Icon size, will be overridden if "size" is used */
   iconSize?: IconSize;
   /** Tooltip */
   tooltip?: string;
@@ -39,6 +39,7 @@ type CommonProps = {
   isHighlighted?: boolean;
   /**
    * Size of the button. If not defined it will use legacy fixed-sized options
+   * It will override size of the icon if provided
    */
   size?: ComponentSize;
 };
@@ -69,6 +70,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     },
     ref
   ) => {
+    iconSize = size || iconSize;
     const styles = useStyles2(getStyles, size);
 
     const buttonStyles = cx(
