@@ -18,9 +18,13 @@ export const HistoryDrawer = () => {
   const state = chrome.useState();
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.drawer, state.historyDocked && styles.dockedDrawer)}>
-      <HistoryHeader />
-      <HistoryWrapper />
+    <div className={cx(styles.historyDrawer, state.historyDocked && styles.historyDockedDrawer)}>
+      <div className={styles.historyDrawerHeader}>
+        <HistoryHeader />
+      </div>
+      <div className={styles.historyDrawerContent}>
+        <HistoryWrapper />
+      </div>
     </div>
   );
 };
@@ -37,7 +41,7 @@ export const HistoryHeader = () => {
     chrome.setHistoryDocked(!state.historyDocked);
   };
   return (
-    <div className={styles.header}>
+    <>
       <Text element="h6">{t('nav.history-container.drawer-tittle', 'History')}</Text>
       <Box justifyContent={'center'} display={'flex'}>
         <IconButton
@@ -59,13 +63,13 @@ export const HistoryHeader = () => {
           variant="secondary"
         />
       </Box>
-    </div>
+    </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    drawer: css({
+    historyDrawer: css({
       maxWidth: HISTORY_DRAWER_WIDTH,
       width: '100%',
       boxSizing: 'border-box',
@@ -81,9 +85,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(2),
     }),
-    dockedDrawer: css({
+    historyDockedDrawer: css({
       background: theme.colors.background.primary,
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       display: 'none',
@@ -93,7 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         display: 'block',
       },
     }),
-    header: css({
+    historyDrawerHeader: css({
       alignItems: 'center',
       display: 'flex',
       gap: theme.spacing(1),
@@ -101,6 +104,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingBottom: theme.spacing(2),
       height: TOP_BAR_LEVEL_HEIGHT,
       minHeight: TOP_BAR_LEVEL_HEIGHT,
+      padding: theme.spacing(2),
+    }),
+    historyDrawerContent: css({
+      padding: theme.spacing(2),
     }),
     dockedHistoryButton: css({
       display: 'none',
