@@ -23,7 +23,6 @@ import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ALL_OPTION_VALUE = '__GRAFANA_INTERNAL_MULTICOMBOBOX_ALL_OPTION__';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
@@ -60,11 +59,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       value: ALL_OPTION_VALUE,
     } as ComboboxOption<T>;
   }, [inputValue]);
-  const getOptionsToSet = useCallback(() => {
+
+  const baseItems = useMemo(() => {
     return isAsync ? [] : enableAllOption ? [allOptionItem, ...options] : options;
   }, [options, enableAllOption, allOptionItem, isAsync]);
-
-  const [baseItems, baseSetItems] = useState(getOptionsToSet());
 
   const items = useMemo(() => {
     const newItems = baseItems.filter(itemFilter(inputValue));
@@ -76,11 +74,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     return newItems;
   }, [baseItems, inputValue, enableAllOption, allOptionItem]);
   const [isOpen, setIsOpen] = useState(false);
-
-  // TODO: Improve this with async
-  useEffect(() => {
-    baseSetItems(getOptionsToSet());
-  }, [options, enableAllOption, allOptionItem, isAsync, getOptionsToSet]);
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
