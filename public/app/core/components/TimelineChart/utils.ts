@@ -172,7 +172,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     grid: { show: true },
   });
 
-  const yAxisWidth = frame.fields[0].config.custom.axisWidth;
+  const yAxisWidth = frame.fields[1].config.custom.axisWidth;
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
