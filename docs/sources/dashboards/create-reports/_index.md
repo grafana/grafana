@@ -147,7 +147,7 @@ The report creation process is multi-step, but you don't need to complete these 
 
 To create a report, follow these steps:
 
-1. Click **Dashboards > Reports** in the main menu.
+1. Click **Dashboards > Reporting** in the main menu.
 1. Click **+ Create a new report**.
 1. Complete the report steps, as needed; you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
    - [Select dashboard](#1-select-dashboard)
@@ -177,15 +177,11 @@ At this step, select the dashboard or dashboards on which the report is based, a
 
 #### Template variables
 
-Select the variable **Datasource** and **Instance** for the selected dashboard. This option is only displayed if the dashboard has variables.
+This option is only displayed if the dashboard has variables.
 
 You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables](ref:templates-and-variables) section.
 
 The query variables saved with a report might become out of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the **All** value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
-
-##### Reports with panels or rows set to repeat by a variable
-
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
 
 #### Time range
 
@@ -218,8 +214,8 @@ At this step, set the report formatting options. You can select multiple options
 
 If you selected the PDF format option, under the **Style the PDF** section, set the following options:
 
-- **Configure the report header** - Click the checkbox to select this option.
-- **Orientation** - Set the report orientation in **Portrait** or **Landscape**.
+- **Show template variables** - Click the checkbox to select this option.
+- **Orientation** - Set the report orientation in **Portrait** or **Landscape**. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
 - **Layout** - Select one of the following:
   - **Simple** - Renders each panel as full-width across the PDF. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
   - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
@@ -329,7 +325,7 @@ On the **Reports** page, you can view and manage your existing reports or create
 
 To edit a report, follow these steps:
 
-1. In the main menu, click **Dashboards > Reports**.
+1. In the main menu, click **Dashboards > Reporting**.
 1. Click the row of the report you want to update.
 1. Click the **Edit report** button in the top-right hand corner or click the **Edit** link for a specific section to go to that one directly.
 1. When you've finished making changes, click **Confirm** at the top of the screen to go to the last step.
@@ -339,7 +335,7 @@ To edit a report, follow these steps:
 
 You can pause and resume sending reports from the report list view. To do this, follow these steps:
 
-1. In the main menu, click **Dashboards > Reports**.
+1. In the main menu, click **Dashboards > Reporting**.
 1. On the row of the report you want to update, do one of the following:
 
    - Click the pause icon - The report won't be sent according to its schedule until it's resumed.
