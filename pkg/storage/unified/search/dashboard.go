@@ -189,6 +189,11 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 				Filterable: true,
 			},
 		},
+		{
+			Name:        DASHBOARD_LEGACY_ID,
+			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Description: "Deprecated legacy id of the dashboard",
+		},
 	})
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
@@ -267,6 +272,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 	// metadata name is the dashboard uid
 	summary.UID = obj.GetName()
+	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
 	doc.Title = summary.Title
@@ -310,11 +316,9 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	doc.Fields = map[string]any{
 		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
 		DASHBOARD_LINK_COUNT:     summary.LinkCount,
+		DASHBOARD_LEGACY_ID:      summary.ID,
 	}
 
-	if summary.ID > 0 {
-		doc.Fields[DASHBOARD_LEGACY_ID] = summary.ID
-	}
 	if len(panelTypes) > 0 {
 		sort.Strings(panelTypes)
 		doc.Fields[DASHBOARD_PANEL_TYPES] = panelTypes

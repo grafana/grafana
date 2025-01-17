@@ -52,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -179,11 +180,10 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 		total := int64(0)
 		for _, org := range orgs {
 			ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(org.ID))
-			dashs, err := dr.listDashboardsThroughK8s(ctx, org.ID)
+			orgDashboards, err := dr.CountDashboardsInOrg(ctx, org.ID)
 			if err != nil {
-				return u, err
+				return nil, err
 			}
-			orgDashboards := int64(len(dashs))
 			total += orgDashboards
 
 			tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
@@ -203,6 +203,28 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 	}
 
 	return dr.dashboardStore.Count(ctx, scopeParams)
+}
+
+func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		resp, err := dr.k8sclient.getSearcher().GetStats(ctx, &resource.ResourceStatsRequest{
+			Namespace: dr.k8sclient.getNamespace(orgID),
+			Kinds: []string{
+				v0alpha1.GROUP + "/" + v0alpha1.DashboardResourceInfo.GetName(),
+			},
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		if len(resp.Stats) != 1 {
+			return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+		}
+
+		return resp.Stats[0].Count, nil
+	}
+
+	return dr.dashboardStore.CountInOrg(ctx, orgID)
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
@@ -1215,6 +1237,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
 			finalResults[i] = dashboards.DashboardSearchProjection{
+				ID:        hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:       hit.Name,
 				OrgID:     query.OrgId,
 				Title:     hit.Title,
@@ -1980,7 +2003,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	for i, row := range result.Results.Rows {
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
-			if _, ok := excludedFields[col.Name]; ok {
+			if _, ok := excludedFields[col.Name]; !ok {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
 					return nil, err

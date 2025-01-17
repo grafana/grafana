@@ -56,7 +56,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
-        return res ? [res] : [];
+        return res
+          ? [{ ...res, refId: `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}` }]
+          : [];
       })
     ),
 };

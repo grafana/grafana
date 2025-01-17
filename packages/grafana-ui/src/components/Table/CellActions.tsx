@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import * as React from 'react';
 
 import { IconSize } from '../../types/icon';
@@ -6,7 +6,7 @@ import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip';
 
-import { TableCellInspector, TableCellInspectorMode } from './TableCellInspector';
+import { TableCellInspectorMode } from './TableCellInspector';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
@@ -20,9 +20,14 @@ interface CommonButtonProps {
   tooltipPlacement: TooltipPlacement;
 }
 
-export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded }: CellActionProps) {
-  const [isInspecting, setIsInspecting] = useState(false);
-
+export function CellActions({
+  field,
+  cell,
+  previewMode,
+  showFilters,
+  onCellFilterAdded,
+  setInspectCell,
+}: CellActionProps) {
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const commonButtonProps: CommonButtonProps = {
@@ -48,37 +53,27 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
   );
 
   return (
-    <>
-      <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
-        <Stack gap={0.5}>
-          {inspectEnabled && (
-            <IconButton
-              name="eye"
-              tooltip="Inspect value"
-              onClick={() => {
-                setIsInspecting(true);
-              }}
-              {...commonButtonProps}
-            />
-          )}
-          {showFilters && (
-            <IconButton name={'search-plus'} onClick={onFilterFor} tooltip="Filter for value" {...commonButtonProps} />
-          )}
-          {showFilters && (
-            <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
-          )}
-        </Stack>
-      </div>
-
-      {isInspecting && (
-        <TableCellInspector
-          mode={previewMode}
-          value={cell.value}
-          onDismiss={() => {
-            setIsInspecting(false);
-          }}
-        />
-      )}
-    </>
+    <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
+      <Stack gap={0.5}>
+        {inspectEnabled && (
+          <IconButton
+            name="eye"
+            tooltip="Inspect value"
+            onClick={() => {
+              if (setInspectCell) {
+                setInspectCell({ value: cell.value, mode: previewMode });
+              }
+            }}
+            {...commonButtonProps}
+          />
+        )}
+        {showFilters && (
+          <IconButton name={'search-plus'} onClick={onFilterFor} tooltip="Filter for value" {...commonButtonProps} />
+        )}
+        {showFilters && (
+          <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
+        )}
+      </Stack>
+    </div>
   );
 }

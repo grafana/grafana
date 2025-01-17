@@ -24,7 +24,7 @@ export const Basic: StoryFn<typeof TimeOfDayPicker> = (args) => {
   return (
     <TimeOfDayPicker
       {...args}
-      onChange={(newValue) => {
+      onChange={(newValue?) => {
         action('on selected')(newValue);
         updateArgs({ value: newValue });
       }}

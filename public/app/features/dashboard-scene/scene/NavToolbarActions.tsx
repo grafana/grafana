@@ -11,8 +11,10 @@ import {
   ButtonGroup,
   Dropdown,
   Icon,
+  InlineLabel,
   Menu,
   Stack,
+  Switch,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -54,7 +56,8 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const { isEditing, showHiddenElements, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } =
+    dashboard.useState();
 
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
@@ -213,6 +216,25 @@ export function ToolbarActions({ dashboard }: Props) {
         >
           Import
         </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'hidden-elements',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <InlineLabel key="toggle-hidden-elements" transparent={true} className={styles.hiddenElementsContainer}>
+          <Switch
+            value={showHiddenElements}
+            onChange={(evt) => {
+              evt.stopPropagation();
+              dashboard.onToggleHiddenElements();
+            }}
+            data-testid={selectors.components.PageToolbar.itemButton('toggle_hidden_elements')}
+          />
+          <span>
+            <Trans i18nKey="dashboard.toolbar.show-hidden-elements">Show hidden</Trans>
+          </span>
+        </InlineLabel>
       ),
     });
   } else {
@@ -741,6 +763,12 @@ interface ToolbarAction {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    hiddenElementsContainer: css({
+      display: 'flex',
+      padding: 0,
+      gap: theme.spacing(1),
+      whiteSpace: 'nowrap',
+    }),
     buttonWithExtraMargin: css({
       margin: theme.spacing(0, 0.5),
     }),

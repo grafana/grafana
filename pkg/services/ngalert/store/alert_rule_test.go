@@ -785,15 +785,6 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 			require.ErrorContains(t, err, "metric name for recording rule must be a valid utf8 string")
 		})
-
-		t.Run("invalid metric name", func(t *testing.T) {
-			invalidMetric := "with-dashes"
-			invalidRule := recordingRulesGen.Generate()
-			invalidRule.Record.Metric = invalidMetric
-			_, err := store.InsertAlertRules(context.Background(), []models.AlertRule{invalidRule})
-			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
-			require.ErrorContains(t, err, "metric name for recording rule must be a valid Prometheus metric name")
-		})
 	})
 
 	t.Run("clears fields that should not exist on recording rules", func(t *testing.T) {

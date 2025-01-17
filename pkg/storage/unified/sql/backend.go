@@ -34,9 +34,10 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider      db.DBProvider
-	Tracer          trace.Tracer
-	PollingInterval time.Duration
+	DBProvider        db.DBProvider
+	Tracer            trace.Tracer
+	PollingInterval   time.Duration
+	SkipDataMigration bool
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -53,12 +54,13 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		pollingInterval = defaultPollingInterval
 	}
 	return &backend{
-		done:            ctx.Done(),
-		cancel:          cancel,
-		log:             log.New("sql-resource-server"),
-		tracer:          opts.Tracer,
-		dbProvider:      opts.DBProvider,
-		pollingInterval: pollingInterval,
+		done:              ctx.Done(),
+		cancel:            cancel,
+		log:               log.New("sql-resource-server"),
+		tracer:            opts.Tracer,
+		dbProvider:        opts.DBProvider,
+		pollingInterval:   pollingInterval,
+		skipDataMigration: opts.SkipDataMigration,
 	}, nil
 }
 
@@ -74,9 +76,10 @@ type backend struct {
 	tracer trace.Tracer
 
 	// database
-	dbProvider db.DBProvider
-	db         db.DB
-	dialect    sqltemplate.Dialect
+	dbProvider        db.DBProvider
+	db                db.DB
+	dialect           sqltemplate.Dialect
+	skipDataMigration bool
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -101,6 +104,12 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.dialect = sqltemplate.DialectForDriver(driverName)
 	if b.dialect == nil {
 		return fmt.Errorf("no dialect for driver %q", driverName)
+	}
+
+	// Process any data manipulation migrations
+	err = b.runStartupDataMigrations(ctx)
+	if err != nil {
+		return err
 	}
 
 	return b.db.PingContext(ctx)
@@ -477,11 +486,15 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	_, span := b.tracer.Start(ctx, tracePrefix+"List")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return 0, fmt.Errorf("missing group or resource")
+	}
+
+	if req.Source != resource.ListRequest_STORE {
+		return b.getHistory(ctx, req, cb)
 	}
 
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
@@ -634,6 +647,48 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 			defer func() {
 				if err := rows.Close(); err != nil {
 					b.log.Warn("listAtRevision error closing rows", "error", err)
+				}
+			}()
+		}
+		if err != nil {
+			return err
+		}
+
+		iter.rows = rows
+		return cb(iter)
+	})
+	return iter.listRV, err
+}
+
+// listLatest fetches the resources from the resource table.
+func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	listReq := sqlGetHistoryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Key:         req.Options.Key,
+		Trash:       req.Source == resource.ListRequest_TRASH,
+	}
+
+	iter := &listIter{}
+	if req.NextPageToken != "" {
+		continueToken, err := GetContinueToken(req.NextPageToken)
+		if err != nil {
+			return 0, fmt.Errorf("get continue token: %w", err)
+		}
+		listReq.StartRV = continueToken.ResourceVersion
+	}
+
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
+		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		if err != nil {
+			return err
+		}
+
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		if rows != nil {
+			defer func() {
+				if err := rows.Close(); err != nil {
+					b.log.Warn("listLatest error closing rows", "error", err)
 				}
 			}()
 		}

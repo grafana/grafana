@@ -62,7 +62,10 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderMatchWords(t)
-	b, err := NewBackend(BackendOptions{DBProvider: dbp})
+	b, err := NewBackend(BackendOptions{
+		DBProvider:        dbp,
+		SkipDataMigration: true, // Calling migrations makes startup SQL calls (avoid the mock)
+	})
 	require.NoError(t, err)
 	require.NotNil(t, b)
 
@@ -109,7 +112,7 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, SkipDataMigration: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
@@ -166,7 +169,7 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, SkipDataMigration: true})
 		require.NoError(t, err)
 		require.NotNil(t, dbp.DB)
 
@@ -182,7 +185,7 @@ func TestBackend_IsHealthy(t *testing.T) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderWithPing(t)
-	b, err := NewBackend(BackendOptions{DBProvider: dbp})
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, SkipDataMigration: true})
 	require.NoError(t, err)
 	require.NotNil(t, dbp.DB)
 
