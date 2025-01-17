@@ -735,7 +735,6 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		for _, element := range libraryElements {
-
 			if element.FolderName == "" {
 				element.FolderName = dashboards.RootFolderName
 			}
