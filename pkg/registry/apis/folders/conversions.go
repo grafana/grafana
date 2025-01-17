@@ -3,7 +3,6 @@ package folders
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstructured.Unstructured, error) {
-	obj := unstructured.Unstructured{
+func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstructured.Unstructured, error) {
+	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
 				"title":       cmd.Title,
@@ -34,30 +33,36 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 	}
 	obj.SetName(cmd.UID)
 
-	if err := setParentUID(&obj, cmd.ParentUID); err != nil {
-		return unstructured.Unstructured{}, err
+	if err := setParentUID(obj, cmd.ParentUID); err != nil {
+		return &unstructured.Unstructured{}, err
 	}
 
 	return obj, nil
 }
 
-func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (unstructured.Unstructured, error) {
-	// #TODO add other fields ; do we support updating the UID/orgID?
-	obj := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]interface{}{
-				"title":       cmd.NewTitle,
-				"description": cmd.NewDescription,
-			},
-		},
+func LegacyUpdateCommandToUnstructured(obj *unstructured.Unstructured, cmd *folder.UpdateFolderCommand) (*unstructured.Unstructured, error) {
+	spec, ok := obj.Object["spec"].(map[string]any)
+	if !ok {
+		return &unstructured.Unstructured{}, fmt.Errorf("could not convert object to folder")
 	}
-	obj.SetName(cmd.UID)
+	if cmd.NewTitle != nil {
+		spec["title"] = cmd.NewTitle
+	}
+	if cmd.NewDescription != nil {
+		spec["description"] = cmd.NewDescription
+	}
+	if cmd.NewParentUID != nil {
+		if err := setParentUID(obj, *cmd.NewParentUID); err != nil {
+			return &unstructured.Unstructured{}, err
+		}
+	}
 
-	if cmd.NewParentUID == nil {
-		return obj, nil
-	}
-	if err := setParentUID(&obj, *cmd.NewParentUID); err != nil {
-		return unstructured.Unstructured{}, err
+	return obj, nil
+}
+
+func LegacyMoveCommandToUnstructured(obj *unstructured.Unstructured, cmd folder.MoveFolderCommand) (*unstructured.Unstructured, error) {
+	if err := setParentUID(obj, cmd.NewParentUID); err != nil {
+		return &unstructured.Unstructured{}, err
 	}
 
 	return obj, nil
@@ -74,10 +79,7 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 		return nil, ""
 	}
 
-	id, err := getLegacyID(meta)
-	if err != nil {
-		return nil, ""
-	}
+	id := meta.GetDeprecatedInternalID() // nolint:staticcheck
 
 	created, err := getCreated(meta)
 	if err != nil {
@@ -89,7 +91,14 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 	if created != nil {
 		// #TODO Fix this time format. The legacy time format seems to be along the lines of time.Now()
 		// which includes a part that represents a fraction of a second. Format should be "2024-09-12T15:37:41.09466+02:00"
-		createdTime = created.Local()
+		createdTime = (*created).UTC()
+	}
+
+	url := getURL(meta, title)
+
+	// RootFolder does not have URL
+	if uid == folder.RootFolder.UID {
+		url = ""
 	}
 
 	f := &folder.Folder{
@@ -98,7 +107,7 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 		ID:        id,
 		ParentUID: meta.GetFolder(),
 		// #TODO add created by field if necessary
-		URL: getURL(meta, title),
+		URL: url,
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
 		Created: createdTime,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
@@ -120,6 +129,10 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 	// folder.Folder expects user ID (int64).
 	return f, meta.GetCreatedBy()
 	// #TODO figure out about adding version, parents, orgID fields
+}
+
+func LegacyFolderToUnstructured(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
+	return convertToK8sResource(v, namespacer)
 }
 
 func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
@@ -144,6 +157,8 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 
 	meta.SetUpdatedTimestamp(&v.Updated)
 	if v.ID > 0 { // nolint:staticcheck
+		meta.SetDeprecatedInternalID(v.ID) // nolint:staticcheck
+
 		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 			Name:      "SQL",
 			Path:      fmt.Sprintf("%d", v.ID), // nolint:staticcheck
@@ -184,23 +199,6 @@ func setParentUID(u *unstructured.Unstructured, parentUid string) error {
 	return nil
 }
 
-func getLegacyID(meta utils.GrafanaMetaAccessor) (int64, error) {
-	var i int64
-
-	repo, err := meta.GetRepositoryInfo()
-	if err != nil {
-		return i, err
-	}
-
-	if repo != nil && repo.Name == "SQL" {
-		i, err = strconv.ParseInt(repo.Path, 10, 64)
-		if err != nil {
-			return i, err
-		}
-	}
-	return i, nil
-}
-
 func getURL(meta utils.GrafanaMetaAccessor, title string) string {
 	slug := slugify.Slugify(title)
 	uid := meta.GetName()
@@ -208,11 +206,8 @@ func getURL(meta utils.GrafanaMetaAccessor, title string) string {
 }
 
 func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
-	created, err := meta.GetRepositoryTimestamp()
-	if err != nil {
-		return nil, err
-	}
-	return created, nil
+	created := meta.GetCreationTimestamp().Time
+	return &created, nil
 }
 
 func GetParentTitles(fullPath string) ([]string, error) {

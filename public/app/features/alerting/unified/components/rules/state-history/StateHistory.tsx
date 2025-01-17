@@ -3,8 +3,8 @@ import { groupBy } from 'lodash';
 import { FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

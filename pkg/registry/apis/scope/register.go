@@ -157,11 +157,6 @@ func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return scope.GetOpenAPIDefinitions
 }
 
-// Register additional routes with the server
-func (b *ScopeAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
-}
-
 func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Grafana scopes"

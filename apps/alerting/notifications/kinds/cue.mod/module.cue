@@ -1,0 +1,1 @@
+module: "github.com/grafana/grafana/apps/alerting/notifications/kinds"

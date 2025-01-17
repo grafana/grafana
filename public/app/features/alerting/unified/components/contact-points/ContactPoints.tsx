@@ -15,7 +15,7 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types';
@@ -128,8 +128,11 @@ const ContactPointsTab = () => {
           )}
         </Stack>
       </Stack>
-      {error && <Alert title="Failed to fetch contact points">{stringifyErrorLike(error)}</Alert>}
-      {!error && <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />}
+      {error ? (
+        <Alert title="Failed to fetch contact points">{stringifyErrorLike(error)}</Alert>
+      ) : (
+        <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
+      )}
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
       {ExportDrawer}

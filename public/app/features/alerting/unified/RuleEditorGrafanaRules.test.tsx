@@ -5,13 +5,14 @@ import { screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
+import { captureRequests, serializeRequests } from './mocks/server/events';
 import { setupDataSources } from './testSetup/datasources';
-import { buildInfoResponse } from './testSetup/featureDiscovery';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -19,7 +20,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 jest.setTimeout(60 * 1000);
 
-const server = setupMswServer();
+setupMswServer();
 
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
@@ -42,19 +43,20 @@ describe('RuleEditor grafana managed rules', () => {
   });
 
   it('can create new grafana managed alert', async () => {
+    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
     const dataSources = {
       default: mockDataSource(
         {
           type: 'prometheus',
           name: 'Prom',
+          uid: PROMETHEUS_DATASOURCE_UID,
           isDefault: true,
         },
-        { alerting: false }
+        { alerting: true, module: 'core:plugin/prometheus' }
       ),
     };
 
     setupDataSources(dataSources.default);
-    mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
 
     const { user } = renderRuleEditor();
 
@@ -69,5 +71,8 @@ describe('RuleEditor grafana managed rules', () => {
     await user.click(ui.buttons.saveAndExit.get());
 
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
   });
 });

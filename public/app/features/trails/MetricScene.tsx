@@ -18,13 +18,13 @@ import { getExploreUrl } from '../../core/utils/explore';
 
 import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
-import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { buildLabelBreakdownActionScene } from './Breakdown/LabelBreakdownScene';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
 import { buildRelatedLogsScene } from './RelatedLogs/RelatedLogsScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
+import { getAutoQueriesForMetric } from './autoQuery/getAutoQueriesForMetric';
+import { AutoQueryDef, AutoQueryInfo } from './autoQuery/types';
 import { reportExploreMetrics } from './interactions';
 import {
   ActionViewDefinition,
@@ -44,6 +44,7 @@ const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLog
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
   metric: string;
+  nativeHistogram?: boolean;
   actionView?: string;
 
   autoQuery: AutoQueryInfo;
@@ -54,7 +55,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['actionView'] });
 
   public constructor(state: MakeOptional<MetricSceneState, 'body' | 'autoQuery'>) {
-    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric);
+    const autoQuery = state.autoQuery ?? getAutoQueriesForMetric(state.metric, state.nativeHistogram);
     super({
       $variables: state.$variables ?? getVariableSet(state.metric),
       body: state.body ?? new MetricGraphScene({}),

@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Template notifications
-weight: 430
+weight: 450
 refs:
   template-annotations-and-labels:
     - pattern: /docs/grafana/

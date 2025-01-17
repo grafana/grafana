@@ -577,6 +577,10 @@ export type TimelineValueAlignment = ('center' | 'left' | 'right');
  */
 export interface VizTextDisplayOptions {
   /**
+   * Explicit percent text size
+   */
+  percentSize?: number;
+  /**
    * Explicit title text size
    */
   titleSize?: number;
@@ -675,6 +679,7 @@ export enum BarGaugeSizing {
  * TODO docs
  */
 export interface VizTooltipOptions {
+  hideZeros?: boolean;
   maxHeight?: number;
   maxWidth?: number;
   mode: TooltipDisplayMode;

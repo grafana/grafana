@@ -17,7 +17,7 @@ import {
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
+import { DataSourceSrv, GetDataSourceListFilters, RuntimeDataSourceRegistration, config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
@@ -416,7 +416,7 @@ class MockDataSourceApi extends DataSourceApi {
   }
 }
 
-// TODO This should be eventually moved to public/app/features/alerting/unified/testSetup/datasources.ts
+/** @deprecated use `setupDatasources` instead */
 export class MockDataSourceSrv implements DataSourceSrv {
   datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore
@@ -450,6 +450,8 @@ export class MockDataSourceSrv implements DataSourceSrv {
       this.datasources[dsSettings.uid] = new MockDataSourceApi(dsSettings);
     }
   }
+
+  registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void {}
 
   get(name?: string | null | DataSourceRef, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     return DatasourceSrv.prototype.get.call(this, name, scopedVars);
