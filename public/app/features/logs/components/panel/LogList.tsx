@@ -14,7 +14,9 @@ interface Props {
   containerElement: HTMLDivElement | null;
   eventBus: EventBus;
   forceEscape?: boolean;
+  showTime: boolean;
   sortOrder: LogsSortOrder;
+  timeZone: string;
   wrapLogMessage: boolean;
 }
 
@@ -23,7 +25,9 @@ export const LogList = ({
   logs,
   eventBus,
   forceEscape = false,
+  showTime,
   sortOrder,
+  timeZone,
   wrapLogMessage,
 }: Props) => {
   const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
@@ -46,10 +50,10 @@ export const LogList = ({
   }, [eventBus, processedLogs.length]);
 
   useEffect(() => {
-    setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape, order: sortOrder }));
+    setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone }));
     listRef.current?.resetAfterIndex(0);
     listRef.current?.scrollTo(0);
-  }, [forceEscape, logs, sortOrder, wrapLogMessage]);
+  }, [forceEscape, logs, sortOrder, timeZone, wrapLogMessage]);
 
   useLayoutEffect(() => {
     const handleResize = () => listRef.current?.resetAfterIndex(0);
@@ -75,13 +79,14 @@ export const LogList = ({
         <LogLine
           index={index}
           log={processedLogs[index]}
+          showTime={showTime}
           style={style}
           wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
       );
     },
-    [handleOverflow, processedLogs, wrapLogMessage]
+    [handleOverflow, processedLogs, showTime, wrapLogMessage]
   );
 
   const height = window.innerHeight * 0.75;
@@ -95,7 +100,7 @@ export const LogList = ({
     <VariableSizeList
       height={height}
       itemCount={processedLogs.length}
-      itemSize={getLogLineSize.bind(null, processedLogs, containerElement, theme, wrapLogMessage)}
+      itemSize={getLogLineSize.bind(null, processedLogs, containerElement, theme, { wrap: wrapLogMessage, showTime })}
       itemKey={(index: number) => processedLogs[index].uid}
       layout="vertical"
       ref={listRef}
