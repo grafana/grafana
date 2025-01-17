@@ -175,7 +175,7 @@ func overlayFake() (map[string]load.Source, error) {
 			return nil
 		}
 
-		f, err := os.ReadFile(path)
+		f, err := os.ReadFile(filepath.Clean(path))
 		if err != nil {
 			return err
 		}
