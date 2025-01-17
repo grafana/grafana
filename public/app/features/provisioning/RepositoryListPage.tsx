@@ -1,9 +1,6 @@
 import { ReactNode, useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
 import {
-  Badge,
-  BadgeColor,
   Card,
   EmptySearchResult,
   EmptyState,
@@ -17,6 +14,8 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
+import { SetupWarnings } from './SetupWarnings';
+import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
@@ -28,6 +27,7 @@ export default function RepositoryListPage() {
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
+        <SetupWarnings />
         <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>
@@ -106,7 +106,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title} <StatusBadge repo={item} name={name} />
+                    {item.spec?.title} <StatusBadge state={item.status?.sync?.state} name={name} />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>
@@ -154,57 +154,4 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
     return `/dashboards/f/${repo.spec?.folder}`;
   }
   return '/dashboards';
-}
-
-interface StatusBadgeProps {
-  repo: Repository;
-  name: string;
-}
-function StatusBadge({ repo, name }: StatusBadgeProps) {
-  const state = repo.status?.sync?.state ?? '';
-
-  let tooltip: string | undefined = undefined;
-  let color: BadgeColor = 'purple';
-  let text = 'Unknown';
-  let icon: IconName = 'exclamation-triangle';
-  switch (state) {
-    case 'success':
-      icon = 'check';
-      text = 'In sync';
-      color = 'green';
-      break;
-    case null:
-    case undefined:
-    case '':
-      color = 'orange';
-      text = 'Pending';
-      icon = 'spinner';
-      tooltip = 'Waiting for health check to run';
-      break;
-    case 'working':
-    case 'pending':
-      color = 'orange';
-      text = 'Syncing';
-      icon = 'spinner';
-      break;
-    case 'error':
-      color = 'red';
-      text = 'Error';
-      icon = 'exclamation-triangle';
-      break;
-    default:
-      break;
-  }
-  return (
-    <Badge
-      color={color}
-      icon={icon}
-      text={text}
-      style={{ cursor: 'pointer' }}
-      tooltip={tooltip}
-      onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${name}/?tab=health`);
-      }}
-    />
-  );
 }
