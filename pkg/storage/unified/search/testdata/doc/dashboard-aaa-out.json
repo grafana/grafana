@@ -16,6 +16,7 @@
     "c"
   ],
   "labels": {
+    "grafana.app/deprecatedInternalID": "141",
     "host": "abc",
     "region": "xyz"
   },
