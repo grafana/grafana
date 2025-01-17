@@ -1,5 +1,5 @@
 import { UrlQueryMap } from '@grafana/data';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
