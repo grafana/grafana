@@ -1,14 +1,17 @@
 import { useForm } from 'react-hook-form';
-import { connect, ConnectedProps } from 'react-redux';
+import { ConnectedProps, connect } from 'react-redux';
 
-import { Input, Field, Button, FieldSet, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Input, Stack } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Team } from 'app/types';
 
+
 import { updateTeam } from './state/actions';
+
+
 
 const mapDispatchToProps = {
   updateTeam,
@@ -75,7 +78,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
             <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
           </Field>
           <Button type="submit" disabled={!canWriteTeamSettings}>
-            Update
+            Save
           </Button>
         </FieldSet>
       </form>
