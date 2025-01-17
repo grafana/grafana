@@ -1,4 +1,4 @@
-import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
+import { BaseQueryFn, createApi, QueryReturnValue } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
@@ -22,7 +22,7 @@ import {
 
 import { t } from '../../../core/internationalization';
 import { dispatch } from '../../../store/store';
-import { provisioningAPI, baseAPI } from '../../provisioning/api';
+import { provisioningAPI, RepositoryList } from '../../provisioning/api';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -109,30 +109,36 @@ export const browseDashboardsAPI = createApi({
     //List folders with repository information, using queryFn
     listFoldersWithRepository: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
-      queryFn: async ({ parentUid, limit, page, permission }, queryApi, extraOptions, baseQuery) => {
-        const folders = await baseQuery({
+      queryFn: async (
+        { parentUid, limit, page, permission },
+        queryApi,
+        extraOptions,
+        baseQuery
+      ): Promise<{ data: FolderListItemDTO[] }> => {
+        const folders = (await baseQuery({
           url: '/folders',
           params: { parentUid, limit, page, permission },
-        });
-        console.log('f', folders);
+        })) as QueryReturnValue<FolderListItemDTO[], unknown, {}>;
 
-        const repositories = await dispatch(provisioningAPI.endpoints.listRepository.initiate({})).unwrap();
-        console.log('repos', repositories);
-
-        if (!folders.data?.length) {
-          return [];
+        if (folders.error || !folders.data?.length) {
+          return { data: [] };
         }
 
-        if (!repositories.data?.items?.length) {
+        const repositories: RepositoryList = await dispatch(
+          provisioningAPI.endpoints.listRepository.initiate({})
+        ).unwrap();
+
+        if (!repositories.items?.length) {
           return folders;
         }
+
         return {
           data: folders.data.map((folder) => {
             const repository = repositories.items?.find((repo) => repo.spec?.folder === folder.uid);
             if (repository) {
               return {
                 ...folder,
-                repository: repository.metadata?.name,
+                repository,
               };
             }
 
@@ -145,7 +151,35 @@ export const browseDashboardsAPI = createApi({
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
-      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+      queryFn: async (folderUID, queryApi, extraOptions, baseQuery): Promise<{ data: FolderDTO }> => {
+        const folder = (await baseQuery({
+          url: `/folders/${folderUID}`,
+          params: { accesscontrol: true },
+        })) as QueryReturnValue<FolderDTO, unknown, {}>;
+
+        if (folder.error || !folder.data) {
+          return { data: {} as FolderDTO };
+        }
+
+        const repositories: RepositoryList = await dispatch(
+          provisioningAPI.endpoints.listRepository.initiate({})
+        ).unwrap();
+
+        if (!repositories.items?.length) {
+          return folder;
+        }
+
+        const repository = repositories.items?.find((repo) => repo.spec?.folder === folder.data?.uid);
+        if (repository) {
+          return {
+            data: {
+              ...folder.data,
+              repository,
+            },
+          };
+        }
+        return folder;
+      },
     }),
 
     // create a new folder

@@ -1,21 +1,18 @@
 import { Icon, IconName, Text } from '@grafana/ui';
-import { RepositorySpec, selectRepoByName } from 'app/features/provisioning/api';
-import { useSelector } from 'app/types';
+import { Repository, RepositorySpec } from 'app/features/provisioning/api';
 
 export interface Props {
-  name?: string;
+  repo?: Repository;
 }
 
-export function FolderRepo({ name }: Props) {
-  if (!name) {
+export function FolderRepo({ repo }: Props) {
+  if (!repo) {
     return null;
   }
-  return <FolderRepoContent name={name} />;
+  return <FolderRepoContent repo={repo} />;
 }
 
-function FolderRepoContent({ name }: Required<Props>) {
-  const repo = useSelector((state) => selectRepoByName(state, name));
-
+function FolderRepoContent({ repo }: Required<Props>) {
   if (!repo || !repo.spec) {
     return null;
   }
@@ -37,7 +34,7 @@ function getRepoDetails(spec: RepositorySpec): [string, IconName] {
     case 'local':
       return [spec.local?.path!, 'file-blank'];
     case 's3':
-      return [spec.s3?.bucket!, 'cloud'];
+      return [spec.local?.path!, 'cloud'];
     default:
       return ['', 'question-circle'];
   }
