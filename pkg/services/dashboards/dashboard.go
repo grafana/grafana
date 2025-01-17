@@ -36,6 +36,7 @@ type DashboardService interface {
 	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
+	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -82,6 +83,7 @@ type Store interface {
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
+	CountInOrg(ctx context.Context, orgID int64) (int64, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
