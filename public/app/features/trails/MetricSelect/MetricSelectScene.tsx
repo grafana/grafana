@@ -571,6 +571,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                 },
                 ...Array.from(rootGroup?.groups.keys() ?? []).map((g) => ({ label: `${g}_`, value: g })),
               ]}
+              className="explore-metrics-metric-prefix-select"
             />
           </Field>
           {!metric && hasOtelResources && (
