@@ -45,7 +45,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       shouldApply: (f) => f.type !== FieldType.time && f.type !== FieldType.string,
     });
 
-  addYAxisWidth(builder);
+  addAxisWidth(builder);
 
   builder
     .addRadio({
@@ -201,11 +201,8 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
   );
 };
 
-/**
- * @internal
- */
-
-export function addYAxisWidth(builder: FieldConfigEditorBuilder<AxisConfig>) {
+/** @internal */
+export function addAxisWidth(builder: FieldConfigEditorBuilder<AxisConfig>) {
   builder.addNumberInput({
     path: 'axisWidth',
     name: 'Width',

@@ -75,7 +75,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           settings: { isTime: true },
         });
 
-      commonOptionsBuilder.addYAxisWidth(builder);
+      commonOptionsBuilder.addAxisWidth(builder);
       commonOptionsBuilder.addHideFrom(builder);
     },
   })

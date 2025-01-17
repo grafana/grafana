@@ -42,7 +42,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         });
 
       commonOptionsBuilder.addHideFrom(builder);
-      commonOptionsBuilder.addYAxisWidth(builder);
+      commonOptionsBuilder.addAxisWidth(builder);
     },
   })
   .setPanelOptions((builder) => {
