@@ -12,7 +12,7 @@ type PlayliststatusOperatorState struct {
 	// descriptiveState is an optional more descriptive state field which has no requirements on format
 	DescriptiveState *string `json:"descriptiveState,omitempty"`
 	// details contains any extra information that is operator-specific
-	Details map[string]any `json:"details,omitempty"`
+	Details map[string]interface{} `json:"details,omitempty"`
 }
 
 // NewPlayliststatusOperatorState creates a new PlayliststatusOperatorState object.
@@ -26,7 +26,7 @@ type PlaylistStatus struct {
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]PlayliststatusOperatorState `json:"operatorStates,omitempty"`
 	// additionalFields is reserved for future use
-	AdditionalFields map[string]any `json:"additionalFields,omitempty"`
+	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }
 
 // NewPlaylistStatus creates a new PlaylistStatus object.
