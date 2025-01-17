@@ -4,6 +4,7 @@ import (
 	context "context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -30,6 +31,7 @@ type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
 	RepositoryIndexServer
+	ResourceStoreAdminServer
 	BlobStoreServer
 	DiagnosticsServer
 }
@@ -643,6 +645,55 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		rsp.Error = AsErrorResult(err)
 	}
 	return rsp, nil
+}
+
+// BatchWrite implements ResourceServer.
+// All requests must be to the same NAMESPACE/GROUP/RESOURCE
+func (s *server) BatchWrite(stream ResourceStoreAdmin_BatchWriteServer) error {
+	ctx := stream.Context()
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		return stream.SendAndClose(&BatchWriteResponse{
+			Error: &ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			},
+		})
+	}
+
+	rsp := &BatchWriteResponse{}
+	returnError := func(k *ResourceKey, msg string, err error) error {
+		rsp.Error = &ErrorResult{
+			Code:    http.StatusBadRequest,
+			Message: msg,
+			Reason:  fmt.Sprintf("Key: %s // Error: %s", k.SearchID(), err),
+		}
+		return stream.SendAndClose(rsp)
+	}
+
+	for {
+		req, err := stream.Recv()
+		if err != nil {
+			if err != io.EOF {
+				return err
+			}
+			return stream.SendAndClose(rsp)
+		}
+
+		obj := &unstructured.Unstructured{}
+		err = obj.UnmarshalJSON(req.Value)
+		if err != nil {
+			return returnError(req.Key, "Error reading JSON", err)
+		}
+		if obj.GetUID() == "" {
+			returnError(req.Key, "Missing UID", nil)
+		}
+		if obj.GetResourceVersion() != "" {
+			returnError(req.Key, "Resource version should not be set", nil)
+		}
+
+		fmt.Printf("WRITE: %s\n", string(req.Value))
+	}
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {

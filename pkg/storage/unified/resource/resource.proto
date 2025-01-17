@@ -310,35 +310,22 @@ message WatchEvent {
 }
 
 message BatchWriteRequest {
-  // Matches WatchEvent (without BOOKMARK+ERROR)
-  enum Type {
-    UNKNOWN = 0;
-    ADDED = 1;
-    MODIFIED = 2;
-    DELETED = 3;
-  }
-
   // NOTE everything in the same batch must share the same Namespace/Group/Resource
   ResourceKey key = 1;
 
-  // Timestamp the event was sent
-  Type type = 2;
-
-  // The resource JSON.
+  // The value will include 
   bytes value = 3;
 
-  // The value is from an "old" version it should not be considered current
-  bool history = 5;
+  // Hint that a new version will be written on-top of this
+  bool is_history = 5;
 }
 
 message BatchWriteResponse {
   // Error details
   ErrorResult error = 1;
 
+  // The number of items written
   int64 count = 2;
-
-  // Timestamp the event was sent
-  string hash = 3;
 }
 
 

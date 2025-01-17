@@ -386,6 +386,137 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	ResourceStoreAdmin_BatchWrite_FullMethodName = "/resource.ResourceStoreAdmin/BatchWrite"
+)
+
+// ResourceStoreAdminClient is the client API for ResourceStoreAdmin service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Admin access to the resource store
+type ResourceStoreAdminClient interface {
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	BatchWrite(ctx context.Context, opts ...grpc.CallOption) (ResourceStoreAdmin_BatchWriteClient, error)
+}
+
+type resourceStoreAdminClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewResourceStoreAdminClient(cc grpc.ClientConnInterface) ResourceStoreAdminClient {
+	return &resourceStoreAdminClient{cc}
+}
+
+func (c *resourceStoreAdminClient) BatchWrite(ctx context.Context, opts ...grpc.CallOption) (ResourceStoreAdmin_BatchWriteClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ResourceStoreAdmin_ServiceDesc.Streams[0], ResourceStoreAdmin_BatchWrite_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &resourceStoreAdminBatchWriteClient{ClientStream: stream}
+	return x, nil
+}
+
+type ResourceStoreAdmin_BatchWriteClient interface {
+	Send(*BatchWriteRequest) error
+	CloseAndRecv() (*BatchWriteResponse, error)
+	grpc.ClientStream
+}
+
+type resourceStoreAdminBatchWriteClient struct {
+	grpc.ClientStream
+}
+
+func (x *resourceStoreAdminBatchWriteClient) Send(m *BatchWriteRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *resourceStoreAdminBatchWriteClient) CloseAndRecv() (*BatchWriteResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(BatchWriteResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ResourceStoreAdminServer is the server API for ResourceStoreAdmin service.
+// All implementations should embed UnimplementedResourceStoreAdminServer
+// for forward compatibility
+//
+// Admin access to the resource store
+type ResourceStoreAdminServer interface {
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	BatchWrite(ResourceStoreAdmin_BatchWriteServer) error
+}
+
+// UnimplementedResourceStoreAdminServer should be embedded to have forward compatible implementations.
+type UnimplementedResourceStoreAdminServer struct {
+}
+
+func (UnimplementedResourceStoreAdminServer) BatchWrite(ResourceStoreAdmin_BatchWriteServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWrite not implemented")
+}
+
+// UnsafeResourceStoreAdminServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ResourceStoreAdminServer will
+// result in compilation errors.
+type UnsafeResourceStoreAdminServer interface {
+	mustEmbedUnimplementedResourceStoreAdminServer()
+}
+
+func RegisterResourceStoreAdminServer(s grpc.ServiceRegistrar, srv ResourceStoreAdminServer) {
+	s.RegisterService(&ResourceStoreAdmin_ServiceDesc, srv)
+}
+
+func _ResourceStoreAdmin_BatchWrite_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ResourceStoreAdminServer).BatchWrite(&resourceStoreAdminBatchWriteServer{ServerStream: stream})
+}
+
+type ResourceStoreAdmin_BatchWriteServer interface {
+	SendAndClose(*BatchWriteResponse) error
+	Recv() (*BatchWriteRequest, error)
+	grpc.ServerStream
+}
+
+type resourceStoreAdminBatchWriteServer struct {
+	grpc.ServerStream
+}
+
+func (x *resourceStoreAdminBatchWriteServer) SendAndClose(m *BatchWriteResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *resourceStoreAdminBatchWriteServer) Recv() (*BatchWriteRequest, error) {
+	m := new(BatchWriteRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// ResourceStoreAdmin_ServiceDesc is the grpc.ServiceDesc for ResourceStoreAdmin service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ResourceStoreAdmin_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.ResourceStoreAdmin",
+	HandlerType: (*ResourceStoreAdminServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "BatchWrite",
+			Handler:       _ResourceStoreAdmin_BatchWrite_Handler,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "resource.proto",
+}
+
+const (
 	ResourceIndex_Search_FullMethodName   = "/resource.ResourceIndex/Search"
 	ResourceIndex_GetStats_FullMethodName = "/resource.ResourceIndex/GetStats"
 )
