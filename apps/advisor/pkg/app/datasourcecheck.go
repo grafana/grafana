@@ -14,45 +14,31 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// TODO: This should be defined in cue
-type CheckError struct {
-	Type   string `json:"type"`   // Investigation or Action recommended
-	Reason string `json:"reason"` // Why the check is failing
-	Action string `json:"action"` // Call to action
-}
+type datasourceCheckRegisterer struct{}
 
-type CheckStatus struct {
-	Count  int          `json:"count"`  // Number of Datasources analyzed
-	Errors []CheckError `json:"errors"` // List of errors found
-}
-
-type checkRegisterer func(cfg *AdvisorConfig) Check
-
-type Check interface {
-	Run(ctx context.Context, obj resource.Object) (*CheckStatus, error)
-	Updated(ctx context.Context, obj resource.Object) (bool, error)
-	Kind() resource.Kind
-}
-
-func NewDatasourceCheck(cfg *AdvisorConfig) Check {
-	return &DatasourceCheckImpl{
+func (r *datasourceCheckRegisterer) New(cfg *AdvisorConfig) check {
+	return &datasourceCheckImpl{
 		datasourceSvc:         cfg.DatasourceSvc,
 		pluginContextProvider: cfg.PluginContextProvider,
 		pluginClient:          cfg.PluginClient,
 	}
 }
 
-func init() {
-	registerChecks = append(registerChecks, NewDatasourceCheck)
+func (r *datasourceCheckRegisterer) Kind() resource.Kind {
+	return advisor.DatasourceCheckKind()
 }
 
-type DatasourceCheckImpl struct {
+func init() {
+	registerChecks = append(registerChecks, &datasourceCheckRegisterer{})
+}
+
+type datasourceCheckImpl struct {
 	datasourceSvc         datasources.DataSourceService
 	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
 }
 
-func (c *DatasourceCheckImpl) Run(ctx context.Context, obj resource.Object) (*CheckStatus, error) {
+func (c *datasourceCheckImpl) Run(ctx context.Context, obj resource.Object) (resource.Object, error) {
 	// Optionally read the check input encoded in the object
 	d, ok := obj.(*advisor.DatasourceCheck)
 	if !ok {
@@ -65,13 +51,13 @@ func (c *DatasourceCheckImpl) Run(ctx context.Context, obj resource.Object) (*Ch
 		return nil, err
 	}
 
-	dsErrs := []CheckError{}
+	dsErrs := []advisor.DatasourceCheckV0alpha1StatusReportErrors{}
 	for _, ds := range dss {
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, CheckError{
-				Type:   "Investigation recommended",
+			dsErrs = append(dsErrs, advisor.DatasourceCheckV0alpha1StatusReportErrors{
+				Type:   advisor.DatasourceCheckStatusTypeInvestigation,
 				Reason: fmt.Sprintf("Invalid UID: %s", ds.UID),
 				Action: "Change UID",
 			})
@@ -107,33 +93,20 @@ func (c *DatasourceCheckImpl) Run(ctx context.Context, obj resource.Object) (*Ch
 		}
 
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, CheckError{
-				Type:   "Action recommended",
+			dsErrs = append(dsErrs, advisor.DatasourceCheckV0alpha1StatusReportErrors{
+				Type:   advisor.DatasourceCheckStatusTypeAction,
 				Reason: fmt.Sprintf("Health check failed: %s", ds.Name),
 				Action: "Check datasource",
 			})
 		}
 	}
 
-	return &CheckStatus{
-		Errors: dsErrs,
-		Count:  len(dss),
-	}, nil
-}
-
-func (c *DatasourceCheckImpl) Updated(ctx context.Context, obj resource.Object) (bool, error) {
-	// Optionally read the check input encoded in the object
-	d, ok := obj.(*advisor.DatasourceCheck)
-	if !ok {
-		return false, fmt.Errorf("invalid object type")
+	// Store result in the object
+	d.DatasourceCheckStatus = advisor.DatasourceCheckStatus{
+		Report: advisor.DatasourceCheckV0alpha1StatusReport{
+			Count:  int64(len(dss)),
+			Errors: dsErrs,
+		},
 	}
-	if d.DatasourceCheckStatus.AdditionalFields != nil {
-		// Already processed
-		return true, nil
-	}
-	return false, nil
-}
-
-func (c *DatasourceCheckImpl) Kind() resource.Kind {
-	return advisor.DatasourceCheckKind()
+	return d, nil
 }

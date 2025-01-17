@@ -11,15 +11,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-func NewPluginCheck(cfg *AdvisorConfig) Check {
+func init() {
+	registerChecks = append(registerChecks, &pluginCheckRegisterer{})
+}
+
+type pluginCheckRegisterer struct{}
+
+func (p *pluginCheckRegisterer) New(cfg *AdvisorConfig) check {
 	return &PluginCheckImpl{
 		pluginStore: cfg.PluginStore,
 		pluginRepo:  cfg.PluginRepo,
 	}
 }
 
-func init() {
-	registerChecks = append(registerChecks, NewPluginCheck)
+func (p *pluginCheckRegisterer) Kind() resource.Kind {
+	return advisor.PluginCheckKind()
 }
 
 type PluginCheckImpl struct {
@@ -27,10 +33,10 @@ type PluginCheckImpl struct {
 	pluginRepo  repo.Service
 }
 
-func (c *PluginCheckImpl) Run(ctx context.Context, obj resource.Object) (*CheckStatus, error) {
+func (c *PluginCheckImpl) Run(ctx context.Context, obj resource.Object) (resource.Object, error) {
 	ps := c.pluginStore.Plugins(ctx)
 
-	dsErrs := []CheckError{}
+	dsErrs := []advisor.PluginCheckV0alpha1StatusReportErrors{}
 	for _, p := range ps {
 		// Check if plugin is deprecated
 		i, err := c.pluginRepo.PluginInfo(ctx, p.ID)
@@ -38,8 +44,8 @@ func (c *PluginCheckImpl) Run(ctx context.Context, obj resource.Object) (*CheckS
 			continue
 		}
 		if i.Status == "deprecated" {
-			dsErrs = append(dsErrs, CheckError{
-				Type:   "Investigation recommended",
+			dsErrs = append(dsErrs, advisor.PluginCheckV0alpha1StatusReportErrors{
+				Type:   advisor.PluginCheckStatusTypeInvestigation,
 				Reason: fmt.Sprintf("Plugin deprecated: %s", p.ID),
 				Action: "Look for alternatives",
 			})
@@ -51,33 +57,24 @@ func (c *PluginCheckImpl) Run(ctx context.Context, obj resource.Object) (*CheckS
 			continue
 		}
 		if info.Version != p.Info.Version { // TODO: Improve check for newer version
-			dsErrs = append(dsErrs, CheckError{
-				Type:   "Action recommended",
+			dsErrs = append(dsErrs, advisor.PluginCheckV0alpha1StatusReportErrors{
+				Type:   advisor.PluginCheckStatusTypeAction,
 				Reason: fmt.Sprintf("Newer version available: %s", p.ID),
 				Action: "Update plugin",
 			})
 		}
 	}
 
-	return &CheckStatus{
-		Errors: dsErrs,
-		Count:  len(ps),
-	}, nil
-}
-
-func (c *PluginCheckImpl) Updated(ctx context.Context, obj resource.Object) (bool, error) {
-	// Optionally read the check input encoded in the object
+	// Store result in the object
 	d, ok := obj.(*advisor.PluginCheck)
 	if !ok {
-		return false, fmt.Errorf("invalid object type")
+		return nil, fmt.Errorf("invalid object type")
 	}
-	if d.PluginCheckStatus.AdditionalFields != nil {
-		// Already processed
-		return true, nil
+	d.PluginCheckStatus = advisor.PluginCheckStatus{
+		Report: advisor.PluginCheckV0alpha1StatusReport{
+			Count:  int64(len(ps)),
+			Errors: dsErrs,
+		},
 	}
-	return false, nil
-}
-
-func (c *PluginCheckImpl) Kind() resource.Kind {
-	return advisor.PluginCheckKind()
+	return d, nil
 }

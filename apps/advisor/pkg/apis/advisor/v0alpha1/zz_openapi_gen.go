@@ -12,20 +12,20 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheck":                    schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckItem":                schema_pkg_apis_advisor_v0alpha1_DatasourceCheckItem(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckList":                schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckOperatorState":       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckOperatorState(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec":                schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus":              schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState": schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheck":                        schema_pkg_apis_advisor_v0alpha1_PluginCheck(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckItem":                    schema_pkg_apis_advisor_v0alpha1_PluginCheckItem(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckList":                    schema_pkg_apis_advisor_v0alpha1_PluginCheckList(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckOperatorState":           schema_pkg_apis_advisor_v0alpha1_PluginCheckOperatorState(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckSpec":                    schema_pkg_apis_advisor_v0alpha1_PluginCheckSpec(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckStatus":                  schema_pkg_apis_advisor_v0alpha1_PluginCheckStatus(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckstatusOperatorState":     schema_pkg_apis_advisor_v0alpha1_PluginCheckstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheck":                           schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckList":                       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec":                       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus":                     schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport":       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors": schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReportErrors(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState":        schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheck":                               schema_pkg_apis_advisor_v0alpha1_PluginCheck(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckList":                           schema_pkg_apis_advisor_v0alpha1_PluginCheckList(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckSpec":                           schema_pkg_apis_advisor_v0alpha1_PluginCheckSpec(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckStatus":                         schema_pkg_apis_advisor_v0alpha1_PluginCheckStatus(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckV0alpha1StatusReport":           schema_pkg_apis_advisor_v0alpha1_PluginCheckV0alpha1StatusReport(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckV0alpha1StatusReportErrors":     schema_pkg_apis_advisor_v0alpha1_PluginCheckV0alpha1StatusReportErrors(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckstatusOperatorState":            schema_pkg_apis_advisor_v0alpha1_PluginCheckstatusOperatorState(ref),
 	}
 }
 
@@ -73,36 +73,6 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "DatasourceCheckItem defines model for DatasourceCheckItem.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"type": {
-						SchemaProps: spec.SchemaProps{
-							Description: "type of the item.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"value": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Value depends on type and describes the advisor item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the advisor.\n - dashboard_by_uid: The value is the dashboard UID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"type", "value"},
-			},
-		},
 	}
 }
 
@@ -154,98 +124,31 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "DatasourceCheckOperatorState defines model for DatasourceCheckOperatorState.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"descriptiveState": {
+					"data": {
 						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
+							Description: "This can be customized per check",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"lastEvaluation", "state"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "DatasourceCheckSpec defines model for DatasourceCheckSpec.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"interval": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckItem"),
-									},
-								},
-							},
-						},
-					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"interval", "items", "title"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckItem"},
 	}
 }
 
@@ -253,22 +156,12 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.Reference
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "DatasourceCheckStatus defines model for DatasourceCheckStatus.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"additionalFields": {
+					"report": {
 						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport"),
 						},
 					},
 					"operatorStates": {
@@ -286,11 +179,101 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.Reference
 							},
 						},
 					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
+				Required: []string{"report"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of elements analyzed",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of errors",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"count", "errors"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReportErrors(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Investigation or Action recommended",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason for the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Action to take",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "reason", "action"},
+			},
+		},
 	}
 }
 
@@ -298,9 +281,24 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "DatasourceCheckstatusOperatorState defines model for DatasourceCheckstatus.#OperatorState.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"descriptiveState": {
 						SchemaProps: spec.SchemaProps{
 							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
@@ -321,22 +319,6 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref com
 									},
 								},
 							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 				},
@@ -393,36 +375,6 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheck(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_PluginCheckItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "PluginCheckItem defines model for PluginCheckItem.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"type": {
-						SchemaProps: spec.SchemaProps{
-							Description: "type of the item.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"value": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Value depends on type and describes the advisor item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the advisor.\n - dashboard_by_uid: The value is the dashboard UID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"type", "value"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_advisor_v0alpha1_PluginCheckList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -471,98 +423,31 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheckList(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_PluginCheckOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_PluginCheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PluginCheckOperatorState defines model for PluginCheckOperatorState.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"descriptiveState": {
+					"data": {
 						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
+							Description: "This can be customized per check",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"lastEvaluation", "state"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_PluginCheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "PluginCheckSpec defines model for PluginCheckSpec.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"interval": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckItem"),
-									},
-								},
-							},
-						},
-					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"interval", "items", "title"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckItem"},
 	}
 }
 
@@ -570,22 +455,12 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheckStatus(ref common.ReferenceCall
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PluginCheckStatus defines model for PluginCheckStatus.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"additionalFields": {
+					"report": {
 						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckV0alpha1StatusReport"),
 						},
 					},
 					"operatorStates": {
@@ -603,11 +478,101 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheckStatus(ref common.ReferenceCall
 							},
 						},
 					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
+				Required: []string{"report"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckstatusOperatorState"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckV0alpha1StatusReport", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckstatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_PluginCheckV0alpha1StatusReport(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of elements analyzed",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of errors",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckV0alpha1StatusReportErrors"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"count", "errors"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.PluginCheckV0alpha1StatusReportErrors"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_PluginCheckV0alpha1StatusReportErrors(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Investigation or Action recommended",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason for the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Action to take",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "reason", "action"},
+			},
+		},
 	}
 }
 
@@ -615,9 +580,24 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheckstatusOperatorState(ref common.
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "PluginCheckstatusOperatorState defines model for PluginCheckstatus.#OperatorState.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"descriptiveState": {
 						SchemaProps: spec.SchemaProps{
 							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
@@ -638,22 +618,6 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheckstatusOperatorState(ref common.
 									},
 								},
 							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 				},

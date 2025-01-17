@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	rawSchemaDatasourceCheckv0alpha1     = []byte(`{"spec":{"properties":{"interval":{"type":"string"},"items":{"items":{"properties":{"type":{"description":"type of the item.","enum":["dashboard_by_tag","dashboard_by_uid","dashboard_by_id"],"type":"string"},"value":{"description":"Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID","type":"string"}},"required":["type","value"],"type":"object"},"type":"array"},"title":{"type":"string"}},"required":["title","interval","items"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
+	rawSchemaDatasourceCheckv0alpha1     = []byte(`{"spec":{"properties":{"data":{"additionalProperties":{"type":"string"},"description":"This can be customized per check","type":"object"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"},"report":{"properties":{"count":{"description":"Number of elements analyzed","type":"integer"},"errors":{"description":"List of errors","items":{"properties":{"action":{"description":"Action to take","type":"string"},"reason":{"description":"Reason for the error","type":"string"},"type":{"description":"Investigation or Action recommended","enum":["investigation","action"],"type":"string"}},"required":["type","reason","action"],"type":"object"},"type":"array"}},"required":["count","errors"],"type":"object"}},"required":["report"],"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
 	versionSchemaDatasourceCheckv0alpha1 app.VersionSchema
 	_                                    = json.Unmarshal(rawSchemaDatasourceCheckv0alpha1, &versionSchemaDatasourceCheckv0alpha1)
-	rawSchemaPluginCheckv0alpha1         = []byte(`{"spec":{"properties":{"interval":{"type":"string"},"items":{"items":{"properties":{"type":{"description":"type of the item.","enum":["dashboard_by_tag","dashboard_by_uid","dashboard_by_id"],"type":"string"},"value":{"description":"Value depends on type and describes the playlist item.\n - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\n is not portable as the numerical identifier is non-deterministic between different instances.\n Will be replaced by dashboard_by_uid in the future. (deprecated)\n - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\n dashboards behind the tag will be added to the playlist.\n - dashboard_by_uid: The value is the dashboard UID","type":"string"}},"required":["type","value"],"type":"object"},"type":"array"},"title":{"type":"string"}},"required":["title","interval","items"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
+	rawSchemaPluginCheckv0alpha1         = []byte(`{"spec":{"properties":{"data":{"additionalProperties":{"type":"string"},"description":"This can be customized per check","type":"object"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"},"report":{"properties":{"count":{"description":"Number of elements analyzed","type":"integer"},"errors":{"description":"List of errors","items":{"properties":{"action":{"description":"Action to take","type":"string"},"reason":{"description":"Reason for the error","type":"string"},"type":{"description":"Investigation or Action recommended","enum":["investigation","action"],"type":"string"}},"required":["type","reason","action"],"type":"object"},"type":"array"}},"required":["count","errors"],"type":"object"}},"required":["report"],"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
 	versionSchemaPluginCheckv0alpha1     app.VersionSchema
 	_                                    = json.Unmarshal(rawSchemaPluginCheckv0alpha1, &versionSchemaPluginCheckv0alpha1)
 )
@@ -30,21 +30,7 @@ var appManifestData = app.ManifestData{
 			Conversion: false,
 			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
-					Admission: &app.AdmissionCapabilities{
-						Validation: &app.ValidationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
-						Mutation: &app.MutationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
-					},
+					Name:   "v0alpha1",
 					Schema: &versionSchemaDatasourceCheckv0alpha1,
 				},
 			},
@@ -56,21 +42,7 @@ var appManifestData = app.ManifestData{
 			Conversion: false,
 			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
-					Admission: &app.AdmissionCapabilities{
-						Validation: &app.ValidationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
-						Mutation: &app.MutationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
-					},
+					Name:   "v0alpha1",
 					Schema: &versionSchemaPluginCheckv0alpha1,
 				},
 			},
