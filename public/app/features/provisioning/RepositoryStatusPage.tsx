@@ -315,14 +315,14 @@ function JobsView({ repo }: RepoProps) {
   );
 }
 
-function formatTimestamp(timestamp?: number): string {
+function formatTimestamp(timestamp?: number) {
   if (!timestamp) {
     return 'N/A';
   }
   return new Date(timestamp * 1000).toLocaleString();
 }
 
-function getRemoteURL(repo: Repository): string | undefined {
+function getRemoteURL(repo: Repository) {
   if (repo.spec?.type === 'github') {
     const spec = repo.spec.github;
     let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
@@ -334,7 +334,7 @@ function getRemoteURL(repo: Repository): string | undefined {
   return undefined;
 }
 
-function getWebhookURL(repo: Repository): string | undefined {
+function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
   if (spec?.type === 'github' && status?.webhook?.url) {
     const { github } = spec;
@@ -359,13 +359,15 @@ export function RepositoryHealth({ repo }: { repo: Repository }) {
         </Alert>
       ) : (
         <Alert title="Repository is unhealthy" severity="warning" style={{ width: ' 100%' }}>
-          <Text>Details:</Text>
           {status?.health?.message && status.health.message.length > 0 && (
-            <ul>
-              {status.health.message.map((message) => (
-                <li key={message}>{message}</li>
-              ))}
-            </ul>
+            <>
+              <Text>Details:</Text>
+              <ul>
+                {status.health.message.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            </>
           )}
         </Alert>
       )}
@@ -386,7 +388,7 @@ export function RepositoryHealth({ repo }: { repo: Repository }) {
         </Text>
       )}
 
-      <h2>Sync Status</h2>
+      <Text element={'h2'}>Sync Status</Text>
       <StatusBadge state={status?.sync?.state} name={name} />
       <ul style={{ listStyle: 'none' }}>
         <li>
