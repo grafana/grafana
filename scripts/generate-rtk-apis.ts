@@ -36,7 +36,32 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
+    '../public/app/features/provisioning/api/endpoints.gen.ts': {
+      apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
+      schemaFile: '../pkg/tests/apis/provisioning/testdata/openapi.json',
+      apiImport: 'baseAPI',
+      filterEndpoints,
+      argSuffix: 'Arg',
+      responseSuffix: 'Response',
+      tag: true,
+      endpointOverrides: [
+        {
+          pattern: /^list/,
+          parameterFilter: () => false,
+        },
+      ],
+    },
   },
 };
+
+function filterEndpoints(name: string) {
+  return (
+    !name.toLowerCase().includes('forallnamespaces') &&
+    !name.toLowerCase().includes('getapiresources') &&
+    !name.toLowerCase().includes('watch') &&
+    !name.toLowerCase().includes('collection') &&
+    !name.toLowerCase().includes('update')
+  );
+}
 
 export default config;

@@ -1396,6 +1396,8 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-github v17.0.0+incompatible/go.mod h1:zLgOLi98H3fifZn+44m+umXrS52loVEgC2AApnigrVQ=
+github.com/google/go-github/v66 v66.0.0 h1:ADJsaXj9UotwdgK8/iFZtv7MLc8E8WBl62WLd/D/9+M=
+github.com/google/go-github/v66 v66.0.0/go.mod h1:+4SO9Zkuyf8ytMj0csN1NR/5OTR+MfqPp8P8dVlcvY4=
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
 github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
 github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
@@ -1497,6 +1499,8 @@ github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884 h1:MSRBiQrSJZ+iowj
 github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884/go.mod h1:x7df73G3xuSD35Xv9cjaMLyPJCgM9Z/Wj5ISouoAfiI=
 github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335 h1:3DHH81RJCi8Bcgn2MdBh7vgWUshmAFjZzBCVuxiQ0uk=
 github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
+github.com/grafana/dashboard-linter v0.0.0-20241106223805-1e7999311752 h1:pIEPQPua6kCkMib/nOn//WLgtiA4urf2RPBViSF6CcE=
+github.com/grafana/dashboard-linter v0.0.0-20241106223805-1e7999311752/go.mod h1:QRxC8NNAbpGx2vz9/XckJcWXtHU3My57byeudPrf0WU=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
 github.com/grafana/dataplane/examples v0.0.1/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
@@ -1519,6 +1523,8 @@ github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 h1:fV6IgVtViXcYZ4VqTAMuVBTLuGA
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2/go.mod h1:Cbh94bfL5o6mUSaHFiOkx4r4CRKlo/DJLx4dPL8XrE0=
 github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 h1:S4kHwr//AqhtL9xHBtz1gqVgZQeCRGTxjgsRBAkpjKY=
 github.com/grafana/grafana-cloud-migration-snapshot v1.6.0/go.mod h1:rWNhyxYkgiXgV7xZ4yOQzMV08yikO8L8S8M5KNoQNpA=
+github.com/grafana/grafana-foundation-sdk/go v0.0.0-20241101005901-83e3491f2a70 h1:69GI3KsF851YnwYp6zHdsskcGp3ZnGsWc+ve8vMp1mc=
+github.com/grafana/grafana-foundation-sdk/go v0.0.0-20241101005901-83e3491f2a70/go.mod h1:WtWosval1KCZP9BGa42b8aVoJmVXSg0EvQXi9LDSVZQ=
 github.com/grafana/grafana-google-sdk-go v0.2.1 h1:XeFdKnkXBjOJjXc1gf4iMx4h5aCHTAZ2CG7476qMC+8=
 github.com/grafana/grafana-google-sdk-go v0.2.1/go.mod h1:RiITSHwBhqVTTd3se3HQq5Ncs/wzzhTB9OK5N0J0PEU=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=

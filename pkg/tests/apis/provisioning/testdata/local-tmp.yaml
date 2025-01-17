@@ -1,0 +1,15 @@
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: local-tmp
+spec:
+  title: Load tmp dashboards
+  description: load a /tmp directory
+  folder: testingtesting
+  editing:
+    create: true
+    update: true
+    delete: true
+  type: local
+  local:
+    path: the test will replace this string
