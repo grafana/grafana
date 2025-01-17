@@ -44,6 +44,7 @@ export function createHistogramMetricQueryDefs(context: AutoQueryContext) {
           isUtf8Metric: context.isUtf8Metric,
           groupings: ['le'],
         }),
+        fromExploreMetrics: true,
         format: 'heatmap',
       },
     ],
@@ -73,5 +74,6 @@ function percentileQuery(context: AutoQueryContext, percentile: number, grouping
     refId: `Percentile${percentile}`,
     expr: `histogram_quantile(${percent}, ${query})`,
     legendFormat,
+    fromExploreMetrics: true,
   };
 }
