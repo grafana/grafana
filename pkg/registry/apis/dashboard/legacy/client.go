@@ -89,3 +89,8 @@ func (d *directResourceClient) Update(ctx context.Context, in *resource.UpdateRe
 func (d *directResourceClient) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
 	return nil, fmt.Errorf("watch not yet supported with direct resource client")
 }
+
+// BatchWrite implements resource.ResourceClient.
+func (d *directResourceClient) BatchWrite(ctx context.Context, opts ...grpc.CallOption) (resource.ResourceStore_BatchWriteClient, error) {
+	return nil, fmt.Errorf("BatchWrite not yet supported with direct resource client")
+}
