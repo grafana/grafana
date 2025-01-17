@@ -1,9 +1,34 @@
-package federated
+package federatedtest
 
 import (
+	"context"
+	"encoding/json"
 	"testing"
+	"time"
 
-	// "github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -12,7 +37,6 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-/*
 func TestDirectSQLStats(t *testing.T) {
 	db, cfg := db.InitTestDBWithCfg(t)
 	ctx := context.Background()
@@ -27,9 +51,10 @@ func TestDirectSQLStats(t *testing.T) {
 	guardian.MockDashboardGuardian(fakeGuardian)
 	require.NoError(t, err)
 	fStore := folderimpl.ProvideStore(db)
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
+	folderSvc, err := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		folderimpl.ProvideDashboardFolderStore(db), db, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
+	require.NoError(t, err)
 
 	// create parent folder
 
@@ -80,7 +105,7 @@ func TestDirectSQLStats(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	store := &LegacyStatsGetter{
+	store := &federated.LegacyStatsGetter{
 		SQL: legacysql.NewDatabaseProvider(db),
 	}
 
@@ -149,4 +174,3 @@ func TestDirectSQLStats(t *testing.T) {
 		]`, string(jj))
 	})
 }
-*/
