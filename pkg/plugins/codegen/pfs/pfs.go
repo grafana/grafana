@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -26,6 +28,8 @@ var schemaInterface = map[string]SchemaInterface{
 		IsGroup: true,
 	},
 }
+
+const pluginImport = "/packages/grafana-schema/src/common"
 
 // PermittedCUEImports returns the list of import paths that may be used in a
 // plugin's grafanaplugin cue package.
@@ -84,13 +88,18 @@ func ParsePluginFS(ctx *cue.Context, fsys fs.FS, dir string) (ParsedPlugin, erro
 		Properties: metadata,
 	}
 
+	for i, c := range cuefiles {
+		cuefiles[i] = dir + "/" + c
+	}
+
+	overlay, err := overlayFake()
 	if err != nil {
 		return ParsedPlugin{}, err
 	}
 
 	bi := load.Instances(cuefiles, &load.Config{
 		Package: PackageName,
-		Dir:     dir,
+		Overlay: overlay,
 	})[0]
 	if bi.Err != nil {
 		return ParsedPlugin{}, bi.Err
@@ -144,6 +153,38 @@ func ParsePluginFS(ctx *cue.Context, fsys fs.FS, dir string) (ParsedPlugin, erro
 	}
 
 	return pp, nil
+}
+
+func overlayFake() (map[string]load.Source, error) {
+	mockCueMod := `language: {
+		version: "v0.11.1"
+		}
+		module: "github.com/grafana/grafana"
+	`
+
+	overlay := map[string]load.Source{
+		"/cue.mod/module.cue": load.FromString(mockCueMod),
+	}
+
+	err := filepath.WalkDir("../../../packages/grafana-schema/src/common", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() || filepath.Ext(path) != ".cue" {
+			return nil
+		}
+
+		f, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		overlay[filepath.Join("/", pluginImport, d.Name())] = load.FromBytes(f)
+		return nil
+	})
+
+	return overlay, err
 }
 
 func getPluginMetadata(fsys fs.FS) (Metadata, error) {
