@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	dashv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -1766,7 +1765,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8s(ctx context.Context, 
 	return result, nil
 }
 
-func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*dashv0alpha1.SearchResults, error) {
+func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alpha1.SearchResults, error) {
 	if result == nil {
 		return nil, nil
 	} else if result.Error != nil {
@@ -1801,7 +1800,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*dashv
 		TotalHits: result.TotalHits,
 		QueryCost: result.QueryCost,
 		MaxScore:  result.MaxScore,
-		Hits:      make([]dashv0alpha1.DashboardHit, len(result.Results.Rows)),
+		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
 	}
 
 	for i, row := range result.Results.Rows {
@@ -1821,7 +1820,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*dashv
 			}
 		}
 
-		hit := &dashv0alpha1.DashboardHit{
+		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
 			Title:    string(row.Cells[titleIDX]),
@@ -1843,16 +1842,16 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*dashv
 
 	// Add facet results
 	if result.Facet != nil {
-		sr.Facets = make(map[string]dashv0alpha1.FacetResult)
+		sr.Facets = make(map[string]v0alpha1.FacetResult)
 		for k, v := range result.Facet {
-			sr.Facets[k] = dashv0alpha1.FacetResult{
+			sr.Facets[k] = v0alpha1.FacetResult{
 				Field:   v.Field,
 				Total:   v.Total,
 				Missing: v.Missing,
-				Terms:   make([]dashv0alpha1.TermFacet, len(v.Terms)),
+				Terms:   make([]v0alpha1.TermFacet, len(v.Terms)),
 			}
 			for j, t := range v.Terms {
-				sr.Facets[k].Terms[j] = dashv0alpha1.TermFacet{
+				sr.Facets[k].Terms[j] = v0alpha1.TermFacet{
 					Term:  t.Term,
 					Count: t.Count,
 				}
