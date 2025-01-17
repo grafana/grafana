@@ -22,7 +22,8 @@ describe('Loki Query Editor', () => {
     e2e.flows.revertAllChanges();
   });
 
-  it('Autocomplete features should work as expected.', () => {
+  it('Autocomplete features should work as expected.', function() {
+    this.skip(); // Test disabled due to being flaky
     addDataSource();
 
     cy.intercept(/labels?/, (req) => {
@@ -84,5 +85,5 @@ describe('Loki Query Editor', () => {
     e2e.components.QueryField.container().type('{selectall}av');
     cy.contains('avg').should('be.visible');
     cy.contains('avg_over_time').should('be.visible');
-  }).skip(); // Test disabled due to being flaky
+  });
 });
