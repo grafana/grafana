@@ -303,7 +303,7 @@ func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.Resourc
 	}, nil
 }
 
-func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOptions) (*resource.BatchWriteResponse, error) {
+func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOptions) (*resource.BatchResponse, error) {
 	info, err := claims.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
@@ -329,15 +329,15 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 		return nil, err
 	}
 
-	stream, err := opts.Store.BatchWrite(ctx)
+	stream, err := opts.Store.BatchProcess(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// First delete everything in the resource
 	if opts.ClearFirst {
-		err = stream.Send(&resource.BatchWriteRequest{
-			Action: resource.BatchWriteRequest_DELETE_COLLECTION,
+		err = stream.Send(&resource.BatchRequest{
+			Action: resource.BatchRequest_DELETE_COLLECTION,
 			Key: &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
@@ -358,7 +358,7 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 		if err != nil {
 			return nil, err
 		}
-		req := &resource.BatchWriteRequest{
+		req := &resource.BatchRequest{
 			Key: &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
@@ -367,12 +367,12 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 			},
 			Value:  body,
 			Folder: rows.row.FolderUID,
-			Action: resource.BatchWriteRequest_ADDED,
+			Action: resource.BatchRequest_ADDED,
 		}
 		if dash.Generation > 1 {
-			req.Action = resource.BatchWriteRequest_MODIFIED
+			req.Action = resource.BatchRequest_MODIFIED
 		} else if dash.Generation < 0 {
-			req.Action = resource.BatchWriteRequest_DELETED
+			req.Action = resource.BatchRequest_DELETED
 		}
 
 		// TODO? large object support!

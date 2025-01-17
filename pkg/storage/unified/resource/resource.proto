@@ -318,7 +318,7 @@ message WatchEvent {
   Resource previous = 4;
 }
 
-message BatchWriteRequest {
+message BatchRequest {
   enum Action {
     // will be an error
     UNKNOWN = 0; 
@@ -345,7 +345,7 @@ message BatchWriteRequest {
   string folder = 4;
 }
 
-message BatchWriteResponse {
+message BatchResponse {
   // Error details
   ErrorResult error = 1;
 
@@ -788,7 +788,7 @@ service ResourceStore {
   // Write multiple resources to the same Namespace/Group/Resource
   // Events will not be sent until the stream is complete
   // Only the *create* permissions is checked
-  rpc BatchWrite(stream BatchWriteRequest) returns (BatchWriteResponse);
+  rpc BatchProcess(stream BatchRequest) returns (BatchResponse);
 }
 
 // Unlike the ResourceStore, this service can be exposed to clients directly

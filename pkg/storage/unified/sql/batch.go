@@ -9,14 +9,15 @@ import (
 )
 
 var (
-	_ resource.BatchWriteableBackend = (*backend)(nil)
+	_ resource.BatchProcessingBackend = (*backend)(nil)
 )
 
-func (b *backend) BatchWrite(ctx context.Context, next func() *resource.BatchWriteRequest) error {
+func (b *backend) ProcessBatch(ctx context.Context, next func() *resource.BatchRequest) error {
 	return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		for req := next(); req != nil; req = next() {
 			fmt.Printf("TODO: %s / %s\n", req.Action, req.Key.SearchID())
 		}
+		fmt.Printf("finished.... maybe write history into current?\n")
 		return nil
 	})
 }

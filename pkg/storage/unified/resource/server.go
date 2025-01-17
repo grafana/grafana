@@ -103,8 +103,8 @@ type StorageBackend interface {
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
 }
 
-type BatchWriteableBackend interface {
-	BatchWrite(ctx context.Context, next func() *BatchWriteRequest) error
+type BatchProcessingBackend interface {
+	ProcessBatch(ctx context.Context, next func() *BatchRequest) error
 }
 
 type ResourceStats struct {
@@ -656,8 +656,8 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 
 // BatchWrite implements ResourceServer.
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
-func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
-	backend, ok := s.backend.(BatchWriteableBackend)
+func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
+	backend, ok := s.backend.(BatchProcessingBackend)
 	if !ok {
 		return fmt.Errorf("backend does not support batched requests")
 	}
@@ -665,7 +665,7 @@ func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
 	ctx := stream.Context()
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
-		return stream.SendAndClose(&BatchWriteResponse{
+		return stream.SendAndClose(&BatchResponse{
 			Error: &ErrorResult{
 				Message: "no user found in context",
 				Code:    http.StatusUnauthorized,
@@ -673,8 +673,8 @@ func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
 		})
 	}
 
-	rsp := &BatchWriteResponse{}
-	addError := func(k *ResourceKey, msg string, err error) *BatchWriteRequest {
+	rsp := &BatchResponse{}
+	addError := func(k *ResourceKey, msg string, err error) *BatchRequest {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusBadRequest,
 			Message: msg,
@@ -684,7 +684,7 @@ func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
 	}
 
 	// BatchProcess requests
-	err := backend.BatchWrite(ctx, func() *BatchWriteRequest {
+	err := backend.ProcessBatch(ctx, func() *BatchRequest {
 		req, err := stream.Recv()
 		if err != nil {
 			if err != io.EOF {
@@ -692,8 +692,10 @@ func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
 			}
 			return nil
 		}
+		// TODO -- access checker
+
+		// Maybe we can skip this -- we are already assuming it is pretty safe!
 		if len(req.Value) > 0 {
-			// Not totally necessary???
 			obj := &unstructured.Unstructured{}
 			err = obj.UnmarshalJSON(req.Value)
 			if err != nil {
