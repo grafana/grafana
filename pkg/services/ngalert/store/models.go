@@ -10,6 +10,7 @@ type alertRule struct {
 	Condition            string
 	Data                 string
 	Updated              time.Time
+	UpdatedBy            *string `xorm:"updated_by"`
 	IntervalSeconds      int64
 	Version              int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
 	UID                  string  `xorm:"uid"`
@@ -46,6 +47,7 @@ type alertRuleVersion struct {
 	Version          int64
 
 	Created         time.Time
+	CreatedBy       *string `xorm:"created_by"`
 	Title           string
 	Condition       string
 	Data            string
