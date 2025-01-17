@@ -8,12 +8,9 @@ const BASE_URL = '/v1/platform';
 
 export const TicketsService = {
   async list(token?: CancelToken): Promise<Ticket[]> {
-    const { tickets = [] } = await api.post<TicketResponse, {}>(
-      `${BASE_URL}/SearchOrganizationTickets`,
-      {},
-      false,
-      token
-    );
+    const { tickets = [] } = await api.get<TicketResponse, {}>(`${BASE_URL}/organization/tickets`, false, {
+      cancelToken: token,
+    });
     return tickets.map(
       ({ number, short_description, priority, state, create_time, department, task_type, url }): Ticket => ({
         number,
