@@ -78,7 +78,6 @@ export default function RepositoryStatusPage() {
           <>
             {query.data ? (
               <>
-                {/*<ErrorView repo={query.data} />*/}
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
@@ -94,7 +93,7 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Resources && <ResourcesView repo={query.data} />}
                   {tab === TabSelection.Files && <FilesView repo={query.data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
-                  {tab === TabSelection.Health && <RepositoryHealth name={name} repo={query.data} />}
+                  {tab === TabSelection.Health && <RepositoryHealth repo={query.data} />}
                 </TabContent>
               </>
             ) : (
@@ -312,89 +311,123 @@ function JobsView({ repo }: RepoProps) {
   );
 }
 
-function RepositoryHealth({ name, repo: repo }: { name: string; repo: Repository }) {
+function formatTimestamp(timestamp?: number): string {
+  if (!timestamp) {
+    return 'N/A';
+  }
+  return new Date(timestamp * 1000).toLocaleString();
+}
+
+function getRemoteURL(repo: Repository): string | undefined {
+  if (repo.spec?.type === 'github') {
+    const spec = repo.spec.github;
+    let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+    if (spec?.branch) {
+      url += `tree/${spec.branch}`;
+    }
+    return url;
+  }
+  return undefined;
+}
+
+function getWebhookURL(repo: Repository): string | undefined {
+  const { status, spec } = repo;
+  if (spec?.type === 'github' && status?.webhook?.url) {
+    const { github } = spec;
+    return `https://github.com/${github?.owner}/${github?.repository}/settings/hooks/${status.webhook?.id}`;
+  }
+  return undefined;
+}
+
+export function RepositoryHealth({ repo }: { repo: Repository }) {
+  const name = repo.metadata?.name ?? '';
+
   const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
 
   if (statusQuery.isLoading) {
     return (
-      <>
-        Loading repository status <Spinner />
-      </>
+      <Stack gap={2} alignItems="center">
+        <Text>Loading repository status</Text>
+        <Spinner />
+      </Stack>
     );
   }
 
   if (statusQuery.isError) {
     return (
-      <Alert title="Error loading repository status">
-        <pre>{JSON.stringify(statusQuery.error)}</pre>
+      <Alert title="Error loading repository status" severity="error">
+        <pre>{JSON.stringify(statusQuery.error, null, 2)}</pre>
       </Alert>
     );
   }
 
   const status = statusQuery.data?.status;
-
-  // FIXME: Add stats
-
-  let webhookURL;
-  if (repo.spec?.type === 'github' && status?.webhook?.url) {
-    const spec = repo.spec.github;
-    webhookURL = `https://github.com/${spec?.owner}/${spec?.repository}/settings/hooks/${status.webhook?.id}`;
-  }
-
-  let remoteURL;
-  if (repo.spec?.type === 'github') {
-    const spec = repo.spec.github;
-    remoteURL = `https://github.com/${spec?.owner}/${spec?.repository}/`;
-    if (spec?.branch) {
-      remoteURL += `tree/` + spec?.branch;
-    }
-  }
+  const remoteURL = getRemoteURL(repo);
+  const webhookURL = getWebhookURL(repo);
 
   return (
-    <>
-      <br />
+    <Stack gap={2} direction="column" alignItems="flex-start">
       <h2>Health Status</h2>
       {status?.health?.healthy ? (
-        <Alert title="Repository is healthy" severity="success">
+        <Alert title="Repository is healthy" severity="success" style={{ width: ' 100%' }}>
           No errors found
         </Alert>
       ) : (
-        <Alert title="Repository is unhealthy">
-          <Text>Details: </Text>
-          <ul>{status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
+        <Alert title="Repository is unhealthy" severity="warning" style={{ width: ' 100%' }}>
+          <Text>Details:</Text>
+          {status?.health?.message && status.health.message.length > 0 && (
+            <ul>
+              {status.health.message.map((message) => (
+                <li key={message}>{message}</li>
+              ))}
+            </ul>
+          )}
         </Alert>
       )}
+
       {remoteURL && (
-        <p>
-          <TextLink key={'link'} external style={{ color: 'inherit' }} href={remoteURL}>
+        <Text>
+          <TextLink external href={remoteURL}>
             {remoteURL}
           </TextLink>
-        </p>
+        </Text>
       )}
+
       {webhookURL && (
-        <p>
-          <TextLink key={'webhook'} external style={{ color: 'inherit' }} href={webhookURL}>
+        <Text>
+          <TextLink external href={webhookURL}>
             Webhook
           </TextLink>
-        </p>
+        </Text>
       )}
+
       <h2>Sync Status</h2>
       <StatusBadge state={status?.sync?.state} name={name} />
-      <ul>
-        <p>
-          Job ID: <b>{status?.sync.job}</b>
-        </p>
-        <p>
-          Last Ref: <b>{status?.sync.hash}</b>
-        </p>
-        <p>
-          Started: <b>{status?.sync.started ? new Date(status.sync.started * 1000).toLocaleString() : 'N/A'}</b>
-        </p>
-        <p>
-          Finished: <b>{status?.sync.finished ? new Date(status.sync.finished * 1000).toLocaleString() : 'N/A'}</b>
-        </p>
+      <ul style={{ listStyle: 'none' }}>
+        <li>
+          Job ID: <b>{status?.sync.job ?? 'N/A'}</b>
+        </li>
+        <li>
+          Last Ref: <b>{status?.sync.hash ?? 'N/A'}</b>
+        </li>
+        <li>
+          Started: <b>{formatTimestamp(status?.sync.started)}</b>
+        </li>
+        <li>
+          Finished: <b>{formatTimestamp(status?.sync.finished)}</b>
+        </li>
       </ul>
-      <ul>{status?.sync?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
-    </>
+
+      {status?.sync?.message && status.sync.message.length > 0 && (
+        <>
+          <Text>Messages:</Text>
+          <ul style={{ listStyle: 'none' }}>
+            {status.sync.message.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </Stack>
   );
 }

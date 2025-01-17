@@ -14,12 +14,13 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import { StatusBadge } from './StatusBadge';
 import { SetupWarnings } from './SetupWarnings';
+import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
 import { Repository, ResourceCount } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
+
 export default function RepositoryListPage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
 
