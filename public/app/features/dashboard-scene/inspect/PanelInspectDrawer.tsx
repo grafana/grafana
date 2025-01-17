@@ -94,7 +94,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     const dashboard = getDashboardSceneFor(this);
     const meta = dashboard.state.meta;
     // Checking for location here as well, otherwise down below isHomeDashboard will be set to true
-    //  as it doesn't have uid neither slug nor url. 
+    //  as it doesn't have uid neither slug nor url.
     const isNew = !dashboard.state.uid && locationService.getLocation().pathname === '/dashboard/new';
 
     locationService.push(
@@ -159,6 +159,3 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
     </Drawer>
   );
 }
-
-
-function 
