@@ -371,6 +371,13 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		s.log.Error("object must not include a resource version", "key", key)
 	}
 
+	// Make sure the command labels are not saved
+	for k := range obj.GetLabels() {
+		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
+			return nil, NewBadRequestError("can not save label: " + k)
+		}
+	}
+
 	check := authz.CheckRequest{
 		Verb:      utils.VerbCreate,
 		Group:     key.Group,
