@@ -1230,7 +1230,6 @@ describe('sceneVariablesSetToVariables', () => {
           },
           "description": "test-desc",
           "hide": "dontHide",
-          "includeAll": false,
           "label": "test-label",
           "multi": true,
           "name": "test",
