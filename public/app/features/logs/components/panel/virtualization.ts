@@ -2,6 +2,37 @@ import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { ProcessedLogModel } from './processing';
 
+interface DisplayOptions {
+  wrap: boolean;
+  showTime: boolean;
+}
+
+export function getLogLineSize(
+  logs: ProcessedLogModel[],
+  container: HTMLDivElement | null,
+  theme: GrafanaTheme2,
+  { wrap, showTime }: DisplayOptions,
+  index: number
+) {
+  if (!container) {
+    return 0;
+  }
+  const lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
+  if (!wrap) {
+    return lineHeight;
+  }
+  const storedSize = retrieveLogLineSize(logs[index].uid, container);
+  if (storedSize) {
+    return storedSize;
+  }
+  let optionsWidth = 0;
+  if (showTime) {
+    optionsWidth = 208;
+  }
+  const { height } = measureText(logs[index].body, getLogContainerWidth(container), lineHeight, optionsWidth);
+  return height;
+}
+
 let ctx: CanvasRenderingContext2D | null = null;
 
 export function init(theme: GrafanaTheme2) {
@@ -23,7 +54,7 @@ export function init(theme: GrafanaTheme2) {
   return true;
 }
 
-export function measureText(text: string, maxWidth: number, lineHeight: number) {
+export function measureText(text: string, maxWidth: number, lineHeight: number, beforeWidth = 0) {
   if (!ctx) {
     throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
   }
@@ -37,11 +68,15 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
       let testLogLine: string;
       let metrics: TextMetrics;
       let delta = 0;
+      let availableWidth = maxWidth - beforeWidth;
       do {
         testLogLine = textLine.substring(start, start + logLineCharsWidth - delta);
         metrics = ctx.measureText(testLogLine);
         delta += 1;
-      } while (metrics.width >= maxWidth);
+      } while (metrics.width >= availableWidth);
+      if (beforeWidth) {
+        beforeWidth = 0;
+      }
       logLines += 1;
       start += testLogLine.length;
     }
@@ -56,28 +91,6 @@ export function measureText(text: string, maxWidth: number, lineHeight: number) 
 }
 
 const scrollBarWidth = getScrollbarWidth();
-
-export function getLogLineSize(
-  logs: ProcessedLogModel[],
-  container: HTMLDivElement | null,
-  theme: GrafanaTheme2,
-  wrapLogMessage: boolean,
-  index: number
-) {
-  if (!container) {
-    return 0;
-  }
-  const storedSize = retrieveLogLineSize(logs[index].uid, container);
-  if (storedSize) {
-    return storedSize;
-  }
-  const lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
-  if (!wrapLogMessage) {
-    return lineHeight;
-  }
-  const { height } = measureText(logs[index].body, getLogContainerWidth(container), lineHeight);
-  return height;
-}
 
 export function getLogContainerWidth(container: HTMLDivElement) {
   return container.clientWidth - scrollBarWidth;
