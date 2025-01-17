@@ -14,7 +14,7 @@ import (
 var ErrFileNotFound error = fs.ErrNotExist
 
 type FileInfo struct {
-	// Path to the file on disk.
+	// The path to the file from the root of the repository.
 	// No leading or trailing slashes will be contained within.
 	// This uses '/' for separation. Use the 'path' package to interact with this.
 	Path string
@@ -30,7 +30,7 @@ type FileInfo struct {
 
 // An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.
 type FileTreeEntry struct {
-	// The path to the file from the base path given (if any).
+	// The full path to the file from the root of the repository.
 	// No leading or trailing slashes will be contained within.
 	// This uses '/' for separation. Use the 'path' package to interact with this.
 	Path string
@@ -81,7 +81,6 @@ type Repository interface {
 	// This data will be parsed and validated before it is shown.
 	// The base is a path to the base directory where the files are wanted. Empty string means `/`. Trailing slashes are ignored.
 	//
-	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
 	// TODO: Test scale: do we want to stream entries instead somehow?
 	ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error)
 
@@ -115,5 +114,5 @@ type RepositoryHooks interface {
 // more agnostic to the underlying storage system
 type VersionedRepository interface {
 	LatestRef(ctx context.Context) (string, error)
-	CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error)
+	CompareFiles(ctx context.Context, base, ref, baseDirectory string) ([]FileChange, error)
 }

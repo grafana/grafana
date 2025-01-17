@@ -84,13 +84,14 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("latest ref: %w", err)
 		}
 
-		logger.Info("replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
-		changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest)
+		baseDir := cfg.Spec.CleanBaseDirectory()
+		logger.Info("replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest, "base_directory", baseDir)
+		changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest, baseDir)
 		if err != nil {
 			return latest, fmt.Errorf("compare files: %w", err)
 		}
 
-		if err := r.replicateChanges(ctx, changes); err != nil {
+		if err := r.replicateChanges(ctx, changes, baseDir); err != nil {
 			return latest, fmt.Errorf("replicate changes: %w", err)
 		}
 	}
@@ -100,7 +101,8 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 
 // replicateTree replicates all files in the repository.
 func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
-	tree, err := r.repository.ReadTree(ctx, ref, r.repository.Config().Spec.BaseDirectory)
+	base := r.repository.Config().Spec.CleanBaseDirectory()
+	tree, err := r.repository.ReadTree(ctx, ref, base)
 	if err != nil {
 		return fmt.Errorf("read tree: %w", err)
 	}
@@ -126,7 +128,7 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 		info.Hash = entry.Hash
 		info.Modified = nil // modified?
 
-		if err := r.replicateFile(ctx, info); err != nil {
+		if err := r.replicateFile(ctx, base, info); err != nil {
 			if errors.Is(err, ErrUnableToReadResourceBytes) {
 				logger.Info("file does not contain a resource")
 				continue
@@ -140,15 +142,16 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 
 // replicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
-	logger := logging.FromContext(ctx).With("file", fileInfo.Path, "ref", fileInfo.Ref)
+func (r *Replicator) replicateFile(ctx context.Context, baseDirectory string, fileInfo *repository.FileInfo) error {
+	pathWithoutBase := fileInfo.Path[len(baseDirectory):]
+	logger := logging.FromContext(ctx).With("file", fileInfo.Path, "fileWithoutBase", pathWithoutBase, "ref", fileInfo.Ref, "baseDirectory", baseDirectory)
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
 	}
 	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace(), "namespace", r.client.GetNamespace())
 
-	parent, err := r.createFolderPath(ctx, fileInfo.Path)
+	parent, err := r.createFolderPath(ctx, pathWithoutBase)
 	if err != nil {
 		return fmt.Errorf("failed to create folder path: %w", err)
 	}
@@ -251,7 +254,7 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 	return parent, nil
 }
 
-func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
+func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.FileChange, baseDirectory string) error {
 	for _, change := range changes {
 		if r.parser.ShouldIgnore(change.Path) {
 			continue
@@ -264,20 +267,19 @@ func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			if err := r.replicateFile(ctx, fileInfo); err != nil {
+			if err := r.replicateFile(ctx, baseDirectory, fileInfo); err != nil {
 				return fmt.Errorf("replicate file: %w", err)
 			}
 		case repository.FileActionRenamed:
 			// delete in old path
-			oldPath, err := r.repository.Read(ctx, change.PreviousPath, change.Ref)
+			oldPath, err := r.repository.Read(ctx, change.PreviousPath, change.PreviousRef)
 			if err != nil {
 				return fmt.Errorf("read previous path: %w", err)
-			}
-			if err := r.deleteFile(ctx, oldPath); err != nil {
+			} else if err := r.deleteFile(ctx, oldPath); err != nil {
 				return fmt.Errorf("delete file: %w", err)
 			}
 
-			if err := r.replicateFile(ctx, fileInfo); err != nil {
+			if err := r.replicateFile(ctx, baseDirectory, fileInfo); err != nil {
 				return fmt.Errorf("replicate file in new path: %w", err)
 			}
 		case repository.FileActionDeleted:

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -34,7 +35,10 @@ type githubRepository struct {
 	webhookURL string
 }
 
-var _ Repository = (*githubRepository)(nil)
+var (
+	_ Repository          = (*githubRepository)(nil)
+	_ VersionedRepository = (*githubRepository)(nil)
+)
 
 func NewGitHub(
 	ctx context.Context,
@@ -228,7 +232,8 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref, base string) ([]Fi
 }
 
 func (r *githubRepository) findBaseRef(ctx context.Context, ref, base string) (string, error) {
-	if base == "" {
+	base = path.Clean(base)
+	if base == "" || base == "." {
 		base = "/"
 	}
 	base = strings.Trim(base, "/")
@@ -604,7 +609,7 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	return branch.Sha, nil
 }
 
-func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error) {
+func (r *githubRepository) CompareFiles(ctx context.Context, base, ref, baseDirectory string) ([]FileChange, error) {
 	if ref == "" {
 		var err error
 		ref, err = r.LatestRef(ctx)
@@ -621,8 +626,14 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
-	changes := make([]FileChange, 0)
+	var changes []FileChange
 	for _, f := range files {
+		if baseDirectory != "" && !strings.HasPrefix(f.GetFilename(), baseDirectory) {
+			logger.Debug("ignoring file in diff due to missing base directory",
+				"newFileName", f.GetFilename(), "oldFileName", f.GetPreviousFilename())
+			continue
+		}
+
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":

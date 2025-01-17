@@ -61,8 +61,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		query := r.URL.Query()
 		ref := query.Get("ref")
 		message := query.Get("message")
-		base := query.Get("base")
-		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message, "base", base)
+		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
 		ctx := logging.Context(r.Context(), logger)
 
 		prefix := fmt.Sprintf("/%s/files", name)
@@ -80,7 +79,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				return
 			}
 
-			rsp, err := repo.ReadTree(ctx, ref, base)
+			rsp, err := repo.ReadTree(ctx, ref, repo.Config().Spec.CleanBaseDirectory())
 			if err != nil {
 				responder.Error(err)
 				return
@@ -92,7 +91,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 					continue // folder item
 				}
 				files.Items = append(files.Items, provisioning.FileItem{
-					Path: v.Path,
 					Size: v.Size,
 					Hash: v.Hash,
 				})

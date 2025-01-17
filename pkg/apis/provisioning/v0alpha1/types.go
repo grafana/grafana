@@ -1,6 +1,9 @@
 package v0alpha1
 
 import (
+	"path"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -113,6 +116,17 @@ type RepositorySpec struct {
 	// Mutually exclusive with local and s3.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+}
+
+func (s *RepositorySpec) CleanBaseDirectory() string {
+	base := s.BaseDirectory
+	base = path.Clean(base)
+	base = strings.TrimLeft(base, "/")
+	base = strings.TrimRight(base, "/")
+	if base == "" || base == "." || base == "/" {
+		return ""
+	}
+	return base
 }
 
 type EditingOptions struct {
