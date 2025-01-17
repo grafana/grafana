@@ -1,36 +1,47 @@
-import { LogRowModel, LogsSortOrder } from '@grafana/data';
+import { dateTimeFormat, LogRowModel, LogsSortOrder } from '@grafana/data';
 
 import { escapeUnescapedString, sortLogRows } from '../../utils';
 
 export interface ProcessedLogModel extends LogRowModel {
   body: string;
+  timestamp: string;
 }
 
 interface PreProcessOptions {
   escape: boolean;
   order: LogsSortOrder;
+  timeZone: string;
   wrap: boolean;
 }
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, order, wrap }: PreProcessOptions
+  { escape, order, timeZone, wrap }: PreProcessOptions
 ): ProcessedLogModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => restructureLog(log, { wrap, escape, prettify: false, expanded: false }));
+  return orderedLogs.map((log) => preProcessLog(log, { wrap, escape, timeZone, prettify: false, expanded: false }));
 };
 
-interface RestructureLogOptions {
+interface PreProcessLogOptions {
   escape: boolean;
   expanded: boolean;
   prettify: boolean;
+  timeZone: string;
   wrap: boolean;
 }
-const restructureLog = (
+const preProcessLog = (
   log: LogRowModel,
-  { prettify, wrap, expanded, escape }: RestructureLogOptions
+  { escape, expanded, timeZone, prettify, wrap }: PreProcessLogOptions
 ): ProcessedLogModel => {
-  const processedLog: ProcessedLogModel = { ...log, body: log.entry };
+  const processedLog: ProcessedLogModel = {
+    ...log,
+    body: log.entry,
+    timestamp: dateTimeFormat(log.timeEpochMs, {
+      timeZone,
+      defaultWithMS: true,
+    }),
+  };
+
   if (prettify) {
     try {
       processedLog.body = JSON.stringify(JSON.parse(processedLog.body), undefined, 2);
