@@ -52,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -1215,6 +1216,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
 			finalResults[i] = dashboards.DashboardSearchProjection{
+				ID:        hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:       hit.Name,
 				OrgID:     query.OrgId,
 				Title:     hit.Title,
@@ -1980,7 +1982,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	for i, row := range result.Results.Rows {
 		fields := &common.Unstructured{}
 		for colIndex, col := range result.Results.Columns {
-			if _, ok := excludedFields[col.Name]; ok {
+			if _, ok := excludedFields[col.Name]; !ok {
 				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
 				if err != nil {
 					return nil, err
