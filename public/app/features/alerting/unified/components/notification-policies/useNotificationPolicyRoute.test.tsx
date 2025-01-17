@@ -62,7 +62,6 @@ test('routeToK8sSubRoute', () => {
         receiver: 'receiver2',
         matchers: undefined,
         object_matchers: [['label2', MatcherOperator.notEqual, 'value2']],
-        routes: undefined,
       },
     ],
   };
@@ -80,6 +79,7 @@ test('routeToK8sSubRoute', () => {
       {
         receiver: 'receiver2',
         matchers: [{ label: 'label2', type: '!=', value: 'value2' }],
+        routes: undefined,
       },
     ],
   };
