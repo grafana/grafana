@@ -113,7 +113,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
         )}
         ref={ref}
       >
-        {(!isHeaderHidden || showHiddenElements) && (
+        {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
           <div className={styles.rowHeader}>
             <button
               onClick={model.onCollapseToggle}
