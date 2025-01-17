@@ -55,9 +55,11 @@ const stringComparer = (a: string, b: string): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
-  // Coerce all inputs to strings
-  // TODO: Resolve this correctly in groupingToMatrix, which is hardcoding types to string.
-  return a.toString().localeCompare(b.toString());
+
+  // Using the Intl.Collator object compare method results in much faster string sorting
+  // (estimated 2x as fast) than .localeCompare
+  const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+  return compare(String(a), String(b));
 };
 
 const booleanComparer = (a: boolean, b: boolean): number => {
