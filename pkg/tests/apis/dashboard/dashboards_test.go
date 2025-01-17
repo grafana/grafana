@@ -60,6 +60,7 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 		obj, err = client.Resource.Get(ctx, created, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, created, obj.GetName())
+		require.Equal(t, int64(1), obj.GetGeneration())
 
 		// Commented out because the dynamic client does not like lists as sub-resource
 		// // Check that it now appears in the history
