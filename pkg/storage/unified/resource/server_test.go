@@ -119,10 +119,23 @@ func TestSimpleServer(t *testing.T) {
 		obj.SetAnnotation("test", "hello")
 		obj.SetUpdatedTimestampMillis(now)
 		obj.SetUpdatedBy(testUserA.GetUID())
+		obj.SetLabels(map[string]string{
+			utils.LabelKeyGetTrash: "", // should not be allowed to save this!
+		})
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
-
 		updated, err := server.Update(ctx, &UpdateRequest{
+			Key:             key,
+			Value:           raw,
+			ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Equal(t, int32(400), updated.Error.Code) // bad request
+
+		// remove the invalid labels
+		obj.SetLabels(nil)
+		raw, err = json.Marshal(tmp)
+		require.NoError(t, err)
+		updated, err = server.Update(ctx, &UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})

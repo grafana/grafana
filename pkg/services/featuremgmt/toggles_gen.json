@@ -1323,6 +1323,21 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchImprovedParsing",
+        "resourceVersion": "1736808262603",
+        "creationTimestamp": "2025-01-13T20:32:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-13 22:44:22.603729 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables less memory intensive Elasticsearch result parsing",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-24T14:46:31Z"
@@ -3206,6 +3221,21 @@
       },
       "spec": {
         "description": "Enables Query Library feature in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryLibraryDashboards",
+        "resourceVersion": "1736850377404",
+        "creationTimestamp": "2025-01-14T10:24:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-14 10:26:17.404592 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Query Library feature in Dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }

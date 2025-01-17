@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource
 
-go 1.23.4
+go 1.23.5
 
 replace (
 	github.com/grafana/grafana => ../../../..
@@ -15,7 +15,7 @@ require (
 	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-plugin-sdk-go v0.261.0
+	github.com/grafana/grafana-plugin-sdk-go v0.262.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
@@ -80,7 +80,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/elazarl/goproxy v1.2.6 // indirect
+	github.com/elazarl/goproxy v1.3.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -118,6 +118,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/alerting v0.0.0-20250110220613-267368fd1968 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da // indirect
@@ -125,7 +126,7 @@ require (
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
@@ -213,7 +214,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.33.0 // indirect
 	go.opentelemetry.io/otel/metric v1.33.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.33.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.4.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
@@ -228,7 +229,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.216.0 // indirect
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20241216192217-9240e9c98484 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250102185135-69823020774d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

@@ -371,8 +371,15 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		s.log.Error("object must not include a resource version", "key", key)
 	}
 
+	// Make sure the command labels are not saved
+	for k := range obj.GetLabels() {
+		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
+			return nil, NewBadRequestError("can not save label: " + k)
+		}
+	}
+
 	check := authz.CheckRequest{
-		Verb:      "create",
+		Verb:      utils.VerbCreate,
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -386,7 +393,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
-		check.Verb = "update"
+		check.Verb = utils.VerbUpdate
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -437,8 +444,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
+	// We only set name for update checks
+	if check.Verb == utils.VerbUpdate {
+		check.Name = key.Name
+	}
+
 	check.Folder = obj.GetFolder()
-	check.Name = key.Name
 	a, err := s.access.Check(ctx, user, check)
 	if err != nil {
 		return nil, AsErrorResult(err)
@@ -608,7 +619,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	if !ok {
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
-	marker := &DeletedMarker{}
+	marker := &unstructured.Unstructured{}
 	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
@@ -623,12 +634,9 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
 	obj.SetUpdatedBy(requester.GetUID())
-	marker.TypeMeta = metav1.TypeMeta{
-		Kind:       "DeletedMarker",
-		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
-	}
-	marker.Annotations["RestoreResourceVersion"] = fmt.Sprintf("%d", event.PreviousRV)
-	event.Value, err = json.Marshal(marker)
+	obj.SetGeneration(utils.DeletedGeneration)
+	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
+	event.Value, err = marker.MarshalJSON()
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable creating deletion marker, %v", err))
@@ -689,6 +697,15 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	ctx, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 
+	// The history + trash queries do not yet support additional filters
+	if req.Source != ListRequest_STORE {
+		if len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0 {
+			return &ListResponse{
+				Error: NewBadRequestError("unexpected field/label selector for history query"),
+			}, nil
+		}
+	}
+
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
 		return &ListResponse{
@@ -696,6 +713,13 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 				Message: "no user found in context",
 				Code:    http.StatusUnauthorized,
 			}}, nil
+	}
+
+	// Do not allow label query for trash/history
+	for _, v := range req.Options.Labels {
+		if v.Key == utils.LabelKeyGetHistory || v.Key == utils.LabelKeyGetTrash {
+			return &ListResponse{Error: NewBadRequestError("history and trash must be requested as source")}, nil
+		}
 	}
 
 	if req.Limit < 1 {
@@ -710,6 +734,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &ListResponse{Error: AsErrorResult(err)}, nil
@@ -785,6 +810,7 @@ func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResp
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &RestoreResponse{Error: AsErrorResult(err)}, nil
@@ -1067,11 +1093,6 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 		return nil, fmt.Errorf("search index not configured")
 	}
 	return s.search.GetStats(ctx, req)
-}
-
-// History implements ResourceServer.
-func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	return s.search.History(ctx, req)
 }
 
 func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {

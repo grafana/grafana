@@ -1743,6 +1743,19 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:           "queryLibraryDashboards",
+			Description:    "Enables Query Library feature in Dashboards",
+			Stage:          FeatureStageExperimental,
+			Owner:          grafanaFrontendPlatformSquad,
+			AllowSelfServe: false,
+		},
+		{
+			Name:        "elasticsearchImprovedParsing",
+			Description: "Enables less memory intensive Elasticsearch result parsing",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+		},
 	}
 )
 

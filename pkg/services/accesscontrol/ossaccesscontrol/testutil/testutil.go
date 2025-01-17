@@ -37,7 +37,7 @@ func ProvideFolderPermissions(
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
