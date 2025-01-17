@@ -181,17 +181,15 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		Options: &resource.ListOptions{
 			Key:    folderkey,
 			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{},
+			Labels: []*resource.Requirement{
+				{
+					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+					Operator: string(selection.In),
+					Values:   []string{fmt.Sprintf("%d", id)},
+				},
+			},
 		},
 		Limit: 100000}
-
-	values := []string{fmt.Sprintf("%d", id)}
-
-	request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
-		Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
-		Operator: string(selection.In),
-		Values:   values,
-	})
 
 	client := s.k8sclient.getSearcher()
 
