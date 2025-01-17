@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -61,6 +62,11 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.Equal(t, created, obj.GetName())
 		require.Equal(t, int64(1), obj.GetGeneration())
+
+		wrap, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		require.Empty(t, wrap.GetRepositoryName()) // no SQL repo stub
+		require.Equal(t, helper.Org1.Admin.Identity.GetUID(), wrap.GetCreatedBy())
 
 		// Commented out because the dynamic client does not like lists as sub-resource
 		// // Check that it now appears in the history
