@@ -327,8 +327,12 @@ export function PanelChrome({
           }}
           onPointerUp={(evt) => {
             evt.stopPropagation();
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            if (pointerDownEvt.current && !(evt.target as HTMLElement).closest(`.${dragClassCancel}`)) {
+            if (
+              pointerDownEvt.current &&
+              dragClassCancel &&
+              evt.target instanceof HTMLElement &&
+              !evt.target.closest(`.${dragClassCancel}`)
+            ) {
               onSelect?.(pointerDownEvt.current);
               pointerDownEvt.current = null;
             }
