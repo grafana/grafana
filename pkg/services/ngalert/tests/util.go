@@ -41,9 +41,29 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type testEnvOptions struct {
+	featureToggles featuremgmt.FeatureToggles
+}
+
+type testEnvOption func(*testEnvOptions)
+
+func WithFeatureToggles(toggles featuremgmt.FeatureToggles) testEnvOption {
+	return func(opts *testEnvOptions) {
+		opts.featureToggles = toggles
+	}
+}
+
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...testEnvOption) (*ngalert.AlertNG, *store.DBstore) {
 	tb.Helper()
+
+	options := testEnvOptions{
+		featureToggles: featuremgmt.WithFeatures(),
+	}
+
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
@@ -64,26 +84,36 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	bus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
-	features := featuremgmt.WithFeatures()
-	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, features, ac)
+
+	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, options.featureToggles, ac)
 	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
-		cfg, features, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
+		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(),
 	)
 	require.NoError(tb, err)
+
+	logger := log.New("ngalert-test")
+
+	instanceStore := store.InstanceDBStore{
+		SQLStore:       ng.SQLStore,
+		Logger:         logger,
+		FeatureToggles: options.featureToggles,
+	}
+
 	return ng, &store.DBstore{
-		FeatureToggles: features,
+		FeatureToggles: options.featureToggles,
 		SQLStore:       ng.SQLStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
 		},
-		Logger:           log.New("ngalert-test"),
+		Logger:           logger,
 		DashboardService: dashboardService,
 		FolderService:    folderService,
 		Bus:              bus,
+		InstanceStore:    instanceStore,
 	}
 }
 

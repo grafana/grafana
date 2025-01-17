@@ -198,6 +198,14 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	})
 
 	t.Run("should ignore Normal state with no reason if feature flag is enabled", func(t *testing.T) {
+		_, dbstore := tests.SetupTestEnv(
+			t,
+			baseIntervalSeconds,
+			tests.WithFeatureToggles(
+				featuremgmt.WithFeatures(featuremgmt.FlagAlertingNoNormalState),
+			),
+		)
+
 		labels := models.InstanceLabels{"test": util.GenerateShortUID()}
 		instance1 := models.AlertInstance{
 			AlertInstanceKey: models.AlertInstanceKey{
@@ -229,17 +237,6 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		}
 
 		alerts, err := dbstore.ListAlertInstances(ctx, listQuery)
-		require.NoError(t, err)
-
-		containsHash(t, alerts, instance1.LabelsHash)
-
-		f := dbstore.FeatureToggles
-		dbstore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingNoNormalState)
-		t.Cleanup(func() {
-			dbstore.FeatureToggles = f
-		})
-
-		alerts, err = dbstore.ListAlertInstances(ctx, listQuery)
 		require.NoError(t, err)
 
 		containsHash(t, alerts, instance2.LabelsHash)

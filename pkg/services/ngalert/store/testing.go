@@ -143,12 +143,18 @@ func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 
 	service := foldertest.NewFakeService()
 
+	instanceStore := InstanceDBStore{
+		SQLStore: db,
+		Logger:   &logtest.Fake{},
+	}
+
 	store := &DBstore{
 		SQLStore:      db,
 		Cfg:           cfg.UnifiedAlerting,
 		FolderService: service,
 		Logger:        &logtest.Fake{},
 		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		InstanceStore: instanceStore,
 	}
 	return store
 }

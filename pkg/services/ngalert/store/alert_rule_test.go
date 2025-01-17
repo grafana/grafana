@@ -1653,12 +1653,17 @@ func createTestStore(
 	cfg setting.UnifiedAlertingSettings,
 	bus bus.Bus,
 ) *DBstore {
+	instanceStore := InstanceDBStore{
+		SQLStore: sqlStore,
+		Logger:   logger,
+	}
 	return &DBstore{
 		SQLStore:      sqlStore,
 		FolderService: folderService,
 		Logger:        logger,
 		Cfg:           cfg,
 		Bus:           bus,
+		InstanceStore: instanceStore,
 	}
 }
 
