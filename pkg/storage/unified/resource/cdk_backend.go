@@ -220,6 +220,10 @@ func isDeletedValue(raw []byte) bool {
 }
 
 func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest, cb func(ListIterator) error) (int64, error) {
+	if req.Source != ListRequest_STORE {
+		return 0, fmt.Errorf("listing from history not supported in CDK backend")
+	}
+
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
 		return 0, err
