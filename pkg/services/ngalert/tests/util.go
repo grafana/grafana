@@ -41,23 +41,23 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type testEnvOptions struct {
+type TestEnvOptions struct {
 	featureToggles featuremgmt.FeatureToggles
 }
 
-type testEnvOption func(*testEnvOptions)
+type TestEnvOption func(*TestEnvOptions)
 
-func WithFeatureToggles(toggles featuremgmt.FeatureToggles) testEnvOption {
-	return func(opts *testEnvOptions) {
+func WithFeatureToggles(toggles featuremgmt.FeatureToggles) TestEnvOption {
+	return func(opts *TestEnvOptions) {
 		opts.featureToggles = toggles
 	}
 }
 
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...testEnvOption) (*ngalert.AlertNG, *store.DBstore) {
+func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOption) (*ngalert.AlertNG, *store.DBstore) {
 	tb.Helper()
 
-	options := testEnvOptions{
+	options := TestEnvOptions{
 		featureToggles: featuremgmt.WithFeatures(),
 	}
 
@@ -97,10 +97,19 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...testEnvOpti
 
 	logger := log.New("ngalert-test")
 
-	instanceStore := store.InstanceDBStore{
-		SQLStore:       ng.SQLStore,
-		Logger:         logger,
-		FeatureToggles: options.featureToggles,
+	var instanceStore store.AlertInstanceStore
+	if options.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		instanceStore = store.ProtoInstanceDBStore{
+			SQLStore:       ng.SQLStore,
+			Logger:         logger,
+			FeatureToggles: options.featureToggles,
+		}
+	} else {
+		instanceStore = store.InstanceDBStore{
+			SQLStore:       ng.SQLStore,
+			Logger:         logger,
+			FeatureToggles: options.featureToggles,
+		}
 	}
 
 	return ng, &store.DBstore{
@@ -185,6 +194,6 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 	require.NotEmpty(t, ruleList)
 
 	rule := ruleList[0]
-	t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folderUID)
+	// t.Logf("alert definition: %v with title: %q interval: %d folder: %s created", rule.GetKey(), rule.Title, rule.IntervalSeconds, folderUID)
 	return rule
 }

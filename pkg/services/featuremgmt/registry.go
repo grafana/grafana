@@ -1053,6 +1053,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
+			Name:         "alertingSaveStateCompressed",
+			Description:  "Uses the compressed state format to save alert state to the database",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:              "scopeApi",
 			Description:       "In-development feature flag for the scope api using the app platform.",
 			Stage:             FeatureStageExperimental,

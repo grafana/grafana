@@ -33,7 +33,7 @@ type AlertingStore interface {
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
 }
 
-type instanceStore interface {
+type AlertInstanceStore interface {
 	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
@@ -53,7 +53,7 @@ type DBstore struct {
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 	Bus              bus.Bus
-	InstanceStore    instanceStore
+	InstanceStore    AlertInstanceStore
 }
 
 func ProvideDBStore(
@@ -67,11 +67,19 @@ func ProvideDBStore(
 ) (*DBstore, error) {
 	logger := log.New("ngalert.dbstore")
 
-	var instanceStore instanceStore
-	if cfg.UnifiedAlerting.AlertStateSaveCompressed {
+	var instanceStore AlertInstanceStore
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		instanceStore = ProtoInstanceDBStore{
-			SQLStore: sqlstore,
-			Logger:   logger,
+			SQLStore:       sqlstore,
+			Logger:         logger,
+			FeatureToggles: featureToggles,
+		}
+
+		// If FlagAlertingSaveStateCompressed is enabled, we use the ProtoInstanceDBStore which workd
+		// in a different way than the InstanceDBStore. The configuration flags are not used in the
+		// ProtoInstanceDBStore, so we log a warning if they are set.
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+			logger.Warn("alertingSaveStatePeriodic can not be used with alertingSaveStateCompressed")
 		}
 	} else {
 		instanceStore = InstanceDBStore{

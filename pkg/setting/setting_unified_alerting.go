@@ -119,8 +119,6 @@ type UnifiedAlertingSettings struct {
 	StatePeriodicSaveBatchSize int
 	RulesPerRuleGroupLimit     int64
 
-	AlertStateSaveCompressed bool
-
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
 
@@ -476,8 +474,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.RuleVersionRecordLimit < 0 {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
-
-	uaCfg.AlertStateSaveCompressed = ua.Key("alert_state_save_compressed").MustBool(false)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

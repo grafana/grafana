@@ -43,7 +43,7 @@ func (m *mockInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key 
 	return args.Error(0)
 }
 
-func (m *mockInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+func (m *mockInstanceStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
 	args := m.Called(ctx, instances)
 	return args.Error(0)
 }
