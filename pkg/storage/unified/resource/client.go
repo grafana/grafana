@@ -13,6 +13,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
@@ -70,8 +71,8 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{},
-		authnlib.WithDisableAccessTokenOption(),
+		&authnlib.GrpcClientConfig{TokenRequest: &authnlib.TokenExchangeRequest{}},
+		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 	)
 
@@ -132,6 +133,10 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
+	if identity.IsBackgroundCall(ctx) {
+		return "", nil
+	}
+
 	authInfo, ok := claims.From(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
@@ -140,6 +145,11 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	extra := authInfo.GetExtra()
 	if token, exists := extra["id-token"]; exists && len(token) != 0 && token[0] != "" {
 		return token[0], nil
+	}
+
+	// Future proofing: if we ever stop signing ID token for services
+	if !claims.IsIdentityType(authInfo.GetIdentityType(), claims.TypeAccessPolicy) {
+		return "", fmt.Errorf("no id-token found")
 	}
 
 	return "", nil

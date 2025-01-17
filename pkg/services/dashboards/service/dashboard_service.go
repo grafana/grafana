@@ -179,7 +179,7 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 
 		total := int64(0)
 		for _, org := range orgs {
-			ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(org.ID))
+			ctx = identity.WithBackgroundCallFlag(ctx)
 			orgDashboards, err := dr.CountDashboardsInOrg(ctx, org.ID)
 			if err != nil {
 				return nil, err
@@ -246,21 +246,6 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, cfg.Quota.Global.Dashboard)
 	limits.Set(orgQuotaTag, cfg.Quota.Org.Dashboard)
 	return limits, nil
-}
-
-func getDashboardBackgroundRequester(orgId int64) *identity.StaticRequester {
-	return &identity.StaticRequester{
-		Type:   claims.TypeServiceAccount,
-		UserID: 1,
-		OrgID:  orgId,
-		Name:   "dashboard-background",
-		Login:  "dashboard-background",
-		Permissions: map[int64]map[string][]string{
-			orgId: {
-				"*": {"*"},
-			},
-		},
-	}
 }
 
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
@@ -608,7 +593,7 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 
 			// delete them
 			for _, foundDash := range foundDashs {
-				ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(org.ID))
+				ctx = identity.WithBackgroundCallFlag(ctx)
 				if err = dr.deleteDashboard(ctx, foundDash.DashboardID, foundDash.DashboardUID, org.ID, false); err != nil {
 					return err
 				}
@@ -684,7 +669,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
-	ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(dto.OrgID))
+	ctx = identity.WithBackgroundCallFlag(ctx)
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false)
 	if err != nil {
@@ -724,7 +709,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	defer span.End()
 
 	dto.SignedInUser = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
-	ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(dto.OrgID))
+	ctx = identity.WithBackgroundCallFlag(ctx)
 
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
@@ -868,7 +853,7 @@ func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, das
 
 // DeleteProvisionedDashboard removes dashboard from the DB even if it is provisioned.
 func (dr *DashboardServiceImpl) DeleteProvisionedDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
-	ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(orgId))
+	ctx = identity.WithBackgroundCallFlag(ctx)
 	return dr.deleteDashboard(ctx, dashboardId, "", orgId, false)
 }
 
@@ -938,7 +923,7 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 		}
 
 		for _, org := range orgs {
-			ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(org.ID))
+			ctx = identity.WithBackgroundCallFlag(ctx)
 			dash, err := dr.getDashboardThroughK8s(ctx, &dashboards.GetDashboardQuery{OrgID: org.ID, ID: dashboardId})
 			if err != nil {
 				// if we can't find it in this org, try the next one
@@ -1855,7 +1840,7 @@ type dashboardProvisioningWithUID struct {
 }
 
 func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]*dashboardProvisioningWithUID, error) {
-	ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(query.OrgId))
+	ctx = identity.WithBackgroundCallFlag(ctx)
 
 	if query.ProvisionedRepo != "" {
 		query.ProvisionedRepo = provisionedFileNameWithPrefix(query.ProvisionedRepo)
