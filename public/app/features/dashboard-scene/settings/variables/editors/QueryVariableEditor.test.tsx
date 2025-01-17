@@ -35,11 +35,11 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
-      getDefaultQuery: () => 'default-query',
       variables: {
         getType: () => VariableSupportType.Custom,
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+        getDefaultQuery: () => 'default-query',
       },
     }),
     getList: () => [defaultDatasource, promDatasource],
@@ -183,8 +183,8 @@ describe('QueryVariableEditor', () => {
     });
 
     expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
-    expect(variable.state.query).toBe('');
-    expect(variable.state.definition).toBe('');
+    expect(variable.state.query).toBe('default-query');
+    expect(variable.state.definition).toBe('default-query');
   });
 
   it('should update the variable state when changing the query', async () => {
