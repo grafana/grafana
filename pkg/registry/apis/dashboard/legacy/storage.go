@@ -354,6 +354,7 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
+		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << should be v1
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend
 		body, err := json.Marshal(dash)

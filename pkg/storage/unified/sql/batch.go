@@ -18,6 +18,8 @@ var (
 
 func (b *backend) ProcessBatch(ctx context.Context, next func() *resource.BatchRequest) error {
 	return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		var lastKey *resource.ResourceKey
+
 		for req := next(); req != nil; req = next() {
 			if req.Action == resource.BatchRequest_DELETE_COLLECTION {
 				res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
@@ -73,9 +75,24 @@ func (b *backend) ProcessBatch(ctx context.Context, next func() *resource.BatchR
 				return fmt.Errorf("insert into resource history: %w", err)
 			}
 
+			lastKey = req.Key
+			lastKey.Name = ""
 			fmt.Printf("TODO: %s / %s / (%d)\n", req.Action, req.Key.SearchID(), rv)
 		}
-		fmt.Printf("finished.... maybe write history into current?\n")
+
+		// MOVE HISTORY TO MAIN
+		res, err := dbutil.Exec(ctx, tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Key:         lastKey, // !!!!
+		})
+		if err != nil {
+			return err
+		}
+		migrate_count, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("SELECT: %s (%d/%d)\n", lastKey.SearchID(), migrate_count)
 		return nil
 	})
 }
