@@ -375,7 +375,7 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		dashUIDs[i] = pubdash.DashboardUid
 	}
 
-	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: query.OrgID, DashboardUIDs: dashUIDs, SignedInUser: query.User})
+	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: query.OrgID, DashboardUIDs: dashUIDs, SignedInUser: query.User, Limit: int64(len(resp.PublicDashboards))})
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
 	}
