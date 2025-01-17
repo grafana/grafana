@@ -5,11 +5,11 @@
   "version": "11.5.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "11.5.0-pre",
+    "@grafana/data": "workspace:*",
     "@grafana/experimental": "2.1.6",
-    "@grafana/runtime": "11.5.0-pre",
-    "@grafana/schema": "11.5.0-pre",
-    "@grafana/ui": "11.5.0-pre",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/schema": "workspace:*",
+    "@grafana/ui": "workspace:*",
     "d3-random": "^3.0.1",
     "lodash": "4.17.21",
     "micro-memoize": "^4.1.2",
@@ -22,8 +22,8 @@
     "uuid": "11.0.5"
   },
   "devDependencies": {
-    "@grafana/e2e-selectors": "11.5.0-pre",
-    "@grafana/plugin-configs": "11.5.0-pre",
+    "@grafana/e2e-selectors": "workspace:*",
+    "@grafana/plugin-configs": "workspace:*",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "14.5.2",
