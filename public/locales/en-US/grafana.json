@@ -2203,6 +2203,11 @@
     "history-container": {
       "drawer-tittle": "History"
     },
+    "history-drawer": {
+      "close": "Close",
+      "dock": "Dock",
+      "undock": "Undock"
+    },
     "history-wrapper": {
       "collapse": "Collapse",
       "expand": "Expand",
