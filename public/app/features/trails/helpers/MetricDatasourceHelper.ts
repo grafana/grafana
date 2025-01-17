@@ -10,7 +10,6 @@ import {
   PromMetricsMetadataItem,
   PromQlLanguageProvider,
   PromQuery,
-  utf8Support,
 } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 
@@ -75,6 +74,7 @@ export class MetricDatasourceHelper {
   public listNativeHistograms() {
     return this._nativeHistograms;
   }
+
   /**
    * Identify native histograms by querying classic histograms and all metrics,
    * then comparing the results and build the collection of native histograms.
@@ -140,13 +140,7 @@ export class MetricDatasourceHelper {
 
     if (ds instanceof PrometheusDatasource) {
       const keys = await ds.getTagKeys(options);
-      return keys.map((key) => {
-        if (typeof key.value === 'string') {
-          key.value = utf8Support(key.value);
-          key.text = utf8Support(key.text);
-        }
-        return key;
-      });
+      return keys;
     }
 
     return [];
