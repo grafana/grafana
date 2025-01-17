@@ -166,7 +166,7 @@ func overlayFake() (map[string]load.Source, error) {
 		"/cue.mod/module.cue": load.FromString(mockCueMod),
 	}
 
-	err := filepath.WalkDir("../../../packages/grafana-schema/src/common", func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(filepath.Join("../../..", pluginImport), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
