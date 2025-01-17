@@ -2,7 +2,9 @@ package v0alpha1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -227,7 +229,39 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	return b.search.GetAPIRoutes(defs)
+	routes := b.search.GetAPIRoutes(defs)
+
+	// HACK -- just to make this easier to test locally
+	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+		Path: "migrate",
+		Spec: &spec3.PathProps{
+			Get: &spec3.Operation{}, // Get is easiest to test from brower
+		},
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			flusher, ok := w.(http.Flusher)
+			if !ok {
+				w.WriteHeader(500)
+				_, _ = w.Write([]byte("Expected flusher"))
+				return
+			}
+			rsp, err := b.legacy.Access.BatchWrite(r.Context(), legacy.BatchWriteOptions{
+				OrgID:       1, // get from namespace
+				KeepHistory: true,
+				Store:       b.unified,
+				Progress: func(count int, msg string) {
+					w.Write([]byte(fmt.Sprintf("[%4d] %s\n", count, msg)))
+					flusher.Flush()
+				},
+			})
+			if err == nil {
+				js, _ := json.MarshalIndent(rsp, "", "  ")
+				w.Write(js)
+			} else {
+				w.Write([]byte(fmt.Sprintf("ERROR: %s\n", err)))
+			}
+		},
+	})
+	return routes
 }
 
 // Mutate removes any internal ID set in the spec & adds it as a label

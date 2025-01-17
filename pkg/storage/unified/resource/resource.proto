@@ -319,14 +319,24 @@ message WatchEvent {
 }
 
 message BatchWriteRequest {
-  // NOTE everything in the same batch must share the same Namespace/Group/Resource
+  enum Type {
+    UNKNOWN = 0; // will be an error
+    ADDED = 1;
+    MODIFIED = 2;
+    DELETED = 3;
+
+    // delete everything from this key
+    DELETE_COLLECTION = 4;
+  }
+
+  // NOTE everything in the same stream must share the same Namespace/Group/Resource
   ResourceKey key = 1;
 
-  // The value will include 
-  bytes value = 3;
+  // The resource value 
+  bytes value = 2;
 
   // Hint that a new version will be written on-top of this
-  bool is_history = 5;
+  string folder = 3;
 }
 
 message BatchWriteResponse {

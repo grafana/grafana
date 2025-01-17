@@ -302,3 +302,51 @@ func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.Resourc
 		},
 	}, nil
 }
+
+func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOptions) (*resource.BatchWriteResponse, error) {
+	query := &DashboardQuery{
+		OrgID: opts.OrgID,
+		Limit: 10000000,
+	}
+
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := a.getRows(ctx, sql, query)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+
+	stream, err := opts.Store.BatchWrite(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for i := 1; rows.Next(); i++ {
+		dash := rows.row.Dash
+		dash.SetResourceVersion("") // it will be filled in by the backend
+		body, err := json.Marshal(dash)
+		if err != nil {
+			return nil, err
+		}
+		// TODO? large object support!
+		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(body)))
+
+		err = stream.Send(&resource.BatchWriteRequest{
+			Key: &resource.ResourceKey{
+				Namespace: dash.Namespace,
+				Group:     dashboard.GROUP,
+				Resource:  dashboard.DASHBOARD_RESOURCE,
+			},
+			Value: body,
+			// Folder?
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return stream.CloseAndRecv()
+}

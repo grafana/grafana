@@ -695,7 +695,8 @@ func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
 			returnError(req.Key, "Resource version should not be set", nil)
 		}
 
-		fmt.Printf("WRITE: %s\n", string(req.Value))
+		fmt.Printf("WRITE: %s\n", string(req.Key.SearchID()))
+		rsp.Count++
 	}
 }
 
