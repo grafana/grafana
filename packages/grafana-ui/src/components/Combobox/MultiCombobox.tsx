@@ -9,19 +9,15 @@ import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
+import { Spinner } from '../Spinner/Spinner';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
 
-import {
-  ComboboxOption,
-  ComboboxBaseProps,
-  AutoSizeConditionals,
-  itemToString,
-  VIRTUAL_OVERSCAN_ITEMS,
-} from './Combobox';
+import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, VIRTUAL_OVERSCAN_ITEMS } from './Combobox';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
-import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { itemFilter, itemToString } from './filter';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useMeasureMulti } from './useMeasureMulti';
@@ -34,7 +30,7 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value, width } = props;
+  const { options, placeholder, onChange, value, width, invalid, loading, disabled } = props;
   const isAsync = typeof options === 'function';
 
   const selectedItems = useMemo(() => {
@@ -47,8 +43,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [value, options, isAsync]);
 
   const styles = useStyles2(getComboboxStyles);
+  const [inputValue, setInputValue] = useState('');
 
-  const [items, baseSetItems] = useState(isAsync ? [] : options);
+  const [baseItems, baseSetItems] = useState(isAsync ? [] : options);
+
+  const items = useMemo(() => baseItems.filter(itemFilter(inputValue)), [baseItems, inputValue]);
 
   // TODO: Improve this with async
   useEffect(() => {
@@ -59,16 +58,18 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen);
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled);
 
-  const { measureRef, suffixMeasureRef, shownItems } = useMeasureMulti(selectedItems, width);
+  const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
+    selectedItems,
+    width,
+    disabled
+  );
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
     [selectedItems]
   );
-
-  const [inputValue, setInputValue] = useState('');
 
   const { getSelectedItemProps, getDropdownProps, removeSelectedItem } = useMultipleSelection({
     selectedItems, //initally selected items,
@@ -115,7 +116,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useCombobox.stateChangeTypes.InputBlur:
           setInputValue('');
           setIsOpen(false);
-          return changes;
         default:
           return changes;
       }
@@ -145,7 +145,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => MENU_OPTION_HEIGHT,
+    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -157,13 +157,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     <div ref={containerRef}>
       <div
         style={{ width: width === 'auto' ? undefined : width }}
-        className={multiStyles.wrapper}
+        className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })}
         ref={measureRef}
-        onClick={() => selectedItems.length > 0 && setIsOpen(!isOpen)}
+        onClick={() => !disabled && selectedItems.length > 0 && setIsOpen(!isOpen)}
       >
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
+              disabled={disabled}
               onRemove={() => {
                 removeSelectedItem(item);
               }}
@@ -174,7 +175,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             </ValuePill>
           ))}
           {selectedItems.length > shownItems && !isOpen && (
-            <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={suffixMeasureRef}>
+            <Box display="flex" direction="row" marginLeft={0.5} gap={1} ref={counterMeasureRef}>
               {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <Text>...</Text>
               <Tooltip
@@ -197,12 +198,18 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             })}
             {...getInputProps(
               getDropdownProps({
+                disabled,
                 preventKeyAction: isOpen,
                 placeholder: selectedItems.length > 0 ? undefined : placeholder,
                 onFocus: () => setIsOpen(true),
               })
             )}
           />
+          {loading && (
+            <div className={multiStyles.suffix} ref={suffixMeasureRef}>
+              <Spinner inline={true} />
+            </div>
+          )}
         </span>
       </div>
       <Portal>

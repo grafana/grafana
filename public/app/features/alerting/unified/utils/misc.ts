@@ -260,7 +260,10 @@ export function isErrorLike(error: unknown): error is Error {
 }
 
 export function getErrorCode(error: Error): unknown {
-  return isApiMachineryError(error) ? error.data.details.uid : error.cause;
+  if (isApiMachineryError(error) && error.data.details) {
+    return error.data.details.uid;
+  }
+  return error.cause;
 }
 
 /* this function will check if the error passed as the first argument contains an error code */
@@ -275,7 +278,7 @@ export function isErrorMatchingCode(error: Error | undefined, code: SupportedErr
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
-    if (isApiMachineryError(error)) {
+    if (isApiMachineryError(error) && error.data.details) {
       const message = getErrorMessageFromCode(error.data.details.uid);
       if (message) {
         return message;
