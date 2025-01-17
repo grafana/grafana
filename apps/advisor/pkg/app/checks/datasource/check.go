@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/common"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -16,7 +17,7 @@ import (
 
 type datasourceCheckRegisterer struct{}
 
-func (r *datasourceCheckRegisterer) New(cfg *AdvisorConfig) check {
+func (r *datasourceCheckRegisterer) New(cfg *common.AdvisorConfig) common.Check {
 	return &datasourceCheckImpl{
 		datasourceSvc:         cfg.DatasourceSvc,
 		pluginContextProvider: cfg.PluginContextProvider,
@@ -29,7 +30,7 @@ func (r *datasourceCheckRegisterer) Kind() resource.Kind {
 }
 
 func init() {
-	registerChecks = append(registerChecks, &datasourceCheckRegisterer{})
+	common.RegisterCheck(&datasourceCheckRegisterer{})
 }
 
 type datasourceCheckImpl struct {
@@ -38,26 +39,22 @@ type datasourceCheckImpl struct {
 	pluginClient          plugins.Client
 }
 
-func (c *datasourceCheckImpl) Run(ctx context.Context, obj resource.Object) (resource.Object, error) {
+func (c *datasourceCheckImpl) Run(ctx context.Context, obj *common.CheckData) (*common.CheckReport, error) {
 	// Optionally read the check input encoded in the object
-	d, ok := obj.(*advisor.DatasourceCheck)
-	if !ok {
-		return nil, fmt.Errorf("invalid object type")
-	}
-	fmt.Println(d.Spec)
+	fmt.Println(obj.Data)
 
 	dss, err := c.datasourceSvc.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		return nil, err
 	}
 
-	dsErrs := []advisor.DatasourceCheckV0alpha1StatusReportErrors{}
+	dsErrs := []common.ReportError{}
 	for _, ds := range dss {
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, advisor.DatasourceCheckV0alpha1StatusReportErrors{
-				Type:   advisor.DatasourceCheckStatusTypeInvestigation,
+			dsErrs = append(dsErrs, common.ReportError{
+				Type:   common.ReportErrorTypeInvestigation,
 				Reason: fmt.Sprintf("Invalid UID: %s", ds.UID),
 				Action: "Change UID",
 			})
@@ -93,20 +90,16 @@ func (c *datasourceCheckImpl) Run(ctx context.Context, obj resource.Object) (res
 		}
 
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, advisor.DatasourceCheckV0alpha1StatusReportErrors{
-				Type:   advisor.DatasourceCheckStatusTypeAction,
+			dsErrs = append(dsErrs, common.ReportError{
+				Type:   common.ReportErrorTypeAction,
 				Reason: fmt.Sprintf("Health check failed: %s", ds.Name),
 				Action: "Check datasource",
 			})
 		}
 	}
 
-	// Store result in the object
-	d.DatasourceCheckStatus = advisor.DatasourceCheckStatus{
-		Report: advisor.DatasourceCheckV0alpha1StatusReport{
-			Count:  int64(len(dss)),
-			Errors: dsErrs,
-		},
-	}
-	return d, nil
+	return &common.CheckReport{
+		Count:  int64(len(dss)),
+		Errors: dsErrs,
+	}, nil
 }

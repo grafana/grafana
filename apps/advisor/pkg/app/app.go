@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -11,33 +12,22 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/common"
+
+	// Trigger check registration
+	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasource"
+	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugin"
 )
 
-type AdvisorConfig struct {
-	DatasourceSvc         datasources.DataSourceService
-	PluginStore           pluginstore.Store
-	PluginRepo            repo.Service
-	PluginContextProvider *plugincontext.Provider
-	PluginClient          plugins.Client
-}
-
-var registerChecks = []checkRegisterer{}
-
 func New(cfg app.Config) (app.App, error) {
-	advisorConfig, ok := cfg.SpecificConfig.(*AdvisorConfig)
+	advisorConfig, ok := cfg.SpecificConfig.(*common.AdvisorConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
 
-	managedKinds := make([]simple.AppManagedKind, 0, len(registerChecks))
-	for _, registeredCheck := range registerChecks {
+	managedKinds := make([]simple.AppManagedKind, 0, len(common.RegisterChecks))
+	for _, registeredCheck := range common.RegisterChecks {
 		kind := registeredCheck.Kind()
 		check := registeredCheck.New(advisorConfig)
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -54,17 +44,41 @@ func New(cfg app.Config) (app.App, error) {
 						// Already processed
 						return nil
 					}
-					res, err := check.Run(ctx, obj)
+					specBytes, err := json.Marshal(obj.GetSpec())
 					if err != nil {
-						annotations["grafana.app/advisorCheckStatus"] = "errored"
-						obj.SetAnnotations(annotations)
-						_, err = client.Update(ctx, obj.GetStaticMetadata().Identifier(), obj, resource.UpdateOptions{})
 						return err
 					}
+					spec := &common.CheckData{}
+					err = json.Unmarshal(specBytes, spec)
+					if err != nil {
+						return err
+					}
+					res, err := check.Run(ctx, spec)
+					if err != nil {
+						annotations["grafana.app/advisorCheckStatus"] = "errored"
+						// obj.SetAnnotations(annotations)
+					} else {
+						annotations["grafana.app/advisorCheckStatus"] = "processed"
+						// res.SetAnnotations(annotations)
+						err = client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+							Operations: []resource.PatchOperation{{
+								Operation: resource.PatchOpAdd,
+								Path:      "/status/report",
+								Value:     *res,
+							}},
+						}, resource.PatchOptions{}, obj)
+						if err != nil {
+							return err
+						}
+					}
 
-					annotations["grafana.app/advisorCheckStatus"] = "processed"
-					res.SetAnnotations(annotations)
-					_, err = client.Update(ctx, obj.GetStaticMetadata().Identifier(), res, resource.UpdateOptions{})
+					err = client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+						Operations: []resource.PatchOperation{{
+							Operation: resource.PatchOpAdd,
+							Path:      "/metadata/annotations",
+							Value:     annotations,
+						}},
+					}, resource.PatchOptions{}, obj)
 					return err
 				},
 			},
@@ -103,7 +117,7 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	kinds := map[schema.GroupVersion][]resource.Kind{
 		gv: {},
 	}
-	for _, check := range registerChecks {
+	for _, check := range common.RegisterChecks {
 		kinds[gv] = append(kinds[gv], check.Kind())
 	}
 

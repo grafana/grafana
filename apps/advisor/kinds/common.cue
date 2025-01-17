@@ -1,5 +1,10 @@
 package advisor
 
+#CheckData: {
+	// Generic data input that a check can receive
+	data?: [string]: string
+}
+
 #CheckReport: {
     // Number of elements analyzed
     count: int

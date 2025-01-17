@@ -11,10 +11,7 @@ datasourcecheck: {
 				backend:  true
 			}
 			schema: {
-				spec: {
-					// This can be customized per check
-					data?: [string]: string
-				}
+				spec: #CheckData
 				status: {
 					report: #CheckReport
 				}

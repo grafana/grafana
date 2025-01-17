@@ -4,7 +4,7 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type DatasourceCheckSpec struct {
-	// This can be customized per check
+	// Generic data input that a check can receive
 	Data map[string]string `json:"data,omitempty"`
 }
 

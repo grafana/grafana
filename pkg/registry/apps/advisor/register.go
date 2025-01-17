@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/apis"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	advisorapp "github.com/grafana/grafana/apps/advisor/pkg/app"
+	advisorappCommon "github.com/grafana/grafana/apps/advisor/pkg/app/common"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
@@ -36,7 +37,7 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: advisorv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     advisorapp.GetKinds(),
-		CustomConfig: any(&advisorapp.AdvisorConfig{
+		CustomConfig: any(&advisorappCommon.AdvisorConfig{
 			DatasourceSvc:         datasourceSvc,
 			PluginStore:           pluginStore,
 			PluginRepo:            pluginRepo,

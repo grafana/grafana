@@ -7,17 +7,18 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/common"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 func init() {
-	registerChecks = append(registerChecks, &pluginCheckRegisterer{})
+	common.RegisterCheck(&pluginCheckRegisterer{})
 }
 
 type pluginCheckRegisterer struct{}
 
-func (p *pluginCheckRegisterer) New(cfg *AdvisorConfig) check {
+func (p *pluginCheckRegisterer) New(cfg *common.AdvisorConfig) common.Check {
 	return &PluginCheckImpl{
 		pluginStore: cfg.PluginStore,
 		pluginRepo:  cfg.PluginRepo,
@@ -33,10 +34,10 @@ type PluginCheckImpl struct {
 	pluginRepo  repo.Service
 }
 
-func (c *PluginCheckImpl) Run(ctx context.Context, obj resource.Object) (resource.Object, error) {
+func (c *PluginCheckImpl) Run(ctx context.Context, obj *common.CheckData) (*common.CheckReport, error) {
 	ps := c.pluginStore.Plugins(ctx)
 
-	dsErrs := []advisor.PluginCheckV0alpha1StatusReportErrors{}
+	dsErrs := []common.ReportError{}
 	for _, p := range ps {
 		// Check if plugin is deprecated
 		i, err := c.pluginRepo.PluginInfo(ctx, p.ID)
@@ -44,8 +45,8 @@ func (c *PluginCheckImpl) Run(ctx context.Context, obj resource.Object) (resourc
 			continue
 		}
 		if i.Status == "deprecated" {
-			dsErrs = append(dsErrs, advisor.PluginCheckV0alpha1StatusReportErrors{
-				Type:   advisor.PluginCheckStatusTypeInvestigation,
+			dsErrs = append(dsErrs, common.ReportError{
+				Type:   common.ReportErrorTypeInvestigation,
 				Reason: fmt.Sprintf("Plugin deprecated: %s", p.ID),
 				Action: "Look for alternatives",
 			})
@@ -57,24 +58,16 @@ func (c *PluginCheckImpl) Run(ctx context.Context, obj resource.Object) (resourc
 			continue
 		}
 		if info.Version != p.Info.Version { // TODO: Improve check for newer version
-			dsErrs = append(dsErrs, advisor.PluginCheckV0alpha1StatusReportErrors{
-				Type:   advisor.PluginCheckStatusTypeAction,
+			dsErrs = append(dsErrs, common.ReportError{
+				Type:   common.ReportErrorTypeAction,
 				Reason: fmt.Sprintf("Newer version available: %s", p.ID),
 				Action: "Update plugin",
 			})
 		}
 	}
 
-	// Store result in the object
-	d, ok := obj.(*advisor.PluginCheck)
-	if !ok {
-		return nil, fmt.Errorf("invalid object type")
-	}
-	d.PluginCheckStatus = advisor.PluginCheckStatus{
-		Report: advisor.PluginCheckV0alpha1StatusReport{
-			Count:  int64(len(ps)),
-			Errors: dsErrs,
-		},
-	}
-	return d, nil
+	return &common.CheckReport{
+		Count:  int64(len(ps)),
+		Errors: dsErrs,
+	}, nil
 }

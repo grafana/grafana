@@ -132,7 +132,7 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"data": {
 						SchemaProps: spec.SchemaProps{
-							Description: "This can be customized per check",
+							Description: "Generic data input that a check can receive",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -431,7 +431,7 @@ func schema_pkg_apis_advisor_v0alpha1_PluginCheckSpec(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"data": {
 						SchemaProps: spec.SchemaProps{
-							Description: "This can be customized per check",
+							Description: "Generic data input that a check can receive",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
