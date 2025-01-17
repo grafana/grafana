@@ -181,7 +181,7 @@ For more detailed instruction, refer to the [tutorial on IIS URL Rewrites](/tuto
 
 To use Apache as a proxy, ensure its proper installation and configuration.
 
-1.  Ensure that the Apache proxy module [mod_proxy](https://httpd.apache.org/docs/current/mod/mod_proxy.html) is installed and enabled. To enable, run the following commands:
+1.  Ensure that the Apache proxy module [`mod_proxy`](https://httpd.apache.org/docs/current/mod/mod_proxy.html) is installed and enabled. To enable, run the following commands:
 
 ```bash
 a2enmod proxy
