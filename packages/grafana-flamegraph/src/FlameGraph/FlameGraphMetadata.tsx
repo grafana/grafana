@@ -42,23 +42,25 @@ const FlameGraphMetadata = memo(
 
     if (sandwichedLabel) {
       parts.push(
-        <span key={'sandwich'}>
-          <Icon size={'sm'} name={'angle-right'} />
-          <div className={styles.metadataPill}>
-            <Icon size={'sm'} name={'gf-show-context'} />{' '}
-            <span className={styles.metadataPillName}>
-              {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
-            </span>
-            <IconButton
-              className={styles.pillCloseButton}
-              name={'times'}
-              size={'sm'}
-              onClick={onSandwichPillClick}
-              tooltip={'Remove sandwich view'}
-              aria-label={'Remove sandwich view'}
-            />
+        <Tooltip key={'sandwich'} content={sandwichedLabel} placement="top">
+          <div>
+            <Icon size={'sm'} name={'angle-right'} />
+            <div className={styles.metadataPill}>
+              <Icon size={'sm'} name={'gf-show-context'} />{' '}
+              <span className={styles.metadataPillName}>
+                {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
+              </span>
+              <IconButton
+                className={styles.pillCloseButton}
+                name={'times'}
+                size={'sm'}
+                onClick={onSandwichPillClick}
+                tooltip={'Remove sandwich view'}
+                aria-label={'Remove sandwich view'}
+              />
+            </div>
           </div>
-        </span>
+        </Tooltip>
       );
     }
 
@@ -71,7 +73,8 @@ const FlameGraphMetadata = memo(
           <div>
             <Icon size={'sm'} name={'angle-right'} />
             <div className={styles.metadataPill}>
-              <Icon size={'sm'} name={iconName} /> {percentValue}% of total
+              <Icon size={'sm'} name={iconName} />
+              &nbsp;{percentValue}% of total
               <IconButton
                 className={styles.pillCloseButton}
                 name={'times'}
@@ -111,8 +114,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(0, 0.5),
   }),
   metadata: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     margin: '8px 0',
-    textAlign: 'center',
   }),
   metadataPillName: css({
     label: 'metadataPillName',
