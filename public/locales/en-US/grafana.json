@@ -1323,10 +1323,9 @@
       "sortBy": "Sort by"
     },
     "related-logs": {
-      "docsLink": "Loki Recording Rule",
+      "LrrDocsLink": "Loki Recording Rule",
       "openExploreLogs": "Open Explore Logs",
-      "relatedLogsUnavailableAfterDocsLink": ", or check back later as we expand the various methods for establishing connections between metrics and logs.",
-      "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
+      "relatedLogsUnavailable": "No related logs found. To see related logs, you can either:<1><0>adjust the label filter to find logs with the same labels as the currently-selected metric</0><1>select a metric created by a <2><0>Loki Recording Rule</0></2></1></1>",
       "warnExperimentalFeature": "Related logs is an experimental feature."
     },
     "viewBy": "View by"
@@ -3345,8 +3344,23 @@
     },
     "metric-select": {
       "filter-by": "Filter by",
+      "native-histogram": "Native Histogram",
       "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "Classic Histogram displayed as heatmap:",
+      "ch-histogram": "Classic Histogram displayed as histogram:",
+      "click-histogram": "Click any of the native histograms below to explore them:",
+      "hide-examples": "Hide examples",
+      "learn-more": "Learn more",
+      "metric-examples": "",
+      "nh-heatmap": "Native Histogram displayed as heatmap:",
+      "nh-histogram": "Native Histogram displayed as histogram:",
+      "now": "Now:",
+      "previously": "Previously:",
+      "see-examples": "> See examples",
+      "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana."
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "Or view a recent exploration"

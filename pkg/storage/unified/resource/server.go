@@ -714,6 +714,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &ListResponse{Error: AsErrorResult(err)}, nil
@@ -789,6 +790,7 @@ func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResp
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return &RestoreResponse{Error: AsErrorResult(err)}, nil
@@ -1071,11 +1073,6 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 		return nil, fmt.Errorf("search index not configured")
 	}
 	return s.search.GetStats(ctx, req)
-}
-
-// History implements ResourceServer.
-func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	return s.search.History(ctx, req)
 }
 
 func (s *server) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {

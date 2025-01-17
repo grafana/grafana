@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/exp/slices"
@@ -51,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -69,6 +71,16 @@ var (
 
 	daysInTrash = 24 * 30 * time.Hour
 	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
+)
+
+var (
+	excludedFields = map[string]string{
+		resource.SEARCH_FIELD_EXPLAIN: "",
+		resource.SEARCH_FIELD_SCORE:   "",
+		resource.SEARCH_FIELD_TITLE:   "",
+		resource.SEARCH_FIELD_FOLDER:  "",
+		resource.SEARCH_FIELD_TAGS:    "",
+	}
 )
 
 type DashboardServiceImpl struct {
@@ -168,11 +180,10 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 		total := int64(0)
 		for _, org := range orgs {
 			ctx = identity.WithRequester(ctx, getDashboardBackgroundRequester(org.ID))
-			dashs, err := dr.listDashboardsThroughK8s(ctx, org.ID)
+			orgDashboards, err := dr.CountDashboardsInOrg(ctx, org.ID)
 			if err != nil {
-				return u, err
+				return nil, err
 			}
-			orgDashboards := int64(len(dashs))
 			total += orgDashboards
 
 			tag, err := quota.NewTag(dashboards.QuotaTargetSrv, dashboards.QuotaTarget, quota.OrgScope)
@@ -192,6 +203,28 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 	}
 
 	return dr.dashboardStore.Count(ctx, scopeParams)
+}
+
+func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		resp, err := dr.k8sclient.getSearcher().GetStats(ctx, &resource.ResourceStatsRequest{
+			Namespace: dr.k8sclient.getNamespace(orgID),
+			Kinds: []string{
+				v0alpha1.GROUP + "/" + v0alpha1.DashboardResourceInfo.GetName(),
+			},
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		if len(resp.Stats) != 1 {
+			return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+		}
+
+		return resp.Stats[0].Count, nil
+	}
+
+	return dr.dashboardStore.CountInOrg(ctx, orgID)
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
@@ -1204,6 +1237,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
 			finalResults[i] = dashboards.DashboardSearchProjection{
+				ID:        hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:       hit.Name,
 				OrgID:     query.OrgId,
 				Title:     hit.Title,
@@ -1949,11 +1983,11 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 			explainIDX = i
 		case resource.SEARCH_FIELD_SCORE:
 			scoreIDX = i
-		case "title":
+		case resource.SEARCH_FIELD_TITLE:
 			titleIDX = i
-		case "folder":
+		case resource.SEARCH_FIELD_FOLDER:
 			folderIDX = i
-		case "tags":
+		case resource.SEARCH_FIELD_TAGS:
 			tagsIDX = i
 		}
 	}
@@ -1967,11 +2001,28 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	}
 
 	for i, row := range result.Results.Rows {
+		fields := &common.Unstructured{}
+		for colIndex, col := range result.Results.Columns {
+			if _, ok := excludedFields[col.Name]; !ok {
+				val, err := resource.DecodeCell(col, colIndex, row.Cells[colIndex])
+				if err != nil {
+					return nil, err
+				}
+				// Some of the dashboard fields come in as int32, but we need to convert them to int64 or else fields.Set() will panic
+				int32Val, ok := val.(int32)
+				if ok {
+					val = int64(int32Val)
+				}
+				fields.Set(col.Name, val)
+			}
+		}
+
 		hit := &v0alpha1.DashboardHit{
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
 			Title:    string(row.Cells[titleIDX]),
 			Folder:   string(row.Cells[folderIDX]),
+			Field:    fields,
 		}
 		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)

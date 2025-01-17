@@ -424,7 +424,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
+        // refactor this into the query generator in future
+        const isNative = trail.isNativeHistogram(metric.name);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description, isNative);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -510,7 +512,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
     const [warningDismissed, dismissWarning] = useReducer(() => true, false);
 
-    const { metricSearch, useOtelExperience, hasOtelResources, isStandardOtel } = trail.useState();
+    const { metricSearch, useOtelExperience, hasOtelResources, isStandardOtel, metric } = trail.useState();
 
     const tooStrict = children.length === 0 && metricSearch;
     const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
@@ -571,7 +573,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
               ]}
             />
           </Field>
-          {hasOtelResources && (
+          {!metric && hasOtelResources && (
             <Field
               label={
                 <>
