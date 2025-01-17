@@ -725,10 +725,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		var libraryElements []model.LibraryElementWithMeta
 		sql := selectLibraryElementDTOWithMeta +
-			", coalesce(dashboard.title, 'General') AS folder_name" +
-			", coalesce(dashboard.uid, '') AS folder_uid" +
 			getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()) +
-			" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id" +
 			" INNER JOIN " + model.LibraryElementConnectionTableName + " AS lce ON lce.element_id = le.id AND lce.kind=1 AND lce.connection_id=?"
 		sess := session.SQL(sql, dashboardID)
 		err := sess.Find(&libraryElements)
@@ -738,6 +735,13 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		for _, element := range libraryElements {
+			if element.FolderName == "" {
+				element.FolderName = dashboards.RootFolderName
+			}
+			if element.FolderUID == "" {
+				element.FolderUID = ac.GeneralFolderUID
+			}
+
 			libraryElementMap[element.UID] = model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
