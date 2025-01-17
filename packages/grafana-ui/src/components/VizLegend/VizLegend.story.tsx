@@ -1,9 +1,10 @@
 import { StoryFn, Meta } from '@storybook/react';
 import { FC, useEffect, useState } from 'react';
-import { useTheme2 } from 'src/themes/ThemeContext';
 
 import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+
+import { useTheme2 } from '../../themes';
 
 import { VizLegend } from './VizLegend';
 import { VizLegendItem } from './types';
