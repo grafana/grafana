@@ -355,9 +355,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Disable grid dragging
     this.state.body.editModeChanged(false);
-
-    // Clear selection upon exiting edit mode
-    this.state.editPane.clearSelection();
   }
 
   public canDiscard() {
