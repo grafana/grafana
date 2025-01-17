@@ -4,7 +4,7 @@ import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerA
 import { timeIntervalsApi } from 'app/features/alerting/unified/api/timeIntervalsApi';
 import { mergeTimeIntervals } from 'app/features/alerting/unified/components/mute-timings/util';
 import {
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval,
   IoK8SApimachineryPkgApisMetaV1ObjectMeta,
 } from 'app/features/alerting/unified/openapi/timeIntervalsApi.gen';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
@@ -43,7 +43,8 @@ export type MuteTiming = MuteTimeInterval & {
 };
 
 /** Alias for generated kuberenetes Alerting API Server type */
-type TimeIntervalV0Alpha1 = ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
+type TimeIntervalV0Alpha1 =
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval;
 
 /** Parse kubernetes API response into a Mute Timing */
 const parseK8sTimeInterval: (item: TimeIntervalV0Alpha1) => MuteTiming = (item) => {
@@ -144,7 +145,11 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 
     return createGrafanaTimeInterval({
       namespace,
-      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval: { metadata: {}, spec: interval },
+      comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval: {
+        metadata: {},
+        spec: interval,
+        status: {},
+      },
     }).unwrap();
   });
 
@@ -233,9 +238,10 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
       return replaceGrafanaTimeInterval({
         name: originalName,
         namespace,
-        comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval: {
+        comGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceTimeintervalV0Alpha1TimeInterval: {
           spec: interval,
           metadata: { name: originalName },
+          status: {},
         },
       }).unwrap();
     }
