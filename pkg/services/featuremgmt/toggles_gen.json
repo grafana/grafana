@@ -5,6 +5,34 @@
   "items": [
     {
       "metadata": {
+        "name": "ABTestFeatureToggleA",
+        "resourceVersion": "1736782112674",
+        "creationTimestamp": "2025-01-13T15:28:32Z"
+      },
+      "spec": {
+        "description": "Test feature toggle to see how cohorts could be set up AB testing",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "ABTestFeatureToggleB",
+        "resourceVersion": "1736782112674",
+        "creationTimestamp": "2025-01-13T15:28:32Z"
+      },
+      "spec": {
+        "description": "Test feature toggle to see how cohorts could be set up AB testing",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "accessActionSets",
         "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
@@ -869,6 +897,7 @@
         "name": "cloudwatchMetricInsightsCrossAccount",
         "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
+        "deletionTimestamp": "2025-01-10T15:06:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }
@@ -1289,6 +1318,21 @@
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch datasource",
         "stage": "preview",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "elasticsearchImprovedParsing",
+        "resourceVersion": "1736808262603",
+        "creationTimestamp": "2025-01-13T20:32:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-13 22:44:22.603729 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables less memory intensive Elasticsearch result parsing",
+        "stage": "experimental",
         "codeowner": "@grafana/aws-datasources"
       }
     },
@@ -2048,6 +2092,18 @@
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesFoldersServiceV2",
+        "resourceVersion": "1735336477446",
+        "creationTimestamp": "2024-12-27T21:54:37Z"
+      },
+      "spec": {
+        "description": "Use the Folders Service V2, and route Folder Service requests to k8s",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
       }
@@ -3171,6 +3227,21 @@
     },
     {
       "metadata": {
+        "name": "queryLibraryDashboards",
+        "resourceVersion": "1736850377404",
+        "creationTimestamp": "2025-01-14T10:24:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-14 10:26:17.404592 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Query Library feature in Dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryOverLive",
         "resourceVersion": "1727432782383",
         "creationTimestamp": "2022-01-26T17:44:20Z",
@@ -3563,6 +3634,18 @@
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
         "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamHttpHeadersMimir",
+        "resourceVersion": "1736763800062",
+        "creationTimestamp": "2025-01-13T10:23:20Z"
+      },
+      "spec": {
+        "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {
