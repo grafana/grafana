@@ -13,7 +13,8 @@
     },
     "labels": {
        "host": "abc",
-       "region": "xyz"
+       "region": "xyz",
+       "grafana.app/deprecatedInternalID": "141"
     }
   },
   "spec": {
