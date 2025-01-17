@@ -12,6 +12,7 @@ import {
   FilterInput,
   InteractiveTable,
   LinkButton,
+  Space,
   Spinner,
   Stack,
   Tab,
@@ -25,13 +26,14 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
+import { StatusBadge } from './StatusBadge';
 import {
-  useGetRepositoryStatusQuery,
   useListJobQuery,
   useGetRepositoryFilesQuery,
   Repository,
   ResourceListItem,
   useGetRepositoryResourcesQuery,
+  useListRepositoryQuery,
 } from './api';
 import { FileDetails } from './api/types';
 import { PROVISIONING_URL } from './constants';
@@ -52,8 +54,11 @@ const tabInfo: SelectableValue<TabSelection> = [
 
 export default function RepositoryStatusPage() {
   const { name = '' } = useParams();
-  const query = useGetRepositoryStatusQuery({ name });
-
+  const query = useListRepositoryQuery({
+    fieldSelector: `metadata.name=${name}`,
+    watch: true,
+  });
+  const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
   const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Resources;
@@ -63,7 +68,7 @@ export default function RepositoryStatusPage() {
     <Page
       navId="provisioning"
       pageNav={{
-        text: query.data?.spec?.title ?? 'Repository Status',
+        text: data?.spec?.title ?? 'Repository Status',
         subTitle: 'Check the status of configured repository.',
       }}
     >
@@ -75,9 +80,8 @@ export default function RepositoryStatusPage() {
           </EmptyState>
         ) : (
           <>
-            {query.data ? (
+            {data ? (
               <>
-                {/*<ErrorView repo={query.data} />*/}
                 <TabsBar>
                   {tabInfo.map((t: SelectableValue) => (
                     <Tab
@@ -90,10 +94,10 @@ export default function RepositoryStatusPage() {
                   ))}
                 </TabsBar>
                 <TabContent>
-                  {tab === TabSelection.Resources && <ResourcesView repo={query.data} />}
-                  {tab === TabSelection.Files && <FilesView repo={query.data} />}
-                  {tab === TabSelection.Jobs && <JobsView repo={query.data} />}
-                  {tab === TabSelection.Health && <RepositoryHealth name={name} />}
+                  {tab === TabSelection.Resources && <ResourcesView repo={data} />}
+                  {tab === TabSelection.Files && <FilesView repo={data} />}
+                  {tab === TabSelection.Jobs && <JobsView repo={data} />}
+                  {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
                 </TabContent>
               </>
             ) : (
@@ -150,7 +154,9 @@ function FilesView({ repo }: RepoProps) {
           const { path } = original;
           return (
             <Stack>
-              <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
+              {(path.endsWith('.json') || path.endsWith('.yaml') || path.endsWith('.yml')) && (
+                <LinkButton href={`${PROVISIONING_URL}/${name}/file/${path}`}>View</LinkButton>
+              )}
               <LinkButton href={`${PROVISIONING_URL}/${name}/history/${path}`}>History</LinkButton>
             </Stack>
           );
@@ -309,39 +315,106 @@ function JobsView({ repo }: RepoProps) {
   );
 }
 
-function RepositoryHealth({ name }: { name: string }) {
-  const statusQuery = useGetRepositoryStatusQuery({ name }, { pollingInterval: 5000 });
-
-  if (statusQuery.isLoading) {
-    return (
-      <>
-        Loading repository status <Spinner />
-      </>
-    );
+function formatTimestamp(timestamp?: number) {
+  if (!timestamp) {
+    return 'N/A';
   }
+  return new Date(timestamp).toLocaleString();
+}
 
-  if (statusQuery.isError) {
-    return (
-      <Alert title="Error loading repository status">
-        <pre>{JSON.stringify(statusQuery.error)}</pre>
-      </Alert>
-    );
+function getRemoteURL(repo: Repository) {
+  if (repo.spec?.type === 'github') {
+    const spec = repo.spec.github;
+    let url = `https://github.com/${spec?.owner}/${spec?.repository}/`;
+    if (spec?.branch) {
+      url += `tree/${spec.branch}`;
+    }
+    return url;
   }
+  return undefined;
+}
 
-  const status = statusQuery.data?.status;
-
-  if (!status?.health?.healthy) {
-    return (
-      <Alert title="Repository is unhealthy">
-        <Text>Details: </Text>
-        <ul>{status?.health?.message?.map((v) => <Text key={v}>{v}</Text>)}</ul>
-      </Alert>
-    );
+function getWebhookURL(repo: Repository) {
+  const { status, spec } = repo;
+  if (spec?.type === 'github' && status?.webhook?.url) {
+    const { github } = spec;
+    return `https://github.com/${github?.owner}/${github?.repository}/settings/hooks/${status.webhook?.id}`;
   }
+  return undefined;
+}
+
+export function RepositoryHealth({ repo }: { repo: Repository }) {
+  const name = repo.metadata?.name ?? '';
+  const status = repo.status;
+  const remoteURL = getRemoteURL(repo);
+  const webhookURL = getWebhookURL(repo);
 
   return (
-    <Alert title="Repository is healthy" severity="success">
-      No errors found
-    </Alert>
+    <Stack gap={2} direction="column" alignItems="flex-start">
+      <Space />
+      <Text element={'h2'}>Health Status</Text>
+      {status?.health?.healthy ? (
+        <Alert title="Repository is healthy" severity="success" style={{ width: '100%' }}>
+          No errors found
+        </Alert>
+      ) : (
+        <Alert title="Repository is unhealthy" severity="warning" style={{ width: '100%' }}>
+          {status?.health?.message && status.health.message.length > 0 && (
+            <>
+              <Text>Details:</Text>
+              <ul>
+                {status.health.message.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </Alert>
+      )}
+
+      {remoteURL && (
+        <Text>
+          <TextLink external href={remoteURL}>
+            {remoteURL}
+          </TextLink>
+        </Text>
+      )}
+
+      {webhookURL && (
+        <Text>
+          <TextLink external href={webhookURL}>
+            Webhook
+          </TextLink>
+        </Text>
+      )}
+
+      <Text element={'h2'}>Sync Status</Text>
+      <StatusBadge state={status?.sync?.state} name={name} />
+      <ul style={{ listStyle: 'none' }}>
+        <li>
+          Job ID: <b>{status?.sync.job ?? 'N/A'}</b>
+        </li>
+        <li>
+          Last Ref: <b>{status?.sync.hash ?? 'N/A'}</b>
+        </li>
+        <li>
+          Started: <b>{formatTimestamp(status?.sync.started)}</b>
+        </li>
+        <li>
+          Finished: <b>{formatTimestamp(status?.sync.finished)}</b>
+        </li>
+      </ul>
+
+      {status?.sync?.message && status.sync.message.length > 0 && (
+        <>
+          <Text>Messages:</Text>
+          <ul style={{ listStyle: 'none' }}>
+            {status.sync.message.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </Stack>
   );
 }

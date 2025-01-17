@@ -1,6 +1,7 @@
 import { Page } from 'app/core/components/Page/Page';
 
 import { ConfigForm } from './ConfigForm';
+import { SetupWarnings } from './SetupWarnings';
 
 export default function NewRepositoryPage() {
   return (
@@ -9,6 +10,7 @@ export default function NewRepositoryPage() {
       pageNav={{ text: 'Configure repository', subTitle: 'Configure a repository for storing your resources.' }}
     >
       <Page.Contents>
+        <SetupWarnings />
         <ConfigForm />
       </Page.Contents>
     </Page>

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -270,6 +271,11 @@ func (m *mockResourceIndexClient) Search(ctx context.Context, req *resource.Reso
 	return args.Get(0).(*resource.ResourceSearchResponse), args.Error(1)
 }
 
+func (m *mockResourceIndexClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
+	args := m.Called(in)
+	return args.Get(0).(*resource.ResourceStatsResponse), args.Error(1)
+}
+
 type mockResourceInterface struct {
 	mock.Mock
 	dynamic.ResourceInterface
@@ -417,9 +423,11 @@ func TestGetDashboard(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -636,9 +644,11 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -729,9 +739,11 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -810,9 +822,11 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -917,9 +931,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -946,9 +962,11 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1039,9 +1057,11 @@ func TestUnprovisionDashboard(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1095,9 +1115,11 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1303,9 +1325,11 @@ func TestDeleteDashboard(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1422,12 +1446,15 @@ func TestSearchDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "tags",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1521,9 +1548,11 @@ func TestGetDashboards(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1599,9 +1628,11 @@ func TestGetDashboardUIDByID(t *testing.T) {
 				Columns: []*resource.ResourceTableColumnDefinition{
 					{
 						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
 					},
 				},
 				Rows: []*resource.ResourceTableRow{
@@ -1753,44 +1784,17 @@ func TestQuotaCount(t *testing.T) {
 		},
 	}
 
-	dashboardUnstructuredOrg1 := unstructured.UnstructuredList{
-		Items: []unstructured.Unstructured{{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name": "uid",
-				},
-				"spec": map[string]any{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
-			},
-		}},
-	}
-	dashboardUnstructuredOrg2 := unstructured.UnstructuredList{
-		Items: []unstructured.Unstructured{{
-			Object: map[string]any{
-				"metadata": map[string]any{
-					"name": "uid",
-				},
-				"spec": map[string]any{
-					"test":    "test",
-					"version": int64(1),
-					"title":   "testing slugify",
-				},
+	countOrg1 := resource.ResourceStatsResponse{
+		Stats: []*resource.ResourceStatsResponse_Stats{
+			{
+				Count: 1,
 			},
 		},
+	}
+	countOrg2 := resource.ResourceStatsResponse{
+		Stats: []*resource.ResourceStatsResponse_Stats{
 			{
-				Object: map[string]any{
-					"metadata": map[string]any{
-						"name": "uid2",
-					},
-					"spec": map[string]any{
-						"test":    "test2",
-						"version": int64(1),
-						"title":   "testing slugify2",
-					},
-				},
+				Count: 2,
 			},
 		},
 	}
@@ -1807,13 +1811,11 @@ func TestQuotaCount(t *testing.T) {
 	})
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
-		ctx, k8sClientMock, k8sResourceMock := setupK8sDashboardTests(service)
+		ctx, k8sClientMock, _ := setupK8sDashboardTests(service)
 		orgSvc := orgtest.FakeOrgService{ExpectedOrgs: orgs}
 		service.orgService = &orgSvc
-		k8sClientMock.On("getClient", mock.Anything, int64(1)).Return(k8sResourceMock, true).Once()
-		k8sClientMock.On("getClient", mock.Anything, int64(2)).Return(k8sResourceMock, true).Once()
-		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg2, nil).Once()
-		k8sResourceMock.On("List", mock.Anything, mock.Anything).Return(&dashboardUnstructuredOrg1, nil).Once()
+		k8sClientMock.searcher.On("GetStats", mock.Anything).Return(&countOrg2, nil).Once()
+		k8sClientMock.searcher.On("GetStats", mock.Anything).Return(&countOrg1, nil).Once()
 
 		result, err := service.Count(ctx, query)
 		require.NoError(t, err)
@@ -1829,6 +1831,38 @@ func TestQuotaCount(t *testing.T) {
 		require.Equal(t, c, int64(3))
 
 		fakeStore.AssertExpectations(t)
+	})
+}
+
+func TestCountDashboardsInOrg(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	defer fakeStore.AssertExpectations(t)
+	service := &DashboardServiceImpl{
+		cfg:            setting.NewCfg(),
+		dashboardStore: &fakeStore,
+	}
+	count := resource.ResourceStatsResponse{
+		Stats: []*resource.ResourceStatsResponse_Stats{
+			{
+				Count: 3,
+			},
+		},
+	}
+
+	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures()
+		fakeStore.On("CountInOrg", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		_, err := service.CountDashboardsInOrg(context.Background(), 1)
+		require.NoError(t, err)
+		fakeStore.AssertExpectations(t)
+	})
+
+	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
+		ctx, k8sClientMock, _ := setupK8sDashboardTests(service)
+		k8sClientMock.searcher.On("GetStats", mock.Anything).Return(&count, nil).Once()
+		result, err := service.CountDashboardsInOrg(ctx, 1)
+		require.NoError(t, err)
+		require.Equal(t, result, int64(3))
 	})
 }
 
@@ -1876,4 +1910,48 @@ func TestToUID(t *testing.T) {
 		result := toUID(rawIdentifier)
 		assert.Equal(t, "", result)
 	})
+}
+
+// regression test - parsing int32 values from search results was causing a panic
+func TestParseResults(t *testing.T) {
+	resSearchResp := &resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{
+					Name: "title",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: "folder",
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				},
+				{
+					Name: search.DASHBOARD_ERRORS_LAST_1_DAYS,
+					Type: resource.ResourceTableColumnDefinition_INT64,
+				},
+				{
+					Name: search.DASHBOARD_LINK_COUNT,
+					Type: resource.ResourceTableColumnDefinition_INT32,
+				},
+			},
+			Rows: []*resource.ResourceTableRow{
+				{
+					Key: &resource.ResourceKey{
+						Name:     "uid",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte("folder1"),
+						[]byte("100"),
+						[]byte("25"),
+					},
+				},
+			},
+		},
+		TotalHits: 1,
+	}
+
+	_, err := ParseResults(resSearchResp, 0)
+	require.NoError(t, err)
 }

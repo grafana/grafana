@@ -398,6 +398,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			"kind": "Folder",
 			"metadata": {
 			  "creationTimestamp": "${creationTimestamp}",
+			  "labels": {"grafana.app/deprecatedInternalID":"1"},
 			  "name": "` + uid + `",
 			  "namespace": "default",
 			  "resourceVersion": "${resourceVersion}",
