@@ -832,25 +832,10 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		var folderUIDs []struct {
-			ID int64 `xorm:"id"`
-		}
-		err := session.SQL("SELECT id from dashboard WHERE uid=? AND org_id=? AND is_folder=?", folderUID, signedInUser.GetOrgID(), l.SQLStore.GetDialect().BooleanStr(true)).Find(&folderUIDs)
-		if err != nil {
-			return err
-		}
-
-		if len(folderUIDs) == 0 {
-			return dashboards.ErrFolderNotFound
-		}
-
-		if len(folderUIDs) != 1 {
-			return fmt.Errorf("found %d folders, while expecting at most one", len(folderUIDs))
-		}
-
-		folderID := folderUIDs[0].ID
-
-		if err := l.requireEditPermissionsOnFolder(c, signedInUser, folderID); err != nil {
+		if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
+			if errors.Is(err, dashboards.ErrDashboardNotFound) {
+				return dashboards.ErrFolderNotFound
+			}
 			return err
 		}
 		var connectionIDs []struct {
@@ -858,8 +843,8 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 		sql := "SELECT lec.connection_id FROM library_element AS le"
 		sql += " INNER JOIN " + model.LibraryElementConnectionTableName + " AS lec on le.id = lec.element_id"
-		sql += " WHERE le.folder_id=? AND le.org_id=?"
-		err = session.SQL(sql, folderID, signedInUser.GetOrgID()).Find(&connectionIDs)
+		sql += " WHERE le.folder_uid=? AND le.org_id=?"
+		err := session.SQL(sql, folderUID, signedInUser.GetOrgID()).Find(&connectionIDs)
 		if err != nil {
 			return err
 		}
@@ -870,7 +855,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		var elementIDs []struct {
 			ID int64 `xorm:"id"`
 		}
-		err = session.SQL("SELECT id from library_element WHERE folder_id=? AND org_id=?", folderID, signedInUser.GetOrgID()).Find(&elementIDs)
+		err = session.SQL("SELECT id from library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elementIDs)
 		if err != nil {
 			return err
 		}
@@ -880,7 +865,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 				return err
 			}
 		}
-		if _, err := session.Exec("DELETE FROM library_element WHERE folder_id=? AND org_id=?", folderID, signedInUser.GetOrgID()); err != nil {
+		if _, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()); err != nil {
 			return err
 		}
 

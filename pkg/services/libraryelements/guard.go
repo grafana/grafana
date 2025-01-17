@@ -31,6 +31,32 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 	}
 }
 
+func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Context, user identity.Requester, folderUID string) error {
+	// TODO remove these special cases and handle General folder case in access control guardian
+	if isUIDGeneralFolder(folderUID) && user.HasRole(org.RoleEditor) {
+		return nil
+	}
+
+	if isUIDGeneralFolder(folderUID) && user.HasRole(org.RoleViewer) {
+		return dashboards.ErrFolderAccessDenied
+	}
+
+	g, err := guardian.NewByUID(ctx, folderUID, user.GetOrgID(), user)
+	if err != nil {
+		return err
+	}
+
+	canEdit, err := g.CanEdit()
+	if err != nil {
+		return err
+	}
+	if !canEdit {
+		return dashboards.ErrFolderAccessDenied
+	}
+
+	return nil
+}
+
 func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
 	// TODO remove these special cases and handle General folder case in access control guardian
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleEditor) {
