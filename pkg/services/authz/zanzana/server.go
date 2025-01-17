@@ -3,7 +3,6 @@ package zanzana
 import (
 	"net/http"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	openfgaserver "github.com/openfga/openfga/pkg/server"
 	openfgastorage "github.com/openfga/openfga/pkg/storage"
 
@@ -13,8 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga openfgav1.OpenFGAServiceServer, logger log.Logger) (*server.Server, error) {
+func NewServer(cfg setting.ZanzanaServerSettings, openfga server.OpenFGAServer, logger log.Logger) (*server.Server, error) {
 	return server.NewServer(cfg, openfga, logger)
+}
+
+func NewHealthServer(target server.DiagnosticServer) *server.HealthServer {
+	return server.NewHealthServer(target)
 }
 
 func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store openfgastorage.OpenFGADatastore, logger log.Logger) (*openfgaserver.Server, error) {
