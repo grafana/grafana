@@ -126,7 +126,7 @@ require (
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
@@ -214,7 +214,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.33.0 // indirect
 	go.opentelemetry.io/otel/metric v1.33.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.33.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.4.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
@@ -229,7 +229,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.216.0 // indirect
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20241216192217-9240e9c98484 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250102185135-69823020774d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
