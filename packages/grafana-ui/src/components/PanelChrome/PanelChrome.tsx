@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId } from 'react';
+import { CSSProperties, PointerEvent, ReactElement, ReactNode, useId, useRef } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -151,6 +151,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect } = useElementSelection(selectionId);
+  const pointerDownEvt = useRef<PointerEvent | null>(null);
 
   const hasHeader = !hoverHeader;
 
@@ -314,8 +315,24 @@ export function PanelChrome({
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
           data-testid="header-container"
-          onPointerDown={onDragStart}
-          onPointerUp={onSelect}
+          onPointerDown={(evt) => {
+            evt.stopPropagation();
+            pointerDownEvt.current = evt;
+          }}
+          onPointerMove={() => {
+            if (pointerDownEvt.current) {
+              onDragStart?.(pointerDownEvt.current);
+              pointerDownEvt.current = null;
+            }
+          }}
+          onPointerUp={(evt) => {
+            evt.stopPropagation();
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            if (pointerDownEvt.current && !(evt.target as HTMLElement).closest(`.${dragClassCancel}`)) {
+              onSelect?.(pointerDownEvt.current);
+              pointerDownEvt.current = null;
+            }
+          }}
         >
           {statusMessage && (
             <div className={dragClassCancel}>
