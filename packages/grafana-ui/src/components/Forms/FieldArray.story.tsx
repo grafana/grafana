@@ -4,7 +4,7 @@ import { FieldValues } from 'react-hook-form';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
@@ -43,7 +43,7 @@ export const Simple: StoryFn = (args) => {
               <>
                 <div style={{ marginBottom: '1rem' }}>
                   {fields.map((field, index) => (
-                    <HorizontalGroup key={field.id}>
+                    <Stack key={field.id}>
                       <Input
                         key={field.id}
                         {...register(`people.${index}.firstName` as const)}
@@ -54,7 +54,7 @@ export const Simple: StoryFn = (args) => {
                         {...register(`people.${index}.lastName` as const)}
                         defaultValue={field.lastName}
                       />
-                    </HorizontalGroup>
+                    </Stack>
                   ))}
                 </div>
                 <Button

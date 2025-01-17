@@ -2,7 +2,7 @@ import { Meta, StoryFn } from '@storybook/react';
 
 import { FeatureState } from '@grafana/data';
 
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { FeatureInfoBox, FeatureInfoBoxProps } from './FeatureInfoBox';
 import { InfoBox } from './InfoBox';
@@ -48,10 +48,10 @@ const defaultProps: FeatureInfoBoxProps = {
 
 const InfoBoxTemplate: StoryFn<typeof InfoBox> = (args) => {
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <div>Deprecrated component, use Alert with info severity</div>
       <InfoBox {...args} />
-    </VerticalGroup>
+    </Stack>
   );
 };
 export const infoBox = InfoBoxTemplate.bind({});
@@ -59,10 +59,10 @@ infoBox.args = defaultProps;
 
 const FeatureInfoBoxTemplate: StoryFn<typeof FeatureInfoBox> = (args) => {
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <div>Deprecrated component, use Alert with info severity</div>
       <FeatureInfoBox {...args} />
-    </VerticalGroup>
+    </Stack>
   );
 };
 
