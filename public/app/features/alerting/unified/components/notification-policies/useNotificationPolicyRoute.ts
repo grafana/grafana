@@ -243,7 +243,7 @@ function isValidMatcherOperator(type: string): type is MatcherOperator {
   return Object.values<string>(MatcherOperator).includes(type);
 }
 
-function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route): Route {
+export function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route): Route {
   return {
     ...route,
     routes: route.routes?.map(k8sSubRouteToRoute),
@@ -257,7 +257,7 @@ function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotific
   };
 }
 
-function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route {
+export function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route {
   const { object_matchers, ...rest } = route;
   return {
     ...rest,
@@ -275,7 +275,7 @@ function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertin
  * Convert Route to K8s compatible format. Make sure we aren't sending any additional properties the API doesn't recognize
  * because it will reply with excess properties in the HTTP headers
  */
-function createKubernetesRoutingTreeSpec(
+export function createKubernetesRoutingTreeSpec(
   rootRoute: Route
 ): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree {
   const inheritableDefaultProperties: InheritableProperties = pick(rootRoute, INHERITABLE_KEYS);
@@ -295,6 +295,9 @@ function createKubernetesRoutingTreeSpec(
 
   return {
     spec: spec,
-    metadata: { name: ROOT_ROUTE_NAME, resourceVersion: rootRoute[ROUTES_META_SYMBOL]?.resourceVersion },
+    metadata: {
+      name: ROOT_ROUTE_NAME,
+      resourceVersion: rootRoute[ROUTES_META_SYMBOL]?.resourceVersion,
+    },
   };
 }
