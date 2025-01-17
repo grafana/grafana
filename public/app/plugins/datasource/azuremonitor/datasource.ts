@@ -60,15 +60,17 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
     this.variables = new VariableSupport(this);
 
-    this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
     const credentials = instanceSettings.jsonData.azureCredentials;
     if (credentials && instanceOfAzureCredential<AadCurrentUserCredentials>('currentuser', credentials)) {
+      this.currentUserAuth = true;
       if (!credentials.serviceCredentials) {
         this.currentUserAuthFallbackAvailable = false;
       } else {
         this.currentUserAuthFallbackAvailable = isCredentialsComplete(credentials.serviceCredentials, true);
       }
     } else {
+      // Handle legacy credentials case
+      this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
       this.currentUserAuthFallbackAvailable = false;
     }
   }
