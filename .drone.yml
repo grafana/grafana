@@ -1029,9 +1029,9 @@ steps:
   name: wait-for-mysql-5.7
 - commands:
   - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
+  - apk add --update mariadb-client
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql57 -P 3306 -u
+    root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -1050,9 +1050,9 @@ steps:
   name: wait-for-mysql-8.0
 - commands:
   - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
-    -prootpass
+  - apk add --update mariadb-client
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql80 -P 3306 -u
+    root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -2462,9 +2462,9 @@ steps:
   name: wait-for-mysql-5.7
 - commands:
   - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
+  - apk add --update mariadb-client
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql57 -P 3306 -u
+    root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -2483,9 +2483,9 @@ steps:
   name: wait-for-mysql-8.0
 - commands:
   - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
-    -prootpass
+  - apk add --update mariadb-client
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql80 -P 3306 -u
+    root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -4206,9 +4206,9 @@ steps:
   name: wait-for-mysql-5.7
 - commands:
   - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
-    -prootpass
+  - apk add --update mariadb-client
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql57 -P 3306 -u
+    root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -4227,9 +4227,9 @@ steps:
   name: wait-for-mysql-8.0
 - commands:
   - apk add --update build-base
-  - apk add --update mysql-client
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
-    -prootpass
+  - apk add --update mariadb-client
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql80 -P 3306 -u
+    root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
@@ -4901,6 +4901,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f1dd154e0d531a55c2ca5da3b8f326f7230db3d8ad630805645fcbd9b2764369
+hmac: 2f35a675be53074c2af9c80d02d69871c7c0c2856b73ac7f6a4ac270a3ad4aa7
 
 ...
