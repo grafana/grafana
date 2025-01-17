@@ -295,7 +295,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		} else if cmd.Name != "" {
 			builder.Write(` AND le.name=?`, cmd.Name)
 		} else {
-			builder.Write(` AND (le.folder_uid="" OR le.folder_uid IS NULL OR le.folder_uid="General OR le.folder_id = 0")`)
+			builder.Write(` AND (le.folder_uid="" OR le.folder_uid IS NULL OR le.folder_uid="General" OR le.folder_id = 0)`)
 		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
