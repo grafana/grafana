@@ -8,10 +8,7 @@ import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedP
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Team } from 'app/types';
 
-
 import { updateTeam } from './state/actions';
-
-
 
 const mapDispatchToProps = {
   updateTeam,
