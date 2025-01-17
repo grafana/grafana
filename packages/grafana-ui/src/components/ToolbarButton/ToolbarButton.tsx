@@ -7,8 +7,10 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { ComponentSize } from '../../types';
 import { IconSize } from '../../types/icon';
 import { getPropertiesForVariant } from '../Button';
+import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip';
 
@@ -35,6 +37,10 @@ type CommonProps = {
   iconOnly?: boolean;
   /** Show highlight dot */
   isHighlighted?: boolean;
+  /**
+   * Size of the button. If not defined it will use legacy fixed-sized options
+   */
+  size?: ComponentSize;
 };
 
 export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -58,11 +64,12 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       iconOnly,
       'aria-label': ariaLabel,
       isHighlighted,
+      size,
       ...rest
     },
     ref
   ) => {
-    const styles = useStyles2(getStyles);
+    const styles = useStyles2(getStyles, size);
 
     const buttonStyles = cx(
       {
@@ -125,9 +132,36 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   return icon;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+/**
+ * Returns props for the button. If "size" it's not provided it uses legacy fixed-sized values that had
+ * been used before "size" property was introduced. Legacy padding was slightly different, and it's not
+ * possible to get exactly the same padding with "size" property so it's kept for backwards compatibility.
+ */
+const getButtonProps = (theme: GrafanaTheme2, size: ComponentSize | undefined) => {
+  const legacyHeight = theme.spacing(theme.components.height.md);
+  const legacyPadding = theme.spacing(0, 1);
+  const legacyFontSize = undefined;
+
+  let height = legacyHeight;
+  let padding = legacyPadding;
+  let fontSize: string | undefined = legacyFontSize;
+
+  if (size) {
+    const props = getPropertiesForButtonSize(size, theme);
+    height = theme.spacing(props.height);
+    const paddingMinusBorder = theme.spacing.gridSize * props.padding - 1;
+    padding = `0 ${paddingMinusBorder}px`;
+    fontSize = props.fontSize;
+  }
+
+  return { height, padding, fontSize };
+};
+
+const getStyles = (theme: GrafanaTheme2, size: ComponentSize | undefined) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
+
+  const { height, padding, fontSize } = getButtonProps(theme, size);
 
   const defaultOld = css({
     color: theme.colors.text.primary,
@@ -146,8 +180,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
-      height: theme.spacing(theme.components.height.md),
-      padding: theme.spacing(0, 1),
+      padding,
+      height,
+      fontSize,
       borderRadius: theme.shape.radius.default,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,

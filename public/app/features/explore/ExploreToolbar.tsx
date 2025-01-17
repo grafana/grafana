@@ -211,6 +211,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   } else {
     navBarActions.unshift(
       <ToolbarButton
+        size="sm"
         variant={drawerOpened ? 'active' : 'canvas'}
         aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
         onClick={() => setDrawerOpened(!drawerOpened)}

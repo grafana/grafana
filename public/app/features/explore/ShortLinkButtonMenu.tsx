@@ -133,6 +133,7 @@ export function ShortLinkButtonMenu() {
   return (
     <ButtonGroup>
       <ToolbarButton
+        size="sm"
         tooltip={lastSelected.label}
         icon={lastSelected.icon}
         variant={'canvas'}
@@ -147,6 +148,7 @@ export function ShortLinkButtonMenu() {
       </ToolbarButton>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
         <ToolbarButton
+          size="sm"
           narrow={true}
           variant={'canvas'}
           isOpen={isOpen}
