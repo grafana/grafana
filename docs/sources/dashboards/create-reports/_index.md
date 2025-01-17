@@ -99,6 +99,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/report-settings/#rendering-configuration
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/report-settings/#rendering-configuration
+  reporting-configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#reporting
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#reporting
   
 ---
 
@@ -117,6 +122,16 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP](ref:smtp) in [Configuration](ref:configuration) for more information.
 - The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
+
+### Rendering configuration
+
+When generating reports, each panel renders separately before being collected in a PDF. You can configure the per-panel rendering timeout and number of concurrently rendered panels.
+
+To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
+
+You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
+
+These options are available in the [reporting configuration](ref:reporting-configuration) of the `ini` file for Enterprise Grafana.
 
 ## Access control
 
@@ -329,3 +344,12 @@ You can pause and resume sending reports from the report list view. To do this, 
 
    - Click the pause icon - The report won't be sent according to its schedule until it's resumed.
    - Click the resume icon - The report resumes on its previous schedule.
+
+## Troubleshoot Reporting
+
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration](ref:configuration) for more information.
+
+```bash
+[log]
+filters = report:debug
+```
