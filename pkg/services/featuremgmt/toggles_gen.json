@@ -2831,6 +2831,18 @@
     },
     {
       "metadata": {
+        "name": "permissionsFilterRefactoredQuery",
+        "resourceVersion": "1737123277563",
+        "creationTimestamp": "2025-01-17T14:14:37Z"
+      },
+      "spec": {
+        "description": "Alternative permission filter implementation that refactors the recursive queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-group"
+      }
+    },
+    {
+      "metadata": {
         "name": "permissionsFilterRemoveSubquery",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-08-02T07:39:25Z"

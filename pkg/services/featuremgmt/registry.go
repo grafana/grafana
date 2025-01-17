@@ -524,6 +524,12 @@ var (
 			Owner:       grafanaBackendGroup,
 		},
 		{
+			Name:        "permissionsFilterRefactoredQuery",
+			Description: "Alternative permission filter implementation that refactors the recursive queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendGroup,
+		},
+		{
 			Name:            "configurableSchedulerTick",
 			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
 			Stage:           FeatureStageExperimental,

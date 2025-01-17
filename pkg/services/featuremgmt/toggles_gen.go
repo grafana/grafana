@@ -287,6 +287,10 @@ const (
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
 
+	// FlagPermissionsFilterRefactoredQuery
+	// Alternative permission filter implementation that refactors the recursive queries
+	FlagPermissionsFilterRefactoredQuery = "permissionsFilterRefactoredQuery"
+
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
