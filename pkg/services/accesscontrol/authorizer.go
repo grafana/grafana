@@ -60,6 +60,8 @@ func NewLegacyAccessClient(ac AccessControl, opts ...ResourceAuthorizerOptions) 
 			utils.VerbPatch:            fmt.Sprintf("%s:write", r),
 			utils.VerbDelete:           fmt.Sprintf("%s:delete", r),
 			utils.VerbDeleteCollection: fmt.Sprintf("%s:delete", r),
+			utils.VerbGetPermissions:   fmt.Sprintf("%s.permissions:read", r),
+			utils.VerbSetPermissions:   fmt.Sprintf("%s.permissions:write", r),
 		}
 	}
 

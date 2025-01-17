@@ -100,7 +100,7 @@ When sharing URLs with ad hoc filters, remember to encode the URL. In the preced
 
 ### Example
 
-[This dashboard in Grafana Play](https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica) passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
+[This dashboard in Grafana Play](https://play.grafana.org/d/p-k6QtkGz/template-redux?var-interval=$__auto&orgId=1&from=now-5m&to=now&timezone=utc&var-query=$__all&var-query2=$__all&var-query3=$__all&var-Filters=job%7C%3D%7Cmetrictank%2Ftsdb-gw&var-textbox=foo&var-custom=lisa&var-datasource=grafanacloud-demoinfra-prom) passes the ad hoc filter variable `Filters` with the filter value `job = metrictank/tsdb-gw`.
 
 ## Time range control using the URL
 

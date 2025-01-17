@@ -299,6 +299,13 @@
         }
       }
     },
+    "group-actions": {
+      "actions-trigger": "Rule group actions",
+      "delete": "Delete",
+      "edit": "Edit",
+      "export": "Export",
+      "reorder": "Re-order rules"
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "New alert rule",
@@ -484,11 +491,22 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "ds-error-boundary": {
+        "description": "Check the data source configuration. Does the data source support Prometheus API?",
+        "title": "Unable to load rules from this data source"
+      },
       "filter-view": {
         "no-more-results": "No more results – showing {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters."
       },
-      "new-alert-rule": "New alert rule"
+      "new-alert-rule": "New alert rule",
+      "pagination": {
+        "next-page": "next page",
+        "previous-page": "previous page"
+      },
+      "return-button": {
+        "title": "Alert rules"
+      }
     },
     "rule-state": {
       "creating": "Creating",
@@ -531,6 +549,11 @@
         "state": "State"
       },
       "save-query": "Save current search"
+    },
+    "silences": {
+      "affected-instances": "Affected alert instances",
+      "only-firing-instances": "Only alert instances in the firing state are displayed.",
+      "preview-affected-instances": "Preview the alert instances affected by this silence."
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
@@ -1300,10 +1323,9 @@
       "sortBy": "Sort by"
     },
     "related-logs": {
-      "docsLink": "Loki Recording Rule",
+      "LrrDocsLink": "Loki Recording Rule",
       "openExploreLogs": "Open Explore Logs",
-      "relatedLogsUnavailableAfterDocsLink": ", or check back later as we expand the various methods for establishing connections between metrics and logs.",
-      "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
+      "relatedLogsUnavailable": "No related logs found. To see related logs, you can either:<1><0>adjust the label filter to find logs with the same labels as the currently-selected metric</0><1>select a metric created by a <2><0>Loki Recording Rule</0></2></1></1>",
       "warnExperimentalFeature": "Related logs is an experimental feature."
     },
     "viewBy": "View by"
@@ -1776,6 +1798,22 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more"
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "Confirm",
+        "message": "You are about to disable the logs filter menu. To re-enable it, select text in a log line while holding the alt key.",
+        "title": "Disable menu"
+      },
+      "disable-popover-message": {
+        "shortcut": "alt+select to enable again"
+      }
+    },
+    "popover-menu": {
+      "copy": "Copy selection",
+      "disable-menu": "Disable menu",
+      "line-contains": "Add as line contains filter",
+      "line-contains-not": "Add as line does not contain filter"
     }
   },
   "migrate-to-cloud": {
@@ -1868,7 +1906,8 @@
       "library_elements": "library elements",
       "mute_timings": "mute timings",
       "notification_policies": "notification policies",
-      "notification_templates": "notification templates"
+      "notification_templates": "notification templates",
+      "plugins": "plugins"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1919,7 +1958,9 @@
     "public-preview": {
       "button-text": "Give feedback",
       "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
-      "title": "Migrate to Grafana Cloud is in public preview"
+      "message-plugins": "Only Community and Commercial signed plugins are eligible for migration. Their latest version will be installed in the cloud instance, please upgrade your plugins before starting the migration process.",
+      "title": "Migrate to Grafana Cloud is in public preview",
+      "title-plugins": "Migration of plugins"
     },
     "resource-details": {
       "dismiss-button": "OK",
@@ -1932,7 +1973,6 @@
         "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
         "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
-        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
         "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
         "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "unsupported-data-type": "Migration of this data type is not currently supported."
@@ -1971,6 +2011,7 @@
       "mute_timing": "Mute Timing",
       "notification_policy": "Notification Policy",
       "notification_template": "Notification Template",
+      "plugin": "Plugin",
       "unknown": "Unknown"
     },
     "summary": {
@@ -2023,7 +2064,7 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "subtitle": "Manage Alertmanager configurations",
+      "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
       "title": "Settings"
     },
     "alerting-am-routes": {
@@ -2497,15 +2538,14 @@
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
-        "installedVersion": "Installed version: ",
+        "installedVersion": "Installed Version",
         "lastCommitDate": "Last commit date:",
-        "latestVersion": "Latest version: ",
+        "latestVersion": "Latest Version",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
-        "updatedAt": "Last updated:",
-        "version": "Version"
+        "updatedAt": "Last updated:"
       }
     },
     "empty-state": {
@@ -2774,6 +2814,12 @@
   "recentlyDeleted": {
     "filter": {
       "placeholder": "Search for dashboards"
+    }
+  },
+  "reduce": {
+    "strictMode": {
+      "description": "When <1>Reduce Strict mode</1> is used, the <3>fill(null)</3> function (InfluxQL) will result in <6>NaN</6>. <9>See the documentation for more details.</9>",
+      "title": "Strict Mode Behaviour"
     }
   },
   "refresh-picker": {
@@ -3187,6 +3233,13 @@
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
+  "table": {
+    "container": {
+      "content": "Showing too many columns in a single table may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series": "Show all columns",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_COLUMNS}} columns"
+    }
+  },
   "tag-filter": {
     "clear-button": "Clear tags",
     "loading": "Loading...",
@@ -3291,7 +3344,23 @@
     },
     "metric-select": {
       "filter-by": "Filter by",
+      "native-histogram": "Native Histogram",
+      "new-badge": "New",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "Classic Histogram displayed as heatmap:",
+      "ch-histogram": "Classic Histogram displayed as histogram:",
+      "click-histogram": "Click any of the native histograms below to explore them:",
+      "hide-examples": "Hide examples",
+      "learn-more": "Learn more",
+      "metric-examples": "",
+      "nh-heatmap": "Native Histogram displayed as heatmap:",
+      "nh-histogram": "Native Histogram displayed as histogram:",
+      "now": "Now:",
+      "previously": "Previously:",
+      "see-examples": "> See examples",
+      "sentence": "Prometheus native histograms offer high resolution, high precision, simple usage in instrumentation and a way to combine and manipulate histograms in queries and in Grafana."
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": "Or view a recent exploration"

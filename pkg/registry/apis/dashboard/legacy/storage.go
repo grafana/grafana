@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -246,10 +245,12 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
+// TODO: this needs to be implemented
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not yet (filter)")
 }
 
+/**
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {
@@ -328,13 +329,47 @@ func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryR
 	}
 	return list, err
 }
+	**/
 
-// Used for efficient provisioning
-func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
-	return nil, fmt.Errorf("not yet (origin)")
+func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.CountRepositoryObjectsRequest) (*resource.CountRepositoryObjectsResponse, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 // GetStats implements ResourceServer.
 func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	return nil, fmt.Errorf("not yet (GetStats)")
+	info, err := claims.ParseNamespace(req.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read namespace")
+	}
+	if info.OrgID == 0 {
+		return nil, fmt.Errorf("invalid OrgID found in namespace")
+	}
+
+	if len(req.Kinds) != 1 {
+		return nil, fmt.Errorf("only can query for dashboard kind in legacy fallback")
+	}
+
+	parts := strings.SplitN(req.Kinds[0], "/", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid kind")
+	}
+
+	count, err := a.dashStore.CountInOrg(ctx, info.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resource.ResourceStatsResponse{
+		Stats: []*resource.ResourceStatsResponse_Stats{
+			{
+				Group:    parts[0],
+				Resource: parts[1],
+				Count:    count,
+			},
+		},
+	}, nil
 }

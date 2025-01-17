@@ -147,10 +147,6 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagPrometheusMetricEncyclopedia
-	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
-	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
-
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
@@ -291,10 +287,6 @@ const (
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
 
-	// FlagPrometheusConfigOverhaulAuth
-	// Update the Prometheus configuration page with the new auth component
-	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
-
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
@@ -387,9 +379,17 @@ const (
 	// Use the k8s client to retrieve dashboards internally
 	FlagKubernetesCliDashboards = "kubernetesCliDashboards"
 
+	// FlagKubernetesRestore
+	// Allow restoring objects in k8s
+	FlagKubernetesRestore = "kubernetesRestore"
+
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
+
+	// FlagKubernetesFoldersServiceV2
+	// Use the Folders Service V2, and route Folder Service requests to k8s
+	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
 
 	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
 	// Facilitate integration testing of experimental APIs
@@ -556,7 +556,7 @@ const (
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
-	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
+	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagOnPremToCloudMigrationsAuthApiMig
@@ -663,10 +663,6 @@ const (
 	// Enables the new alert list view design
 	FlagAlertingListViewV2 = "alertingListViewV2"
 
-	// FlagNotificationBanner
-	// Enables the notification banner UI and API
-	FlagNotificationBanner = "notificationBanner"
-
 	// FlagDashboardRestore
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
@@ -739,10 +735,6 @@ const (
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
 
-	// FlagCloudwatchMetricInsightsCrossAccount
-	// Enables cross account observability for Cloudwatch Metric Insights query builder
-	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
@@ -800,7 +792,7 @@ const (
 	FlagAlertingQueryAndExpressionsStepMode = "alertingQueryAndExpressionsStepMode"
 
 	// FlagImprovedExternalSessionHandling
-	// Enable improved support for external sessions in Grafana
+	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
 
 	// FlagUseSessionStorageForRedirection
@@ -926,4 +918,36 @@ const (
 	// FlagInvestigationsBackend
 	// Enable the investigations backend API
 	FlagInvestigationsBackend = "investigationsBackend"
+
+	// FlagK8SFolderCounts
+	// Enable folder&#39;s api server counts
+	FlagK8SFolderCounts = "k8SFolderCounts"
+
+	// FlagK8SFolderMove
+	// Enable folder&#39;s api server move
+	FlagK8SFolderMove = "k8SFolderMove"
+
+	// FlagImprovedExternalSessionHandlingSAML
+	// Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+	FlagImprovedExternalSessionHandlingSAML = "improvedExternalSessionHandlingSAML"
+
+	// FlagTeamHttpHeadersMimir
+	// Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
+	FlagTeamHttpHeadersMimir = "teamHttpHeadersMimir"
+
+	// FlagABTestFeatureToggleA
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
+
+	// FlagABTestFeatureToggleB
+	// Test feature toggle to see how cohorts could be set up AB testing
+	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
+
+	// FlagQueryLibraryDashboards
+	// Enables Query Library feature in Dashboards
+	FlagQueryLibraryDashboards = "queryLibraryDashboards"
+
+	// FlagElasticsearchImprovedParsing
+	// Enables less memory intensive Elasticsearch result parsing
+	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 )

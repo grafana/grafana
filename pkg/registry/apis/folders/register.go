@@ -18,13 +18,11 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -32,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
@@ -44,25 +44,29 @@ var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	gv            schema.GroupVersion
-	features      featuremgmt.FeatureToggles
-	namespacer    request.NamespaceMapper
-	folderSvc     folder.Service
-	storage       grafanarest.Storage
-	accessControl accesscontrol.AccessControl
-	searcher      resource.ResourceIndexClient
+	gv                   schema.GroupVersion
+	features             featuremgmt.FeatureToggles
+	namespacer           request.NamespaceMapper
+	folderSvc            folder.Service
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	storage              grafanarest.Storage
+	accessControl        accesscontrol.AccessControl
+	searcher             resource.ResourceIndexClient
+	cfg                  *setting.Cfg
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
+	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagKubernetesFolders,
+		featuremgmt.FlagKubernetesFoldersServiceV2,
 		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
@@ -70,12 +74,14 @@ func RegisterAPIService(cfg *setting.Cfg,
 	}
 
 	builder := &FolderAPIBuilder{
-		gv:            resourceInfo.GroupVersion(),
-		features:      features,
-		namespacer:    request.GetNamespaceMapper(cfg),
-		folderSvc:     folderSvc,
-		accessControl: accessControl,
-		searcher:      unified,
+		gv:                   resourceInfo.GroupVersion(),
+		features:             features,
+		namespacer:           request.GetNamespaceMapper(cfg),
+		folderSvc:            folderSvc,
+		folderPermissionsSvc: folderPermissionsSvc,
+		cfg:                  cfg,
+		accessControl:        accessControl,
+		searcher:             unified,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -120,10 +126,16 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	dualWriteBuilder := opts.DualWriteBuilder
 
 	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: resourceInfo.TableConverter(),
+		service:              b.folderSvc,
+		namespacer:           b.namespacer,
+		tableConverter:       resourceInfo.TableConverter(),
+		folderPermissionsSvc: b.folderPermissionsSvc,
+		features:             b.features,
+		cfg:                  b.cfg,
 	}
+
+	opts.StorageOptions(resourceInfo.GroupResource(), apistore.StorageOptions{
+		RequireDeprecatedInternalID: true})
 
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
