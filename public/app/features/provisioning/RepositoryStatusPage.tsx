@@ -319,7 +319,6 @@ function formatTimestamp(timestamp?: number) {
   if (!timestamp) {
     return 'N/A';
   }
-  return new Date(timestamp * 1000).toLocaleString();
 }
 
 function getRemoteURL(repo: Repository) {
