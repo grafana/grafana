@@ -52,7 +52,6 @@ export function PluginDetailsPage({
     queryParams.get('page') as PluginTabIds,
     isNarrowScreen
   );
-
   const { actions, info, subtitle } = usePluginPageExtensions(plugin);
   const { isLoading: isFetchLoading } = useFetchStatus();
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
