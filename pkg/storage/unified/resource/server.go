@@ -103,6 +103,10 @@ type StorageBackend interface {
 	GetResourceStats(ctx context.Context, namespace string, minCount int) ([]ResourceStats, error)
 }
 
+type BatchWriteableBackend interface {
+	BatchWrite(ctx context.Context, next func() *BatchWriteRequest) error
+}
+
 type ResourceStats struct {
 	NamespacedResource
 
@@ -653,6 +657,11 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 // BatchWrite implements ResourceServer.
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
 func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
+	backend, ok := s.backend.(BatchWriteableBackend)
+	if !ok {
+		return fmt.Errorf("backend does not support batched requests")
+	}
+
 	ctx := stream.Context()
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
@@ -665,39 +674,45 @@ func (s *server) BatchWrite(stream ResourceStore_BatchWriteServer) error {
 	}
 
 	rsp := &BatchWriteResponse{}
-	returnError := func(k *ResourceKey, msg string, err error) error {
+	addError := func(k *ResourceKey, msg string, err error) *BatchWriteRequest {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusBadRequest,
 			Message: msg,
 			Reason:  fmt.Sprintf("Key: %s // Error: %s", k.SearchID(), err),
 		}
-		return stream.SendAndClose(rsp)
+		return nil
 	}
 
-	for {
+	// BatchProcess requests
+	err := backend.BatchWrite(ctx, func() *BatchWriteRequest {
 		req, err := stream.Recv()
 		if err != nil {
 			if err != io.EOF {
-				return err
+				rsp.Error = AsErrorResult(err)
 			}
-			return stream.SendAndClose(rsp)
+			return nil
 		}
-
-		obj := &unstructured.Unstructured{}
-		err = obj.UnmarshalJSON(req.Value)
-		if err != nil {
-			return returnError(req.Key, "Error reading JSON", err)
+		if len(req.Value) > 0 {
+			// Not totally necessary???
+			obj := &unstructured.Unstructured{}
+			err = obj.UnmarshalJSON(req.Value)
+			if err != nil {
+				return addError(req.Key, "Error reading JSON", err)
+			}
+			if obj.GetUID() == "" {
+				return addError(req.Key, "Missing UID", nil)
+			}
+			if obj.GetResourceVersion() != "" {
+				return addError(req.Key, "Resource version should not be set", nil)
+			}
 		}
-		if obj.GetUID() == "" {
-			returnError(req.Key, "Missing UID", nil)
-		}
-		if obj.GetResourceVersion() != "" {
-			returnError(req.Key, "Resource version should not be set", nil)
-		}
-
-		fmt.Printf("WRITE: %s\n", string(req.Key.SearchID()))
 		rsp.Count++
+		return req
+	})
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
 	}
+	return stream.SendAndClose(rsp)
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {

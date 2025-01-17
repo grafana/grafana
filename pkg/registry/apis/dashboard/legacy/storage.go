@@ -304,8 +304,13 @@ func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.Resourc
 }
 
 func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOptions) (*resource.BatchWriteResponse, error) {
+	info, err := claims.ParseNamespace(opts.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &DashboardQuery{
-		OrgID: opts.OrgID,
+		OrgID: info.OrgID,
 		Limit: 10000000,
 	}
 
@@ -320,30 +325,60 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 			_ = rows.Close()
 		}()
 	}
+	if err != nil {
+		return nil, err
+	}
 
 	stream, err := opts.Store.BatchWrite(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// First delete everything in the resource
+	if opts.ClearFirst {
+		err = stream.Send(&resource.BatchWriteRequest{
+			Action: resource.BatchWriteRequest_DELETE_COLLECTION,
+			Key: &resource.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     dashboard.GROUP,
+				Resource:  dashboard.DASHBOARD_RESOURCE,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
+		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend
 		body, err := json.Marshal(dash)
 		if err != nil {
 			return nil, err
 		}
+		req := &resource.BatchWriteRequest{
+			Key: &resource.ResourceKey{
+				Namespace: opts.Namespace,
+				Group:     dashboard.GROUP,
+				Resource:  dashboard.DASHBOARD_RESOURCE,
+				Name:      rows.Name(),
+			},
+			Value:  body,
+			Folder: rows.row.FolderUID,
+			Action: resource.BatchWriteRequest_ADDED,
+		}
+		if dash.Generation > 1 {
+			req.Action = resource.BatchWriteRequest_MODIFIED
+		} else if dash.Generation < 0 {
+			req.Action = resource.BatchWriteRequest_DELETED
+		}
+
 		// TODO? large object support!
 		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(body)))
 
-		err = stream.Send(&resource.BatchWriteRequest{
-			Key: &resource.ResourceKey{
-				Namespace: dash.Namespace,
-				Group:     dashboard.GROUP,
-				Resource:  dashboard.DASHBOARD_RESOURCE,
-			},
-			Value: body,
-			// Folder?
-		})
+		err = stream.Send(req)
 		if err != nil {
 			return nil, err
 		}

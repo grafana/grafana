@@ -245,8 +245,9 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				return
 			}
 			rsp, err := b.legacy.Access.BatchWrite(r.Context(), legacy.BatchWriteOptions{
-				OrgID:       1, // get from namespace
-				KeepHistory: true,
+				Namespace:   "default", // get from namespace
+				ClearFirst:  true,
+				SendHistory: true,
 				Store:       b.unified,
 				Progress: func(count int, msg string) {
 					w.Write([]byte(fmt.Sprintf("[%4d] %s\n", count, msg)))

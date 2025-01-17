@@ -8,9 +8,10 @@ import (
 )
 
 type BatchWriteOptions struct {
-	OrgID       int64
+	Namespace   string
 	Store       resource.ResourceStoreClient
-	KeepHistory bool
+	ClearFirst  bool
+	SendHistory bool
 	Progress    func(count int, msg string)
 }
 

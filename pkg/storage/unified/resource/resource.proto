@@ -319,8 +319,11 @@ message WatchEvent {
 }
 
 message BatchWriteRequest {
-  enum Type {
-    UNKNOWN = 0; // will be an error
+  enum Action {
+    // will be an error
+    UNKNOWN = 0; 
+
+    // Matches Watch event enum
     ADDED = 1;
     MODIFIED = 2;
     DELETED = 3;
@@ -332,11 +335,14 @@ message BatchWriteRequest {
   // NOTE everything in the same stream must share the same Namespace/Group/Resource
   ResourceKey key = 1;
 
+  // Requested action
+  Action action = 2;
+
   // The resource value 
-  bytes value = 2;
+  bytes value = 3;
 
   // Hint that a new version will be written on-top of this
-  string folder = 3;
+  string folder = 4;
 }
 
 message BatchWriteResponse {
