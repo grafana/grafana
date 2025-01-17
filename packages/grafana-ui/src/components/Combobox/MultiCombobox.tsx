@@ -124,7 +124,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     selectedItem: null,
     stateReducer: (state, actionAndChanges) => {
       const { changes, type } = actionAndChanges;
-      //console.log(changes, type);
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
@@ -193,6 +192,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
 
+  // Selected items that show up in the input field
   const visibleItems = isOpen ? selectedItems.slice(0, MAX_SHOWN_ITEMS) : selectedItems.slice(0, shownItems);
 
   return (
