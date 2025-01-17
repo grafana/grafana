@@ -733,17 +733,16 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 			return err
 		}
 
-		for _, el := range libraryElements {
-			if el.FolderName == "" {
-				el.FolderName = dashboards.RootFolderName
-			}
-			if el.FolderUID == "" {
-				el.FolderUID = ac.GeneralFolderUID
-			}
-		}
-
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		for _, element := range libraryElements {
+
+			if element.FolderName == "" {
+				element.FolderName = dashboards.RootFolderName
+			}
+			if element.FolderUID == "" {
+				element.FolderUID = ac.GeneralFolderUID
+			}
+
 			libraryElementMap[element.UID] = model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
