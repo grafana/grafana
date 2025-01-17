@@ -1,3 +1,4 @@
+import { pick } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
@@ -8,8 +9,8 @@ import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
   generatedRoutesApi as routingTreeApi,
 } from '../../openapi/routesApi.gen';
 import {
@@ -21,6 +22,7 @@ import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getK8sNamespace, isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
+import { INHERITABLE_KEYS, InheritableProperties } from '../../utils/notification-policies';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
@@ -101,23 +103,8 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
     const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
     const newRouteTree = mergePartialAmRouteWithRouteTree(alertmanager, update, rootRouteWithIdentifiers);
 
-    const { routes, ...defaults } = newRouteTree;
-    // Remove provenance so we don't send it to API
-    // Convert Route to K8s compatible format
-    const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
-      defaults: {
-        ...defaults,
-        // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
-        receiver: defaults.receiver || '',
-      },
-      routes: newRouteTree.routes?.map(routeToK8sSubRoute) || [],
-    };
-
     // Create the K8s route object
-    const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
-      spec: k8sRoute,
-      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: newRouteTree[ROUTES_META_SYMBOL]?.resourceVersion },
-    };
+    const routeObject = createKubernetesRoutingTreeSpec(newRouteTree);
 
     return updatedNamespacedRoute({
       name: ROOT_ROUTE_NAME,
@@ -152,23 +139,8 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
     const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
     const newRouteTree = omitRouteFromRouteTree(id, rootRouteWithIdentifiers);
 
-    const { routes, ...defaults } = newRouteTree;
-    // Remove provenance so we don't send it to API
-    // Convert Route to K8s compatible format
-    const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
-      defaults: {
-        ...defaults,
-        // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
-        receiver: defaults.receiver || '',
-      },
-      routes: newRouteTree.routes?.map(routeToK8sSubRoute) || [],
-    };
-
     // Create the K8s route object
-    const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
-      spec: k8sRoute,
-      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: newRouteTree[ROUTES_META_SYMBOL]?.resourceVersion },
-    };
+    const routeObject = createKubernetesRoutingTreeSpec(newRouteTree);
 
     return updatedNamespacedRoute({
       name: ROOT_ROUTE_NAME,
@@ -217,23 +189,9 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
         rootRouteWithIdentifiers,
         insertPosition
       );
-      const { routes, ...defaults } = newRouteTree;
-      // Remove provenance so we don't send it to API
-      // Convert Route to K8s compatible format
-      const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
-        defaults: {
-          ...defaults,
-          // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
-          receiver: defaults.receiver || '',
-        },
-        routes: newRouteTree.routes?.map(routeToK8sSubRoute) || [],
-      };
 
       // Create the K8s route object
-      const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
-        spec: k8sRoute,
-        metadata: { name: ROOT_ROUTE_NAME, resourceVersion: newRouteTree[ROUTES_META_SYMBOL]?.resourceVersion },
-      };
+      const routeObject = createKubernetesRoutingTreeSpec(newRouteTree);
 
       return updatedNamespacedRoute({
         name: ROOT_ROUTE_NAME,
@@ -310,5 +268,33 @@ function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertin
       value,
     })),
     routes: route.routes?.map(routeToK8sSubRoute),
+  };
+}
+
+/**
+ * Convert Route to K8s compatible format. Make sure we aren't sending any additional properties the API doesn't recognize
+ * because it will reply with excess properties in the HTTP headers
+ */
+function createKubernetesRoutingTreeSpec(
+  rootRoute: Route
+): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree {
+  const inheritableDefaultProperties: InheritableProperties = pick(rootRoute, INHERITABLE_KEYS);
+
+  const defaults: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults = {
+    ...inheritableDefaultProperties,
+    // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
+    receiver: rootRoute.receiver ?? '',
+  };
+
+  const routes = rootRoute.routes?.map(routeToK8sSubRoute) ?? [];
+
+  const spec = {
+    defaults,
+    routes,
+  };
+
+  return {
+    spec: spec,
+    metadata: { name: ROOT_ROUTE_NAME, resourceVersion: rootRoute[ROUTES_META_SYMBOL]?.resourceVersion },
   };
 }
