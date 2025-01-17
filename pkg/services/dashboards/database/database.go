@@ -1052,7 +1052,6 @@ func (d *dashboardStore) GetAllDashboardsUIDsInFolders(
 
 	var dashboardUIDs = make([]string, 0)
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-
 		s := strings.Builder{}
 		args := make([]any, 0, 3)
 		s.WriteString("SELECT uid FROM dashboard WHERE ")
