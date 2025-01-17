@@ -40,7 +40,7 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
           const response = await cacheDataLoaded;
           const resourceVersion = response.data.metadata?.resourceVersion;
 
-          subscription = client.watch({resourceVersion: resourceVersion}).subscribe((event) => {
+          subscription = client.watch({ resourceVersion: resourceVersion }).subscribe((event) => {
             updateCachedData((draft: RepositoryList) => {
               if (!draft.items) {
                 draft.items = [];
