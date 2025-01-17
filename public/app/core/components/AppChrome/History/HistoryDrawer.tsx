@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingBottom: theme.spacing(2),
       height: TOP_BAR_LEVEL_HEIGHT,
       minHeight: TOP_BAR_LEVEL_HEIGHT,
-      padding: theme.spacing(2),
+      padding: theme.spacing(0, 2),
     }),
     historyDrawerContent: css({
       padding: theme.spacing(2),
