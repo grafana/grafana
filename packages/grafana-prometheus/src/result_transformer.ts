@@ -17,6 +17,7 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { ExemplarTraceIdDestination, PromMetric, PromQuery, PromValue } from './types';
@@ -236,7 +237,8 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
       length: timeField.values.length,
     };
   });
-  return frames;
+
+  return frames.map((frame) => maybeSortFrame(frame, 0));
 }
 
 function getValueText(responseLength: number, refId = '') {
