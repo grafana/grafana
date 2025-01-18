@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -43,6 +44,7 @@ const QueryEditor = ({
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
+  const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -52,7 +54,15 @@ const QueryEditor = ({
     [onChange, onRunQuery]
   );
 
-  const query = usePreparedQuery(baseQuery, onQueryChange);
+  useEffectOnce(() => {
+    if (baseQuery.queryType === AzureQueryType.TraceExemplar) {
+      datasource.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription().then((subscription) => {
+        setDefaultSubscriptionId(subscription || '');
+      });
+    }
+  });
+
+  const query = usePreparedQuery(baseQuery, onQueryChange, defaultSubscriptionId);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const basicLogsEnabled =
