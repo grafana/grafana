@@ -47,6 +47,12 @@ def integration_test_services():
             "commands": ["/bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled -alertmanager.utf8-strict-mode-enabled"],
         },
         {
+            "name": "prometheus",
+            "image": images["prometheus"],
+            "environment": {},
+            "commands": ["/bin/prometheus --web.listen-address=localhost:9090"],
+        },
+        {
             "name": "redis",
             "image": images["redis_alpine"],
             "environment": {},

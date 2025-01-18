@@ -860,25 +860,12 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make bash go
-  - make devenv sources=prometheus
-  depends_on:
-  - clone
-  image: docker:27-cli
-  name: setup-prometheus-devenv
-  volumes:
-  - name: prometheus-data
-    path: /var/lib/prometheus
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright playwright e2e/plugin-e2e/prometheus/prometheus.spec.ts
   depends_on:
   - grafana-server
   - build-test-plugins
-  - setup-prometheus-devenv
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -1052,6 +1039,11 @@ services:
   environment: {}
   image: grafana/mimir-alpine:r316-55f47f8
   name: mimir_backend
+- commands:
+  - /bin/prometheus --web.listen-address=localhost:9090
+  environment: {}
+  image: prom/prometheus:3.1.0
+  name: prometheus
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -1141,6 +1133,17 @@ steps:
   - verify-gen-cue
   image: golang:1.23.5-alpine
   name: wire-install
+- commands:
+  - dockerize -wait tcp://prometheus:9090 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-prometheus
+- commands:
+  - apk add --update build-base
+  depends_on:
+  - wire-install
+  - wait-for-prometheus
+  image: golang:1.23.5-alpine
+  name: prometheus-integration-tests
 - commands:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   image: jwilder/dockerize:0.6.1
@@ -1489,6 +1492,11 @@ services:
   environment: {}
   image: grafana/mimir-alpine:r316-55f47f8
   name: mimir_backend
+- commands:
+  - /bin/prometheus --web.listen-address=localhost:9090
+  environment: {}
+  image: prom/prometheus:3.1.0
+  name: prometheus
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2285,25 +2293,12 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update make bash go
-  - make devenv sources=prometheus
-  depends_on:
-  - clone
-  image: docker:27-cli
-  name: setup-prometheus-devenv
-  volumes:
-  - name: prometheus-data
-    path: /var/lib/prometheus
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
   - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn playwright install --with-deps chromium
   - yarn e2e:playwright playwright e2e/plugin-e2e/prometheus/prometheus.spec.ts
   depends_on:
   - grafana-server
   - build-test-plugins
-  - setup-prometheus-devenv
   environment:
     HOST: grafana-server
     PORT: "3001"
@@ -2589,6 +2584,11 @@ services:
   environment: {}
   image: grafana/mimir-alpine:r316-55f47f8
   name: mimir_backend
+- commands:
+  - /bin/prometheus --web.listen-address=localhost:9090
+  environment: {}
+  image: prom/prometheus:3.1.0
+  name: prometheus
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -2639,6 +2639,17 @@ steps:
   - verify-gen-cue
   image: golang:1.23.5-alpine
   name: wire-install
+- commands:
+  - dockerize -wait tcp://prometheus:9090 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-prometheus
+- commands:
+  - apk add --update build-base
+  depends_on:
+  - wire-install
+  - wait-for-prometheus
+  image: golang:1.23.5-alpine
+  name: prometheus-integration-tests
 - commands:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   image: jwilder/dockerize:0.6.1
@@ -3137,6 +3148,11 @@ services:
   environment: {}
   image: grafana/mimir-alpine:r316-55f47f8
   name: mimir_backend
+- commands:
+  - /bin/prometheus --web.listen-address=localhost:9090
+  environment: {}
+  image: prom/prometheus:3.1.0
+  name: prometheus
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -3187,6 +3203,17 @@ steps:
   - verify-gen-cue
   image: golang:1.23.5-alpine
   name: wire-install
+- commands:
+  - dockerize -wait tcp://prometheus:9090 -timeout 120s
+  image: jwilder/dockerize:0.6.1
+  name: wait-for-prometheus
+- commands:
+  - apk add --update build-base
+  depends_on:
+  - wire-install
+  - wait-for-prometheus
+  image: golang:1.23.5-alpine
+  name: prometheus-integration-tests
 - commands:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   image: jwilder/dockerize:0.6.1
@@ -4854,6 +4881,11 @@ services:
   environment: {}
   image: grafana/mimir-alpine:r316-55f47f8
   name: mimir_backend
+- commands:
+  - /bin/prometheus --web.listen-address=localhost:9090
+  environment: {}
+  image: prom/prometheus:3.1.0
+  name: prometheus
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
@@ -5300,6 +5332,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/mimir-alpine:r316-55f47f8
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM prom/prometheus:3.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM memcached:1.6.9-alpine
@@ -5338,6 +5371,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/mimir-alpine:r316-55f47f8
+  - trivy --exit-code 1 --severity HIGH,CRITICAL prom/prometheus:3.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
   - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL memcached:1.6.9-alpine
@@ -5595,6 +5629,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 154c1f072294cef09ba4f579eed30b1e29bc5c263897c862f4574432d321502c
+hmac: 1b13d724fc94d9f5d4cd4f150e5ab1ee20afefcdeeab169b80e558c0a85707fa
 
 ...

@@ -21,6 +21,7 @@ load(
     "memcached_integration_tests_steps",
     "mysql_integration_tests_steps",
     "postgres_integration_tests_steps",
+    "prom_e2e_tests_steps",
     "redis_integration_tests_steps",
     "remote_alertmanager_integration_tests_steps",
     "verify_gen_cue_step",
@@ -70,7 +71,8 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
     ]
 
     # test_steps = [a, b] + [c, d] + [e, f]...
-    test_steps = postgres_integration_tests_steps() + \
+    test_steps = prom_e2e_tests_steps() + \
+                 postgres_integration_tests_steps() + \
                  mysql_integration_tests_steps("mysql80", "8.0") + \
                  redis_integration_tests_steps() + \
                  memcached_integration_tests_steps() + \

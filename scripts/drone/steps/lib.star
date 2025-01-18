@@ -896,7 +896,6 @@ def playwright_e2e_tests_step():
         "depends_on": [
             "grafana-server",
             "build-test-plugins",
-            "setup-prometheus-devenv",
         ],
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
@@ -1115,6 +1114,15 @@ def memcached_integration_tests_steps():
     }
 
     return integration_tests_steps("memcached", cmds, "memcached", "11211", environment)
+
+def prom_e2e_tests_steps():
+    cmds = [
+    ]
+
+    environment = {
+    }
+
+    return integration_tests_steps("prometheus", cmds, "prometheus", "9090", environment)
 
 def release_canary_npm_packages_step(trigger = None):
     """Releases canary NPM packages.
