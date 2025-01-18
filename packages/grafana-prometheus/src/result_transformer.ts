@@ -14,10 +14,10 @@ import {
   getDisplayProcessor,
   getFieldDisplayName,
   Labels,
+  sortDataFrame,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { ExemplarTraceIdDestination, PromMetric, PromQuery, PromValue } from './types';
@@ -211,13 +211,26 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
         });
     });
 
+    let prevTime = -Infinity;
+    let needsSort = false;
+
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
       timeField.config.interval ??= df.fields[0]?.config.interval;
 
       const timeFields = df.fields[0]?.values ?? [];
       const dataFields = df.fields[1]?.values ?? [];
-      timeFields.forEach((value) => timeField.values.push(value));
+
+      timeFields.forEach((value) => {
+        timeField.values.push(value);
+
+        if (value < prevTime) {
+          needsSort = true;
+        }
+
+        prevTime = value;
+      });
+
       dataFields.forEach((value) => {
         valueField.values.push(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
@@ -226,7 +239,8 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     });
 
     const fields = [timeField, ...labelFields, valueField];
-    return {
+
+    const frame: DataFrame = {
       refId,
       fields,
       // Prometheus specific UI for instant queries
@@ -236,9 +250,11 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
       },
       length: timeField.values.length,
     };
+
+    return needsSort ? sortDataFrame(frame, 0) : frame;
   });
 
-  return frames.map((frame) => maybeSortFrame(frame, 0));
+  return frames;
 }
 
 function getValueText(responseLength: number, refId = '') {

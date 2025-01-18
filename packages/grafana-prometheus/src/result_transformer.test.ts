@@ -261,11 +261,11 @@ describe('Prometheus Result Transformer', () => {
           createDataFrame({
             refId: 'A',
             fields: [
-              { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+              { name: 'time', type: FieldType.time, values: [4, 5, 6] },
               {
                 name: 'value',
                 type: FieldType.number,
-                values: [6, 5, 4],
+                values: [4, 5, 6],
                 labels: { label1: 'value1', label2: 'value2' },
               },
             ],
