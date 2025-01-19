@@ -488,6 +488,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
 
+	// TODO: time should be a dependency
 	start := time.Now()
 	defer func() {
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))

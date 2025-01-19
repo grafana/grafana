@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/authapi"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ authapi.Service = (*AuthapiStub)(nil)
@@ -16,8 +15,9 @@ type AuthapiStub struct {
 	Policies map[string]authapi.AccessPolicy
 }
 
-func (client *AuthapiStub) CreateAccessPolicy(_ context.Context, _ authapi.CreateAccessPolicyParams, _ authapi.CreateAccessPolicyPayload) (authapi.AccessPolicy, error) {
-	randStr := fmt.Sprintf("random-policy-%s", util.GenerateShortUID())
+func (client *AuthapiStub) CreateAccessPolicy(_ context.Context, _ authapi.CreateAccessPolicyParams, payload authapi.CreateAccessPolicyPayload) (authapi.AccessPolicy, error) {
+	// randStr := fmt.Sprintf("random-policy-%s", util.GenerateShortUID())
+	randStr := fmt.Sprintf("random-policy-%s", payload.Name)
 	policy := authapi.AccessPolicy{
 		ID:   randStr,
 		Name: randStr,
@@ -49,10 +49,11 @@ func (client *AuthapiStub) ListTokens(_ context.Context, _ authapi.ListTokenPara
 
 func (client *AuthapiStub) CreateToken(_ context.Context, _ authapi.CreateTokenParams, payload authapi.CreateTokenPayload) (authapi.Token, error) {
 	token := authapi.Token{
-		ID:             fmt.Sprintf("random-token-%s", util.GenerateShortUID()),
+		// ID:             fmt.Sprintf("random-token-%s", util.GenerateShortUID()),
+		ID:             fmt.Sprintf("random-token-%s", payload.Name),
 		Name:           payload.Name,
 		AccessPolicyID: payload.AccessPolicyID,
-		Token:          fmt.Sprintf("completely_fake_token_%s", util.GenerateShortUID()),
+		Token:          fmt.Sprintf("completely_fake_token_%s", payload.Name),
 	}
 	client.Token = &authapi.TokenView{
 		ID:             token.ID,
