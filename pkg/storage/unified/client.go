@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/unifiedstorage"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
@@ -37,6 +38,7 @@ func ProvideUnifiedStorageClient(
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
+	us unifiedstorage.UnifiedStorageClientRegistrar,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
@@ -53,6 +55,8 @@ func ProvideUnifiedStorageClient(
 			legacysql.NewDatabaseProvider(db),
 		)
 	}
+
+	us.RegisterClient(client)
 	return client, err
 }
 
