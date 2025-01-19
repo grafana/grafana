@@ -55,6 +55,8 @@ import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/sh
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { LogList } from 'app/features/logs/components/panel/LogList';
+import { ScrollToLogsEvent } from 'app/features/logs/components/panel/virtualization';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -708,8 +710,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
   );
 
+  const logsPanelV2 = true;
+
   const scrollToTopLogs = useCallback(() => {
-    if (config.featureToggles.logsInfiniteScrolling) {
+    if (logsPanelV2) {
+      eventBus.publish(
+        new ScrollToLogsEvent({
+          scrollTo: 'top',
+        })
+      );
+    } else if (config.featureToggles.logsInfiniteScrolling) {
       if (logsContainerRef.current) {
         logsContainerRef.current.scroll({
           behavior: 'auto',
@@ -718,7 +728,25 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
     }
     topLogsRef.current?.scrollIntoView();
-  }, [logsContainerRef, topLogsRef]);
+  }, [eventBus, logsPanelV2]);
+
+  const scrollToBottomLogs = useCallback(() => {
+    if (logsPanelV2) {
+      eventBus.publish(
+        new ScrollToLogsEvent({
+          scrollTo: 'bottom',
+        })
+      );
+    } else if (config.featureToggles.logsInfiniteScrolling) {
+      if (logsContainerRef.current) {
+        logsContainerRef.current.scroll({
+          behavior: 'auto',
+          top: logsContainerRef.current.scrollHeight,
+        });
+      }
+    }
+    topLogsRef.current?.scrollTo(0, topLogsRef.current.scrollHeight);
+  }, [eventBus, logsPanelV2]);
 
   const onPinToContentOutlineClick = useCallback(
     (row: LogRowModel, allowUnPin = true) => {
@@ -968,7 +996,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {visualisationType === 'logs' && hasData && (
+          {visualisationType === 'logs' && hasData && !logsPanelV2 && (
             <>
               <div
                 className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
@@ -1032,6 +1060,36 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 loading={loading}
                 queries={logsQueries ?? []}
                 scrollToTopLogs={scrollToTopLogs}
+                addResultsToCache={addResultsToCache}
+                clearCache={clearCache}
+              />
+            </>
+          )}
+          {visualisationType === 'logs' && logsPanelV2 && (
+            <>
+              <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
+                <LogList
+                  app={CoreApp.Explore}
+                  containerElement={logsContainerRef.current}
+                  eventBus={eventBus}
+                  forceEscape={forceEscape}
+                  logs={dedupedRows}
+                  showTime={showTime}
+                  sortOrder={logsSortOrder}
+                  timeZone={timeZone}
+                  wrapLogMessage={wrapLogMessage}
+                />
+              </div>
+              <LogsNavigation
+                logsSortOrder={logsSortOrder}
+                visibleRange={navigationRange ?? absoluteRange}
+                absoluteRange={absoluteRange}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                loading={loading}
+                queries={logsQueries ?? []}
+                scrollToTopLogs={scrollToTopLogs}
+                scrollToBottomLogs={scrollToBottomLogs}
                 addResultsToCache={addResultsToCache}
                 clearCache={clearCache}
               />

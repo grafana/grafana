@@ -19,6 +19,7 @@ type Props = {
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
+  scrollToBottomLogs?: () => void;
   addResultsToCache: () => void;
   clearCache: () => void;
 };
@@ -35,6 +36,7 @@ function LogsNavigation({
   loading,
   onChangeTime,
   scrollToTopLogs,
+  scrollToBottomLogs,
   visibleRange,
   queries,
   clearCache,
@@ -178,6 +180,11 @@ function LogsNavigation({
     scrollToTopLogs();
   }, [scrollToTopLogs]);
 
+  const onScrollToBottomClick = useCallback(() => {
+    reportInteraction('grafana_explore_logs_scroll_bottom_clicked');
+    scrollToBottomLogs?.();
+  }, [scrollToBottomLogs]);
+
   return (
     <div className={styles.navContainer}>
       {!config.featureToggles.logsInfiniteScrolling && (
@@ -193,6 +200,17 @@ function LogsNavigation({
           />
           {oldestLogsFirst ? newerLogsButton : olderLogsButton}
         </>
+      )}
+      {scrollToBottomLogs && (
+        <Button
+          data-testid="scrollToBottom"
+          className={styles.scrollToBottomButton}
+          variant="secondary"
+          onClick={onScrollToBottomClick}
+          title="Scroll to bottom"
+        >
+          <Icon name="arrow-down" size="lg" />
+        </Button>
       )}
       <Button
         data-testid="scrollToTop"
@@ -243,6 +261,16 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
       width: '100%',
       height: '100%',
       whiteSpace: 'normal',
+    }),
+    scrollToBottomButton: css({
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      top: 0,
     }),
     scrollToTopButton: css({
       width: '40px',
