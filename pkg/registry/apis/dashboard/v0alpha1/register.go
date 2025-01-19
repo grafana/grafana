@@ -244,9 +244,8 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				_, _ = w.Write([]byte("Expected flusher"))
 				return
 			}
-			rsp, err := b.legacy.Access.BatchWrite(r.Context(), legacy.BatchWriteOptions{
+			rsp, err := b.legacy.Access.Migrate(r.Context(), legacy.MigrateOptions{
 				Namespace:    "default", // get from namespace
-				ClearFirst:   true,
 				SendHistory:  true,
 				LargeObjects: nil, // ???
 				Store:        b.unified,
@@ -255,12 +254,20 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					flusher.Flush()
 				},
 			})
-			if err == nil {
-				js, _ := json.MarshalIndent(rsp, "", "  ")
-				w.Write(js)
-			} else {
+
+			if rsp != nil {
+				jj, err := json.MarshalIndent(rsp, "", "  ")
+				if err != nil {
+					w.Write([]byte(fmt.Sprintf("JSON error: %s\n", err)))
+				}
+				w.Write(jj)
+			}
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err.Error())
 				w.Write([]byte(fmt.Sprintf("ERROR: %s\n", err)))
 			}
+			flusher.Flush()
+			fmt.Printf(">>MIGRATE DONE!!!\n")
 		},
 	})
 	return routes

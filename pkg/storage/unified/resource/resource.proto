@@ -327,9 +327,6 @@ message BatchRequest {
     ADDED = 1;
     MODIFIED = 2;
     DELETED = 3;
-
-    // delete everything from this key
-    DELETE_COLLECTION = 4;
   }
 
   // NOTE everything in the same stream must share the same Namespace/Group/Resource
@@ -346,11 +343,29 @@ message BatchRequest {
 }
 
 message BatchResponse {
+  message Summary {
+    enum Action {
+      UNKNOWN = 0;
+      ERROR = 1;
+      WRITE_EVENT = 2;
+      DELETE_HISTORY = 3;
+      DELETE_RESOURCE = 4;
+      SYNC_RESOURCE = 5;
+    }
+
+    Action action = 1;
+    ResourceKey key = 2; // The collection or object
+    int64 count = 3;
+    string details = 4; // useful for error handling
+  }
+
   // Error details
   ErrorResult error = 1;
 
-  // The number of items written
-  int64 count = 2;
+  // The number of events processed
+  int64 processed = 2;
+
+  repeated Summary summary = 3;
 }
 
 

@@ -8,11 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type BatchWriteOptions struct {
+type MigrateOptions struct {
 	Namespace    string
 	Store        resource.ResourceClient
 	LargeObjects apistore.LargeObjectSupport
-	ClearFirst   bool
 	SendHistory  bool
 	Progress     func(count int, msg string)
 }
@@ -62,7 +61,7 @@ type DashboardAccess interface {
 	DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboard.Dashboard, bool, error)
 
 	// Read from legacy and write into unified storage
-	BatchWrite(ctx context.Context, opts BatchWriteOptions) (*resource.BatchResponse, error)
+	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error)
 
 	// Get a typed list
 	GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboard.LibraryPanelList, error)

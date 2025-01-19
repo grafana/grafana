@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
@@ -303,7 +305,7 @@ func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.Resourc
 	}, nil
 }
 
-func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOptions) (*resource.BatchResponse, error) {
+func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error) {
 	info, err := claims.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
@@ -329,24 +331,20 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 		return nil, err
 	}
 
-	stream, err := opts.Store.BatchProcess(ctx)
+	settings := resource.BatchSettings{
+		RebuildCollection: true,
+		SkipValidation:    true,
+		Collection: []*resource.ResourceKey{{
+			Namespace: opts.Namespace,
+			Group:     dashboard.GROUP,
+			Resource:  dashboard.DASHBOARD_RESOURCE,
+		}},
+	}
+	stream, err := opts.Store.BatchProcess(ctx,
+		grpc.Header(settings.ToMD()), // The collection settings
+	)
 	if err != nil {
 		return nil, err
-	}
-
-	// First delete everything in the resource
-	if opts.ClearFirst {
-		err = stream.Send(&resource.BatchRequest{
-			Action: resource.BatchRequest_DELETE_COLLECTION,
-			Key: &resource.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     dashboard.GROUP,
-				Resource:  dashboard.DASHBOARD_RESOURCE,
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	large := opts.LargeObjects
@@ -354,7 +352,7 @@ func (a *dashboardSqlAccess) BatchWrite(ctx context.Context, opts BatchWriteOpti
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
-		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << should be v1
+		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << should be v0
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend
 		body, err := json.Marshal(dash)

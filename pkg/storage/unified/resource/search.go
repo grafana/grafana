@@ -411,6 +411,7 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		return
 	}
 
+	start := time.Now()
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {
 		s.log.Warn("error getting builder for watch event", "error", err)
@@ -446,12 +447,12 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	}
 
 	// record latency from when event was created to when it was indexed
-	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
-	if latencySeconds > 5 {
-		s.log.Warn("high index latency", "latency", latencySeconds)
+	latency := time.Since(start).Seconds()
+	if latency > 5 {
+		s.log.Warn("high index latency", "latency", latency)
 	}
 	if IndexMetrics != nil {
-		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latency)
 	}
 }
 
