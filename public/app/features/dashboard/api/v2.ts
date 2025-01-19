@@ -1,18 +1,23 @@
-import { UrlQueryMap } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { backendSrv } from 'app/core/services/backend_srv';
+import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
   AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyMessage,
+  Resource,
   ResourceClient,
+  ResourceForCreate,
 } from 'app/features/apiserver/types';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { SaveDashboardCommandV2 } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
@@ -62,7 +67,59 @@ export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<D
     throw new Error('Method not implemented.');
   }
 
-  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
-    throw new Error('Method not implemented.');
+  async saveDashboard(options: SaveDashboardCommandV2): Promise<SaveDashboardResponseDTO> {
+    const dashboard = options.dashboard;
+
+    const obj: ResourceForCreate<DashboardV2Spec> = {
+      // the metadata will have the name that's the uid
+      metadata: {
+        ...options?.k8s,
+      },
+      spec: {
+        ...dashboard,
+      },
+    };
+
+    // add annotations
+    if (options.message) {
+      obj.metadata.annotations = {
+        ...obj.metadata.annotations,
+        [AnnoKeyMessage]: options.message,
+      };
+    } else if (obj.metadata.annotations) {
+      delete obj.metadata.annotations[AnnoKeyMessage];
+    }
+
+    // add folder annotation
+    if (options.folderUid) {
+      obj.metadata.annotations = {
+        ...obj.metadata.annotations,
+        [AnnoKeyFolder]: options.folderUid,
+      };
+    }
+
+    if (obj.metadata.name) {
+      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    }
+    return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+  }
+
+  asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
+    const url = locationUtil.assureBaseUrl(
+      getDashboardUrl({
+        uid: v.metadata.name,
+        currentQueryParams: '',
+        slug: kbn.slugifyForUrl(v.spec.title),
+      })
+    );
+
+    return {
+      uid: v.metadata.name,
+      version: v.spec.version ?? 0, // FIXME: what is version?
+      id: v.spec.id ?? 0,
+      status: 'success',
+      url,
+      slug: '',
+    };
   }
 }

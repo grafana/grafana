@@ -29,6 +29,11 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
     folderUid: dashboard.state.meta.folderUid,
+    // we need to set the name here in order to save the dashboard
+    // in schema v2 we don't have the uid in the spec
+    k8s: {
+      name: dashboard.state.uid,
+    },
   });
 
   const onSave = async (overwrite: boolean) => {
