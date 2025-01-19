@@ -1919,9 +1919,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
-	folderService, err := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
+	folderService := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
 		featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
-	require.NoError(t, err)
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,

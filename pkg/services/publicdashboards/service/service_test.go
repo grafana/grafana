@@ -1394,8 +1394,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	fStore := folderimpl.ProvideStore(testDB)
 	folderPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(testDB)
-	folderSvc, err := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, testDB, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
-	require.NoError(t, err)
+	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, testDB, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
 
 	dashboardService, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), folderPermissions, ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
 	require.NoError(t, err)

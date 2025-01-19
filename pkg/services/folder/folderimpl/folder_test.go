@@ -63,9 +63,8 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 		db, cfg := db.InitTestDBWithCfg(t)
 		store := ProvideStore(db)
-		_, err := ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
+		ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
 			featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
-		require.NoError(t, err)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})

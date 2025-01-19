@@ -754,9 +754,8 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
 	fStore := folderimpl.ProvideStore(sc.sqlStore)
-	s, err := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
+	s := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
 		features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
-	require.NoError(t, err)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := identity.WithRequester(context.Background(), sc.user)
@@ -841,9 +840,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		fStore := folderimpl.ProvideStore(sqlStore)
 
-		folderService, err := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
+		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
 			features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
-		require.NoError(t, err)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac)
 		service := LibraryPanelService{

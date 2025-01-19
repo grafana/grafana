@@ -36,13 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
-	"github.com/grafana/grafana/pkg/services/unifiedstorage"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-<<<<<<< HEAD
-	"github.com/grafana/grafana/pkg/storage/unified"
-=======
->>>>>>> Inject UniStore client into FolderService
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -80,10 +75,6 @@ func ProvideService(
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
-<<<<<<< HEAD
-=======
-	us unifiedstorage.UnifiedStorageClientRegistrar,
->>>>>>> Inject UniStore client into FolderService
 ) *Service {
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),

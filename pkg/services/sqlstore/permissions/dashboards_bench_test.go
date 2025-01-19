@@ -79,9 +79,8 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	require.NoError(b, err)
 
 	fStore := folderimpl.ProvideStore(store)
-	folderSvc, err := folderimpl.ProvideService(fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store),
+	folderSvc := folderimpl.ProvideService(fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store),
 		store, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
-	require.NoError(b, err)
 
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
