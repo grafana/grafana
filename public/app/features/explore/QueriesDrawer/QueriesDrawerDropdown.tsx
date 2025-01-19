@@ -1,7 +1,6 @@
-import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
 
 import { queryLibraryTrackToggle } from '../QueryLibrary/QueryLibraryAnalyticsEvents';
 
@@ -16,7 +15,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   const { selectedTab, setSelectedTab, queryLibraryAvailable, drawerOpened, setDrawerOpened } =
     useQueriesDrawerContext();
 
-  const styles = useStyles2(getStyles);
+  const [isOpen, setIsOpen] = useState(false);
 
   if (!queryLibraryAvailable) {
     return undefined;
@@ -40,6 +39,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   return (
     <ButtonGroup>
       <ToolbarButton
+        size="sm"
         icon="book"
         variant={drawerOpened ? 'active' : 'canvas'}
         onClick={() => {
@@ -52,7 +52,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
       </ToolbarButton>
       {drawerOpened ? (
         <Button
-          className={styles.close}
+          size="sm"
           variant="secondary"
           icon="times"
           onClick={() => {
@@ -61,16 +61,10 @@ export function QueriesDrawerDropdown({ variant }: Props) {
           }}
         ></Button>
       ) : (
-        <Dropdown overlay={menu}>
-          <ToolbarButton className={styles.toggle} variant="canvas" icon="angle-down" />
+        <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
+          <ToolbarButton size="sm" isOpen={isOpen} narrow={true} variant="canvas" />
         </Dropdown>
       )}
     </ButtonGroup>
   );
 }
-
-const getStyles = () => ({
-  toggle: css({ width: '36px' }),
-  // tweaking icon position so it's nicely aligned when dropdown turns into a close button
-  close: css({ width: '36px', '> svg': { position: 'relative', left: 2 } }),
-});

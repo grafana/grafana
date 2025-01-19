@@ -125,6 +125,22 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
           ))}
         </ToolbarButtonRow>
         <br />
+        Sizes
+        <ToolbarButtonRow>
+          <ToolbarButton icon="sync" tooltip="Sync" size="sm" variant="canvas">
+            sm
+          </ToolbarButton>
+          <ToolbarButton icon="sync" tooltip="Sync" size="md" variant="canvas">
+            md
+          </ToolbarButton>
+          <ToolbarButton icon="sync" tooltip="Sync" size="lg" variant="canvas">
+            ls
+          </ToolbarButton>
+          <ToolbarButton icon="sync" tooltip="Sync" variant="canvas">
+            legacy
+          </ToolbarButton>
+        </ToolbarButtonRow>
+        <br />
         Wrapped in noSpacing ButtonGroup
         <ButtonGroup>
           <ToolbarButton variant="active" icon="clock-nine" tooltip="Time picker">
