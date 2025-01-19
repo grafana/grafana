@@ -3007,7 +3007,7 @@ __metadata:
     "@grafana/experimental": "npm:2.1.6"
     "@grafana/lezer-logql": "npm:0.2.6"
     "@grafana/lezer-traceql": "npm:0.0.20"
-    "@grafana/monaco-logql": "npm:^0.0.7"
+    "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
     "@grafana/runtime": "workspace:*"
@@ -3378,15 +3378,6 @@ __metadata:
   peerDependencies:
     "@lezer/lr": ^1.3.0
   checksum: 10/53c05149ad7390ffe5f729df74fe09f8caa2f820a5eb922283083a630aaed443d9643ccf37172eb0c4b9600841dfccc0bd200064ad6bcdda3f6b88bb27bd11a5
-  languageName: node
-  linkType: hard
-
-"@grafana/monaco-logql@npm:^0.0.7":
-  version: 0.0.7
-  resolution: "@grafana/monaco-logql@npm:0.0.7"
-  peerDependencies:
-    monaco-editor: ^0.32.1
-  checksum: 10/a900e24912476997f30349e6ee24041c0cffebf6706d8b9203eb952f12c768fc0fd6be8d7abe86d02019a0d8f26b83d15ffd0fb09d97047307e2ba5b4ba43a1b
   languageName: node
   linkType: hard
 
@@ -9619,16 +9610,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*":
-  version: 18.2.25
-  resolution: "@types/react-dom@npm:18.2.25"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10/0e45856a2fdbf09e74632b132b3af773c6b18fc2ab0bd04595c9f2bcc0bb04d5e732ac8156d145b712dedab7484a8fe9dce5cf720a5437b5d26099c7060c7ba4
-  languageName: node
-  linkType: hard
-
-"@types/react-dom@npm:18.3.5":
+"@types/react-dom@npm:*, @types/react-dom@npm:18.3.5":
   version: 18.3.5
   resolution: "@types/react-dom@npm:18.3.5"
   peerDependencies:
@@ -9743,17 +9725,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*":
-  version: 18.3.3
-  resolution: "@types/react@npm:18.3.3"
-  dependencies:
-    "@types/prop-types": "npm:*"
-    csstype: "npm:^3.0.2"
-  checksum: 10/68e203b7f1f91d6cf21f33fc7af9d6d228035a26c83f514981e54aa3da695d0ec6af10c277c6336de1dd76c4adbe9563f3a21f80c4462000f41e5f370b46e96c
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:18.3.18":
+"@types/react@npm:*, @types/react@npm:18.3.18":
   version: 18.3.18
   resolution: "@types/react@npm:18.3.18"
   dependencies:
