@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 
 import {
-  FieldConfigSource,
-  toDataFrame,
-  FieldType,
-  VizOrientation,
-  LoadingState,
-  getDefaultTimeRange,
   EventBusSrv,
+  FieldConfigSource,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  toDataFrame,
+  VizOrientation,
 } from '@grafana/data';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, LegendPlacement, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel } from './PieChartPanel';
-import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
+import { Options, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -177,7 +177,7 @@ const setup = (propsOverrides?: {}) => {
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,
-      placement: 'right',
+      placement: LegendPlacement.Right,
       calcs: [],
       values: [PieChartLegendValues.Percent],
     },
