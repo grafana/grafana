@@ -20,6 +20,18 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
+// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID}/history ruler RouteGetRuleHistoryByUID
+//
+// Get historical changes of rule by UID
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: GettableRuleHistory
+//       403: ForbiddenError
+//       404: description: Not found.
+
 // swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
@@ -290,6 +302,8 @@ func (c *PostableRuleGroupConfig) validate() error {
 	return nil
 }
 
+type GettableRuleHistory []GettableExtendedRuleNode
+
 // swagger:model
 type GettableRuleGroupConfig struct {
 	Name     string                     `yaml:"name" json:"name"`
@@ -541,6 +555,7 @@ type GettableGrafanaRule struct {
 	Condition            string                         `json:"condition" yaml:"condition"`
 	Data                 []AlertQuery                   `json:"data" yaml:"data"`
 	Updated              time.Time                      `json:"updated" yaml:"updated"`
+	UpdatedBy            *UserInfo                      `json:"updatedBy" yaml:"updatedBy"`
 	IntervalSeconds      int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
 	Version              int64                          `json:"version" yaml:"version"`
 	UID                  string                         `json:"uid" yaml:"uid"`
@@ -553,6 +568,12 @@ type GettableGrafanaRule struct {
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+// UserInfo represents user-related information, including a unique identifier and a name.
+type UserInfo struct {
+	UID  string `json:"uid"`
+	Name string `json:"name"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

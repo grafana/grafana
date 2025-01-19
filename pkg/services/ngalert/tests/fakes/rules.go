@@ -22,6 +22,7 @@ type RuleStore struct {
 	mtx sync.Mutex
 	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64][]*models.AlertRule
+	History     map[models.AlertRuleKey][]*models.AlertRule
 	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []any
 	Folders     map[int64][]*folder.Folder
@@ -53,6 +54,9 @@ mainloop:
 		for idx, rulePtr := range rgs {
 			if rulePtr.UID == r.UID {
 				rgs[idx] = r
+				cp := models.CopyRule(rulePtr)
+				cp.ID = int64(len(f.History[r.GetKey()]) + 1) // simulate different rule_version ID
+				f.History[r.GetKey()] = append(f.History[r.GetKey()], cp)
 				continue mainloop
 			}
 		}
@@ -371,4 +375,23 @@ func (f *RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uid
 	}
 
 	return namespacesMap, nil
+}
+
+func (f *RuleStore) GetAlertRuleVersions(_ context.Context, key models.AlertRuleKey) ([]*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	q := GenericRecordedQuery{
+		Name:   "GetAlertRuleVersions",
+		Params: []any{key},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(key); err != nil {
+		return nil, err
+	}
+
+	return f.History[key], nil
 }

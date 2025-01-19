@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 // AlertRuleFieldsToIgnoreInDiff contains fields that are ignored when calculating the RuleDelta.Diff.
-var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated"}
+var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated", "UpdatedBy"}
 
 type RuleDelta struct {
 	Existing *models.AlertRule
@@ -156,7 +158,7 @@ func calculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 
 // UpdateCalculatedRuleFields refreshes the calculated fields in a set of alert rule changes.
 // This may generate new changes to keep a group consistent, such as versions or rule indexes.
-func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
+func UpdateCalculatedRuleFields(ch *GroupDelta, user identity.Requester) *GroupDelta {
 	updatingRules := make(map[models.AlertRuleKey]struct{}, len(ch.Delete)+len(ch.Update))
 	for _, update := range ch.Update {
 		updatingRules[update.Existing.GetKey()] = struct{}{}
@@ -189,13 +191,27 @@ func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
 			toUpdate = append(toUpdate, upd)
 		}
 	}
-	return &GroupDelta{
+	result := &GroupDelta{
 		GroupKey:       ch.GroupKey,
 		AffectedGroups: ch.AffectedGroups,
 		New:            ch.New,
 		Update:         append(ch.Update, toUpdate...),
 		Delete:         ch.Delete,
 	}
+	if user == nil {
+		return result
+	}
+	userID := util.Pointer(models.UserUID(user.GetIdentifier()))
+	for i := 0; i < len(result.Update); i++ {
+		result.Update[i].New.UpdatedBy = userID
+	}
+	for i := 0; i < len(result.New); i++ {
+		result.New[i].UpdatedBy = userID
+	}
+	for i := 0; i < len(result.Delete); i++ {
+		result.Delete[i].UpdatedBy = userID
+	}
+	return result
 }
 
 // CalculateRuleUpdate calculates GroupDelta for rule update operation

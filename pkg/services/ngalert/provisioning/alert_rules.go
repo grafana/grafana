@@ -220,6 +220,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
+	rule.UpdatedBy = util.Pointer(models.UserUID(user.GetIdentifier()))
 	if len(rule.NotificationSettings) > 0 {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
@@ -321,6 +322,8 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 			}
 			newRule := *rule
 			newRule.IntervalSeconds = intervalSeconds
+			newRule.Updated = time.Now()
+			newRule.UpdatedBy = util.Pointer(models.UserUID(user.GetIdentifier()))
 			updateRules = append(updateRules, models.UpdateRule{
 				Existing: rule,
 				New:      newRule,
@@ -473,7 +476,7 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 	}
 
 	// Refresh all calculated fields across all rules.
-	return store.UpdateCalculatedRuleFields(delta), nil
+	return store.UpdateCalculatedRuleFields(delta, user), nil
 }
 
 func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, provenance models.Provenance) error {
@@ -603,6 +606,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		}
 	}
 	rule.Updated = time.Now()
+	rule.UpdatedBy = util.Pointer(models.UserUID(user.GetIdentifier()))
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds = storedRule.IntervalSeconds
 
