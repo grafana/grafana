@@ -464,6 +464,10 @@ export interface ReduceDataOptions {
    */
   limit?: number;
   /**
+   * what sort order, if any, to give to the final display of the values
+   */
+  sort?: SortWithReducer;
+  /**
    * If true show each row value
    */
   values?: boolean;
@@ -687,6 +691,18 @@ export interface VizTooltipOptions {
 }
 
 export interface Labels {}
+
+/**
+ * Compare two values
+ */
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
+}
 
 /**
  * Internally, this is the "type" of cell that's being displayed
@@ -931,16 +947,10 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
-/**
- * Compare two values
- */
-export enum ComparisonOperation {
-  EQ = 'eq',
-  GT = 'gt',
-  GTE = 'gte',
-  LT = 'lt',
-  LTE = 'lte',
-  NEQ = 'neq',
+export enum SortWithReducer {
+  Az = 'az',
+  None = 'none',
+  Za = 'za',
 }
 
 /**
