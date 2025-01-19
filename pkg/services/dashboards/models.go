@@ -203,9 +203,10 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginID     string           `json:"-" xorm:"plugin_id"`
 	// Deprecated: use FolderUID instead
-	FolderID  int64  `json:"folderId" xorm:"folder_id"`
-	FolderUID string `json:"folderUid" xorm:"folder_uid"`
-	IsFolder  bool   `json:"isFolder"`
+	FolderID        int64  `json:"folderId" xorm:"folder_id"`
+	FolderUID       string `json:"folderUid" xorm:"folder_uid"`
+	IsFolder        bool   `json:"isFolder"`
+	DisableUiUpdate bool   `json:"disableUiUpdate"`
 
 	UpdatedAt time.Time
 }

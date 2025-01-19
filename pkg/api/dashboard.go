@@ -606,7 +606,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		provisioningData = data
 	}
 
-	allowUiUpdate := true
+	allowUiUpdate := !cmd.DisableUiUpdate
 	if provisioningData != nil {
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
