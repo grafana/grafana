@@ -48,6 +48,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     topRow: css({
+      label: 'PageHeader-topRow',
       alignItems: 'flex-start',
       display: 'flex',
       flexDirection: 'row',
@@ -70,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     titleInfoContainer: css({
       display: 'flex',
-      label: 'title-info-container',
+      label: 'PageHeader-titleInfoContainer',
       flex: 1,
       flexWrap: 'wrap',
       gap: theme.spacing(1, 4),
@@ -79,17 +80,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       minWidth: '200px',
     }),
     pageHeader: css({
-      label: 'page-header',
+      label: 'PageHeader-pageHeader',
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(2),
     }),
     subTitle: css({
+      label: 'PageHeader-subTitle',
       position: 'relative',
       color: theme.colors.text.secondary,
     }),
     img: css({
+      label: 'PageHeader-img',
       width: '32px',
       height: '32px',
       marginRight: theme.spacing(2),
