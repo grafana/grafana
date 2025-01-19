@@ -20,6 +20,8 @@ const setup = (propOverrides?: object) => {
     pendingInvitesCount: 0,
     externalUserMngLinkUrl: '',
     externalUserMngLinkName: '',
+    externalUserMngAnalytics: false,
+    externalUserMngAnalyticsParams: '',
     showInvites: false,
   };
 
@@ -53,11 +55,36 @@ describe('Render', () => {
 
   it('should show external user management button', () => {
     setup({
-      externalUserMngLinkUrl: 'some/url',
+      externalUserMngLinkUrl: 'http://some/url',
       externalUserMngLinkName: 'someUrl',
     });
 
-    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'some/url');
+    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'http://some/url');
+  });
+
+  it('should show external user management button with analytics values when configured', () => {
+    setup({
+      externalUserMngLinkUrl: 'http://some/url',
+      externalUserMngLinkName: 'someUrl',
+      externalUserMngAnalytics: true,
+      externalUserMngAnalyticsParams: 'src=grafananet&other=value1',
+    });
+
+    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute(
+      'href',
+      'http://some/url?src=grafananet&other=value1&cnt=manage-users'
+    );
+  });
+
+  it('should show external user management button without analytics values when disabled', () => {
+    setup({
+      externalUserMngLinkUrl: 'http://some/url',
+      externalUserMngLinkName: 'someUrl',
+      externalUserMngAnalytics: false,
+      externalUserMngAnalyticsParams: 'src=grafananet&other=value1',
+    });
+
+    expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'http://some/url');
   });
 
   it('should not show invite button when externalUserMngInfo is set and disableLoginForm is true', () => {

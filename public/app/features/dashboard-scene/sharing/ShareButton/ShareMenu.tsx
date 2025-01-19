@@ -93,7 +93,23 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
       renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
       onClick: () => {
-        window.open(config.externalUserMngLinkUrl, '_blank');
+        const url = new URL(config.externalUserMngLinkUrl);
+
+        if (config.externalUserMngAnalytics) {
+          // Add query parameters in config.externalUserMngAnalyticsParams to track conversion
+          if (config.externalUserMngAnalyticsParams !== '') {
+            const params = config.externalUserMngAnalyticsParams.split('&');
+            params.forEach((param) => {
+              const [key, value] = param.split('=');
+              url.searchParams.append(key, value);
+            });
+          }
+
+          // Add cnt=share-invite to track conversion
+          url.searchParams.append('cnt', 'share-invite');
+        }
+
+        window.open(url.toString(), '_blank');
       },
       renderDividerAbove: true,
       component: () => <Icon name="external-link-alt" className={styles.inviteUserItemIcon} />,
