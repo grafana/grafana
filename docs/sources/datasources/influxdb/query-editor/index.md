@@ -94,6 +94,8 @@ Visual query editor mode contains the following components:
 - **FORMAT AS** - Select a format option from the drop-down menu.
 - **ALIAS** - Add an alias. Refer to [Alias patterns](#alias-patterns) for more information.
 
+Remember that this feature is simply constructing an InfluxQL query that will be sent directly to the InfluxDB server. You can use only features offered by InfluxQL.
+
 ### Raw query editor mode
 
 You can write raw InfluxQL queries by switching to raw query mode. Click the pencil in the upper right of the query editor to switch modes. Note that when you switch to visual editor mode, you will lose any changes made in raw query mode.
@@ -158,6 +160,8 @@ You can also use the `[[tag_hostname]]` pattern replacement syntax.
 For example, entering the value `Host: [[tag_hostname]]` in the ALIAS BY field replaces it with the `hostname` tag value for each legend value.
 
 An example legend value is `Host: server1`.
+
+InfluxQL does not allow you to use a regex to change the legend values, but you can do so by telling Grafana to [tranform the data](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/) returned by the InfluxDB server, for example using  [Rename by regex](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#rename-by-regex).
 
 ## SQL query editor
 
