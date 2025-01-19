@@ -17,6 +17,10 @@ const grpcMetaKeyCollection = "x-gf-batch-collection"
 const grpcMetaKeyRebuildCollection = "x-gf-batch-rebuild-collection"
 const grpcMetaKeySkipValidation = "x-gf-batch-skip-validation"
 
+func grpcMetaValueIsTrue(vals []string) bool {
+	return len(vals) == 1 && vals[0] == "true"
+}
+
 type BatchProcessingBackend interface {
 	ProcessBatch(ctx context.Context, setting BatchSettings, next func() *BatchRequest) (*BatchResponse, error)
 }
@@ -63,9 +67,9 @@ func NewBatchSettings(md metadata.MD) (BatchSettings, error) {
 				settings.Collection = append(settings.Collection, key)
 			}
 		case grpcMetaKeyRebuildCollection:
-			settings.RebuildCollection = len(v) == 1 && "true" == v[0]
+			settings.RebuildCollection = grpcMetaValueIsTrue(v)
 		case grpcMetaKeySkipValidation:
-			settings.SkipValidation = len(v) == 1 && "true" == v[0]
+			settings.SkipValidation = grpcMetaValueIsTrue(v)
 		}
 	}
 	return settings, nil

@@ -250,7 +250,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				LargeObjects: nil, // ???
 				Store:        b.unified,
 				Progress: func(count int, msg string) {
-					w.Write([]byte(fmt.Sprintf("[%4d] %s\n", count, msg)))
+					_, _ = w.Write([]byte(fmt.Sprintf("[%4d] %s\n", count, msg)))
 					flusher.Flush()
 				},
 			})
@@ -258,13 +258,13 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 			if rsp != nil {
 				jj, err := json.MarshalIndent(rsp, "", "  ")
 				if err != nil {
-					w.Write([]byte(fmt.Sprintf("JSON error: %s\n", err)))
+					_, _ = w.Write([]byte(fmt.Sprintf("JSON error: %s\n", err)))
 				}
-				w.Write(jj)
+				_, _ = w.Write(jj)
 			}
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err.Error())
-				w.Write([]byte(fmt.Sprintf("ERROR: %s\n", err)))
+				_, _ = w.Write([]byte(fmt.Sprintf("ERROR: %s\n", err)))
 			}
 			flusher.Flush()
 			fmt.Printf(">>MIGRATE DONE!!!\n")
