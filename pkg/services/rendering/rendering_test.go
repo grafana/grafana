@@ -115,6 +115,19 @@ func TestRenderUnavailableError(t *testing.T) {
 	assert.Nil(t, result)
 }
 
+// test for when rendering service callback url is defined, the rendering service domain is configured to be the callback url
+func TestRenderingServiceWithCallbackURL(t *testing.T) {
+	cfg := &setting.Cfg{
+		RendererUrl:         "https://localhost:8081/render",
+		RendererCallbackUrl: "https://public-grafana.com/",
+	}
+
+	rs, err := ProvideService(cfg, nil, nil, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, "https://public-grafana.com/", rs.domain)
+}
+
 func TestRenderLimitImage(t *testing.T) {
 	path, err := filepath.Abs("../../../")
 	require.NoError(t, err)

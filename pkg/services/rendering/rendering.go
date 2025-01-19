@@ -58,6 +58,7 @@ type Plugin interface {
 }
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
+	// TODO: Need to figure out how to mock this
 	folders := []string{
 		cfg.ImagesDir,
 		cfg.CSVsDir,
@@ -83,19 +84,23 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 	switch {
 	case cfg.RendererUrl != "":
 		// RendererCallbackUrl has already been passed, it won't generate an error.
-		u, err := url.Parse(cfg.RendererCallbackUrl)
+		_, err := url.Parse(cfg.RendererCallbackUrl)
 		if err != nil {
+			logger.Warn("Image renderer callback url is not valid. " +
+				"Please provide a valid RendererCallbackUrl in the config. " +
+				"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
 			return nil, err
 		}
 
 		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
-		domain = u.Hostname()
+		domain = cfg.RendererCallbackUrl
 	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
 		domain = cfg.HTTPAddr
 	default:
 		domain = "localhost"
 	}
 
+	// TODO: Need to figure out how to mock this
 	var renderKeyProvider renderKeyProvider
 	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
 		renderKeyProvider = &jwtRenderKeyProvider{
@@ -111,6 +116,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		}
 	}
 
+	// TODO: Need to figure out how to mock this
 	_, exists := rm.Renderer(context.Background())
 
 	s := &RenderingService{
