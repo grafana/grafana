@@ -33,6 +33,16 @@ type AlertingStore interface {
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
 }
 
+type AlertInstanceStore interface {
+	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
+	FetchOrgIds(ctx context.Context) ([]int64, error)
+	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
+	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
+	SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error
+	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error
+	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error
+}
+
 // DBstore stores the alert definitions and instances in the database.
 type DBstore struct {
 	Cfg              setting.UnifiedAlertingSettings
@@ -43,6 +53,7 @@ type DBstore struct {
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
 	Bus              bus.Bus
+	InstanceStore    AlertInstanceStore
 }
 
 func ProvideDBStore(
@@ -54,16 +65,42 @@ func ProvideDBStore(
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 ) (*DBstore, error) {
+	logger := log.New("ngalert.dbstore")
+
+	var instanceStore AlertInstanceStore
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		instanceStore = ProtoInstanceDBStore{
+			SQLStore:       sqlstore,
+			Logger:         logger,
+			FeatureToggles: featureToggles,
+		}
+
+		// If FlagAlertingSaveStateCompressed is enabled, we use the ProtoInstanceDBStore which workd
+		// in a different way than the InstanceDBStore. The configuration flags are not used in the
+		// ProtoInstanceDBStore, so we log a warning if they are set.
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+			logger.Warn("alertingSaveStatePeriodic can not be used with alertingSaveStateCompressed")
+		}
+	} else {
+		instanceStore = InstanceDBStore{
+			SQLStore:       sqlstore,
+			Logger:         logger,
+			FeatureToggles: featureToggles,
+		}
+	}
+
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,
 		SQLStore:         sqlstore,
-		Logger:           log.New("ngalert.dbstore"),
+		Logger:           logger,
 		FolderService:    folderService,
 		DashboardService: dashboards,
 		AccessControl:    ac,
 		Bus:              bus,
+		InstanceStore:    instanceStore,
 	}
+
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err
 	}
