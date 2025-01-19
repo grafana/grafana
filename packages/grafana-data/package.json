@@ -35,7 +35,7 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "7.0.1",
+    "@braintree/sanitize-url": "7.1.1",
     "@grafana/schema": "11.5.0-pre",
     "@types/d3-interpolate": "^3.0.0",
     "@types/string-hash": "1.1.3",
