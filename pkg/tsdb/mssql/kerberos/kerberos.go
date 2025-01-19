@@ -22,11 +22,19 @@ type KerberosAuth struct {
 	CredentialCache           string
 	CredentialCacheLookupFile string
 	ConfigFilePath            string
-	UDPConnectionLimit        string
+	UDPConnectionLimit        int
 	EnableDNSLookupKDC        string
 }
 
 func GetKerberosSettings(settings backend.DataSourceInstanceSettings) (kerberosAuth KerberosAuth, err error) {
+	kerberosAuth = KerberosAuth{
+		KeytabFilePath:            "",
+		CredentialCache:           "",
+		CredentialCacheLookupFile: "",
+		ConfigFilePath:            "",
+		UDPConnectionLimit:        1,
+		EnableDNSLookupKDC:        "",
+	}
 	err = json.Unmarshal(settings.JSONData, &kerberosAuth)
 	return kerberosAuth, err
 }
@@ -65,8 +73,8 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 		return ""
 	}
 
-	if kerberosAuth.UDPConnectionLimit != "" {
-		krb5DriverParams += "krb5-udppreferencelimit=" + kerberosAuth.UDPConnectionLimit + ";"
+	if kerberosAuth.UDPConnectionLimit != 1 {
+		krb5DriverParams += fmt.Sprintf("krb5-udppreferencelimit=%d;", kerberosAuth.UDPConnectionLimit)
 	}
 
 	if kerberosAuth.EnableDNSLookupKDC != "" {
