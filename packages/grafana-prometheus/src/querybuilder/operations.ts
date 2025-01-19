@@ -123,6 +123,14 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       addOperationHandler: addOperationWithRangeVector,
       changeTypeHandler: operationTypeChangedHandlerForRangeFunction,
     }),
+    createFunction({
+      id: PromOperationId.Info,
+      params: [],
+      alternativesKey: 'overtime function',
+      category: PromVisualQueryOperationCategory.Functions,
+      renderer: functionRendererRight,
+      addOperationHandler: addOperationWithRangeVector,
+    }),
     ...binaryScalarOperations,
     {
       id: PromOperationId.NestedQuery,
