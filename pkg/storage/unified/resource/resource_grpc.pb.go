@@ -19,13 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_Read_FullMethodName    = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName  = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName  = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName  = "/resource.ResourceStore/Delete"
-	ResourceStore_Restore_FullMethodName = "/resource.ResourceStore/Restore"
-	ResourceStore_List_FullMethodName    = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName   = "/resource.ResourceStore/Watch"
+	ResourceStore_Read_FullMethodName         = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName       = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName       = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName       = "/resource.ResourceStore/Delete"
+	ResourceStore_Restore_FullMethodName      = "/resource.ResourceStore/Restore"
+	ResourceStore_List_FullMethodName         = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName        = "/resource.ResourceStore/Watch"
+	ResourceStore_BatchProcess_FullMethodName = "/resource.ResourceStore/BatchProcess"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -50,6 +51,10 @@ type ResourceStoreClient interface {
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (ResourceStore_WatchClient, error)
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	// Only the *create* permissions is checked
+	BatchProcess(ctx context.Context, opts ...grpc.CallOption) (ResourceStore_BatchProcessClient, error)
 }
 
 type resourceStoreClient struct {
@@ -153,6 +158,41 @@ func (x *resourceStoreWatchClient) Recv() (*WatchEvent, error) {
 	return m, nil
 }
 
+func (c *resourceStoreClient) BatchProcess(ctx context.Context, opts ...grpc.CallOption) (ResourceStore_BatchProcessClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ResourceStore_ServiceDesc.Streams[1], ResourceStore_BatchProcess_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &resourceStoreBatchProcessClient{ClientStream: stream}
+	return x, nil
+}
+
+type ResourceStore_BatchProcessClient interface {
+	Send(*BatchRequest) error
+	CloseAndRecv() (*BatchResponse, error)
+	grpc.ClientStream
+}
+
+type resourceStoreBatchProcessClient struct {
+	grpc.ClientStream
+}
+
+func (x *resourceStoreBatchProcessClient) Send(m *BatchRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *resourceStoreBatchProcessClient) CloseAndRecv() (*BatchResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(BatchResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ResourceStoreServer is the server API for ResourceStore service.
 // All implementations should embed UnimplementedResourceStoreServer
 // for forward compatibility
@@ -175,6 +215,10 @@ type ResourceStoreServer interface {
 	// This will perform best-effort filtering to increase performace.
 	// NOTE: storage.Interface is ultimatly responsible for the final filtering
 	Watch(*WatchRequest, ResourceStore_WatchServer) error
+	// Write multiple resources to the same Namespace/Group/Resource
+	// Events will not be sent until the stream is complete
+	// Only the *create* permissions is checked
+	BatchProcess(ResourceStore_BatchProcessServer) error
 }
 
 // UnimplementedResourceStoreServer should be embedded to have forward compatible implementations.
@@ -201,6 +245,9 @@ func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*Li
 }
 func (UnimplementedResourceStoreServer) Watch(*WatchRequest, ResourceStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedResourceStoreServer) BatchProcess(ResourceStore_BatchProcessServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchProcess not implemented")
 }
 
 // UnsafeResourceStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -343,6 +390,32 @@ func (x *resourceStoreWatchServer) Send(m *WatchEvent) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ResourceStore_BatchProcess_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ResourceStoreServer).BatchProcess(&resourceStoreBatchProcessServer{ServerStream: stream})
+}
+
+type ResourceStore_BatchProcessServer interface {
+	SendAndClose(*BatchResponse) error
+	Recv() (*BatchRequest, error)
+	grpc.ServerStream
+}
+
+type resourceStoreBatchProcessServer struct {
+	grpc.ServerStream
+}
+
+func (x *resourceStoreBatchProcessServer) SendAndClose(m *BatchResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *resourceStoreBatchProcessServer) Recv() (*BatchRequest, error) {
+	m := new(BatchRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ResourceStore_ServiceDesc is the grpc.ServiceDesc for ResourceStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -380,6 +453,11 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "Watch",
 			Handler:       _ResourceStore_Watch_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "BatchProcess",
+			Handler:       _ResourceStore_BatchProcess_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "resource.proto",

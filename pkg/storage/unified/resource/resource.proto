@@ -308,7 +308,7 @@ message WatchEvent {
   // Timestamp the event was sent
   int64 timestamp = 1;
 
-  // Timestamp the event was sent
+  // The event type
   Type type = 2;
 
   // Resource version for the object
@@ -317,6 +317,57 @@ message WatchEvent {
   // Previous resource version (for update+delete)
   Resource previous = 4;
 }
+
+message BatchRequest {
+  enum Action {
+    // will be an error
+    UNKNOWN = 0; 
+
+    // Matches Watch event enum
+    ADDED = 1;
+    MODIFIED = 2;
+    DELETED = 3;
+  }
+
+  // NOTE everything in the same stream must share the same Namespace/Group/Resource
+  ResourceKey key = 1;
+
+  // Requested action
+  Action action = 2;
+
+  // The resource value 
+  bytes value = 3;
+
+  // Hint that a new version will be written on-top of this
+  string folder = 4;
+}
+
+message BatchResponse {
+  message Summary {
+    enum Action {
+      UNKNOWN = 0;
+      ERROR = 1;
+      WRITE_EVENT = 2;
+      DELETE_HISTORY = 3;
+      DELETE_RESOURCE = 4;
+      SYNC_RESOURCE = 5;
+    }
+
+    Action action = 1;
+    ResourceKey key = 2; // The collection or object
+    int64 count = 3;
+    string details = 4; // useful for error handling
+  }
+
+  // Error details
+  ErrorResult error = 1;
+
+  // The number of events processed
+  int64 processed = 2;
+
+  repeated Summary summary = 3;
+}
+
 
 // Get statistics across multiple resources
 // For these queries, we do not need authorization to see the actual values
@@ -748,6 +799,11 @@ service ResourceStore {
   // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
+
+  // Write multiple resources to the same Namespace/Group/Resource
+  // Events will not be sent until the stream is complete
+  // Only the *create* permissions is checked
+  rpc BatchProcess(stream BatchRequest) returns (BatchResponse);
 }
 
 // Unlike the ResourceStore, this service can be exposed to clients directly

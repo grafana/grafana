@@ -363,6 +363,16 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceHistoryDeleteRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						GUID:        `xxxx`,
+						Namespace:   "ns",
+					},
+				},
+				{
+					Name: "wipe",
+					Data: &sqlResourceHistoryDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Group:       "ggg",
+						Resource:    "rrr",
 					},
 				},
 			},
@@ -393,6 +403,19 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						GUID:        "ggggg",
 						Value:       "{new value}",
+					},
+				},
+			},
+			sqlResourceInsertFromHistory: {
+				{
+					Name: "update",
+					Data: &sqlResourceInsertFromHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resource.ResourceKey{
+							Namespace: "default",
+							Group:     "dashboard.grafana.app",
+							Resource:  "dashboards",
+						},
 					},
 				},
 			},

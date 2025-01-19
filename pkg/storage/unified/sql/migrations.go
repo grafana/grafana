@@ -119,6 +119,7 @@ func (b *backend) runStartupDataMigrations(ctx context.Context) error {
 				_, err = dbutil.Exec(ctx, tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
 					SQLTemplate: sqltemplate.New(b.dialect),
 					GUID:        req.GUID,
+					Namespace:   item.Marker.GetNamespace(),
 				})
 				if err != nil {
 					return err
