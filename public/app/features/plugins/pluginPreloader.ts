@@ -1,9 +1,7 @@
 import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
 import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
-import type { AppPluginConfig } from '@grafana/runtime';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { importAppPlugin } from './plugin_loader';
+import { loadPlugin } from './utils';
 
 export type PluginPreloadResult = {
   pluginId: string;
@@ -13,28 +11,31 @@ export type PluginPreloadResult = {
   addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
-const preloadedAppPlugins = new Set<string>();
-const isNotYetPreloaded = ({ id }: AppPluginConfig) => !preloadedAppPlugins.has(id);
-const markAsPreloaded = (apps: AppPluginConfig[]) => apps.forEach(({ id }) => preloadedAppPlugins.add(id));
+interface PluginConfig {
+  id: string;
+  moduleHash?: string;
+}
 
-export async function preloadPlugins(apps: AppPluginConfig[] = []) {
-  const appPluginsToPreload = apps.filter(isNotYetPreloaded);
+const preloadedAppPlugins = new Set<string>();
+const isNotYetPreloaded = ({ id }: PluginConfig) => !preloadedAppPlugins.has(id);
+const markAsPreloaded = (configs: PluginConfig[]) => configs.forEach(({ id }) => preloadedAppPlugins.add(id));
+
+export async function preloadPlugins(configs: PluginConfig[] = []) {
+  const appPluginsToPreload = configs.filter(isNotYetPreloaded);
 
   if (appPluginsToPreload.length === 0) {
     return;
   }
 
-  markAsPreloaded(apps);
+  markAsPreloaded(configs);
 
   await Promise.all(appPluginsToPreload.map(preload));
 }
 
-async function preload(config: AppPluginConfig) {
+async function preload(config: PluginConfig) {
   try {
-    const meta = await getPluginSettings(config.id);
-
-    await importAppPlugin(meta);
+    await loadPlugin(config.id);
   } catch (error) {
-    console.error(`[Plugins] Failed to preload plugin: ${config.path} (version: ${config.version})`, error);
+    console.error(`[Plugins] Failed to preload plugin: ${config.id} (version: ${config.moduleHash})`, error);
   }
 }

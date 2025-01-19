@@ -5,6 +5,7 @@ import config from 'app/core/config';
 
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
 
+import { addedFunctionsRegistry } from './extensions/registry/setup';
 import { importPluginModule } from './plugin_loader';
 
 const promiseCache: Record<string, Promise<PanelPlugin>> = {};
@@ -47,7 +48,7 @@ export function getPanelPluginMeta(id: string): PanelPluginMeta {
   return v;
 }
 
-export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {
+export async function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {
   return getPanelPlugin(meta);
 }
 
@@ -82,7 +83,10 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
       if (!plugin.panel && plugin.angularPanelCtrl) {
         plugin.panel = getAngularPanelReactWrapper(plugin);
       }
-
+      addedFunctionsRegistry.register({
+        pluginId: meta.id,
+        configs: plugin.addedFunctionConfigs || [],
+      });
       return plugin;
     })
     .catch((err) => {

@@ -105,6 +105,7 @@ func TestLoader_Load(t *testing.T) {
 						Extensions: plugins.Extensions{
 							AddedLinks:        []plugins.AddedLink{},
 							AddedComponents:   []plugins.AddedComponent{},
+							AddedFunctions:    []plugins.AddedFunction{},
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -200,8 +201,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -248,8 +251,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -303,8 +308,10 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
@@ -397,8 +404,10 @@ func TestLoader_Load(t *testing.T) {
 							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 						},
 						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
 							ExposedComponents: []plugins.ExposedComponent{},
 							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},

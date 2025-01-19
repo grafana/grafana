@@ -426,6 +426,15 @@ export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 export const getAppPluginConfigs = (pluginIds: string[] = []) =>
   Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
 
+export const getPluginConfigs = (pluginIds: string[] = []) => {
+  const appConfigs = Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
+  const panelConfigs = Object.values(config.panels).filter((panel) => pluginIds.includes(panel.id));
+  const datasourceConfigs = Object.values(config.datasources)
+    .map((ds) => ds.meta)
+    .filter((panel) => pluginIds.includes(panel.id));
+  return [...appConfigs, ...panelConfigs, ...datasourceConfigs];
+};
+
 export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
   return exposedComponentId.split('/')[0];
 };
@@ -434,16 +443,24 @@ export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string)
 // (These plugins are necessary to be loaded to use the extension point.)
 // (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
 export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
-  return Object.values(config.apps)
+  const matchingApps = Object.values(config.apps)
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
+        app.extensions.addedFunctions.some((fn) => fn.targets.includes(extensionPointId)) ||
         app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
     )
     .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
       return [...acc, id, ...getAppPluginDependencies(id)];
     }, []);
+  const matchingPanels = Object.values(config.panels)
+    .filter((plugin) => plugin.extensions?.addedFunctions?.some((ext) => ext.targets.includes(extensionPointId)))
+    .map((plugin) => plugin.id);
+  const matchingDataSources = Object.values(config.datasources)
+    .filter((plugin) => plugin.meta.extensions?.addedFunctions?.some((ext) => ext.targets.includes(extensionPointId)))
+    .map((plugin) => plugin.meta.id);
+  return [...matchingApps, ...matchingPanels, ...matchingDataSources];
 };
 
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
