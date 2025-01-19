@@ -3,12 +3,14 @@ package authz
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
@@ -45,7 +47,8 @@ func ProvideAuthZClient(
 
 	// Register the server
 	sql := legacysql.NewDatabaseProvider(db)
-	server := rbac.NewService(sql, legacy.NewLegacySQLStores(sql), log.New("authz-grpc-server"), tracer)
+	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute})
+	server := rbac.NewService(sql, legacy.NewLegacySQLStores(sql), log.New("authz-grpc-server"), tracer, cache)
 
 	switch authCfg.mode {
 	case ModeGRPC:

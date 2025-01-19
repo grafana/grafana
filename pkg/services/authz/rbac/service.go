@@ -16,8 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -47,29 +47,30 @@ type Service struct {
 	logger log.Logger
 	tracer tracing.Tracer
 
-	// Cache for user permissions, user team memberships and user basic roles
-	idCache        *localcache.CacheService
-	permCache      *localcache.CacheService
-	teamCache      *localcache.CacheService
-	basicRoleCache *localcache.CacheService
-	folderCache    *localcache.CacheService
-
 	// Deduplication of concurrent requests
 	sf *singleflight.Group
+
+	// Cache for user permissions, user team memberships and user basic roles
+	idCache        *cacheWrap[store.UserIdentifiers]
+	permCache      *cacheWrap[map[string]bool]
+	teamCache      *cacheWrap[[]int64]
+	basicRoleCache *cacheWrap[store.BasicRole]
+	folderCache    *cacheWrap[map[string]FolderNode]
 }
 
-func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
+func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore,
+	logger log.Logger, tracer tracing.Tracer, cache remotecache.CacheStorage) *Service {
 	return &Service{
 		store:          store.NewStore(sql, tracer),
 		identityStore:  identityStore,
 		actionMapper:   mappers.NewK8sRbacMapper(),
 		logger:         logger,
 		tracer:         tracer,
-		idCache:        localcache.New(longCacheTTL, longCleanupInterval),
-		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
-		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
-		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
-		folderCache:    localcache.New(shortCacheTTL, shortCleanupInterval),
+		idCache:        newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
+		permCache:      newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
+		teamCache:      newCacheWrap[[]int64](cache, logger, shortCacheTTL),
+		basicRoleCache: newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
+		folderCache:    newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
 		sf:             new(singleflight.Group),
 	}
 }
@@ -258,8 +259,8 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	}
 
 	userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
-	if cached, ok := s.permCache.Get(userPermKey); ok {
-		return cached.(map[string]bool), nil
+	if cached, ok := s.permCache.Get(ctx, userPermKey); ok {
+		return cached, nil
 	}
 
 	res, err, _ := s.sf.Do(userPermKey+"_getUserPermissions", func() (interface{}, error) {
@@ -288,7 +289,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 		}
 		scopeMap := getScopeMap(permissions)
 
-		s.permCache.Set(userPermKey, scopeMap, 0)
+		s.permCache.Set(ctx, userPermKey, scopeMap)
 		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
 
 		return scopeMap, nil
@@ -306,17 +307,16 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 	defer span.End()
 
 	anonPermKey := anonymousPermCacheKey(ns.Value, action)
-	if cached, ok := s.permCache.Get(anonPermKey); ok {
-		return cached.(map[string]bool), nil
+	if cached, ok := s.permCache.Get(ctx, anonPermKey); ok {
+		return cached, nil
 	}
-
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
 		permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
 		if err != nil {
 			return nil, err
 		}
 		scopeMap := getScopeMap(permissions)
-		s.permCache.Set(anonPermKey, scopeMap, 0)
+		s.permCache.Set(ctx, anonPermKey, scopeMap)
 		return scopeMap, nil
 	})
 
@@ -329,13 +329,13 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 
 func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
 	uidCacheKey := userIdentifierCacheKey(ns.Value, userUID)
-	if cached, ok := s.idCache.Get(uidCacheKey); ok {
-		return cached.(*store.UserIdentifiers), nil
+	if cached, ok := s.idCache.Get(ctx, uidCacheKey); ok {
+		return &cached, nil
 	}
 
 	idCacheKey := userIdentifierCacheKeyById(ns.Value, userUID)
-	if cached, ok := s.idCache.Get(idCacheKey); ok {
-		return cached.(*store.UserIdentifiers), nil
+	if cached, ok := s.idCache.Get(ctx, idCacheKey); ok {
+		return &cached, nil
 	}
 
 	var userIDQuery store.UserIdentifierQuery
@@ -346,12 +346,12 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInf
 		userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
 	}
 	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
-	if err != nil {
+	if err != nil || userIdentifiers == nil {
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
 
-	s.idCache.Set(uidCacheKey, userIdentifiers, 0)
-	s.idCache.Set(idCacheKey, userIdentifiers, 0)
+	s.idCache.Set(ctx, uidCacheKey, *userIdentifiers)
+	s.idCache.Set(ctx, idCacheKey, *userIdentifiers)
 
 	return userIdentifiers, nil
 }
@@ -362,8 +362,8 @@ func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, use
 
 	teamIDs := make([]int64, 0, 50)
 	teamsCacheKey := userTeamCacheKey(ns.Value, userIdentifiers.UID)
-	if cached, ok := s.teamCache.Get(teamsCacheKey); ok {
-		return cached.([]int64), nil
+	if cached, ok := s.teamCache.Get(ctx, teamsCacheKey); ok {
+		return cached, nil
 	}
 
 	teamQuery := legacy.ListUserTeamsQuery{
@@ -384,7 +384,7 @@ func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, use
 			break
 		}
 	}
-	s.teamCache.Set(teamsCacheKey, teamIDs, 0)
+	s.teamCache.Set(ctx, teamsCacheKey, teamIDs)
 	span.SetAttributes(attribute.Int("num_user_teams", len(teamIDs)))
 
 	return teamIDs, nil
@@ -395,8 +395,8 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns claims.NamespaceInfo,
 	defer span.End()
 
 	basicRoleKey := userBasicRoleCacheKey(ns.Value, userIdentifiers.UID)
-	if cached, ok := s.basicRoleCache.Get(basicRoleKey); ok {
-		return cached.(store.BasicRole), nil
+	if cached, ok := s.basicRoleCache.Get(ctx, basicRoleKey); ok {
+		return cached, nil
 	}
 
 	basicRole, err := s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})
@@ -406,7 +406,7 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns claims.NamespaceInfo,
 	if basicRole == nil {
 		basicRole = &store.BasicRole{}
 	}
-	s.basicRoleCache.Set(basicRoleKey, *basicRole, 0)
+	s.basicRoleCache.Set(ctx, basicRoleKey, *basicRole)
 
 	return *basicRole, nil
 }
@@ -469,14 +469,14 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	currentUID := req.ParentFolder
 	for {
 		if node, has := folderMap[currentUID]; has {
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(node.uid)
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(node.UID)
 			if scopeMap[scope] {
 				return true, nil
 			}
-			if node.parentUID == nil {
+			if node.ParentUID == nil {
 				break
 			}
-			currentUID = *node.parentUID
+			currentUID = *node.ParentUID
 		} else {
 			break
 		}
@@ -489,8 +489,8 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 	defer span.End()
 
 	key := folderCacheKey(ns.Value)
-	if cached, ok := s.folderCache.Get(key); ok {
-		return cached.(map[string]FolderNode), nil
+	if cached, ok := s.folderCache.Get(ctx, key); ok {
+		return cached, nil
 	}
 
 	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (interface{}, error) {
@@ -504,11 +504,11 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 		for _, folder := range folders {
 			if node, has := folderMap[folder.UID]; !has {
 				folderMap[folder.UID] = FolderNode{
-					uid:       folder.UID,
-					parentUID: folder.ParentUID,
+					UID:       folder.UID,
+					ParentUID: folder.ParentUID,
 				}
 			} else {
-				node.parentUID = folder.ParentUID
+				node.ParentUID = folder.ParentUID
 				folderMap[folder.UID] = node
 			}
 			// Register that the parent has this child node
@@ -516,17 +516,17 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 				continue
 			}
 			if parent, has := folderMap[*folder.ParentUID]; has {
-				parent.childrenUIDs = append(parent.childrenUIDs, folder.UID)
+				parent.ChildrenUIDs = append(parent.ChildrenUIDs, folder.UID)
 				folderMap[*folder.ParentUID] = parent
 			} else {
 				folderMap[*folder.ParentUID] = FolderNode{
-					uid:          *folder.ParentUID,
-					childrenUIDs: []string{folder.UID},
+					UID:          *folder.ParentUID,
+					ChildrenUIDs: []string{folder.UID},
 				}
 			}
 		}
 
-		s.folderCache.Set(key, folderMap, 0)
+		s.folderCache.Set(ctx, key, folderMap)
 		return folderMap, nil
 	})
 
@@ -587,7 +587,7 @@ func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet ma
 	if !has {
 		return
 	}
-	for _, child := range folder.childrenUIDs {
+	for _, child := range folder.ChildrenUIDs {
 		// We have already processed all the children of this folder
 		if _, ok := folderSet[child]; ok {
 			return
