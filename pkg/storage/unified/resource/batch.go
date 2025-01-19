@@ -157,9 +157,29 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	if rsp == nil {
 		rsp = &BatchResponse{}
 	}
+	if err == nil {
+		// Rebuild the index for this key
+		for _, key := range settings.Collection {
+			idx, rv, err := s.search.build(ctx, NamespacedResource{
+				Namespace: key.Namespace,
+				Group:     key.Group,
+				Resource:  key.Resource,
+			}, rsp.Processed, 555555) // can we get the RV from the server????
+			if err != nil {
+				return err // should not happen
+			}
+			count, err := idx.DocCount(ctx, "")
+			if err != nil {
+				return err // should not happen
+			}
+			fmt.Printf("Build index: size:%d / rv:%d", count, rv)
+		}
+	}
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
+
 	fmt.Printf("Finished (core)\n")
 	return stream.SendAndClose(rsp)
 }

@@ -379,6 +379,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 		for {
 			v := <-events
 
+			// Skip index events for batch updates
+			if v.PreviousRV < 0 {
+				continue
+			}
+
 			s.handleEvent(watchctx, v)
 		}
 	}()

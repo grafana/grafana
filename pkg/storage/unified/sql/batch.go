@@ -131,6 +131,7 @@ type batchWroker struct {
 	dialect sqltemplate.Dialect
 }
 
+// This will remove everything from the `resource` and `resource_history` table for a given namespace/group/resource
 func (w *batchWroker) deleteCollection(key *resource.ResourceKey) ([]*resource.BatchResponse_Summary, error) {
 	// First delete history
 	res, err := dbutil.Exec(w.ctx, w.tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
@@ -169,6 +170,7 @@ func (w *batchWroker) deleteCollection(key *resource.ResourceKey) ([]*resource.B
 	return []*resource.BatchResponse_Summary{history, resources}, err
 }
 
+// Copy the latest value from history into the active resource table
 func (w *batchWroker) syncCollection(key *resource.ResourceKey) (*resource.BatchResponse_Summary, error) {
 	res, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
