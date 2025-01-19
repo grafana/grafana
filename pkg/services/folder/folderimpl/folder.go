@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -43,15 +44,16 @@ import (
 const FULLPATH_SEPARATOR = "/"
 
 type Service struct {
-	store                folder.Store
-	unifiedStore         folder.Store
-	db                   db.DB
-	log                  *slog.Logger
-	dashboardStore       dashboards.Store
-	dashboardFolderStore folder.FolderStore
-	features             featuremgmt.FeatureToggles
-	accessControl        accesscontrol.AccessControl
-	k8sclient            folderK8sHandler
+	store                  folder.Store
+	unifiedStore           folder.Store
+	db                     db.DB
+	log                    *slog.Logger
+	dashboardStore         dashboards.Store
+	dashboardFolderStore   folder.FolderStore
+	features               featuremgmt.FeatureToggles
+	accessControl          accesscontrol.AccessControl
+	k8sclient              folderK8sHandler
+	publicDashboardService publicdashboards.ServiceWrapper
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
 	bus bus.Bus
@@ -71,6 +73,7 @@ func ProvideService(
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
+	publicDashboardService publicdashboards.ServiceWrapper,
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -84,19 +87,20 @@ func ProvideService(
 	unifiedStore := ProvideUnifiedStore(cfg)
 
 	srv := &Service{
-		log:                  slog.Default().With("logger", "folder-service"),
-		dashboardStore:       dashboardStore,
-		dashboardFolderStore: folderStore,
-		store:                store,
-		unifiedStore:         unifiedStore,
-		features:             features,
-		accessControl:        ac,
-		bus:                  bus,
-		db:                   db,
-		registry:             make(map[string]folder.RegistryService),
-		metrics:              newFoldersMetrics(r),
-		tracer:               tracer,
-		k8sclient:            k8sHandler,
+		log:                    slog.Default().With("logger", "folder-service"),
+		dashboardStore:         dashboardStore,
+		dashboardFolderStore:   folderStore,
+		store:                  store,
+		unifiedStore:           unifiedStore,
+		features:               features,
+		accessControl:          ac,
+		bus:                    bus,
+		db:                     db,
+		registry:               make(map[string]folder.RegistryService),
+		metrics:                newFoldersMetrics(r),
+		tracer:                 tracer,
+		k8sclient:              k8sHandler,
+		publicDashboardService: publicDashboardService,
 	}
 	srv.DBMigration(db)
 
@@ -1006,6 +1010,17 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
 	// TODO use bulk delete
 	for _, folderUID := range folderUIDs {
+		// We need a list of dashboard uids inside the folder to delete related public dashboards
+		dashboardUIDs, err := s.dashboardStore.GetAllDashboardsUIDsInFolders(ctx, &dashboards.GetAllDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: cmd.OrgID})
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
+
+		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
+		}
+
 		// nolint:staticcheck
 		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {

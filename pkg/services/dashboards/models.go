@@ -360,6 +360,11 @@ type DeleteDashboardsInFolderRequest struct {
 	OrgID      int64
 }
 
+type GetAllDashboardsInFolderRequest struct {
+	FolderUIDs []string
+	OrgID      int64
+}
+
 //
 // DASHBOARD ACL
 //

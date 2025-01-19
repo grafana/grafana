@@ -629,6 +629,20 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, int64(2), count)
 	})
 
+	t.Run("Get dashboard uids in a folder", func(t *testing.T) {
+		setup()
+		// setup() saves one dashboard in the general folder and two in the "savedFolder".
+		uids, err := dashboardStore.GetAllDashboardsUIDsInFolders(context.Background(),
+			&dashboards.GetAllDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, 2, len(uids))
+
+		uids, err = dashboardStore.GetAllDashboardsUIDsInFolders(context.Background(),
+			&dashboards.GetAllDashboardsInFolderRequest{FolderUIDs: []string{""}, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, 1, len(uids))
+	})
+
 	t.Run("Can delete dashboards in folder", func(t *testing.T) {
 		setup()
 		folder := insertTestDashboard(t, dashboardStore, "dash folder", 1, 0, "", true, "prod", "webapp")
@@ -902,7 +916,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1021,7 +1035,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,

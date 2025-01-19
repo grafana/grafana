@@ -682,6 +682,56 @@ func TestIntegrationDelete(t *testing.T) {
 	})
 }
 
+func TestDeleteByDashboardUIDs(t *testing.T) {
+	var sqlStore db.DB
+	var cfg *setting.Cfg
+	var dashboardStore dashboards.Store
+	var publicdashboardStore *PublicDashboardStoreImpl
+	var savedDashboard *dashboards.Dashboard
+	//var savedPublicDashboard *PublicDashboard
+	var err error
+
+	setup := func() {
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		require.NoError(t, err)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
+		_ = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, PublicShareType)
+	}
+
+	t.Run("returns nil when dashboardUIDs is empty", func(t *testing.T) {
+		setup()
+		var dashboardUIDs []string
+		store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		err := store.DeleteByDashboardUIDs(context.Background(), 1, dashboardUIDs)
+
+		require.NoError(t, err)
+		assert.Nil(t, err)
+	})
+
+	t.Run("deletes public dashboards with provided dashboard uids", func(t *testing.T) {
+		setup()
+
+		// confirm the pubdash exists
+		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
+		require.NoError(t, err)
+		assert.NotNil(t, pubdash)
+
+		dashboardUIDs := []string{savedDashboard.UID}
+
+		// delete the pubdash by dashboard uid
+		err = publicdashboardStore.DeleteByDashboardUIDs(context.Background(), 1, dashboardUIDs)
+		require.NoError(t, err)
+		assert.Nil(t, err)
+
+		// confirm the pubdash was deleted
+		pubdash, err = publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
+		require.NoError(t, err)
+		assert.Nil(t, pubdash)
+	})
+}
+
 func TestFindByFolder(t *testing.T) {
 	t.Run("returns nil when dashboard is not a folder", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
