@@ -299,6 +299,13 @@
         }
       }
     },
+    "group-actions": {
+      "actions-trigger": "",
+      "delete": "",
+      "edit": "",
+      "export": "",
+      "reorder": ""
+    },
     "list-view": {
       "empty": {
         "new-alert-rule": "",
@@ -484,11 +491,22 @@
     },
     "rule-list": {
       "configure-datasource": "",
+      "ds-error-boundary": {
+        "description": "",
+        "title": ""
+      },
       "filter-view": {
         "no-more-results": "",
         "no-rules-found": ""
       },
-      "new-alert-rule": ""
+      "new-alert-rule": "",
+      "pagination": {
+        "next-page": "",
+        "previous-page": ""
+      },
+      "return-button": {
+        "title": ""
+      }
     },
     "rule-state": {
       "creating": "",
@@ -939,6 +957,7 @@
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
       "share-button": "Compartir",
+      "show-hidden-elements": "",
       "unmark-favorite": "Deshacer marca como favorito"
     },
     "validation": {
@@ -1305,10 +1324,9 @@
       "sortBy": ""
     },
     "related-logs": {
-      "docsLink": "",
+      "LrrDocsLink": "",
       "openExploreLogs": "",
-      "relatedLogsUnavailableAfterDocsLink": "",
-      "relatedLogsUnavailableBeforeDocsLink": "",
+      "relatedLogsUnavailable": "",
       "warnExperimentalFeature": ""
     },
     "viewBy": ""
@@ -3216,6 +3234,13 @@
     "url-column-header": "URL de la instantánea",
     "view-button": "Vista"
   },
+  "table": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": ""
+    }
+  },
   "tag-filter": {
     "clear-button": "",
     "loading": "Cargando...",
@@ -3320,8 +3345,23 @@
     },
     "metric-select": {
       "filter-by": "",
+      "native-histogram": "",
       "new-badge": "",
       "otel-switch": ""
+    },
+    "native-histogram-banner": {
+      "ch-heatmap": "",
+      "ch-histogram": "",
+      "click-histogram": "",
+      "hide-examples": "",
+      "learn-more": "",
+      "metric-examples": "",
+      "nh-heatmap": "",
+      "nh-histogram": "",
+      "now": "",
+      "previously": "",
+      "see-examples": "",
+      "sentence": ""
     },
     "recent-metrics": {
       "or-view-a-recent-exploration": ""
