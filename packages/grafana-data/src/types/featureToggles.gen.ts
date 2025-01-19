@@ -254,4 +254,5 @@ export interface FeatureToggles {
   ABTestFeatureToggleB?: boolean;
   queryLibraryDashboards?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  pluginsCDNSyncLoader?: boolean;
 }

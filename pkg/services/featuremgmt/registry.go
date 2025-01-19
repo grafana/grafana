@@ -1756,6 +1756,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 		},
+		{
+			Name:        "pluginsCDNSyncLoader",
+			Description: "Load plugins from CDN synchronously",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
 	}
 )
 
