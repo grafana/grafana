@@ -832,7 +832,6 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService)
 
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
@@ -840,6 +839,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
 			features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+
+		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderService)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac)
 		service := LibraryPanelService{

@@ -398,6 +398,9 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore)
+	tracer := tracing.InitializeTracerForTest()
+	folderService := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracer)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
@@ -405,7 +408,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, svcErr)
-	guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
+	guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderService)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		// nolint:staticcheck
@@ -460,6 +463,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+		fStore := folderimpl.ProvideStore(sqlStore)
+		folderService := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracer)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, dashboardPermissions, ac,
@@ -467,8 +472,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, dashSvcErr)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService)
-		fStore := folderimpl.ProvideStore(sqlStore)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderService)
 		folderSrv := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore,
 			features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 		service := LibraryElementService{
