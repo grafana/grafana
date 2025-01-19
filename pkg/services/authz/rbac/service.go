@@ -9,6 +9,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
@@ -44,8 +45,9 @@ type Service struct {
 	identityStore legacy.LegacyIdentityStore
 	actionMapper  *mappers.K8sRbacMapper
 
-	logger log.Logger
-	tracer tracing.Tracer
+	logger  log.Logger
+	tracer  tracing.Tracer
+	metrics *metrics
 
 	// Cache for user permissions, user team memberships and user basic roles
 	idCache        *localcache.CacheService
@@ -58,13 +60,14 @@ type Service struct {
 	sf *singleflight.Group
 }
 
-func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
+func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *Service {
 	return &Service{
 		store:          store.NewStore(sql, tracer),
 		identityStore:  identityStore,
 		actionMapper:   mappers.NewK8sRbacMapper(),
 		logger:         logger,
 		tracer:         tracer,
+		metrics:        newMetrics(reg),
 		idCache:        localcache.New(longCacheTTL, longCleanupInterval),
 		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
 		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
@@ -84,6 +87,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	checkReq, err := s.validateCheckRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
+		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return deny, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
@@ -91,14 +95,18 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	permissions, err := s.getUserPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
+		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return deny, err
 	}
 
 	allowed, err := s.checkPermission(ctx, permissions, checkReq)
 	if err != nil {
 		ctxLogger.Error("could not check permission", "error", err)
+		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return deny, err
 	}
+
+	s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
 
@@ -110,6 +118,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	listReq, err := s.validateListRequest(ctx, req)
 	if err != nil {
 		ctxLogger.Error("invalid request", "error", err)
+		s.metrics.requestCount.WithLabelValues("true", "false", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return &authzv1.ListResponse{}, err
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
@@ -117,10 +126,13 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
+		s.metrics.requestCount.WithLabelValues("true", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
 		return nil, err
 	}
 
-	return s.listPermission(ctx, permissions, listReq)
+	resp, err := s.listPermission(ctx, permissions, listReq)
+	s.metrics.requestCount.WithLabelValues(strconv.FormatBool(err != nil), "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+	return resp, err
 }
 
 func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRequest) (*CheckRequest, error) {
@@ -259,8 +271,10 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 
 	userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
 	if cached, ok := s.permCache.Get(userPermKey); ok {
+		s.metrics.permissionCacheUsage.WithLabelValues("true", action).Inc()
 		return cached.(map[string]bool), nil
 	}
+	s.metrics.permissionCacheUsage.WithLabelValues("false", action).Inc()
 
 	res, err, _ := s.sf.Do(userPermKey+"_getUserPermissions", func() (interface{}, error) {
 		basicRoles, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
