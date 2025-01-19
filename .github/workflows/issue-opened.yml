@@ -99,7 +99,7 @@ jobs:
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
           payload: >
             {
