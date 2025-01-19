@@ -12,6 +12,7 @@ type MigrateOptions struct {
 	Namespace    string
 	Store        resource.ResourceClient
 	LargeObjects apistore.LargeObjectSupport
+	Resource     string
 	SendHistory  bool
 	Progress     func(count int, msg string)
 }
@@ -29,6 +30,9 @@ type DashboardQuery struct {
 
 	// List dashboards with a deletion timestamp
 	GetTrash bool
+
+	// Only folders
+	GetFolders bool
 
 	// Get dashboards from the history table
 	GetHistory bool

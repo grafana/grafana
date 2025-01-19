@@ -317,6 +317,40 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		GetHistory: opts.SendHistory, // include history
 	}
 
+	settings := resource.BatchSettings{
+		RebuildCollection: true,
+		SkipValidation:    true,
+	}
+
+	group := dashboard.GROUP
+	res := dashboard.DASHBOARD_RESOURCE
+
+	switch opts.Resource {
+	case "folders":
+		query.GetFolders = true
+		group = "folder.grafana.app"
+		res = "folders"
+		settings.Collection = []*resource.ResourceKey{{
+			Namespace: opts.Namespace,
+			Group:     group,
+			Resource:  res,
+		}}
+		if query.GetHistory {
+			return nil, fmt.Errorf("unsupported folder history")
+		}
+
+	case "":
+		fallthrough
+	case "dashboards":
+		settings.Collection = []*resource.ResourceKey{{
+			Namespace: opts.Namespace,
+			Group:     group,
+			Resource:  res,
+		}}
+	default:
+		return nil, fmt.Errorf("unsupported resource: %s", opts.Resource)
+	}
+
 	sql, err := a.sql(ctx)
 	if err != nil {
 		return nil, err
@@ -332,15 +366,6 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		return nil, err
 	}
 
-	settings := resource.BatchSettings{
-		RebuildCollection: true,
-		SkipValidation:    true,
-		Collection: []*resource.ResourceKey{{
-			Namespace: opts.Namespace,
-			Group:     dashboard.GROUP,
-			Resource:  dashboard.DASHBOARD_RESOURCE,
-		}},
-	}
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	stream, err := opts.Store.BatchProcess(ctx)
 	if err != nil {
@@ -355,6 +380,22 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << eventually v0
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend
+
+		// Folder model
+		if query.GetFolders {
+			dash.APIVersion = "folder.grafana.app/v0alpha1"
+			dash.Kind = "Folder"
+
+			spec := map[string]any{
+				"title": dash.Spec.Object["title"],
+			}
+			description := dash.Spec.Object["description"]
+			if description != nil {
+				spec["description"] = description
+			}
+			dash.Spec.Object = spec
+		}
+
 		body, err := json.Marshal(dash)
 		if err != nil {
 			return nil, err
@@ -363,8 +404,8 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		req := &resource.BatchRequest{
 			Key: &resource.ResourceKey{
 				Namespace: opts.Namespace,
-				Group:     dashboard.GROUP,
-				Resource:  dashboard.DASHBOARD_RESOURCE,
+				Group:     group,
+				Resource:  res,
 				Name:      rows.Name(),
 			},
 			Value:  body,

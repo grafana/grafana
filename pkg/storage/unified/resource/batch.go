@@ -55,6 +55,20 @@ func (x *BatchSettings) ToMD() metadata.MD {
 	return md
 }
 
+func (x *BatchSettings) validator() func(req *BatchRequest) bool {
+	valid := make(map[string]bool)
+	for _, key := range x.Collection {
+		valid[key.SearchID()] = true
+	}
+	return func(req *BatchRequest) bool {
+		k := fmt.Sprintf("%s/%s/%s", req.Key.Namespace, req.Key.Group, req.Key.Resource)
+		if !valid[k] {
+			fmt.Printf("NOPE: %s // %+v\n", k, valid)
+		}
+		return valid[k]
+	}
+}
+
 func NewBatchSettings(md metadata.MD) (BatchSettings, error) {
 	settings := BatchSettings{}
 	for k, v := range md {
@@ -158,20 +172,33 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	}
 
 	// BatchProcess requests
+	validator := settings.validator()
+	var errinfo *ErrorResult
 	rsp, err := backend.ProcessBatch(ctx, settings, func() *BatchRequest {
 		req, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
-			return nil
+			errinfo = AsErrorResult(err)
+			return nil // <<<< HIDDEN!!! -- this should avoid TX.commit!!!
+		}
+		if !validator(req) {
+			fmt.Printf("INVALID REQUEST: %+v\n", req.Key)
+			errinfo = &ErrorResult{
+				Code:    http.StatusBadRequest,
+				Message: "the request does not match the requested collection",
+			}
+			return nil // ???? avoid TX.commit!!!
 		}
 		return req
 	})
 	if rsp == nil {
 		rsp = &BatchResponse{}
 	}
-	if err == nil {
+	if errinfo != nil {
+		rsp.Error = errinfo
+	} else if err == nil {
 		// Rebuild the index for this key
 		for _, key := range settings.Collection {
 			started := time.Now()

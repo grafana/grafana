@@ -248,6 +248,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 			rsp, err := b.legacy.Access.Migrate(r.Context(), legacy.MigrateOptions{
 				Namespace:    "default", // get from namespace
 				SendHistory:  query.Get("history") == "true",
+				Resource:     query.Get("resource"),
 				LargeObjects: nil, // ???
 				Store:        b.unified,
 				Progress: func(count int, msg string) {
@@ -264,8 +265,9 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				_, _ = w.Write(jj)
 			}
 			if err != nil {
-				fmt.Printf("ERROR: %s\n", err.Error())
-				_, _ = w.Write([]byte(fmt.Sprintf("ERROR: %s\n", err)))
+				//	panic(err)
+				fmt.Printf("Migrate ERROR: %s\n", err.Error())
+				_, _ = w.Write([]byte(fmt.Sprintf("Migrate ERROR: %s\n", err)))
 			}
 			flusher.Flush()
 			fmt.Printf(">>MIGRATE DONE!!!\n")
