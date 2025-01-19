@@ -67,6 +67,22 @@ func TestDashboardService(t *testing.T) {
 				}
 			})
 
+			t.Run("Should return validation error if message is too long", func(t *testing.T) {
+				dto.Dashboard = dashboards.NewDashboard("Dash")
+				dto.Message = `Here we go, 500+ characters for testing. I'm sorry that you're
+				having to read this. I spent too long trying to come up with something clever 
+				to say or a funny joke. Unforuntately, nothing came to mind. So instead, I'm
+				will share this with you, as a form of payment for having to read this:
+				https://youtu.be/dQw4w9WgXcQ?si=KeoTIpn9tUtQnOBk! Enjoy :) Now lets see if 
+				this test passes or if the result is more exciting than these 500 characters
+				I wrote. Best of luck to the both of us!`
+				_, err := service.SaveDashboard(context.Background(), dto, false)
+				require.Equal(t, err, dashboards.ErrDashboardMessageTooLong)
+
+				// set to a shorter message for the rest of the tests
+				dto.Message = `message`
+			})
+
 			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboardFolder("General")
 				_, err := service.SaveDashboard(context.Background(), dto, false)
