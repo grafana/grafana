@@ -51,6 +51,7 @@ interface UPlotConfigOptions {
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
+  axisWidth?: number;
 }
 
 /**
@@ -171,16 +172,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     grid: { show: true },
   });
 
+  const yAxisWidth = frame.fields[1].config.custom.axisWidth;
+
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
-    values: coreConfig.yValues,
+    values: yAxisWidth === 0 ? (u, splits) => splits.map((v) => null) : coreConfig.yValues,
     grid: { show: false },
     ticks: { show: false },
-    gap: 16,
+    gap: yAxisWidth === 0 ? 0 : 16,
     theme,
+    size: yAxisWidth,
   });
 
   let seriesIndex = 0;
