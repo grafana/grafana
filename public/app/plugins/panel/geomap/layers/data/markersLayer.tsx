@@ -1,9 +1,11 @@
-import { isNumber } from 'lodash';
-import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
-import VectorImage from 'ol/layer/VectorImage';
+import { Point } from 'ol/geom';
+import LayerGroup from 'ol/layer/Group';
+import VectorLayer from 'ol/layer/Vector';
+import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
 import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
+import tinycolor from 'tinycolor2';
 
 import {
   MapLayerRegistryItem,
@@ -13,15 +15,17 @@ import {
   FrameGeometrySourceMode,
   EventBus,
 } from '@grafana/data';
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { getStyleConfigState } from '../../style/utils';
-import { getStyleDimension} from '../../utils/utils';
+import { prepareSVG, textMarker } from '../../style/markers';
+import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getDisplacement, getStyleConfigState, styleUsesText } from '../../style/utils';
+import { getStyleDimension } from '../../utils/utils';
 
 // Configuration options for Circle overlays
 export interface MarkersConfig {
@@ -72,11 +76,27 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     };
 
     const style = await getStyleConfigState(config.style);
+    //TODO make this more robust and handle webgl supported shapes: circle, square, triangle, RegularShape
+    const src = await prepareSVG(getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''));
+
+    const symbolStyle = {
+      symbol: {
+        symbolType: 'image',
+        size: ['get', 'size', 'number'],
+        color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
+        offset: ['array', ['get', 'offsetX'], ['get', 'offsetY']],
+        rotation: ['get', 'rotation', 'number'],
+        opacity: ['get', 'opacity', 'number'],
+        src,
+      },
+    };
+    const hasText = styleUsesText(config.style);
     const location = await getLocationMatchers(options.location);
-    const source = new FrameVectorSource(location);
-    const vectorLayer = new VectorImage({
-      source,
-      declutter: false // TODO consider making this an option or explore grouping strategies
+    const source = new FrameVectorSource<Point>(location);
+    const symbolLayer = new WebGLPointsLayer({ source, style: symbolStyle });
+    const textLayer = new VectorLayer({ source });
+    const layers = new LayerGroup({
+      layers: hasText ? [symbolLayer, textLayer] : [symbolLayer],
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
@@ -85,37 +105,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
-    if (!style.fields) {
-      // Set a global style
-      vectorLayer.setStyle(style.maker(style.base));
-    } else {
-      vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx: number = feature.get('rowIndex');
-        const dims = style.dims;
-        if (!dims || !isNumber(idx)) {
-          return style.maker(style.base);
-        }
-
-        const values = { ...style.base };
-
-        if (dims.color) {
-          values.color = dims.color.get(idx);
-        }
-        if (dims.size) {
-          values.size = dims.size.get(idx);
-        }
-        if (dims.text) {
-          values.text = dims.text.get(idx);
-        }
-        if (dims.rotation) {
-          values.rotation = dims.rotation.get(idx);
-        }
-        return style.maker(values);
-      });
-    }
-
     return {
-      init: () => vectorLayer,
+      init: () => layers,
       legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
@@ -132,11 +123,49 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               styleConfig: style,
               size: style.dims?.size,
               layerName: options.name,
-              layer: vectorLayer,
+              layer: symbolLayer,
             });
           }
 
           source.update(frame);
+          source.forEachFeature((feature) => {
+            const idx: number = feature.get('rowIndex');
+            const dims = style.dims;
+            const values = { ...style.base };
+
+            if (dims?.color) {
+              values.color = dims.color.get(idx);
+            }
+            if (dims?.size) {
+              values.size = dims.size.get(idx);
+            }
+            if (dims?.text) {
+              values.text = dims.text.get(idx);
+            }
+            if (dims?.rotation) {
+              values.rotation = dims.rotation.get(idx);
+            }
+            const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
+            const colorValues = getRGBValues(colorString);
+
+            const radius = values.size ?? DEFAULT_SIZE;
+            const displacement = getDisplacement(values.symbolAlign ?? defaultStyleConfig.symbolAlign, radius);
+
+            feature.setProperties({ red: colorValues?.r ?? 255 });
+            feature.setProperties({ green: colorValues?.g ?? 0 });
+            feature.setProperties({ blue: colorValues?.b ?? 0 });
+            feature.setProperties({ size: (values.size ?? 1) * 2 });
+            feature.setProperties({ rotation: ((values.rotation ?? 0) * Math.PI) / 180 });
+            feature.setProperties({ opacity: values.opacity });
+            feature.setProperties({ offsetX: displacement[0] });
+            feature.setProperties({ offsetY: displacement[1] });
+
+            // Set style to be used by VectorLayer (text only)
+            if (hasText) {
+              const textStyle = textMarker(values);
+              feature.setStyle(textStyle);
+            }
+          });
           break; // Only the first frame for now!
         }
       },
@@ -167,3 +196,49 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   // fill in the default values
   defaultOptions,
 };
+
+function getRGBValues(colorString: string) {
+  // Check if it's a hex color
+  if (colorString.startsWith('#')) {
+    return getRGBFromHex(colorString);
+  }
+
+  // Check if it's an RGB color
+  else if (colorString.startsWith('rgb')) {
+    return getRGBFromRGBString(colorString);
+  }
+
+  // Handle other color formats if needed
+  else {
+    console.warn(`Unsupported color format: ${colorString}`);
+  }
+  return null;
+}
+
+function getRGBFromHex(hexColor: string) {
+  // Remove the '#' character
+  hexColor = hexColor.slice(1);
+
+  // Convert hex to decimal values
+  const r = parseInt(hexColor.slice(0, 2), 16);
+  const g = parseInt(hexColor.slice(2, 4), 16);
+  const b = parseInt(hexColor.slice(4, 6), 16);
+
+  return { r, g, b };
+}
+
+function getRGBFromRGBString(rgbString: string) {
+  // Use regex to extract the numbers
+  const matches = rgbString.match(/\d+/g);
+
+  if (matches && matches.length === 3) {
+    return {
+      r: parseInt(matches[0], 10),
+      g: parseInt(matches[1], 10),
+      b: parseInt(matches[2], 10),
+    };
+  } else {
+    console.warn(`Unsupported color format: ${rgbString}`);
+  }
+  return null;
+}
