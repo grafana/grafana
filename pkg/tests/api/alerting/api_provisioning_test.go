@@ -877,4 +877,86 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 			require.YAMLEq(t, string(expectedYaml), exportRaw)
 		})
 	})
+	t.Run("when provisioning contact points from files", func(t *testing.T) {
+		// add file provisioned contact points
+		fileProvisionedContactPoints, err := testData.ReadFile(path.Join("test-data", "provisioning-contact-points.yaml"))
+		require.NoError(t, err)
+
+		var expected definitions.AlertingFileExport
+		require.NoError(t, yaml.Unmarshal(fileProvisionedContactPoints, &expected))
+		expectedYaml, err := yaml.Marshal(expected)
+		require.NoError(t, err)
+
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-contact-points.yaml"), fileProvisionedContactPoints, 0750)
+		require.NoError(t, err)
+
+		apiClient.ReloadAlertingFileProvisioning(t)
+
+		t.Run("exported contact points should escape $ characters", func(t *testing.T) {
+			// call export endpoint
+			exportRaw := apiClient.ExportReceiver(t, "cp_1_$escaped", "yaml", true)
+			var export definitions.AlertingFileExport
+			require.NoError(t, yaml.Unmarshal([]byte(exportRaw), &export))
+
+			// verify the file exported matches the file provisioned thing
+			require.Len(t, export.ContactPoints, 1)
+			require.YAMLEq(t, string(expectedYaml), exportRaw)
+		})
+	})
+	t.Run("when provisioning mute times from files", func(t *testing.T) {
+		// add file provisioned mute times
+		fileProvisionedMuteTimings, err := testData.ReadFile(path.Join("test-data", "provisioning-mute-times.yaml"))
+		require.NoError(t, err)
+
+		var expected definitions.AlertingFileExport
+		require.NoError(t, yaml.Unmarshal(fileProvisionedMuteTimings, &expected))
+		expected.MuteTimings[0].OrgID = 1 // HACK to deal with weird goyaml behavior
+		expectedYamlRaw, err := yaml.Marshal(expected)
+		require.NoError(t, err)
+
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-mute-times.yaml"), fileProvisionedMuteTimings, 0750)
+		require.NoError(t, err)
+
+		apiClient.ReloadAlertingFileProvisioning(t)
+
+		t.Run("exported mute times shouldn't escape $ characters", func(t *testing.T) {
+			// call export endpoint
+			exportRaw := apiClient.ExportMuteTiming(t, "$mute_time_a", "yaml")
+			var export definitions.AlertingFileExport
+			require.NoError(t, yaml.Unmarshal([]byte(exportRaw), &export))
+			expectedYaml := string(expectedYamlRaw)
+			// verify the file exported matches the file provisioned thing
+			require.Len(t, export.MuteTimings, 1)
+			require.YAMLEq(t, expectedYaml, exportRaw)
+		})
+	})
+	t.Run("when provisioning mixed set of alerting configurations from files", func(t *testing.T) {
+		// add file provisioned mute times
+		fileProvisionedMuteTimings, err := testData.ReadFile(path.Join("test-data", "provisioning-mixed-set.yaml"))
+		require.NoError(t, err)
+
+		var expected definitions.AlertingFileExport
+		require.NoError(t, yaml.Unmarshal(fileProvisionedMuteTimings, &expected))
+		expected.MuteTimings[0].OrgID = 1 // HACK to deal with weird goyaml behavior
+
+		require.NoError(t, os.RemoveAll(filepath.Join(alertingDir, "*")))
+
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-mixed-set.yaml"), fileProvisionedMuteTimings, 0750)
+		require.NoError(t, err)
+
+		apiClient.ReloadAlertingFileProvisioning(t)
+
+		t.Run("exported notification policy matches imported", func(t *testing.T) {
+			notificationPolicyExpected := expected
+			notificationPolicyExpected.MuteTimings = nil
+			notificationPolicyExpected.ContactPoints = nil
+			notificationPolicyExpected.Groups = nil
+			serializedExpected, err := yaml.Marshal(notificationPolicyExpected)
+			require.NoError(t, err)
+
+			actual := apiClient.ExportNotificationPolicy(t, "yaml")
+
+			require.YAMLEq(t, string(serializedExpected), actual)
+		})
+	})
 }
