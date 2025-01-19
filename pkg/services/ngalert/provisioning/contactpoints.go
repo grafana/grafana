@@ -122,26 +122,27 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 
 // getContactPointDecrypted is an internal-only function that gets full contact point info, included encrypted fields.
 // nil is returned if no matching contact point exists.
-func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
+// Also returns the raw settings json, unencrypted
+func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, *simplejson.Json, error) {
 	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
-		return apimodels.EmbeddedContactPoint{}, err
+		return apimodels.EmbeddedContactPoint{}, nil, err
 	}
 	for _, receiver := range revision.Config.GetGrafanaReceiverMap() {
 		if receiver.UID != uid {
 			continue
 		}
-		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
+		embeddedContactPoint, raw, err := PostableGrafanaReceiverToEmbeddedContactPoint(
 			receiver,
 			models.ProvenanceNone, // TODO should be correct provenance?
 			ecp.decryptValueOrRedacted(true, receiver.UID),
 		)
 		if err != nil {
-			return apimodels.EmbeddedContactPoint{}, err
+			return apimodels.EmbeddedContactPoint{}, nil, err
 		}
-		return embeddedContactPoint, nil
+		return embeddedContactPoint, raw, nil
 	}
-	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
+	return apimodels.EmbeddedContactPoint{}, nil, fmt.Errorf("%w: contact point with uid '%s' not found", ErrNotFound, uid)
 }
 
 func (ecp *ContactPointService) CreateContactPoint(
@@ -243,7 +244,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if contactPoint.Settings == nil {
 		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
 	}
-	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
+	decryptedContactPoint, rawSettings, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
@@ -254,7 +255,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	for _, secretKey := range secretKeys {
 		secretValue := contactPoint.Settings.Get(secretKey).MustString()
 		if secretValue == apimodels.RedactedValue {
-			contactPoint.Settings.Set(secretKey, rawContactPoint.Settings.Get(secretKey).MustString())
+			contactPoint.Settings.Set(secretKey, decryptedContactPoint.Settings.Get(secretKey).MustString())
 		}
 	}
 
@@ -276,7 +277,12 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
+	updatedSecrets := diffSecrets(extractedSecrets, decryptedContactPoint.Settings, secretKeys)
 	for k, v := range extractedSecrets {
+		if !updatedSecrets {
+			extractedSecrets[k] = rawSettings.Get(k).MustString()
+			continue
+		}
 		encryptedValue, err := ecp.encryptValue(v)
 		if err != nil {
 			return err
@@ -546,6 +552,7 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 		return "", nil
 	}
 	path := strings.Split(key, ".")
+	realPath := make([]string, 0, len(path))
 	getNodeCaseInsensitive := func(n *simplejson.Json, field string) (string, *simplejson.Json, error) {
 		// Check for an exact key match first.
 		if value, ok := n.CheckGet(field); ok {
@@ -568,16 +575,17 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 
 	node := jsonObj
 	for idx, segment := range path {
-		_, value, err := getNodeCaseInsensitive(node, segment)
+		actual, value, err := getNodeCaseInsensitive(node, segment)
 		if err != nil {
 			return "", err
 		}
 		if value == nil {
 			return "", nil
 		}
+		realPath = append(realPath, actual)
 		if idx == len(path)-1 {
 			resultValue := value.MustString()
-			node.Del(segment)
+			jsonObj.Del(strings.Join(realPath, "."))
 			return resultValue, nil
 		}
 		node = value
@@ -591,4 +599,18 @@ func convertRecSvcErr(err error) error {
 		return legacy_storage.ErrNoAlertmanagerConfiguration.Errorf("")
 	}
 	return err
+}
+
+func diffSecrets(new map[string]string, old *simplejson.Json, secretKeys []string) bool {
+	for _, secretKey := range secretKeys {
+		newVal, ok := new[secretKey]
+		if !ok {
+			// mimic .MustString() behavior
+			newVal = ""
+		}
+		if newVal != old.Get(secretKey).MustString() {
+			return true
+		}
+	}
+	return false
 }
