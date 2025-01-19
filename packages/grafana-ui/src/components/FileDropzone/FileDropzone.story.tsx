@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { FileDropzone } from '@grafana/ui';
-
+import { FileDropzone } from './FileDropzone';
 import mdx from './FileDropzone.mdx';
 
 const meta: Meta<typeof FileDropzone> = {
