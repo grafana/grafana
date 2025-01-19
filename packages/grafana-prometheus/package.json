@@ -95,8 +95,8 @@
     "@types/node": "22.10.6",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.5",
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
     "@types/react-highlight-words": "0.20.0",
     "@types/react-window": "1.8.8",
     "@types/semver": "7.5.8",
@@ -122,8 +122,8 @@
     "jest-environment-jsdom": "29.7.0",
     "jest-matcher-utils": "29.7.0",
     "prettier": "3.4.2",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "react-select-event": "5.5.1",
     "rollup": "^4.22.4",
     "rollup-plugin-dts": "^6.1.1",
@@ -139,7 +139,7 @@
     "webpack-cli": "6.0.1"
   },
   "peerDependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   }
 }
