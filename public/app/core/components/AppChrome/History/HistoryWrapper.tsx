@@ -4,12 +4,14 @@ import { useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
-export function HistoryWrapper({ onClose }: { onClose: () => void }) {
+export function HistoryWrapper() {
+  const { chrome } = useGrafana();
   const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
     return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
   });
@@ -48,7 +50,7 @@ export function HistoryWrapper({ onClose }: { onClose: () => void }) {
                     key={index}
                     entry={entry}
                     isSelected={entry.time === selectedTime}
-                    onClick={() => onClose()}
+                    onClick={() => chrome.setHistoryOpen(false)}
                   />
                 );
               })}
