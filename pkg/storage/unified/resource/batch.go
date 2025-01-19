@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -126,8 +127,26 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 
 	if settings.RebuildCollection {
 		for _, k := range settings.Collection {
-			fmt.Printf("TODO> check access... can %s: %s\n", utils.VerbDeleteCollection, k.SearchID())
-			fmt.Printf("TODO> check access... can %s: %s\n", utils.VerbCreate, k.SearchID())
+			verbs := []string{
+				utils.VerbDeleteCollection,
+				utils.VerbCreate,
+			}
+			for _, verb := range verbs {
+				rsp, err := s.access.Check(ctx, user, authz.CheckRequest{
+					Namespace: k.Namespace,
+					Group:     k.Group,
+					Resource:  k.Resource,
+					Verb:      verb,
+				})
+				if err != nil || !rsp.Allowed {
+					return stream.SendAndClose(&BatchResponse{
+						Error: &ErrorResult{
+							Message: fmt.Sprintf("Requester must be able to: %s", verb),
+							Code:    http.StatusForbidden,
+						},
+					})
+				}
+			}
 		}
 	} else {
 		return stream.SendAndClose(&BatchResponse{
