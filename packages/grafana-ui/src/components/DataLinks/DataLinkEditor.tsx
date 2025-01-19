@@ -5,7 +5,7 @@ import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/index';
 import { isCompactUrl } from '../../utils/dataLinks';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
@@ -45,6 +45,10 @@ export const DataLinkEditor = memo(({ index, value, onChange, suggestions, isLas
     onChange(index, { ...value, targetBlank: !value.targetBlank });
   };
 
+  const onOneClickChanged = () => {
+    onChange(index, { ...value, oneClick: !value.oneClick });
+  };
+
   return (
     <div className={styles.listItem}>
       <Field label="Title">
@@ -61,6 +65,10 @@ export const DataLinkEditor = memo(({ index, value, onChange, suggestions, isLas
 
       <Field label="Open in new tab">
         <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+      </Field>
+
+      <Field label={t('grafana-ui.data-link-editor.one-click', 'One click')}>
+        <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
       </Field>
 
       {isLast && (

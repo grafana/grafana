@@ -1476,7 +1476,8 @@
       "right-axis-indicator": "(řįģĥŧ y-äχįş)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ"
+      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
   "graph": {
