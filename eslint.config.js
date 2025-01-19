@@ -259,6 +259,14 @@ module.exports = [
       'react/no-unused-prop-types': 'error',
       'react/self-closing-comp': 'error',
       'unicorn/no-unused-properties': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          destructuredArrayIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+          caughtErrors: 'none',
+        },
+      ],
     },
   },
   {

@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { ActionMeta, Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
+import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
@@ -41,7 +41,7 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                 <Stack>
                   <ContactPointSelectorDropdown
                     selectProps={{
-                      onChange: (value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
+                      onChange: (value: SelectableValue<ContactPointWithMetadata>) => {
                         onChange(value?.value?.name);
                         onSelectContactPoint(value?.value);
                       },

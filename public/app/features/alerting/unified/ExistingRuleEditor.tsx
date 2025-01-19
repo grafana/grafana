@@ -10,10 +10,9 @@ import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
-  id?: string;
 }
 
-export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) {
+export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
   const {
     loading: loadingAlertRule,
     result: ruleWithLocation,

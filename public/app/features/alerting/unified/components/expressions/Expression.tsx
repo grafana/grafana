@@ -47,7 +47,6 @@ interface ExpressionProps {
   onSetCondition: (refId: string) => void;
   onUpdateRefId: (oldRefId: string, newRefId: string) => void;
   onRemoveExpression: (refId: string) => void;
-  onUpdateExpressionType: (refId: string, type: ExpressionQueryType) => void;
   onChangeQuery: (query: ExpressionQuery) => void;
 }
 
@@ -61,7 +60,6 @@ export const Expression: FC<ExpressionProps> = ({
   onSetCondition,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType, // this method is not used? maybe we should remove it
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);
