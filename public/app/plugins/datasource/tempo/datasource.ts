@@ -57,7 +57,7 @@ import {
   transformFromOTLP as transformFromOTEL,
   transformTrace,
 } from './resultTransformer';
-import { doTempoChannelStream } from './streaming';
+import { doTempoMetricsStreaming, doTempoSearchStreaming } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 import { TempoVariableSupport } from './variables';
@@ -353,8 +353,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
+              streaming: this.isStreamingSearchEnabled(),
             });
-            subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql));
+            if (this.isStreamingSearchEnabled()) {
+              subQueries.push(this.handleMetricsStreamingQuery(options, targets.traceql, queryValue));
+            } else {
+              subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql));
+            }
           } else {
             reportInteraction('grafana_traces_traceql_queried', {
               datasourceType: 'tempo',
@@ -687,11 +692,33 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     return merge(
       ...targets.map((target) =>
-        doTempoChannelStream(
+        doTempoSearchStreaming(
           { ...target, query },
           this, // the datasource
           options,
           this.instanceSettings
+        )
+      )
+    );
+  }
+
+  // This function can probably be simplified by avoiding passing both `targets` and `query`,
+  // since `query` is built from `targets`, if you look at how this function is currently called
+  handleMetricsStreamingQuery(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[],
+    query: string
+  ): Observable<DataQueryResponse> {
+    if (query === '') {
+      return EMPTY;
+    }
+
+    return merge(
+      ...targets.map((target) =>
+        doTempoMetricsStreaming(
+          { ...target, query },
+          this, // the datasource
+          options
         )
       )
     );

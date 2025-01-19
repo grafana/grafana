@@ -96,7 +96,7 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 		return &backend.DataResponse{}, fmt.Errorf("failed to convert response to type: %w", err)
 	}
 
-	frames := traceql.TransformMetricsResponse(tempoQuery, queryResponse)
+	frames := traceql.TransformMetricsResponse(*tempoQuery.Query, queryResponse)
 
 	result.Frames = frames
 	ctxLogger.Debug("Successfully performed TraceQL query", "function", logEntrypoint())
