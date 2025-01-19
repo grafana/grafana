@@ -300,6 +300,8 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		} else if errAnnotationValue := state.Annotations[errAnnotationName]; errAnnotationValue != "" {
 			errMsg = errAnnotationValue
 			state.State.Values = map[string]float64{}
+		} else if state.State.State == eval.NoData || state.State.StateReason == eval.NoData.String() {
+			state.State.Values = map[string]float64{}
 		}
 
 		entry := LokiEntry{
