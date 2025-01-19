@@ -312,8 +312,9 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	}
 
 	query := &DashboardQuery{
-		OrgID: info.OrgID,
-		Limit: 10000000,
+		OrgID:      info.OrgID,
+		Limit:      10000000,
+		GetHistory: opts.SendHistory, // include history
 	}
 
 	sql, err := a.sql(ctx)

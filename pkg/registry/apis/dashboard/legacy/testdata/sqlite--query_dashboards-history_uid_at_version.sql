@@ -18,4 +18,6 @@ SELECT
       AND dashboard.org_id = 2
       AND dashboard.uid = 'UUU'
       AND dashboard_version.version = 3
-    ORDER BY dashboard_version.version DESC
+    ORDER BY 
+      dashboard_version.created ASC,
+      dashboard_version.version ASC

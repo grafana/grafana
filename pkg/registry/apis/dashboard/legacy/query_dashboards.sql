@@ -32,7 +32,9 @@ SELECT
       {{ else if .Query.LastID }}
       AND dashboard_version.version < {{ .Arg .Query.LastID }}
       {{ end }}
-    ORDER BY dashboard_version.version DESC
+    ORDER BY 
+      dashboard_version.created ASC,
+      dashboard_version.version ASC
     {{ else }}
       {{ if .Query.UID }}
       AND dashboard.uid = {{ .Arg .Query.UID }}

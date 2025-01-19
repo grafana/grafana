@@ -244,9 +244,10 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				_, _ = w.Write([]byte("Expected flusher"))
 				return
 			}
+			query := r.URL.Query()
 			rsp, err := b.legacy.Access.Migrate(r.Context(), legacy.MigrateOptions{
 				Namespace:    "default", // get from namespace
-				SendHistory:  true,
+				SendHistory:  query.Get("history") == "true",
 				LargeObjects: nil, // ???
 				Store:        b.unified,
 				Progress: func(count int, msg string) {

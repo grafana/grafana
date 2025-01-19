@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -150,7 +151,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	// BatchProcess requests
 	rsp, err := backend.ProcessBatch(ctx, settings, func() *BatchRequest {
 		req, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
@@ -168,7 +169,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 				Namespace: key.Namespace,
 				Group:     key.Group,
 				Resource:  key.Resource,
-			}, rsp.Processed, 555555) // can we get the RV from the server????
+			}, rsp.Processed, 555555) // can we get the RV from the MAX(RV) in ns/g/r
 			if err != nil {
 				return err // should not happen
 			}
@@ -176,7 +177,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 			if err != nil {
 				return err // should not happen
 			}
-			fmt.Printf("Build index: size:%d / rv:%d", count, rv)
+			fmt.Printf("Build index: size:%d / rv:%d\n", count, rv)
 		}
 	}
 
