@@ -170,6 +170,8 @@ export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
     kind: LibraryElementKind.Panel,
     version: _loadedPanel?.version || 0,
   };
+
+  saveModel.model.title = name;
   return saveModel;
 }
 
