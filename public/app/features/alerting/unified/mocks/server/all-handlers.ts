@@ -17,6 +17,7 @@ import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handl
 import notificationsHandlers from 'app/features/alerting/unified/mocks/server/handlers/notifications';
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins/all-plugin-handlers';
+import prometheusHandlers from 'app/features/alerting/unified/mocks/server/handlers/prometheus';
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
 import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/search';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
@@ -35,6 +36,7 @@ const allHandlers = [
   ...folderHandlers,
   ...pluginsHandlers,
   ...provisioningHandlers,
+  ...prometheusHandlers,
   ...silenceHandlers,
   ...searchHandlers,
   ...notificationsHandlers,
