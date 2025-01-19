@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -22,7 +22,6 @@ import {
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -40,24 +39,21 @@ import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useReturnTo } from '../../../hooks/useReturnTo';
-import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { DataSourceType } from '../../../utils/datasource';
 import {
-  DEFAULT_GROUP_EVALUATION_INTERVAL,
+  defaultFormValuesForRuleType,
+  formValuesFromExistingRule,
+  formValuesFromPrefill,
+  translateRouteParamToRuleType,
+} from '../../../rule-editor/formDefaults';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
-  formValuesFromExistingRule,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
-  getDefaultFormValues,
-  getDefaultQueries,
-  ignoreHiddenQueries,
-  normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
-import { isGrafanaRecordingRuleByType } from '../../../utils/rules';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
@@ -68,12 +64,7 @@ import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
-import {
-  QueryAndExpressionsStep,
-  areQueriesTransformableToSimpleCondition,
-  isExpressionQueryInAlert,
-} from '../query-and-alert-condition/QueryAndExpressionsStep';
-import { translateRouteParamToRuleType } from '../util';
+import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -85,9 +76,7 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
-  const [queryParams] = useURLSearchParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
-  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
@@ -110,19 +99,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return formValuesFromPrefill(prefill);
     }
 
-    if (queryParams.has('defaults')) {
-      return formValuesFromQueryParams(queryParams.get('defaults') ?? '', ruleType);
-    }
     const defaultRuleType = ruleType || RuleFormType.grafana;
 
-    return {
-      ...getDefaultFormValues(),
-      condition: 'C',
-      queries: getDefaultQueries(isGrafanaRecordingRuleByType(defaultRuleType)),
-      type: defaultRuleType,
-      evaluateEvery: evaluateEvery,
-    };
-  }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
+    return defaultFormValuesForRuleType(defaultRuleType);
+  }, [existing, prefill, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -151,6 +131,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   // @todo why is error not propagated to form?
   const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
+    const { type, evaluateEvery } = values;
+
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
       if (!existing && grafanaTypeRule) {
@@ -160,7 +142,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return;
     }
 
-    trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
+    trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: type });
 
     const ruleDefinition = grafanaTypeRule ? formValuesToRulerGrafanaRuleDTO(values) : formValuesToRulerRuleDTO(values);
 
@@ -206,12 +188,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const deleteRule = async () => {
     if (existing) {
-      const returnTo = queryParams.get('returnTo') || '/alerting/list';
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
 
       await deleteRuleFromGroup.execute(ruleGroupIdentifier, ruleIdentifier);
-      locationService.replace(returnTo);
+      locationService.replace(returnTo ?? '/alerting/list');
     }
   };
 
@@ -235,9 +216,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
     locationService.getHistory().goBack();
   };
-
-  const evaluateEveryInForm = watch('evaluateEvery');
-  useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
   const actionButtons = (
     <Stack justifyContent="flex-end" alignItems="center">
@@ -314,12 +292,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
                 {/* Step 4 & 5 & 6*/}
                 {isGrafanaManagedRuleByType(type) && (
-                  <GrafanaEvaluationBehaviorStep
-                    evaluateEvery={evaluateEvery}
-                    setEvaluateEvery={setEvaluateEvery}
-                    existing={Boolean(existing)}
-                    enableProvisionedGroups={false}
-                  />
+                  <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={false} />
                 )}
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={uidFromParams} />
@@ -379,101 +352,17 @@ const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
   return (ruleType === RuleFormType.cloudAlerting || ruleType === RuleFormType.cloudRecording) && dataSourceName !== '';
 };
 
-function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): RuleFormValues {
-  let ruleFromQueryParams: Partial<RuleFormValues>;
-
-  try {
-    ruleFromQueryParams = JSON.parse(ruleDefinition);
-  } catch (err) {
-    return {
-      ...getDefaultFormValues(),
-      queries: getDefaultQueries(),
-    };
-  }
-
-  return setQueryEditorSettings(
-    setInstantOrRange(
-      ignoreHiddenQueries({
-        ...getDefaultFormValues(),
-        ...ruleFromQueryParams,
-        annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
-        queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-        type: type || RuleFormType.grafana,
-        evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
-      })
-    )
-  );
-}
-
-function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
-  return ignoreHiddenQueries({
-    ...getDefaultFormValues(),
-    ...rule,
-  });
-}
-
-function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
-  const isQuerySwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-
-  if (!isQuerySwitchModeEnabled) {
-    return {
-      ...values,
-      editorSettings: {
-        simplifiedQueryEditor: false,
-        simplifiedNotificationEditor: true, // actually it doesn't matter in this case
-      },
-    };
-  }
-
-  // data queries only
-  const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
-
-  // expression queries only
-  const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
-
-  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
-  return {
-    ...values,
-    editorSettings: {
-      simplifiedQueryEditor: queryParamsAreTransformable,
-      simplifiedNotificationEditor: true,
-    },
-  };
-}
-
-function setInstantOrRange(values: RuleFormValues): RuleFormValues {
-  return {
-    ...values,
-    queries: values.queries?.map((query) => {
-      if (isExpressionQuery(query.model)) {
-        return query;
-      }
-      // data query
-      const defaultToInstant =
-        query.model.datasource?.type === DataSourceType.Loki ||
-        query.model.datasource?.type === DataSourceType.Prometheus;
-      const isInstant =
-        'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
-      return {
-        ...query,
-        model: {
-          ...query.model,
-          instant: isInstant,
-          range: !isInstant, // we cannot have both instant and range queries in alerting
-        },
-      };
-    }),
-  };
-}
-
 function storeInLocalStorageValues(values: RuleFormValues) {
-  if (values.manualRouting) {
+  const { manualRouting, editorSettings } = values;
+
+  if (manualRouting) {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
   } else {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
   }
-  if (values.editorSettings) {
-    if (values.editorSettings.simplifiedQueryEditor) {
+
+  if (editorSettings) {
+    if (editorSettings.simplifiedQueryEditor) {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
     } else {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');

@@ -4,7 +4,8 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import RuleEditor from 'app/features/alerting/unified/RuleEditor';
+import RuleEditor from 'app/features/alerting/unified/rule-editor/RuleEditor';
+
 export enum GrafanaRuleFormStep {
   Query = 2,
   Notification = 5,

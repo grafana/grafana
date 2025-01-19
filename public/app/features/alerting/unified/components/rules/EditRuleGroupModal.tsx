@@ -4,31 +4,45 @@ import { useMemo } from 'react';
 import { FieldValues, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Field,
+  Input,
+  Label,
+  LinkButton,
+  LoadingPlaceholder,
+  Modal,
+  Stack,
+  useStyles2,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RuleGroupIdentifier, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { alertRuleApi } from '../../api/alertRuleApi';
 import {
   useMoveRuleGroup,
   useRenameRuleGroup,
   useUpdateRuleGroupConfiguration,
 } from '../../hooks/ruleGroup/useUpdateRuleGroup';
 import { anyOfRequestState } from '../../hooks/useAsync';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { fetchRulerRulesAction, rulesInSameGroupHaveInvalidFor } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { AlertInfo, getAlertInfo, isGrafanaOrDataSourceRecordingRule } from '../../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
-import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
 import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
+
+const useRuleGroupDefinition = alertRuleApi.endpoints.getRuleGroupForNamespace.useQuery;
 
 const ITEMS_PER_PAGE = 10;
 
@@ -170,17 +184,59 @@ export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: Rul
 });
 
 export interface ModalProps {
-  namespace: CombinedRuleNamespace;
-  group: CombinedRuleGroup;
+  ruleGroupIdentifier: RuleGroupIdentifier;
+  folderTitle?: string;
+  rulerConfig: RulerDataSourceConfig;
   onClose: (saved?: boolean) => void;
   intervalEditOnly?: boolean;
   folderUrl?: string;
-  folderUid?: string;
   hideFolder?: boolean;
 }
 
-export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
-  const { namespace, group, onClose, intervalEditOnly, folderUid } = props;
+export interface ModalFormProps {
+  ruleGroupIdentifier: RuleGroupIdentifier;
+  folderTitle?: string; // used to display the GMA folder title
+  ruleGroup: RulerRuleGroupDTO;
+  onClose: (saved?: boolean) => void;
+  intervalEditOnly?: boolean;
+  folderUrl?: string;
+  hideFolder?: boolean;
+}
+
+// this component just wraps the modal with some loading state for grabbing rules and such
+export function EditRuleGroupModal(props: ModalProps) {
+  const { ruleGroupIdentifier, rulerConfig, intervalEditOnly, onClose } = props;
+  const rulesSourceName = ruleGroupIdentifier.dataSourceName;
+  const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
+
+  const modalTitle =
+    intervalEditOnly || isGrafanaManagedGroup ? 'Edit evaluation group' : 'Edit namespace or evaluation group';
+
+  const styles = useStyles2(getStyles);
+
+  const {
+    data: ruleGroup,
+    error,
+    isLoading,
+  } = useRuleGroupDefinition({
+    group: ruleGroupIdentifier.groupName,
+    namespace: ruleGroupIdentifier.namespaceName,
+    rulerConfig,
+  });
+
+  const loadingText = t('alerting.common.loading', 'Loading...');
+
+  return (
+    <Modal className={styles.modal} isOpen={true} title={modalTitle} onDismiss={onClose} onClickBackdrop={onClose}>
+      {isLoading && <LoadingPlaceholder text={loadingText} />}
+      {error ? stringifyErrorLike(error) : null}
+      {ruleGroup && <EditRuleGroupModalForm {...props} ruleGroup={ruleGroup} />}
+    </Modal>
+  );
+}
+
+export function EditRuleGroupModalForm(props: ModalFormProps): React.ReactElement {
+  const { ruleGroup, ruleGroupIdentifier, folderTitle, onClose, intervalEditOnly } = props;
 
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
@@ -200,32 +256,21 @@ export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
 
   const defaultValues = useMemo(
     (): FormValues => ({
-      namespaceName: decodeGrafanaNamespace(namespace).name,
-      groupName: group.name,
-      groupInterval: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
+      namespaceName: ruleGroupIdentifier.namespaceName,
+      groupName: ruleGroupIdentifier.groupName,
+      groupInterval: ruleGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
     }),
-    [namespace, group.name, group.interval]
+    [ruleGroup?.interval, ruleGroupIdentifier.groupName, ruleGroupIdentifier.namespaceName]
   );
 
-  const rulesSourceName = getRulesSourceName(namespace.rulesSource);
+  const rulesSourceName = ruleGroupIdentifier.dataSourceName;
   const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
-
-  // parse any parent folders the alert rule might be stored in
-  const nestedFolderParents = decodeGrafanaNamespace(namespace).parents;
 
   const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
 
   const onSubmit = async (values: FormValues) => {
-    const ruleGroupIdentifier: RuleGroupIdentifier = {
-      dataSourceName: rulesSourceName,
-      groupName: group.name,
-      namespaceName: isGrafanaManagedGroup ? folderUid! : namespace.name,
-    };
-
     // make sure that when dealing with a nested folder for Grafana managed rules we encode the folder properly
-    const updatedNamespaceName = isGrafanaManagedGroup
-      ? encodeGrafanaNamespace(values.namespaceName, nestedFolderParents)
-      : values.namespaceName;
+    const updatedNamespaceName = values.namespaceName;
     const updatedGroupName = values.groupName;
     const updatedInterval = values.groupInterval;
 
@@ -266,136 +311,133 @@ export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
   };
 
   const rulesWithoutRecordingRules = compact(
-    group.rules.map((r) => r.rulerRule).filter((rule) => !isGrafanaOrDataSourceRecordingRule(rule))
+    ruleGroup?.rules.filter((rule) => !isGrafanaOrDataSourceRecordingRule(rule))
   );
   const hasSomeNoRecordingRules = rulesWithoutRecordingRules.length > 0;
-  const modalTitle =
-    intervalEditOnly || isGrafanaManagedGroup ? 'Edit evaluation group' : 'Edit namespace or evaluation group';
 
   return (
-    <Modal className={styles.modal} isOpen={true} title={modalTitle} onDismiss={onClose} onClickBackdrop={onClose}>
-      <FormProvider {...formAPI}>
-        <form onSubmit={handleSubmit(onSubmit, onInvalid)} key={JSON.stringify(defaultValues)}>
-          <>
-            {!props.hideFolder && (
-              <Stack gap={1} alignItems={'center'}>
-                <Field
-                  className={styles.formInput}
-                  label={
-                    <Label
-                      htmlFor="namespaceName"
-                      description={
-                        !isGrafanaManagedGroup &&
-                        'Change the current namespace name. Moving groups between namespaces is not supported'
-                      }
-                    >
-                      {nameSpaceLabel}
-                    </Label>
-                  }
-                  invalid={Boolean(errors.namespaceName) ? true : undefined}
-                  error={errors.namespaceName?.message}
-                >
-                  <Input
-                    id="namespaceName"
-                    readOnly={intervalEditOnly || isGrafanaManagedGroup}
-                    {...register('namespaceName', {
-                      required: 'Namespace name is required.',
-                    })}
-                  />
-                </Field>
-                {isGrafanaManagedGroup && props.folderUrl && (
-                  <LinkButton
-                    href={props.folderUrl}
-                    title="Go to folder"
-                    variant="secondary"
-                    icon="folder-open"
-                    target="_blank"
-                  />
-                )}
-              </Stack>
-            )}
-            <Field
-              label={
-                <Label
-                  htmlFor="groupName"
-                  description="A group evaluates all its rules over the same evaluation interval."
-                >
-                  Evaluation group
-                </Label>
-              }
-              invalid={!!errors.groupName}
-              error={errors.groupName?.message}
-            >
-              <Input
-                autoFocus={true}
-                id="groupName"
-                readOnly={intervalEditOnly}
-                {...register('groupName', {
-                  required: 'Evaluation group name is required.',
-                })}
-              />
-            </Field>
-            <Field
-              label={
-                <Label
-                  htmlFor="groupInterval"
-                  description="How often is the rule evaluated. Applies to every rule within the group."
-                >
-                  <Stack gap={0.5}>Evaluation interval</Stack>
-                </Label>
-              }
-              invalid={Boolean(errors.groupInterval) ? true : undefined}
-              error={errors.groupInterval?.message}
-            >
-              <Stack direction="column">
+    <FormProvider {...formAPI}>
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} key={JSON.stringify(defaultValues)}>
+        <>
+          {!props.hideFolder && (
+            <Stack gap={1} alignItems={'center'}>
+              <Field
+                className={styles.formInput}
+                label={
+                  <Label
+                    htmlFor="namespaceName"
+                    description={
+                      !isGrafanaManagedGroup &&
+                      'Change the current namespace name. Moving groups between namespaces is not supported'
+                    }
+                  >
+                    {nameSpaceLabel}
+                  </Label>
+                }
+                invalid={Boolean(errors.namespaceName) ? true : undefined}
+                error={errors.namespaceName?.message}
+              >
                 <Input
-                  id="groupInterval"
-                  placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
-                  {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
+                  id="namespaceName"
+                  readOnly={intervalEditOnly || isGrafanaManagedGroup}
+                  value={folderTitle}
+                  {...register('namespaceName', {
+                    required: 'Namespace name is required.',
+                  })}
                 />
-                <EvaluationGroupQuickPick
-                  currentInterval={getValues('groupInterval')}
-                  onSelect={(value) => setValue('groupInterval', value, { shouldValidate: true, shouldDirty: true })}
-                />
-              </Stack>
-            </Field>
-
-            {/* if we're dealing with a Grafana-managed group, check if the evaluation interval is valid / permitted */}
-            {isGrafanaManagedGroup && checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
-              <EvaluationIntervalLimitExceeded />
-            )}
-
-            {!hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
-            {hasSomeNoRecordingRules && (
-              <>
-                <div>List of rules that belong to this group</div>
-                <div className={styles.evalRequiredLabel}>
-                  #Eval column represents the number of evaluations needed before alert starts firing.
-                </div>
-                <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
-              </>
-            )}
-            {error && <Alert title={'Failed to update rule group'}>{stringifyErrorLike(error)}</Alert>}
-            <div className={styles.modalButtons}>
-              <Modal.ButtonRow>
-                <Button
+              </Field>
+              {isGrafanaManagedGroup && props.folderUrl && (
+                <LinkButton
+                  href={props.folderUrl}
+                  title="Go to folder"
                   variant="secondary"
-                  type="button"
-                  disabled={loading}
-                  onClick={() => onClose(false)}
-                  fill="outline"
-                >
-                  <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-                </Button>
-                <Button type="submit" disabled={!isDirty || !isValid || loading}>
-                  {loading ? 'Saving...' : 'Save'}
-                </Button>
-              </Modal.ButtonRow>
-            </div>
-          </>
-        </form>
-      </FormProvider>
-    </Modal>
+                  icon="folder-open"
+                  target="_blank"
+                />
+              )}
+            </Stack>
+          )}
+          <Field
+            label={
+              <Label
+                htmlFor="groupName"
+                description="A group evaluates all its rules over the same evaluation interval."
+              >
+                Evaluation group
+              </Label>
+            }
+            invalid={!!errors.groupName}
+            error={errors.groupName?.message}
+          >
+            <Input
+              autoFocus={true}
+              id="groupName"
+              readOnly={intervalEditOnly}
+              {...register('groupName', {
+                required: 'Evaluation group name is required.',
+              })}
+            />
+          </Field>
+          <Field
+            label={
+              <Label
+                htmlFor="groupInterval"
+                description="How often is the rule evaluated. Applies to every rule within the group."
+              >
+                <Stack gap={0.5}>Evaluation interval</Stack>
+              </Label>
+            }
+            invalid={Boolean(errors.groupInterval) ? true : undefined}
+            error={errors.groupInterval?.message}
+          >
+            <Stack direction="column">
+              <Input
+                id="groupInterval"
+                placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
+                {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
+              />
+              <EvaluationGroupQuickPick
+                currentInterval={getValues('groupInterval')}
+                onSelect={(value) => setValue('groupInterval', value, { shouldValidate: true, shouldDirty: true })}
+              />
+            </Stack>
+          </Field>
+
+          {/* if we're dealing with a Grafana-managed group, check if the evaluation interval is valid / permitted */}
+          {isGrafanaManagedGroup && checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
+            <EvaluationIntervalLimitExceeded />
+          )}
+
+          {!hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
+          {hasSomeNoRecordingRules && (
+            <>
+              <div>List of rules that belong to this group</div>
+              <div className={styles.evalRequiredLabel}>
+                #Eval column represents the number of evaluations needed before alert starts firing.
+              </div>
+              <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
+            </>
+          )}
+          {error && <Alert title={'Failed to update rule group'}>{stringifyErrorLike(error)}</Alert>}
+          <div className={styles.modalButtons}>
+            <Modal.ButtonRow>
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={loading}
+                onClick={() => onClose(false)}
+                fill="outline"
+              >
+                <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+              </Button>
+              <Button type="submit" disabled={!isDirty || !isValid || loading}>
+                {loading ? 'Saving...' : 'Save'}
+              </Button>
+            </Modal.ButtonRow>
+          </div>
+        </>
+      </form>
+    </FormProvider>
   );
 }
 
