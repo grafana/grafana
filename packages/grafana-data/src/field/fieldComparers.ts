@@ -51,11 +51,16 @@ const numericComparer = (a: number, b: number): number => {
   return a - b;
 };
 
+// Using the Intl.Collator object compare method results in much faster
+// string sorting than .localeCompare
+const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+
 const stringComparer = (a: string, b: string): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
-  return a.localeCompare(b);
+
+  return compare(String(a), String(b));
 };
 
 const booleanComparer = (a: boolean, b: boolean): number => {

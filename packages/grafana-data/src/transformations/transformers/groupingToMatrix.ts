@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field } from '../../types/dataFrame';
 import {
   SpecialValue,
   DataTransformerInfo,
@@ -44,24 +44,20 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
    */
   isApplicable: (data: DataFrame[]) => {
     let numFields = 0;
-
-    for (const frame of data) {
-      numFields += frame.fields.length;
-    }
+    data.forEach(({ fields }) => (numFields += fields.length));
 
     return numFields >= 3
       ? TransformationApplicabilityLevels.Applicable
       : TransformationApplicabilityLevels.NotApplicable;
   },
+
   isApplicableDescription: (data: DataFrame[]) => {
     let numFields = 0;
-
-    for (const frame of data) {
-      numFields += frame.fields.length;
-    }
+    data.forEach(({ fields }) => (numFields += fields.length));
 
     return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
+
   operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
       map((data) => {
@@ -90,33 +86,32 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 
         const matrixValues: { [key: string]: { [key: string]: unknown } } = {};
 
-        for (let index = 0; index < valueField.values.length; index++) {
+        valueField.values.forEach((value, index) => {
           const columnName = keyColumnField.values[index];
           const rowName = keyRowField.values[index];
-          const value = valueField.values[index];
 
           if (!matrixValues[columnName]) {
             matrixValues[columnName] = {};
           }
 
           matrixValues[columnName][rowName] = value;
-        }
+        });
 
         const fields: Field[] = [
           {
             name: rowColumnField,
             values: rowValues,
-            type: FieldType.string,
+            type: keyRowField.type,
             config: {},
           },
         ];
 
-        for (const columnName of columnValues) {
-          let values = [];
-          for (const rowName of rowValues) {
+        columnValues.forEach((columnName: string) => {
+          let values: ({} | null)[] = [];
+          rowValues.forEach((rowName: string) => {
             const value = matrixValues[columnName][rowName] ?? getSpecialValue(emptyValue);
             values.push(value);
-          }
+          });
 
           // setting the displayNameFromDS in prometheus overrides
           // the column name based on value fields that are numbers
@@ -127,12 +122,12 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           }
 
           fields.push({
-            name: columnName.toString(),
-            values: values,
             config: valueField.config,
+            name: columnName.toString(),
             type: valueField.type,
+            values: values,
           });
-        }
+        });
 
         return [
           {
@@ -146,10 +141,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 
 function uniqueValues<T>(values: T[]): T[] {
   const unique = new Set<T>();
-
-  for (let index = 0; index < values.length; index++) {
-    unique.add(values[index]);
-  }
+  values.forEach((value) => unique.add(value));
 
   return Array.from(unique);
 }
