@@ -10,15 +10,10 @@ import { Select, HorizontalGroup, useStyles2, InputActionMeta } from '@grafana/u
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { OPTIONS_LIMIT } from '../language_provider';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
 
 import { filterScopedTag, operatorSelectableValue } from './utils';
-
-const getStyles = () => ({
-  dropdown: css({
-    boxShadow: 'none',
-  }),
-});
 
 interface Props {
   filter: TraceqlFilter;
@@ -119,11 +114,11 @@ const SearchField = ({
 
   const tagOptions = useMemo(() => {
     if (tagQuery.length === 0) {
-      return formatTagOptions(tags.slice(0, maxOptions), filter.tag);
+      return formatTagOptions(tags.slice(0, OPTIONS_LIMIT), filter.tag);
     }
 
     const queryLowerCase = tagQuery.toLowerCase();
-    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
+    const filterdOptions = tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, OPTIONS_LIMIT);
     return formatTagOptions(filterdOptions, filter.tag);
   }, [filter.tag, tagQuery, tags]);
 
@@ -133,7 +128,7 @@ const SearchField = ({
     }
 
     if (tagValuesQuery.length === 0) {
-      return options.slice(0, maxOptions);
+      return options.slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = tagValuesQuery.toLowerCase();
@@ -144,7 +139,7 @@ const SearchField = ({
         }
         return false;
       })
-      .slice(0, maxOptions);
+      .slice(0, OPTIONS_LIMIT);
   }, [tagValuesQuery, options]);
 
   return (
@@ -239,6 +234,8 @@ const SearchField = ({
   );
 };
 
+export default SearchField;
+
 /**
  * Add to a list of options the current template variables.
  *
@@ -250,7 +247,8 @@ export const withTemplateVariableOptions = (options: SelectableValue[] | undefin
   return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };
 
-// Limit maximum options in select dropdowns for performance reasons
-export const maxOptions = 1000;
-
-export default SearchField;
+const getStyles = () => ({
+  dropdown: css({
+    boxShadow: 'none',
+  }),
+});
