@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -341,9 +341,8 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			Resource:  dashboard.DASHBOARD_RESOURCE,
 		}},
 	}
-	stream, err := opts.Store.BatchProcess(ctx,
-		grpc.Header(settings.ToMD()), // The collection settings
-	)
+	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
+	stream, err := opts.Store.BatchProcess(ctx)
 	if err != nil {
 		return nil, err
 	}

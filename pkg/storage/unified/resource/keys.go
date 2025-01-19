@@ -64,7 +64,7 @@ func (x *ResourceKey) ReadSearchID(v string) error {
 	x.Namespace = parts[0]
 	x.Group = parts[1]
 	x.Resource = parts[2]
-	if len(parts) >= 3 {
+	if len(parts) > 3 {
 		x.Name = parts[3]
 	}
 

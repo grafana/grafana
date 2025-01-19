@@ -33,9 +33,16 @@ func TestSearchIDKeys(t *testing.T) {
 				Resource:  "resource",
 				Name:      "name",
 			}},
-		{input: "/group/resource/", // missing name
+		{input: "/group/resource/",
 			expected: &ResourceKey{
 				Namespace: "",
+				Group:     "group",
+				Resource:  "resource",
+				Name:      "",
+			}},
+		{input: "default/group/resource",
+			expected: &ResourceKey{
+				Namespace: "default",
 				Group:     "group",
 				Resource:  "resource",
 				Name:      "",

@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -39,7 +38,7 @@ type BatchSettings struct {
 	SkipValidation bool
 }
 
-func (x *BatchSettings) ToMD() *metadata.MD {
+func (x *BatchSettings) ToMD() metadata.MD {
 	md := make(metadata.MD)
 	if len(x.Collection) > 0 {
 		for _, v := range x.Collection {
@@ -52,7 +51,7 @@ func (x *BatchSettings) ToMD() *metadata.MD {
 	if x.SkipValidation {
 		md[grpcMetaKeySkipValidation] = []string{"true"}
 	}
-	return &md
+	return md
 }
 
 func NewBatchSettings(md metadata.MD) (BatchSettings, error) {
@@ -117,22 +116,12 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	}
 
 	if len(settings.Collection) < 1 {
-		jj, _ := json.MarshalIndent(md, "", "  ")
-		fmt.Printf(">> TODO!!! Missing MD HEADERS: %s\n", string(jj))
-		settings.RebuildCollection = true
-		settings.SkipValidation = true
-		settings.Collection = []*ResourceKey{{
-			Namespace: "default",
-			Group:     "dashboard.grafana.app",
-			Resource:  "dashboards",
-		}}
-
-		// return stream.SendAndClose(&BatchResponse{
-		// 	Error: &ErrorResult{
-		// 		Message: "Missing target collection(s) in request header",
-		// 		Code:    http.StatusBadRequest,
-		// 	},
-		// })
+		return stream.SendAndClose(&BatchResponse{
+			Error: &ErrorResult{
+				Message: "Missing target collection(s) in request header",
+				Code:    http.StatusBadRequest,
+			},
+		})
 	}
 
 	if settings.RebuildCollection {
