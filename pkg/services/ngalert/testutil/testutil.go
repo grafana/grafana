@@ -58,11 +58,12 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, fs,
-		features, folderPermissions, dashboardPermissions, ac,
+		features, folderPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(tb, err)
+	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 
 	return dashboardService, dashboardStore
 }
