@@ -44,4 +44,7 @@ export enum NodeGraphDataFrameFieldNames {
 
   // Supplies a fixed Y position for the node to have in the finished graph.
   fixedY = 'fixedy',
+
+  // Whether the node is instrumented or not
+  isInstrumented = 'isinstrumented',
 }
