@@ -88,7 +88,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
 
     const layoutElement = vizPanel.parent!;
 
@@ -123,6 +123,8 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
+      // Keep title from dashboard JSON's panel model
+      libPanel.model.title = this.state.title ?? libPanel.model.title;
       this.setPanelFromLibPanel(libPanel);
     } catch (err) {
       vizPanel.setState({
