@@ -353,7 +353,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
-		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << should be v0
+		dash.APIVersion = fmt.Sprintf("%s/v0alpha1", dashboard.GROUP) // << eventually v0
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend
 		body, err := json.Marshal(dash)
@@ -385,6 +385,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 				return nil, err
 			}
 
+			opts.Progress(i, fmt.Sprintf("[v:%d] %s Large object (%d)", dash.Generation, dash.Name, len(body)))
 			err = large.Deconstruct(ctx, req.Key, opts.Store, obj, req.Value)
 			if err != nil {
 				return nil, err
@@ -397,8 +398,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			}
 		}
 
-		// TODO? large object support!
-		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(body)))
+		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(req.Value)))
 
 		err = stream.Send(req)
 		if err != nil {
