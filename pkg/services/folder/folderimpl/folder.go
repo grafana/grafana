@@ -37,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -74,21 +76,13 @@ func ProvideService(
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
-) *Service {
-	k8sHandler := &foldk8sHandler{
-		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
-		namespacer: request.GetNamespaceMapper(cfg),
-		cfg:        cfg,
-	}
-
-	unifiedStore := ProvideUnifiedStore(cfg)
-
+	docs resource.DocumentBuilderSupplier,
+) (*Service, error) {
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,
-		unifiedStore:         unifiedStore,
 		features:             features,
 		accessControl:        ac,
 		bus:                  bus,
@@ -96,7 +90,6 @@ func ProvideService(
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
 		tracer:               tracer,
-		k8sclient:            k8sHandler,
 	}
 	srv.DBMigration(db)
 
@@ -104,7 +97,29 @@ func ProvideService(
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
-	return srv
+
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		unified, err := unified.ProvideUnifiedStorageClient(cfg, features, db, tracer, r, nil, docs)
+		if err != nil {
+			return nil, err
+		}
+
+		k8sHandler := &foldk8sHandler{
+			gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
+			namespacer: request.GetNamespaceMapper(cfg),
+			unified:    unified,
+			cfg:        cfg,
+			features:   features,
+			tracer:     tracer,
+		}
+
+		unifiedStore := ProvideUnifiedStore(cfg)
+
+		srv.unifiedStore = unifiedStore
+		srv.k8sclient = k8sHandler
+	}
+
+	return srv, nil
 }
 
 func (s *Service) DBMigration(db db.DB) {

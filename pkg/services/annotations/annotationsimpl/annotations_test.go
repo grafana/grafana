@@ -59,9 +59,10 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	folderSvc := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
+	folderSvc, err := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
+	require.NoError(t, err)
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 		ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
 	require.NoError(t, err)
@@ -242,8 +243,9 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		ac := acimpl.ProvideAccessControl(features)
 		fStore := folderimpl.ProvideStore(sql)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sql)
-		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		folderSvc, err := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
+			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
+		require.NoError(t, err)
 		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 			ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
 		require.NoError(t, err)

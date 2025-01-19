@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -9,21 +10,26 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -31,12 +37,16 @@ import (
 type folderK8sHandler interface {
 	getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
 	getNamespace(orgID int64) string
+	getSearcher() resource.ResourceClient
 }
 
 var _ folderK8sHandler = (*foldk8sHandler)(nil)
 
 type foldk8sHandler struct {
 	cfg        *setting.Cfg
+	features   featuremgmt.FeatureToggles
+	unified    resource.ResourceClient
+	tracer     tracing.Tracer
 	namespacer request.NamespaceMapper
 	gvr        schema.GroupVersionResource
 }
@@ -92,6 +102,8 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
+	ctx = identity.WithRequester(ctx, q.SignedInUser)
+
 	var dashFolder *folder.Folder
 	var err error
 	switch {
@@ -105,7 +117,10 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		}
 	// nolint:staticcheck
 	case q.ID != nil:
-		// not implemented
+		dashFolder, err = s.getFolderByIDFromApiServer(ctx, *q.ID, q.OrgID)
+		if err != nil {
+			return nil, err
+		}
 	case q.Title != nil:
 		// not implemented
 	default:
@@ -152,6 +167,57 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	}
 
 	return f, err
+}
+
+func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
+	if id == 0 {
+		return &folder.GeneralFolder, nil
+	}
+
+	folderkey := &resource.ResourceKey{
+		Namespace: s.k8sclient.getNamespace(orgID),
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+	}
+
+	request := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Key:    folderkey,
+			Fields: []*resource.Requirement{},
+			Labels: []*resource.Requirement{
+				{
+					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+					Operator: string(selection.In),
+					Values:   []string{fmt.Sprintf("%d", id)},
+				},
+			},
+		},
+		Limit: 100000}
+
+	client := s.k8sclient.getSearcher()
+
+	res, err := client.Search(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	hits, err := dashboardsearch.ParseResults(res, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	uid := hits.Hits[0].Name
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
@@ -699,4 +765,8 @@ func (fk8s *foldk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic
 
 func (fk8s *foldk8sHandler) getNamespace(orgID int64) string {
 	return fk8s.namespacer(orgID)
+}
+
+func (fk8s *foldk8sHandler) getSearcher() resource.ResourceClient {
+	return fk8s.unified
 }

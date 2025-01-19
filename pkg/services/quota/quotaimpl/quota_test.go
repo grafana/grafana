@@ -491,9 +491,10 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	dashStore, err := dashboardStore.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	folderSvc := folderimpl.ProvideService(fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
+	folderSvc, err := folderimpl.ProvideService(fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, sqlStore, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
+	require.NoError(t, err)
 	_, err = dashService.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(),
 		ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil)
 
