@@ -21,12 +21,7 @@ LEFT OUTER JOIN {{ .Ident .VersionTable }} as dashboard_version ON dashboard.id 
 LEFT OUTER JOIN {{ .Ident .ProvisioningTable }} as provisioning ON dashboard.id = provisioning.dashboard_id
 LEFT OUTER JOIN {{ .Ident .UserTable }} as created_user ON dashboard.created_by = created_user.id
 LEFT OUTER JOIN {{ .Ident .UserTable }} as updated_user ON dashboard.updated_by = updated_user.id
-WHERE 
-  {{ if .Query.GetFolders }}
-  dashboard.is_folder = true
-  {{ else }}
-  dashboard.is_folder = false
-  {{ end }}
+WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   AND dashboard.org_id = {{ .Arg .Query.OrgID }}
   {{ if .Query.UseHistoryTable }}
   {{ if .Query.UID }}
