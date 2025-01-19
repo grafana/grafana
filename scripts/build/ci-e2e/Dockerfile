@@ -1,4 +1,4 @@
-FROM node:12.19.0-buster-slim
+FROM node:20.15.0-buster-slim
 
 WORKDIR /root
 
