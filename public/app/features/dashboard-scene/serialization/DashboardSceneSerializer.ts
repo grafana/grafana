@@ -155,7 +155,7 @@ export class V2DashboardSerializer
     );
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
-    const isNew = scene.getInitialState()?.meta.isNew;
+    const isNew = !Boolean(scene.getInitialState()?.uid);
 
     return {
       ...changeInfo,

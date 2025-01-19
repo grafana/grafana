@@ -944,6 +944,12 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
+        "no-rules": "There are no alert rules linked to this panel."
+      }
+    },
     "toolbar": {
       "add": "Add",
       "alert-rules": "Alert rules",
