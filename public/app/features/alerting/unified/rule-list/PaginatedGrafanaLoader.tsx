@@ -2,7 +2,7 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Icon, Stack, Text } from '@grafana/ui';
-import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
+import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GrafanaRuleLoader } from './GrafanaRuleLoader';
@@ -83,10 +83,25 @@ interface GrafanaRuleGroupListItemProps {
   namespaceName: string;
 }
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
+  const groupIdentifier: GrafanaRuleGroupIdentifier = {
+    groupName: group.name,
+    namespace: {
+      uid: group.folderUid,
+    },
+    groupOrigin: 'grafana',
+  };
+
   return (
     <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
       {group.rules.map((rule) => {
-        return <GrafanaRuleLoader key={rule.uid} rule={rule} groupName={group.name} namespaceName={namespaceName} />;
+        return (
+          <GrafanaRuleLoader
+            key={rule.uid}
+            rule={rule}
+            namespaceName={namespaceName}
+            groupIdentifier={groupIdentifier}
+          />
+        );
       })}
     </ListGroup>
   );
