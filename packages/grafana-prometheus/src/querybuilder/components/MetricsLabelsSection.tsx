@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { ComboboxOption } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -40,7 +41,7 @@ export function MetricsLabelsSection({
    * Map metric metadata to SelectableValue for Select component and also adds defined template variables to the list.
    */
   const withTemplateVariableOptions = useCallback(
-    async (optionsPromise: Promise<SelectableValue[]>): Promise<SelectableValue[]> => {
+    async (optionsPromise: Promise<SelectableValue[]>): Promise<ComboboxOption[]> => {
       const variables = datasource.getVariables();
       const options = await optionsPromise;
       return [
@@ -60,7 +61,7 @@ export function MetricsLabelsSection({
    * Formats a promQL expression and passes that off to helper functions depending on API support
    * @param forLabel
    */
-  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
+  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<ComboboxOption[]> => {
     // If no metric we need to use a different method
     if (!query.metric) {
       await datasource.languageProvider.fetchLabels();
@@ -82,7 +83,7 @@ export function MetricsLabelsSection({
   const getLabelValuesAutocompleteSuggestions = (
     queryString?: string,
     labelName?: string
-  ): Promise<SelectableValue[]> => {
+  ): Promise<ComboboxOption[]> => {
     const forLabel = {
       label: labelName ?? '__name__',
       op: '=~',
@@ -99,14 +100,14 @@ export function MetricsLabelsSection({
       value: datasource.interpolateString(labelObject.value),
     }));
     const expr = promQueryModeller.renderLabels(interpolatedLabelsToConsider);
-    let response: Promise<SelectableValue[]>;
+    let response: Promise<ComboboxOption[]>;
     if (datasource.hasLabelsMatchAPISupport()) {
       response = getLabelValuesFromLabelValuesAPI(forLabel, expr);
     } else {
       response = getLabelValuesFromSeriesAPI(forLabel, expr);
     }
 
-    return response.then((response: SelectableValue[]) => {
+    return response.then((response: ComboboxOption[]) => {
       truncateResult(response);
       return response;
     });
@@ -120,7 +121,7 @@ export function MetricsLabelsSection({
   const getLabelValuesFromSeriesAPI = (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
-  ): Promise<SelectableValue[]> => {
+  ): Promise<ComboboxOption[]> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
@@ -146,7 +147,7 @@ export function MetricsLabelsSection({
   const getLabelValuesFromLabelValuesAPI = (
     forLabel: Partial<QueryBuilderLabelFilter>,
     promQLExpression: string
-  ): Promise<SelectableValue[]> => {
+  ): Promise<ComboboxOption[]> => {
     if (!forLabel.label) {
       return Promise.resolve([]);
     }

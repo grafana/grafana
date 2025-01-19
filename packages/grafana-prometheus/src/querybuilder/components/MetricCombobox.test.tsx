@@ -86,7 +86,7 @@ describe('MetricCombobox', () => {
     expect(screen.getByPlaceholderText('Select metric')).toBeInTheDocument();
   });
 
-  it('fetches top metrics when the combobox is opened ', async () => {
+  it('fetches top metrics when the combobox is opened', async () => {
     render(<MetricCombobox {...defaultProps} />);
 
     const combobox = screen.getByPlaceholderText('Select metric');

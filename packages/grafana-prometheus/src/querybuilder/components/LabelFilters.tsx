@@ -1,26 +1,27 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilters.tsx
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorList } from '@grafana/experimental';
-import { InlineFieldRow, InlineLabel } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { ComboboxOption, InlineFieldRow, InlineLabel } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from '../shared/types';
 
 import { LabelFilterItem } from './LabelFilterItem';
+import { LabelFilterItemCombobox } from './LabelFilterItemCombobox';
 
 export const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 
 export interface LabelFiltersProps {
   labelsFilters: QueryBuilderLabelFilter[];
   onChange: (labelFilters: Array<Partial<QueryBuilderLabelFilter>>) => void;
-  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
-  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
+  onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<ComboboxOption[]>;
+  onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<ComboboxOption[]>;
   /** If set to true, component will show error message until at least 1 filter is selected */
   labelFilterRequired?: boolean;
-  getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<ComboboxOption[]>;
   debounceDuration: number;
   variableEditor?: boolean;
 }
@@ -58,13 +59,18 @@ export function LabelFilters({
 
   const hasLabelFilter = items.some((item) => item.label && item.value);
 
+  const FilterItemComponent = useMemo(() => {
+    const anyIsMulti = items.some((item) => item.op === '=~' || item.op === '!~');
+    return config.featureToggles.prometheusUsesCombobox && !anyIsMulti ? LabelFilterItemCombobox : LabelFilterItem;
+  }, [items]);
+
   const editorList = () => {
     return (
       <EditorList
         items={items}
         onChange={onLabelsChange}
         renderItem={(item: Partial<QueryBuilderLabelFilter>, onChangeItem, onDelete) => (
-          <LabelFilterItem
+          <FilterItemComponent
             debounceDuration={debounceDuration}
             item={item}
             defaultOp={defaultOp}
