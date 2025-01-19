@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"google.golang.org/grpc/metadata"
 
@@ -165,11 +166,12 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	if err == nil {
 		// Rebuild the index for this key
 		for _, key := range settings.Collection {
+			started := time.Now()
 			idx, rv, err := s.search.build(ctx, NamespacedResource{
 				Namespace: key.Namespace,
 				Group:     key.Group,
 				Resource:  key.Resource,
-			}, rsp.Processed, 555555) // can we get the RV from the MAX(RV) in ns/g/r
+			}, rsp.Processed, time.Now().UnixMilli()) // can we get the RV from the MAX(RV) in ns/g/r
 			if err != nil {
 				return err // should not happen
 			}
@@ -177,7 +179,8 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 			if err != nil {
 				return err // should not happen
 			}
-			fmt.Printf("Build index: size:%d / rv:%d\n", count, rv)
+			elapsed := time.Since(started)
+			fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", key.Resource, count, rv, elapsed.String())
 		}
 	}
 

@@ -2,10 +2,10 @@ SELECT
   dashboard.org_id, dashboard.id,
   dashboard.uid, dashboard.folder_uid,
   dashboard.deleted, plugin_id,
-  provisioning.name     as origin_name,
-  provisioning.external_id  as origin_path,
-  provisioning.check_sum  as origin_key,
-  provisioning.updated    as origin_ts,
+  provisioning.name        as repo_name,
+  provisioning.external_id as repo_path,
+  provisioning.check_sum   as repo_hash,
+  provisioning.updated     as repo_ts,
   dashboard.created, created_user.uid as created_by, dashboard.created_by   as created_by_id,
   {{ if .Query.UseHistoryTable }}
   dashboard_version.created, updated_user.uid as updated_by,updated_user.id as created_by_id,
@@ -15,9 +15,9 @@ SELECT
   dashboard.version, '' as message, dashboard.data
   {{ end }}
 FROM {{ .Ident .DashboardTable }} as dashboard
-  {{ if .Query.UseHistoryTable }}
+{{ if .Query.UseHistoryTable }}
 LEFT OUTER JOIN {{ .Ident .VersionTable }} as dashboard_version ON dashboard.id = dashboard_version.dashboard_id
-  {{ end }}
+{{ end }}
 LEFT OUTER JOIN {{ .Ident .ProvisioningTable }} as provisioning ON dashboard.id = provisioning.dashboard_id
 LEFT OUTER JOIN {{ .Ident .UserTable }} as created_user ON dashboard.created_by = created_user.id
 LEFT OUTER JOIN {{ .Ident .UserTable }} as updated_user ON dashboard.updated_by = updated_user.id
