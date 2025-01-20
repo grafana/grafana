@@ -23,7 +23,7 @@ func (j TSTypesJenny) JennyName() string {
 }
 
 func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
-	cueValue := sfg.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
+	cueValue := sfg.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema.spec"))
 	opts := make([]cog.CUEOption, 0)
 	if sfg.IsGroup {
 		opts = append(opts, cog.ForceEnvelope(sfg.Name))

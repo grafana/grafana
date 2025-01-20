@@ -35,32 +35,28 @@ export const defaultNavbarPreference = (): NavbarPreference => ({
 	bookmarkUrls: [],
 });
 
+// Spec defines user, team or org Grafana preferences
+// swagger:model Preferences
 export interface Preferences {
-	// Spec defines user, team or org Grafana preferences
-	// swagger:model Preferences
-	spec: {
-		// UID for the home dashboard
-		homeDashboardUID?: string;
-		// The timezone selection
-		// TODO: this should use the timezone defined in common
-		timezone?: string;
-		// day of the week (sunday, monday, etc)
-		weekStart?: string;
-		// light, dark, empty is default
-		theme?: string;
-		// Selected language (beta)
-		language?: string;
-		// Explore query history preferences
-		queryHistory?: QueryHistoryPreference;
-		// Cookie preferences
-		cookiePreferences?: CookiePreferences;
-		// Navigation preferences
-		navbar?: NavbarPreference;
-	};
+	// UID for the home dashboard
+	homeDashboardUID?: string;
+	// The timezone selection
+	// TODO: this should use the timezone defined in common
+	timezone?: string;
+	// day of the week (sunday, monday, etc)
+	weekStart?: string;
+	// light, dark, empty is default
+	theme?: string;
+	// Selected language (beta)
+	language?: string;
+	// Explore query history preferences
+	queryHistory?: QueryHistoryPreference;
+	// Cookie preferences
+	cookiePreferences?: CookiePreferences;
+	// Navigation preferences
+	navbar?: NavbarPreference;
 }
 
 export const defaultPreferences = (): Preferences => ({
-	spec: {
-},
 });
 

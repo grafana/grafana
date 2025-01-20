@@ -10,16 +10,6 @@
 
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-export interface CustomRoleRef {
-	kind: "Role";
-	name: string;
-}
-
-export const defaultCustomRoleRef = (): CustomRoleRef => ({
-	kind: "Role",
-	name: "",
-});
-
 export interface BuiltinRoleRef {
 	kind: "BuiltinRole";
 	name: "viewer" | "editor" | "admin";
@@ -28,6 +18,16 @@ export interface BuiltinRoleRef {
 export const defaultBuiltinRoleRef = (): BuiltinRoleRef => ({
 	kind: "BuiltinRole",
 	name: "viewer",
+});
+
+export interface CustomRoleRef {
+	kind: "Role";
+	name: string;
+}
+
+export const defaultCustomRoleRef = (): CustomRoleRef => ({
+	kind: "Role",
+	name: "",
 });
 
 export interface RoleBindingSubject {
@@ -42,18 +42,14 @@ export const defaultRoleBindingSubject = (): RoleBindingSubject => ({
 });
 
 export interface RoleBinding {
-	spec: {
-		// The role we are discussing
-		role: BuiltinRoleRef | CustomRoleRef;
-		// The team or user that has the specified role
-		subject: RoleBindingSubject;
-	};
+	// The role we are discussing
+	role: BuiltinRoleRef | CustomRoleRef;
+	// The team or user that has the specified role
+	subject: RoleBindingSubject;
 }
 
 export const defaultRoleBinding = (): RoleBinding => ({
-	spec: {
 	role: defaultBuiltinRoleRef(),
 	subject: defaultRoleBindingSubject(),
-},
 });
 

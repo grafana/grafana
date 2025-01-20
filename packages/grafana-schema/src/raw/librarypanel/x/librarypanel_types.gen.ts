@@ -43,36 +43,32 @@ export const defaultLibraryElementDTOMeta = (): LibraryElementDTOMeta => ({
 });
 
 export interface LibraryPanel {
-	spec: {
-		// Folder UID
-		folderUid?: string;
-		// Library element UID
-		uid: string;
-		// Panel name (also saved in the model)
-		name: string;
-		// Panel description
-		description?: string;
-		// The panel type (from inside the model)
-		type: string;
-		// Dashboard version when this was saved (zero if unknown)
-		schemaVersion?: number;
-		// panel version, incremented each time the dashboard is updated.
-		version: number;
-		// TODO: should be the same panel schema defined in dashboard
-		// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-		model: Record<string, any>;
-		// Object storage metadata
-		meta?: LibraryElementDTOMeta;
-	};
+	// Folder UID
+	folderUid?: string;
+	// Library element UID
+	uid: string;
+	// Panel name (also saved in the model)
+	name: string;
+	// Panel description
+	description?: string;
+	// The panel type (from inside the model)
+	type: string;
+	// Dashboard version when this was saved (zero if unknown)
+	schemaVersion?: number;
+	// panel version, incremented each time the dashboard is updated.
+	version: number;
+	// TODO: should be the same panel schema defined in dashboard
+	// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
+	model: Record<string, any>;
+	// Object storage metadata
+	meta?: LibraryElementDTOMeta;
 }
 
 export const defaultLibraryPanel = (): LibraryPanel => ({
-	spec: {
 	uid: "",
 	name: "",
 	type: "",
 	version: 0,
 	model: {},
-},
 });
 

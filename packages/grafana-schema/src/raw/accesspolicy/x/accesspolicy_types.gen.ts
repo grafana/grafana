@@ -10,6 +10,17 @@
 
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+export interface ResourceRef {
+	// explicit resource or folder will cascade
+	kind: string;
+	name: string;
+}
+
+export const defaultResourceRef = (): ResourceRef => ({
+	kind: "",
+	name: "",
+});
+
 export interface RoleRef {
 	// Policies can apply to roles, teams, or users
 	// Applying policies to individual users is supported, but discouraged
@@ -23,17 +34,6 @@ export const defaultRoleRef = (): RoleRef => ({
 	kind: "Role",
 	name: "",
 	xname: "",
-});
-
-export interface ResourceRef {
-	// explicit resource or folder will cascade
-	kind: string;
-	name: string;
-}
-
-export const defaultResourceRef = (): ResourceRef => ({
-	kind: "",
-	name: "",
 });
 
 export interface AccessRule {
@@ -52,22 +52,18 @@ export const defaultAccessRule = (): AccessRule => ({
 });
 
 export interface AccessPolicy {
-	spec: {
-		// The scope where these policies should apply
-		scope: ResourceRef;
-		// The role that must apply this policy
-		role: RoleRef;
-		// The set of rules to apply.  Note that * is required to modify
-		// access policy rules, and that "none" will reject all actions
-		rules: AccessRule[];
-	};
+	// The scope where these policies should apply
+	scope: ResourceRef;
+	// The role that must apply this policy
+	role: RoleRef;
+	// The set of rules to apply.  Note that * is required to modify
+	// access policy rules, and that "none" will reject all actions
+	rules: AccessRule[];
 }
 
 export const defaultAccessPolicy = (): AccessPolicy => ({
-	spec: {
 	scope: defaultResourceRef(),
 	role: defaultRoleRef(),
 	rules: [],
-},
 });
 
