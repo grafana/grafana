@@ -5,6 +5,7 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { muteTimingsReducer } from '../reducers/alertmanager/muteTimings';
+import { routesReducer } from '../reducers/alertmanager/notificationPolicyRoutes';
 import { notificationTemplatesReducer } from '../reducers/alertmanager/notificationTemplates';
 import { receiversReducer } from '../reducers/alertmanager/receivers';
 import { useAlertmanager } from '../state/AlertmanagerContext';
@@ -31,7 +32,8 @@ const configurationReducer = reduceReducers(
   initialAlertmanagerConfiguration,
   muteTimingsReducer,
   receiversReducer,
-  notificationTemplatesReducer
+  notificationTemplatesReducer,
+  routesReducer
 );
 
 /**

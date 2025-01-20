@@ -22,6 +22,7 @@ import (
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/log/term"
 	"github.com/grafana/grafana/pkg/infra/log/text"
 	"github.com/grafana/grafana/pkg/util"
@@ -60,6 +61,8 @@ func init() {
 		}
 		return nil, false
 	})
+
+	logging.DefaultLogger = logging.NewSLogLogger(slog.Default().Handler())
 }
 
 // logManager manage loggers

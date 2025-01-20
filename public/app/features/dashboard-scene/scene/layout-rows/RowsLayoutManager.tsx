@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { DashboardScene } from '../DashboardScene';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
@@ -18,7 +19,22 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public editModeChanged(isEditing: boolean): void {}
 
-  public addPanel(vizPanel: VizPanel): void {}
+  public addPanel(vizPanel: VizPanel): void {
+    // Try to add new panels to the selected row
+    const selectedObject = this.getSelectedObject();
+    if (selectedObject instanceof RowItem) {
+      return selectedObject.onAddPanel(vizPanel);
+    }
+
+    // If we don't have selected row add it to the first row
+    if (this.state.rows.length > 0) {
+      return this.state.rows[0].onAddPanel(vizPanel);
+    }
+
+    // Otherwise fallback to adding a new row and a panel
+    this.addNewRow();
+    this.state.rows[this.state.rows.length - 1].onAddPanel(vizPanel);
+  }
 
   public addNewRow(): void {
     this.setState({
@@ -67,6 +83,10 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return RowsLayoutManager.getDescriptor();
   }
 
+  public getSelectedObject() {
+    return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selectedObject?.resolve();
+  }
+
   public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Rows',
@@ -106,7 +126,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      height: '100%',
+      flexGrow: 1,
       width: '100%',
     }),
   };

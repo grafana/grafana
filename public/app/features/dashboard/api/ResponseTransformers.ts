@@ -1,5 +1,6 @@
+import { TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, DataQuery, DataSourceRef, Panel, VariableModel } from '@grafana/schema';
+import { AnnotationQuery, DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -11,17 +12,26 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TransformationKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+  AdhocVariableKind,
+  CustomVariableKind,
+  ConstantVariableKind,
+  IntervalVariableKind,
+  TextVariableKind,
+  GroupByVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
   AnnoKeyDashboardId,
+  AnnoKeyDashboardIsSnapshot,
+  AnnoKeyDashboardSnapshotOriginalUrl,
   AnnoKeyFolder,
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   transformCursorSynctoEnum,
@@ -52,20 +62,56 @@ export function ensureV2Response(
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
   const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+  // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
+  // that would allow accessing unique properties for each variable type that the API returns
   const variables = getVariables(dashboard.templating?.list || []);
   const annotations = getAnnotations(dashboard.annotations?.list || []);
 
-  const accessAndMeta = isDashboardResource(dto)
-    ? {
-        ...dto.access,
-        created: dto.metadata.creationTimestamp,
-        createdBy: dto.metadata.annotations?.[AnnoKeyCreatedBy],
-        updatedBy: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
-        updated: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
-        folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
-        slug: dto.metadata.annotations?.[AnnoKeySlug],
-      }
-    : dto.meta;
+  let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
+  let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
+  let creationTimestamp;
+
+  if (isDashboardResource(dto)) {
+    accessMeta = dto.access;
+    annotationsMeta = {
+      [AnnoKeyCreatedBy]: dto.metadata.annotations?.[AnnoKeyCreatedBy],
+      [AnnoKeyUpdatedBy]: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
+      [AnnoKeyUpdatedTimestamp]: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+      [AnnoKeyFolder]: dto.metadata.annotations?.[AnnoKeyFolder],
+      [AnnoKeySlug]: dto.metadata.annotations?.[AnnoKeySlug],
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
+      [AnnoKeyDashboardIsSnapshot]: dto.metadata.annotations?.[AnnoKeyDashboardIsSnapshot],
+    };
+    creationTimestamp = dto.metadata.creationTimestamp;
+  } else {
+    accessMeta = {
+      url: dto.meta.url,
+      slug: dto.meta.slug,
+      canSave: dto.meta.canSave,
+      canEdit: dto.meta.canEdit,
+      canDelete: dto.meta.canDelete,
+      canShare: dto.meta.canShare,
+      canStar: dto.meta.canStar,
+      canAdmin: dto.meta.canAdmin,
+      annotationsPermissions: dto.meta.annotationsPermissions,
+    };
+    annotationsMeta = {
+      [AnnoKeyCreatedBy]: dto.meta.createdBy,
+      [AnnoKeyUpdatedBy]: dto.meta.updatedBy,
+      [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
+      [AnnoKeyFolder]: dto.meta.folderUid,
+      [AnnoKeySlug]: dto.meta.slug,
+      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
+      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
+      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
+    };
+    creationTimestamp = dto.meta.created;
+  }
+
+  if (annotationsMeta?.[AnnoKeyDashboardIsSnapshot]) {
+    annotationsMeta[AnnoKeyDashboardSnapshotOriginalUrl] = dashboard.snapshot?.originalUrl;
+  }
 
   const spec: DashboardV2Spec = {
     title: dashboard.title,
@@ -100,31 +146,13 @@ export function ensureV2Response(
     apiVersion: 'v2alpha1',
     kind: 'DashboardWithAccessInfo',
     metadata: {
-      creationTimestamp: accessAndMeta.created || '', // TODO verify this empty string is valid
+      creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
       name: dashboard.uid,
       resourceVersion: dashboard.version?.toString() || '0',
-      annotations: {
-        [AnnoKeyCreatedBy]: accessAndMeta.createdBy,
-        [AnnoKeyUpdatedBy]: accessAndMeta.updatedBy,
-        [AnnoKeyUpdatedTimestamp]: accessAndMeta.updated,
-        [AnnoKeyFolder]: accessAndMeta.folderUid,
-        [AnnoKeySlug]: accessAndMeta.slug,
-        [AnnoKeyDashboardId]: dashboard.id ?? undefined,
-        [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      },
+      annotations: annotationsMeta,
     },
     spec,
-    access: {
-      url: accessAndMeta.url || '',
-      canAdmin: accessAndMeta.canAdmin,
-      canDelete: accessAndMeta.canDelete,
-      canEdit: accessAndMeta.canEdit,
-      canSave: accessAndMeta.canSave,
-      canShare: accessAndMeta.canShare,
-      canStar: accessAndMeta.canStar,
-      slug: accessAndMeta.slug,
-      annotationsPermissions: accessAndMeta.annotationsPermissions,
-    },
+    access: accessMeta,
   };
 }
 
@@ -226,51 +254,73 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 
   // iterate over panels
   for (const p of panels) {
-    const queries = getPanelQueries(
-      (p.targets as unknown as DataQuery[]) || [],
-      p.datasource || getDefaultDatasource()
-    );
+    let elementName;
 
-    const transformations = getPanelTransformations(p.transformations || []);
+    // LibraryPanelKind
+    if (p.libraryPanel) {
+      elementName = p.libraryPanel.uid;
 
-    elements[p.id!] = {
-      kind: 'Panel',
-      spec: {
-        title: p.title || '',
-        description: p.description || '',
-        vizConfig: {
-          kind: p.type,
-          spec: {
-            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-            options: p.options as any,
-            pluginVersion: p.pluginVersion!,
-          },
+      elements[elementName] = {
+        kind: 'LibraryPanel',
+        spec: {
+          uid: p.libraryPanel.uid,
+          name: p.libraryPanel.name,
         },
-        links:
-          p.links?.map<DataLink>((l) => ({
-            title: l.title,
-            url: l.url || '',
-            targetBlank: l.targetBlank,
-          })) || [],
-        id: p.id!,
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries,
-            transformations, // TODO[schema v2]: handle transformations
-            queryOptions: {
-              cacheTimeout: p.cacheTimeout,
-              maxDataPoints: p.maxDataPoints,
-              interval: p.interval,
-              hideTimeOverride: p.hideTimeOverride,
-              queryCachingTTL: p.queryCachingTTL,
-              timeFrom: p.timeFrom,
-              timeShift: p.timeShift,
+      };
+      // PanelKind
+    } else {
+      elementName = p.id!.toString();
+
+      // FIXME: for now we should skip row panels
+      if (p.type === 'row') {
+        continue;
+      }
+
+      const queries = getPanelQueries(
+        (p.targets as unknown as DataQuery[]) || [],
+        p.datasource || getDefaultDatasource()
+      );
+      const transformations = getPanelTransformations(p.transformations || []);
+
+      elements[elementName] = {
+        kind: 'Panel',
+        spec: {
+          title: p.title || '',
+          description: p.description || '',
+          vizConfig: {
+            kind: p.type,
+            spec: {
+              fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+              options: p.options as any,
+              pluginVersion: p.pluginVersion!,
+            },
+          },
+          links:
+            p.links?.map<DataLink>((l) => ({
+              title: l.title,
+              url: l.url || '',
+              targetBlank: l.targetBlank,
+            })) || [],
+          id: p.id!,
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries,
+              transformations, // TODO[schema v2]: handle transformations
+              queryOptions: {
+                cacheTimeout: p.cacheTimeout,
+                maxDataPoints: p.maxDataPoints,
+                interval: p.interval,
+                hideTimeOverride: p.hideTimeOverride,
+                queryCachingTTL: p.queryCachingTTL,
+                timeFrom: p.timeFrom,
+                timeShift: p.timeShift,
+              },
             },
           },
         },
-      },
-    };
+      };
+    }
 
     layout.spec.items.push({
       kind: 'GridLayoutItem',
@@ -281,7 +331,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
         height: p.gridPos!.h,
         element: {
           kind: 'ElementReference',
-          name: p.id!.toString(),
+          name: elementName,
         },
       },
     });
@@ -291,20 +341,23 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 }
 
 function getDefaultDatasourceType() {
-  const datasources = config.datasources;
-  // find default datasource in datasources
-  return Object.values(datasources).find((ds) => ds.isDefault)!.type;
+  // if there is no default datasource, return 'grafana' as default
+  return getDefaultDataSourceRef()?.type ?? 'grafana';
 }
 
-function getDefaultDatasource(): DataSourceRef {
-  const datasources = config.datasources;
+export function getDefaultDatasource(): DataSourceRef {
+  const configDefaultDS = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
 
-  // find default datasource in datasources
-  const defaultDs = Object.values(datasources).find((ds) => ds.isDefault)!;
+  if (configDefaultDS.uid && !configDefaultDS.apiVersion) {
+    // get api version from config
+    const dsInstance = config.bootData.settings.datasources[configDefaultDS.uid];
+    configDefaultDS.apiVersion = dsInstance.apiVersion ?? undefined;
+  }
+
   return {
-    apiVersion: defaultDs.apiVersion,
-    type: defaultDs.type,
-    uid: defaultDs.uid,
+    apiVersion: configDefaultDS.apiVersion,
+    type: configDefaultDS.type,
+    uid: configDefaultDS.uid,
   };
 }
 
@@ -341,9 +394,17 @@ function getPanelTransformations(transformations: DataTransformerConfig[]): Tran
   });
 }
 
-function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
+function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] {
   const variables: DashboardV2Spec['variables'] = [];
   for (const v of vars) {
+    const commonProperties = {
+      name: v.name,
+      label: v.label,
+      ...(v.description && { description: v.description }),
+      skipUrlSync: Boolean(v.skipUrlSync),
+      hide: transformVariableHideToEnum(v.hide),
+    };
+
     switch (v.type) {
       case 'query':
         let query = v.query || {};
@@ -356,17 +417,17 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         const qv: QueryVariableKind = {
           kind: 'QueryVariable',
           spec: {
-            name: v.name,
-            label: v.label,
-            hide: transformVariableHideToEnum(v.hide),
-            skipUrlSync: Boolean(v.skipUrlSync),
+            ...commonProperties,
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
-            allValue: v.allValue,
-            current: v.current || { text: '', value: '' },
+            ...(v.allValue && { allValue: v.allValue }),
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
             options: v.options || [],
             refresh: transformVariableRefreshToEnum(v.refresh),
-            datasource: v.datasource ?? undefined,
+            ...(v.datasource && { datasource: v.datasource }),
             regex: v.regex || '',
             sort: transformSortVariableToEnum(v.sort),
             query: {
@@ -389,25 +450,122 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         const dv: DatasourceVariableKind = {
           kind: 'DatasourceVariable',
           spec: {
-            name: v.name,
-            label: v.label,
-            hide: transformVariableHideToEnum(v.hide),
-            skipUrlSync: Boolean(v.skipUrlSync),
+            ...commonProperties,
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
-            allValue: v.allValue,
-            current: v.current || { text: '', value: '' },
+            ...(v.allValue && { allValue: v.allValue }),
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
             options: v.options || [],
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
             regex: v.regex || '',
-            description: v.description || '',
           },
         };
         variables.push(dv);
         break;
+      case 'custom':
+        const cv: CustomVariableKind = {
+          kind: 'CustomVariable',
+          spec: {
+            ...commonProperties,
+            query: v.query,
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
+            options: v.options,
+            multi: v.multi,
+            includeAll: v.includeAll,
+            ...(v.allValue && { allValue: v.allValue }),
+          },
+        };
+        variables.push(cv);
+        break;
+      case 'adhoc':
+        const av: AdhocVariableKind = {
+          kind: 'AdhocVariable',
+          spec: {
+            ...commonProperties,
+            datasource: v.datasource || getDefaultDatasource(),
+            baseFilters: v.baseFilters || [],
+            filters: v.filters || [],
+            defaultKeys: v.defaultKeys || [],
+          },
+        };
+        variables.push(av);
+        break;
+      case 'constant':
+        const cnts: ConstantVariableKind = {
+          kind: 'ConstantVariable',
+          spec: {
+            ...commonProperties,
+            current: {
+              value: v.current.value,
+              // Constant variable doesn't use text state
+              text: v.current.value,
+            },
+            query: v.query,
+          },
+        };
+        variables.push(cnts);
+        break;
+      case 'interval':
+        const intrv: IntervalVariableKind = {
+          kind: 'IntervalVariable',
+          spec: {
+            ...commonProperties,
+            current: {
+              value: v.current.value,
+              // Interval variable doesn't use text state
+              text: v.current.value,
+            },
+            query: v.query,
+            refresh: 'onTimeRangeChanged',
+            options: v.options,
+            auto: v.auto,
+            auto_min: v.auto_min,
+            auto_count: v.auto_count,
+          },
+        };
+        variables.push(intrv);
+        break;
+      case 'textbox':
+        const tx: TextVariableKind = {
+          kind: 'TextVariable',
+          spec: {
+            ...commonProperties,
+            current: {
+              value: v.current.value,
+              // Text variable doesn't use text state
+              text: v.current.value,
+            },
+            query: v.query,
+          },
+        };
+        variables.push(tx);
+        break;
+      case 'groupby':
+        const gb: GroupByVariableKind = {
+          kind: 'GroupByVariable',
+          spec: {
+            ...commonProperties,
+            datasource: v.datasource || getDefaultDatasource(),
+            options: v.options,
+            current: {
+              value: v.current.value,
+              text: v.current.text,
+            },
+            multi: v.multi,
+          },
+        };
+        variables.push(gb);
+        break;
       default:
-        throw new Error(`Variable transformation not implemented: ${v.type}`);
+        // do not throw error, just log it
+        console.error(`Variable transformation not implemented: ${v.type}`);
     }
   }
   return variables;
@@ -419,7 +577,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
       kind: 'AnnotationQuery',
       spec: {
         name: a.name,
-        datasource: a.datasource ?? undefined,
+        ...(a.datasource && { datasource: a.datasource }),
         enable: a.enable,
         hide: Boolean(a.hide),
         iconColor: a.iconColor,

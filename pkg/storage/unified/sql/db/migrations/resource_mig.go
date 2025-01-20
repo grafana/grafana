@@ -88,6 +88,34 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: "resource_blob",
+		Columns: []*migrator.Column{
+			{Name: "uuid", Type: migrator.DB_Uuid, Length: 36, Nullable: false, IsPrimaryKey: true},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
+
+			// The raw bytes
+			{Name: "value", Type: migrator.DB_LongBlob, Nullable: false},
+
+			// Used as an etag
+			{Name: "hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
+			{Name: "content_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{
+				Cols: []string{"namespace", "group", "resource", "name"},
+				Type: migrator.IndexType,
+				Name: "IDX_resource_history_namespace_group_name",
+			},
+			{Cols: []string{"created"}, Type: migrator.IndexType}, // sort field
+		},
+	})
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
