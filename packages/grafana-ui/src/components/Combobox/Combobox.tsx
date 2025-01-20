@@ -13,8 +13,8 @@ import { Input, Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { itemFilter, itemToString } from './filter';
 import { AsyncError, NotFoundError } from './MessageRows';
+import { itemFilter, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
@@ -452,3 +452,4 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     </div>
   );
 };
+export { itemToString };
