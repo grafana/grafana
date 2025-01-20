@@ -4,19 +4,24 @@ import { Select } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
 
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
-  level: number;
 }
 
-export function DashboardLayoutSelector({ layoutManager, level }: Props) {
-  const layouts = layoutRegistry.list();
-  const options = layouts
-    .filter((layout) => layout.level >= level)
+export function DashboardLayoutSelector({ layoutManager }: Props) {
+  const dashboard = getDashboardSceneFor(layoutManager);
+  const { body: rootLayoutManager } = dashboard.useState();
+  const isRootLayout = rootLayoutManager === layoutManager;
+  const rootLayoutManagerLevel = rootLayoutManager.getDescriptor().level;
+
+  const options = layoutRegistry
+    .list()
+    .filter((layout) => isRootLayout || layout.level > rootLayoutManagerLevel)
     .map((layout) => ({
       label: layout.name,
       value: layout,
@@ -38,7 +43,7 @@ export function DashboardLayoutSelector({ layoutManager, level }: Props) {
   );
 }
 
-export function useLayoutCategory(layoutManager: DashboardLayoutManager, level: number) {
+export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
   return useMemo(() => {
     const layoutCategory = new OptionsPaneCategoryDescriptor({
       title: 'Layout',
@@ -50,7 +55,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager, level: 
       new OptionsPaneItemDescriptor({
         title: 'Type',
         render: function renderTitle() {
-          return <DashboardLayoutSelector layoutManager={layoutManager} level={level} />;
+          return <DashboardLayoutSelector layoutManager={layoutManager} />;
         },
       })
     );
@@ -62,7 +67,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager, level: 
     }
 
     return layoutCategory;
-  }, [layoutManager, level]);
+  }, [layoutManager]);
 }
 
 function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
