@@ -1,6 +1,8 @@
 import { Observable } from 'rxjs';
 
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, LogsSortOrder } from '@grafana/schema';
+
+import { BusEventWithPayload } from '../events/types';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
@@ -366,3 +368,11 @@ export const hasQueryModificationSupport = <TQuery extends DataQuery>(
     'getSupportedQueryModifications' in datasource
   );
 };
+
+export interface LogSortOrderChangePayload {
+  order: LogsSortOrder;
+}
+
+export class LogSortOrderChangeEvent extends BusEventWithPayload<LogSortOrderChangePayload> {
+  static type = 'logs-sort-order-change';
+}

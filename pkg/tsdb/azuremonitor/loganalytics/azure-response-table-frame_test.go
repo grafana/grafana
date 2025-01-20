@@ -56,7 +56,7 @@ func TestLogTableToFrame(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadTestFileWithNumber(t, tt.testFile)
-			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, dataquery.ResultFormatTable, false)
+			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, dataquery.ResultFormatTable, false)
 			appendErrorNotice(frame, res.Error)
 			require.NoError(t, err)
 
@@ -107,7 +107,7 @@ func TestTraceTableToFrame(t *testing.T) {
 			name:         "single trace as trace format from exemplars query",
 			testFile:     "traces/2-traces-single-table.json",
 			resultFormat: dataquery.ResultFormatTrace,
-			queryType:    dataquery.AzureQueryTypeTraceql,
+			queryType:    dataquery.AzureQueryTypeTraceExemplar,
 		},
 	}
 
@@ -142,7 +142,7 @@ func TestLargeLogsResponse(t *testing.T) {
 		}
 		res.Tables[0].Rows = rows
 		resultFormat := dataquery.ResultFormatLogs
-		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, resultFormat, false)
+		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, resultFormat, false)
 		appendErrorNotice(frame, res.Error)
 		require.NoError(t, err)
 		require.Equal(t, frame.Rows(), 30000)
@@ -171,7 +171,7 @@ func TestLargeLogsResponse(t *testing.T) {
 		}
 		res.Tables[0].Rows = rows
 		resultFormat := dataquery.ResultFormatLogs
-		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, resultFormat, true)
+		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, resultFormat, true)
 		appendErrorNotice(frame, res.Error)
 		require.NoError(t, err)
 		require.Equal(t, frame.Rows(), 40000)
