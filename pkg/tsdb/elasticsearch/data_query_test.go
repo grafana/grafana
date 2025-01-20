@@ -580,6 +580,47 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, hAgg.MinDocCount, 2)
 			require.Equal(t, *hAgg.Missing, 5)
 		})
+		t.Run("With histogram agg with decimal interval", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"bucketAggs": [
+					{
+						"id": "3",
+						"type": "histogram",
+						"field": "bytes",
+						"settings": { "interval": "5.5", "min_doc_count": 2, "missing": 5 }
+					}
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
+			require.Equal(t, hAgg.Interval, 5.5)
+		})
+
+		t.Run("With histogram agg with invalid interval", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"bucketAggs": [
+					{
+						"id": "3",
+						"type": "histogram",
+						"field": "bytes",
+						"settings": { "interval": "5,5", "min_doc_count": 2, "missing": 5 }
+					}
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
+			require.Equal(t, hAgg.Interval, 1000)
+		})
 
 		t.Run("With histogram (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
