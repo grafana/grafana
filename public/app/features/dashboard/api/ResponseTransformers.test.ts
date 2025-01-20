@@ -308,6 +308,7 @@ describe('ResponseTransformers', () => {
           {
             id: 2,
             type: 'table',
+            title: 'Just a shared table',
             libraryPanel: {
               uid: 'library-panel-table',
               name: 'Table Panel as Library Panel',
@@ -463,8 +464,12 @@ describe('ResponseTransformers', () => {
       expect(spec.elements['2']).toEqual({
         kind: 'LibraryPanel',
         spec: {
-          uid: 'library-panel-table',
-          name: 'Table Panel as Library Panel',
+          libraryPanel: {
+            uid: 'library-panel-table',
+            name: 'Table Panel as Library Panel',
+          },
+          id: 2,
+          title: 'Just a shared table',
         },
       });
 
