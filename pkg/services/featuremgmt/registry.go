@@ -1473,9 +1473,10 @@ var (
 		{
 			Name:         "alertingQueryAndExpressionsStepMode",
 			Description:  "Enables step mode for alerting queries and expressions",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:           "improvedExternalSessionHandling",
@@ -1647,9 +1648,10 @@ var (
 		{
 			Name:         "alertingNotificationsStepMode",
 			Description:  "Enables simplified step mode in the notifications section",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:            "useV2DashboardsAPI",
