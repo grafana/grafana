@@ -66,9 +66,9 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("initializing encryption manager: %w", err)
 	}
 
-	b := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
-	apiregistration.RegisterAPI(b)
-	return b, nil
+	apiBuilder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
+	apiregistration.RegisterAPI(apiBuilder)
+	return apiBuilder, nil
 }
 
 // GetGroupVersion returns the tuple of `group` and `version` for the API which uniquely identifies it.
