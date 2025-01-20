@@ -92,6 +92,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&.level-warning': {
         color: colors.warning,
       },
+      '&.level-info': {
+        color: colors.info,
+      },
       '&.level-debug': {
         color: colors.debug,
       },
