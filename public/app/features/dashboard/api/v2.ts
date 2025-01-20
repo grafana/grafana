@@ -1,7 +1,7 @@
 import { UrlQueryMap } from '@grafana/data';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { getMessageFromError } from 'app/core/utils/errors';
+import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
@@ -46,7 +46,7 @@ export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<D
           result.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
           result.metadata.annotations[AnnoKeyFolderId] = folder.id;
         } catch (e) {
-          console.error('Failed to load a folder', e);
+          throw new Error('Failed to load folder');
         }
       }
 
@@ -59,9 +59,10 @@ export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<D
       // return the v2 response
       return result;
     } catch (e) {
+      const status = getStatusFromError(e);
       const message = getMessageFromError(e);
       // Hacking around a bug in k8s api server that returns 500 for not found resources
-      if (message.includes('not found')) {
+      if (message.includes('not found') && status !== 404) {
         // @ts-expect-error
         e.status = 404;
         // @ts-expect-error

@@ -1,6 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { getMessageFromError } from 'app/core/utils/errors';
+import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -114,15 +114,16 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
           result.meta.folderUid = folder.uid;
           result.meta.folderId = folder.id;
         } catch (e) {
-          console.error('Failed to load a folder', e);
+          throw new Error('Failed to load folder');
         }
       }
 
       return result;
     } catch (e) {
+      const status = getStatusFromError(e);
       const message = getMessageFromError(e);
       // Hacking around a bug in k8s api server that returns 500 for not found resources
-      if (message.includes('not found')) {
+      if (message.includes('not found') && status !== 404) {
         // @ts-expect-error
         e.status = 404;
         // @ts-expect-error
@@ -130,7 +131,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
       }
 
       throw e;
-      // debugger;
     }
   }
 }
