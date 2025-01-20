@@ -253,4 +253,7 @@ export interface FeatureToggles {
   teamHttpHeadersMimir?: boolean;
   ABTestFeatureToggleA?: boolean;
   ABTestFeatureToggleB?: boolean;
+  queryLibraryDashboards?: boolean;
+  grafanaAdvisor?: boolean;
+  elasticsearchImprovedParsing?: boolean;
 }

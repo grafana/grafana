@@ -149,6 +149,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 // CreateGrafDir creates the Grafana directory.
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
+//
+//nolint:gocyclo
 func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
@@ -459,6 +461,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = grafanaComSection.NewKey("api_url", opts.GrafanaComAPIURL)
 		require.NoError(t, err)
 	}
+	if opts.GrafanaComSSOAPIToken != "" {
+		grafanaComSection, err := getOrCreateSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaComSection.NewKey("sso_api_token", opts.GrafanaComSSOAPIToken)
+		require.NoError(t, err)
+	}
+
 	if opts.UnifiedStorageConfig != nil {
 		for k, v := range opts.UnifiedStorageConfig {
 			section, err := getOrCreateSection(fmt.Sprintf("unified_storage.%s", k))
@@ -519,6 +528,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
+	GrafanaComSSOAPIToken                 string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
