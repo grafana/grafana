@@ -3,9 +3,14 @@ import { config } from '@grafana/runtime';
 import { Alert, Text } from '@grafana/ui';
 
 const requiredFeatureToggles: Array<keyof FeatureToggles> = [
-  'kubernetesFolders',
   'kubernetesDashboards',
+  'kubernetesFoldersServiceV2',
+  'kubernetesDashboards',
+  'grafanaAPIServerWithExperimentalAPIs',
+  // 'unifiedStorage', // FIXME: not assignable to keyof FeatureToggles
   'unifiedStorageSearch',
+  'unifiedStorageSearchUI',
+  'kubernetesCliDashboards',
 ];
 
 export function SetupWarnings() {
