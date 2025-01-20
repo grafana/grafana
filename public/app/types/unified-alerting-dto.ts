@@ -244,6 +244,8 @@ export interface GrafanaEditorSettings {
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
+  version?: number;
+  updated?: string;
   title: string;
   condition: string;
   no_data_state?: GrafanaAlertStateDecision;

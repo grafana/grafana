@@ -1,8 +1,10 @@
+import { produce } from 'immer';
 import { HttpResponse, delay, http } from 'msw';
 
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
 import {
+  GrafanaRuleDefinition,
   PromRulesResponse,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
@@ -135,6 +137,21 @@ export const rulerRuleHandler = () => {
   });
 };
 
+export const rulerRuleVersionHistoryHandler = () => {
+  const grafanaRuleVersions = [
+    grafanaRulerRule,
+    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
+      draft.grafana_alert.version = 1;
+      draft.grafana_alert.title = 'Updated alert';
+      draft.grafana_alert.updated = '2025-01-1T09:35:17.000Z';
+    }),
+  ];
+
+  return http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/history`, ({ params: { uid } }) => {
+    return HttpResponse.json(grafanaRuleVersions);
+  });
+};
+
 export const historyHandler = () => {
   return http.get('/api/v1/rules/history', () => {
     return HttpResponse.json(getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]));
@@ -150,5 +167,6 @@ const handlers = [
   historyHandler(),
   updateRulerRuleNamespaceHandler(),
   deleteRulerRuleGroupHandler(),
+  rulerRuleVersionHistoryHandler(),
 ];
 export default handlers;

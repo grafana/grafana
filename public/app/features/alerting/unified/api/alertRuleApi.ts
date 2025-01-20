@@ -344,6 +344,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}` }),
       providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
     }),
+    getAlertVersionHistory: build.query<RulerGrafanaRuleDTO[], { uid: string }>({
+      query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}/history` }),
+    }),
 
     exportRules: build.query<string, ExportRulesParams>({
       query: ({ format, folderUid, group, ruleUid }) => ({

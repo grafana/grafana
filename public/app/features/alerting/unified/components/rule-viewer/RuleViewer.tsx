@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -42,6 +43,7 @@ import { FederatedRuleWarning } from './FederatedRuleWarning';
 import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
 import { RecordingBadge, StateBadge } from './StateBadges';
+import { AlertVersionHistory } from './tabs/AlertVersionHistory';
 import { Details } from './tabs/Details';
 import { History } from './tabs/History';
 import { InstancesList } from './tabs/Instances';
@@ -54,6 +56,7 @@ export enum ActiveTab {
   History = 'history',
   Routing = 'routing',
   Details = 'details',
+  VersionHistory = 'version-history',
 }
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
@@ -127,6 +130,9 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
           {activeTab === ActiveTab.Routing && <Routing />}
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
+          {activeTab === ActiveTab.VersionHistory && isGrafanaRulerRule(rule.rulerRule) && (
+            <AlertVersionHistory ruleUID={rule.rulerRule?.grafana_alert.uid} />
+          )}
         </TabContent>
       </Stack>
       {duplicateRuleIdentifier && (
@@ -376,6 +382,14 @@ function usePageNav(rule: CombinedRule) {
         onClick: () => {
           setActiveTab(ActiveTab.Details);
         },
+      },
+      {
+        text: 'Version history',
+        active: activeTab === ActiveTab.VersionHistory,
+        onClick: () => {
+          setActiveTab(ActiveTab.VersionHistory);
+        },
+        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingRuleVersionHistory,
       },
     ],
     parentItem: {

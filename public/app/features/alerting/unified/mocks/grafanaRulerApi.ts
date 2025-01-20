@@ -58,6 +58,8 @@ export const grafanaRulerRule: RulerGrafanaRuleDTO = {
     exec_err_state: GrafanaAlertStateDecision.Error,
     is_paused: false,
     notification_settings: undefined,
+    version: 2,
+    updated: '2025-01-17T09:35:17.000Z',
   },
 };
 
