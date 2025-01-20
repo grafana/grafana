@@ -43,7 +43,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
         );
     }, [dashboard]);
 
-    const layoutCategory = useLayoutCategory(body);
+    const layoutCategory = useLayoutCategory(body, 0);
 
     return [dashboardOptions, layoutCategory];
   }
