@@ -490,7 +490,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 	fields := s.builders.GetFields(nsr)
 
-	s.log.Debug(fmt.Sprintf("TODO, build %+v (size:%d, rv:%d) // builder:%+v\n", nsr, size, rv, builder))
+	s.log.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
 	key := &ResourceKey{
 		Group:     nsr.Group,

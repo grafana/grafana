@@ -1,21 +1,21 @@
 import { useStyles2 } from '../../themes';
 
-import { ComboboxOption } from './Combobox';
 import { getComboboxStyles } from './getComboboxStyles';
 
 interface Props {
-  option: ComboboxOption<string | number>;
+  label: string;
+  description?: string;
   id: string;
 }
 
-export const OptionListItem = ({ option, id }: Props) => {
+export const OptionListItem = ({ label, description, id }: Props) => {
   const styles = useStyles2(getComboboxStyles);
   return (
     <div className={styles.optionBody}>
       <span className={styles.optionLabel} id={id}>
-        {option.label ?? option.value}
+        {label}
       </span>
-      {option.description && <span className={styles.optionDescription}>{option.description}</span>}
+      {description && <span className={styles.optionDescription}>{description}</span>}
     </div>
   );
 };

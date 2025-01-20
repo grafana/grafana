@@ -40,9 +40,10 @@ type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	store         store.Store
-	identityStore legacy.LegacyIdentityStore
-	actionMapper  *mappers.K8sRbacMapper
+	store           store.Store
+	permissionStore store.PermissionStore
+	identityStore   legacy.LegacyIdentityStore
+	actionMapper    *mappers.K8sRbacMapper
 
 	logger log.Logger
 	tracer tracing.Tracer
@@ -58,19 +59,27 @@ type Service struct {
 	sf *singleflight.Group
 }
 
-func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
+func NewService(
+	sql legacysql.LegacyDatabaseProvider,
+	identityStore legacy.LegacyIdentityStore,
+	permissionStore store.PermissionStore,
+	logger log.Logger,
+	tracer tracing.Tracer,
+
+) *Service {
 	return &Service{
-		store:          store.NewStore(sql, tracer),
-		identityStore:  identityStore,
-		actionMapper:   mappers.NewK8sRbacMapper(),
-		logger:         logger,
-		tracer:         tracer,
-		idCache:        localcache.New(longCacheTTL, longCleanupInterval),
-		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
-		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
-		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
-		folderCache:    localcache.New(shortCacheTTL, shortCleanupInterval),
-		sf:             new(singleflight.Group),
+		store:           store.NewStore(sql, tracer),
+		permissionStore: permissionStore,
+		identityStore:   identityStore,
+		actionMapper:    mappers.NewK8sRbacMapper(),
+		logger:          logger,
+		tracer:          tracer,
+		idCache:         localcache.New(longCacheTTL, longCleanupInterval),
+		permCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
+		teamCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
+		basicRoleCache:  localcache.New(longCacheTTL, longCleanupInterval),
+		folderCache:     localcache.New(shortCacheTTL, shortCleanupInterval),
+		sf:              new(singleflight.Group),
 	}
 }
 
@@ -282,7 +291,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 			IsServerAdmin: basicRoles.IsAdmin,
 		}
 
-		permissions, err := s.store.GetUserPermissions(ctx, ns, userPermQuery)
+		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, userPermQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -311,7 +320,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 	}
 
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
-		permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
+		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
 		if err != nil {
 			return nil, err
 		}
