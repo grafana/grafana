@@ -426,7 +426,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			builder.Write(" UNION ")
 		}
 		builder.Write(selectLibraryElementDTOWithMeta)
-		builder.Write(", le.folder_uid as folder_name ")
+		builder.Write(", le.folder_uid as folder_name ") // #TODO stop setting this
 		builder.Write(", le.folder_uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		builder.Write(` WHERE le.org_id=? AND folder_id<>0`, signedInUser.GetOrgID())
@@ -455,8 +455,10 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			return err
 		}
 		var folderUIDS = []string{"general"} // every signed in user can see the general folder
+		folderMap := map[string]string{}
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
+			folderMap[f.UID] = f.Title
 		}
 		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, element := range elements {
@@ -478,7 +480,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 				Model:       element.Model,
 				Version:     element.Version,
 				Meta: model.LibraryElementDTOMeta{
-					FolderName:          element.FolderName,
+					FolderName:          folderMap[element.FolderUID],
 					FolderUID:           element.FolderUID,
 					ConnectedDashboards: element.ConnectedDashboards,
 					Created:             element.Created,
