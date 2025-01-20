@@ -3,6 +3,7 @@ package authz
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -33,6 +34,12 @@ func ProvideAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, grpcServer grpcserver.Provider,
 	tracer tracing.Tracer, db db.DB,
 ) (authzlib.AccessClient, error) {
+	// FIXME: SECURITY: Enable authorization. DO NOT MERGE until fixed.
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) && !setting.IsEnterprise {
+		slog.Warn("Authorization is disabled for provisioning. To enable, use Enterprise, or wait for OSS fix.")
+		return nil, nil
+	}
+
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
 		return nil, err
