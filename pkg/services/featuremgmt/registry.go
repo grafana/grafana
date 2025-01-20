@@ -1478,10 +1478,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "improvedExternalSessionHandling",
-			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       identityAccessTeam,
+			Name:           "improvedExternalSessionHandling",
+			Description:    "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
+			Stage:          FeatureStagePublicPreview,
+			Owner:          identityAccessTeam,
+			AllowSelfServe: true,
 		},
 		{
 			Name:        "useSessionStorageForRedirection",
@@ -1714,10 +1715,11 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "improvedExternalSessionHandlingSAML",
-			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       identityAccessTeam,
+			Name:           "improvedExternalSessionHandlingSAML",
+			Description:    "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
+			Stage:          FeatureStagePublicPreview,
+			Owner:          identityAccessTeam,
+			AllowSelfServe: true,
 		},
 		{
 			Name:           "teamHttpHeadersMimir",
