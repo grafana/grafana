@@ -1323,6 +1323,21 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchImprovedParsing",
+        "resourceVersion": "1736808262603",
+        "creationTimestamp": "2025-01-13T20:32:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-13 22:44:22.603729 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables less memory intensive Elasticsearch result parsing",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-24T14:46:31Z"
@@ -1725,6 +1740,18 @@
     },
     {
       "metadata": {
+        "name": "grafanaAdvisor",
+        "resourceVersion": "1737365459765",
+        "creationTimestamp": "2025-01-20T09:30:59Z"
+      },
+      "spec": {
+        "description": "Enables Advisor app",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaManagedRecordingRules",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-04-22T17:53:16Z"
@@ -1832,31 +1859,33 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandling",
-        "resourceVersion": "1736440595516",
+        "resourceVersion": "1737370880023",
         "creationTimestamp": "2024-09-17T10:54:39Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-09 16:36:35.516462 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-20 11:01:20.02358 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
         "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "codeowner": "@grafana/identity-access-team",
+        "allowSelfServe": true
       }
     },
     {
       "metadata": {
         "name": "improvedExternalSessionHandlingSAML",
-        "resourceVersion": "1736440619329",
+        "resourceVersion": "1737370880023",
         "creationTimestamp": "2025-01-09T16:33:07Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-09 16:36:59.329967 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-20 11:01:20.02358 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
         "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "codeowner": "@grafana/identity-access-team",
+        "allowSelfServe": true
       }
     },
     {
@@ -3206,6 +3235,21 @@
       },
       "spec": {
         "description": "Enables Query Library feature in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryLibraryDashboards",
+        "resourceVersion": "1736850377404",
+        "creationTimestamp": "2025-01-14T10:24:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-14 10:26:17.404592 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Query Library feature in Dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }

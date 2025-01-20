@@ -1,3 +1,5 @@
+import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
+
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
@@ -11,8 +13,10 @@ import {
   ResourceList,
   ResourceClient,
   ObjectMeta,
+  WatchOptions,
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
+  ResourceEvent,
 } from './types';
 
 export interface GroupVersionResource {
@@ -32,6 +36,44 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
 
   public async get(name: string): Promise<Resource<T, S, K>> {
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
+  }
+
+  public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
+    const decoder = new TextDecoder();
+    const params = {
+      ...opts,
+      watch: true,
+      labelSelector: this.parseListOptionsSelector(opts?.labelSelector),
+      fieldSelector: this.parseListOptionsSelector(opts?.fieldSelector),
+    };
+    return getBackendSrv()
+      .chunked({
+        url: params.name ? `${this.url}/${params.name}` : this.url,
+        params,
+      })
+      .pipe(
+        filter((response) => response.ok && response.data instanceof Uint8Array),
+        map((response) => {
+          const text = decoder.decode(response.data);
+          return text.split('\n');
+        }),
+        mergeMap((text) => from(text)),
+        filter((line) => line.length > 0),
+        map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            console.warn('Invalid JSON in watch stream:', e);
+            return null;
+          }
+        }),
+        filter((event): event is ResourceEvent<T, S, K> => event !== null),
+        retry({ count: 3, delay: 1000 }),
+        catchError((error) => {
+          console.error('Watch stream error:', error);
+          throw error;
+        })
+      );
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {

@@ -101,6 +101,7 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}, nil
 }
@@ -125,6 +126,7 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}, nil
 }
