@@ -1761,6 +1761,7 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 	t.Run("successfully converts save command to unstructured", func(t *testing.T) {
 		cmd := &dashboards.SaveDashboardCommand{
 			FolderUID: "folder-uid",
+			Message:   "saving this dashboard",
 			Dashboard: simplejson.NewFromAny(map[string]any{"test": "test", "title": "testing slugify", "uid": "test-uid"}),
 		}
 
@@ -1771,7 +1772,7 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 		assert.Equal(t, "test-namespace", result.GetNamespace())
 		spec := result.Object["spec"].(map[string]any)
 		assert.Equal(t, spec["version"], 1)
-		assert.Equal(t, result.GetAnnotations(), map[string]string{utils.AnnoKeyFolder: "folder-uid"})
+		assert.Equal(t, result.GetAnnotations(), map[string]string{utils.AnnoKeyFolder: "folder-uid", utils.AnnoKeyMessage: "saving this dashboard"})
 	})
 
 	t.Run("should increase version when called", func(t *testing.T) {
