@@ -1,5 +1,5 @@
-import { DataQuery } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DataQuery, VariableModel, VariableRefresh } from '@grafana/schema';
+import { DashboardV2Spec, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -9,16 +9,313 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
+import {
+  transformVariableHideToEnum,
+  transformVariableRefreshToEnum,
+} from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
-import { getPanelQueries, ResponseTransformers } from './ResponseTransformers';
+import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
 import { DashboardWithAccessInfo } from './types';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    bootData: {
+      ...jest.requireActual('@grafana/runtime').config.bootData,
+      settings: {
+        ...jest.requireActual('@grafana/runtime').config.bootData.settings,
+        datasources: {
+          PromTest: {
+            uid: 'xyz-abc',
+            name: 'PromTest',
+            id: 'prometheus',
+            meta: {
+              id: 'prometheus',
+              name: 'PromTest',
+              type: 'datasource',
+            },
+            isDefault: true,
+            apiVersion: 'v2',
+          },
+          '-- Grafana --': {
+            uid: 'grafana',
+            name: '-- Grafana --',
+            id: 'grafana',
+            meta: {
+              id: 'grafana',
+              name: '-- Grafana --',
+              type: 'datasource',
+            },
+            isDefault: false,
+          },
+        },
+
+        defaultDatasource: 'PromTest',
+      },
+    },
+  },
+}));
+
 describe('ResponseTransformers', () => {
+  describe('getDefaultDataSource', () => {
+    it('should return prometheus as default', () => {
+      expect(getDefaultDatasource()).toEqual({
+        apiVersion: 'v2',
+        uid: 'PromTest',
+        type: 'prometheus',
+      });
+    });
+  });
+
+  describe('getDefaultDataSourceRef', () => {
+    it('should return prometheus as default', () => {
+      expect(getDefaultDataSourceRef()).toEqual({
+        uid: 'PromTest',
+        type: 'prometheus',
+      });
+    });
+  });
+
   describe('v1 -> v2 transformation', () => {
     it('should transform DashboardDTO to DashboardWithAccessInfo<DashboardV2Spec>', () => {
-      const dashV2 = setupDashboardV1Resource();
-      const transformed = ResponseTransformers.ensureV2Response(dashV2);
+      const dashboardV1: DashboardDataDTO = {
+        uid: 'dashboard-uid',
+        id: 123,
+        title: 'Dashboard Title',
+        description: 'Dashboard Description',
+        tags: ['tag1', 'tag2'],
+        schemaVersion: 1,
+        graphTooltip: 0,
+        preload: true,
+        liveNow: false,
+        editable: true,
+        time: { from: 'now-6h', to: 'now' },
+        timezone: 'browser',
+        refresh: '5m',
+        timepicker: {
+          refresh_intervals: ['5s', '10s', '30s'],
+          hidden: false,
+          time_options: ['5m', '15m', '1h'],
+          nowDelay: '1m',
+        },
+        fiscalYearStartMonth: 1,
+        weekStart: 'monday',
+        version: 1,
+        gnetId: 'something-like-a-uid',
+        revision: 225,
+        links: [
+          {
+            title: 'Link 1',
+            url: 'https://grafana.com',
+            asDropdown: false,
+            targetBlank: true,
+            includeVars: true,
+            keepTime: true,
+            tags: ['tag1', 'tag2'],
+            icon: 'external link',
+            type: 'link',
+            tooltip: 'Link 1 Tooltip',
+          },
+        ],
+        annotations: {
+          list: [],
+        },
+        templating: {
+          list: [
+            {
+              type: 'query',
+              name: 'var1',
+              label: 'query var',
+              description: 'query var description',
+              skipUrlSync: false,
+              hide: 0,
+              multi: true,
+              includeAll: true,
+              current: { value: '1', text: '1' },
+              options: [
+                { selected: true, text: '1', value: '1' },
+                { selected: false, text: '2', value: '2' },
+              ],
+              refresh: VariableRefresh.onTimeRangeChanged,
+              datasource: {
+                type: 'prometheus',
+                uid: 'abc',
+              },
+              regex: '.*',
+              sort: 1,
+              query: {
+                expr: 'sum(query)',
+              },
+            },
+            {
+              type: 'datasource',
+              name: 'var2',
+              label: 'datasource var',
+              description: 'datasource var description',
+              skipUrlSync: false,
+              hide: 0,
+              multi: true,
+              includeAll: true,
+              current: { value: 'PromTest', text: 'PromTest' },
+              options: [
+                { selected: true, text: 'PromTest', value: 'PromTest' },
+                { selected: false, text: 'Grafana', value: 'Grafana' },
+              ],
+              refresh: VariableRefresh.onTimeRangeChanged,
+              regex: '.*',
+              sort: 1,
+              query: 'sum(query)',
+            },
+            {
+              type: 'custom',
+              name: 'var3',
+              label: 'custom var',
+              description: 'custom var description',
+              skipUrlSync: false,
+              hide: 0,
+              multi: true,
+              includeAll: true,
+              current: { value: '1', text: '1' },
+              query: '1,2,3',
+              options: [
+                { selected: true, text: '1', value: '1' },
+                { selected: false, text: '2', value: '2' },
+              ],
+              allValue: '1,2,3',
+            },
+            {
+              type: 'adhoc',
+              name: 'var4',
+              label: 'adhoc var',
+              description: 'adhoc var description',
+              skipUrlSync: false,
+              hide: 0,
+              datasource: {
+                type: 'prometheus',
+                uid: 'abc',
+              },
+              // @ts-expect-error
+              baseFilters: [{ key: 'key1', operator: 'AND' }],
+              filters: [],
+              defaultKeys: [],
+            },
+            {
+              type: 'constant',
+              name: 'var5',
+              label: 'constant var',
+              description: 'constant var description',
+              skipUrlSync: false,
+              hide: 0,
+              current: { value: '1', text: '0' },
+              query: '1',
+            },
+            {
+              type: 'interval',
+              name: 'var6',
+              label: 'interval var',
+              description: 'interval var description',
+              skipUrlSync: false,
+              query: '1m,10m,30m,1h',
+              hide: 0,
+              current: {
+                value: 'auto',
+                text: 'auto',
+              },
+              refresh: VariableRefresh.onTimeRangeChanged,
+              options: [
+                {
+                  selected: true,
+                  text: '1m',
+                  value: '1m',
+                },
+                {
+                  selected: false,
+                  text: '10m',
+                  value: '10m',
+                },
+                {
+                  selected: false,
+                  text: '30m',
+                  value: '30m',
+                },
+                {
+                  selected: false,
+                  text: '1h',
+                  value: '1h',
+                },
+              ],
+              // @ts-expect-error
+              auto: false,
+              auto_min: '1s',
+              auto_count: 1,
+            },
+            {
+              type: 'textbox',
+              name: 'var7',
+              label: 'textbox var',
+              description: 'textbox var description',
+              skipUrlSync: false,
+              hide: 0,
+              current: { value: '1', text: '1' },
+              query: '1',
+            },
+            {
+              type: 'groupby',
+              name: 'var8',
+              label: 'groupby var',
+              description: 'groupby var description',
+              skipUrlSync: false,
+              hide: 0,
+              datasource: {
+                type: 'prometheus',
+                uid: 'abc',
+              },
+              options: [
+                { selected: true, text: '1', value: '1' },
+                { selected: false, text: '2', value: '2' },
+              ],
+              current: { value: ['1'], text: ['1'] },
+            },
+          ],
+        },
+      };
+
+      const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
+        spec: dashboardV1,
+        access: {
+          slug: 'dashboard-slug',
+          url: '/d/dashboard-slug',
+          canAdmin: true,
+          canDelete: true,
+          canEdit: true,
+          canSave: true,
+          canShare: true,
+          canStar: true,
+          annotationsPermissions: {
+            dashboard: { canAdd: true, canEdit: true, canDelete: true },
+            organization: { canAdd: true, canEdit: true, canDelete: true },
+          },
+        },
+        apiVersion: 'v1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'dashboard-uid',
+          resourceVersion: '1',
+          creationTimestamp: '2023-01-01T00:00:00Z',
+          annotations: {
+            [AnnoKeyCreatedBy]: 'user1',
+            [AnnoKeyUpdatedBy]: 'user2',
+            [AnnoKeyUpdatedTimestamp]: '2023-01-02T00:00:00Z',
+            [AnnoKeyFolder]: 'folder1',
+            [AnnoKeySlug]: 'dashboard-slug',
+          },
+        },
+      };
+
+      const transformed = ResponseTransformers.ensureV2Response(dto);
 
       // Metadata
       expect(transformed.apiVersion).toBe('v2alpha1');
@@ -33,26 +330,26 @@ describe('ResponseTransformers', () => {
 
       // Spec
       const spec = transformed.spec;
-      expect(spec.title).toBe(dashV2.spec.title);
-      expect(spec.description).toBe(dashV2.spec.description);
-      expect(spec.tags).toEqual(dashV2.spec.tags);
-      expect(spec.schemaVersion).toBe(dashV2.spec.schemaVersion);
+      expect(spec.title).toBe(dashboardV1.title);
+      expect(spec.description).toBe(dashboardV1.description);
+      expect(spec.tags).toEqual(dashboardV1.tags);
+      expect(spec.schemaVersion).toBe(dashboardV1.schemaVersion);
       expect(spec.cursorSync).toBe('Off'); // Assuming transformCursorSynctoEnum(0) returns 'Off'
-      expect(spec.preload).toBe(dashV2.spec.preload);
-      expect(spec.liveNow).toBe(dashV2.spec.liveNow);
-      expect(spec.editable).toBe(dashV2.spec.editable);
-      expect(spec.revision).toBe(dashV2.spec.revision);
-      expect(spec.timeSettings.from).toBe(dashV2.spec.time?.from);
-      expect(spec.timeSettings.to).toBe(dashV2.spec.time?.to);
-      expect(spec.timeSettings.timezone).toBe(dashV2.spec.timezone);
-      expect(spec.timeSettings.autoRefresh).toBe(dashV2.spec.refresh);
-      expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashV2.spec.timepicker?.refresh_intervals);
-      expect(spec.timeSettings.hideTimepicker).toBe(dashV2.spec.timepicker?.hidden);
-      expect(spec.timeSettings.quickRanges).toEqual(dashV2.spec.timepicker?.time_options);
-      expect(spec.timeSettings.nowDelay).toBe(dashV2.spec.timepicker?.nowDelay);
-      expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashV2.spec.fiscalYearStartMonth);
-      expect(spec.timeSettings.weekStart).toBe(dashV2.spec.weekStart);
-      expect(spec.links).toEqual(dashV2.spec.links);
+      expect(spec.preload).toBe(dashboardV1.preload);
+      expect(spec.liveNow).toBe(dashboardV1.liveNow);
+      expect(spec.editable).toBe(dashboardV1.editable);
+      expect(spec.revision).toBe(dashboardV1.revision);
+      expect(spec.timeSettings.from).toBe(dashboardV1.time?.from);
+      expect(spec.timeSettings.to).toBe(dashboardV1.time?.to);
+      expect(spec.timeSettings.timezone).toBe(dashboardV1.timezone);
+      expect(spec.timeSettings.autoRefresh).toBe(dashboardV1.refresh);
+      expect(spec.timeSettings.autoRefreshIntervals).toEqual(dashboardV1.timepicker?.refresh_intervals);
+      expect(spec.timeSettings.hideTimepicker).toBe(dashboardV1.timepicker?.hidden);
+      expect(spec.timeSettings.quickRanges).toEqual(dashboardV1.timepicker?.time_options);
+      expect(spec.timeSettings.nowDelay).toBe(dashboardV1.timepicker?.nowDelay);
+      expect(spec.timeSettings.fiscalYearStartMonth).toBe(dashboardV1.fiscalYearStartMonth);
+      expect(spec.timeSettings.weekStart).toBe(dashboardV1.weekStart);
+      expect(spec.links).toEqual(dashboardV1.links);
       expect(spec.annotations).toEqual([]);
 
       // Panel
@@ -136,6 +433,14 @@ describe('ResponseTransformers', () => {
           name: 'Table Panel as Library Panel',
         },
       });
+      validateVariablesV1ToV2(spec.variables[0], dashboardV1.templating?.list?.[0]);
+      validateVariablesV1ToV2(spec.variables[1], dashboardV1.templating?.list?.[1]);
+      validateVariablesV1ToV2(spec.variables[2], dashboardV1.templating?.list?.[2]);
+      validateVariablesV1ToV2(spec.variables[3], dashboardV1.templating?.list?.[3]);
+      validateVariablesV1ToV2(spec.variables[4], dashboardV1.templating?.list?.[4]);
+      validateVariablesV1ToV2(spec.variables[5], dashboardV1.templating?.list?.[5]);
+      validateVariablesV1ToV2(spec.variables[6], dashboardV1.templating?.list?.[6]);
+      validateVariablesV1ToV2(spec.variables[7], dashboardV1.templating?.list?.[7]);
     });
   });
 
@@ -348,117 +653,78 @@ describe('ResponseTransformers', () => {
   });
 });
 
-function setupDashboardV1Resource(): DashboardWithAccessInfo<DashboardDataDTO> {
-  const dashboardV1: DashboardDataDTO = {
-    uid: 'dashboard-uid',
-    id: 123,
-    title: 'Dashboard Title',
-    description: 'Dashboard Description',
-    tags: ['tag1', 'tag2'],
-    schemaVersion: 1,
-    graphTooltip: 0,
-    preload: true,
-    liveNow: false,
-    editable: true,
-    time: { from: 'now-6h', to: 'now' },
-    timezone: 'browser',
-    refresh: '5m',
-    timepicker: {
-      refresh_intervals: ['5s', '10s', '30s'],
-      hidden: false,
-      time_options: ['5m', '15m', '1h'],
-      nowDelay: '1m',
-    },
-    fiscalYearStartMonth: 1,
-    weekStart: 'monday',
-    version: 1,
-    gnetId: 'something-like-a-uid',
-    revision: 225,
-    links: [
-      {
-        title: 'Link 1',
-        url: 'https://grafana.com',
-        asDropdown: false,
-        targetBlank: true,
-        includeVars: true,
-        keepTime: true,
-        tags: ['tag1', 'tag2'],
-        icon: 'external link',
-        type: 'link',
-        tooltip: 'Link 1 Tooltip',
-      },
-    ],
-    annotations: {
-      list: [],
-    },
-    panels: [
-      {
-        id: 1,
-        type: 'timeseries',
-        title: 'Panel Title',
-        gridPos: { x: 0, y: 0, w: 12, h: 8 },
-        targets: [
-          {
-            refId: 'A',
-            datasource: 'datasource1',
-            expr: 'test-query',
-            hide: false,
-          },
-        ],
-        datasource: {
-          type: 'prometheus',
-          uid: 'datasource1',
-        },
-        fieldConfig: { defaults: {}, overrides: [] },
-        options: {},
-        transparent: false,
-        links: [],
-        transformations: [],
-      },
-      {
-        id: 2,
-        type: 'table',
-        libraryPanel: {
-          uid: 'library-panel-table',
-          name: 'Table Panel as Library Panel',
-        },
-        gridPos: { x: 0, y: 8, w: 12, h: 8 },
-      },
-    ],
+function validateVariablesV1ToV2(v2: VariableKind, v1: VariableModel | undefined) {
+  if (!v1) {
+    return expect(v1).toBeDefined();
+  }
+
+  const v1Common = {
+    name: v1.name,
+    label: v1.label,
+    description: v1.description,
+    hide: transformVariableHideToEnum(v1.hide),
+    skipUrlSync: v1.skipUrlSync,
+  };
+  const v2Common = {
+    name: v2.spec.name,
+    label: v2.spec.label,
+    description: v2.spec.description,
+    hide: v2.spec.hide,
+    skipUrlSync: v2.spec.skipUrlSync,
   };
 
-  const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
-    spec: dashboardV1,
-    access: {
-      slug: 'dashboard-slug',
-      url: '/d/dashboard-slug',
-      canAdmin: true,
-      canDelete: true,
-      canEdit: true,
-      canSave: true,
-      canShare: true,
-      canStar: true,
-      annotationsPermissions: {
-        dashboard: { canAdd: true, canEdit: true, canDelete: true },
-        organization: { canAdd: true, canEdit: true, canDelete: true },
-      },
-    },
-    apiVersion: 'v1',
-    kind: 'DashboardWithAccessInfo',
-    metadata: {
-      name: 'dashboard-uid',
-      resourceVersion: '1',
+  expect(v2Common).toEqual(v1Common);
 
-      creationTimestamp: '2023-01-01T00:00:00Z',
-      annotations: {
-        [AnnoKeyCreatedBy]: 'user1',
-        [AnnoKeyUpdatedBy]: 'user2',
-        [AnnoKeyUpdatedTimestamp]: '2023-01-02T00:00:00Z',
-        [AnnoKeyFolder]: 'folder1',
-        [AnnoKeySlug]: 'dashboard-slug',
+  if (v2.kind === 'QueryVariable') {
+    expect(v2.spec.datasource).toEqual(v1.datasource);
+    expect(v2.spec.query).toEqual({
+      kind: v1.datasource?.type,
+      spec: {
+        ...(typeof v1.query === 'object' ? v1.query : {}),
       },
-    },
-  };
+    });
+  }
 
-  return dto;
+  if (v2.kind === 'DatasourceVariable') {
+    expect(v2.spec.pluginId).toBe(v1.query);
+    expect(v2.spec.refresh).toBe(transformVariableRefreshToEnum(v1.refresh));
+  }
+
+  if (v2.kind === 'CustomVariable') {
+    expect(v2.spec.query).toBe(v1.query);
+    expect(v2.spec.options).toEqual(v1.options);
+  }
+
+  if (v2.kind === 'AdhocVariable') {
+    expect(v2.spec.datasource).toEqual(v1.datasource);
+    expect(v2.spec.filters).toEqual([]);
+    // @ts-expect-error
+    expect(v2.spec.baseFilters).toEqual(v1.baseFilters);
+  }
+
+  if (v2.kind === 'ConstantVariable') {
+    expect(v2.spec.query).toBe(v1.query);
+  }
+
+  if (v2.kind === 'IntervalVariable') {
+    expect(v2.spec.query).toBe(v1.query);
+    expect(v2.spec.options).toEqual(v1.options);
+    expect(v2.spec.current).toEqual(v1.current);
+    // @ts-expect-error
+    expect(v2.spec.auto).toBe(v1.auto);
+    // @ts-expect-error
+    expect(v2.spec.auto_min).toBe(v1.auto_min);
+    // @ts-expect-error
+    expect(v2.spec.auto_count).toBe(v1.auto_count);
+  }
+
+  if (v2.kind === 'TextVariable') {
+    expect(v2.spec.query).toBe(v1.query);
+    expect(v2.spec.current).toEqual(v1.current);
+  }
+
+  if (v2.kind === 'GroupByVariable') {
+    expect(v2.spec.datasource).toEqual(v1.datasource);
+    expect(v2.spec.options).toEqual(v1.options);
+  }
 }

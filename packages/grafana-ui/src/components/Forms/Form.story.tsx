@@ -1,23 +1,20 @@
 import { StoryFn } from '@storybook/react';
 import { ValidateResult } from 'react-hook-form';
 
-import {
-  Field,
-  Legend,
-  Input,
-  Button,
-  Form,
-  Switch,
-  Checkbox,
-  Select,
-  InputControl,
-  TextArea,
-  RadioButtonGroup,
-} from '@grafana/ui';
-
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
+import { Button } from '../Button';
+import { Input } from '../Input/Input';
+import { InputControl } from '../InputControl';
+import { Select } from '../Select/Select';
+import { Switch } from '../Switch/Switch';
+import { TextArea } from '../TextArea/TextArea';
 
+import { Checkbox } from './Checkbox';
+import { Field } from './Field';
+import { Form } from './Form';
 import mdx from './Form.mdx';
+import { Legend } from './Legend';
+import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
 export default {
   title: 'Forms/Form',

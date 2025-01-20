@@ -12,8 +12,8 @@ import {
   defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
-  PanelKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -488,7 +488,6 @@ describe('DashboardSceneSerializer', () => {
                     },
                   ],
                   multi: false,
-                  includeAll: false,
                   hide: 'dontHide',
                   skipUrlSync: false,
                 },
@@ -624,9 +623,18 @@ describe('DashboardSceneSerializer', () => {
       ).toThrow('Method not implemented.');
     });
 
-    it('should throw on getSnapshotUrl', () => {
+    it('should allow retrieving snapshot url', () => {
       const serializer = new V2DashboardSerializer();
-      expect(() => serializer.getSnapshotUrl()).toThrow('Method not implemented.');
+      serializer.metadata = {
+        name: 'dashboard-test',
+        resourceVersion: '1',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+        annotations: {
+          [AnnoKeyDashboardSnapshotOriginalUrl]: 'originalUrl/snapshot',
+        },
+      };
+
+      expect(serializer.getSnapshotUrl()).toBe('originalUrl/snapshot');
     });
   });
 });

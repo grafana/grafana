@@ -38,7 +38,8 @@ import {
   DataLink,
   LibraryPanelKind,
   Element,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+  RepeatOptions,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -51,6 +52,7 @@ import {
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
   isLibraryPanel,
+  calculateGridItemDimensions,
 } from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
@@ -115,7 +117,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     layout: {
       kind: 'GridLayout',
       spec: {
-        items: getGridLayoutItems(oldDash),
+        items: getGridLayoutItems(oldDash, isSnapshot),
       },
     },
     // EOF layout
@@ -150,16 +152,16 @@ function getLiveNow(state: DashboardSceneState) {
 
 function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): GridLayoutItemKind[] {
   const body = state.body;
-  const elements: GridLayoutItemKind[] = [];
+  let elements: GridLayoutItemKind[] = [];
   if (body instanceof DefaultGridLayoutManager) {
     for (const child of body.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
         // TODO: handle panel repeater scenario
-        // if (child.state.variableName) {
-        //   panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
-        // } else {
-        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
-        // }
+        if (child.state.variableName) {
+          elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
+        } else {
+          elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
+        }
       }
 
       // TODO: OLD transformer code
@@ -172,6 +174,7 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
       // }
     }
   }
+
   return elements;
 }
 
@@ -193,6 +196,7 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
   x = gridItem_.state.x ?? 0;
   y = gridItem_.state.y ?? 0;
   width = gridItem_.state.width ?? 0;
+  const repeatVar = gridItem_.state.variableName;
 
   // FIXME: which name should we use for the element reference, key or something else ?
   const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
@@ -209,6 +213,23 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
       },
     },
   };
+
+  if (repeatVar) {
+    const repeat: RepeatOptions = {
+      mode: 'variable',
+      value: repeatVar,
+    };
+
+    if (gridItem_.state.maxPerRow) {
+      repeat.maxPerRow = gridItem_.getMaxPerRow();
+    }
+
+    if (gridItem_.state.repeatDirection) {
+      repeat.direction = gridItem_.getRepeatDirection();
+    }
+
+    elementGridItem.spec.repeat = repeat;
+  }
 
   if (!elementGridItem) {
     throw new Error('Unsupported grid item type');
@@ -388,6 +409,60 @@ function createElements(panels: Element[]): Record<string, Element> {
   );
 }
 
+function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
+  if (!isSnapshot) {
+    return [gridItemToGridLayoutItemKind(repeater)];
+  } else {
+    if (repeater.state.body instanceof VizPanel && isLibraryPanel(repeater.state.body)) {
+      // TODO: implement
+      // const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
+      // return [vizPanelToPanel(repeater.state.body, { x, y, w, h }, isSnapshot)];
+      return [];
+    }
+
+    if (repeater.state.repeatedPanels) {
+      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
+      const panels = repeater.state.repeatedPanels!.map((panel, index) => {
+        let x = 0,
+          y = 0;
+        if (repeater.state.repeatDirection === 'v') {
+          x = repeater.state.x!;
+          y = index * h;
+        } else {
+          x = (index % columnCount) * w;
+          y = repeater.state.y! + Math.floor(index / columnCount) * h;
+        }
+
+        const gridPos = { x, y, w, h };
+
+        const result: GridLayoutItemKind = {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: gridPos.x,
+            y: gridPos.y,
+            width: gridPos.w,
+            height: gridPos.h,
+            repeat: {
+              mode: 'variable',
+              value: repeater.state.variableName!,
+              maxPerRow: repeater.getMaxPerRow(),
+              direction: repeater.state.repeatDirection,
+            },
+            element: {
+              kind: 'ElementReference',
+              name: panel.state.key!,
+            },
+          },
+        };
+        return result;
+      });
+
+      return panels;
+    }
+    return [];
+  }
+}
+
 function getVariables(oldDash: DashboardSceneState) {
   const variablesSet = oldDash.$variables;
 
@@ -428,7 +503,6 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
-        filter: layer.state.query.filter,
         iconColor: layer.state.query.iconColor,
       },
     };
@@ -440,6 +514,11 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         kind: queryKind,
         spec: layer.state.query.query.spec,
       };
+    }
+
+    // If filter is an empty array, don't save it
+    if (layer.state.query.filter?.ids?.length) {
+      result.spec.filter = layer.state.query.filter;
     }
 
     annotations.push(result);
@@ -460,7 +539,7 @@ export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string
   }
 }
 
-function getDefaultDataSourceRef(): DataSourceRef | undefined {
+export function getDefaultDataSourceRef(): DataSourceRef | undefined {
   // we need to return the default datasource configured in the BootConfig
   const defaultDatasource = config.bootData.settings.defaultDatasource;
 
