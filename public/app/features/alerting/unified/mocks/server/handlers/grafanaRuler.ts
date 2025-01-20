@@ -143,7 +143,8 @@ export const rulerRuleVersionHistoryHandler = () => {
     produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
       draft.grafana_alert.version = 1;
       draft.grafana_alert.title = 'Updated alert';
-      draft.grafana_alert.updated = '2025-01-1T09:35:17.000Z';
+      draft.grafana_alert.updated = '2025-01-17T09:35:17.000Z';
+      draft.grafana_alert.updated_by = 'user1';
     }),
   ];
 

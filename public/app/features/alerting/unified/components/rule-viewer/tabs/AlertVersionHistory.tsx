@@ -136,7 +136,7 @@ function VersionHistoryTable({
   const rows: VersionData[] = ruleVersions.map((rule) => ({
     id: String(rule.grafana_alert.version ?? 0),
     date: rule.grafana_alert.updated ?? 'unknown',
-    updatedBy: 'user.name', // todo: do we have this info?
+    updatedBy: rule.grafana_alert.updated_by ?? 'unknown',
     uid: rule.grafana_alert.uid,
   }));
 
@@ -176,7 +176,7 @@ function VersionHistoryTable({
       id: 'updatedBy',
       header: 'Updated By',
       disableGrow: true,
-      cell: () => <></>, //todo: user.name
+      cell: ({ value }) => value,
     },
     {
       id: 'actions',

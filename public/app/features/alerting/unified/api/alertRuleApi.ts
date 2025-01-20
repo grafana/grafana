@@ -346,6 +346,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
     getAlertVersionHistory: build.query<RulerGrafanaRuleDTO[], { uid: string }>({
       query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}/history` }),
+      providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({
