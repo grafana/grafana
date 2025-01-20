@@ -344,25 +344,22 @@ message BatchRequest {
 
 message BatchResponse {
   message Summary {
-    enum Action {
-      UNKNOWN = 0;
-      ERROR = 1;
-      WRITE_EVENT = 2;
-      DELETE_HISTORY = 3;
-      DELETE_RESOURCE = 4;
-      SYNC_RESOURCE = 5;
-    }
+    string namespace = 1;
+    string group = 2;
+    string resource = 3;
+    int64 count = 4;
+    int64 history = 5;
+    int64 resource_version = 6; // The max saved RV
 
-    Action action = 1;
-    ResourceKey key = 2; // The collection or object
-    int64 count = 3;
-    string details = 4; // useful for error handling
+    // The previous count
+    int64 previous_count = 7;
+    int64 previous_history = 8;
   }
 
   // Error details
   ErrorResult error = 1;
 
-  // The number of events processed
+  // Total events processed
   int64 processed = 2;
 
   repeated Summary summary = 3;

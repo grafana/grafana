@@ -103,6 +103,8 @@ func (r sqlResourceInsertFromHistoryRequest) Validate() error {
 type sqlStatsRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
+	Group     string
+	Resource  string
 	Folder    string
 	MinCount  int
 }

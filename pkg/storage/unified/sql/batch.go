@@ -30,16 +30,18 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 		// We are in a transaction so as long as the individual values increase we are set
 		rv := int64(0)
 
+		summaries := make(map[string]*resource.BatchResponse_Summary, len(setting.Collection)*4)
+
 		// First clear everything in the transaction
 		if setting.RebuildCollection {
 			for _, key := range setting.Collection {
 				summary, err := batch.deleteCollection(key)
-				if summary != nil {
-					rsp.Summary = append(rsp.Summary, summary...)
-				}
 				if err != nil {
 					return err
 				}
+				k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
+				summaries[k] = summary
+				rsp.Summary = append(rsp.Summary, summary)
 
 				// get the RV for this resource
 				tmp, err := b.resourceVersionAtomicInc(ctx, tx, key)
@@ -54,8 +56,6 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 		if rv < 100 {
 			return fmt.Errorf("expected resource version to be set")
 		}
-
-		summary := make(map[string]*resource.BatchResponse_Summary, len(setting.Collection)*4)
 
 		// Write each event into the history
 		for req := next(); req != nil; req = next() {
@@ -82,30 +82,18 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 				return fmt.Errorf("insert into resource history: %w", err)
 			}
 
-			// Add summary statistics
-			k := fmt.Sprintf("%s/%s/%s - %d", req.Key.Namespace, req.Key.Group, req.Key.Resource, eventType)
-			s, ok := summary[k]
-			if !ok {
-				req.Key.Name = ""
-				s = &resource.BatchResponse_Summary{
-					Action:  resource.BatchResponse_Summary_WRITE_EVENT,
-					Key:     req.Key,
-					Details: fmt.Sprintf("Type %s", eventType.String()),
-				}
-				rsp.Summary = append(rsp.Summary, s)
-				summary[k] = s
-			}
-			s.Count++
-
-			fmt.Printf("WROTE %d/%s (%s/%d)\n", rv, req.Key.Name, s.Action, s.Count)
+			fmt.Printf("WROTE %d/%s\n", rv, req.Key.Name)
 		}
 
 		// Now update the resource table from history
 		for _, key := range setting.Collection {
-			summary, err := batch.syncCollection(key)
-			if summary != nil {
-				rsp.Summary = append(rsp.Summary, summary)
+			k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
+			summary := summaries[k]
+			if summary == nil {
+				return fmt.Errorf("missing summary key for: %s", k)
 			}
+
+			err := batch.syncCollection(key, summary)
 			if err != nil {
 				return err
 			}
@@ -132,7 +120,13 @@ type batchWroker struct {
 }
 
 // This will remove everything from the `resource` and `resource_history` table for a given namespace/group/resource
-func (w *batchWroker) deleteCollection(key *resource.ResourceKey) ([]*resource.BatchResponse_Summary, error) {
+func (w *batchWroker) deleteCollection(key *resource.ResourceKey) (*resource.BatchResponse_Summary, error) {
+	summary := &resource.BatchResponse_Summary{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}
+
 	// First delete history
 	res, err := dbutil.Exec(w.ctx, w.tx, sqlResourceHistoryDelete, &sqlResourceHistoryDeleteRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
@@ -143,11 +137,8 @@ func (w *batchWroker) deleteCollection(key *resource.ResourceKey) ([]*resource.B
 	if err != nil {
 		return nil, err
 	}
-	history := &resource.BatchResponse_Summary{
-		Action: resource.BatchResponse_Summary_DELETE_HISTORY,
-		Key:    key,
-	}
-	history.Count, err = res.RowsAffected()
+
+	summary.PreviousHistory, err = res.RowsAffected()
 	if err != nil {
 		return nil, err
 	}
@@ -162,27 +153,39 @@ func (w *batchWroker) deleteCollection(key *resource.ResourceKey) ([]*resource.B
 	if err != nil {
 		return nil, err
 	}
-	resources := &resource.BatchResponse_Summary{
-		Action: resource.BatchResponse_Summary_DELETE_RESOURCE,
-		Key:    key,
-	}
-	resources.Count, err = res.RowsAffected()
-	return []*resource.BatchResponse_Summary{history, resources}, err
+	summary.PreviousCount, err = res.RowsAffected()
+	return summary, err
 }
 
 // Copy the latest value from history into the active resource table
-func (w *batchWroker) syncCollection(key *resource.ResourceKey) (*resource.BatchResponse_Summary, error) {
-	res, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
+func (w *batchWroker) syncCollection(key *resource.ResourceKey, summary *resource.BatchResponse_Summary) error {
+	_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
 		Key:         key,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	summary := &resource.BatchResponse_Summary{
-		Action: resource.BatchResponse_Summary_SYNC_RESOURCE,
-		Key:    key,
+
+	rows, err := dbutil.QueryRows(w.ctx, w.tx, sqlResourceStats, &sqlStatsRequest{
+		SQLTemplate: sqltemplate.New(w.dialect),
+		Namespace:   key.Namespace,
+		Group:       key.Group,
+		Resource:    key.Resource,
+	})
+	if err != nil {
+		return err
 	}
-	summary.Count, err = res.RowsAffected()
-	return summary, err
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
+	}
+	if rows.Next() {
+		row := resource.ResourceStats{}
+		return rows.Scan(&row.Namespace, &row.Group, &row.Resource,
+			&summary.Count,
+			&summary.ResourceVersion)
+	}
+	return err
 }

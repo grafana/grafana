@@ -199,14 +199,14 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	if errinfo != nil {
 		rsp.Error = errinfo
 	} else if err == nil {
-		// Rebuild the index for this key
-		for _, key := range settings.Collection {
+		// Rebuild any changed indexes
+		for _, summary := range rsp.Summary {
 			started := time.Now()
 			idx, rv, err := s.search.build(ctx, NamespacedResource{
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			}, rsp.Processed, time.Now().UnixMilli()) // can we get the RV from the MAX(RV) in ns/g/r
+				Namespace: summary.Namespace,
+				Group:     summary.Group,
+				Resource:  summary.Resource,
+			}, summary.Count, summary.ResourceVersion)
 			if err != nil {
 				return err // should not happen
 			}
@@ -215,7 +215,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 				return err // should not happen
 			}
 			elapsed := time.Since(started)
-			fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", key.Resource, count, rv, elapsed.String())
+			fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", summary.Resource, count, rv, elapsed.String())
 		}
 	}
 

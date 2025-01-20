@@ -535,7 +535,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		meta.SetFolder(p.FolderUID)
 		meta.SetCreatedBy(p.CreatedBy)
 		meta.SetGeneration(1)
-		meta.SetDeprecatedInternalID(p.ID)
+		meta.SetDeprecatedInternalID(p.ID) //nolint:staticcheck
 
 		// Only set updated metadata if it is different
 		if p.UpdatedBy != p.CreatedBy || p.Updated.Sub(p.Created) > time.Second {

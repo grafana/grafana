@@ -284,14 +284,14 @@ func TestUnifiedStorageQueries(t *testing.T) {
 
 			sqlResourceStats: {
 				{
-					Name: "query",
+					Name: "global",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						MinCount:    10, // Not yet used in query (only response filter)
 					},
 				},
 				{
-					Name: "query-namespace",
+					Name: "namespace",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
@@ -299,12 +299,21 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 				{
-					Name: "query-folder",
+					Name: "folder",
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
 						Folder:      "folder",
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "resource",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Group:       "dashboard.grafana.app",
+						Resource:    "dashboards",
 					},
 				},
 			},
