@@ -115,30 +115,9 @@ export const browseDashboardsAPI = createApi({
           return { data: [] };
         }
 
-        if (!config.featureToggles.provisioning) {
-          return response;
-        }
-
-        const repositories: RepositoryList = await dispatch(
-          provisioningAPI.endpoints.listRepository.initiate({})
-        ).unwrap();
-
-        if (!repositories.items?.length) {
-          return response;
-        }
-
+        const data = await addRepositoryData(response.data);
         return {
-          data: response.data.map((folder) => {
-            const repository = repositories.items?.find((repo) => repo.spec?.folder === folder.uid);
-            if (repository) {
-              return {
-                ...folder,
-                repository,
-              };
-            }
-
-            return folder;
-          }),
+          data,
         };
       },
     }),
@@ -156,28 +135,10 @@ export const browseDashboardsAPI = createApi({
           return { data: {} as FolderDTO };
         }
 
-        if (!config.featureToggles.provisioning) {
-          return response;
-        }
-
-        const repositories: RepositoryList = await dispatch(
-          provisioningAPI.endpoints.listRepository.initiate({})
-        ).unwrap();
-
-        if (!repositories.items?.length) {
-          return response;
-        }
-
-        const repository = repositories.items?.find((repo) => repo.spec?.folder === response.data?.uid);
-        if (repository) {
-          return {
-            data: {
-              ...response.data,
-              repository,
-            },
-          };
-        }
-        return response;
+        const data = await addRepositoryData(response.data);
+        return {
+          data,
+        };
       },
     }),
 
@@ -512,3 +473,28 @@ export const {
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';
+
+// Overloaded function signatures to handle different input types
+async function addRepositoryData(data: FolderListItemDTO[]): Promise<FolderListItemDTO[]>;
+async function addRepositoryData(data: FolderDTO): Promise<FolderDTO>;
+async function addRepositoryData(data: FolderListItemDTO[] | FolderDTO): Promise<FolderListItemDTO[] | FolderDTO> {
+  if (!config.featureToggles.provisioning) {
+    return data;
+  }
+
+  const repositories: RepositoryList = await dispatch(provisioningAPI.endpoints.listRepository.initiate({})).unwrap();
+
+  if (!repositories.items?.length) {
+    return data;
+  }
+
+  const enrichItem = <T extends FolderListItemDTO | FolderDTO>(item: T) => {
+    const repository = repositories.items?.find((repo) => repo.spec?.folder === item.uid);
+    return repository ? { ...item, repository } : item;
+  };
+
+  if (Array.isArray(data)) {
+    return data.map(enrichItem);
+  }
+  return enrichItem(data);
+}
