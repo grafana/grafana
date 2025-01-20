@@ -94,7 +94,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       workflow: WorkflowOption.PullRequest,
     },
   });
-  const [title, ref, workflow, path, comment] = watch(['title', 'ref', 'workflow', 'path', 'comment']);
+  const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
   const isGitHub = repositoryConfig?.type === 'github';
   const href = createPRLink(repositoryConfig, title, ref, comment);
   const { isDirty } = dashboard.state;
@@ -113,7 +113,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, path, saveProvisioned, repo, ref]);
+  }, [request.isSuccess, request.isError, request.error, dashboard]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));

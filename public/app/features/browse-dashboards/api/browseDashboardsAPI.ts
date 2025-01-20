@@ -9,6 +9,7 @@ import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { dispatch } from 'app/store/store';
 import {
   DashboardDTO,
   DescendantCount,
@@ -21,7 +22,6 @@ import {
 } from 'app/types';
 
 import { t } from '../../../core/internationalization';
-import { dispatch } from '../../../store/store';
 import { provisioningAPI, RepositoryList } from '../../provisioning/api';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
@@ -100,13 +100,8 @@ export const browseDashboardsAPI = createApi({
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
-      queryFn: async (
-        { parentUid, limit, page, permission },
-        queryApi,
-        extraOptions,
-        baseQuery
-      ): Promise<{ data: FolderListItemDTO[] }> => {
-        const response = (await baseQuery({
+      queryFn: async ({ parentUid, limit, page, permission }, queryApi, extraOptions, baseQuery) => {
+        const response: QueryReturnValue<FolderListItemDTO[], unknown, {}> = (await baseQuery({
           url: '/folders',
           params: { parentUid, limit, page, permission },
         })) as QueryReturnValue<FolderListItemDTO[], unknown, {}>;
@@ -125,7 +120,7 @@ export const browseDashboardsAPI = createApi({
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
-      queryFn: async (folderUID, queryApi, extraOptions, baseQuery): Promise<{ data: FolderDTO }> => {
+      queryFn: async (folderUID, queryApi, extraOptions, baseQuery) => {
         const response = (await baseQuery({
           url: `/folders/${folderUID}`,
           params: { accesscontrol: true },
