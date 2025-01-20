@@ -50,7 +50,7 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/src/schema/dashboard/v2alpha0';
 import { contextSrv } from 'app/core/core';
 import {
   AnnoKeyCreatedBy,

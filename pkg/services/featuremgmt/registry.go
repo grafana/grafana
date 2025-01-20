@@ -1750,6 +1750,18 @@ var (
 			Owner:          grafanaFrontendPlatformSquad,
 			AllowSelfServe: false,
 		},
+		{
+			Name:        "grafanaAdvisor",
+			Description: "Enables Advisor app",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:        "elasticsearchImprovedParsing",
+			Description: "Enables less memory intensive Elasticsearch result parsing",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+		},
 	}
 )
 

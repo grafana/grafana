@@ -25,7 +25,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -109,6 +109,8 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
+  /** Controls the visibility of hidden elements like row headers */
+  showHiddenElements?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
@@ -257,7 +259,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true });
+    this.setState({ isEditing: true, showHiddenElements: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged(true);
@@ -338,10 +340,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
+      this.setState({ ...this._initialState, isEditing: false, showHiddenElements: false });
     } else {
       // Do not restore
-      this.setState({ isEditing: false });
+      this.setState({ isEditing: false, showHiddenElements: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -358,6 +360,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public canDiscard() {
     return this._initialState !== undefined;
   }
+
+  public onToggleHiddenElements = () => this.setState({ showHiddenElements: !this.state.showHiddenElements });
 
   public pauseTrackingChanges() {
     this._changeTracker.stopTrackingChanges();

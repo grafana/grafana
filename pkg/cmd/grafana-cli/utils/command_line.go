@@ -26,6 +26,7 @@ type CommandLine interface {
 	PluginDirectory() string
 	PluginRepoURL() string
 	PluginURL() string
+	GcomToken() string
 }
 
 type ApiClient interface {
@@ -75,12 +76,7 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 
 	// if --config flag is set, try to get the GrafanaComAPIURL setting
 	if c.ConfigFile() != "" {
-		configOptions := strings.Split(c.String("configOverrides"), " ")
-		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-			Config:   c.ConfigFile(),
-			HomePath: c.HomePath(),
-			Args:     append(configOptions, c.Args().Slice()...),
-		})
+		cfg, err := c.Config()
 
 		if err != nil {
 			logger.Debug("Could not parse config file", err)
@@ -90,6 +86,25 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 	}
 	// fallback to default value
 	return c.String("repo")
+}
+
+func (c *ContextCommandLine) Config() (*setting.Cfg, error) {
+	configOptions := strings.Split(c.String("configOverrides"), " ")
+	return setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   c.ConfigFile(),
+		HomePath: c.HomePath(),
+		Args:     append(configOptions, c.Args().Slice()...),
+	})
+}
+
+func (c *ContextCommandLine) GcomToken() string {
+	cfg, err := c.Config()
+
+	if err != nil {
+		logger.Debug("Could not parse config file", err)
+		return ""
+	}
+	return cfg.GrafanaComSSOAPIToken
 }
 
 func (c *ContextCommandLine) PluginURL() string {

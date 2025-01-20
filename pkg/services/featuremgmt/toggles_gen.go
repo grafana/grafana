@@ -946,4 +946,12 @@ const (
 	// FlagQueryLibraryDashboards
 	// Enables Query Library feature in Dashboards
 	FlagQueryLibraryDashboards = "queryLibraryDashboards"
+
+	// FlagGrafanaAdvisor
+	// Enables Advisor app
+	FlagGrafanaAdvisor = "grafanaAdvisor"
+
+	// FlagElasticsearchImprovedParsing
+	// Enables less memory intensive Elasticsearch result parsing
+	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 )
