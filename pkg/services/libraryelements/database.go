@@ -467,6 +467,9 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					continue
 				}
 			}
+			if folderMap[element.FolderUID] == "" {
+				folderMap[element.FolderUID] = dashboards.RootFolderName
+			}
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
