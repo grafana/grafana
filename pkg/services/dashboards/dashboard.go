@@ -88,7 +88,6 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
-	GetAllDashboardsUIDsInFolders(ctx context.Context, request *GetAllDashboardsInFolderRequest) ([]string, error)
 
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)

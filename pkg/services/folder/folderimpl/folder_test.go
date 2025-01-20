@@ -271,7 +271,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 				}).Return(nil).Once()
-				dashStore.On("GetAllDashboardsUIDsInFolders", mock.Anything, mock.Anything).Return([]string{}, nil).Once()
+				dashStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
 				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
@@ -291,7 +291,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				f.UID = util.GenerateShortUID()
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-				dashStore.On("GetAllDashboardsUIDsInFolders", mock.Anything, mock.Anything).Return([]string{}, nil).Once()
+				dashStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
 
 				var actualCmd *dashboards.DeleteDashboardCommand
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -317,7 +317,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				f.UID = util.GenerateShortUID()
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-				dashStore.On("GetAllDashboardsUIDsInFolders", mock.Anything, mock.Anything).Return([]string{}, nil).Once()
+				dashStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil).Once()
 
 				var actualCmd *dashboards.DeleteDashboardCommand
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {

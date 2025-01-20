@@ -96,7 +96,6 @@ func (_m *FakeDashboardStore) CountInOrg(_a0 context.Context, _a1 int64) (int64,
 	return r0, r1
 }
 
-
 // CountDashboardsInFolders provides a mock function with given fields: ctx, request
 func (_m *FakeDashboardStore) CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error) {
 	ret := _m.Called(ctx, request)
@@ -280,36 +279,6 @@ func (_m *FakeDashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = rf(ctx, orgID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetAllDashboardsUIDsInFolders provides a mock function with given fields: ctx, request
-func (_m *FakeDashboardStore) GetAllDashboardsUIDsInFolders(ctx context.Context, request *GetAllDashboardsInFolderRequest) ([]string, error) {
-	ret := _m.Called(ctx, request)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllDashboardsUIDsInFolders")
-	}
-
-	var r0 []string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *GetAllDashboardsInFolderRequest) ([]string, error)); ok {
-		return rf(ctx, request)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *GetAllDashboardsInFolderRequest) []string); ok {
-		r0 = rf(ctx, request)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *GetAllDashboardsInFolderRequest) error); ok {
-		r1 = rf(ctx, request)
 	} else {
 		r1 = ret.Error(1)
 	}

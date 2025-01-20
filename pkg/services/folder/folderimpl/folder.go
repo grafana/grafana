@@ -1008,25 +1008,36 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
-	// TODO use bulk delete
-	for _, folderUID := range folderUIDs {
+	// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 		// We need a list of dashboard uids inside the folder to delete related public dashboards
-		dashboardUIDs, err := s.dashboardStore.GetAllDashboardsUIDsInFolders(ctx, &dashboards.GetAllDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: cmd.OrgID})
+		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folderUIDs, OrgId: cmd.OrgID})
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
 
+		dashboardUIDs := make([]string, 0, len(dashes))
+		for _, dashboard := range dashes {
+			dashboardUIDs = append(dashboardUIDs, dashboard.UID)
+		}
+
+		// Delete all public dashboards in the folders
 		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}
+	}
 
+	// TODO use bulk delete
+	// Delete all dashboards in the folders
+	for _, folderUID := range folderUIDs {
 		// nolint:staticcheck
 		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 			return toFolderError(err)
 		}
 	}
+
 	return nil
 }
 

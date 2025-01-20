@@ -901,6 +901,12 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		}
 	}
 
+	// deletes all related public dashboard entities
+	err := dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
+	if err != nil {
+		return err
+	}
+
 	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
 }
 
@@ -1408,9 +1414,14 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	}
 
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
-	dashboardUIDs, err := dr.dashboardStore.GetAllDashboardsUIDsInFolders(ctx, &dashboards.GetAllDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
+	dashes, err := dr.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: u, FolderUIDs: folderUIDs, OrgId: orgID})
 	if err != nil {
-		return err
+		return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+	}
+
+	dashboardUIDs := make([]string, 0, len(dashes))
+	for _, dashboard := range dashes {
+		dashboardUIDs = append(dashboardUIDs, dashboard.UID)
 	}
 
 	err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgID, dashboardUIDs)
