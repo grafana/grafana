@@ -1170,19 +1170,16 @@ func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, 
 	return userDashboardUIDs, nil
 }
 
-func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboards")
-	defer span.End()
-
+func (dr *DashboardServiceImpl) GetSharedDashboardUIDsQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (bool, error) {
 	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, folder.SharedWithMeFolderUID) {
 		start := time.Now()
 		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {
 			dr.metrics.sharedWithMeFetchDashboardsRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
-			return nil, err
+			return false, err
 		}
 		if len(userDashboardUIDs) == 0 {
-			return []dashboards.DashboardSearchProjection{}, nil
+			return true, nil
 		}
 		query.DashboardUIDs = userDashboardUIDs
 		query.FolderUIDs = []string{}
@@ -1190,6 +1187,20 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		defer func(t time.Time) {
 			dr.metrics.sharedWithMeFetchDashboardsRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 		}(time.Now())
+	}
+
+	return false, nil
+}
+
+func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboards")
+	defer span.End()
+
+	emptyResponse, err := dr.GetSharedDashboardUIDsQuery(ctx, query)
+	if err != nil {
+		return nil, err
+	} else if emptyResponse {
+		return []dashboards.DashboardSearchProjection{}, nil
 	}
 
 	if dr.features.IsEnabled(ctx, featuremgmt.FlagKubernetesCliDashboards) {

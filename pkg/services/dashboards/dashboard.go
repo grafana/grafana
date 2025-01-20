@@ -37,6 +37,7 @@ type DashboardService interface {
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
+	GetSharedDashboardUIDsQuery(ctx context.Context, query *FindPersistedDashboardsQuery) (bool, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.

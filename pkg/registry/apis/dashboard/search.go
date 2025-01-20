@@ -347,8 +347,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		result, err = s.client.Search(ctx, searchRequest)
 	}
 
-	fmt.Println("here results: ", result)
-
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

@@ -99,7 +99,6 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	}
 
 	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
-	fmt.Println("here hits: ", len(hits))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
