@@ -14,24 +14,24 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSCredentials":       schema_pkg_apis_secret_v0alpha1_AWSCredentials(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeper":            schema_pkg_apis_secret_v0alpha1_AWSKeeper(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials":     schema_pkg_apis_secret_v0alpha1_AzureCredentials(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeper":          schema_pkg_apis_secret_v0alpha1_AzureKeeper(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue":      schema_pkg_apis_secret_v0alpha1_CredentialValue(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption":           schema_pkg_apis_secret_v0alpha1_Encryption(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope":             schema_pkg_apis_secret_v0alpha1_Envelope(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials":       schema_pkg_apis_secret_v0alpha1_GCPCredentials(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeper":            schema_pkg_apis_secret_v0alpha1_GCPKeeper(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials": schema_pkg_apis_secret_v0alpha1_HashiCorpCredentials(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeper":      schema_pkg_apis_secret_v0alpha1_HashiCorpKeeper(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Keeper":               schema_pkg_apis_secret_v0alpha1_Keeper(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperList":           schema_pkg_apis_secret_v0alpha1_KeeperList(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperSpec":           schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeper":            schema_pkg_apis_secret_v0alpha1_SQLKeeper(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValue":          schema_pkg_apis_secret_v0alpha1_SecureValue(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueList":      schema_pkg_apis_secret_v0alpha1_SecureValueList(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec":      schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSCredentials":        schema_pkg_apis_secret_v0alpha1_AWSCredentials(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig":       schema_pkg_apis_secret_v0alpha1_AWSKeeperConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials":      schema_pkg_apis_secret_v0alpha1_AzureCredentials(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig":     schema_pkg_apis_secret_v0alpha1_AzureKeeperConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue":       schema_pkg_apis_secret_v0alpha1_CredentialValue(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption":            schema_pkg_apis_secret_v0alpha1_Encryption(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope":              schema_pkg_apis_secret_v0alpha1_Envelope(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials":        schema_pkg_apis_secret_v0alpha1_GCPCredentials(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig":       schema_pkg_apis_secret_v0alpha1_GCPKeeperConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials":  schema_pkg_apis_secret_v0alpha1_HashiCorpCredentials(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig": schema_pkg_apis_secret_v0alpha1_HashiCorpKeeperConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Keeper":                schema_pkg_apis_secret_v0alpha1_Keeper(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperList":            schema_pkg_apis_secret_v0alpha1_KeeperList(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperSpec":            schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig":       schema_pkg_apis_secret_v0alpha1_SQLKeeperConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValue":           schema_pkg_apis_secret_v0alpha1_SecureValue(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueList":       schema_pkg_apis_secret_v0alpha1_SecureValueList(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec":       schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref),
 	}
 }
 
@@ -69,7 +69,7 @@ func schema_pkg_apis_secret_v0alpha1_AWSCredentials(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_secret_v0alpha1_AWSKeeper(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_secret_v0alpha1_AWSKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -145,7 +145,7 @@ func schema_pkg_apis_secret_v0alpha1_AzureCredentials(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_secret_v0alpha1_AzureKeeper(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_secret_v0alpha1_AzureKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -299,7 +299,7 @@ func schema_pkg_apis_secret_v0alpha1_GCPCredentials(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_secret_v0alpha1_GCPKeeper(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_secret_v0alpha1_GCPKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -354,7 +354,7 @@ func schema_pkg_apis_secret_v0alpha1_HashiCorpCredentials(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_secret_v0alpha1_HashiCorpKeeper(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_secret_v0alpha1_HashiCorpKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -496,27 +496,27 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 					"sql": {
 						SchemaProps: spec.SchemaProps{
 							Description: "You can only chose one of the following.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeper"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig"),
 						},
 					},
 					"aws": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeper"),
+							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig"),
 						},
 					},
 					"azurekeyvault": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeper"),
+							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig"),
 						},
 					},
 					"gcp": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeper"),
+							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig"),
 						},
 					},
 					"hashivault": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeper"),
+							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig"),
 						},
 					},
 				},
@@ -524,11 +524,11 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeper", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeper", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeper", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeper", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeper"},
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig"},
 	}
 }
 
-func schema_pkg_apis_secret_v0alpha1_SQLKeeper(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_secret_v0alpha1_SQLKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

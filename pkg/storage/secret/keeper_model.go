@@ -70,15 +70,15 @@ func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 	// Obtain provider configs
 	provider := toProvider(kp.Type, kp.Payload)
 	switch v := provider.(type) {
-	case *secretv0alpha1.SQLKeeper:
+	case *secretv0alpha1.SQLKeeperConfig:
 		resource.Spec.SQL = v
-	case *secretv0alpha1.AWSKeeper:
+	case *secretv0alpha1.AWSKeeperConfig:
 		resource.Spec.AWS = v
-	case *secretv0alpha1.AzureKeeper:
+	case *secretv0alpha1.AzureKeeperConfig:
 		resource.Spec.Azure = v
-	case *secretv0alpha1.GCPKeeper:
+	case *secretv0alpha1.GCPKeeperConfig:
 		resource.Spec.GCP = v
-	case *secretv0alpha1.HashiCorpKeeper:
+	case *secretv0alpha1.HashiCorpKeeperConfig:
 		resource.Spec.HashiCorp = v
 	}
 
@@ -251,34 +251,34 @@ func toTypeAndPayload(kp *secretv0alpha1.Keeper) (KeeperType, string, error) {
 }
 
 // toProvider maps a KeeperType and payload into a provider config struct.
-func toProvider(keeperType KeeperType, payload string) interface{} {
+func toProvider(keeperType KeeperType, payload string) secretv0alpha1.KeeperConfig {
 	switch keeperType {
 	case SqlKeeperType:
-		sql := &secretv0alpha1.SQLKeeper{}
+		sql := &secretv0alpha1.SQLKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), sql); err != nil {
 			return nil
 		}
 		return sql
 	case AWSKeeperType:
-		aws := &secretv0alpha1.AWSKeeper{}
+		aws := &secretv0alpha1.AWSKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), aws); err != nil {
 			return nil
 		}
 		return aws
 	case AzureKeeperType:
-		azure := &secretv0alpha1.AzureKeeper{}
+		azure := &secretv0alpha1.AzureKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), azure); err != nil {
 			return nil
 		}
 		return azure
 	case GCPKeeperType:
-		gcp := &secretv0alpha1.GCPKeeper{}
+		gcp := &secretv0alpha1.GCPKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), gcp); err != nil {
 			return nil
 		}
 		return gcp
 	case HashiCorpKeeperType:
-		hashicorp := &secretv0alpha1.HashiCorpKeeper{}
+		hashicorp := &secretv0alpha1.HashiCorpKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), hashicorp); err != nil {
 			return nil
 		}
