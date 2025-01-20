@@ -69,8 +69,8 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20250115195200-209e052dba64 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250120092408-d9d7ace6ab03 // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20250120092105-17561e20d299 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20250120144156-d6737a7dc8f5 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20250120144156-d6737a7dc8f5 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // @grafana/grafana-backend-group

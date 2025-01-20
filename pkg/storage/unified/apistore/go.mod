@@ -14,7 +14,8 @@ exclude k8s.io/client-go v12.0.0+incompatible
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib/types v0.0.0-20250120092105-17561e20d299
+	github.com/grafana/authlib v0.0.0-20250120144156-d6737a7dc8f5
+	github.com/grafana/authlib/types v0.0.0-20250120144156-d6737a7dc8f5
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da
