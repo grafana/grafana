@@ -12,17 +12,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheck":                           schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckList":                       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec":                       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus":                     schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport":       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors": schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReportErrors(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState":        schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check":                           schema_pkg_apis_advisor_v0alpha1_Check(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckList":                       schema_pkg_apis_advisor_v0alpha1_CheckList(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec":                       schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus":                     schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport":       schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReportErrors": schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReportErrors(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState":        schema_pkg_apis_advisor_v0alpha1_CheckstatusOperatorState(ref),
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_Check(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -51,13 +51,13 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref common.ReferenceCallba
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec"),
+							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus"),
 						},
 					},
 				},
@@ -65,11 +65,11 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_CheckList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -102,7 +102,7 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheck"),
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check"),
 									},
 								},
 							},
@@ -113,11 +113,11 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheck", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -145,7 +145,7 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -154,7 +154,7 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.Reference
 					"report": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport"),
+							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport"),
 						},
 					},
 					"operatorStates": {
@@ -166,7 +166,7 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.Reference
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState"),
 									},
 								},
 							},
@@ -192,11 +192,11 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState"},
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -218,7 +218,7 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors"),
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReportErrors"),
 									},
 								},
 							},
@@ -229,11 +229,11 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReportErrors"},
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReportErrors(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReportErrors(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -270,7 +270,7 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReportErrors(
 	}
 }
 
-func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_advisor_v0alpha1_CheckstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

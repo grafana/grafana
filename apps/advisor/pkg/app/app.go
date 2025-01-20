@@ -22,7 +22,7 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: advisorv0alpha1.DatasourceCheckKind(),
+				Kind: advisorv0alpha1.CheckKind(),
 			},
 		},
 	}
@@ -43,14 +43,12 @@ func New(cfg app.Config) (app.App, error) {
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
 		// Group and version are the same for all checks
-		Group:   advisorv0alpha1.Group,
-		Version: advisorv0alpha1.Version,
+		Group:   advisorv0alpha1.CheckKind().Group(),
+		Version: advisorv0alpha1.CheckKind().Version(),
 	}
-	kinds := map[schema.GroupVersion][]resource.Kind{
+	return map[schema.GroupVersion][]resource.Kind{
 		gv: {
-			advisorv0alpha1.DatasourceCheckKind(),
+			advisorv0alpha1.CheckKind(),
 		},
 	}
-
-	return kinds
 }

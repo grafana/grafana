@@ -3,12 +3,12 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type DatasourceCheckSpec struct {
+type CheckSpec struct {
 	// Generic data input that a check can receive
 	Data map[string]string `json:"data,omitempty"`
 }
 
-// NewDatasourceCheckSpec creates a new DatasourceCheckSpec object.
-func NewDatasourceCheckSpec() *DatasourceCheckSpec {
-	return &DatasourceCheckSpec{}
+// NewCheckSpec creates a new CheckSpec object.
+func NewCheckSpec() *CheckSpec {
+	return &CheckSpec{}
 }

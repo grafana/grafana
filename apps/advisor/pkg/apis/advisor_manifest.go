@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	rawSchemaDatasourceCheckv0alpha1     = []byte(`{"spec":{"properties":{"data":{"additionalProperties":{"type":"string"},"description":"Generic data input that a check can receive","type":"object"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"},"report":{"properties":{"count":{"description":"Number of elements analyzed","type":"integer"},"errors":{"description":"List of errors","items":{"properties":{"action":{"description":"Action to take to resolve the error","type":"string"},"reason":{"description":"Human readable reason for the error","type":"string"},"type":{"description":"Investigation or Action recommended (severity of the error)","enum":["investigation","action"],"type":"string"}},"required":["type","reason","action"],"type":"object"},"type":"array"}},"required":["count","errors"],"type":"object"}},"required":["report"],"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
-	versionSchemaDatasourceCheckv0alpha1 app.VersionSchema
-	_                                    = json.Unmarshal(rawSchemaDatasourceCheckv0alpha1, &versionSchemaDatasourceCheckv0alpha1)
+	rawSchemaCheckv0alpha1     = []byte(`{"spec":{"properties":{"data":{"additionalProperties":{"type":"string"},"description":"Generic data input that a check can receive","type":"object"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"},"report":{"properties":{"count":{"description":"Number of elements analyzed","type":"integer"},"errors":{"description":"List of errors","items":{"properties":{"action":{"description":"Action to take to resolve the error","type":"string"},"reason":{"description":"Human readable reason for the error","type":"string"},"type":{"description":"Investigation or Action recommended (severity of the error)","enum":["investigation","action"],"type":"string"}},"required":["type","reason","action"],"type":"object"},"type":"array"}},"required":["count","errors"],"type":"object"}},"required":["report"],"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
+	versionSchemaCheckv0alpha1 app.VersionSchema
+	_                          = json.Unmarshal(rawSchemaCheckv0alpha1, &versionSchemaCheckv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -22,13 +22,13 @@ var appManifestData = app.ManifestData{
 	Group:   "advisor.grafana.app",
 	Kinds: []app.ManifestKind{
 		{
-			Kind:       "DatasourceCheck",
+			Kind:       "Check",
 			Scope:      "Namespaced",
 			Conversion: false,
 			Versions: []app.ManifestKindVersion{
 				{
 					Name:   "v0alpha1",
-					Schema: &versionSchemaDatasourceCheckv0alpha1,
+					Schema: &versionSchemaCheckv0alpha1,
 				},
 			},
 		},

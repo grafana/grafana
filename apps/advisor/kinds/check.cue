@@ -1,8 +1,8 @@
 package advisor
 
 datasourcecheck: {
-	kind:	   "DatasourceCheck"
-	pluralName: "DatasourceChecks"
+	kind:	   "Check"
+	pluralName: "Checks"
 	current:	"v0alpha1"
 	versions: {
 		"v0alpha1": {

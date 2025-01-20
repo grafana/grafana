@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// DatasourceCheckJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type DatasourceCheckJSONCodec struct{}
+// CheckJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type CheckJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*DatasourceCheckJSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*CheckJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*DatasourceCheckJSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*CheckJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &DatasourceCheckJSONCodec{}
+var _ resource.Codec = &CheckJSONCodec{}

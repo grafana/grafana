@@ -15,19 +15,19 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type DatasourceCheck struct {
-	metav1.TypeMeta       `json:",inline" yaml:",inline"`
-	metav1.ObjectMeta     `json:"metadata" yaml:"metadata"`
-	Spec                  DatasourceCheckSpec   `json:"spec" yaml:"spec"`
-	DatasourceCheckStatus DatasourceCheckStatus `json:"status" yaml:"status"`
+type Check struct {
+	metav1.TypeMeta   `json:",inline" yaml:",inline"`
+	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
+	Spec              CheckSpec   `json:"spec" yaml:"spec"`
+	CheckStatus       CheckStatus `json:"status" yaml:"status"`
 }
 
-func (o *DatasourceCheck) GetSpec() any {
+func (o *Check) GetSpec() any {
 	return o.Spec
 }
 
-func (o *DatasourceCheck) SetSpec(spec any) error {
-	cast, ok := spec.(DatasourceCheckSpec)
+func (o *Check) SetSpec(spec any) error {
+	cast, ok := spec.(CheckSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -35,36 +35,36 @@ func (o *DatasourceCheck) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *DatasourceCheck) GetSubresources() map[string]any {
+func (o *Check) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.DatasourceCheckStatus,
+		"status": o.CheckStatus,
 	}
 }
 
-func (o *DatasourceCheck) GetSubresource(name string) (any, bool) {
+func (o *Check) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.DatasourceCheckStatus, true
+		return o.CheckStatus, true
 	default:
 		return nil, false
 	}
 }
 
-func (o *DatasourceCheck) SetSubresource(name string, value any) error {
+func (o *Check) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(DatasourceCheckStatus)
+		cast, ok := value.(CheckStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type DatasourceCheckStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type CheckStatus", value)
 		}
-		o.DatasourceCheckStatus = cast
+		o.CheckStatus = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
 }
 
-func (o *DatasourceCheck) GetStaticMetadata() resource.StaticMetadata {
+func (o *Check) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -75,7 +75,7 @@ func (o *DatasourceCheck) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *DatasourceCheck) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *Check) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -85,7 +85,7 @@ func (o *DatasourceCheck) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *DatasourceCheck) GetCommonMetadata() resource.CommonMetadata {
+func (o *Check) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -117,7 +117,7 @@ func (o *DatasourceCheck) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *DatasourceCheck) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *Check) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -162,7 +162,7 @@ func (o *DatasourceCheck) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *DatasourceCheck) GetCreatedBy() string {
+func (o *Check) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -170,7 +170,7 @@ func (o *DatasourceCheck) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *DatasourceCheck) SetCreatedBy(createdBy string) {
+func (o *Check) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -178,7 +178,7 @@ func (o *DatasourceCheck) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *DatasourceCheck) GetUpdateTimestamp() time.Time {
+func (o *Check) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -187,7 +187,7 @@ func (o *DatasourceCheck) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *DatasourceCheck) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *Check) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -195,7 +195,7 @@ func (o *DatasourceCheck) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *DatasourceCheck) GetUpdatedBy() string {
+func (o *Check) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -203,7 +203,7 @@ func (o *DatasourceCheck) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *DatasourceCheck) SetUpdatedBy(updatedBy string) {
+func (o *Check) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -211,43 +211,43 @@ func (o *DatasourceCheck) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *DatasourceCheck) Copy() resource.Object {
+func (o *Check) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *DatasourceCheck) DeepCopyObject() runtime.Object {
+func (o *Check) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &DatasourceCheck{}
+var _ resource.Object = &Check{}
 
 // +k8s:openapi-gen=true
-type DatasourceCheckList struct {
+type CheckList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []DatasourceCheck `json:"items" yaml:"items"`
+	Items           []Check `json:"items" yaml:"items"`
 }
 
-func (o *DatasourceCheckList) DeepCopyObject() runtime.Object {
+func (o *CheckList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *DatasourceCheckList) Copy() resource.ListObject {
-	cpy := &DatasourceCheckList{
+func (o *CheckList) Copy() resource.ListObject {
+	cpy := &CheckList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]DatasourceCheck, len(o.Items)),
+		Items:    make([]Check, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*DatasourceCheck); ok {
+		if item, ok := o.Items[i].Copy().(*Check); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *DatasourceCheckList) GetItems() []resource.Object {
+func (o *CheckList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -255,12 +255,12 @@ func (o *DatasourceCheckList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *DatasourceCheckList) SetItems(items []resource.Object) {
-	o.Items = make([]DatasourceCheck, len(items))
+func (o *CheckList) SetItems(items []resource.Object) {
+	o.Items = make([]Check, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*DatasourceCheck)
+		o.Items[i] = *items[i].(*Check)
 	}
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &DatasourceCheckList{}
+var _ resource.ListObject = &CheckList{}
