@@ -45,6 +45,9 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const field = options.field as Field;
+  if (field.display) {
+    return field.display;
+  }
   const config = field.config ?? {};
   const { palette } = options.theme.visualization;
 
