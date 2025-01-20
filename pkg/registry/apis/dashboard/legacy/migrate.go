@@ -21,6 +21,16 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		return nil, err
 	}
 
+	// Migrate everything
+	if len(opts.Resources) == 1 && opts.Resources[0] == "*" {
+		opts.SendHistory = true
+		opts.Resources = []string{
+			"folders",
+			"dashboards",
+			"panels",
+		}
+	}
+
 	migrators := []migrator{}
 	settings := resource.BatchSettings{
 		RebuildCollection: true,
@@ -31,29 +41,29 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		switch res {
 		case "folders":
 			migrators = append(migrators, a.migrateFolders)
-			settings.Collection = []*resource.ResourceKey{{
+			settings.Collection = append(settings.Collection, &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     "folder.grafana.app",
 				Resource:  "folders",
-			}}
+			})
 
 		case "panels":
 			migrators = append(migrators, a.migratePanels)
-			settings.Collection = []*resource.ResourceKey{{
+			settings.Collection = append(settings.Collection, &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
 				Resource:  dashboard.LIBRARY_PANEL_RESOURCE,
-			}}
+			})
 
 		case "":
 			fallthrough
 		case "dashboards":
 			migrators = append(migrators, a.migrateDashboards)
-			settings.Collection = []*resource.ResourceKey{{
+			settings.Collection = append(settings.Collection, &resource.ResourceKey{
 				Namespace: opts.Namespace,
 				Group:     dashboard.GROUP,
 				Resource:  dashboard.DASHBOARD_RESOURCE,
-			}}
+			})
 		default:
 			return nil, fmt.Errorf("unsupported resource: %s", res)
 		}
@@ -88,6 +98,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		return err
 	}
 
+	opts.Progress(-1, "migrating dashboards...")
 	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {
@@ -172,6 +183,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 		return err
 	}
 
+	opts.Progress(-1, "migrating folders...")
 	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {
@@ -233,6 +245,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 }
 
 func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error {
+	opts.Progress(-1, "migrating library panels...")
 	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
 		OrgID: orgId,
 		Limit: 1000000,
