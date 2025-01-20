@@ -22,6 +22,7 @@ func NewDatasourceCheckstatusOperatorState() *DatasourceCheckstatusOperatorState
 
 // +k8s:openapi-gen=true
 type DatasourceCheckStatus struct {
+	Report DatasourceCheckV0alpha1StatusReport `json:"report"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]DatasourceCheckstatusOperatorState `json:"operatorStates,omitempty"`
@@ -31,7 +32,9 @@ type DatasourceCheckStatus struct {
 
 // NewDatasourceCheckStatus creates a new DatasourceCheckStatus object.
 func NewDatasourceCheckStatus() *DatasourceCheckStatus {
-	return &DatasourceCheckStatus{}
+	return &DatasourceCheckStatus{
+		Report: *NewDatasourceCheckV0alpha1StatusReport(),
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -42,3 +45,39 @@ const (
 	DatasourceCheckStatusOperatorStateStateInProgress DatasourceCheckStatusOperatorStateState = "in_progress"
 	DatasourceCheckStatusOperatorStateStateFailed     DatasourceCheckStatusOperatorStateState = "failed"
 )
+
+// +k8s:openapi-gen=true
+type DatasourceCheckStatusType string
+
+const (
+	DatasourceCheckStatusTypeInvestigation DatasourceCheckStatusType = "investigation"
+	DatasourceCheckStatusTypeAction        DatasourceCheckStatusType = "action"
+)
+
+// +k8s:openapi-gen=true
+type DatasourceCheckV0alpha1StatusReportErrors struct {
+	// Investigation or Action recommended (severity of the error)
+	Type DatasourceCheckStatusType `json:"type"`
+	// Human readable reason for the error
+	Reason string `json:"reason"`
+	// Action to take to resolve the error
+	Action string `json:"action"`
+}
+
+// NewDatasourceCheckV0alpha1StatusReportErrors creates a new DatasourceCheckV0alpha1StatusReportErrors object.
+func NewDatasourceCheckV0alpha1StatusReportErrors() *DatasourceCheckV0alpha1StatusReportErrors {
+	return &DatasourceCheckV0alpha1StatusReportErrors{}
+}
+
+// +k8s:openapi-gen=true
+type DatasourceCheckV0alpha1StatusReport struct {
+	// Number of elements analyzed
+	Count int64 `json:"count"`
+	// List of errors
+	Errors []DatasourceCheckV0alpha1StatusReportErrors `json:"errors"`
+}
+
+// NewDatasourceCheckV0alpha1StatusReport creates a new DatasourceCheckV0alpha1StatusReport object.
+func NewDatasourceCheckV0alpha1StatusReport() *DatasourceCheckV0alpha1StatusReport {
+	return &DatasourceCheckV0alpha1StatusReport{}
+}

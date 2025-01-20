@@ -12,11 +12,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheck":                    schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckList":                schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec":                schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus":              schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState": schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheck":                           schema_pkg_apis_advisor_v0alpha1_DatasourceCheck(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckList":                       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckList(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckSpec":                       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckSpec(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckStatus":                     schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport":       schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors": schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReportErrors(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState":        schema_pkg_apis_advisor_v0alpha1_DatasourceCheckstatusOperatorState(ref),
 	}
 }
 
@@ -149,6 +151,12 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.Reference
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"report": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport"),
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -180,10 +188,85 @@ func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckStatus(ref common.Reference
 						},
 					},
 				},
+				Required: []string{"report"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReport", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckstatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReport(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of elements analyzed",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of errors",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"count", "errors"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.DatasourceCheckV0alpha1StatusReportErrors"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_DatasourceCheckV0alpha1StatusReportErrors(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Investigation or Action recommended (severity of the error)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Human readable reason for the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Action to take to resolve the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "reason", "action"},
+			},
+		},
 	}
 }
 
