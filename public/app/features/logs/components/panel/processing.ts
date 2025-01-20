@@ -39,7 +39,7 @@ interface PreProcessLogOptions {
 }
 const preProcessLog = (
   log: LogRowModel,
-  { escape, expanded, timeZone, prettify, wrap }: PreProcessLogOptions
+  { escape, expanded, timeZone, wrap }: PreProcessLogOptions
 ): ProcessedLogModel => {
   let body = log.entry;
   const timestamp = dateTimeFormat(log.timeEpochMs, {
