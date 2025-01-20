@@ -22,7 +22,7 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import { getPanelElement, transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
 jest.mock('@grafana/runtime', () => ({
@@ -560,7 +560,8 @@ describe('DashboardSceneSerializer', () => {
         editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
         const result = dashboard.getDashboardChanges(false, true);
-        const panelSaveModel = (result.changedSaveModel as DashboardV2Spec).elements['panel-1'] as PanelKind;
+        const panelSaveModel = getPanelElement(result.changedSaveModel as DashboardV2Spec, 'panel-1')!;
+
         expect(panelSaveModel.spec.title).toBe('changed title');
       });
     });

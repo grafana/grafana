@@ -38,7 +38,11 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import {
+  getLibraryPanelElement,
+  getPanelElement,
+  transformSaveModelSchemaV2ToScene,
+} from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -221,12 +225,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
-    const getPanelElement = (id: string) => (dash.elements[id].kind === 'Panel' ? dash.elements[id] : undefined);
-    const getLibraryPanelElement = (id: string) =>
-      dash.elements[id].kind === 'LibraryPanel' ? dash.elements[id] : undefined;
 
     // Panel
-    const panel = getPanelElement('panel-1')!;
+    const panel = getPanelElement(dash, 'panel-1')!;
     expect(layout.state.grid.state.children.length).toBe(2);
     expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
     const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
@@ -238,7 +239,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     validateVizPanel(vizPanel, dash);
 
     // Library Panel
-    const libraryPanel = getLibraryPanelElement('library-panel-1')!;
+    const libraryPanel = getLibraryPanelElement(dash, 'library-panel-1')!;
     expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.uid}`);
     const libraryGridLayoutItemSpec = dash.layout.spec.items[1].spec;
     expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
@@ -251,13 +252,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Transformations
     const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
     expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      getPanelElement('panel-1')!.spec.data.spec.transformations[0].spec
+      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
     );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -285,7 +286,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -313,7 +314,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    (dashboard.spec.elements['panel-1'] as PanelKind).spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
