@@ -3,11 +3,13 @@ import { Meta } from '@storybook/react';
 import { ChangeEvent, useState } from 'react';
 
 import { toIconName, IconName } from '@grafana/data';
-import { Input, Field, Icon } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
 import { getAvailableIcons } from '../../types';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
 
+import { Icon } from './Icon';
 import mdx from './Icon.mdx';
 
 const meta: Meta<typeof Icon> = {

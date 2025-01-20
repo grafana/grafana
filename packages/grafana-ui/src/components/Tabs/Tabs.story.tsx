@@ -1,11 +1,12 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { TabsBar, Tab, TabContent, Counter as TabCounter } from '@grafana/ui';
-
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
-import { CounterProps } from './Counter';
+import { CounterProps, Counter as TabCounter } from './Counter';
+import { Tab } from './Tab';
+import { TabContent } from './TabContent';
+import { TabsBar } from './TabsBar';
 import mdx from './TabsBar.mdx';
 
 const meta: Meta = {
