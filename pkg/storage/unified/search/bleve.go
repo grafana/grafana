@@ -94,17 +94,17 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 func (b *bleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
-	// When the size is known, it will be passed along here
-	// Depending on the size, the backend may choose different options (eg: memory vs disk)
+// When the size is known, it will be passed along here
+// Depending on the size, the backend may choose different options (eg: memory vs disk)
 	size int64,
 
-	// The last known resource version can be used to know that we can skip calling the builder
+// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
 
-	// the non-standard searchable fields
+// the non-standard searchable fields
 	fields resource.SearchableDocumentFields,
 
-	// The builder will write all documents before returning
+// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
@@ -566,8 +566,25 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
 		}
+		checkers := map[string]authz.ItemChecker{
+			b.key.Resource: checker,
+		}
 
-		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, checker)
+		// handle federation
+		for _, federated := range req.Federated {
+			checker, err := access.Compile(ctx, auth, authz.ListRequest{
+				Namespace: federated.Namespace,
+				Group:     federated.Group,
+				Resource:  federated.Resource,
+				Verb:      utils.VerbList,
+			})
+			if err != nil {
+				return nil, resource.AsErrorResult(err)
+			}
+			checkers[federated.Resource] = checker
+		}
+
+		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, checkers)
 	}
 
 	for k, v := range req.Facet {
@@ -815,15 +832,15 @@ func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Fa
 
 type permissionScopedQuery struct {
 	query.Query
-	checker authz.ItemChecker
-	log     log.Logger
+	checkers map[string]authz.ItemChecker // one checker per resource
+	log      log.Logger
 }
 
-func newPermissionScopedQuery(q query.Query, checker authz.ItemChecker) *permissionScopedQuery {
+func newPermissionScopedQuery(q query.Query, checkers map[string]authz.ItemChecker) *permissionScopedQuery {
 	return &permissionScopedQuery{
-		Query:   q,
-		checker: checker,
-		log:     log.New("search_permissions"),
+		Query:    q,
+		checkers: checkers,
+		log:      log.New("search_permissions"),
 	}
 }
 
@@ -847,14 +864,19 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 			return false
 		}
 		ns := parts[0]
-		name := parts[len(parts)-1]
+		resource := parts[2]
+		name := parts[3]
 		folder := ""
 		err = dvReader.VisitDocValues(d.IndexInternalID, func(field string, value []byte) {
 			if field == "folder" {
 				folder = string(value)
 			}
 		})
-		allowed := q.checker(ns, name, folder)
+		if _, ok := q.checkers[resource]; !ok {
+			q.log.Debug("No resource checker found", "resource", resource)
+			return false
+		}
+		allowed := q.checkers[resource](ns, name, folder)
 		if !allowed {
 			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
 		}
