@@ -23,8 +23,18 @@ func grpcMetaValueIsTrue(vals []string) bool {
 	return len(vals) == 1 && vals[0] == "true"
 }
 
+type BatchRequestIterator interface {
+	Next() bool
+
+	// The next event we should process
+	Request() *BatchRequest
+
+	// Rollback requested
+	RollbackRequested() bool
+}
+
 type BatchProcessingBackend interface {
-	ProcessBatch(ctx context.Context, setting BatchSettings, next func() *BatchRequest) (*BatchResponse, error)
+	ProcessBatch(ctx context.Context, setting BatchSettings, iter BatchRequestIterator) (*BatchResponse, error)
 }
 
 type BatchSettings struct {
@@ -53,20 +63,6 @@ func (x *BatchSettings) ToMD() metadata.MD {
 		md[grpcMetaKeySkipValidation] = []string{"true"}
 	}
 	return md
-}
-
-func (x *BatchSettings) validator() func(req *BatchRequest) bool {
-	valid := make(map[string]bool)
-	for _, key := range x.Collection {
-		valid[key.SearchID()] = true
-	}
-	return func(req *BatchRequest) bool {
-		k := fmt.Sprintf("%s/%s/%s", req.Key.Namespace, req.Key.Group, req.Key.Resource)
-		if !valid[k] {
-			fmt.Printf("NOPE: %s // %+v\n", k, valid)
-		}
-		return valid[k]
-	}
 }
 
 func NewBatchSettings(md metadata.MD) (BatchSettings, error) {
@@ -172,33 +168,16 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	}
 
 	// BatchProcess requests
-	validator := settings.validator()
-	var errinfo *ErrorResult
-	rsp, err := backend.ProcessBatch(ctx, settings, func() *BatchRequest {
-		req, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
-		if err != nil {
-			errinfo = AsErrorResult(err)
-			return nil // <<<< HIDDEN!!! -- this should avoid TX.commit!!!
-		}
-		if !validator(req) {
-			fmt.Printf("INVALID REQUEST: %+v\n", req.Key)
-			errinfo = &ErrorResult{
-				Code:    http.StatusBadRequest,
-				Message: "the request does not match the requested collection",
-			}
-			return nil // ???? avoid TX.commit!!!
-		}
-		return req
-	})
+	runner := newBatchRunner(settings, stream)
+	rsp, err := backend.ProcessBatch(ctx, settings, runner)
 	if rsp == nil {
 		rsp = &BatchResponse{}
 	}
-	if errinfo != nil {
-		rsp.Error = errinfo
-	} else if err == nil {
+	if err == nil {
+		err = runner.err
+	}
+
+	if err == nil {
 		// Rebuild any changed indexes
 		for _, summary := range rsp.Summary {
 			started := time.Now()
@@ -217,12 +196,81 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 			elapsed := time.Since(started)
 			fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", summary.Resource, count, rv, elapsed.String())
 		}
-	}
-
-	if err != nil {
+	} else {
 		rsp.Error = AsErrorResult(err)
 	}
 
 	fmt.Printf("Finished (core)\n")
 	return stream.SendAndClose(rsp)
+}
+
+var (
+	_ BatchRequestIterator = (*batchRunner)(nil)
+)
+
+type batchRunner struct {
+	stream   ResourceStore_BatchProcessServer
+	rollback bool
+	request  *BatchRequest
+	err      error
+	valid    map[string]bool
+}
+
+func newBatchRunner(settings BatchSettings, stream ResourceStore_BatchProcessServer) *batchRunner {
+	runner := &batchRunner{
+		valid:  make(map[string]bool),
+		stream: stream,
+	}
+	for _, key := range settings.Collection {
+		runner.valid[key.SearchID()] = true
+	}
+	return runner
+}
+
+// Next implements BatchRequestIterator.
+func (b *batchRunner) Next() bool {
+	if b.rollback {
+		return true
+	}
+
+	b.request, b.err = b.stream.Recv()
+	if errors.Is(b.err, io.EOF) {
+		b.err = nil
+		b.rollback = false
+		b.request = nil
+		return false
+	}
+
+	if b.err != nil {
+		b.rollback = true
+		return true
+	}
+
+	if b.request != nil {
+		key := b.request.Key
+		k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
+		if !b.valid[k] {
+			b.err = fmt.Errorf("key is not from the requested collection")
+			b.rollback = true
+		}
+		return true
+	}
+	return false
+}
+
+// Request implements BatchRequestIterator.
+func (b *batchRunner) Request() *BatchRequest {
+	if b.rollback {
+		return nil
+	}
+	return b.request
+}
+
+// RollbackRequested implements BatchRequestIterator.
+func (b *batchRunner) RollbackRequested() bool {
+	if b.rollback {
+		b.rollback = false // break iterator
+		return true
+	}
+	return false
 }

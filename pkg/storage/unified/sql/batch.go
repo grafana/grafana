@@ -17,9 +17,18 @@ var (
 	_ resource.BatchProcessingBackend = (*backend)(nil)
 )
 
-func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettings, next func() *resource.BatchRequest) (*resource.BatchResponse, error) {
+func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) (*resource.BatchResponse, error) {
 	rsp := &resource.BatchResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		rollbackWithError := func(err error) error {
+			txerr := tx.Rollback()
+			if txerr != nil {
+				b.log.Warn("rollback", "error", txerr)
+			} else {
+				b.log.Info("rollback")
+			}
+			return err
+		}
 		batch := &batchWroker{
 			ctx:     ctx,
 			tx:      tx,
@@ -37,7 +46,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 			for _, key := range setting.Collection {
 				summary, err := batch.deleteCollection(key)
 				if err != nil {
-					return err
+					return rollbackWithError(err)
 				}
 				k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
 				summaries[k] = summary
@@ -46,7 +55,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 				// get the RV for this resource
 				tmp, err := b.resourceVersionAtomicInc(ctx, tx, key)
 				if err != nil {
-					return fmt.Errorf("increment resource version: %w", err)
+					return rollbackWithError(fmt.Errorf("increment resource version: %w", err))
 				}
 				if tmp > rv {
 					rv = tmp
@@ -54,13 +63,21 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 			}
 		}
 		if rv < 100 {
-			return fmt.Errorf("expected resource version to be set")
+			return rollbackWithError(fmt.Errorf("expected resource version to be set"))
 		}
 
 		// Write each event into the history
-		for req := next(); req != nil; req = next() {
+		for iter.Next() {
+			if iter.RollbackRequested() {
+				return rollbackWithError(nil)
+			}
+			req := iter.Request()
+			if req == nil {
+				return rollbackWithError(fmt.Errorf("missing request"))
+			}
+
 			if req.Action == resource.BatchRequest_UNKNOWN {
-				return fmt.Errorf("unknown action")
+				return rollbackWithError(fmt.Errorf("unknown action"))
 			}
 			rv++ // Increment the resource version
 			rsp.Processed++
@@ -79,7 +96,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 				GUID:            uuid.NewString(),
 				ResourceVersion: rv,
 			}); err != nil {
-				return fmt.Errorf("insert into resource history: %w", err)
+				return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
 			}
 
 			fmt.Printf("WROTE %d/%s\n", rv, req.Key.Name)
@@ -90,7 +107,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 			k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
 			summary := summaries[k]
 			if summary == nil {
-				return fmt.Errorf("missing summary key for: %s", k)
+				return rollbackWithError(fmt.Errorf("missing summary key for: %s", k))
 			}
 
 			err := batch.syncCollection(key, summary)
