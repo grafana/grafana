@@ -254,56 +254,73 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 
   // iterate over panels
   for (const p of panels) {
-    // FIXME: for now we should skip row panels
-    if (p.type === 'row') {
-      continue;
-    }
+    let elementName;
 
-    const queries = getPanelQueries(
-      (p.targets as unknown as DataQuery[]) || [],
-      p.datasource || getDefaultDatasource()
-    );
+    // LibraryPanelKind
+    if (p.libraryPanel) {
+      elementName = p.libraryPanel.uid;
 
-    const transformations = getPanelTransformations(p.transformations || []);
-
-    elements[p.id!] = {
-      kind: 'Panel',
-      spec: {
-        title: p.title || '',
-        description: p.description || '',
-        vizConfig: {
-          kind: p.type,
-          spec: {
-            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-            options: p.options as any,
-            pluginVersion: p.pluginVersion!,
-          },
+      elements[elementName] = {
+        kind: 'LibraryPanel',
+        spec: {
+          uid: p.libraryPanel.uid,
+          name: p.libraryPanel.name,
         },
-        links:
-          p.links?.map<DataLink>((l) => ({
-            title: l.title,
-            url: l.url || '',
-            targetBlank: l.targetBlank,
-          })) || [],
-        id: p.id!,
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries,
-            transformations, // TODO[schema v2]: handle transformations
-            queryOptions: {
-              cacheTimeout: p.cacheTimeout,
-              maxDataPoints: p.maxDataPoints,
-              interval: p.interval,
-              hideTimeOverride: p.hideTimeOverride,
-              queryCachingTTL: p.queryCachingTTL,
-              timeFrom: p.timeFrom,
-              timeShift: p.timeShift,
+      };
+      // PanelKind
+    } else {
+      elementName = p.id!.toString();
+
+      // FIXME: for now we should skip row panels
+      if (p.type === 'row') {
+        continue;
+      }
+
+      const queries = getPanelQueries(
+        (p.targets as unknown as DataQuery[]) || [],
+        p.datasource || getDefaultDatasource()
+      );
+      const transformations = getPanelTransformations(p.transformations || []);
+
+      elements[elementName] = {
+        kind: 'Panel',
+        spec: {
+          title: p.title || '',
+          description: p.description || '',
+          vizConfig: {
+            kind: p.type,
+            spec: {
+              fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+              options: p.options as any,
+              pluginVersion: p.pluginVersion!,
+            },
+          },
+          links:
+            p.links?.map<DataLink>((l) => ({
+              title: l.title,
+              url: l.url || '',
+              targetBlank: l.targetBlank,
+            })) || [],
+          id: p.id!,
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries,
+              transformations, // TODO[schema v2]: handle transformations
+              queryOptions: {
+                cacheTimeout: p.cacheTimeout,
+                maxDataPoints: p.maxDataPoints,
+                interval: p.interval,
+                hideTimeOverride: p.hideTimeOverride,
+                queryCachingTTL: p.queryCachingTTL,
+                timeFrom: p.timeFrom,
+                timeShift: p.timeShift,
+              },
             },
           },
         },
-      },
-    };
+      };
+    }
 
     layout.spec.items.push({
       kind: 'GridLayoutItem',
@@ -314,7 +331,7 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
         height: p.gridPos!.h,
         element: {
           kind: 'ElementReference',
-          name: p.id!.toString(),
+          name: elementName,
         },
       },
     });

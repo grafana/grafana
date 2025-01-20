@@ -78,7 +78,6 @@ func (_m *FakeDashboardStore) CountInOrg(_a0 context.Context, _a1 int64) (int64,
 	return r0, r1
 }
 
-
 // CountDashboardsInFolders provides a mock function with given fields: ctx, request
 func (_m *FakeDashboardStore) CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error) {
 	ret := _m.Called(ctx, request)

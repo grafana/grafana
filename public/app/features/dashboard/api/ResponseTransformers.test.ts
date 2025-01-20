@@ -281,6 +281,40 @@ describe('ResponseTransformers', () => {
             },
           ],
         },
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            title: 'Panel Title',
+            gridPos: { x: 0, y: 0, w: 12, h: 8 },
+            targets: [
+              {
+                refId: 'A',
+                datasource: 'datasource1',
+                expr: 'test-query',
+                hide: false,
+              },
+            ],
+            datasource: {
+              type: 'prometheus',
+              uid: 'datasource1',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            options: {},
+            transparent: false,
+            links: [],
+            transformations: [],
+          },
+          {
+            id: 2,
+            type: 'table',
+            libraryPanel: {
+              uid: 'library-panel-table',
+              name: 'Table Panel as Library Panel',
+            },
+            gridPos: { x: 0, y: 8, w: 12, h: 8 },
+          },
+        ],
       };
 
       const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
@@ -317,6 +351,7 @@ describe('ResponseTransformers', () => {
 
       const transformed = ResponseTransformers.ensureV2Response(dto);
 
+      // Metadata
       expect(transformed.apiVersion).toBe('v2alpha1');
       expect(transformed.kind).toBe('DashboardWithAccessInfo');
       expect(transformed.metadata.annotations?.[AnnoKeyCreatedBy]).toEqual('user1');
@@ -327,6 +362,7 @@ describe('ResponseTransformers', () => {
       expect(transformed.metadata.annotations?.[AnnoKeyDashboardId]).toBe(123);
       expect(transformed.metadata.annotations?.[AnnoKeyDashboardGnetId]).toBe('something-like-a-uid');
 
+      // Spec
       const spec = transformed.spec;
       expect(spec.title).toBe(dashboardV1.title);
       expect(spec.description).toBe(dashboardV1.description);
@@ -349,6 +385,90 @@ describe('ResponseTransformers', () => {
       expect(spec.timeSettings.weekStart).toBe(dashboardV1.weekStart);
       expect(spec.links).toEqual(dashboardV1.links);
       expect(spec.annotations).toEqual([]);
+
+      // Panel
+      expect(spec.layout.spec.items).toHaveLength(2);
+      expect(spec.layout.spec.items[0].spec).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: '1',
+        },
+        x: 0,
+        y: 0,
+        width: 12,
+        height: 8,
+      });
+      expect(spec.elements['1']).toEqual({
+        kind: 'Panel',
+        spec: {
+          title: 'Panel Title',
+          description: '',
+          id: 1,
+          links: [],
+          vizConfig: {
+            kind: 'timeseries',
+            spec: {
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+              options: {},
+              pluginVersion: undefined,
+            },
+          },
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    datasource: 'datasource1',
+                    hidden: false,
+                    query: {
+                      kind: 'prometheus',
+                      spec: {
+                        expr: 'test-query',
+                      },
+                    },
+                    refId: 'A',
+                  },
+                },
+              ],
+              queryOptions: {
+                cacheTimeout: undefined,
+                hideTimeOverride: undefined,
+                interval: undefined,
+                maxDataPoints: undefined,
+                queryCachingTTL: undefined,
+                timeFrom: undefined,
+                timeShift: undefined,
+              },
+              transformations: [],
+            },
+          },
+        },
+      });
+      // Library Panel
+      expect(spec.layout.spec.items[1].spec).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: 'library-panel-table',
+        },
+        x: 0,
+        y: 8,
+        width: 12,
+        height: 8,
+      });
+      expect(spec.elements['library-panel-table']).toEqual({
+        kind: 'LibraryPanel',
+        spec: {
+          uid: 'library-panel-table',
+          name: 'Table Panel as Library Panel',
+        },
+      });
+
+      // Variables
       validateVariablesV1ToV2(spec.variables[0], dashboardV1.templating?.list?.[0]);
       validateVariablesV1ToV2(spec.variables[1], dashboardV1.templating?.list?.[1]);
       validateVariablesV1ToV2(spec.variables[2], dashboardV1.templating?.list?.[2]);

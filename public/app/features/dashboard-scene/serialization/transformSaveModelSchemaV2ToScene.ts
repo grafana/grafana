@@ -46,6 +46,7 @@ import {
   defaultTextVariableKind,
   GroupByVariableKind,
   IntervalVariableKind,
+  LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
   QueryVariableKind,
@@ -74,6 +75,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
@@ -253,6 +255,18 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
           repeatDirection: element.spec.repeat?.direction,
           maxPerRow: element.spec.repeat?.maxPerRow,
         });
+      } else if (panel.kind === 'LibraryPanel') {
+        const libraryPanel = buildLibraryPanel(panel);
+
+        return new DashboardGridItem({
+          key: `grid-item-${panel.spec.uid}`,
+          x: element.spec.x,
+          y: element.spec.y,
+          width: element.spec.width,
+          height: element.spec.height,
+          itemHeight: element.spec.height,
+          body: libraryPanel,
+        });
       } else {
         throw new Error(`Unknown element kind: ${element.kind}`);
       }
@@ -260,6 +274,45 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       throw new Error(`Unknown layout element kind: ${element.kind}`);
     }
   });
+}
+
+function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
+  const titleItems: SceneObject[] = [];
+
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
+
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: [],
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
+
+  titleItems.push(new PanelNotices());
+
+  const vizPanelState: VizPanelState = {
+    key: panel.spec.uid,
+    titleItems,
+    $behaviors: [new LibraryPanelBehavior({ uid: panel.spec.uid, name: panel.spec.name })],
+    extendPanelContext: setDashboardPanelContext,
+    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
+    title: '',
+    options: {},
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+  };
+
+  if (!config.publicDashboardAccessToken) {
+    vizPanelState.menu = new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    });
+  }
+
+  return new VizPanel(vizPanelState);
 }
 
 function buildVizPanel(panel: PanelKind): VizPanel {
@@ -298,15 +351,6 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     extendPanelContext: setDashboardPanelContext,
     // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
   };
-
-  // FIXME: Library Panel
-  // if (panel.spec.libraryPanel) {
-  //   vizPanelState.$behaviors!.push(
-  //     new LibraryPanelBehavior({ uid: panel.spec.libraryPanel.uid, name: panel.spec.libraryPanel.name })
-  //   );
-  //   vizPanelState.pluginId = LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID;
-  //   vizPanelState.$data = undefined;
-  // }
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({
@@ -678,4 +722,12 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
     hide: transformVariableHideToEnumV1(variable.spec.hide),
   });
   return snapshotVariable;
+}
+
+export function getPanelElement(dashboard: DashboardV2Spec, elementName: string): PanelKind | undefined {
+  return dashboard.elements[elementName].kind === 'Panel' ? dashboard.elements[elementName] : undefined;
+}
+
+export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
+  return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
 }
