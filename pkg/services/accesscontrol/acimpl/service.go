@@ -770,8 +770,12 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	return s.store.DeleteExternalServiceRole(ctx, slug)
 }
 
-func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {
+	return s.roles
 }
 
 func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
