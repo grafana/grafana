@@ -2052,42 +2052,6 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 	}
 }
 
-func TestDeleteByDashboard(t *testing.T) {
-	t.Run("will return nil when pubdash not found", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
-		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
-		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-
-		err := pd.DeleteByDashboard(context.Background(), dashboard)
-		assert.Nil(t, err)
-	})
-	t.Run("will delete pubdash when dashboard deleted", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
-		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
-		pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
-		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(pubdash, nil)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
-
-		err := pd.DeleteByDashboard(context.Background(), dashboard)
-		require.NoError(t, err)
-	})
-
-	t.Run("will delete pubdashes when dashboard folder deleted", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
-		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: true}
-		pubdash1 := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
-		pubdash2 := &PublicDashboard{Uid: "3", OrgId: 1, DashboardUid: dashboard.UID}
-		store.On("FindByFolder", mock.Anything, mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
-
-		err := pd.DeleteByDashboard(context.Background(), dashboard)
-		require.NoError(t, err)
-	})
-}
-
 func TestGenerateAccessToken(t *testing.T) {
 	accessToken, err := GenerateAccessToken()
 

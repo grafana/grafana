@@ -732,51 +732,6 @@ func TestDeleteByDashboardUIDs(t *testing.T) {
 	})
 }
 
-func TestFindByFolder(t *testing.T) {
-	t.Run("returns nil when dashboard is not a folder", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		dashboard := &dashboards.Dashboard{OrgID: 1, UID: "dashboarduid", IsFolder: false}
-		store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
-		pubdashes, err := store.FindByFolder(context.Background(), dashboard.OrgID, dashboard.UID)
-
-		require.NoError(t, err)
-		assert.Nil(t, pubdashes)
-	})
-
-	t.Run("returns nil when parameters are empty", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		store := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
-		pubdashes, err := store.FindByFolder(context.Background(), 0, "")
-
-		require.NoError(t, err)
-		assert.Nil(t, pubdashes)
-	})
-
-	t.Run("can get all pubdashes for dashboard folder and org", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-		require.NoError(t, err)
-		pubdashStore := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
-		// insert folders
-		folder := insertTestDashboard(t, dashboardStore, "This is a folder", 1, "", true, PublicShareType)
-		folder2 := insertTestDashboard(t, dashboardStore, "This is another folder", 1, "", true, PublicShareType)
-		// insert dashboard in a folder
-		dashboard := insertTestDashboard(t, dashboardStore, "Dashboard in a folder", 1, folder.UID, false, PublicShareType)
-		// insert a dashboard in a different folder
-		dashboard2 := insertTestDashboard(t, dashboardStore, "Another Dashboard in a different folder", 1, folder2.UID, false, PublicShareType)
-
-		// create 2 public dashboards
-		pubdash := insertPublicDashboard(t, pubdashStore, dashboard.UID, dashboard.OrgID, true, PublicShareType)
-		_ = insertPublicDashboard(t, pubdashStore, dashboard2.UID, dashboard2.OrgID, true, PublicShareType)
-
-		pubdashes, err := pubdashStore.FindByFolder(context.Background(), folder.OrgID, folder.UID)
-
-		require.NoError(t, err)
-		assert.Len(t, pubdashes, 1)
-		assert.Equal(t, pubdash, pubdashes[0])
-	})
-}
-
 func TestGetMetrics(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

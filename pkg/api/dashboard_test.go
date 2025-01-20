@@ -272,12 +272,10 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 			hs.LibraryPanelService = &mockLibraryPanelService{}
 			hs.LibraryElementService = &libraryelementsfake.LibraryElementService{}
 
-			pubDashService := publicdashboards.NewFakePublicDashboardService(t)
-			pubDashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil).Maybe()
 			middleware := publicdashboards.NewFakePublicDashboardMiddleware(t)
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
-			hs.PublicDashboardsApi = api.ProvideApi(pubDashService, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware, hs.Cfg, license)
+			hs.PublicDashboardsApi = api.ProvideApi(nil, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware, hs.Cfg, license)
 
 			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 		})

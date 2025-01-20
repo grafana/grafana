@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -294,19 +293,6 @@ func (d *PublicDashboardStoreImpl) DeleteByDashboardUIDs(ctx context.Context, or
 
 		return err
 	})
-}
-
-func (d *PublicDashboardStoreImpl) FindByFolder(ctx context.Context, orgId int64, folderUid string) ([]*PublicDashboard, error) {
-	var pubdashes []*PublicDashboard
-
-	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return sess.SQL("SELECT * from dashboard_public WHERE (dashboard_uid, org_id) IN (SELECT uid, org_id FROM dashboard WHERE org_id = ? AND folder_uid = ?)", orgId, folderUid).Find(&pubdashes)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return pubdashes, nil
 }
 
 func (d *PublicDashboardStoreImpl) GetMetrics(ctx context.Context) (*Metrics, error) {
