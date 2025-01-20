@@ -7,13 +7,11 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 type Store interface {
-	GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error)
 	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
 	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
 	GetFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error)
@@ -29,44 +27,6 @@ func NewStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) *Stor
 		sql:    sql,
 		tracer: tracer,
 	}
-}
-
-func (s *StoreImpl) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
-	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.GetUserPermissions")
-	defer span.End()
-
-	sql, err := s.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	query.OrgID = ns.OrgID
-	req := newGetPermissions(sql, &query)
-	q, err := sqltemplate.Execute(sqlUserPerms, req)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if res != nil {
-			_ = res.Close()
-		}
-	}()
-
-	var perms []accesscontrol.Permission
-	for res.Next() {
-		var perm accesscontrol.Permission
-		if err := res.Scan(&perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope); err != nil {
-			return nil, err
-		}
-		perms = append(perms, perm)
-	}
-
-	return perms, nil
 }
 
 func (s *StoreImpl) GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error) {
