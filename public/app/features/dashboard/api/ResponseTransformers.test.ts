@@ -467,6 +467,8 @@ describe('ResponseTransformers', () => {
           name: 'Table Panel as Library Panel',
         },
       });
+
+      // Variables
       validateVariablesV1ToV2(spec.variables[0], dashboardV1.templating?.list?.[0]);
       validateVariablesV1ToV2(spec.variables[1], dashboardV1.templating?.list?.[1]);
       validateVariablesV1ToV2(spec.variables[2], dashboardV1.templating?.list?.[2]);
