@@ -158,6 +158,7 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  alertingSaveStateCompressed?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
