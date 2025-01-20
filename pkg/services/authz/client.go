@@ -18,7 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,8 +32,12 @@ const authzServiceAudience = "authzService"
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, grpcServer grpcserver.Provider,
-	tracer tracing.Tracer, db db.DB,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	grpcServer grpcserver.Provider,
+	tracer tracing.Tracer,
+	db db.DB,
+	acService accesscontrol.Service,
 ) (authzlib.AccessClient, error) {
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
@@ -43,16 +49,25 @@ func ProvideAuthZClient(
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
-	// Register the server
-	sql := legacysql.NewDatabaseProvider(db)
-	server := rbac.NewService(sql, legacy.NewLegacySQLStores(sql), log.New("authz-grpc-server"), tracer)
-
 	switch authCfg.mode {
 	case ModeGRPC:
 		return newGrpcLegacyClient(authCfg, tracer)
 	case ModeCloud:
 		return newCloudLegacyClient(authCfg, tracer)
 	default:
+		sql := legacysql.NewDatabaseProvider(db)
+
+		// Register the server
+		server := rbac.NewService(
+			sql,
+			legacy.NewLegacySQLStores(sql),
+			store.NewUnionPermissionStore(
+				store.NewStaticPermissionStore(acService),
+				store.NewSQLPermissionStore(sql, tracer),
+			),
+			log.New("authz-grpc-server"),
+			tracer,
+		)
 		return newInProcLegacyClient(server, tracer)
 	}
 }

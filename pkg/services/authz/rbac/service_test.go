@@ -286,10 +286,11 @@ func TestService_getUserBasicRole(t *testing.T) {
 			}
 
 			s := &Service{
-				basicRoleCache: cacheService,
-				store:          store,
-				logger:         log.New("test"),
-				tracer:         tracing.NewNoopTracerService(),
+				basicRoleCache:  cacheService,
+				store:           store,
+				permissionStore: store,
+				logger:          log.New("test"),
+				tracer:          tracing.NewNoopTracerService(),
 			}
 
 			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
@@ -361,16 +362,17 @@ func TestService_getUserPermissions(t *testing.T) {
 			}
 
 			s := &Service{
-				store:          store,
-				identityStore:  &fakeIdentityStore{teams: []int64{1, 2}},
-				actionMapper:   mappers.NewK8sRbacMapper(),
-				logger:         log.New("test"),
-				tracer:         tracing.NewNoopTracerService(),
-				idCache:        localcache.New(longCacheTTL, longCleanupInterval),
-				permCache:      cacheService,
-				sf:             new(singleflight.Group),
-				basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
-				teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
+				store:           store,
+				permissionStore: store,
+				identityStore:   &fakeIdentityStore{teams: []int64{1, 2}},
+				actionMapper:    mappers.NewK8sRbacMapper(),
+				logger:          log.New("test"),
+				tracer:          tracing.NewNoopTracerService(),
+				idCache:         localcache.New(longCacheTTL, longCleanupInterval),
+				permCache:       cacheService,
+				sf:              new(singleflight.Group),
+				basicRoleCache:  localcache.New(longCacheTTL, longCleanupInterval),
+				teamCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
 			}
 
 			perms, err := s.getUserPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
@@ -437,11 +439,12 @@ func TestService_buildFolderTree(t *testing.T) {
 			store := &fakeStore{folders: tc.folders}
 
 			s := &Service{
-				store:       store,
-				folderCache: cacheService,
-				logger:      log.New("test"),
-				sf:          new(singleflight.Group),
-				tracer:      tracing.NewNoopTracerService(),
+				store:           store,
+				permissionStore: store,
+				folderCache:     cacheService,
+				logger:          log.New("test"),
+				sf:              new(singleflight.Group),
+				tracer:          tracing.NewNoopTracerService(),
 			}
 
 			tree, err := s.buildFolderTree(ctx, ns)
