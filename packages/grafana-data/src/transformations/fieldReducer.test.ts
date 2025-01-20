@@ -235,26 +235,59 @@ describe('Stats Calculators', () => {
     }
   });
 
+  const reducerTestCases = (values: (number | null)[]) => [
+    // Min reducer
+    { values, config: undefined, expected: 1, reducerID: ReducerID.min },
+    { values, config: NullValueMode.Ignore, expected: 1, reducerID: ReducerID.min },
+    { values, config: NullValueMode.Null, expected: 1, reducerID: ReducerID.min },
+    { values, config: NullValueMode.AsZero, expected: 0, reducerID: ReducerID.min },
+    // Mean reducer
+    { values, config: undefined, expected: 2.5, reducerID: ReducerID.mean },
+    { values, config: NullValueMode.Ignore, expected: 2.5, reducerID: ReducerID.mean },
+    { values, config: NullValueMode.Null, expected: 2.5, reducerID: ReducerID.mean },
+    { values, config: NullValueMode.AsZero, expected: 2, reducerID: ReducerID.mean },
+    // Median reducer
+    { values, config: undefined, expected: 2.5, reducerID: ReducerID.median },
+    { values, config: NullValueMode.Ignore, expected: 2.5, reducerID: ReducerID.median },
+    { values, config: NullValueMode.Null, expected: 2, reducerID: ReducerID.median },
+    { values, config: NullValueMode.AsZero, expected: 2, reducerID: ReducerID.median },
+    // Count reducer
+    { values, config: undefined, expected: 4, reducerID: ReducerID.count },
+    { values, config: NullValueMode.Ignore, expected: 4, reducerID: ReducerID.count },
+    { values, config: NullValueMode.Null, expected: 5, reducerID: ReducerID.count },
+    { values, config: NullValueMode.AsZero, expected: 5, reducerID: ReducerID.count },
+    // Range reducer
+    { values, config: undefined, expected: 3, reducerID: ReducerID.range },
+    { values, config: NullValueMode.Ignore, expected: 3, reducerID: ReducerID.range },
+    { values, config: NullValueMode.Null, expected: 3, reducerID: ReducerID.range },
+    { values, config: NullValueMode.AsZero, expected: 4, reducerID: ReducerID.range },
+    // Delta reducer
+    { values, config: undefined, expected: 4, reducerID: ReducerID.delta },
+    { values, config: NullValueMode.Ignore, expected: 4, reducerID: ReducerID.delta },
+    { values, config: NullValueMode.Null, expected: 4, reducerID: ReducerID.delta },
+    { values, config: NullValueMode.AsZero, expected: 6, reducerID: ReducerID.delta },
+    // Distinct count reducer
+    { values, config: undefined, expected: 4, reducerID: ReducerID.distinctCount },
+    { values, config: NullValueMode.Ignore, expected: 4, reducerID: ReducerID.distinctCount },
+    { values, config: NullValueMode.Null, expected: 5, reducerID: ReducerID.distinctCount },
+    { values, config: NullValueMode.AsZero, expected: 5, reducerID: ReducerID.distinctCount },
+    // Step reducer
+    { values, config: undefined, expected: -1, reducerID: ReducerID.step },
+    { values, config: NullValueMode.Ignore, expected: -1, reducerID: ReducerID.step },
+    { values, config: NullValueMode.Null, expected: -1, reducerID: ReducerID.step },
+    { values, config: NullValueMode.AsZero, expected: -3, reducerID: ReducerID.step },
+    // Change count reducer
+    { values, config: undefined, expected: 3, reducerID: ReducerID.changeCount },
+    { values, config: NullValueMode.Ignore, expected: 3, reducerID: ReducerID.changeCount },
+    { values, config: NullValueMode.Null, expected: 4, reducerID: ReducerID.changeCount },
+    { values, config: NullValueMode.AsZero, expected: 4, reducerID: ReducerID.changeCount },
+  ];
+
   // Programmatic testing of reducer functions to be sure they handle count nulls, ignore nulls, and null as zero
-  it.each([
-    { values: [1, null, null, 1], field: 'x', config: undefined, expected: 2, reducerID: ReducerID.count },
-    { values: [1, null, null, 1], field: 'x', config: NullValueMode.Ignore, expected: 2, reducerID: ReducerID.count },
-    { values: [1, null, null, 1], field: 'x', config: NullValueMode.Null, expected: 4, reducerID: ReducerID.count },
-    { values: [1, null, null, 1], field: 'x', config: NullValueMode.AsZero, expected: 4, reducerID: ReducerID.count },
-    { values: [3, null, 2, 1, 4], field: 'y', config: undefined, expected: 2.5, reducerID: ReducerID.median },
-    {
-      values: [3, null, 2, 1, 4],
-      field: 'y',
-      config: NullValueMode.Ignore,
-      expected: 2.5,
-      reducerID: ReducerID.median,
-    },
-    { values: [3, null, 2, 1, 4], field: 'y', config: NullValueMode.Null, expected: 2, reducerID: ReducerID.median },
-    { values: [3, null, 2, 1, 4], field: 'y', config: NullValueMode.AsZero, expected: 2, reducerID: ReducerID.median },
-  ])(
-    '$reducerID reducer returns count $expected for fieldConfig $config on field $field',
-    ({ values, field, config, expected, reducerID }) => {
-      const someNulls = createField(field, values);
+  it.each(reducerTestCases([3, null, 2, 1, 4]))(
+    '$reducerID reducer returns count $expected for fieldConfig $config',
+    ({ config, expected, reducerID, values }) => {
+      const someNulls = createField('x', values);
       someNulls.config.nullValueMode = config;
 
       expect(reduce(someNulls, reducerID)).toEqual(expected);
