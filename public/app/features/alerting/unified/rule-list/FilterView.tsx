@@ -24,7 +24,7 @@ interface FilterViewProps {
   filterState: RulesFilter;
 }
 
-const FRONTENT_PAGE_SIZE = 40;
+const FRONTENT_PAGE_SIZE = 100;
 const API_PAGE_SIZE = 2000;
 
 export function FilterView({ filterState }: FilterViewProps) {
