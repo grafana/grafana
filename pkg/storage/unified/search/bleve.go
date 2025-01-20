@@ -111,14 +111,14 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	mapper := getBleveMappings(fields)
 
 	if size > b.opts.FileThreshold {
+		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
+			fmt.Sprintf("%s.%s", key.Resource, key.Group),
+		)
 		fname := fmt.Sprintf("rv%d", resourceVersion)
 		if resourceVersion == 0 {
 			fname = b.start.Format("tmp-20060102-150405")
 		}
-		dir := filepath.Join(b.opts.Root, key.Namespace,
-			fmt.Sprintf("%s.%s", key.Resource, key.Group),
-			fname,
-		)
+		dir := filepath.Join(resourceDir, fname)
 		if resourceVersion > 0 {
 			info, _ := os.Stat(dir)
 			if info != nil && info.IsDir() {
@@ -128,6 +128,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 					if err != nil || int64(found) != size {
 						b.log.Info("this size changed since the last time the index opened")
 						_ = index.Close()
+
+						// Pick a new file name
+						fname = b.start.Format("tmp-20060102-150405-changed")
+						dir = filepath.Join(resourceDir, fname)
 						index = nil
 					} else {
 						build = false // no need to build the index
@@ -138,8 +142,15 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 		if index == nil {
 			index, err = bleve.New(dir, mapper)
+			if err != nil {
+				err = fmt.Errorf("error creating new bleve index: %s %w", dir, err)
+			}
 		}
 
+		// Start a background task to cleanup the old index directories
+		if index != nil && err == nil {
+			go b.cleanOldIndexes(resourceDir, fname)
+		}
 		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
@@ -181,6 +192,25 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	b.cache[key] = idx
 	b.cacheMu.Unlock()
 	return idx, nil
+}
+
+func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		b.log.Warn("error cleaning folders from", "directory", dir, "error", err)
+		return
+	}
+	for _, file := range files {
+		if file.IsDir() && file.Name() != skip {
+			fpath := filepath.Join(dir, file.Name())
+			err = os.RemoveAll(fpath)
+			if err != nil {
+				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
+			} else {
+				b.log.Error("Removed old index folder", "directory", fpath)
+			}
+		}
+	}
 }
 
 // TotalDocs returns the total number of documents across all indices
