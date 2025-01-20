@@ -21,6 +21,7 @@ import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
+import { RuleOperation } from './components/RuleListIcon';
 import { usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -244,13 +245,13 @@ function RulerEnabledDataSourceGroupLoader({
   promRules,
   rulerRules,
 }: RulerEnabledDataSourceGroupLoaderProps) {
-  const { matching, unmatchedPromRules, unmatchedRulerRules } = useMemo(() => {
+  const { matching, promOnlyRules, rulerOnlyRules } = useMemo(() => {
     return matchRules(promRules, rulerRules);
   }, [promRules, rulerRules]);
 
   return (
     <>
-      {unmatchedRulerRules.map((rule) => (
+      {rulerOnlyRules.map((rule) => (
         <RuleInTransitionListItem
           key={getRuleName(rule)}
           name={getRuleName(rule)}
@@ -258,7 +259,7 @@ function RulerEnabledDataSourceGroupLoader({
           group={groupName}
           rulesSource={groupIdentifier.rulesSource}
           application={application}
-          transition="creating"
+          operation={RuleOperation.Creating}
         />
       ))}
       {matching.map(({ promRule, rulerRule }) => (
@@ -273,7 +274,7 @@ function RulerEnabledDataSourceGroupLoader({
           }
         />
       ))}
-      {unmatchedPromRules.map((rule) => (
+      {promOnlyRules.map((rule) => (
         <RuleInTransitionListItem
           key={rule.name}
           name={rule.name}
@@ -281,7 +282,7 @@ function RulerEnabledDataSourceGroupLoader({
           group={groupName}
           rulesSource={groupIdentifier.rulesSource}
           application={application}
-          transition="deleting"
+          operation={RuleOperation.Deleting}
         />
       ))}
     </>
@@ -305,8 +306,8 @@ interface RuleMatch {
 
 interface MatchingResult {
   matching: RuleMatch[];
-  unmatchedPromRules: PromRuleDTO[];
-  unmatchedRulerRules: RulerRuleDTO[];
+  promOnlyRules: PromRuleDTO[];
+  rulerOnlyRules: RulerRuleDTO[];
 }
 
 export function matchRules(promRules: PromRuleDTO[], rulerRules: RulerCloudRuleDTO[]): MatchingResult {
@@ -315,7 +316,7 @@ export function matchRules(promRules: PromRuleDTO[], rulerRules: RulerCloudRuleD
 
   const matchingResult = rulerRules.reduce<MatchingResult>(
     (acc, rulerRule) => {
-      const { matching, unmatchedRulerRules } = acc;
+      const { matching, rulerOnlyRules } = acc;
 
       // We try to match including the query first, if it fails we try without it
       const rulerBasedIdentifier = getRulerRuleIdentifier(rulerRule, true);
@@ -336,10 +337,10 @@ export function matchRules(promRules: PromRuleDTO[], rulerRules: RulerCloudRuleD
         return acc;
       }
 
-      unmatchedRulerRules.push(rulerRule);
+      rulerOnlyRules.push(rulerRule);
       return acc;
     },
-    { matching: [], unmatchedPromRules: [], unmatchedRulerRules: [] }
+    { matching: [], promOnlyRules: [], rulerOnlyRules: [] }
   );
 
   // Truly unmatched rules are the ones which are still present in both maps
@@ -348,7 +349,7 @@ export function matchRules(promRules: PromRuleDTO[], rulerRules: RulerCloudRuleD
     Array.from(promRulesByHashWithoutQuery.values())
   );
 
-  return { ...matchingResult, unmatchedPromRules };
+  return { ...matchingResult, promOnlyRules: unmatchedPromRules };
 }
 
 function getPromRuleIdentifier(rule: PromRuleDTO, includeQuery: boolean): string {
