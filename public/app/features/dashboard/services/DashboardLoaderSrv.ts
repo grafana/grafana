@@ -63,7 +63,6 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
             'Please make sure it exists and returns a valid dashboard',
           ]);
           throw err;
-          // return this._dashboardLoadFailed('Scripted dashboard');
         }
       );
   }
