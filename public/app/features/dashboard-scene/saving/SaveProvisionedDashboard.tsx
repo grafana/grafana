@@ -1,7 +1,5 @@
-import debounce from 'debounce-promise';
-import { ChangeEvent, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -100,7 +98,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   const isGitHub = repositoryConfig?.type === 'github';
   const href = createPRLink(repositoryConfig, title, ref, comment);
   const { isDirty } = dashboard.state;
-  const navigate = useNavigate();
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -116,7 +113,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, path, saveProvisioned, navigate, repo, ref]);
+  }, [request.isSuccess, request.isError, request.error, dashboard, path, saveProvisioned, repo, ref]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -165,10 +162,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
           <>
             <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
               <Input
-                {...register('title', { required: 'Required', validate: validateDashboardName })}
-                onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
-                  setValue('title', e.target.value, { shouldValidate: true });
-                }, 400)}
+                {...register('title', { required: 'Dashboard title is required', validate: validateDashboardName })}
               />
             </Field>
             <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
