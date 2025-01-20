@@ -48,6 +48,37 @@ func (_m *FakeDashboardStore) Count(_a0 context.Context, _a1 *quota.ScopeParamet
 	return r0, r1
 }
 
+// CountInOrg provides a mock function with given fields: _a0, _a1
+func (_m *FakeDashboardStore) CountInOrg(_a0 context.Context, _a1 int64) (int64, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Count")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(int64)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+
 // CountDashboardsInFolders provides a mock function with given fields: ctx, request
 func (_m *FakeDashboardStore) CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error) {
 	ret := _m.Called(ctx, request)
