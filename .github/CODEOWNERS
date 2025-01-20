@@ -66,7 +66,7 @@
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /hack/ @grafana/grafana-app-platform-squad
 
-/apps/alerting/ @grafana/alerting-backend @grafana/alerting-frontend
+/apps/alerting/ @grafana/alerting-backend
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/investigation/ @fcjack @matryer
 /pkg/api/ @grafana/grafana-backend-group

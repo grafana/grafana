@@ -253,6 +253,7 @@ export interface FeatureToggles {
   ABTestFeatureToggleA?: boolean;
   ABTestFeatureToggleB?: boolean;
   queryLibraryDashboards?: boolean;
+  grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
   pluginsCDNSyncLoader?: boolean;
 }
