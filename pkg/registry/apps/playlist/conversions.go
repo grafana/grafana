@@ -129,5 +129,5 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 	if err != nil {
 		return 0
 	}
-	return meta.GetDeprecatedInternalID()
+	return meta.GetDeprecatedInternalID() // nolint:staticcheck
 }
