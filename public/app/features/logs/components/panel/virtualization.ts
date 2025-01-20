@@ -38,9 +38,19 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
   }
 
   let logLines = 0;
-  const charWidth = measureTextWidth('a');
-  let logLineCharsWidth = Math.round(maxWidth / charWidth);
+  const charWidth = measureTextWidth('ee') / 2;
+  let logLineCharsLength = Math.round(maxWidth / charWidth);
+  const firstLineCharsLength = Math.floor((maxWidth - beforeWidth) / charWidth) - 10;
   const textLines = text.split('\n');
+
+  // Skip unnecessary measurements
+  if (textLines.length === 1 && text.length < firstLineCharsLength) {
+    return {
+      lines: 1,
+      height: lineHeight,
+    };
+  }
+
   for (const textLine of textLines) {
     for (let start = 0; start < textLine.length; ) {
       let testLogLine: string;
@@ -48,11 +58,12 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
       let delta = 0;
       let availableWidth = maxWidth - beforeWidth;
       do {
-        testLogLine = textLine.substring(start, start + logLineCharsWidth - delta);
+        testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
         width = measureTextWidth(testLogLine);
         delta += 1;
       } while (width >= availableWidth);
       if (beforeWidth) {
+        //console.log(testLogLine)
         beforeWidth = 0;
       }
       logLines += 1;
