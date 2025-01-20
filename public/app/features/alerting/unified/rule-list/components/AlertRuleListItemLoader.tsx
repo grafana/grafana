@@ -3,8 +3,8 @@ import Skeleton from 'react-loading-skeleton';
 import { t } from 'app/core/internationalization';
 import { PromRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { ActionsLoader } from './ActionsLoader';
 import { ListItem } from './ListItem';
+import { RuleActionsSkeleton } from './RuleActionsSkeleton';
 import { RuleListIcon } from './RuleListIcon';
 
 export function AlertRuleListItemLoader() {
@@ -13,7 +13,7 @@ export function AlertRuleListItemLoader() {
       title={<Skeleton width={64} />}
       icon={<RuleListIcon isPaused={false} />}
       description={<Skeleton width={256} />}
-      actions={<ActionsLoader />}
+      actions={<RuleActionsSkeleton />}
       data-testid="alert-rule-list-item-loader"
     />
   );

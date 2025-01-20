@@ -73,9 +73,11 @@ export const RuleListIcon = memo(function RuleListIcon({
 
   return (
     <Tooltip content={stateName} placement="right">
-      <Text color={iconColor}>
-        <Icon name={iconName} size="lg" />
-      </Text>
+      <div>
+        <Text color={iconColor}>
+          <Icon name={iconName} size="lg" />
+        </Text>
+      </div>
     </Tooltip>
   );
 });

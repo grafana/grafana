@@ -8,7 +8,7 @@ import { equal, fromRule, fromRulerRule, stringifyIdentifier } from '../utils/ru
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
-import { ActionsLoader } from './components/ActionsLoader';
+import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 
@@ -64,7 +64,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
   // 2.2 render provisioning badge and contact point metadata, etc.
   const actions = useMemo(() => {
     if (isLoading) {
-      return <ActionsLoader />;
+      return <RuleActionsSkeleton />;
     }
 
     if (rulerRule) {
