@@ -766,8 +766,6 @@ GroupByVariableSpec: {
   }
   options: [...VariableOption] | *[]
   multi: bool | *false
-  includeAll: bool | *false
-  allValue?: string
   label?: string
   hide: VariableHide
   skipUrlSync: bool | *false

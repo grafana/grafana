@@ -407,7 +407,6 @@ export function sceneVariablesSetToSchemaV2Variables(
             })) || [],
           current: currentVariableOption,
           multi: variable.state.isMulti || false,
-          includeAll: variable.state.includeAll || false,
         },
       };
       variables.push(groupVariable);
