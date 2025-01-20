@@ -47,11 +47,6 @@ const preProcessLog = (
     defaultWithMS: true,
   });
 
-  if (prettify) {
-    try {
-      body = JSON.stringify(JSON.parse(body), undefined, 2);
-    } catch (error) {}
-  }
   if (escape && log.hasUnescapedContent) {
     body = escapeUnescapedString(body);
   }
