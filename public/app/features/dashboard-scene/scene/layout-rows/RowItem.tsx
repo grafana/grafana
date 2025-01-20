@@ -55,7 +55,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     }, [row]);
 
     const { layout } = this.useState();
-    const layoutOptions = useLayoutCategory(layout, 2);
+    const layoutOptions = useLayoutCategory(layout);
 
     return [rowOptions, layoutOptions];
   }
