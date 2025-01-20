@@ -311,18 +311,24 @@ func setupDB(b testing.TB) benchScenario {
 
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
-			RoleID:  roleID,
-			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-			Updated: now,
-			Created: now,
+			RoleID:     roleID,
+			Action:     dashboards.ActionFoldersRead,
+			Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Kind:       dashboards.ScopeFoldersRoot,
+			Attribute:  "uid",
+			Identifier: f0.UID,
+			Updated:    now,
+			Created:    now,
 		},
 			accesscontrol.Permission{
-				RoleID:  roleID,
-				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-				Updated: now,
-				Created: now,
+				RoleID:     roleID,
+				Action:     dashboards.ActionDashboardsRead,
+				Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Kind:       dashboards.ScopeFoldersRoot,
+				Attribute:  "uid",
+				Identifier: f0.UID,
+				Updated:    now,
+				Created:    now,
 			},
 		)
 		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
@@ -493,6 +499,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
+		tracer:           tracing.InitializeTracerForTest(),
 	}
 
 	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
