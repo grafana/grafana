@@ -55,7 +55,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     }, [row]);
 
     const { layout } = this.useState();
-    const layoutOptions = useLayoutCategory(layout);
+    const layoutOptions = useLayoutCategory(layout, 2);
 
     return [rowOptions, layoutOptions];
   }
@@ -95,13 +95,13 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   };
 
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden } = model.useState();
+    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
     const { isEditing, showHiddenElements } = getDashboardSceneFor(model).useState();
     const styles = useStyles2(getStyles);
     const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
     const ref = useRef<HTMLDivElement>(null);
     const shouldGrow = !isCollapsed && height === 'expand';
-    const { isSelected, onSelect } = useElementSelection(model.state.key);
+    const { isSelected, onSelect } = useElementSelection(key);
 
     return (
       <div

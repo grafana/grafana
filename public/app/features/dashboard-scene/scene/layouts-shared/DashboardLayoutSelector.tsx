@@ -10,14 +10,17 @@ import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
+  level: number;
 }
 
-export function DashboardLayoutSelector({ layoutManager }: { layoutManager: DashboardLayoutManager }) {
+export function DashboardLayoutSelector({ layoutManager, level }: Props) {
   const layouts = layoutRegistry.list();
-  const options = layouts.map((layout) => ({
-    label: layout.name,
-    value: layout,
-  }));
+  const options = layouts
+    .filter((layout) => layout.level >= level)
+    .map((layout) => ({
+      label: layout.name,
+      value: layout,
+    }));
 
   const currentLayoutId = layoutManager.getDescriptor().id;
   const currentLayoutOption = options.find((option) => option.value.id === currentLayoutId);
@@ -26,12 +29,16 @@ export function DashboardLayoutSelector({ layoutManager }: { layoutManager: Dash
     <Select
       options={options}
       value={currentLayoutOption}
-      onChange={(option) => changeLayoutTo(layoutManager, option.value!)}
+      onChange={(option) => {
+        if (option.value?.id !== currentLayoutOption?.value.id) {
+          changeLayoutTo(layoutManager, option.value!);
+        }
+      }}
     />
   );
 }
 
-export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
+export function useLayoutCategory(layoutManager: DashboardLayoutManager, level: number) {
   return useMemo(() => {
     const layoutCategory = new OptionsPaneCategoryDescriptor({
       title: 'Layout',
@@ -43,7 +50,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       new OptionsPaneItemDescriptor({
         title: 'Type',
         render: function renderTitle() {
-          return <DashboardLayoutSelector layoutManager={layoutManager} />;
+          return <DashboardLayoutSelector layoutManager={layoutManager} level={level} />;
         },
       })
     );
@@ -55,7 +62,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
     }
 
     return layoutCategory;
-  }, [layoutManager]);
+  }, [layoutManager, level]);
 }
 
 function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
