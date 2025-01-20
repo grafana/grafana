@@ -100,7 +100,7 @@ export const LogList = ({
     <VariableSizeList
       height={height}
       itemCount={processedLogs.length}
-      itemSize={getLogLineSize.bind(null, processedLogs, containerElement, theme, { wrap: wrapLogMessage, showTime })}
+      itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
       itemKey={(index: number) => processedLogs[index].uid}
       layout="vertical"
       ref={listRef}
