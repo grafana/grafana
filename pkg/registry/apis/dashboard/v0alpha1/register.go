@@ -248,7 +248,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 			rsp, err := b.legacy.Access.Migrate(r.Context(), legacy.MigrateOptions{
 				Namespace:    "default", // get from namespace
 				SendHistory:  query.Get("history") == "true",
-				Resource:     query.Get("resource"),
+				Resources:    query["resource"],
 				LargeObjects: nil, // ???
 				Store:        b.unified,
 				Progress: func(count int, msg string) {
