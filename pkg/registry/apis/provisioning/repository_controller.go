@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 const loggerName = "provisioning-repository-controller"
@@ -48,6 +49,7 @@ type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
+	parsers    *resources.ParserFactory
 
 	jobs jobs.JobQueue
 
@@ -69,6 +71,7 @@ func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	repoInformer informer.RepositoryInformer,
 	repoGetter RepoGetter,
+	parsers *resources.ParserFactory,
 	identities auth.BackgroundIdentityService,
 	tester *RepositoryTester,
 	jobs jobs.JobQueue,
@@ -234,6 +237,21 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if ok {
 			return hooks.OnDelete(ctx)
 		}
+
+		parser, err := rc.parsers.GetParser(ctx, repo)
+		if err != nil {
+			return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
+		}
+
+		replicator, err := resources.NewReplicator(repo, parser)
+		if err != nil {
+			return fmt.Errorf("error creating replicator")
+		}
+
+		if err := replicator.Unsync(ctx, resources.UnsyncOptions{}); err != nil {
+			return fmt.Errorf("unsync repository: %w", err)
+		}
+
 		return nil
 	}
 

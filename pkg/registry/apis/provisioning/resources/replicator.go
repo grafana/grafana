@@ -18,10 +18,15 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
+
+type UnsyncOptions struct {
+	KeepDashboards bool
+}
 
 type Replicator struct {
 	client     *DynamicClient
@@ -97,6 +102,27 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 	}
 
 	return latest, nil
+}
+
+func (r *Replicator) Unsync(ctx context.Context, opts UnsyncOptions) error {
+	if r.repository.Config().Spec.Folder != "" {
+		obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("get folder to unsync: %w", err)
+		}
+
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("create meta accessor from folder object: %w", err)
+		}
+
+		meta.SetRepositoryInfo(nil)
+		if _, err := r.folders.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+			return fmt.Errorf("remove repo info from folder: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // replicateTree replicates all files in the repository.
@@ -211,11 +237,15 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 	}
 
 	logger := logging.FromContext(ctx).With("file", filePath)
+
+	var currentPath string
 	for _, folder := range strings.Split(dir, "/") {
 		if folder == "" {
 			// Trailing / leading slash?
 			continue
 		}
+
+		currentPath = path.Join(currentPath, folder)
 
 		logger := logger.With("folder", folder)
 		obj, err := r.folders.Get(ctx, folder, metav1.GetOptions{})
@@ -226,21 +256,31 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 			continue
 		}
 
-		_, err = r.folders.Create(ctx, &unstructured.Unstructured{
+		obj = &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      folder,
-					"namespace": r.client.GetNamespace(),
-					"annotations": map[string]any{
-						apiutils.AnnoKeyFolder: parent,
-					},
-				},
 				"spec": map[string]any{
 					"title":       folder, // TODO: how do we want to get this?
 					"description": "Repository-managed folder.",
 				},
 			},
-		}, metav1.CreateOptions{})
+		}
+
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return "", fmt.Errorf("create meta accessor for the object: %w", err)
+		}
+
+		obj.SetNamespace(r.client.GetNamespace())
+		obj.SetName(folder)
+		meta.SetFolder(parent)
+		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+			Name:      r.repository.Config().Name,
+			Path:      currentPath,
+			Hash:      "",  // FIXME: which hash?
+			Timestamp: nil, // ???&info.Modified.Time,
+		})
+
+		_, err = r.folders.Create(ctx, obj, metav1.CreateOptions{})
 		if err != nil {
 			return parent, fmt.Errorf("failed to create folder '%s': %w", folder, err)
 		}
@@ -490,8 +530,24 @@ func (r *Replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, erro
 }
 
 func (r *Replicator) ensureRepositoryFolderExists(ctx context.Context) error {
-	_, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
+	obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
 	if err == nil {
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("create meta accessor for the object: %w", err)
+		}
+
+		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+			Name:      r.repository.Config().Name,
+			Path:      "",
+			Hash:      "",  // FIXME: which hash?
+			Timestamp: nil, // ???&info.Modified.Time,
+		})
+
+		if _, err := r.folders.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+			return fmt.Errorf("failed to add repo info to configured folder: %w", err)
+		}
+
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)
@@ -503,18 +559,29 @@ func (r *Replicator) ensureRepositoryFolderExists(ctx context.Context) error {
 		title = cfg.Spec.Folder
 	}
 
-	if _, err := r.folders.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]any{
-			"metadata": map[string]any{
-				"name":      cfg.Spec.Folder,
-				"namespace": cfg.GetNamespace(),
-			},
+	obj = &unstructured.Unstructured{
+		Object: map[string]interface{}{
 			"spec": map[string]any{
-				"title":       title,
-				"description": "Repository-managed folder",
+				"title": title, // TODO: how do we want to get this?
 			},
 		},
-	}, metav1.CreateOptions{}); err != nil {
+	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return fmt.Errorf("create meta accessor for the object: %w", err)
+	}
+
+	obj.SetNamespace(cfg.GetNamespace())
+	obj.SetName(cfg.Spec.Folder)
+	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+		Name:      r.repository.Config().Name,
+		Path:      "",
+		Hash:      "",  // FIXME: which hash?
+		Timestamp: nil, // ???&info.Modified.Time,
+	})
+
+	if _, err := r.folders.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
 
