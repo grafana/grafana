@@ -452,4 +452,3 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     </div>
   );
 };
-export { itemToString };
