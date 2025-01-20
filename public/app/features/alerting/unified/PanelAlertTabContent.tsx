@@ -60,7 +60,6 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     );
   }
 
-  //  For legacy architecture reasons (DashboardModel) the isNew also respects UID being null
   const isNew = !Boolean(dashboard.uid);
 
   return (
