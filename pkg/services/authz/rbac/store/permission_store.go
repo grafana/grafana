@@ -139,7 +139,7 @@ func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns claim
 var _ PermissionStore = (*UnionPermissionStore)(nil)
 
 func NewUnionPermissionStore(stores ...PermissionStore) *UnionPermissionStore {
-	return &UnionPermissionStore{}
+	return &UnionPermissionStore{stores}
 }
 
 type UnionPermissionStore struct {
