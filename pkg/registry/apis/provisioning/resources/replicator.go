@@ -105,21 +105,33 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 }
 
 func (r *Replicator) Unsync(ctx context.Context, opts UnsyncOptions) error {
+	cfg := r.repository.Config()
+
+	logger := logging.FromContext(ctx)
+	logger = logger.With("repository", cfg.Name, "namespace", cfg.GetNamespace(), "folder", cfg.Spec.Folder)
+	logger.Info("start repository unsync")
+	defer logger.Info("end repository unsync")
+
 	if r.repository.Config().Spec.Folder != "" {
 		obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("get folder to unsync: %w", err)
 		}
 
-		meta, err := utils.MetaAccessor(obj)
+		meta, err := apiutils.MetaAccessor(obj)
 		if err != nil {
 			return fmt.Errorf("create meta accessor from folder object: %w", err)
 		}
 
 		meta.SetRepositoryInfo(nil)
-		if _, err := r.folders.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+		obj, err = r.folders.Update(ctx, obj, metav1.UpdateOptions{})
+		if err != nil {
 			return fmt.Errorf("remove repo info from folder: %w", err)
 		}
+
+		logger.Info("removed repo info from folder", "object", obj)
+	} else {
+		logger.Info("skip repo info removal as it's root folder")
 	}
 
 	return nil
@@ -265,7 +277,7 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 			},
 		}
 
-		meta, err := utils.MetaAccessor(obj)
+		meta, err := apiutils.MetaAccessor(obj)
 		if err != nil {
 			return "", fmt.Errorf("create meta accessor for the object: %w", err)
 		}

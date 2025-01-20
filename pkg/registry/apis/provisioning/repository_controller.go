@@ -87,6 +87,7 @@ func NewRepositoryController(
 			},
 		),
 		repoGetter: repoGetter,
+		parsers:    parsers,
 		identities: identities,
 		tester:     tester,
 		jobs:       jobs,
@@ -233,9 +234,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("unable to create repository from object: %w", err)
 		}
 
-		hooks, ok := repo.(repository.RepositoryHooks)
-		if ok {
-			return hooks.OnDelete(ctx)
+		if hooks, ok := repo.(repository.RepositoryHooks); !ok {
+			err := hooks.OnDelete(ctx)
+			if err != nil {
+				return fmt.Errorf("handle repository delete: %w", err)
+			}
 		}
 
 		parser, err := rc.parsers.GetParser(ctx, repo)
