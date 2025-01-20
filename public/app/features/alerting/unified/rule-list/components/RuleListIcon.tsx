@@ -121,7 +121,7 @@ export const RuleListIcon = memo(function RuleListIcon({
                 r={ICON_SIZE / 2}
                 cx="12"
                 cy="12"
-                // make sure to match this color to the color of the list item background where it's being used!
+                // make sure to match this color to the color of the list item background where it's being used! Works for both light and dark themes.
                 stroke={theme.colors.background.primary}
                 strokeWidth="3"
                 strokeLinecap="round"
