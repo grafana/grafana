@@ -18,7 +18,7 @@ interface SaveDashboardAsFormDTO {
   firstName?: string;
   title: string;
   description: string;
-  folder: { uid?: string; title?: string; repository?: Repository };
+  folder: { uid?: string; title?: string };
   copyTags: boolean;
 }
 
@@ -134,7 +134,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         <FolderPicker
           onChange={(uid: string | undefined, title: string | undefined, repository?: Repository) => {
             const name = repository?.metadata?.name;
-            setValue('folder', { uid, title, repository });
+            setValue('folder', { uid, title });
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);
             dashboard.setState({
