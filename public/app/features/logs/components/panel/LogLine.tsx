@@ -34,6 +34,7 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
     <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
       <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
         {showTime && <span className={styles.timestamp}>{log.timestamp}</span>}
+        {log.logLevel && <span className={styles.level}>{log.logLevel}</span>}
         {log.body}
       </div>
     </div>
@@ -41,10 +42,6 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  timestamp: css({
-    width: 200,
-    paddingRight: theme.spacing(1),
-  }),
   logLine: css({
     fontFamily: theme.typography.fontFamilyMonospace,
     fontSize: theme.typography.fontSize,
@@ -52,6 +49,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       opacity: 0.5,
     },
+  }),
+  timestamp: css({
+    display: 'inline-block',
+    marginRight: theme.spacing(1),
+  }),
+  level: css({
+    display: 'inline-block',
+    marginRight: theme.spacing(1),
   }),
   overflows: css({
     outline: 'solid 1px red',
