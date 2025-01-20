@@ -5,7 +5,6 @@ import {
   TransformerUIProps,
   TransformerCategory,
   FrameMatcherID,
-  StandardEditorsRegistryItem,
 } from '@grafana/data';
 import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
@@ -26,8 +25,6 @@ export const FilterByRefIdTransformerEditor = (props: TransformerUIProps<FilterF
         });
       }}
       context={{ data: props.input }}
-      // eslint-disable-next-line
-      item={{} as StandardEditorsRegistryItem}
     />
   );
 };
