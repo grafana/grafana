@@ -2,7 +2,7 @@ import { BaseQueryFn, createApi, QueryReturnValue } from '@reduxjs/toolkit/query
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -100,28 +100,23 @@ export const browseDashboardsAPI = createApi({
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
-      query: ({ parentUid, limit, page, permission }) => ({
-        url: '/folders',
-        params: { parentUid, limit, page, permission },
-      }),
-    }),
-
-    //List folders with repository information, using queryFn
-    listFoldersWithRepository: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
-      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
       queryFn: async (
         { parentUid, limit, page, permission },
         queryApi,
         extraOptions,
         baseQuery
       ): Promise<{ data: FolderListItemDTO[] }> => {
-        const folders = (await baseQuery({
+        const response = (await baseQuery({
           url: '/folders',
           params: { parentUid, limit, page, permission },
         })) as QueryReturnValue<FolderListItemDTO[], unknown, {}>;
 
-        if (folders.error || !folders.data?.length) {
+        if (response.error || !response.data?.length) {
           return { data: [] };
+        }
+
+        if (!config.featureToggles.provisioning) {
+          return response;
         }
 
         const repositories: RepositoryList = await dispatch(
@@ -129,11 +124,11 @@ export const browseDashboardsAPI = createApi({
         ).unwrap();
 
         if (!repositories.items?.length) {
-          return folders;
+          return response;
         }
 
         return {
-          data: folders.data.map((folder) => {
+          data: response.data.map((folder) => {
             const repository = repositories.items?.find((repo) => repo.spec?.folder === folder.uid);
             if (repository) {
               return {
@@ -152,13 +147,17 @@ export const browseDashboardsAPI = createApi({
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
       queryFn: async (folderUID, queryApi, extraOptions, baseQuery): Promise<{ data: FolderDTO }> => {
-        const folder = (await baseQuery({
+        const response = (await baseQuery({
           url: `/folders/${folderUID}`,
           params: { accesscontrol: true },
         })) as QueryReturnValue<FolderDTO, unknown, {}>;
 
-        if (folder.error || !folder.data) {
+        if (response.error || !response.data) {
           return { data: {} as FolderDTO };
+        }
+
+        if (!config.featureToggles.provisioning) {
+          return response;
         }
 
         const repositories: RepositoryList = await dispatch(
@@ -166,19 +165,19 @@ export const browseDashboardsAPI = createApi({
         ).unwrap();
 
         if (!repositories.items?.length) {
-          return folder;
+          return response;
         }
 
-        const repository = repositories.items?.find((repo) => repo.spec?.folder === folder.data?.uid);
+        const repository = repositories.items?.find((repo) => repo.spec?.folder === response.data?.uid);
         if (repository) {
           return {
             data: {
-              ...folder.data,
+              ...response.data,
               repository,
             },
           };
         }
-        return folder;
+        return response;
       },
     }),
 
@@ -510,7 +509,6 @@ export const {
   useSaveFolderMutation,
   useRestoreDashboardMutation,
   useHardDeleteDashboardMutation,
-  useListFoldersWithRepositoryQuery,
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';

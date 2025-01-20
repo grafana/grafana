@@ -36,7 +36,7 @@ const listAllFoldersSelector = createSelector(
         continue;
       }
 
-      const page = browseDashboardsAPI.endpoints.listFoldersWithRepository.select({
+      const page = browseDashboardsAPI.endpoints.listFolders.select({
         parentUid: req.arg.parentUid,
         page: req.arg.page,
         limit: req.arg.limit,
@@ -112,7 +112,7 @@ export function useFoldersQuery(
       }
 
       const args = { parentUid, page: (pageNumber ?? 0) + 1, limit: PAGE_SIZE, permission };
-      const promise = dispatch(browseDashboardsAPI.endpoints.listFoldersWithRepository.initiate(args));
+      const promise = dispatch(browseDashboardsAPI.endpoints.listFolders.initiate(args));
 
       // It's important that we create a new array so we can correctly memoize with it
       requestsRef.current = requestsRef.current.concat([promise]);
