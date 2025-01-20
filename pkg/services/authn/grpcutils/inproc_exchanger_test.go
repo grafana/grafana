@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/grafana/authlib/authn"
@@ -48,8 +47,4 @@ func createExpectedJWT(t *testing.T) string {
 	require.NoError(t, err)
 
 	return base64.RawURLEncoding.EncodeToString([]byte(header)) + "." + base64.RawURLEncoding.EncodeToString(payload) + "."
-}
-
-func testTime() time.Time {
-	return time.Date(2025, time.January, 1, 11, 10, 0, 0, time.UTC)
 }
