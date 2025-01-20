@@ -18,10 +18,6 @@ type TSTypesJenny struct {
 
 var _ codejen.OneToOne[SchemaForGen] = &TSTypesJenny{}
 
-var cogImportMap = map[string]string{
-	"common": "@grafana/schema",
-}
-
 func (j TSTypesJenny) JennyName() string {
 	return "TSTypesJenny"
 }
@@ -36,9 +32,7 @@ func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 	f, err := cog.
 		TypesFromSchema().
 		CUEValue(sfg.Name, cueValue, opts...).
-		Typescript(cog.TypescriptConfig{
-			ImportsMap: cogImportMap,
-		}).
+		Typescript(cog.TypescriptConfig{}).
 		Run(context.Background())
 
 	if err != nil {
