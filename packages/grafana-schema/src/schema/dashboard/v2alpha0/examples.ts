@@ -248,8 +248,8 @@ export const handyTestingSchema: DashboardV2Spec = {
               kind: 'ElementReference',
               name: 'panel-1',
             },
-            height: 100,
-            width: 200,
+            height: 10,
+            width: 10,
             x: 0,
             y: 0,
             repeat: {
@@ -262,8 +262,8 @@ export const handyTestingSchema: DashboardV2Spec = {
         {
           kind: 'GridLayoutRow',
           spec: {
-            y: 100,
-            collapsed: false,
+            y: 10,
+            collapsed: true,
             title: 'Row 1',
             elements: [
               {
@@ -273,8 +273,8 @@ export const handyTestingSchema: DashboardV2Spec = {
                     kind: 'ElementReference',
                     name: 'panel-2',
                   },
-                  height: 100,
-                  width: 200,
+                  height: 10,
+                  width: 10,
                   x: 0,
                   y: 0,
                 },
@@ -287,7 +287,7 @@ export const handyTestingSchema: DashboardV2Spec = {
   },
   links: [
     {
-      asDropdown: false,
+      asDropdown: true,
       icon: '',
       includeVars: false,
       keepTime: false,

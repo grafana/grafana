@@ -13,6 +13,7 @@ import {
   GroupByVariable,
   AdHocFiltersVariable,
   SceneDataTransformer,
+  SceneGridRow,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -42,7 +43,7 @@ import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
-const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
   metadata: {
     name: 'dashboard-uid',
@@ -232,7 +233,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
 
-    expect(layout.state.grid.state.children[1].state.y).toBe(100);
+    expect((layout.state.grid.state.children[1] as SceneGridRow).state.isCollapsed).toBe(true);
+    expect((layout.state.grid.state.children[1] as SceneGridRow).state.y).toBe(10);
 
     // Transformations
     expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(

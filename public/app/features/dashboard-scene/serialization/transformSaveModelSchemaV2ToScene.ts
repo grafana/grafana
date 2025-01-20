@@ -229,12 +229,12 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   return dashboardScene;
 }
 
-function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind): DashboardGridItem {
+function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride?: number): DashboardGridItem {
   const vizPanel = buildVizPanel(panel);
   return new DashboardGridItem({
     key: `grid-item-${panel.spec.id}`,
     x: gridItem.x,
-    y: gridItem.y,
+    y: yOverride ?? gridItem.y,
     width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
     height: gridItem.height,
     itemHeight: gridItem.height,
@@ -262,12 +262,12 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         throw new Error(`Unknown element kind: ${element.kind}`);
       }
     } else if (element.kind === 'GridLayoutRow') {
-      const children = element.spec.elements.map((element) => {
-        const panel = dashboard.elements[element.spec.element.name];
+      const children = element.spec.elements.map((gridElement) => {
+        const panel = dashboard.elements[gridElement.spec.element.name];
         if (panel.kind === 'Panel') {
-          return buildGridItem(element.spec, panel);
+          return buildGridItem(gridElement.spec, panel, element.spec.y);
         } else {
-          throw new Error(`Unknown element kind: ${element.kind}`);
+          throw new Error(`Unknown element kind: ${gridElement.kind}`);
         }
       });
       return new SceneGridRow({
