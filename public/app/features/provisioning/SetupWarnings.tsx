@@ -6,8 +6,6 @@ const requiredFeatureToggles: Array<keyof FeatureToggles> = [
   'kubernetesDashboards',
   'kubernetesFoldersServiceV2',
   'kubernetesDashboards',
-  'grafanaAPIServerWithExperimentalAPIs',
-  // 'unifiedStorage', // FIXME: not assignable to keyof FeatureToggles
   'unifiedStorageSearch',
   'unifiedStorageSearchUI',
   'kubernetesCliDashboards',
