@@ -10,7 +10,7 @@
     "@grafana/experimental": "2.1.6",
     "@grafana/lezer-logql": "0.2.6",
     "@grafana/lezer-traceql": "0.0.20",
-    "@grafana/monaco-logql": "^0.0.7",
+    "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
