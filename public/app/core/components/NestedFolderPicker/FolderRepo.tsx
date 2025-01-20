@@ -6,17 +6,9 @@ export interface Props {
 }
 
 export function FolderRepo({ repo }: Props) {
-  if (!repo) {
+  if (!repo?.spec) {
     return null;
   }
-  return <FolderRepoContent repo={repo} />;
-}
-
-function FolderRepoContent({ repo }: Required<Props>) {
-  if (!repo || !repo.spec) {
-    return null;
-  }
-
   const [repoName, icon] = getRepoDetails(repo.spec);
 
   return (
@@ -30,11 +22,11 @@ function FolderRepoContent({ repo }: Required<Props>) {
 function getRepoDetails(spec: RepositorySpec): [string, IconName] {
   switch (spec.type) {
     case 'github':
-      return [spec.github?.repository!, 'github'];
+      return [spec.github?.repository ?? '', 'github'];
     case 'local':
-      return [spec.local?.path!, 'file-blank'];
+      return [spec.local?.path ?? '', 'file-blank'];
     case 's3':
-      return [spec.local?.path!, 'cloud'];
+      return [spec.s3?.bucket ?? '', 'cloud'];
     default:
       return ['', 'question-circle'];
   }
