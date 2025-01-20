@@ -1,4 +1,4 @@
-import { Observable, switchMap, from, retry, catchError } from 'rxjs';
+import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -13,6 +13,7 @@ import {
   ResourceList,
   ResourceClient,
   ObjectMeta,
+  WatchOptions,
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
   ResourceEvent,
@@ -37,35 +38,36 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(name?: string, resourceVersion?: string): Observable<ResourceEvent<T, S, K>> {
+  public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
+    const decoder = new TextDecoder();
+    const params = {
+      ...opts,
+      watch: true,
+      labelSelector: this.parseListOptionsSelector(opts?.labelSelector),
+      fieldSelector: this.parseListOptionsSelector(opts?.fieldSelector),
+    };
     return getBackendSrv()
       .chunked({
-        url: name ? `${this.url}/${name}` : this.url,
-        params: {
-          watch: true,
-          resourceVersion,
-        },
+        url: params.name ? `${this.url}/${params.name}` : this.url,
+        params,
       })
       .pipe(
-        switchMap((response) => {
-          const events: Array<ResourceEvent<T, S, K>> = [];
-          if (response.ok && response.data) {
-            const decoder = new TextDecoder();
-            decoder
-              .decode(response.data)
-              .split('\n')
-              .forEach((v) => {
-                if (v?.length) {
-                  try {
-                    events.push(JSON.parse(v));
-                  } catch (e) {
-                    console.warn('invalid response', e);
-                  }
-                }
-              });
-          }
-          return from(events);
+        filter((response) => response.ok && response.data instanceof Uint8Array),
+        map((response) => {
+          const text = decoder.decode(response.data);
+          return text.split('\n');
         }),
+        mergeMap((text) => from(text)),
+        filter((line) => line.length > 0),
+        map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            console.warn('Invalid JSON in watch stream:', e);
+            return null;
+          }
+        }),
+        filter((event): event is ResourceEvent<T, S, K> => event !== null),
         retry({ count: 3, delay: 1000 }),
         catchError((error) => {
           console.error('Watch stream error:', error);

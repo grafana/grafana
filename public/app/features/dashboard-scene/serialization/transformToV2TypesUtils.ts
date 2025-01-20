@@ -15,7 +15,7 @@ import {
   VariableHide,
   VariableRefresh,
   VariableSort,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 export function transformCursorSynctoEnum(cursorSync?: DashboardCursorSyncV1): DashboardCursorSync {
   switch (cursorSync) {
