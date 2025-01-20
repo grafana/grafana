@@ -1,7 +1,9 @@
+import { css, keyframes } from '@emotion/css';
 import { ComponentProps, memo } from 'react';
 import type { RequireAtLeastOne } from 'type-fest';
 
-import { Icon, type IconName, Text, Tooltip } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, type IconName, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import type { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -14,7 +16,12 @@ interface RuleListIconProps {
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   isPaused?: boolean;
-  inTransition?: boolean;
+  operation?: RuleOperation;
+}
+
+export enum RuleOperation {
+  Creating = 'Creating',
+  Deleting = 'Deleting',
 }
 
 const icons: Record<PromAlertingRuleState, IconName> = {
@@ -35,6 +42,11 @@ const stateNames: Record<PromAlertingRuleState, string> = {
   [PromAlertingRuleState.Firing]: 'Firing',
 };
 
+const operationIcons: Record<RuleOperation, IconName> = {
+  [RuleOperation.Creating]: 'plus-circle',
+  [RuleOperation.Deleting]: 'minus-circle',
+};
+
 /**
  * Make sure that the order of importance here matches the one we use in the StateBadge component for the detail view
  * This component is often rendered tens or hundreds of times in a single page, so it's performance is important
@@ -44,8 +56,10 @@ export const RuleListIcon = memo(function RuleListIcon({
   health,
   recording = false,
   isPaused = false,
-  inTransition = false,
+  operation,
 }: RequireAtLeastOne<RuleListIconProps>) {
+  const styles = useStyles2(getStyles);
+
   let iconName: IconName = state ? icons[state] : 'circle';
   let iconColor: TextProps['color'] = state ? color[state] : 'secondary';
   let stateName: string = state ? stateNames[state] : 'unknown';
@@ -53,6 +67,7 @@ export const RuleListIcon = memo(function RuleListIcon({
   if (recording) {
     iconName = 'record-audio';
     iconColor = 'success';
+    4;
     stateName = 'Recording';
   }
 
@@ -74,19 +89,44 @@ export const RuleListIcon = memo(function RuleListIcon({
     stateName = 'Paused';
   }
 
-  if (inTransition) {
-    iconName = 'sync';
-    iconColor = 'info';
-    stateName = 'In transition';
+  if (operation) {
+    iconName = operationIcons[operation];
+    iconColor = 'secondary';
+    stateName = operation;
   }
 
   return (
     <Tooltip content={stateName} placement="right">
       <div>
         <Text color={iconColor}>
-          <Icon name={iconName} size="lg" />
+          <div className={operation ? styles.container : undefined}>
+            <Icon name={iconName} size="lg" />
+          </div>
         </Text>
       </div>
     </Tooltip>
   );
+});
+
+const pulse = keyframes({
+  '0%': {
+    opacity: 0,
+  },
+  '50%': {
+    opacity: 1,
+  },
+  '100%': {
+    opacity: 0,
+  },
+});
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    [theme.transitions.handleMotion('no-preference')]: {
+      animationName: pulse,
+      animationIterationCount: 'infinite',
+      animationDuration: '2s',
+      animationDelay: '0.5s',
+    },
+  }),
 });

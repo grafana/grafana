@@ -16,6 +16,7 @@ import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
+import { RuleOperation } from './components/RuleListIcon';
 import { useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
@@ -156,7 +157,7 @@ function GrafanaGroupLoader({ groupIdentifier, namespaceName }: GrafanaGroupLoad
           group={groupIdentifier.groupName}
           rulesSource={GrafanaRulesSource}
           application="grafana"
-          transition="creating"
+          operation={RuleOperation.Creating}
         />
       ))}
       {matching.map(({ promRule, rulerRule }) => (
@@ -176,7 +177,7 @@ function GrafanaGroupLoader({ groupIdentifier, namespaceName }: GrafanaGroupLoad
           group={groupIdentifier.groupName}
           rulesSource={GrafanaRulesSource}
           application="grafana"
-          transition="deleting"
+          operation={RuleOperation.Deleting}
         />
       ))}
     </>

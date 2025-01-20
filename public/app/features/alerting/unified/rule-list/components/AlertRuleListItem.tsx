@@ -20,7 +20,7 @@ import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
 import { DataSourceIcon } from './Namespace';
-import { RuleListIcon } from './RuleListIcon';
+import { RuleListIcon, RuleOperation } from './RuleListIcon';
 import { calculateNextEvaluationEstimate } from './util';
 
 interface AlertRuleListItemProps {
@@ -191,13 +191,13 @@ export function RecordingRuleListItem({
   );
 }
 
-interface RuleInTransitionListItemProps {
+interface RuleOperationListItemProps {
   name: string;
   namespace: string;
   group: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
-  transition: 'creating' | 'deleting';
+  operation: RuleOperation;
 }
 
 export function RuleInTransitionListItem({
@@ -206,8 +206,8 @@ export function RuleInTransitionListItem({
   group,
   rulesSource,
   application,
-  transition,
-}: RuleInTransitionListItemProps) {
+  operation,
+}: RuleOperationListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group) {
     metadata.push(
@@ -217,11 +217,6 @@ export function RuleInTransitionListItem({
     );
   }
 
-  const description =
-    transition === 'creating'
-      ? 'The rule has been created but has not been evaluated yet'
-      : 'The rule is being deleted';
-
   return (
     <ListItem
       title={
@@ -229,8 +224,7 @@ export function RuleInTransitionListItem({
           <Text>{name}</Text>
         </Stack>
       }
-      description={<Summary content={description} />}
-      icon={<RuleListIcon inTransition={true} />}
+      icon={<RuleListIcon operation={operation} />}
       meta={metadata}
     />
   );
