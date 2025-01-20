@@ -453,14 +453,14 @@ describe('ResponseTransformers', () => {
       expect(spec.layout.spec.items[1].spec).toEqual({
         element: {
           kind: 'ElementReference',
-          name: 'library-panel-table',
+          name: '2',
         },
         x: 0,
         y: 8,
         width: 12,
         height: 8,
       });
-      expect(spec.elements['library-panel-table']).toEqual({
+      expect(spec.elements['2']).toEqual({
         kind: 'LibraryPanel',
         spec: {
           uid: 'library-panel-table',

@@ -295,10 +295,16 @@ function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.spec.id),
     titleItems,
-    $behaviors: [new LibraryPanelBehavior({ uid: panel.spec.libraryPanel.uid, name: panel.spec.libraryPanel.name })],
+    $behaviors: [
+      new LibraryPanelBehavior({
+        uid: panel.spec.libraryPanel.uid,
+        name: panel.spec.libraryPanel.name,
+        title: panel.spec.title,
+      }),
+    ],
     extendPanelContext: setDashboardPanelContext,
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
-    title: '',
+    title: panel.spec.title,
     options: {},
     fieldConfig: {
       defaults: {},
