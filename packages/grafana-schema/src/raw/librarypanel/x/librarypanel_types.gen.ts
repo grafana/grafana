@@ -8,58 +8,71 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 export interface LibraryElementDTOMetaUser {
-  avatarUrl: string;
-  id: number;
-  name: string;
+	id: number;
+	name: string;
+	avatarUrl: string;
 }
+
+export const defaultLibraryElementDTOMetaUser = (): LibraryElementDTOMetaUser => ({
+	id: 0,
+	name: "",
+	avatarUrl: "",
+});
 
 export interface LibraryElementDTOMeta {
-  connectedDashboards: number;
-  created: string;
-  createdBy: LibraryElementDTOMetaUser;
-  folderName: string;
-  folderUid: string;
-  updated: string;
-  updatedBy: LibraryElementDTOMetaUser;
+	folderName: string;
+	folderUid: string;
+	connectedDashboards: number;
+	created: string;
+	updated: string;
+	createdBy: LibraryElementDTOMetaUser;
+	updatedBy: LibraryElementDTOMetaUser;
 }
 
+export const defaultLibraryElementDTOMeta = (): LibraryElementDTOMeta => ({
+	folderName: "",
+	folderUid: "",
+	connectedDashboards: 0,
+	created: "",
+	updated: "",
+	createdBy: defaultLibraryElementDTOMetaUser(),
+	updatedBy: defaultLibraryElementDTOMetaUser(),
+});
+
 export interface LibraryPanel {
-  /**
-   * Panel description
-   */
-  description?: string;
-  /**
-   * Folder UID
-   */
-  folderUid?: string;
-  /**
-   * Object storage metadata
-   */
-  meta?: LibraryElementDTOMeta;
-  /**
-   * TODO: should be the same panel schema defined in dashboard
-   * Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-   */
-  model: Record<string, unknown>;
-  /**
-   * Panel name (also saved in the model)
-   */
-  name: string;
-  /**
-   * Dashboard version when this was saved (zero if unknown)
-   */
-  schemaVersion?: number;
-  /**
-   * The panel type (from inside the model)
-   */
-  type: string;
-  /**
-   * Library element UID
-   */
-  uid: string;
-  /**
-   * panel version, incremented each time the dashboard is updated.
-   */
-  version: number;
+	spec: {
+		// Folder UID
+		folderUid?: string;
+		// Library element UID
+		uid: string;
+		// Panel name (also saved in the model)
+		name: string;
+		// Panel description
+		description?: string;
+		// The panel type (from inside the model)
+		type: string;
+		// Dashboard version when this was saved (zero if unknown)
+		schemaVersion?: number;
+		// panel version, incremented each time the dashboard is updated.
+		version: number;
+		// TODO: should be the same panel schema defined in dashboard
+		// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
+		model: Record<string, any>;
+		// Object storage metadata
+		meta?: LibraryElementDTOMeta;
+	};
 }
+
+export const defaultLibraryPanel = (): LibraryPanel => ({
+	spec: {
+	uid: "",
+	name: "",
+	type: "",
+	version: 0,
+	model: {},
+},
+});
+
