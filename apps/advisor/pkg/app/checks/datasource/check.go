@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/common"
@@ -25,8 +24,8 @@ func (r *datasourceCheckRegisterer) New(cfg *common.AdvisorConfig) common.Check 
 	}
 }
 
-func (r *datasourceCheckRegisterer) Kind() resource.Kind {
-	return advisor.DatasourceCheckKind()
+func (r *datasourceCheckRegisterer) Type() string {
+	return "datasource"
 }
 
 func init() {
@@ -39,7 +38,7 @@ type datasourceCheckImpl struct {
 	pluginClient          plugins.Client
 }
 
-func (c *datasourceCheckImpl) Run(ctx context.Context, obj *common.CheckData) (*common.CheckReport, error) {
+func (c *datasourceCheckImpl) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.CheckV0alpha1StatusReport, error) {
 	// Optionally read the check input encoded in the object
 	fmt.Println(obj.Data)
 
@@ -48,13 +47,13 @@ func (c *datasourceCheckImpl) Run(ctx context.Context, obj *common.CheckData) (*
 		return nil, err
 	}
 
-	dsErrs := []common.ReportError{}
+	dsErrs := []advisor.CheckV0alpha1StatusReportErrors{}
 	for _, ds := range dss {
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, common.ReportError{
-				Type:   common.ReportErrorTypeInvestigation,
+			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
+				Type:   advisor.CheckStatusTypeInvestigation,
 				Reason: fmt.Sprintf("Invalid UID: %s", ds.UID),
 				Action: "Change UID",
 			})
@@ -90,15 +89,15 @@ func (c *datasourceCheckImpl) Run(ctx context.Context, obj *common.CheckData) (*
 		}
 
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, common.ReportError{
-				Type:   common.ReportErrorTypeAction,
+			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
+				Type:   advisor.CheckStatusTypeAction,
 				Reason: fmt.Sprintf("Health check failed: %s", ds.Name),
 				Action: "Check datasource",
 			})
 		}
 	}
 
-	return &common.CheckReport{
+	return &advisor.CheckV0alpha1StatusReport{
 		Count:  int64(len(dss)),
 		Errors: dsErrs,
 	}, nil

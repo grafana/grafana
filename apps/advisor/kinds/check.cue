@@ -1,9 +1,8 @@
 package advisor
 
-
-plugincheck: {
-	kind:       "PluginCheck"
-	pluralName: "PluginChecks"
+check: {
+	kind:       "Check"
+	pluralName: "Checks"
 	current:    "v0alpha1"
 	versions: {
 		"v0alpha1": {
