@@ -1,5 +1,5 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -122,14 +122,7 @@ export class DashboardRepeatsProcessedEvent extends BusEventWithPayload<Dashboar
   public static type = 'dashboard-repeats-processed';
 }
 
-/**
- * Interface for elements that have options
- */
-export interface EditableDashboardElement {
-  /**
-   * Marks this object as an element that can be selected and edited directly on the canvas
-   */
-  isEditableDashboardElement: true;
+export interface EditableElement {
   /**
    * Hook that returns edit pane options
    */
@@ -143,26 +136,31 @@ export interface EditableDashboardElement {
    **/
   renderActions?(): React.ReactNode;
 }
+/**
+ * Interface for elements that have options
+ */
+export interface EditableDashboardElement extends EditableElement {
+  /**
+   * Marks this object as an element that can be selected and edited directly on the canvas
+   */
+  isEditableDashboardElement: true;
+  /**
+   * created a new multi-selection element from a list of selected items
+   */
+  createMultiSelectedElement?(items: Map<string, SceneObjectRef<SceneObject>>): MultiSelectedEditableDashboardElement;
+}
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
   return 'isEditableDashboardElement' in obj;
 }
 
-export interface BulkEditableDashboardElements {
+export interface MultiSelectedEditableDashboardElement extends EditableElement {
   /**
    * Marks this object as an element that can be selected and edited directly on the canvas
    */
-  isBulkEditableDashboardElements: true;
-  /**
-   * Bulk elements actions
-   */
-  renderBulkActions?(): React.ReactNode;
-  /**
-   * Get the type name of the element
-   */
-  getTypeName(): string;
+  isMultiSelectedEditableDashboardElement: true;
 }
 
-export function isBulkEditableDashboardElements(obj: object): obj is BulkEditableDashboardElements {
-  return 'isBulkEditableDashboardElements' in obj;
+export function isMultiSelectedEditableDashboardElement(obj: object): obj is MultiSelectedEditableDashboardElement {
+  return 'isMultiSelectedEditableDashboardElement' in obj;
 }

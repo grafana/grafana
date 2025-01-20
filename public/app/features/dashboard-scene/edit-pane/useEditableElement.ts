@@ -3,27 +3,33 @@ import { useMemo } from 'react';
 import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { BulkRowItemsElement } from '../scene/layout-rows/BulkRowItemsElement';
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { BulkEditableDashboardElements, EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
+import {
+  EditableDashboardElement,
+  isEditableDashboardElement,
+  MultiSelectedEditableDashboardElement,
+} from '../scene/types';
 
-import { BulkVizPanelsEditableElement } from './BulkVizPanelsEditableElement';
 import { DashboardEditableElement } from './DashboardEditableElement';
+import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 
 export function useEditableElement(
-  selectedObjects: Array<SceneObjectRef<SceneObject>> | undefined
-): EditableDashboardElement | BulkEditableDashboardElements | undefined {
+  selectedObjects: Map<string, SceneObjectRef<SceneObject>> | undefined
+): EditableDashboardElement | MultiSelectedEditableDashboardElement | undefined {
   return useMemo(() => {
-    if (!selectedObjects || selectedObjects.length === 0) {
+    if (!selectedObjects || selectedObjects.size === 0) {
       return undefined;
     }
 
-    if (selectedObjects.length > 1) {
-      return buildMultiSelectionElement(selectedObjects);
+    const sceneObj = selectedObjects.values().next().value?.resolve();
+
+    if (!sceneObj) {
+      return undefined;
     }
 
-    const sceneObj = selectedObjects[0].resolve();
+    if (selectedObjects.size > 1) {
+      return buildMultiSelectedElement(selectedObjects, sceneObj);
+    }
 
     if (isEditableDashboardElement(sceneObj)) {
       return sceneObj;
@@ -41,16 +47,16 @@ export function useEditableElement(
   }, [selectedObjects]);
 }
 
-function buildMultiSelectionElement(
-  selectedObjects: Array<SceneObjectRef<SceneObject>>
-): BulkEditableDashboardElements | undefined {
-  const firstObj = selectedObjects[0].resolve();
+function buildMultiSelectedElement(
+  selectedObjects: Map<string, SceneObjectRef<SceneObject>>,
+  firstObj: SceneObject
+): MultiSelectedEditableDashboardElement | undefined {
   if (firstObj instanceof VizPanel) {
-    return new BulkVizPanelsEditableElement(selectedObjects);
+    return new MultiSelectedVizPanelsEditableElement(selectedObjects);
   }
 
-  if (firstObj instanceof RowItem) {
-    return new BulkRowItemsElement(selectedObjects);
+  if (isEditableDashboardElement(firstObj)) {
+    return firstObj.createMultiSelectedElement?.(selectedObjects);
   }
 
   return undefined;

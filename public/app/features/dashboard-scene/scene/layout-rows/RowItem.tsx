@@ -3,7 +3,14 @@ import { useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneComponentProps,
+  sceneGraph,
+  SceneObjectRef,
+  SceneObject,
+} from '@grafana/scenes';
 import { Button, Icon, Input, RadioButtonGroup, Switch, useElementSelection, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -12,6 +19,7 @@ import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
 
+import { MultiSelectedRowItemsElement } from './MultiSelectedRowItemsElement';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 export interface RowItemState extends SceneObjectState {
@@ -62,6 +70,10 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
 
   public getTypeName(): string {
     return 'Row';
+  }
+
+  public createMultiSelectedElement(items: Map<string, SceneObjectRef<SceneObject>>) {
+    return new MultiSelectedRowItemsElement(items);
   }
 
   public onDelete = () => {

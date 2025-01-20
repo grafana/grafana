@@ -12,15 +12,13 @@ import {
 } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { isBulkEditableDashboardElements, isEditableDashboardElement } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
-import { MultiSelectedElementsEditPane } from './MultiSelectedElementsEditPane';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
-  selectedObjects?: Array<SceneObjectRef<SceneObject>>;
+  selectedObjects?: Map<string, SceneObjectRef<SceneObject>>;
   selectionContext: ElementSelectionContextState;
 }
 
@@ -55,20 +53,18 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    const currentSelection = this.state.selectedObjects?.[0].resolve();
-    console.log(currentSelection, obj, this.state.selectedObjects);
-    if (currentSelection === obj && !multi) {
+    const prevItem = this.state.selectedObjects?.values().next().value?.resolve();
+    if (prevItem === obj && !multi) {
       this.clearSelection();
       return;
     }
 
     const ref = obj.getRef();
     let selected = [{ id }];
-    let selectedObjects = [ref];
+    let selectedObjects = new Map([[id, ref]]);
 
-    // if we are multi selecting, we need to check if the current selection is of the same type
-    if (multi && currentSelection?.constructor.name === obj.constructor.name) {
-      selectedObjects = [ref, ...(this.state.selectedObjects ?? [])];
+    if (multi && prevItem?.constructor.name === obj.constructor.name) {
+      selectedObjects = new Map([[id, ref], ...(this.state.selectedObjects?.entries() ?? [])]);
       selected = [{ id }, ...this.state.selectionContext.selected];
     }
 
@@ -79,14 +75,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
         selected,
       },
     });
-
-    selectedObjects.map((el) => console.log(el.resolve()));
   }
 
   public clearSelection() {
     const dashboard = getDashboardSceneFor(this);
     this.setState({
-      selectedObjects: [dashboard.getRef()],
+      selectedObjects: new Map([[dashboard.state.uid!, dashboard.getRef()]]),
       selectionContext: {
         ...this.state.selectionContext,
         selected: [],
@@ -109,7 +103,9 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   useEffect(() => {
     if (!editPane.state.selectedObjects) {
       const dashboard = getDashboardSceneFor(editPane);
-      editPane.setState({ selectedObjects: [dashboard.getRef()] });
+      editPane.setState({
+        selectedObjects: new Map([[dashboard.state.uid!, dashboard.getRef()]]),
+      });
     }
 
     editPane.enableSelection();
@@ -145,12 +141,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      {isBulkEditableDashboardElements(editableElement) && (
-        <MultiSelectedElementsEditPane bulkEditElement={editableElement} />
-      )}
-      {isEditableDashboardElement(editableElement) && (
-        <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
-      )}
+      <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
     </div>
   );
 }
