@@ -33,7 +33,7 @@ export const preProcessLogs = (
 interface PreProcessLogOptions {
   escape: boolean;
   expanded: boolean;
-  prettify: boolean;
+  prettify: boolean; // Not used for now
   timeZone: string;
   wrap: boolean;
 }
