@@ -8,10 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSources_List(t *testing.T) {
+	zeroPCfg := &pluginsCfg.PluginManagementCfg{}
 	t.Run("Plugin sources are populated by default and listed in specific order", func(t *testing.T) {
 		testdata, err := filepath.Abs("../testdata")
 		require.NoError(t, err)
@@ -29,7 +31,7 @@ func TestSources_List(t *testing.T) {
 			},
 		}
 
-		s := ProvideService(cfg)
+		s := ProvideService(cfg, zeroPCfg)
 		srcs := s.List(context.Background())
 
 		ctx := context.Background()
@@ -80,7 +82,7 @@ func TestSources_List(t *testing.T) {
 			StaticRootPath: testdata,
 			PluginsPath:    filepath.Join(testdata, "symbolic-plugin-dirs"),
 		}
-		s := ProvideService(cfg)
+		s := ProvideService(cfg, zeroPCfg)
 		ctx := context.Background()
 		srcs := s.List(ctx)
 		uris := map[plugins.Class]map[string]struct{}{}
