@@ -157,9 +157,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     }
 
     promise.then((result: DashboardDTO) => {
-      // if (result.meta.dashboardNotFound !== true) {
       impressionSrv.addDashboardImpression(result.dashboard.uid);
-      // }
 
       return result;
     });
