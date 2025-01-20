@@ -25,7 +25,7 @@ type PermissionsQuery struct {
 	IsServerAdmin bool
 }
 
-func NewDefaultPermissionStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) *SQLPermissionsStore {
+func NewSQLPermissionStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) *SQLPermissionsStore {
 	return &SQLPermissionsStore{sql, tracer}
 }
 
@@ -103,12 +103,12 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns claims.
 
 var _ PermissionStore = (*StaticPermissionStore)(nil)
 
-func NewStaticPermissionStore(store PermissionStore, staticPermissions map[string][]accesscontrol.Permission) *StaticPermissionStore {
-	return &StaticPermissionStore{}
+func NewStaticPermissionStore(ac accesscontrol.Service) *StaticPermissionStore {
+	return &StaticPermissionStore{ac}
 }
 
 type StaticPermissionStore struct {
-	staticPermissions map[string][]accesscontrol.Permission
+	ac accesscontrol.Service
 }
 
 func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
@@ -117,9 +117,16 @@ func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns claim
 		roles = append(roles, "Grafana Admin")
 	}
 
+	static := s.ac.GetStaticRoles(ctx)
+
 	var permissions []accesscontrol.Permission
-	for _, r := range roles {
-		for _, p := range s.staticPermissions[r] {
+	for _, name := range roles {
+		r, ok := static[name]
+		if !ok {
+			continue
+		}
+
+		for _, p := range r.Permissions {
 			if p.Action == query.Action {
 				permissions = append(permissions, p)
 			}

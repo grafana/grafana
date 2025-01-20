@@ -59,10 +59,17 @@ type Service struct {
 	sf *singleflight.Group
 }
 
-func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
+func NewService(
+	sql legacysql.LegacyDatabaseProvider,
+	identityStore legacy.LegacyIdentityStore,
+	permissionStore store.PermissionStore,
+	logger log.Logger,
+	tracer tracing.Tracer,
+
+) *Service {
 	return &Service{
 		store:           store.NewStore(sql, tracer),
-		permissionStore: store.NewDefaultPermissionStore(sql, tracer),
+		permissionStore: permissionStore,
 		identityStore:   identityStore,
 		actionMapper:    mappers.NewK8sRbacMapper(),
 		logger:          logger,
