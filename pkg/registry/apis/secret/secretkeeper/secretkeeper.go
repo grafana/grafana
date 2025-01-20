@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
@@ -11,7 +12,7 @@ import (
 )
 
 type Service interface {
-	GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, credentials any) (keepertypes.Keeper, error)
+	GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, cfg secretv0alpha1.KeeperConfig) (keepertypes.Keeper, error)
 }
 
 type OSSKeeperService struct {
@@ -26,7 +27,7 @@ func ProvideService(encryptionManager *manager.EncryptionManager, store secretst
 	}, nil
 }
 
-func (ks OSSKeeperService) GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, credentials any) (keepertypes.Keeper, error) {
+func (ks OSSKeeperService) GetKeeper(ctx context.Context, keeperType keepertypes.KeeperType, cfg secretv0alpha1.KeeperConfig) (keepertypes.Keeper, error) {
 	// Default SQL keeper
 	if keeperType != keepertypes.SQLKeeperType {
 		return nil, fmt.Errorf("missing configuration for keeper type %s", keeperType)

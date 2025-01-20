@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -40,6 +41,7 @@ func Test_OSSKeeperService_GetKeeper(t *testing.T) {
 		keeper, err := keeperService.GetKeeper(context.Background(), keepertypes.SQLKeeperType, nil)
 		require.NoError(t, err)
 		assert.NotNil(t, keeper)
+		assert.IsType(t, &sqlkeeper.SQLKeeper{}, keeper)
 	})
 
 	t.Run("GetKeeper should error when type is not sql", func(t *testing.T) {
