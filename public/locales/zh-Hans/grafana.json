@@ -241,11 +241,13 @@
     },
     "common": {
       "cancel": "",
+      "clear-filters": "",
       "delete": "",
       "edit": "",
       "export": "",
       "export-all": "",
       "loading": "",
+      "search-by-matchers": "",
       "view": ""
     },
     "contact-points": {
@@ -325,6 +327,8 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "",
+      "description": "",
       "save": "",
       "saving": ""
     },
@@ -347,6 +351,7 @@
         "warning-1": "",
         "warning-2": ""
       },
+      "filter-description": "",
       "generated-policies": "",
       "matchers": "",
       "metadata": {
@@ -522,6 +527,11 @@
         "state": ""
       },
       "save-query": ""
+    },
+    "silences": {
+      "affected-instances": "",
+      "only-firing-instances": "",
+      "preview-affected-instances": ""
     },
     "simpleCondition": {
       "alertCondition": ""
@@ -1700,7 +1710,10 @@
     },
     "share-panel": {
       "config-description": "",
-      "render-image": ""
+      "download-image": "",
+      "render-image": "",
+      "render-image-error": "",
+      "render-image-error-description": ""
     }
   },
   "login": {
@@ -1758,6 +1771,22 @@
     "log-row-message": {
       "ellipsis": "",
       "more": ""
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "",
+        "message": "",
+        "title": ""
+      },
+      "disable-popover-message": {
+        "shortcut": ""
+      }
+    },
+    "popover-menu": {
+      "copy": "",
+      "disable-menu": "",
+      "line-contains": "",
+      "line-contains-not": ""
     }
   },
   "migrate-to-cloud": {
@@ -1850,7 +1879,8 @@
       "library_elements": "",
       "mute_timings": "",
       "notification_policies": "",
-      "notification_templates": ""
+      "notification_templates": "",
+      "plugins": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1901,7 +1931,9 @@
     "public-preview": {
       "button-text": "",
       "message": "",
-      "title": ""
+      "message-plugins": "",
+      "title": "",
+      "title-plugins": ""
     },
     "resource-details": {
       "dismiss-button": "",
@@ -1914,7 +1946,6 @@
         "generic-error": "",
         "internal-service-error": "",
         "library-element-name-conflict": "",
-        "only-core-data-sources": "",
         "resource-conflict": "",
         "unexpected-error": "",
         "unsupported-data-type": ""
@@ -1953,6 +1984,7 @@
       "mute_timing": "",
       "notification_policy": "",
       "notification_template": "",
+      "plugin": "",
       "unknown": "未知"
     },
     "summary": {
@@ -2158,6 +2190,16 @@
     "help/documentation": "文档",
     "help/keyboard-shortcuts": "快捷键",
     "help/support": "支持",
+    "history-container": {
+      "drawer-tittle": ""
+    },
+    "history-wrapper": {
+      "collapse": "",
+      "expand": "",
+      "show-more": "",
+      "today": "",
+      "yesterday": ""
+    },
     "home": {
       "title": "首页"
     },
@@ -2332,12 +2374,6 @@
       "list-label": "导航",
       "open": "",
       "undock": "取消停靠菜单"
-    },
-    "toolbar": {
-      "close-menu": "关闭菜单",
-      "enable-kiosk": "启用 kiosk 模式",
-      "open-menu": "打开菜单",
-      "toggle-search-bar": "切换顶部搜索栏"
     }
   },
   "news": {
@@ -2482,8 +2518,7 @@
         "reportAbuse": "",
         "signature": "",
         "status": "",
-        "updatedAt": "",
-        "version": ""
+        "updatedAt": ""
       }
     },
     "empty-state": {
@@ -2750,6 +2785,12 @@
       "placeholder": ""
     }
   },
+  "reduce": {
+    "strictMode": {
+      "description": "",
+      "title": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
@@ -2911,6 +2952,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "",
+      "invite-user-title": "",
       "share-externally-title": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
@@ -3019,6 +3061,27 @@
       "create-button": ""
     }
   },
+  "share-panel-image": {
+    "preview": {
+      "title": ""
+    },
+    "settings": {
+      "height-label": "",
+      "height-min": "",
+      "height-placeholder": "",
+      "height-required": "",
+      "max-warning": "",
+      "scale-factor-label": "",
+      "scale-factor-min": "",
+      "scale-factor-placeholder": "",
+      "scale-factor-required": "",
+      "title": "",
+      "width-label": "",
+      "width-min": "",
+      "width-placeholder": "",
+      "width-required": ""
+    }
+  },
   "share-playlist": {
     "checkbox-description": "将调整面板高度以适应屏幕大小",
     "checkbox-label": "自动调整",
@@ -3027,7 +3090,6 @@
     "mode": "模式",
     "mode-kiosk": "Kiosk",
     "mode-normal": "正常",
-    "mode-tv": "电视",
     "title": "共享播放列表"
   },
   "shared": {
@@ -3244,6 +3306,7 @@
     },
     "metric-select": {
       "filter-by": "",
+      "new-badge": "",
       "otel-switch": ""
     },
     "recent-metrics": {

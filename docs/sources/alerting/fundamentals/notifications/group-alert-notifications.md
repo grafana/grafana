@@ -61,7 +61,7 @@ If you want to group alerts by other labels, something other than the alert rule
 
 ### A single group for all alerts
 
-If you want to group all alerts handled by the notification policy in a single group (without grouping notifications by alert rule or other labels), you can do so by leaving `Group by` empty.
+If you want to group all alerts handled by the notification policy in a single group (without grouping notifications by alert rule or other labels), leave `Group by` empty in the Default policy.
 
 ### Disable grouping
 

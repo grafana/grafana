@@ -148,7 +148,7 @@ $popover-shadow: ${theme.shadows.z3};
 $graph-tooltip-bg: $gray-5;
 
 $tooltipLinkColor: color.adjust($tooltipColor, $lightness: 5%);
-$tooltipExternalLinkColor: #6E9FFF;
+$tooltipExternalLinkColor: #6e9fff;
 
 $popover-error-bg: $red-base;
 $popover-help-bg: $tooltipBackground;

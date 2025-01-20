@@ -170,7 +170,7 @@ describe('filterPanelDataToQuery', () => {
 });
 
 describe('frame results with warnings', () => {
-  const meta = {
+  const metaWarning = {
     notices: [
       {
         severity: 'warning',
@@ -178,25 +178,79 @@ describe('frame results with warnings', () => {
       },
     ],
   };
+  const metaInfo = {
+    notices: [
+      {
+        severity: 'info',
+        text: 'For your info, something is up.',
+      },
+    ],
+  };
+  const metaWarningAndInfo = {
+    notices: [
+      {
+        severity: 'warning',
+        text: 'Reduce operation is not needed. Input query or expression A is already reduced data.',
+      },
+      {
+        severity: 'info',
+        text: 'For your info, something is up.',
+      },
+    ],
+  };
 
-  const dataWithWarnings: PanelData = {
+  const dataWithWarningsAndInfo: PanelData = {
     state: LoadingState.Done,
     series: [
       toDataFrame({
         refId: 'B',
         fields: [{ name: 'B1' }],
-        meta,
+        meta: metaWarningAndInfo,
       }),
       toDataFrame({
         refId: 'B',
         fields: [{ name: 'B2' }],
-        meta,
+        meta: metaWarningAndInfo,
       }),
     ],
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   };
 
-  const dataWithoutWarnings: PanelData = {
+  const dataWithWarningsOnly: PanelData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B1' }],
+        meta: metaWarning,
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B2' }],
+        meta: metaWarning,
+      }),
+    ],
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  };
+
+  const dataWithInfosOnly: PanelData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B1' }],
+        meta: metaInfo,
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B2' }],
+        meta: metaInfo,
+      }),
+    ],
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  };
+
+  const dataWithoutWarningsOrInfo: PanelData = {
     state: LoadingState.Done,
     series: [
       toDataFrame({
@@ -213,33 +267,79 @@ describe('frame results with warnings', () => {
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   };
 
-  it('should show a warning badge and de-duplicate warning messages', () => {
+  it('should show both badges and de-duplicate messages', () => {
     // @ts-ignore: there are _way_ too many props to inject here :(
     const editorRow = new QueryEditorRow({
-      data: dataWithWarnings,
+      data: dataWithWarningsAndInfo,
       query: {
         refId: 'B',
       },
     });
 
-    const warningsComponent = editorRow.renderWarnings();
+    const warningsComponent = editorRow.renderWarnings('warning');
     expect(warningsComponent).not.toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).not.toBe(null);
+
+    render(warningsComponent!);
+    render(infosComponent!);
+    expect(screen.getByText('1 warning')).toBeInTheDocument();
+    expect(screen.getByText('1 info')).toBeInTheDocument();
+  });
+
+  it('should show a warning badge and de-duplicate warning messages', () => {
+    // @ts-ignore: there are _way_ too many props to inject here :(
+    const editorRow = new QueryEditorRow({
+      data: dataWithWarningsOnly,
+      query: {
+        refId: 'B',
+      },
+    });
+
+    const warningsComponent = editorRow.renderWarnings('warning');
+    expect(warningsComponent).not.toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).toBe(null);
 
     render(warningsComponent!);
     expect(screen.getByText('1 warning')).toBeInTheDocument();
   });
 
-  it('should not show a warning badge when there are no warnings', () => {
+  it('should show an info badge and de-duplicate info messages', () => {
     // @ts-ignore: there are _way_ too many props to inject here :(
     const editorRow = new QueryEditorRow({
-      data: dataWithoutWarnings,
+      data: dataWithInfosOnly,
       query: {
         refId: 'B',
       },
     });
 
-    const warningsComponent = editorRow.renderWarnings();
+    const warningsComponent = editorRow.renderWarnings('warning');
     expect(warningsComponent).toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).not.toBe(null);
+
+    render(infosComponent!);
+    expect(screen.getByText('1 info')).toBeInTheDocument();
+  });
+
+  it('should not show any badge when there are no warnings or info', () => {
+    // @ts-ignore: there are _way_ too many props to inject here :(
+    const editorRow = new QueryEditorRow({
+      data: dataWithoutWarningsOrInfo,
+      query: {
+        refId: 'B',
+      },
+    });
+
+    const warningsComponent = editorRow.renderWarnings('warning');
+    expect(warningsComponent).toBe(null);
+
+    const infosComponent = editorRow.renderWarnings('info');
+    expect(infosComponent).toBe(null);
   });
 });
 describe('QueryEditorRow', () => {
