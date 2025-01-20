@@ -5,10 +5,11 @@ import Chance from 'chance';
 import { useState } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
-import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
+import { Icon } from '../Icon/Icon';
 
+import { AsyncMultiSelect, AsyncSelect, MultiSelect, Select } from './Select';
 import mdx from './Select.mdx';
 import { generateOptions, generateThousandsOfOptions } from './mockOptions';
 import { SelectCommonProps } from './types';

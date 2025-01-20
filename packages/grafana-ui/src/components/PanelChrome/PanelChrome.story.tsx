@@ -5,12 +5,18 @@ import { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
-import { Button, Icon, PanelChrome, PanelChromeProps, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { Button } from '../Button';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Icon } from '../Icon/Icon';
+import { Stack } from '../Layout/Stack/Stack';
 import { Menu } from '../Menu/Menu';
 
+import { PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
+
+import { PanelChrome } from '.';
 
 const PANEL_WIDTH = 400;
 const PANEL_HEIGHT = 150;
