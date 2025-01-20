@@ -33,7 +33,10 @@ export interface Props extends PropsWithChildren<{}> {}
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const historyDockedAndOpen = !state.chromeless && state.historyDocked && state.historyOpen;
+  const historyIsDockedAndOpen =
+    !state.chromeless && config.featureToggles.unifiedHistory && state.historyDocked && state.historyOpen;
+  const historyIsOpen =
+    !state.chromeless && config.featureToggles.unifiedHistory && !state.historyDocked && state.historyOpen;
   const theme = useTheme2();
   const styles = useStyles2(getStyles, Boolean(state.actions));
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
@@ -106,12 +109,12 @@ export function AppChrome({ children }: Props) {
           {menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          {config.featureToggles.unifiedHistory && historyDockedAndOpen && <HistoryDrawer />}
+          {historyIsDockedAndOpen && <HistoryDrawer />}
           <header
             className={cx(
               styles.topNav,
               menuDockedAndOpen && styles.topNavMenuDocked,
-              historyDockedAndOpen && styles.topActionsHistoryDocked
+              historyIsDockedAndOpen && styles.topActionsHistoryDocked
             )}
           >
             <SingleTopBar
@@ -139,7 +142,7 @@ export function AppChrome({ children }: Props) {
             className={cx(styles.pageContainer, {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerHistoryDocked]: historyDockedAndOpen,
+              [styles.pageContainerHistoryDocked]: historyIsDockedAndOpen,
             })}
             id="pageContent"
           >
@@ -152,9 +155,7 @@ export function AppChrome({ children }: Props) {
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
-      {!state.chromeless && state.historyDocked === false && config.featureToggles.unifiedHistory && (
-        <AppChromeHistory />
-      )}
+      {historyIsOpen && <AppChromeHistory />}
     </div>
   );
 }
