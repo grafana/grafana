@@ -488,7 +488,6 @@ describe('DashboardSceneSerializer', () => {
                     },
                   ],
                   multi: false,
-                  includeAll: false,
                   hide: 'dontHide',
                   skipUrlSync: false,
                 },
