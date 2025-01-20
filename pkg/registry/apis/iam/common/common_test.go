@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/endpoints/request"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

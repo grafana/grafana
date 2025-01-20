@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"

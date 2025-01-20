@@ -4,8 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -48,7 +47,7 @@ type ListFunc[T Resource] func(ctx context.Context, ns claims.NamespaceInfo, p P
 func List[T Resource](
 	ctx context.Context,
 	resourceName string,
-	ac authz.AccessClient,
+	ac claims.AccessClient,
 	p Pagination,
 	fn ListFunc[T],
 ) (*ListResponse[T], error) {
@@ -65,7 +64,7 @@ func List[T Resource](
 	check := func(_, _, _ string) bool { return true }
 	if ac != nil {
 		var err error
-		check, err = ac.Compile(ctx, ident, authz.ListRequest{
+		check, err = ac.Compile(ctx, ident, claims.ListRequest{
 			Resource:  resourceName,
 			Namespace: ns.Value,
 		})

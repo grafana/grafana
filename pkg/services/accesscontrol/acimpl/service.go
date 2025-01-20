@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"

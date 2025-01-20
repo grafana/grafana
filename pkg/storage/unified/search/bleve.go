@@ -18,7 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -359,7 +359,7 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.Co
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,
-	access authz.AccessClient,
+	access types.AccessClient,
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 ) (*resource.ResourceSearchResponse, error) {
@@ -485,7 +485,7 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+func toBleveSearchRequest(req *resource.ResourceSearchRequest, access types.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
 	facets := bleve.FacetsRequest{}
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
