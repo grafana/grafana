@@ -36,6 +36,8 @@ import {
   AdhocVariableKind,
   AnnotationQueryKind,
   DataLink,
+  LibraryPanelKind,
+  Element,
   RepeatOptions,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -45,6 +47,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
+  getLibraryPanelBehavior,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
@@ -237,33 +240,46 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
 
 function getElements(state: DashboardSceneState) {
   const panels = state.body.getVizPanels() ?? [];
-  const panelsArray = panels.reduce((acc: PanelKind[], vizPanel: VizPanel) => {
-    const elementSpec: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        id: getPanelIdForVizPanel(vizPanel),
-        title: vizPanel.state.title,
-        description: vizPanel.state.description ?? '',
-        links: getPanelLinks(vizPanel),
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries: getVizPanelQueries(vizPanel),
-            transformations: getVizPanelTransformations(vizPanel),
-            queryOptions: getVizPanelQueryOptions(vizPanel),
+  const panelsArray = panels.reduce((acc: Element[], vizPanel: VizPanel) => {
+    if (isLibraryPanel(vizPanel)) {
+      const behavior = getLibraryPanelBehavior(vizPanel)!;
+      const elementSpec: LibraryPanelKind = {
+        kind: 'LibraryPanel',
+        spec: {
+          name: behavior.state.name,
+          uid: behavior.state.uid,
+        },
+      };
+      acc.push(elementSpec);
+    } else {
+      const elementSpec: PanelKind = {
+        kind: 'Panel',
+        spec: {
+          id: getPanelIdForVizPanel(vizPanel),
+          title: vizPanel.state.title,
+          description: vizPanel.state.description ?? '',
+          links: getPanelLinks(vizPanel),
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: getVizPanelQueries(vizPanel),
+              transformations: getVizPanelTransformations(vizPanel),
+              queryOptions: getVizPanelQueryOptions(vizPanel),
+            },
+          },
+          vizConfig: {
+            kind: vizPanel.state.pluginId,
+            spec: {
+              pluginVersion: vizPanel.state.pluginVersion ?? '',
+              options: vizPanel.state.options,
+              fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
+            },
           },
         },
-        vizConfig: {
-          kind: vizPanel.state.pluginId,
-          spec: {
-            pluginVersion: vizPanel.state.pluginVersion ?? '',
-            options: vizPanel.state.options,
-            fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
-          },
-        },
-      },
-    };
-    acc.push(elementSpec);
+      };
+      acc.push(elementSpec);
+    }
+
     return acc;
   }, []);
   // create elements
@@ -382,14 +398,14 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: PanelKind[]): Record<string, PanelKind> {
+function createElements(panels: Element[]): Record<string, Element> {
   return panels.reduce(
     (acc, panel) => {
-      const key = getVizPanelKeyForPanelId(panel.spec.id);
+      const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
       acc[key] = panel;
       return acc;
     },
-    {} as Record<string, PanelKind>
+    {} as Record<string, Element>
   );
 }
 
