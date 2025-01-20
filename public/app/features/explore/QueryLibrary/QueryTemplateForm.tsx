@@ -9,7 +9,7 @@ import { Field } from '@grafana/ui/';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { Trans, t } from 'app/core/internationalization';
 import { getQueryDisplayText } from 'app/core/utils/richHistory';
-import { useCreateQueryTemplateMutation, useEditQueryTemplateMutation } from 'app/features/query-library';
+import { useCreateQueryTemplateMutation, useUpdateQueryTemplateMutation } from 'app/features/query-library';
 import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec2 } from '../../query-library/api/mappers';
@@ -53,7 +53,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
   });
 
   const [addQueryTemplate] = useCreateQueryTemplateMutation();
-  const [editQueryTemplate] = useEditQueryTemplateMutation();
+  const [editQueryTemplate] = useUpdateQueryTemplateMutation();
 
   const datasource = useDatasource(queryToAdd?.datasource);
 
@@ -88,7 +88,13 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
   };
 
   const handleEditQueryTemplate = async (editQueryTemplateCommand: EditQueryTemplateCommand) => {
-    return editQueryTemplate(editQueryTemplateCommand)
+    return editQueryTemplate({
+      namespace: config.namespace,
+      name: editQueryTemplateCommand.uid,
+      ioK8SApimachineryPkgApisMetaV1Patch: {
+        spec: editQueryTemplateCommand.partialSpec,
+      },
+    })
       .unwrap()
       .then(() => {
         getAppEvents().publish({

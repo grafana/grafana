@@ -17,17 +17,28 @@ export const {
   // useAllQueryTemplatesQuery,
   // useAddQueryTemplateMutation,
   // useDeleteQueryTemplateMutation,
-  useEditQueryTemplateMutation,
+  // useEditQueryTemplateMutation,
 } = queryLibraryApi;
 
-export const { useCreateQueryTemplateMutation, useDeleteQueryTemplateMutation, useListQueryTemplateQuery } =
-  generatedQueryLibraryApi.enhanceEndpoints({
-    endpoints: {
-      // listQueryTemplate: {
-      //   transformResponse: (response) => response.data,
-      // }
+export const {
+  useCreateQueryTemplateMutation,
+  useDeleteQueryTemplateMutation,
+  useListQueryTemplateQuery,
+  useUpdateQueryTemplateMutation,
+} = generatedQueryLibraryApi.enhanceEndpoints({
+  endpoints: {
+    // Need to mutate the generated query to set the Content-Type header correctly
+    updateQueryTemplate: (endpointDefinition) => {
+      const oldQuery = endpointDefinition.query;
+      endpointDefinition.query = (requestOptions) => ({
+        ...oldQuery?.(requestOptions),
+        headers: {
+          'Content-Type': 'application/merge-patch+json',
+        },
+      });
     },
-  });
+  },
+});
 
 // TODO probably remove
 export function withNamespace<T extends (...args: any[]) => any>(queryMethod: T) {

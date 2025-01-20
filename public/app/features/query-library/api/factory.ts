@@ -34,17 +34,17 @@ export const queryLibraryApi = createApi({
     //   }),
     //   invalidatesTags: ['QueryTemplatesList'],
     // }),
-    editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
-      query: (editQueryTemplateCommand) => ({
-        url: `/${editQueryTemplateCommand.uid}`,
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/merge-patch+json',
-        },
-        data: { spec: editQueryTemplateCommand.partialSpec },
-      }),
-      invalidatesTags: ['QueryTemplatesList'],
-    }),
+    // editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
+    //   query: (editQueryTemplateCommand) => ({
+    //     url: `/${editQueryTemplateCommand.uid}`,
+    //     method: 'PATCH',
+    //     headers: {
+    //       'Content-Type': 'application/merge-patch+json',
+    //     },
+    //     data: { spec: editQueryTemplateCommand.partialSpec },
+    //   }),
+    //   invalidatesTags: ['QueryTemplatesList'],
+    // }),
   }),
   reducerPath: 'queryLibrary',
 });
