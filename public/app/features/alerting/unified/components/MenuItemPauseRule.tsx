@@ -24,8 +24,9 @@ const MenuItemPauseRule = ({ rule, groupIdentifier, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
   const [pauseRule, updateState] = usePauseRuleInGroup();
 
-  const icon = rule.grafana_alert.is_paused ? 'play' : 'pause';
-  const title = rule.grafana_alert.is_paused ? 'Resume evaluation' : 'Pause evaluation';
+  const [icon, title] = rule.grafana_alert.is_paused
+    ? ['play' as const, 'Resume evaluation']
+    : ['pause' as const, 'Pause evaluation'];
 
   /**
    * Triggers API call to update the current rule to the new `is_paused` state

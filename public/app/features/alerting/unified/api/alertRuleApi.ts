@@ -263,9 +263,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           notificationOptions,
         };
       },
-      providesTags: (_result, _error, { namespace, group }) => [
-        { type: 'RuleGroup', id: `${namespace}/${group}` },
-        { type: 'RuleNamespace', id: namespace },
+      providesTags: (_result, _error, { namespace, group, rulerConfig }) => [
+        { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${group}` },
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
       ],
     }),
 
@@ -278,8 +278,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         return { url: path, params };
       },
       providesTags: (_result, _error, { namespace, groupName }) => [
-        { type: 'RuleGroup', id: `${namespace.uid}/${groupName}` },
-        { type: 'RuleNamespace', id: namespace.uid },
+        { type: 'RuleGroup', id: `grafana/${namespace.uid}/${groupName}` },
+        { type: 'RuleNamespace', id: `grafana/${namespace.uid}` },
       ],
     }),
 

@@ -107,7 +107,7 @@ function getQueryDetailsProvider(rulerConfig: RulerDataSourceConfig): RulerQuery
 }
 
 function getRulerPath(rulerConfig: RulerDataSourceConfig) {
-  const grafanaServerPath = `/api/ruler/${getDatasourceAPIUid(rulerConfig.dataSourceName)}`;
+  const grafanaServerPath = `/api/ruler/${rulerConfig.dataSourceUid}`;
   return `${grafanaServerPath}/api/v1/rules`;
 }
 

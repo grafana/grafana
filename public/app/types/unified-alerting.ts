@@ -309,6 +309,7 @@ export interface StateHistoryItem {
 
 export interface RulerDataSourceConfig {
   dataSourceName: string;
+  dataSourceUid: string;
   apiVersion: 'legacy' | 'config';
 }
 
