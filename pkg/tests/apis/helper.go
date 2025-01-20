@@ -20,7 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/version"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
+	apimachineryversion "k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -440,7 +442,14 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 	users := OrgUsers{
-		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
+		Admin: c.CreateUser("admin", orgName, org.RoleAdmin, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
+				ResourceID:        "*",
+			},
+		}),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}
@@ -599,6 +608,31 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	client, err := discovery.NewDiscoveryClientForConfig(conf)
 	require.NoError(c.t, err)
 	return client
+}
+
+func (c *K8sTestHelper) GetVersionInfo() apimachineryversion.Info {
+	c.t.Helper()
+
+	disco := c.NewDiscoveryClient()
+	req := disco.RESTClient().Get().
+		Prefix("version").
+		SetHeader("Accept", "application/json")
+
+	result := req.Do(context.Background())
+	require.NoError(c.t, result.Error())
+
+	raw, err := result.Raw()
+	require.NoError(c.t, err)
+	info := apimachineryversion.Info{}
+	err = json.Unmarshal(raw, &info)
+	require.NoError(c.t, err)
+
+	// Make sure the gitVersion is parsable
+	v, err := version.Parse(info.GitVersion)
+	require.NoError(c.t, err)
+	require.Equal(c.t, info.Major, fmt.Sprintf("%d", v.Major()))
+	require.Equal(c.t, info.Minor, fmt.Sprintf("%d", v.Minor()))
+	return info
 }
 
 func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {

@@ -7,7 +7,7 @@ import { buildParams, shareDashboardType } from 'app/features/dashboard/componen
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { SceneShareTabState } from './types';

@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { filterByKeyword, isPluginUpdateable } from '../helpers';
+import { filterByKeyword, isPluginUpdatable } from '../helpers';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
@@ -69,7 +69,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      if (filters.hasUpdate !== undefined && (plugin.hasUpdate !== filters.hasUpdate || !isPluginUpdateable(plugin))) {
+      if (filters.hasUpdate !== undefined && (plugin.hasUpdate !== filters.hasUpdate || !isPluginUpdatable(plugin))) {
         return false;
       }
 

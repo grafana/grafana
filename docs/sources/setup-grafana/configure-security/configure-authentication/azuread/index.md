@@ -46,16 +46,44 @@ To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
    - Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
    - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
-1. Click **Certificates & secrets** in the side menu, then add a new entry under **Client secrets** with the following configuration.
+1. Click **Certificates & secrets** in the side menu, then add a new entry under the supported client authentication option you want to use. The following are the supported client authentication options with their respective configuration steps.
 
-   - Description: Grafana OAuth
-   - Expires: Select an expiration period
+   - **Client secrets**
 
-1. Click **Add** then copy the key **Value**. This is the OAuth client secret.
+     1. Add a new entry under **Client secrets** with the following configuration.
 
-{{% admonition type="note" %}}
-Make sure that you copy the string in the **Value** field, rather than the one in the **Secret ID** field.
-{{% /admonition %}}
+        - Description: Grafana OAuth 2.0
+        - Expires: Select an expiration period
+
+     1. Click **Add** then copy the key **Value**. This is the OAuth 2.0 client secret.
+
+     {{< admonition type="note" >}}
+     Make sure that you copy the string in the **Value** field, rather than the one in the **Secret ID** field.
+     {{< /admonition >}}
+
+     1. You must have set `client_authentication` under `[auth.azuread]` to `client_secret_post` in the Grafana server configuration for this to work.
+
+   - **Federated credentials**
+
+     1. Refer to [Configure an application to trust a managed identity (preview)](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-config-app-trust-managed-identity?tabs=microsoft-entra-admin-center) for a complete guide on setting up a managed identity as a federated credential.
+        Add a new entry under Federated credentials with the following configuration.
+
+        - Federated credential scenario: Select **Other issuer**.
+        - Issuer: The OAuth 2.0 / OIDC issuer URL of the Microsoft Entra ID authority. For example: `https://login.microsoftonline.com/{tenantID}/v2.0`.
+        - Subject identifier: The Object (Principal) ID GUID of the Managed Identity.
+        - Name: A unique descriptive name for the credential.
+        - Description: Grafana OAuth.
+        - Audience: The audience value that must appear in the external token. For Public cloud, it would be `api://AzureADTokenExchange`. See mentioned documentation for the full list of available audiences.
+
+     1. Click **Add**, and then copy the Managed Identity Client ID and the federated credential Audience values. This is your OAuth 2.0 federated credential.
+
+     1. You must have set `client_authentication` under `[auth.azuread]` to `managed_identity` in the Grafana server configuration for this to work.
+
+     {{< admonition type="note" >}}
+     Managed identities as federated credentials are only applicable to workloads hosted in Azure.
+
+     You can only add user-assigned managed identities as federated credentials on Entra ID applications.
+     {{< /admonition >}}
 
 1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
@@ -201,19 +229,22 @@ Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature 
 resource "grafana_sso_settings" "azuread_sso_settings" {
   provider_name = "azuread"
   oauth2_settings {
-    name                       = "Azure AD"
-    auth_url                   = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize"
-    token_url                  = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
-    client_id                  = "APPLICATION_ID"
-    client_secret              = "CLIENT_SECRET"
-    allow_sign_up              = true
-    auto_login                 = false
-    scopes                     = "openid email profile"
-    allowed_organizations      = "TENANT_ID"
-    role_attribute_strict      = false
-    allow_assign_grafana_admin = false
-    skip_org_role_sync         = false
-    use_pkce                   = true
+    name                          = "Azure AD"
+    auth_url                      = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize"
+    token_url                     = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
+    client_authentication         = "CLIENT_AUTHENTICATION_OPTION"
+    client_id                     = "APPLICATION_ID"
+    client_secret                 = "CLIENT_SECRET"
+    managed_identity_client_id    = "MANAGED_IDENTITY_CLIENT_ID"
+    federated_credential_audience = "FEDERATED_CREDENTIAL_AUDIENCE"
+    allow_sign_up                 = true
+    auto_login                    = false
+    scopes                        = "openid email profile"
+    allowed_organizations         = "TENANT_ID"
+    role_attribute_strict         = false
+    allow_assign_grafana_admin    = false
+    skip_org_role_sync            = false
+    use_pkce                      = true
   }
 }
 ```
@@ -234,8 +265,11 @@ name = Azure AD
 enabled = true
 allow_sign_up = true
 auto_login = false
+client_authentication = CLIENT_AUTHENTICATION_OPTION
 client_id = APPLICATION_ID
 client_secret = CLIENT_SECRET
+managed_identity_client_id = MANAGED_IDENTITY_CLIENT_ID
+federated_credential_audience = FEDERATED_CREDENTIAL_AUDIENCE
 scopes = openid email profile
 auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
@@ -248,11 +282,14 @@ skip_org_role_sync = false
 use_pkce = true
 ```
 
-You can also use these environment variables to configure **client_id** and **client_secret**:
+You can also use these environment variables to configure `client_authentication`, `client_id`, `client_secret`, `managed_identity_client_id`, and `federated_credential_audience`:
 
 ```
+GF_AUTH_AZUREAD_CLIENT_AUTHENTICATION
 GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
+GF_AUTH_AZUREAD_MANAGED_IDENTITY_CLIENT_ID
+GF_AUTH_AZUREAD_FEDERATED_CREDENTIAL_AUDIENCE
 ```
 
 {{% admonition type="note" %}}

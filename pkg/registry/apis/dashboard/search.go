@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +20,7 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -191,6 +194,8 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
+const rootFolder = "general"
+
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -222,16 +227,25 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:   queryParams.Get("query"),
 		Limit:   int64(limit),
 		Offset:  int64(offset),
-		Fields: []string{
-			"title",
-			"folder",
-			"tags",
-		},
+		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
+	fields := []string{"title", "folder", "tags"}
+	if queryParams.Has("field") {
+		// add fields to search and exclude duplicates
+		for _, f := range queryParams["field"] {
+			if f != "" && !slices.Contains(fields, f) {
+				fields = append(fields, f)
+			}
+		}
+	}
+	searchRequest.Fields = fields
 
 	// Add the folder constraint. Note this does not do recursive search
 	folder := queryParams.Get("folder")
 	if folder != "" {
+		if folder == rootFolder {
+			folder = "" // root folder is empty in the search index
+		}
 		searchRequest.Options.Fields = []*resource.Requirement{{
 			Key:      "folder",
 			Operator: "=",
@@ -270,6 +284,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	// Add sorting
 	if queryParams.Has("sort") {
 		for _, sort := range queryParams["sort"] {
+			if slices.Contains(search.DashboardFields(), sort) {
+				sort = "fields." + sort
+			}
 			s := &resource.ResourceSearchRequest_Sort{Field: sort}
 			if strings.HasPrefix(sort, "-") {
 				s.Desc = true
@@ -301,6 +318,20 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
+	// The names filter
+	names, ok := queryParams["name"]
+	if ok {
+		if searchRequest.Options.Fields == nil {
+			searchRequest.Options.Fields = []*resource.Requirement{}
+		}
+		namesFilter := []*resource.Requirement{{
+			Key:      "name",
+			Operator: "in",
+			Values:   names,
+		}}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
+	}
+
 	// Run the query
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
@@ -308,46 +339,13 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sr := &dashboardv0alpha1.SearchResults{
-		Offset:    searchRequest.Offset,
-		TotalHits: result.TotalHits,
-		QueryCost: result.QueryCost,
-		MaxScore:  result.MaxScore,
-		Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
-	}
-	for i, row := range result.Results.Rows {
-		hit := &dashboardv0alpha1.DashboardHit{
-			Resource: row.Key.Resource, // folders | dashboards
-			Name:     row.Key.Name,     // The Grafana UID
-			Title:    string(row.Cells[0]),
-			Folder:   string(row.Cells[1]),
-		}
-		if row.Cells[2] != nil {
-			_ = json.Unmarshal(row.Cells[2], &hit.Tags)
-		}
-		sr.Hits[i] = *hit
+	parsedResults, err := dashboardsvc.ParseResults(result, searchRequest.Offset)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
 	}
 
-	// Add facet results
-	if result.Facet != nil {
-		sr.Facets = make(map[string]dashboardv0alpha1.FacetResult)
-		for k, v := range result.Facet {
-			sr.Facets[k] = dashboardv0alpha1.FacetResult{
-				Field:   v.Field,
-				Total:   v.Total,
-				Missing: v.Missing,
-				Terms:   make([]dashboardv0alpha1.TermFacet, len(v.Terms)),
-			}
-			for j, t := range v.Terms {
-				sr.Facets[k].Terms[j] = dashboardv0alpha1.TermFacet{
-					Term:  t.Term,
-					Count: t.Count,
-				}
-			}
-		}
-	}
-
-	s.write(w, sr)
+	s.write(w, parsedResults)
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {

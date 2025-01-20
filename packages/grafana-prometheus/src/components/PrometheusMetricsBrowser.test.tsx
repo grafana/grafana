@@ -54,6 +54,49 @@ describe('buildSelector()', () => {
     ];
     expect(buildSelector(labels)).toEqual('foo{bar="baz"}');
   });
+
+  describe('utf8 support', () => {
+    it('metric selector with utf8 metric', () => {
+      const labels: SelectableLabel[] = [
+        { name: '__name__', selected: true, values: [{ name: 'utf8.metric', selected: true }] },
+      ];
+      expect(buildSelector(labels)).toEqual('{"utf8.metric"}');
+    });
+
+    it('metric selector with utf8 labels', () => {
+      const labels: SelectableLabel[] = [
+        { name: '__name__', selected: true, values: [{ name: 'foo', selected: true }] },
+        { name: 'utf8.label', selected: true, values: [{ name: 'baz', selected: true }] },
+      ];
+      expect(buildSelector(labels)).toEqual('foo{"utf8.label"="baz"}');
+    });
+
+    it('metric selector with utf8 labels and metrics', () => {
+      const labels: SelectableLabel[] = [
+        { name: '__name__', selected: true, values: [{ name: 'utf8.metric', selected: true }] },
+        { name: 'utf8.label', selected: true, values: [{ name: 'baz', selected: true }] },
+      ];
+      expect(buildSelector(labels)).toEqual('{"utf8.metric","utf8.label"="baz"}');
+    });
+
+    it('metric selector with utf8 metric and with utf8/non-utf8 labels', () => {
+      const labels: SelectableLabel[] = [
+        { name: '__name__', selected: true, values: [{ name: 'utf8.metric', selected: true }] },
+        { name: 'utf8.label', selected: true, values: [{ name: 'uuu', selected: true }] },
+        { name: 'bar', selected: true, values: [{ name: 'baz', selected: true }] },
+      ];
+      expect(buildSelector(labels)).toEqual('{"utf8.metric","utf8.label"="uuu",bar="baz"}');
+    });
+
+    it('metric selector with non-utf8 metric with utf8/non-utf8 labels', () => {
+      const labels: SelectableLabel[] = [
+        { name: '__name__', selected: true, values: [{ name: 'foo', selected: true }] },
+        { name: 'utf8.label', selected: true, values: [{ name: 'uuu', selected: true }] },
+        { name: 'bar', selected: true, values: [{ name: 'baz', selected: true }] },
+      ];
+      expect(buildSelector(labels)).toEqual('foo{"utf8.label"="uuu",bar="baz"}');
+    });
+  });
 });
 
 describe('facetLabels()', () => {

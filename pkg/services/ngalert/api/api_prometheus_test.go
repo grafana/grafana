@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -315,9 +314,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"query": "vector(1)",
 				"alerts": [{
 					"labels": {
@@ -378,10 +380,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus",
@@ -440,10 +445,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"folderUid": "namespaceUID",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -562,7 +570,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			manager: fakeAIM,
 			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		}
 
 		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
@@ -688,7 +696,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			manager: fakeAIM,
 			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		}
 
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -825,7 +833,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				manager: fakeAIM,
 				status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 				store:   ruleStore,
-				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
