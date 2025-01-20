@@ -90,6 +90,11 @@ export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is
 export function isGrafanaRulerRulePaused(rule: RulerGrafanaRuleDTO) {
   return rule && isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.is_paused);
 }
+export function isCloudRulerGroup(
+  rulerRuleGroup: RulerRuleGroupDTO
+): rulerRuleGroup is RulerRuleGroupDTO<RulerCloudRuleDTO> {
+  return rulerRuleGroup.rules.every((r) => isCloudRulerRule(r));
+}
 
 export function alertInstanceKey(alert: Alert): string {
   return JSON.stringify(alert.labels);
