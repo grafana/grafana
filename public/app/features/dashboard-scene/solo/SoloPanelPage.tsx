@@ -8,6 +8,7 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
@@ -39,7 +40,7 @@ export function SoloPanelPage({ queryParams }: Props) {
   if (loadError) {
     return (
       <Box justifyContent={'center'} alignItems={'center'} display={'flex'} height={'100%'}>
-        <Alert severity="error" title="Failed to load dashboard">
+        <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
           {loadError.message}
         </Alert>
       </Box>

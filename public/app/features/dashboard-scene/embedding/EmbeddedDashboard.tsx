@@ -5,6 +5,7 @@ import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types';
 
@@ -24,7 +25,7 @@ export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
 
   if (loadError) {
     return (
-      <Alert severity="error" title="Failed to load dashboard">
+      <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
         {getMessageFromError(loadError)}
       </Alert>
     );
