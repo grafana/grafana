@@ -21,10 +21,11 @@ window.__grafana_app_bundle_loaded = true;
 import app from './app';
 
 const prepareInit = async () => {
-  // if (process.env.frontend_dev_mock_api) {
-  return import('test/mock-api/worker').then((workerModule) => {
-    workerModule.default.start({ onUnhandledRequest: 'bypass' });
-  });
+  if (process.env.frontend_dev_mock_api) {
+    return import('test/mock-api/worker').then((workerModule) => {
+      workerModule.default.start({ onUnhandledRequest: 'bypass' });
+    });
+  }
 };
 
 prepareInit().then(() => {
