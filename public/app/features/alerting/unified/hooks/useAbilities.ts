@@ -463,7 +463,7 @@ function useCanSilence(rule?: RulerRuleDTO): [boolean, boolean] {
 function useCanSilenceInFolder(folderUID?: string) {
   const folderPermissions = useFolderPermissions(folderUID);
 
-  const hasFolderSilencePermission = folderPermissions[AccessControlAction.AlertingSilenceCreate];
+  const hasFolderSilencePermission = folderPermissions[AccessControlAction.AlertingSilenceCreate] ?? false;
   const hasGlobalSilencePermission = ctx.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   // User is permitted to silence if they either have the "global" permissions of "AlertingInstanceCreate",
