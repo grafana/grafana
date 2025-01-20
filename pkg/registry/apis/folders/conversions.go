@@ -2,7 +2,6 @@ package folders
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -190,23 +189,4 @@ func getURL(meta utils.GrafanaMetaAccessor, title string) string {
 func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
 	created := meta.GetCreationTimestamp().Time
 	return &created, nil
-}
-
-func GetParentTitles(fullPath string) ([]string, error) {
-	// Find all forward slashes which aren't escaped
-	r, err := regexp.Compile(`[^\\](/)`)
-	if err != nil {
-		return nil, err
-	}
-	indices := r.FindAllStringIndex(fullPath, -1)
-
-	var start int
-	titles := []string{}
-	for _, i := range indices {
-		titles = append(titles, fullPath[start:i[0]+1])
-		start = i[0] + 2
-	}
-
-	titles = append(titles, fullPath[start:])
-	return titles, nil
 }
