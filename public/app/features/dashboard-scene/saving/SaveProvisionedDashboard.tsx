@@ -27,16 +27,16 @@ type FormData = {
   workflow?: WorkflowOption;
   title: string;
   description: string;
-  folder: { uid?: string; title?: string; repository?: Repository };
+  folder: { uid?: string; title?: string };
 };
 
-function getDefaultValues(meta: DashboardMeta, repository?: Repository) {
+function getDefaultValues(meta: DashboardMeta, repositoryName = '') {
   const anno = meta.k8s?.annotations;
   const timestamp = Date.now();
   const ref = `dashboard/${timestamp}`;
   const pathName = meta.slug || `new-dashboard-${timestamp}`;
   let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
-  const repo = anno?.[AnnoKeyRepoName] ?? repository?.metadata?.name ?? '';
+  const repo = anno?.[AnnoKeyRepoName] ?? repositoryName;
   const idx = path.indexOf('#');
   if (idx > 0) {
     path = path.substring(0, idx);
@@ -47,7 +47,7 @@ function getDefaultValues(meta: DashboardMeta, repository?: Repository) {
     path,
     repo,
     comment: '',
-    folder: { uid: meta.folderUid, title: '', repository },
+    folder: { uid: meta.folderUid, title: '' },
   };
 }
 
@@ -77,7 +77,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   const folderRepository = useFolderRepository(meta.folderUid);
   const repositoryConfig = folderRepository?.spec;
   const repo = folderRepository?.metadata?.name;
-  const defaultValues = getDefaultValues(meta, folderRepository);
+  const defaultValues = getDefaultValues(meta, repo);
   const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
   const {
     register,
@@ -177,7 +177,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                   return (
                     <FolderPicker
                       onChange={(uid?: string, title?: string, repository?: Repository) => {
-                        onChange({ uid, title, repository });
+                        onChange({ uid, title });
                         const name = repository?.metadata?.name;
                         if (name) {
                           setValue('repo', name);
