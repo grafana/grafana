@@ -60,7 +60,7 @@ export const UsersActionBarUnconnected = ({
 
     if (externalUserMngAnalytics) {
       // Add query parameters in config.externalUserMngAnalyticsParams to track conversion
-      if (externalUserMngAnalyticsParams !== '') {
+      if (!!externalUserMngAnalyticsParams) {
         const params = externalUserMngAnalyticsParams.split('&');
         params.forEach((param) => {
           const [key, value] = param.split('=');

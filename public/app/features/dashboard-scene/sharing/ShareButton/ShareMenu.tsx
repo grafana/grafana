@@ -97,7 +97,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
         if (config.externalUserMngAnalytics) {
           // Add query parameters in config.externalUserMngAnalyticsParams to track conversion
-          if (config.externalUserMngAnalyticsParams !== '') {
+          if (!!config.externalUserMngAnalyticsParams) {
             const params = config.externalUserMngAnalyticsParams.split('&');
             params.forEach((param) => {
               const [key, value] = param.split('=');
