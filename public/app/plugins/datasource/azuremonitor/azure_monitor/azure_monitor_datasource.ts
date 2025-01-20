@@ -1,4 +1,3 @@
-import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
 import { AzureCredentials } from '@grafana/azure-sdk';
@@ -26,6 +25,7 @@ import {
   Location,
   ResourceGroup,
   Metric,
+  MetricNamespace,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -238,7 +238,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     return (await Promise.all(promises)).flat();
   }
 
-  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string) {
+  // Note globalRegion should be false when querying custom metric namespaces
+  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string, custom?: boolean) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
@@ -249,7 +250,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       region
     );
     return this.getResource(url)
-      .then((result: AzureAPIResponse<Namespace>) => {
+      .then((result: AzureAPIResponse<MetricNamespace>) => {
+        if (custom) {
+          result.value = result.value.filter((namespace) => namespace.classification === 'Custom');
+        }
         return ResponseParser.parseResponseValues(
           result,
           'properties.metricNamespaceName',
