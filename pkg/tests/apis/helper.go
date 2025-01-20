@@ -213,6 +213,7 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 
 	deep := v.DeepCopy()
 	deep.SetAnnotations(nil)
+	deep.SetLabels(nil)
 	deep.SetManagedFields(nil)
 	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)

@@ -136,6 +136,6 @@ func toUserItem(u *user.User, ns string) iamv0.User {
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetDeprecatedInternalID(u.ID)
+	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
 }

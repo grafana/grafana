@@ -493,34 +493,32 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.NotEmpty(t, uid)
 
 		expectedResult := `{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-				"creationTimestamp": "${creationTimestamp}",
-				"labels": {
-					"grafana.app/deprecatedInternalID": "1"
-				},
-				"name": "` + uid + `",
-				"namespace": "default",
-				"resourceVersion": "${resourceVersion}",
-				"uid": "${uid}"
-			},
-			"spec": {
-				"interval": "20s",
-				"items": [
-					{
-						"type": "dashboard_by_uid",
-						"value": "xCmMwXdVz"
-					},
-					{
-						"type": "dashboard_by_tag",
-						"value": "graph-ng"
-					}
-				],
-				"title": "Test"
-			},
-			"status": {}
-		}`
+  "apiVersion": "playlist.grafana.app/v0alpha1",
+  "kind": "Playlist",
+  "metadata": {
+    "creationTimestamp": "${creationTimestamp}",
+    "name": "` + uid + `",
+    "namespace": "default",
+    "resourceVersion": "${resourceVersion}",
+    "uid": "${uid}"
+  },
+  "spec": {
+    "interval": "20s",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "xCmMwXdVz"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "graph-ng"
+      }
+    ],
+    "title": "Test"
+  },
+  "status": {}
+}`
+
 		// List includes the expected result
 		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
