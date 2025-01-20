@@ -23,17 +23,17 @@ func NewSQLKeeper(encryptionManager *manager.EncryptionManager, store secretStor
 	}, nil
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, config any, exposedValueOrRef string) (keepertypes.ExternalID, error) {
+func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, exposedValueOrRef string) (keepertypes.ExternalID, error) {
 	// TODO: implement me
 	return keepertypes.ExternalID("todo-sql-keeper-store"), nil
 }
 
-func (s *SQLKeeper) Expose(ctx context.Context, config any, id keepertypes.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
+func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, id keepertypes.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
 	// TODO: implement me
 	return secretv0alpha1.NewExposedSecureValue("todo-sql-keeper-exposed"), nil
 }
 
-func (s *SQLKeeper) Delete(ctx context.Context, config any, id keepertypes.ExternalID) error {
+func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, id keepertypes.ExternalID) error {
 	// TODO: implement me
 	return nil
 }

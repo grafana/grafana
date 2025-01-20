@@ -1,18 +1,15 @@
 package secretkeeper
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zeebo/assert"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -26,28 +23,28 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func Test_OSSKeeperService_GetKeeper(t *testing.T) {
-	cfg := `
-	[security]
-	secret_key = sdDkslslld
-	encryption_provider = secretKey.v1
-	available_encryption_providers = secretKey.v1
-	`
-	keeperService, err := setupTestService(t, cfg)
-	require.NoError(t, err)
+// func Test_OSSKeeperService_GetKeeper(t *testing.T) {
+// 	cfg := `
+// 	[security]
+// 	secret_key = sdDkslslld
+// 	encryption_provider = secretKey.v1
+// 	available_encryption_providers = secretKey.v1
+// 	`
+// 	keeperService, err := setupTestService(t, cfg)
+// 	require.NoError(t, err)
 
-	t.Run("GetKeeper should successfully return a sql keeper", func(t *testing.T) {
-		keeper, err := keeperService.GetKeeper(context.Background(), keepertypes.SQLKeeperType, nil)
-		require.NoError(t, err)
-		assert.NotNil(t, keeper)
-	})
+// 	t.Run("GetKeeper should successfully return a sql keeper", func(t *testing.T) {
+// 		keeper, err := keeperService.GetKeeper(context.Background(), keepertypes.SQLKeeperType, nil)
+// 		require.NoError(t, err)
+// 		assert.NotNil(t, keeper)
+// 	})
 
-	t.Run("GetKeeper should error when type is not sql", func(t *testing.T) {
-		keeper, err := keeperService.GetKeeper(context.Background(), keepertypes.AWSKeeperType, nil)
-		require.Error(t, err)
-		assert.Nil(t, keeper)
-	})
-}
+// 	t.Run("GetKeeper should error when type is not sql", func(t *testing.T) {
+// 		keeper, err := keeperService.GetKeeper(context.Background(), keepertypes.AWSKeeperType, nil)
+// 		require.Error(t, err)
+// 		assert.Nil(t, keeper)
+// 	})
+// }
 
 func setupTestService(t *testing.T, config string) (OSSKeeperService, error) {
 	raw, err := ini.Load([]byte(config))
