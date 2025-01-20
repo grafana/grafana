@@ -140,9 +140,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 };
 
 function uniqueValues<T>(values: T[]): T[] {
-  const unique = new Set<T>();
-  values.forEach((value) => unique.add(value));
-
+  const unique = new Set<T>(values);
   return Array.from(unique);
 }
 
