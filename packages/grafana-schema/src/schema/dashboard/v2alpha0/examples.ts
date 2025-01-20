@@ -458,6 +458,7 @@ export const handyTestingSchema: DashboardV2Spec = {
         label: 'Adhoc Variable',
         name: 'adhocVar',
         skipUrlSync: false,
+        collapseFilters: false,
       },
     },
   ],

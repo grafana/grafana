@@ -508,6 +508,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings(variable.spec.datasource)?.meta.multiValueFilterOperators
       ),
+      collapseFilters: variable.spec.collapseFilters,
     });
   }
   if (variable.kind === defaultCustomVariableKind().kind) {
