@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -110,14 +111,14 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	mapper := getBleveMappings(fields)
 
 	if size > b.opts.FileThreshold {
+		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
+			fmt.Sprintf("%s.%s", key.Resource, key.Group),
+		)
 		fname := fmt.Sprintf("rv%d", resourceVersion)
 		if resourceVersion == 0 {
 			fname = b.start.Format("tmp-20060102-150405")
 		}
-		dir := filepath.Join(b.opts.Root, key.Namespace,
-			fmt.Sprintf("%s.%s", key.Resource, key.Group),
-			fname,
-		)
+		dir := filepath.Join(resourceDir, fname)
 		if resourceVersion > 0 {
 			info, _ := os.Stat(dir)
 			if info != nil && info.IsDir() {
@@ -127,6 +128,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 					if err != nil || int64(found) != size {
 						b.log.Info("this size changed since the last time the index opened")
 						_ = index.Close()
+
+						// Pick a new file name
+						fname = b.start.Format("tmp-20060102-150405-changed")
+						dir = filepath.Join(resourceDir, fname)
 						index = nil
 					} else {
 						build = false // no need to build the index
@@ -137,8 +142,15 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 		if index == nil {
 			index, err = bleve.New(dir, mapper)
+			if err != nil {
+				err = fmt.Errorf("error creating new bleve index: %s %w", dir, err)
+			}
 		}
 
+		// Start a background task to cleanup the old index directories
+		if index != nil && err == nil {
+			go b.cleanOldIndexes(resourceDir, fname)
+		}
 		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
@@ -180,6 +192,25 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	b.cache[key] = idx
 	b.cacheMu.Unlock()
 	return idx, nil
+}
+
+func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		b.log.Warn("error cleaning folders from", "directory", dir, "error", err)
+		return
+	}
+	for _, file := range files {
+		if file.IsDir() && file.Name() != skip {
+			fpath := filepath.Join(dir, file.Name())
+			err = os.RemoveAll(fpath)
+			if err != nil {
+				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
+			} else {
+				b.log.Error("Removed old index folder", "directory", fpath)
+			}
+		}
+	}
 }
 
 // TotalDocs returns the total number of documents across all indices
@@ -489,8 +520,18 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
+
+	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
+	fields := make([]string, 0, len(req.Fields))
+	for _, f := range req.Fields {
+		if slices.Contains(DashboardFields(), f) {
+			f = "fields." + f
+		}
+		fields = append(fields, f)
+	}
+
 	searchrequest := &bleve.SearchRequest{
-		Fields:  req.Fields,
+		Fields:  fields,
 		Size:    int(req.Limit),
 		From:    int(req.Offset),
 		Explain: req.Explain,
@@ -720,7 +761,14 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
 			default:
-				v := match.Fields[f.Name]
+				fieldName := f.Name
+				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
+				// if a specific field is named the same as a common field
+				v := match.Fields[fieldName]
+				// fields that are specific to the resource get stored as fields.<fieldName>, so we need to check for that
+				if v == nil {
+					v = match.Fields["fields."+fieldName]
+				}
 				if v != nil {
 					// Encode the value to protobuf
 					row.Cells[i], err = encoders[i](v)
