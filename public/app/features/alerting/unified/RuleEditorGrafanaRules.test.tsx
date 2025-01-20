@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
-import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
@@ -21,6 +21,20 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 jest.setTimeout(60 * 1000);
 
 setupMswServer();
+
+const dataSources = {
+  default: mockDataSource(
+    {
+      type: 'prometheus',
+      name: 'Prom',
+      uid: PROMETHEUS_DATASOURCE_UID,
+      isDefault: true,
+    },
+    { alerting: true, module: 'core:plugin/prometheus' }
+  ),
+};
+
+setupDataSources(dataSources.default);
 
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
@@ -44,19 +58,6 @@ describe('RuleEditor grafana managed rules', () => {
 
   it('can create new grafana managed alert', async () => {
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
-    const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          uid: PROMETHEUS_DATASOURCE_UID,
-          isDefault: true,
-        },
-        { alerting: true, module: 'core:plugin/prometheus' }
-      ),
-    };
-
-    setupDataSources(dataSources.default);
 
     const { user } = renderRuleEditor();
 
@@ -74,5 +75,33 @@ describe('RuleEditor grafana managed rules', () => {
     const requests = await capture;
     const serializedRequests = await serializeRequests(requests);
     expect(serializedRequests).toMatchSnapshot();
+  });
+
+  // FIXME: This should work (i.e. the necessary setup is done, and the preview should trigger an error)
+  // but for some reason the alert error doesn't render
+  it.skip('shows an error when trying to use time series as alert condition', async () => {
+    setupDataSources(dataSources.default);
+    const { user } = renderRuleEditor();
+
+    // Select Prometheus data source
+    const dataSourceInput = await ui.inputs.dataSource.find();
+    await user.click(dataSourceInput);
+    await user.click(await screen.findByRole('button', { name: new RegExp(dataSources.default.name) }));
+
+    // Change to `code` editor, and type in something that would give us a time series response
+    await user.click(screen.getByLabelText(/code/i));
+    await user.click(screen.getByTestId('data-testid Query field'));
+    // We have to escape the curly braces because they have special meaning to the RTL keyboard API
+    await user.keyboard('sum(counters_logins{{}})');
+
+    // Expand the options and select "range" instead
+    await user.click(screen.getByRole('button', { name: /type: instant/i }));
+    await user.click(screen.getByLabelText(/range/i));
+
+    await user.click(screen.getByRole('button', { name: /remove expression "b"/i }));
+    await selectOptionInTest(await screen.findByLabelText(/input/i), 'A');
+
+    await user.click(ui.buttons.preview.get());
+    expect(await screen.findByText(/you cannot use time series data as an alert condition/i)).toBeInTheDocument();
   });
 });

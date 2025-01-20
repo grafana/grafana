@@ -45,7 +45,7 @@ describe('RuleEditor cloud', () => {
   it('can create a new cloud alert', async () => {
     const { user } = renderRuleEditor();
 
-    const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
+    const removeExpressionsButtons = screen.getAllByLabelText(/Remove expression/);
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
@@ -58,7 +58,7 @@ describe('RuleEditor cloud', () => {
     await user.click(switchToCloudButton);
 
     //expressions are removed after switching to data-source managed
-    expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
+    expect(screen.queryAllByLabelText(/Remove expression/)).toHaveLength(0);
 
     expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
 
