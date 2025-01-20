@@ -235,47 +235,31 @@ describe('Stats Calculators', () => {
     }
   });
 
-  it('count should ignoreNulls by default', () => {
-    const someNulls = createField('x', [1, null, null, 1]);
-    expect(reduce(someNulls, ReducerID.count)).toEqual(2);
-  });
+  // Programmatic testing of reducer functions to be sure they handle count nulls, ignore nulls, and null as zero
+  it.each([
+    { values: [1, null, null, 1], field: 'x', config: undefined, expected: 2, reducerID: ReducerID.count },
+    { values: [1, null, null, 1], field: 'x', config: NullValueMode.Ignore, expected: 2, reducerID: ReducerID.count },
+    { values: [1, null, null, 1], field: 'x', config: NullValueMode.Null, expected: 4, reducerID: ReducerID.count },
+    { values: [1, null, null, 1], field: 'x', config: NullValueMode.AsZero, expected: 4, reducerID: ReducerID.count },
+    { values: [3, null, 2, 1, 4], field: 'y', config: undefined, expected: 2.5, reducerID: ReducerID.median },
+    {
+      values: [3, null, 2, 1, 4],
+      field: 'y',
+      config: NullValueMode.Ignore,
+      expected: 2.5,
+      reducerID: ReducerID.median,
+    },
+    { values: [3, null, 2, 1, 4], field: 'y', config: NullValueMode.Null, expected: 2, reducerID: ReducerID.median },
+    { values: [3, null, 2, 1, 4], field: 'y', config: NullValueMode.AsZero, expected: 2, reducerID: ReducerID.median },
+  ])(
+    '$reducerID reducer returns count $expected for fieldConfig $config on field $field',
+    ({ values, field, config, expected, reducerID }) => {
+      const someNulls = createField(field, values);
+      someNulls.config.nullValueMode = config;
 
-  it('count should use fieldConfig nullValueMode.Ignore and not count nulls', () => {
-    const someNulls = createField('x', [1, null, null, 1]);
-    someNulls.config.nullValueMode = NullValueMode.Ignore;
-
-    expect(reduce(someNulls, ReducerID.count)).toEqual(2);
-  });
-
-  it('count should use fieldConfig nullValueMode.Null and count nulls', () => {
-    const someNulls = createField('x', [1, null, null, 1]);
-    someNulls.config.nullValueMode = NullValueMode.Null;
-
-    expect(reduce(someNulls, ReducerID.count)).toEqual(4);
-  });
-
-  it('median should ignoreNulls by default', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2.5);
-  });
-
-  it('median should use fieldConfig nullValueMode.Ignore and not count nulls', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    someNulls.config.nullValueMode = NullValueMode.Ignore;
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2.5);
-  });
-
-  it('median should use fieldConfig nullValueMode.Null and count nulls', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    someNulls.config.nullValueMode = NullValueMode.Null;
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2);
-  });
-
-  it('median should use fieldConfig nullValueMode.AsZero and count nulls as zero', () => {
-    const someNulls = createField('y', [3, null, 2, 1, 4]);
-    someNulls.config.nullValueMode = NullValueMode.AsZero;
-    expect(reduce(someNulls, ReducerID.median)).toEqual(2);
-  });
+      expect(reduce(someNulls, reducerID)).toEqual(expected);
+    }
+  );
 
   it('can reduce to percentiles', () => {
     // This `Array.from` will build an array of elements from 1 to 99
