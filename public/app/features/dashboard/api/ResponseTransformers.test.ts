@@ -281,6 +281,40 @@ describe('ResponseTransformers', () => {
             },
           ],
         },
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            title: 'Panel Title',
+            gridPos: { x: 0, y: 0, w: 12, h: 8 },
+            targets: [
+              {
+                refId: 'A',
+                datasource: 'datasource1',
+                expr: 'test-query',
+                hide: false,
+              },
+            ],
+            datasource: {
+              type: 'prometheus',
+              uid: 'datasource1',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            options: {},
+            transparent: false,
+            links: [],
+            transformations: [],
+          },
+          {
+            id: 2,
+            type: 'table',
+            libraryPanel: {
+              uid: 'library-panel-table',
+              name: 'Table Panel as Library Panel',
+            },
+            gridPos: { x: 0, y: 8, w: 12, h: 8 },
+          },
+        ],
       };
 
       const dto: DashboardWithAccessInfo<DashboardDataDTO> = {
