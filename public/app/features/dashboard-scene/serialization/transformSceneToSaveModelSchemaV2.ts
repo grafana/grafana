@@ -246,8 +246,12 @@ function getElements(state: DashboardSceneState) {
       const elementSpec: LibraryPanelKind = {
         kind: 'LibraryPanel',
         spec: {
-          name: behavior.state.name,
-          uid: behavior.state.uid,
+          id: getPanelIdForVizPanel(vizPanel),
+          title: vizPanel.state.title,
+          libraryPanel: {
+            uid: behavior.state.uid,
+            name: behavior.state.name,
+          },
         },
       };
       acc.push(elementSpec);
@@ -401,8 +405,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 function createElements(panels: Element[]): Record<string, Element> {
   return panels.reduce(
     (acc, panel) => {
-      const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
-      acc[key] = panel;
+      acc[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
       return acc;
     },
     {} as Record<string, Element>

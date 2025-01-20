@@ -182,11 +182,15 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
-    'library-panel-1': {
+    'panel-2': {
       kind: 'LibraryPanel',
       spec: {
-        uid: 'library-panel-1',
-        name: 'Library Panel',
+        id: 2,
+        title: 'Test Library Panel',
+        libraryPanel: {
+          uid: 'uid-for-library-panel',
+          name: 'Library Panel',
+        },
       },
     },
   },
@@ -217,7 +221,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           spec: {
             element: {
               kind: 'ElementReference',
-              name: 'library-panel-1',
+              name: 'panel-2',
             },
             height: 100,
             width: 200,

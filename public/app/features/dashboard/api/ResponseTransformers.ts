@@ -254,23 +254,23 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 
   // iterate over panels
   for (const p of panels) {
-    let elementName;
+    const elementName = p.id!.toString();
 
     // LibraryPanelKind
     if (p.libraryPanel) {
-      elementName = p.libraryPanel.uid;
-
       elements[elementName] = {
         kind: 'LibraryPanel',
         spec: {
-          uid: p.libraryPanel.uid,
-          name: p.libraryPanel.name,
+          libraryPanel: {
+            uid: p.libraryPanel.uid,
+            name: p.libraryPanel.name,
+          },
+          id: p.id!,
+          title: p.title ?? '',
         },
       };
       // PanelKind
     } else {
-      elementName = p.id!.toString();
-
       // FIXME: for now we should skip row panels
       if (p.type === 'row') {
         continue;
