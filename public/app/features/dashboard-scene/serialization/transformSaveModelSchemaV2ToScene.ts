@@ -45,6 +45,7 @@ import {
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
+  GridLayoutItemSpec,
   GroupByVariableKind,
   IntervalVariableKind,
   PanelKind,
@@ -228,6 +229,22 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   return dashboardScene;
 }
 
+function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind): DashboardGridItem {
+  const vizPanel = buildVizPanel(panel);
+  return new DashboardGridItem({
+    key: `grid-item-${panel.spec.id}`,
+    x: gridItem.x,
+    y: gridItem.y,
+    width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
+    height: gridItem.height,
+    itemHeight: gridItem.height,
+    body: vizPanel,
+    variableName: gridItem.repeat?.value,
+    repeatDirection: gridItem.repeat?.direction,
+    maxPerRow: gridItem.repeat?.maxPerRow,
+  });
+}
+
 function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridItemLike[] {
   const gridElements = dashboard.layout.spec.items;
 
@@ -240,20 +257,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       }
 
       if (panel.kind === 'Panel') {
-        const vizPanel = buildVizPanel(panel);
-
-        return new DashboardGridItem({
-          key: `grid-item-${panel.spec.id}`,
-          x: element.spec.x,
-          y: element.spec.y,
-          width: element.spec.repeat?.direction === 'h' ? 24 : element.spec.width,
-          height: element.spec.height,
-          itemHeight: element.spec.height,
-          body: vizPanel,
-          variableName: element.spec.repeat?.value,
-          repeatDirection: element.spec.repeat?.direction,
-          maxPerRow: element.spec.repeat?.maxPerRow,
-        });
+        return buildGridItem(element.spec, panel);
       } else {
         throw new Error(`Unknown element kind: ${element.kind}`);
       }
@@ -261,25 +265,17 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       const children = element.spec.elements.map((element) => {
         const panel = dashboard.elements[element.spec.element.name];
         if (panel.kind === 'Panel') {
-          const vizPanel = buildVizPanel(panel);
-
-          return new DashboardGridItem({
-            key: `grid-item-${panel.spec.id}`,
-            x: element.spec.x,
-            y: element.spec.y,
-            width: element.spec.repeat?.direction === 'h' ? 24 : element.spec.width,
-            height: element.spec.height,
-            itemHeight: element.spec.height,
-            body: vizPanel,
-            variableName: element.spec.repeat?.value,
-            repeatDirection: element.spec.repeat?.direction,
-            maxPerRow: element.spec.repeat?.maxPerRow,
-          });
+          return buildGridItem(element.spec, panel);
         } else {
           throw new Error(`Unknown element kind: ${element.kind}`);
         }
       });
-      return new SceneGridRow({ y: element.spec.y, height: element.spec.height, children });
+      return new SceneGridRow({
+        y: element.spec.y,
+        isCollapsed: element.spec.collapsed,
+        title: element.spec.title,
+        children,
+      });
     } else {
       //@ts-expect-error
       throw new Error(`Unknown layout element kind: ${element.kind}`);

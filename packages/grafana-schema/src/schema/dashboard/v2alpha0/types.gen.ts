@@ -691,8 +691,33 @@ export const defaultGridLayoutItemKind = (): GridLayoutItemKind => ({
 	spec: defaultGridLayoutItemSpec(),
 });
 
+export interface GridLayoutRowKind {
+	kind: "GridLayoutRow";
+	spec: GridLayoutRowSpec;
+}
+
+export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
+	kind: "GridLayoutRow",
+	spec: defaultGridLayoutRowSpec(),
+});
+
+export interface GridLayoutRowSpec {
+	y: number;
+	collapsed: boolean;
+	repeat?: RepeatOptions;
+	title: string;
+	elements: GridLayoutItemKind[];
+}
+
+export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
+	y: 0,
+	collapsed: false,
+	title: "",
+	elements: [],
+});
+
 export interface GridLayoutSpec {
-	items: GridLayoutItemKind[];
+	items: (GridLayoutItemKind | GridLayoutRowKind)[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({

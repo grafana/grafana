@@ -484,8 +484,10 @@ GridLayoutRowKind: {
 }
 
 GridLayoutRowSpec: {
-  height: int
   y: int
+  collapsed: bool
+  repeat?: RepeatOptions
+  title: string
   elements: [...GridLayoutItemKind]
 }
 
