@@ -505,6 +505,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         stepNo={2}
         title={sectionTitle}
         fullWidth={true}
+        // @TODO make this easier to define, see RuleEditorSubSection
         description={
           <Stack direction="row" gap={0.5} alignItems="center">
             <Text variant="bodySmall" color="secondary">
@@ -520,165 +521,203 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         }
         switchMode={switchMode}
       >
-        {/* This is the cloud data source selector */}
-        {isDataSourceManagedRuleByType(type) && (
-          <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
-        )}
+        <RuleEditorSubSection>
+          {/* This is the cloud data source selector */}
+          {isDataSourceManagedRuleByType(type) && (
+            <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
+          )}
 
-        {/* This is the PromQL Editor for recording rules */}
-        {isRecordingRuleType && dataSourceName && (
-          <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-            <RecordingRuleEditor
-              dataSourceName={dataSourceName}
-              queries={queries}
-              runQueries={() => runQueriesPreview()}
-              onChangeQuery={onChangeRecordingRulesQueries}
-              panelData={queryPreviewData}
-            />
-          </Field>
-        )}
-
-        {/* This is the PromQL Editor for Cloud rules */}
-        {isCloudAlertRuleType && dataSourceName && (
-          <>
+          {/* This is the PromQL Editor for recording rules */}
+          {isRecordingRuleType && dataSourceName && (
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-              <Controller
-                name="expression"
-                render={({ field: { ref, ...field } }) => {
-                  return (
-                    <ExpressionEditor
-                      {...field}
-                      dataSourceName={dataSourceName}
-                      showPreviewAlertsButton={!isRecordingRuleType}
-                      onChange={onChangeExpression}
-                    />
-                  );
-                }}
-                control={control}
-                rules={{
-                  required: { value: true, message: 'A valid expression is required' },
-                }}
+              <RecordingRuleEditor
+                dataSourceName={dataSourceName}
+                queries={queries}
+                runQueries={() => runQueriesPreview()}
+                onChangeQuery={onChangeRecordingRulesQueries}
+                panelData={queryPreviewData}
               />
             </Field>
-            <SmartAlertTypeDetector
-              editingExistingRule={editingExistingRule}
-              queries={queries}
-              rulesSourcesWithRuler={rulesSourcesWithRuler}
-              onClickSwitch={onClickSwitch}
-            />
-          </>
-        )}
+          )}
 
-        {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
-        {isGrafanaManagedRuleByType(type) && (
-          <>
-            {/* Data Queries */}
-            <QueryEditor
-              queries={dataQueries}
-              expressions={expressionQueries}
-              onRunQueries={() => runQueriesPreview()}
-              onChangeQueries={onChangeQueries}
-              onDuplicateQuery={onDuplicateQuery}
-              panelData={queryPreviewData}
-              condition={condition}
-              onSetCondition={handleSetCondition}
-            />
-            {!simplifiedQueryStep && (
-              <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    dispatch(addNewDataQuery());
+          {/* This is the PromQL Editor for Cloud rules */}
+          {isCloudAlertRuleType && dataSourceName && (
+            <>
+              <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+                <Controller
+                  name="expression"
+                  render={({ field: { ref, ...field } }) => {
+                    return (
+                      <ExpressionEditor
+                        {...field}
+                        dataSourceName={dataSourceName}
+                        showPreviewAlertsButton={!isRecordingRuleType}
+                        onChange={onChangeExpression}
+                      />
+                    );
                   }}
-                  variant="secondary"
-                  data-testid={selectors.components.QueryTab.addQuery}
-                  disabled={noCompatibleDataSources}
-                  className={styles.addQueryButton}
-                >
-                  Add query
-                </Button>
-              </Tooltip>
-            )}
-
-            {/* We only show Switch for Grafana managed alerts */}
-            {isGrafanaAlertingType && !simplifiedQueryStep && (
-              <SmartAlertTypeDetector
-                editingExistingRule={editingExistingRule}
-                rulesSourcesWithRuler={rulesSourcesWithRuler}
-                queries={queries}
-                onClickSwitch={onClickSwitch}
-              />
-            )}
-
-            {/* Expression Queries */}
-            {!simplifiedQueryStep && (
-              <RuleEditorSubSection
-                title="Expressions"
-                description="Manipulate data returned from queries with math and other operations."
-              >
-                <ExpressionsEditor
-                  queries={queries}
-                  panelData={queryPreviewData}
-                  condition={condition}
-                  onSetCondition={handleSetCondition}
-                  onRemoveExpression={(refId) => {
-                    dispatch(removeExpression(refId));
-                  }}
-                  onUpdateRefId={onUpdateRefId}
-                  onUpdateExpressionType={(refId, type) => {
-                    dispatch(updateExpressionType({ refId, type }));
-                  }}
-                  onUpdateQueryExpression={(model) => {
-                    dispatch(updateExpression(model));
+                  control={control}
+                  rules={{
+                    required: { value: true, message: 'A valid expression is required' },
                   }}
                 />
+              </Field>
+            </>
+          )}
 
-                {/* action buttons */}
-                <Stack direction="column">
-                  {simplifiedQueryStep && (
-                    <SimpleConditionEditor
-                      simpleCondition={simpleCondition}
-                      onChange={setSimpleCondition}
-                      expressionQueriesList={expressionQueries}
-                      dispatch={dispatch}
-                      previewData={queryPreviewData[condition ?? '']}
-                    />
-                  )}
-                  <Stack direction="row">
-                    {!simplifiedQueryStep && config.expressionsEnabled && (
-                      <TypeSelectorButton onClickType={onClickType} />
-                    )}
+          {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
+          {isGrafanaManagedRuleByType(type) && (
+            <>
+              {/* Data Queries */}
+              <QueryEditor
+                queries={dataQueries}
+                expressions={expressionQueries}
+                onRunQueries={() => runQueriesPreview()}
+                onChangeQueries={onChangeQueries}
+                onDuplicateQuery={onDuplicateQuery}
+                panelData={queryPreviewData}
+                condition={condition}
+                onSetCondition={handleSetCondition}
+              />
+              {!simplifiedQueryStep && (
+                <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      dispatch(addNewDataQuery());
+                    }}
+                    variant="secondary"
+                    data-testid={selectors.components.QueryTab.addQuery}
+                    disabled={noCompatibleDataSources}
+                    className={styles.addQueryButton}
+                  >
+                    Add query
+                  </Button>
+                </Tooltip>
+              )}
 
-                    {isPreviewLoading && (
-                      <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
-                        <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-                      </Button>
+              {/* We only show Switch for Grafana managed alerts */}
+              {isGrafanaAlertingType && !simplifiedQueryStep && (
+                <RuleEditorSubSection
+                  title="Rule type"
+                  description="Select where the alert rule will be managed."
+                  helpInfo={{
+                    contentText: (
+                      <>
+                        <Text color="primary" variant="h6">
+                          Grafana-managed alert rules
+                        </Text>
+                        <p>
+                          Grafana-managed alert rules allow you to create alerts that can act on data from any of our
+                          supported data sources, including having multiple data sources in the same rule. You can also
+                          add expressions to transform your data and set alert conditions. Using images in alert
+                          notifications is also supported.
+                        </p>
+                        <Text color="primary" variant="h6">
+                          Data source-managed alert rules
+                        </Text>
+                        <p>
+                          Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources
+                          which have been configured to support rule creation. The use of expressions or multiple
+                          queries is not supported.
+                        </p>
+                      </>
+                    ),
+                    externalLink:
+                      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/',
+                    linkText: 'Read about alert rule types',
+                    title: 'Alert rule types',
+                  }}
+                >
+                  <SmartAlertTypeDetector
+                    editingExistingRule={editingExistingRule}
+                    rulesSourcesWithRuler={rulesSourcesWithRuler}
+                    queries={queries}
+                    onClickSwitch={onClickSwitch}
+                  />
+                </RuleEditorSubSection>
+              )}
+
+              {/* Expression Queries */}
+              {!simplifiedQueryStep && (
+                <RuleEditorSubSection
+                  title="Expressions"
+                  description="Manipulate data returned from queries with math and other operations."
+                >
+                  <ExpressionsEditor
+                    queries={queries}
+                    panelData={queryPreviewData}
+                    condition={condition}
+                    onSetCondition={handleSetCondition}
+                    onRemoveExpression={(refId) => {
+                      dispatch(removeExpression(refId));
+                    }}
+                    onUpdateRefId={onUpdateRefId}
+                    onUpdateExpressionType={(refId, type) => {
+                      dispatch(updateExpressionType({ refId, type }));
+                    }}
+                    onUpdateQueryExpression={(model) => {
+                      dispatch(updateExpression(model));
+                    }}
+                  />
+
+                  {/* action buttons */}
+                  <Stack direction="column">
+                    {simplifiedQueryStep && (
+                      <SimpleConditionEditor
+                        simpleCondition={simpleCondition}
+                        onChange={setSimpleCondition}
+                        expressionQueriesList={expressionQueries}
+                        dispatch={dispatch}
+                        previewData={queryPreviewData[condition ?? '']}
+                      />
                     )}
-                    {!isPreviewLoading && (
-                      <Button
-                        data-testid={selectors.components.AlertRules.previewButton}
-                        icon="sync"
-                        type="button"
-                        onClick={() => runQueriesPreview()}
-                        disabled={emptyQueries}
-                      >
-                        {!simplifiedQueryStep
-                          ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
-                          : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
-                      </Button>
-                    )}
+                    <Stack direction="row">
+                      {!simplifiedQueryStep && config.expressionsEnabled && (
+                        <TypeSelectorButton onClickType={onClickType} />
+                      )}
+
+                      {isPreviewLoading && (
+                        <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
+                          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+                        </Button>
+                      )}
+                      {!isPreviewLoading && (
+                        <Button
+                          data-testid={selectors.components.AlertRules.previewButton}
+                          icon="sync"
+                          type="button"
+                          onClick={() => runQueriesPreview()}
+                          disabled={emptyQueries}
+                        >
+                          {!simplifiedQueryStep
+                            ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
+                            : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
+                        </Button>
+                      )}
+                    </Stack>
                   </Stack>
-                </Stack>
-              </RuleEditorSubSection>
-            )}
+                </RuleEditorSubSection>
+              )}
 
-            {/* No Queries */}
-            {emptyQueries && (
-              <Alert title="No queries or expressions have been configured" severity="warning">
-                Create at least one query or expression to be alerted on
-              </Alert>
-            )}
-          </>
+              {/* No Queries */}
+              {emptyQueries && (
+                <Alert title="No queries or expressions have been configured" severity="warning">
+                  Create at least one query or expression to be alerted on
+                </Alert>
+              )}
+            </>
+          )}
+        </RuleEditorSubSection>
+
+        {/*  */}
+        {isCloudAlertRuleType && dataSourceName && (
+          <SmartAlertTypeDetector
+            editingExistingRule={editingExistingRule}
+            queries={queries}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            onClickSwitch={onClickSwitch}
+          />
         )}
       </RuleEditorSection>
 
