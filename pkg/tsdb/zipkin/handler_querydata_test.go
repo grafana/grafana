@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/openzipkin/zipkin-go/model"
+
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 )
 
 func TestTransformResponse(t *testing.T) {
@@ -34,7 +35,6 @@ func TestTransformResponse(t *testing.T) {
 			},
 			Tags: map[string]string{
 				"tag1": "val1",
-				"tag2": "val2",
 			},
 		}
 		span2 := model.SpanModel{
