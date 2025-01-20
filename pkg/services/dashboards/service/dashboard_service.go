@@ -2020,13 +2020,17 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 	finalObj.SetNamespace(namespace)
 	finalObj.SetGroupVersionKind(v0alpha1.DashboardResourceInfo.GroupVersionKind())
 
-	if cmd.FolderUID != "" {
-		meta, err := utils.MetaAccessor(&finalObj)
-		if err != nil {
-			return finalObj, err
-		}
+	meta, err := utils.MetaAccessor(&finalObj)
+	if err != nil {
+		return finalObj, err
+	}
 
+	if cmd.FolderUID != "" {
 		meta.SetFolder(cmd.FolderUID)
+	}
+
+	if cmd.Message != "" {
+		meta.SetMessage(cmd.Message)
 	}
 
 	return finalObj, nil
