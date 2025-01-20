@@ -490,6 +490,10 @@ func (r *Replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, erro
 }
 
 func (r *Replicator) ensureRepositoryFolderExists(ctx context.Context) error {
+	if r.repository.Config().Spec.Folder == "" {
+		return nil
+	}
+
 	_, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
 	if err == nil {
 		return nil
