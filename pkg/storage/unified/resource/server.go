@@ -21,7 +21,6 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -234,13 +233,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	// Make this cancelable
-	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
-		&identity.StaticRequester{
-			Type:           claims.TypeServiceAccount,
-			Login:          "watcher", // admin user for watch
-			UserID:         1,
-			IsGrafanaAdmin: true,
-		}))
+	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
 		tracer:      opts.Tracer,
 		log:         logger,
