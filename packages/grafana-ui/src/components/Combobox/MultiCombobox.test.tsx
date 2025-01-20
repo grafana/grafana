@@ -36,8 +36,8 @@ describe('MultiCombobox', () => {
     const input = screen.getByRole('combobox');
     user.click(input);
     expect(await screen.findByText('A')).toBeInTheDocument();
-    expect(await screen.findByText('B')).toBeInTheDocument();
-    expect(await screen.findByText('C')).toBeInTheDocument();
+    expect(screen.getByText('B')).toBeInTheDocument();
+    expect(screen.getByText('C')).toBeInTheDocument();
   });
 
   it('should render with value', () => {
@@ -85,6 +85,7 @@ describe('MultiCombobox', () => {
         />
       );
     };
+
     render(<ControlledMultiCombobox options={options} value={[]} onChange={onChange} />);
     const input = screen.getByRole('combobox');
     await user.click(input);
@@ -110,5 +111,50 @@ describe('MultiCombobox', () => {
     render(<MultiCombobox width={200} options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
     await user.click(screen.getByRole('combobox'));
     expect(await screen.findByText('d')).toBeInTheDocument();
+  });
+
+  describe('all option', () => {
+    it('should render all option', async () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      render(<MultiCombobox width={200} options={options} value={['a']} onChange={jest.fn()} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'All' })).toBeInTheDocument();
+    });
+
+    it('should select all option', async () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      const onChange = jest.fn();
+      render(<MultiCombobox width={200} options={options} value={['a']} onChange={onChange} enableAllOption />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.click(await screen.findByText('All'));
+
+      expect(onChange).toHaveBeenCalledWith(['a', 'b', 'c']);
+    });
+
+    it('should deselect all option', async () => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      const onChange = jest.fn();
+      render(
+        <MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} enableAllOption />
+      );
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.click(await screen.findByRole('option', { name: 'All' }));
+      expect(onChange).toHaveBeenCalledWith([]);
+    });
   });
 });

@@ -2049,6 +2049,12 @@
       "title": "Ŵĥy ĥőşŧ ŵįŧĥ Ğřäƒäŉä?"
     }
   },
+  "multicombobox": {
+    "all": {
+      "title": "Åľľ",
+      "title-filtered": "Åľľ (ƒįľŧęřęđ)"
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Åđđ ŉęŵ čőŉŉęčŧįőŉ"
