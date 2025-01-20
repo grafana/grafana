@@ -21,7 +21,6 @@ import {
   PanelQueryKind,
   TransformationKind,
   FieldConfigSource,
-  DashboardLink,
   DataTransformerConfig,
   PanelQuerySpec,
   DataQueryKind,
@@ -36,16 +35,25 @@ import {
   GroupByVariableKind,
   AdhocVariableKind,
   AnnotationQueryKind,
-  defaultAnnotationPanelFilter,
-  defaultAnnotationQuerySpec,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+  DataLink,
+  LibraryPanelKind,
+  Element,
+  RepeatOptions,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getQueryRunnerFor } from '../utils/utils';
+import {
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+  calculateGridItemDimensions,
+} from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
@@ -57,7 +65,7 @@ type DeepPartial<T> = T extends object
     }
   : T;
 
-export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): Partial<DashboardV2Spec> {
+export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const oldDash = scene.state;
   const timeRange = oldDash.$timeRange!.state;
 
@@ -66,6 +74,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
+    id: oldDash.id ? oldDash.id : undefined,
     title: oldDash.title,
     description: oldDash.description ?? '',
     cursorSync: getCursorSync(oldDash),
@@ -108,17 +117,19 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     layout: {
       kind: 'GridLayout',
       spec: {
-        items: getGridLayoutItems(oldDash),
+        items: getGridLayoutItems(oldDash, isSnapshot),
       },
     },
     // EOF layout
   };
 
-  if (isDashboardSchemaV2(dashboardSchemaV2)) {
-    return dashboardSchemaV2;
+  try {
+    validateDashboardSchemaV2(dashboardSchemaV2);
+    return dashboardSchemaV2 as DashboardV2Spec;
+  } catch (reason) {
+    console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
+    throw new Error('Error transforming dashboard to schema v2: ' + reason);
   }
-  console.error('Error transforming dashboard to schema v2');
-  throw new Error('Error transforming dashboard to schema v2');
 }
 
 function getCursorSync(state: DashboardSceneState) {
@@ -141,16 +152,16 @@ function getLiveNow(state: DashboardSceneState) {
 
 function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): GridLayoutItemKind[] {
   const body = state.body;
-  const elements: GridLayoutItemKind[] = [];
+  let elements: GridLayoutItemKind[] = [];
   if (body instanceof DefaultGridLayoutManager) {
     for (const child of body.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
         // TODO: handle panel repeater scenario
-        // if (child.state.variableName) {
-        //   panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
-        // } else {
-        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
-        // }
+        if (child.state.variableName) {
+          elements = elements.concat(repeaterToLayoutItems(child, isSnapshot));
+        } else {
+          elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
+        }
       }
 
       // TODO: OLD transformer code
@@ -163,6 +174,7 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
       // }
     }
   }
+
   return elements;
 }
 
@@ -184,6 +196,7 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
   x = gridItem_.state.x ?? 0;
   y = gridItem_.state.y ?? 0;
   width = gridItem_.state.width ?? 0;
+  const repeatVar = gridItem_.state.variableName;
 
   // FIXME: which name should we use for the element reference, key or something else ?
   const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
@@ -201,6 +214,23 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
     },
   };
 
+  if (repeatVar) {
+    const repeat: RepeatOptions = {
+      mode: 'variable',
+      value: repeatVar,
+    };
+
+    if (gridItem_.state.maxPerRow) {
+      repeat.maxPerRow = gridItem_.getMaxPerRow();
+    }
+
+    if (gridItem_.state.repeatDirection) {
+      repeat.direction = gridItem_.getRepeatDirection();
+    }
+
+    elementGridItem.spec.repeat = repeat;
+  }
+
   if (!elementGridItem) {
     throw new Error('Unsupported grid item type');
   }
@@ -210,33 +240,46 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
 
 function getElements(state: DashboardSceneState) {
   const panels = state.body.getVizPanels() ?? [];
-  const panelsArray = panels.reduce((acc: PanelKind[], vizPanel: VizPanel) => {
-    const elementSpec: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        uid: vizPanel.state.key ?? '', // FIXME: why is key optional?
-        title: vizPanel.state.title,
-        description: vizPanel.state.description ?? '',
-        links: getPanelLinks(vizPanel),
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries: getVizPanelQueries(vizPanel),
-            transformations: getVizPanelTransformations(vizPanel),
-            queryOptions: getVizPanelQueryOptions(vizPanel),
+  const panelsArray = panels.reduce((acc: Element[], vizPanel: VizPanel) => {
+    if (isLibraryPanel(vizPanel)) {
+      const behavior = getLibraryPanelBehavior(vizPanel)!;
+      const elementSpec: LibraryPanelKind = {
+        kind: 'LibraryPanel',
+        spec: {
+          name: behavior.state.name,
+          uid: behavior.state.uid,
+        },
+      };
+      acc.push(elementSpec);
+    } else {
+      const elementSpec: PanelKind = {
+        kind: 'Panel',
+        spec: {
+          id: getPanelIdForVizPanel(vizPanel),
+          title: vizPanel.state.title,
+          description: vizPanel.state.description ?? '',
+          links: getPanelLinks(vizPanel),
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: getVizPanelQueries(vizPanel),
+              transformations: getVizPanelTransformations(vizPanel),
+              queryOptions: getVizPanelQueryOptions(vizPanel),
+            },
+          },
+          vizConfig: {
+            kind: vizPanel.state.pluginId,
+            spec: {
+              pluginVersion: vizPanel.state.pluginVersion ?? '',
+              options: vizPanel.state.options,
+              fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
+            },
           },
         },
-        vizConfig: {
-          kind: vizPanel.state.pluginId,
-          spec: {
-            pluginVersion: vizPanel.state.pluginVersion ?? '',
-            options: vizPanel.state.options,
-            fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
-          },
-        },
-      },
-    };
-    acc.push(elementSpec);
+      };
+      acc.push(elementSpec);
+    }
+
     return acc;
   }, []);
   // create elements
@@ -245,10 +288,10 @@ function getElements(state: DashboardSceneState) {
   return elements;
 }
 
-function getPanelLinks(panel: VizPanel): DashboardLink[] {
+function getPanelLinks(panel: VizPanel): DataLink[] {
   const vizLinks = dashboardSceneGraph.getPanelLinks(panel);
   if (vizLinks) {
-    return (vizLinks.state.rawLinks as DashboardLink[]) ?? [];
+    return vizLinks.state.rawLinks ?? [];
   }
   return [];
 }
@@ -263,13 +306,13 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
     vizPanelQueries.forEach((query) => {
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
-        spec: query,
+        spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
         datasource: datasource ?? getDefaultDataSourceRef(),
         query: dataQuery,
         refId: query.refId,
-        hidden: query.hidden,
+        hidden: Boolean(query.hide),
       };
       queries.push({
         kind: 'PanelQuery',
@@ -310,9 +353,12 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
           id: transformation.filter?.id ?? '',
           options: transformation.filter?.options ?? {},
         },
-        topic: transformation.topic,
         options: transformation.options,
       };
+
+      if (transformation.topic !== undefined) {
+        transformationSpec.topic = transformation.topic;
+      }
 
       transformations.push({
         kind: transformation.id,
@@ -347,19 +393,74 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   if (panelTime instanceof PanelTimeRange) {
     queryOptions.timeFrom = panelTime.state.timeFrom;
     queryOptions.timeShift = panelTime.state.timeShift;
+    queryOptions.hideTimeOverride = panelTime.state.hideTimeOverride;
   }
   return queryOptions;
 }
 
-function createElements(panels: PanelKind[]): Record<string, PanelKind> {
+function createElements(panels: Element[]): Record<string, Element> {
   return panels.reduce(
     (acc, panel) => {
-      const key = panel.spec.uid;
+      const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
       acc[key] = panel;
       return acc;
     },
-    {} as Record<string, PanelKind>
+    {} as Record<string, Element>
   );
+}
+
+function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
+  if (!isSnapshot) {
+    return [gridItemToGridLayoutItemKind(repeater)];
+  } else {
+    if (repeater.state.body instanceof VizPanel && isLibraryPanel(repeater.state.body)) {
+      // TODO: implement
+      // const { x = 0, y = 0, width: w = 0, height: h = 0 } = repeater.state;
+      // return [vizPanelToPanel(repeater.state.body, { x, y, w, h }, isSnapshot)];
+      return [];
+    }
+
+    if (repeater.state.repeatedPanels) {
+      const { h, w, columnCount } = calculateGridItemDimensions(repeater);
+      const panels = repeater.state.repeatedPanels!.map((panel, index) => {
+        let x = 0,
+          y = 0;
+        if (repeater.state.repeatDirection === 'v') {
+          x = repeater.state.x!;
+          y = index * h;
+        } else {
+          x = (index % columnCount) * w;
+          y = repeater.state.y! + Math.floor(index / columnCount) * h;
+        }
+
+        const gridPos = { x, y, w, h };
+
+        const result: GridLayoutItemKind = {
+          kind: 'GridLayoutItem',
+          spec: {
+            x: gridPos.x,
+            y: gridPos.y,
+            width: gridPos.w,
+            height: gridPos.h,
+            repeat: {
+              mode: 'variable',
+              value: repeater.state.variableName!,
+              maxPerRow: repeater.getMaxPerRow(),
+              direction: repeater.state.repeatDirection,
+            },
+            element: {
+              kind: 'ElementReference',
+              name: panel.state.key!,
+            },
+          },
+        };
+        return result;
+      });
+
+      return panels;
+    }
+    return [];
+  }
 }
 
 function getVariables(oldDash: DashboardSceneState) {
@@ -397,22 +498,29 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
     const result: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: Boolean(layer.state.query.builtIn),
         name: layer.state.query.name,
         datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
-        query: {
-          kind: getAnnotationQueryKind(layer.state.query),
-          spec: omit(layer.state.query, 'datasource'),
-        },
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
-        filter: layer.state.query.filter ?? defaultAnnotationPanelFilter(),
         iconColor: layer.state.query.iconColor,
-        builtIn:
-          layer.state.query.builtIn === undefined
-            ? Boolean(layer.state.query.builtIn)
-            : defaultAnnotationQuerySpec().builtIn,
       },
     };
+
+    // Check if DataQueryKind exists
+    const queryKind = getAnnotationQueryKind(layer.state.query);
+    if (layer.state.query.query?.kind === queryKind) {
+      result.spec.query = {
+        kind: queryKind,
+        spec: layer.state.query.query.spec,
+      };
+    }
+
+    // If filter is an empty array, don't save it
+    if (layer.state.query.filter?.ids?.length) {
+      result.spec.filter = layer.state.query.filter;
+    }
+
     annotations.push(result);
   }
   return annotations;
@@ -431,12 +539,12 @@ export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string
   }
 }
 
-function getDefaultDataSourceRef(): DataSourceRef | undefined {
+export function getDefaultDataSourceRef(): DataSourceRef | undefined {
   // we need to return the default datasource configured in the BootConfig
   const defaultDatasource = config.bootData.settings.defaultDatasource;
 
   // get default datasource type
-  const dsList = config.bootData.settings.datasources;
+  const dsList = config.bootData.settings.datasources ?? {};
   const ds = dsList[defaultDatasource];
 
   if (ds) {
@@ -447,98 +555,98 @@ function getDefaultDataSourceRef(): DataSourceRef | undefined {
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
-function isDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
+function validateDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null) {
-    return false;
+    throw new Error('Dashboard is not an object or is null');
   }
 
   if (typeof dash.title !== 'string') {
-    return false;
+    throw new Error('Title is not a string');
   }
   if (typeof dash.description !== 'string') {
-    return false;
+    throw new Error('Description is not a string');
   }
   if (typeof dash.cursorSync !== 'string') {
-    return false;
+    throw new Error('CursorSync is not a string');
   }
   if (typeof dash.liveNow !== 'boolean') {
-    return false;
+    throw new Error('LiveNow is not a boolean');
   }
   if (typeof dash.preload !== 'boolean') {
-    return false;
+    throw new Error('Preload is not a boolean');
   }
   if (typeof dash.editable !== 'boolean') {
-    return false;
+    throw new Error('Editable is not a boolean');
   }
   if (!Array.isArray(dash.links)) {
-    return false;
+    throw new Error('Links is not an array');
   }
   if (!Array.isArray(dash.tags)) {
-    return false;
+    throw new Error('Tags is not an array');
   }
 
   if (dash.id !== undefined && typeof dash.id !== 'number') {
-    return false;
+    throw new Error('ID is not a number');
   }
 
   // Time settings
   if (typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
-    return false;
+    throw new Error('TimeSettings is not an object or is null');
   }
   if (typeof dash.timeSettings.timezone !== 'string') {
-    return false;
+    throw new Error('Timezone is not a string');
   }
   if (typeof dash.timeSettings.from !== 'string') {
-    return false;
+    throw new Error('From is not a string');
   }
   if (typeof dash.timeSettings.to !== 'string') {
-    return false;
+    throw new Error('To is not a string');
   }
   if (typeof dash.timeSettings.autoRefresh !== 'string') {
-    return false;
+    throw new Error('AutoRefresh is not a string');
   }
   if (!Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
-    return false;
+    throw new Error('AutoRefreshIntervals is not an array');
   }
   if (!Array.isArray(dash.timeSettings.quickRanges)) {
-    return false;
+    throw new Error('QuickRanges is not an array');
   }
   if (typeof dash.timeSettings.hideTimepicker !== 'boolean') {
-    return false;
+    throw new Error('HideTimepicker is not a boolean');
   }
   if (typeof dash.timeSettings.weekStart !== 'string') {
-    return false;
+    throw new Error('WeekStart is not a string');
   }
   if (typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
-    return false;
+    throw new Error('FiscalYearStartMonth is not a number');
   }
   if (dash.timeSettings.nowDelay !== undefined && typeof dash.timeSettings.nowDelay !== 'string') {
-    return false;
+    throw new Error('NowDelay is not a string');
   }
 
   // Other sections
   if (!Array.isArray(dash.variables)) {
-    return false;
+    throw new Error('Variables is not an array');
   }
   if (typeof dash.elements !== 'object' || dash.elements === null) {
-    return false;
+    throw new Error('Elements is not an object or is null');
   }
   if (!Array.isArray(dash.annotations)) {
-    return false;
+    throw new Error('Annotations is not an array');
   }
 
   // Layout
   if (typeof dash.layout !== 'object' || dash.layout === null) {
-    return false;
+    throw new Error('Layout is not an object or is null');
   }
   if (dash.layout.kind !== 'GridLayout') {
-    return false;
+    throw new Error('Layout kind is not GridLayout');
   }
   if (typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
-    return false;
+    throw new Error('Layout spec is not an object or is null');
   }
   if (!Array.isArray(dash.layout.spec.items)) {
-    return false;
+    throw new Error('Layout spec items is not an array');
   }
 
   return true;

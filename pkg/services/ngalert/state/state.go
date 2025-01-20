@@ -575,13 +575,24 @@ func (a *State) IsStale() bool {
 	return a.StateReason == models.StateReasonMissingSeries
 }
 
-// shouldTakeImage returns true if the state just has transitioned to alerting from another state,
-// transitioned to alerting in a previous evaluation but does not have a screenshot, or has just
-// been resolved.
-func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) bool {
-	return resolved ||
-		state == eval.Alerting && previousState != eval.Alerting ||
-		state == eval.Alerting && previousImage == nil
+// shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
+// newly transitioning to an alerting state, when no valid image exists, or when the alert has been resolved.
+func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) string {
+	if resolved {
+		return "resolved"
+	}
+	if state == eval.Alerting {
+		if previousState != eval.Alerting {
+			return "transition to alerting"
+		}
+		if previousImage == nil {
+			return "no image"
+		}
+		if previousImage.HasExpired() {
+			return "expired image"
+		}
+	}
+	return ""
 }
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or

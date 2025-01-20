@@ -5,8 +5,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
 
-export const getMultiComboboxStyles = (theme: GrafanaTheme2) => {
-  const inputStyles = getInputStyles({ theme });
+export const getMultiComboboxStyles = (
+  theme: GrafanaTheme2,
+  isOpen: boolean,
+  invalid?: boolean,
+  disabled?: boolean
+) => {
+  const inputStyles = getInputStyles({ theme, invalid });
   const focusStyles = getFocusStyles(theme);
 
   return {
@@ -34,10 +39,28 @@ export const getMultiComboboxStyles = (theme: GrafanaTheme2) => {
         outline: 'none',
       },
     }),
+
     pillWrapper: css({
       display: 'inline-flex',
-      flexWrap: 'wrap',
+      flexWrap: isOpen ? 'wrap' : 'nowrap',
+      flexGrow: 1,
+      minWidth: '50px',
       gap: theme.spacing(0.5),
     }),
+    restNumber: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: theme.spacing(0, 1),
+      border: disabled ? `1px solid ${theme.colors.border.weak}` : 'none',
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.secondary,
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: theme.colors.action.hover,
+      },
+    }),
+    suffix: inputStyles.suffix,
+    disabled: inputStyles.inputDisabled,
   };
 };
