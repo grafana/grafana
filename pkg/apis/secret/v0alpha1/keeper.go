@@ -23,7 +23,9 @@ func (k *Keeper) IsSqlKeeper() bool {
 	return k.Spec.SQL != nil && k.Spec.SQL.Encryption != nil
 }
 
-type KeeperConfig interface{}
+type KeeperConfig interface {
+	Type() string
+}
 
 type KeeperSpec struct {
 	// Human friendly name for the keeper.
@@ -53,6 +55,10 @@ type KeeperList struct {
 // The default SQL keeper.
 type SQLKeeperConfig struct {
 	Encryption *Encryption `json:"encryption,omitempty"`
+}
+
+func (s *SQLKeeperConfig) Type() string {
+	return "sql"
 }
 
 // Encryption of default SQL keeper.
@@ -120,4 +126,20 @@ type GCPKeeperConfig struct {
 
 type HashiCorpKeeperConfig struct {
 	HashiCorpCredentials `json:",inline"`
+}
+
+func (s *AWSKeeperConfig) Type() string {
+	return "aws"
+}
+
+func (s *AzureKeeperConfig) Type() string {
+	return "azure"
+}
+
+func (s *GCPKeeperConfig) Type() string {
+	return "gcp"
+}
+
+func (s *HashiCorpKeeperConfig) Type() string {
+	return "hashicorp"
 }

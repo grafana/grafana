@@ -251,7 +251,7 @@ func toTypeAndPayload(kp *secretv0alpha1.Keeper) (KeeperType, string, error) {
 }
 
 // toProvider maps a KeeperType and payload into a provider config struct.
-func toProvider(keeperType KeeperType, payload string) interface{} {
+func toProvider(keeperType KeeperType, payload string) secretv0alpha1.KeeperConfig {
 	switch keeperType {
 	case SqlKeeperType:
 		sql := &secretv0alpha1.SQLKeeperConfig{}
