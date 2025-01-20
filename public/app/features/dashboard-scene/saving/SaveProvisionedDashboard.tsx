@@ -11,7 +11,7 @@ import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
-import { RepositorySpec } from '../../provisioning/api';
+import { Repository, RepositorySpec } from '../../provisioning/api';
 import { useCreateOrUpdateRepositoryFile, useFolderRepository, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
@@ -29,16 +29,16 @@ type FormData = {
   workflow?: WorkflowOption;
   title: string;
   description: string;
-  folder: { uid?: string; title?: string; repository?: string };
+  folder: { uid?: string; title?: string; repository?: Repository };
 };
 
-function getDefaultValues(meta: DashboardMeta, repository = '') {
+function getDefaultValues(meta: DashboardMeta, repository?: Repository) {
   const anno = meta.k8s?.annotations;
   const timestamp = Date.now();
   const ref = `dashboard/${timestamp}`;
   const pathName = meta.slug || `new-dashboard-${timestamp}`;
   let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
-  const repo = anno?.[AnnoKeyRepoName] ?? repository;
+  const repo = anno?.[AnnoKeyRepoName] ?? repository?.metadata?.name ?? '';
   const idx = path.indexOf('#');
   if (idx > 0) {
     path = path.substring(0, idx);
@@ -49,7 +49,7 @@ function getDefaultValues(meta: DashboardMeta, repository = '') {
     path,
     repo,
     comment: '',
-    folder: { uid: meta.folderUid, title: '', repository: '' },
+    folder: { uid: meta.folderUid, title: '', repository },
   };
 }
 
@@ -79,7 +79,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   const folderRepository = useFolderRepository(meta.folderUid);
   const repositoryConfig = folderRepository?.spec;
   const repo = folderRepository?.metadata?.name;
-  const defaultValues = getDefaultValues(meta, repo);
+  const defaultValues = getDefaultValues(meta, folderRepository);
   const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
   const {
     register,
@@ -182,13 +182,17 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 render={({ field: { ref, value, onChange, ...field } }) => {
                   return (
                     <FolderPicker
-                      onChange={(uid?: string, title?: string, repository?: string) => {
+                      onChange={(uid?: string, title?: string, repository?: Repository) => {
                         onChange({ uid, title, repository });
-                        if (repository) {
-                          setValue('repo', repository);
+                        const name = repository?.metadata?.name;
+                        if (name) {
+                          setValue('repo', name);
                         }
                         dashboard.setState({
-                          meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
+                          meta: {
+                            k8s: name ? { annotations: { [AnnoKeyRepoName]: name } } : undefined,
+                            folderUid: uid,
+                          },
                         });
                       }}
                       value={value.uid}
