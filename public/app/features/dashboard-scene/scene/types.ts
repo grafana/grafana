@@ -131,7 +131,7 @@ export interface EditableDashboardElement {
    */
   isEditableDashboardElement: true;
   /**
-   * Hook that returns edit pane optionsß
+   * Hook that returns edit pane options
    */
   useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
   /**
@@ -146,4 +146,23 @@ export interface EditableDashboardElement {
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
   return 'isEditableDashboardElement' in obj;
+}
+
+export interface BulkEditableDashboardElements {
+  /**
+   * Marks this object as an element that can be selected and edited directly on the canvas
+   */
+  isBulkEditableDashboardElements: true;
+  /**
+   * Bulk elements actions
+   */
+  renderBulkActions?(): React.ReactNode;
+  /**
+   * Get the type name of the element
+   */
+  getTypeName(): string;
+}
+
+export function isBulkEditableDashboardElements(obj: object): obj is BulkEditableDashboardElements {
+  return 'isBulkEditableDashboardElements' in obj;
 }

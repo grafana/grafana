@@ -84,7 +84,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public getSelectedObject() {
-    return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selectedObject?.resolve();
+    return sceneGraph.getAncestor(this, DashboardScene).state.editPane.state.selectedObjects?.[0].resolve();
   }
 
   public static getDescriptor(): LayoutRegistryItem {

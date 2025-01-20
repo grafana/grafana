@@ -12,13 +12,15 @@ import {
 } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { isBulkEditableDashboardElements, isEditableDashboardElement } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
+import { MultiSelectedElementsEditPane } from './MultiSelectedElementsEditPane';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
-  selectedObject?: SceneObjectRef<SceneObject>;
+  selectedObjects?: Array<SceneObjectRef<SceneObject>>;
   selectionContext: ElementSelectionContextState;
 }
 
@@ -41,7 +43,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public disableSelection() {
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
-      selectedObject: undefined,
+      selectedObjects: undefined,
     });
   }
 
@@ -53,25 +55,38 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    const currentSelection = this.state.selectedObject?.resolve();
-    if (currentSelection === obj) {
+    const currentSelection = this.state.selectedObjects?.[0].resolve();
+    console.log(currentSelection, obj, this.state.selectedObjects);
+    if (currentSelection === obj && !multi) {
       this.clearSelection();
       return;
     }
 
+    const ref = obj.getRef();
+    let selected = [{ id }];
+    let selectedObjects = [ref];
+
+    // if we are multi selecting, we need to check if the current selection is of the same type
+    if (multi && currentSelection?.constructor.name === obj.constructor.name) {
+      selectedObjects = [ref, ...(this.state.selectedObjects ?? [])];
+      selected = [{ id }, ...this.state.selectionContext.selected];
+    }
+
     this.setState({
-      selectedObject: obj.getRef(),
+      selectedObjects,
       selectionContext: {
         ...this.state.selectionContext,
-        selected: [{ id }],
+        selected,
       },
     });
+
+    selectedObjects.map((el) => console.log(el.resolve()));
   }
 
   public clearSelection() {
     const dashboard = getDashboardSceneFor(this);
     this.setState({
-      selectedObject: dashboard.getRef(),
+      selectedObjects: [dashboard.getRef()],
       selectionContext: {
         ...this.state.selectionContext,
         selected: [],
@@ -92,9 +107,9 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse }: Props) {
   // Activate the edit pane
   useEffect(() => {
-    if (!editPane.state.selectedObject) {
+    if (!editPane.state.selectedObjects) {
       const dashboard = getDashboardSceneFor(editPane);
-      editPane.setState({ selectedObject: dashboard.getRef() });
+      editPane.setState({ selectedObjects: [dashboard.getRef()] });
     }
 
     editPane.enableSelection();
@@ -104,10 +119,10 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     };
   }, [editPane]);
 
-  const { selectedObject } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectedObjects } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
-  const editableElement = useEditableElement(selectedObject?.resolve());
+  const editableElement = useEditableElement(selectedObjects);
 
   if (!editableElement) {
     return null;
@@ -130,7 +145,12 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
+      {isBulkEditableDashboardElements(editableElement) && (
+        <MultiSelectedElementsEditPane bulkEditElement={editableElement} />
+      )}
+      {isEditableDashboardElement(editableElement) && (
+        <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
+      )}
     </div>
   );
 }
