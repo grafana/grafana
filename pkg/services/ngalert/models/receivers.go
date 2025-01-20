@@ -548,7 +548,7 @@ func ValidateIntegration(ctx context.Context, integration alertingNotify.Grafana
 		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
 			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
 		},
-	}, decryptFunc)
+	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 	if err != nil {
 		return err
 	}

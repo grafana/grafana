@@ -16,6 +16,7 @@ import (
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error
+	DeleteAllDashboards(ctx context.Context, orgID int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	// GetDashboard fetches a dashboard.
 	// To fetch a dashboard under root by title should set the folder UID to point to an empty string
@@ -30,10 +31,12 @@ type DashboardService interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
+	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	RestoreDashboard(ctx context.Context, dashboard *Dashboard, user identity.Requester, optionalFolderUID string) error
 	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
+	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -60,6 +63,8 @@ type DashboardProvisioningService interface {
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
+	CleanupAfterDelete(ctx context.Context, cmd *DeleteDashboardCommand) error
+	DeleteAllDashboards(ctx context.Context, orgID int64) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
@@ -72,18 +77,20 @@ type Store interface {
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
-	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
+	SaveProvisionedDashboard(ctx context.Context, dash *Dashboard, provisioning *DashboardProvisioning) error
 	UnprovisionDashboard(ctx context.Context, id int64) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
+	CountInOrg(ctx context.Context, orgID int64) (int64, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
+	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
 	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
 	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
 	SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error
