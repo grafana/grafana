@@ -39,12 +39,7 @@ export const getMultiComboboxStyles = (
         outline: 'none',
       },
     }),
-    inputClosed: css({
-      width: 0,
-      flexGrow: 0,
-      paddingLeft: 0,
-      paddingRight: 0,
-    }),
+
     pillWrapper: css({
       display: 'inline-flex',
       flexWrap: isOpen ? 'wrap' : 'nowrap',
