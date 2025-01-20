@@ -5,83 +5,57 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/infra/localcache"
-	"golang.org/x/sync/singleflight"
-)
-
-var (
-	timeNow = time.Now
-)
-
-const (
-	tokenLifetime       = 5 * time.Minute
-	inProcTokenCacheKey = "in-proc-access-token" // #nosec G101 not a hardcoded credential
 )
 
 type inProcExchanger struct {
-	cache   *localcache.CacheService
-	singlef singleflight.Group
+	tokenResponse *authn.TokenExchangeResponse
 }
 
 func ProvideInProcExchanger() *inProcExchanger {
-	return &inProcExchanger{
-		cache:   localcache.New(5*time.Minute, 5*time.Minute),
-		singlef: singleflight.Group{},
+	tokenResponse, err := createInProcToken()
+	if err != nil {
+		panic(err)
 	}
+
+	return &inProcExchanger{tokenResponse}
 }
 
 func (e *inProcExchanger) Exchange(ctx context.Context, r authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
-	tokenData, ok := e.cache.Get(inProcTokenCacheKey)
+	return e.tokenResponse, nil
+}
 
-	if ok {
-		return &authn.TokenExchangeResponse{Token: tokenData.(string)}, nil
+func createInProcToken() (*authn.TokenExchangeResponse, error) {
+	claims := authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Audience: []string{"resourceStore"},
+			Issuer:   "grafana",
+			Subject:  claims.NewTypeID(claims.TypeAccessPolicy, "1"),
+		},
+		Rest: authn.AccessTokenClaims{
+			Namespace:            "*",
+			Permissions:          []string{"folder.grafana.app:*", "dashboard.grafana.app:*"},
+			DelegatedPermissions: []string{"folder.grafana.app:*", "dashboard.grafana.app:*"},
+		},
 	}
 
-	resp, err, _ := e.singlef.Do(inProcTokenCacheKey, func() (interface{}, error) {
-		now := timeNow()
-		tokenExpiration := now.Add(tokenLifetime)
-		claims := authn.Claims[authn.AccessTokenClaims]{
-			Claims: jwt.Claims{
-				Audience:  []string{"resourceStore"},
-				Expiry:    jwt.NewNumericDate(tokenExpiration),
-				IssuedAt:  jwt.NewNumericDate(now),
-				Issuer:    "grafana",
-				Subject:   claims.NewTypeID(claims.TypeAccessPolicy, "1"),
-				NotBefore: jwt.NewNumericDate(now),
-			},
-			Rest: authn.AccessTokenClaims{
-				Namespace:            "*",
-				Permissions:          []string{"folder.grafana.app:*", "dashboard.grafana.app:*"},
-				DelegatedPermissions: []string{"folder.grafana.app:*", "dashboard.grafana.app:*"},
-			},
-		}
-
-		header, err := json.Marshal(map[string]string{
-			"alg": "none",
-			"typ": authn.TokenTypeAccess,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w", authn.ErrInvalidExchangeResponse, err)
-		}
-
-		payload, err := json.Marshal(claims)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %w", authn.ErrInvalidExchangeResponse, err)
-		}
-
-		token := fmt.Sprintf("%s.%s.", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload))
-
-		response := &authn.TokenExchangeResponse{
-			Token: token,
-		}
-
-		e.cache.Set(inProcTokenCacheKey, token, time.Until(tokenExpiration))
-		return response, nil
+	header, err := json.Marshal(map[string]string{
+		"alg": "none",
+		"typ": authn.TokenTypeAccess,
 	})
-	return resp.(*authn.TokenExchangeResponse), err
+	if err != nil {
+		return nil, err
+	}
+
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authn.TokenExchangeResponse{
+		Token: fmt.Sprintf("%s.%s.", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload)),
+	}, nil
 }

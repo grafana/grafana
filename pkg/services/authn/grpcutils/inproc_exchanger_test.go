@@ -16,21 +16,12 @@ import (
 const header = "{\"alg\":\"none\",\"typ\":\"at+jwt\"}"
 
 func TestInProcExchanger_Exchange(t *testing.T) {
-	t.Run("should cache and return token on successful request", func(t *testing.T) {
+	t.Run("should return the token successfully", func(t *testing.T) {
 		exchanger := ProvideInProcExchanger()
 
-		timeNow = testTime
 		tokenExchResponse, err := exchanger.Exchange(context.Background(), authn.TokenExchangeRequest{})
 
 		expectedJWT := createExpectedJWT(t)
-
-		require.NoError(t, err)
-		require.NotNil(t, tokenExchResponse)
-		require.Equal(t, expectedJWT, tokenExchResponse.Token)
-
-		// Test cache
-		timeNow = func() time.Time { return time.Now() }
-		tokenExchResponse, err = exchanger.Exchange(context.Background(), authn.TokenExchangeRequest{})
 
 		require.NoError(t, err)
 		require.NotNil(t, tokenExchResponse)
@@ -43,12 +34,9 @@ func createExpectedJWT(t *testing.T) string {
 
 	expectedClaims := authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
-			Audience:  []string{"resourceStore"},
-			Expiry:    jwt.NewNumericDate(testTime().Add(5 * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(testTime()),
-			Issuer:    "grafana",
-			Subject:   claims.NewTypeID(claims.TypeAccessPolicy, "1"),
-			NotBefore: jwt.NewNumericDate(testTime()),
+			Audience: []string{"resourceStore"},
+			Issuer:   "grafana",
+			Subject:  claims.NewTypeID(claims.TypeAccessPolicy, "1"),
 		},
 		Rest: authn.AccessTokenClaims{
 			Namespace:            "*",
