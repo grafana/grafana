@@ -2,6 +2,7 @@ import { PageLayoutType } from '@grafana/data';
 import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { t } from 'app/core/internationalization';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 
 export function DashboardPageError({ error, type }: { error: unknown; type?: string }) {
@@ -15,7 +16,11 @@ export function DashboardPageError({ error, type }: { error: unknown; type?: str
         {status === 404 ? (
           <EntityNotFound entity={entity} />
         ) : (
-          <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-page-error">
+          <Alert
+            title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}
+            severity="error"
+            data-testid="dashboard-page-error"
+          >
             {message}
           </Alert>
         )}
