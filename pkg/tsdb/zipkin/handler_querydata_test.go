@@ -78,6 +78,6 @@ func TestTransformResponse(t *testing.T) {
 
 		spans := []model.SpanModel{span1, span2, span3}
 		frames := transformResponse(spans, "test")
-		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_trace.golden", frames, true)
+		experimental.CheckGoldenJSONFrame(t, "./testdata", "simple_trace.golden", frames, false)
 	})
 }
