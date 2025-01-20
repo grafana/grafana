@@ -2,16 +2,17 @@ import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { AppEvents, dateTime } from '@grafana/data';
-import { DataSourcePicker, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
+import { config, DataSourcePicker, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, InlineSwitch, Modal, RadioButtonGroup, TextArea } from '@grafana/ui';
 import { Field } from '@grafana/ui/';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { Trans, t } from 'app/core/internationalization';
 import { getQueryDisplayText } from 'app/core/utils/richHistory';
-import { useAddQueryTemplateMutation, useEditQueryTemplateMutation } from 'app/features/query-library';
+import { useCreateQueryTemplateMutation, useEditQueryTemplateMutation } from 'app/features/query-library';
 import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
 
+import { convertAddQueryTemplateCommandToDataQuerySpec2 } from '../../query-library/api/mappers';
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
@@ -51,7 +52,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     },
   });
 
-  const [addQueryTemplate] = useAddQueryTemplateMutation();
+  const [addQueryTemplate] = useCreateQueryTemplateMutation();
   const [editQueryTemplate] = useEditQueryTemplateMutation();
 
   const datasource = useDatasource(queryToAdd?.datasource);
@@ -61,7 +62,12 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     queryToAdd !== undefined ? [queryToAdd] : templateData?.query !== undefined ? [templateData?.query] : [];
 
   const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
-    return addQueryTemplate(addQueryTemplateCommand)
+    // TODO extract out namespace/horrible arg
+    return addQueryTemplate({
+      namespace: config.namespace,
+      comGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate:
+        convertAddQueryTemplateCommandToDataQuerySpec2(addQueryTemplateCommand),
+    })
       .unwrap()
       .then(() => {
         getAppEvents().publish({

@@ -11,24 +11,32 @@ import { config } from '@grafana/runtime';
 
 import { generatedQueryLibraryApi } from './api/endpoints.gen';
 import { queryLibraryApi } from './api/factory';
-import { convertDataQueryResponseToQueryTemplates } from './api/mappers';
 import { mockData } from './api/mocks';
 
 export const {
-  useAllQueryTemplatesQuery,
-  useAddQueryTemplateMutation,
+  // useAllQueryTemplatesQuery,
+  // useAddQueryTemplateMutation,
   // useDeleteQueryTemplateMutation,
   useEditQueryTemplateMutation,
 } = queryLibraryApi;
 
-export const { useDeleteQueryTemplateMutation, useListQueryTemplateQuery } = generatedQueryLibraryApi.enhanceEndpoints({
-  endpoints: {
-    // addQueryTemplate,
-    // listQueryTemplate: {
-    //   transformResponse: convertDataQueryResponseToQueryTemplates,
-    // }
-  },
-});
+export const { useCreateQueryTemplateMutation, useDeleteQueryTemplateMutation, useListQueryTemplateQuery } =
+  generatedQueryLibraryApi.enhanceEndpoints({
+    endpoints: {
+      // listQueryTemplate: {
+      //   transformResponse: (response) => response.data,
+      // }
+    },
+  });
+
+// TODO probably remove
+export function withNamespace<T extends (...args: any[]) => any>(queryMethod: T) {
+  return (args: Omit<Parameters<T>[0], 'namespace'>) =>
+    queryMethod({
+      namespace: config.namespace,
+      ...args,
+    });
+}
 
 export function isQueryLibraryEnabled() {
   return config.featureToggles.queryLibrary;

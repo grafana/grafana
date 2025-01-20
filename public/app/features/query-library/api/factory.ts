@@ -13,20 +13,20 @@ export const queryLibraryApi = createApi({
   baseQuery,
   tagTypes: ['QueryTemplatesList'],
   endpoints: (builder) => ({
-    allQueryTemplates: builder.query<QueryTemplate[], void>({
-      query: () => ({
-        url: `?limit=${QUERY_LIBRARY_GET_LIMIT}`,
-      }),
-      transformResponse: convertDataQueryResponseToQueryTemplates,
-      providesTags: ['QueryTemplatesList'],
-    }),
-    addQueryTemplate: builder.mutation<QueryTemplate, AddQueryTemplateCommand>({
-      query: (addQueryTemplateCommand) => ({
-        method: 'POST',
-        data: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
-      }),
-      invalidatesTags: ['QueryTemplatesList'],
-    }),
+    // allQueryTemplates: builder.query<QueryTemplate[], void>({
+    //   query: () => ({
+    //     url: `?limit=${QUERY_LIBRARY_GET_LIMIT}`,
+    //   }),
+    //   transformResponse: convertDataQueryResponseToQueryTemplates,
+    //   providesTags: ['QueryTemplatesList'],
+    // }),
+    // addQueryTemplate: builder.mutation<QueryTemplate, AddQueryTemplateCommand>({
+    //   query: (addQueryTemplateCommand) => ({
+    //     method: 'POST',
+    //     data: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
+    //   }),
+    //   invalidatesTags: ['QueryTemplatesList'],
+    // }),
     // deleteQueryTemplate: builder.mutation<void, DeleteQueryTemplateCommand>({
     //   query: ({ uid }) => ({
     //     url: `/${uid}`,

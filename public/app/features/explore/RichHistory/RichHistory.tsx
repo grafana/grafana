@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import {
@@ -16,6 +17,7 @@ import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
+import { generatedQueryLibraryApi } from '../../query-library/api/endpoints.gen';
 import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
 import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
@@ -97,7 +99,12 @@ export function RichHistory(props: RichHistoryProps) {
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
 
-  const queryTemplatesCount = useSelector(queryLibraryApi.endpoints.allQueryTemplates.select()).data?.length || 0;
+  // TODO fix this
+  const listQueryTemplateSelector = generatedQueryLibraryApi.endpoints.listQueryTemplate.select({
+    limit: QUERY_LIBRARY_GET_LIMIT,
+    namespace: config.namespace,
+  });
+  const queryTemplatesCount = useSelector(listQueryTemplateSelector).data?.items?.length || 0;
 
   const QueryLibraryTab: TabConfig = {
     label: `${i18n.queryLibrary} (${queryTemplatesCount}/${QUERY_LIBRARY_GET_LIMIT})`,

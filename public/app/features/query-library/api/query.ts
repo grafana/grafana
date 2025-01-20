@@ -65,7 +65,8 @@ export const baseQuery2: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecRe
       url: `${requestOptions.url ?? ''}`,
       showErrorAlert: true,
       method: requestOptions.method || 'GET',
-      data: requestOptions.data,
+      // TODO requestOptions.data doesn't work with the generated api
+      data: requestOptions.body,
       headers: { ...requestOptions.headers },
     });
     return await lastValueFrom(responseObservable);

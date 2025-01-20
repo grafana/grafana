@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
-import { isQueryLibraryEnabled, useAllQueryTemplatesQuery } from 'app/features/query-library';
+import { isQueryLibraryEnabled, useListQueryTemplateQuery } from 'app/features/query-library';
 
 import {
   queryLibraryTrackAddFromQueryHistory,
@@ -16,7 +16,11 @@ type Props = {
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
-  const { refetch } = useAllQueryTemplatesQuery();
+  // TODO extract out namespace/limit
+  const { refetch } = useListQueryTemplateQuery({
+    limit: 1000,
+    namespace: 'default',
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
 
