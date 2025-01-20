@@ -489,6 +489,129 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 	}
 }
 
+func TestIntegration_DashboardNestedPermissionRefactoredFilter(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		queryType      string
+		permission     dashboardaccess.PermissionType
+		permissions    []accesscontrol.Permission
+		expectedResult []string
+		features       []any
+	}{
+		{
+			desc:           "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
+			queryType:      searchstore.TypeDashboard,
+			permission:     dashboardaccess.PERMISSION_VIEW,
+			permissions:    nil,
+			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery},
+			expectedResult: nil,
+		},
+		{
+			desc:           "Should not be able to view inherited folders with no permissions if nested folders are enabled",
+			queryType:      searchstore.TypeFolder,
+			permission:     dashboardaccess.PERMISSION_VIEW,
+			permissions:    nil,
+			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery},
+			expectedResult: nil,
+		},
+		{
+			desc:           "Should not be able to view inherited dashboards and folders with no permissions if nested folders are enabled",
+			permission:     dashboardaccess.PERMISSION_VIEW,
+			permissions:    nil,
+			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery},
+			expectedResult: nil,
+		},
+		{
+			desc:       "Should be able to view dashboards under inherited folders with wildcard folder scope if nested folders are enabled",
+			queryType:  searchstore.TypeDashboard,
+			permission: dashboardaccess.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+			},
+			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets, featuremgmt.FlagPermissionsFilterRefactoredQuery},
+			expectedResult: []string{"dashboard under the root", "dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should be able to view dashboards under inherited folders with wildcard dashboard scope if nested folders are enabled",
+			queryType:  searchstore.TypeDashboard,
+			permission: dashboardaccess.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+			},
+			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagAccessActionSets, featuremgmt.FlagPermissionsFilterRefactoredQuery},
+			expectedResult: []string{"dashboard under the root", "dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should be able to view inherited folders if nested folders are enabled",
+			queryType:  searchstore.TypeFolder,
+			permission: dashboardaccess.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
+			},
+			features:       []any{featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery},
+			expectedResult: []string{"parent", "subfolder"},
+		},
+		{
+			desc:       "Should not be able to view inherited folders if nested folders are not enabled",
+			queryType:  searchstore.TypeFolder,
+			permission: dashboardaccess.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
+			},
+			features:       []any{featuremgmt.FlagPermissionsFilterRefactoredQuery},
+			expectedResult: []string{"parent"},
+		},
+	}
+
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	var orgID int64 = 1
+
+	for _, tc := range testCases {
+		tc.permissions = append(tc.permissions, accesscontrol.Permission{
+			Action: dashboards.ActionFoldersCreate,
+		}, accesscontrol.Permission{
+			Action: dashboards.ActionFoldersWrite,
+			Scope:  dashboards.ScopeFoldersAll,
+		})
+		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.permissions)}}
+
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagAccessActionSets)...), featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+			m := features.GetEnabled(context.Background())
+			keys := make([]string, 0, len(m))
+			for k := range m {
+				keys = append(keys, k)
+			}
+
+			t.Run(tc.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
+				db := setupNestedTest(t, usr, tc.permissions, orgID, features)
+				recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
+				require.NoError(t, err)
+				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported)
+				var result []string
+				err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+					q, params := filter.Where()
+					recQry, recQryParams := filter.With()
+					params = append(recQryParams, params...)
+					s := recQry + "\nSELECT dashboard.title FROM dashboard WHERE " + q
+					leftJoin := filter.LeftJoin()
+					if leftJoin != "" {
+						s = recQry + "\nSELECT dashboard.title FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q + "ORDER BY dashboard.id ASC"
+					}
+					err := sess.SQL(s, params...).Find(&result)
+					return err
+				})
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedResult, result)
+			})
+		}
+	}
+}
+
 func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
 	testCases := []struct {
 		desc                    string
