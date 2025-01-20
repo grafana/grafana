@@ -2,38 +2,8 @@ import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { ProcessedLogModel } from './processing';
 
-interface DisplayOptions {
-  wrap: boolean;
-  showTime: boolean;
-}
-
-export function getLogLineSize(
-  logs: ProcessedLogModel[],
-  container: HTMLDivElement | null,
-  theme: GrafanaTheme2,
-  { wrap, showTime }: DisplayOptions,
-  index: number
-) {
-  if (!container) {
-    return 0;
-  }
-  const lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
-  if (!wrap) {
-    return lineHeight;
-  }
-  const storedSize = retrieveLogLineSize(logs[index].uid, container);
-  if (storedSize) {
-    return storedSize;
-  }
-  let optionsWidth = 0;
-  if (showTime) {
-    optionsWidth = 208;
-  }
-  const { height } = measureText(logs[index].body, getLogContainerWidth(container), lineHeight, optionsWidth);
-  return height;
-}
-
 let ctx: CanvasRenderingContext2D | null = null;
+let lineHeight: number | null = null;
 
 export function init(theme: GrafanaTheme2) {
   const letterSpacing = theme.typography.body.letterSpacing
@@ -51,29 +21,37 @@ export function init(theme: GrafanaTheme2) {
   if (letterSpacing) {
     ctx.letterSpacing = `${letterSpacing}px`;
   }
+  lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
   return true;
 }
 
-export function measureText(text: string, maxWidth: number, lineHeight: number, beforeWidth = 0) {
-  if (!ctx) {
+export function measureTextWidth(text: string) {
+  if (!ctx || !lineHeight) {
+    throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
+  }
+  return ctx.measureText(text).width;
+}
+
+export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 0) {
+  if (!lineHeight) {
     throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
   }
 
   let logLines = 0;
-  const charWidth = ctx.measureText('a').width;
+  const charWidth = measureTextWidth('a');
   let logLineCharsWidth = Math.round(maxWidth / charWidth);
   const textLines = text.split('\n');
   for (const textLine of textLines) {
     for (let start = 0; start < textLine.length; ) {
       let testLogLine: string;
-      let metrics: TextMetrics;
+      let width = 0;
       let delta = 0;
       let availableWidth = maxWidth - beforeWidth;
       do {
         testLogLine = textLine.substring(start, start + logLineCharsWidth - delta);
-        metrics = ctx.measureText(testLogLine);
+        width = measureTextWidth(testLogLine);
         delta += 1;
-      } while (metrics.width >= availableWidth);
+      } while (width >= availableWidth);
       if (beforeWidth) {
         beforeWidth = 0;
       }
@@ -88,6 +66,42 @@ export function measureText(text: string, maxWidth: number, lineHeight: number, 
     lines: logLines,
     height,
   };
+}
+
+interface DisplayOptions {
+  wrap: boolean;
+  showTime: boolean;
+}
+
+export function getLogLineSize(
+  logs: ProcessedLogModel[],
+  container: HTMLDivElement | null,
+  { wrap, showTime }: DisplayOptions,
+  index: number
+) {
+  if (!lineHeight) {
+    throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
+  }
+  if (!container) {
+    return 0;
+  }
+  if (!wrap) {
+    return lineHeight;
+  }
+  const storedSize = retrieveLogLineSize(logs[index].uid, container);
+  if (storedSize) {
+    return storedSize;
+  }
+  const gap = 8;
+  let optionsWidth = 0;
+  if (showTime) {
+    optionsWidth += logs[index].dimensions.timestampWidth + gap;
+  }
+  if (logs[index].logLevel) {
+    optionsWidth += logs[index].dimensions.levelWidth + gap;
+  }
+  const { height } = measureTextHeight(logs[index].body, getLogContainerWidth(container), optionsWidth);
+  return height;
 }
 
 const scrollBarWidth = getScrollbarWidth();

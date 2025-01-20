@@ -2,9 +2,17 @@ import { dateTimeFormat, LogRowModel, LogsSortOrder } from '@grafana/data';
 
 import { escapeUnescapedString, sortLogRows } from '../../utils';
 
+import { measureTextWidth } from './virtualization';
+
 export interface ProcessedLogModel extends LogRowModel {
   body: string;
   timestamp: string;
+  dimensions: LogDimensions;
+}
+
+export interface LogDimensions {
+  timestampWidth: number;
+  levelWidth: number;
 }
 
 interface PreProcessOptions {
@@ -33,26 +41,32 @@ const preProcessLog = (
   log: LogRowModel,
   { escape, expanded, timeZone, prettify, wrap }: PreProcessLogOptions
 ): ProcessedLogModel => {
-  const processedLog: ProcessedLogModel = {
-    ...log,
-    body: log.entry,
-    timestamp: dateTimeFormat(log.timeEpochMs, {
-      timeZone,
-      defaultWithMS: true,
-    }),
-  };
+  let body = log.entry;
+  const timestamp = dateTimeFormat(log.timeEpochMs, {
+    timeZone,
+    defaultWithMS: true,
+  });
 
   if (prettify) {
     try {
-      processedLog.body = JSON.stringify(JSON.parse(processedLog.body), undefined, 2);
+      body = JSON.stringify(JSON.parse(body), undefined, 2);
     } catch (error) {}
   }
   if (escape && log.hasUnescapedContent) {
-    processedLog.body = escapeUnescapedString(processedLog.body);
+    body = escapeUnescapedString(body);
   }
   // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
   if (!wrap && !expanded) {
-    processedLog.body = processedLog.body.replace(/(\r\n|\n|\r)/g, '');
+    body = body.replace(/(\r\n|\n|\r)/g, '');
   }
-  return processedLog;
+
+  return {
+    ...log,
+    body,
+    timestamp,
+    dimensions: {
+      timestampWidth: measureTextWidth(timestamp),
+      levelWidth: measureTextWidth(log.logLevel),
+    },
+  };
 };
