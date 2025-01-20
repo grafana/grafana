@@ -30,22 +30,36 @@ export interface AzureMonitorQuery extends common.DataQuery {
    */
   azureTraces?: AzureTracesQuery;
   /**
+   * Custom namespace used in template variable queries
+   */
+  customNamespace?: string;
+  /**
    * @deprecated Legacy template variable support.
    */
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
+  /**
+   * Namespace used in template variable queries
+   */
   namespace?: string;
   /**
    * Used only for exemplar queries from Prometheus
    */
   query?: string;
+  /**
+   * Region used in template variable queries
+   */
   region?: string;
+  /**
+   * Resource used in template variable queries
+   */
   resource?: string;
   /**
-   * Template variables params. These exist for backwards compatiblity with legacy template variables.
+   * Resource group used in template variable queries
    */
   resourceGroup?: string;
   /**
    * Azure subscription containing the resource(s) to be queried.
+   * Also used for template variable queries
    */
   subscription?: string;
   /**
@@ -65,6 +79,8 @@ export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   AzureResourceGraph = 'Azure Resource Graph',
   AzureTraces = 'Azure Traces',
+  CustomMetricNamesQuery = 'Azure Custom Metric Names',
+  CustomNamespacesQuery = 'Azure Custom Namespaces',
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
   LocationsQuery = 'Azure Regions',
   LogAnalytics = 'Azure Log Analytics',
