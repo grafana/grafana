@@ -66,6 +66,15 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("UID should be empty: %v", accIn.GetUID())
 	}
 
+	metaIn, err := utils.MetaAccessor(in)
+	if err != nil {
+		return nil, err
+	}
+	repoIn, err := metaIn.GetRepositoryInfo()
+	if err != nil {
+		return nil, fmt.Errorf("error getting repository info: %w", err)
+	}
+
 	startLegacy := time.Now()
 	createdFromLegacy, err := d.Legacy.Create(ctx, in, createValidation, options)
 	if err != nil {
@@ -83,6 +92,10 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	}
 
 	accCreated.SetResourceVersion("")
+	if repoIn != nil {
+		log.Info("setting repository info", "repo", repoIn)
+		accCreated.SetRepositoryInfo(repoIn)
+	}
 
 	startStorage := time.Now()
 	createdFromStorage, err := d.Storage.Create(ctx, createdCopy, createValidation, options)

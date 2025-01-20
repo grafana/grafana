@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -64,6 +65,15 @@ func (d *DualWriterMode3) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
+	metaIn, err := utils.MetaAccessor(in)
+	if err != nil {
+		return nil, err
+	}
+	repoIn, err := metaIn.GetRepositoryInfo()
+	if err != nil {
+		return nil, fmt.Errorf("error getting repository info: %w", err)
+	}
+
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
 	// will try to cleanup the object in legacy.
 
@@ -77,11 +87,16 @@ func (d *DualWriterMode3) Create(ctx context.Context, in runtime.Object, createV
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
 	createdCopy := createdFromLegacy.DeepCopyObject()
-	accCreated, err := meta.Accessor(createdCopy)
+	accCreated, err := utils.MetaAccessor(createdCopy)
 	if err != nil {
 		return createdFromLegacy, err
 	}
+
 	accCreated.SetResourceVersion("")
+	if repoIn != nil {
+		log.Info("setting repository info", "repo", repoIn)
+		accCreated.SetRepositoryInfo(repoIn)
+	}
 
 	startStorage := time.Now()
 	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
