@@ -11,6 +11,7 @@ import { findParentLayout } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
+  level: number;
 }
 
 export function DashboardLayoutSelector({ layoutManager }: Props) {
@@ -43,7 +44,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   );
 }
 
-export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
+export function useLayoutCategory(layoutManager: DashboardLayoutManager, level: number) {
   return useMemo(() => {
     const layoutCategory = new OptionsPaneCategoryDescriptor({
       title: 'Layout',
@@ -55,7 +56,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
       new OptionsPaneItemDescriptor({
         title: 'Type',
         render: function renderTitle() {
-          return <DashboardLayoutSelector layoutManager={layoutManager} />;
+          return <DashboardLayoutSelector layoutManager={layoutManager} level={level} />;
         },
       })
     );
@@ -67,7 +68,7 @@ export function useLayoutCategory(layoutManager: DashboardLayoutManager) {
     }
 
     return layoutCategory;
-  }, [layoutManager]);
+  }, [layoutManager, level]);
 }
 
 function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {

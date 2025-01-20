@@ -38,6 +38,7 @@ import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 
 interface Props {
   dashboard: DashboardScene;
@@ -178,7 +179,7 @@ export function ToolbarActions({ dashboard }: Props) {
     });
     leftActions.push({
       group: 'add-panel',
-      condition: isEditingAndShowingDashboard,
+      condition: isEditingAndShowingDashboard && dashboard.state.body instanceof RowsLayoutManager,
       render: () => (
         <Button
           key="add-panel-button"

@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { isClonedSceneObject } from '../../utils/clone';
 
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -102,6 +103,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       name: 'Rows',
       description: 'Rows layout',
       id: 'rows-layout',
+      level: 1,
       createFromLayout: RowsLayoutManager.createFromLayout,
     };
   }
@@ -125,7 +127,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         }
 
         if (child instanceof SceneGridRow) {
-          if (!child.state.key?.includes('-clone-')) {
+          if (!isClonedSceneObject(child)) {
             config.push({
               title: child.state.title,
               isCollapsed: !!child.state.isCollapsed,
