@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -43,7 +47,7 @@ func TestBleveBackend(t *testing.T) {
 	resource.NewIndexMetrics(backend.opts.Root, backend)
 
 	rv := int64(10)
-	ctx := context.Background()
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	var dashboardsIndex resource.ResourceIndex
 	var foldersIndex resource.ResourceIndex
 
@@ -149,7 +153,7 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		dashboardsIndex = index
 
-		rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 			},
@@ -198,7 +202,7 @@ func TestBleveBackend(t *testing.T) {
 		count, _ = index.DocCount(ctx, "zzz")
 		assert.Equal(t, int64(1), count)
 
-		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 				Labels: []*resource.Requirement{{
@@ -216,8 +220,8 @@ func TestBleveBackend(t *testing.T) {
 			rsp.Results.Rows[1].Key.Name,
 		})
 
-		// can get sprinkles fields
-		rsp, err = index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		// can get sprinkles fields and sort by them
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 			},
@@ -231,11 +235,24 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, 2, len(rsp.Results.Columns))
 		require.Equal(t, DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
 		require.Equal(t, DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
-
 		// sorted descending so should start with highest dashboard_views_last_1_days (100)
 		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
 		require.NoError(t, err)
 		require.Equal(t, int64(100), val)
+
+		// check auth will exclude results we don't have access to
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false}), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: key,
+			},
+			Limit:  100000,
+			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
+			},
+		}, nil)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(rsp.Results.Rows))
 
 		// Now look for repositories
 		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
@@ -343,7 +360,7 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, index)
 		foldersIndex = index
 
-		rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"folders": true}), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: key,
 			},
@@ -363,7 +380,7 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, foldersIndex)
 
 		// Use a federated query to get both results together, sorted by title
-		rsp, err := dashboardsIndex.Search(ctx, nil, &resource.ResourceSearchRequest{
+		rsp, err := dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
 				Key: dashboardskey,
 			},
@@ -425,29 +442,89 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(disp))
-	})
-}
 
-func TestToBleveSearchRequest(t *testing.T) {
-	t.Run("will prepend 'fields.' to all dashboard fields", func(t *testing.T) {
-		fields := []string{"title", "name", "folder"}
-		fields = append(fields, DashboardFields()...)
-		resReq := &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{},
-			Fields:  fields,
-		}
-		bleveReq, err := toBleveSearchRequest(resReq, nil)
-		if err != nil {
-			t.Fatalf("error creating bleve search request: %v", err)
-		}
+		// now only when we have permissions to see dashboards
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": false}), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardskey,
+			},
+			Fields: []string{
+				"title", "_id",
+			},
+			Federated: []*resource.ResourceKey{
+				folderKey, // This will join in the
+			},
+			Limit: 100000,
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "title", Desc: false},
+			},
+			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+				"region": {
+					Field: "labels.region",
+					Limit: 100,
+				},
+			},
+		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
 
-		require.Equal(t, len(fields), len(bleveReq.Fields))
-		for _, field := range DashboardFields() {
-			require.True(t, slices.Contains(bleveReq.Fields, "fields."+field))
-		}
-		require.Contains(t, bleveReq.Fields, "title")
-		require.Contains(t, bleveReq.Fields, "name")
-		require.Contains(t, bleveReq.Fields, "folder")
+		require.NoError(t, err)
+		require.Equal(t, 3, len(rsp.Results.Rows))
+		require.Equal(t, "dashboards", rsp.Results.Rows[0].Key.Resource)
+		require.Equal(t, "dashboards", rsp.Results.Rows[1].Key.Resource)
+		require.Equal(t, "dashboards", rsp.Results.Rows[2].Key.Resource)
+
+		// now only when we have permissions to see folders
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": true}), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardskey,
+			},
+			Fields: []string{
+				"title", "_id",
+			},
+			Federated: []*resource.ResourceKey{
+				folderKey, // This will join in the
+			},
+			Limit: 100000,
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "title", Desc: false},
+			},
+			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+				"region": {
+					Field: "labels.region",
+					Limit: 100,
+				},
+			},
+		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
+
+		require.NoError(t, err)
+		require.Equal(t, 2, len(rsp.Results.Rows))
+		require.Equal(t, "folders", rsp.Results.Rows[0].Key.Resource)
+		require.Equal(t, "folders", rsp.Results.Rows[1].Key.Resource)
+
+		// now when we have permissions to see nothing
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": false}), &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: dashboardskey,
+			},
+			Fields: []string{
+				"title", "_id",
+			},
+			Federated: []*resource.ResourceKey{
+				folderKey, // This will join in the
+			},
+			Limit: 100000,
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "title", Desc: false},
+			},
+			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+				"region": {
+					Field: "labels.region",
+					Limit: 100,
+				},
+			},
+		}, []resource.ResourceIndex{foldersIndex}) // << note the folder index matches the federation request
+
+		require.NoError(t, err)
+		require.Equal(t, 0, len(rsp.Results.Rows))
 	})
 }
 
@@ -457,4 +534,36 @@ func asTimePointer(milli int64) *time.Time {
 		return &t
 	}
 	return nil
+}
+
+var _ authz.AccessClient = (*StubAccessClient)(nil)
+
+func NewStubAccessClient(permissions map[string]bool) *StubAccessClient {
+	return &StubAccessClient{resourceResponses: permissions}
+}
+
+type StubAccessClient struct {
+	resourceResponses map[string]bool // key is the resource name, and bool if what the checker will return
+}
+
+func (nc *StubAccessClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
+	return authz.CheckResponse{Allowed: nc.resourceResponses[req.Resource]}, nil
+}
+
+func (nc *StubAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
+	return func(namespace string, name, folder string) bool {
+		return nc.resourceResponses[req.Resource]
+	}, nil
+}
+
+func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	return nil, nil
+}
+
+func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
+	return nil
+}
+
+func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
+	return nil, nil
 }
