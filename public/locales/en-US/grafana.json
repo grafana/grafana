@@ -957,6 +957,7 @@
       "settings": "Dashboard settings",
       "share": "Share dashboard",
       "share-button": "Share",
+      "show-hidden-elements": "Show hidden",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
@@ -2046,6 +2047,12 @@
       "body": "In addition to the convenience of managed hosting, Grafana Cloud includes many cloud-exclusive features like SLOs, incident management, machine learning, and powerful observability integrations.",
       "link-title": "More questions? Talk to an expert",
       "title": "Why host with Grafana?"
+    }
+  },
+  "multicombobox": {
+    "all": {
+      "title": "All",
+      "title-filtered": "All (filtered)"
     }
   },
   "nav": {

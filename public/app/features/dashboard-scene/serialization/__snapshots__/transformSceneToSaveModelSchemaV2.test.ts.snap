@@ -305,7 +305,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
         "description": "A group by variable",
         "hide": "dontHide",
-        "includeAll": false,
         "label": "Group By Variable",
         "multi": false,
         "name": "groupByVar",
