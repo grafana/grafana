@@ -13,7 +13,6 @@ FROM "grafana"."dashboard" as dashboard
 LEFT OUTER JOIN "grafana"."dashboard_provisioning" as provisioning ON dashboard.id = provisioning.dashboard_id
 LEFT OUTER JOIN "grafana"."user" as created_user ON dashboard.created_by = created_user.id
 LEFT OUTER JOIN "grafana"."user" as updated_user ON dashboard.updated_by = updated_user.id
-WHERE dashboard.is_folder = FALSE
+WHERE dashboard.is_folder = TRUE
   AND dashboard.org_id = 2
-    AND dashboard.uid = 'UUU'
   ORDER BY dashboard.id DESC
