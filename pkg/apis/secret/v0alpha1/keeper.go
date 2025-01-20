@@ -23,16 +23,18 @@ func (k *Keeper) IsSqlKeeper() bool {
 	return k.Spec.SQL != nil && k.Spec.SQL.Encryption != nil
 }
 
+type KeeperConfig interface{}
+
 type KeeperSpec struct {
 	// Human friendly name for the keeper.
 	Title string `json:"title"`
 
 	// You can only chose one of the following.
-	SQL       *SQLKeeper       `json:"sql,omitempty"`
-	AWS       *AWSKeeper       `json:"aws,omitempty"`
-	Azure     *AzureKeeper     `json:"azurekeyvault,omitempty"`
-	GCP       *GCPKeeper       `json:"gcp,omitempty"`
-	HashiCorp *HashiCorpKeeper `json:"hashivault,omitempty"`
+	SQL       *SQLKeeperConfig       `json:"sql,omitempty"`
+	AWS       *AWSKeeperConfig       `json:"aws,omitempty"`
+	Azure     *AzureKeeperConfig     `json:"azurekeyvault,omitempty"`
+	GCP       *GCPKeeperConfig       `json:"gcp,omitempty"`
+	HashiCorp *HashiCorpKeeperConfig `json:"hashivault,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -49,7 +51,7 @@ type KeeperList struct {
 }
 
 // The default SQL keeper.
-type SQLKeeper struct {
+type SQLKeeperConfig struct {
 	Encryption *Encryption `json:"encryption,omitempty"`
 }
 
@@ -104,18 +106,18 @@ type CredentialValue struct {
 }
 
 // Remote Keepers.
-type AWSKeeper struct {
+type AWSKeeperConfig struct {
 	AWSCredentials `json:",inline"`
 }
 
-type AzureKeeper struct {
+type AzureKeeperConfig struct {
 	AzureCredentials `json:",inline"`
 }
 
-type GCPKeeper struct {
+type GCPKeeperConfig struct {
 	GCPCredentials `json:",inline"`
 }
 
-type HashiCorpKeeper struct {
+type HashiCorpKeeperConfig struct {
 	HashiCorpCredentials `json:",inline"`
 }
