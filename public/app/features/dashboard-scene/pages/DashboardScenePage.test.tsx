@@ -347,6 +347,7 @@ describe('DashboardScenePage', () => {
       setup();
 
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
+      expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Internal server error');
     });
     it('should render error alert for runtime errors', async () => {
       setupLoadDashboardRuntimeErrorMock();
@@ -354,6 +355,7 @@ describe('DashboardScenePage', () => {
       setup();
 
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
+      expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Runtime error');
     });
   });
 });
