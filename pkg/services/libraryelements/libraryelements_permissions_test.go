@@ -110,30 +110,29 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				}
 			})
 
-		// #TODO fix this test
-		// testScenario(t, fmt.Sprintf("When %s tries to get all library panels from General folder, it should return correct response", testCase.role),
-		// 	func(t *testing.T, sc scenarioContext) {
-		// 		cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
-		// 		sc.reqContext.Req.Body = mockRequestBody(cmd)
-		// 		resp := sc.service.createHandler(sc.reqContext)
-		// 		result := validateAndUnMarshalResponse(t, resp)
-		// 		result.Result.Meta.CreatedBy.Name = userInDbName
-		// 		result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
-		// 		result.Result.Meta.UpdatedBy.Name = userInDbName
-		// 		result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
-		// 		result.Result.Meta.FolderName = "General"
-		// 		sc.reqContext.SignedInUser.OrgRole = testCase.role
+		testScenario(t, fmt.Sprintf("When %s tries to get all library panels from General folder, it should return correct response", testCase.role),
+			func(t *testing.T, sc scenarioContext) {
+				cmd := getCreatePanelCommand(0, "", "Library Panel in General Folder")
+				sc.reqContext.Req.Body = mockRequestBody(cmd)
+				resp := sc.service.createHandler(sc.reqContext)
+				result := validateAndUnMarshalResponse(t, resp)
+				result.Result.Meta.CreatedBy.Name = userInDbName
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
+				result.Result.Meta.UpdatedBy.Name = userInDbName
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
+				result.Result.Meta.FolderName = "General"
+				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-		// 		resp = sc.service.getAllHandler(sc.reqContext) //
-		// 		require.Equal(t, 200, resp.Status())
-		// 		var actual libraryElementsSearch
-		// 		err := json.Unmarshal(resp.Body(), &actual)
-		// 		require.NoError(t, err)
-		// 		require.Equal(t, 1, len(actual.Result.Elements))
-		// 		if diff := cmp.Diff(result.Result, actual.Result.Elements[0], getCompareOptions()...); diff != "" {
-		// 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-		// 		}
-		// 	})
+				resp = sc.service.getAllHandler(sc.reqContext) //
+				require.Equal(t, 200, resp.Status())
+				var actual libraryElementsSearch
+				err := json.Unmarshal(resp.Body(), &actual)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(actual.Result.Elements))
+				if diff := cmp.Diff(result.Result, actual.Result.Elements[0], getCompareOptions()...); diff != "" {
+					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+				}
+			})
 	}
 }
 

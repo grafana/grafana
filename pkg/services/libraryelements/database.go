@@ -454,7 +454,8 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if err != nil {
 			return err
 		}
-		var folderUIDS = []string{"general"} // every signed in user can see the general folder
+		// #TODO : "" is meant to also correspond to the "general" folder. Is there a better way to do the comparison when it's set as ""?
+		var folderUIDS = []string{"general", ""} // every signed in user can see the general folder
 		folderMap := map[string]string{}
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
