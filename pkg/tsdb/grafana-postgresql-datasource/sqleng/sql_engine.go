@@ -447,7 +447,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 			}
 		}
 
-		if qm.Format == dataQueryFormatTable && col == "timeend" {
+		if qm.Format == dataQueryFormatTable && strings.EqualFold(col, "timeend") {
 			qm.timeEndIndex = i
 			continue
 		}

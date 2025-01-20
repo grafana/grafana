@@ -47,7 +47,7 @@ type FeatureSpec struct {
 	// Do not show the value in docs
 	HideFromDocs bool `json:"hideFromDocs,omitempty"`
 
-	// Expression to determine if the flag is enabled by default
+	// Expression to determine if the flag is enabled by default -- can only be "true" for toggles that are public preview, generally available, or deprecated
 	Expression string `json:"expression,omitempty"`
 }
 

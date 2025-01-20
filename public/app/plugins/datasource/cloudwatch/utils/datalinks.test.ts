@@ -55,7 +55,7 @@ describe('addDataLinksToLogsResponse', () => {
       mockResponse,
       mockOptions,
       (s) => s ?? '',
-      (v) => [v] ?? [],
+      (v) => [v],
       (r) => r,
       'xrayUid'
     );
@@ -132,7 +132,7 @@ describe('addDataLinksToLogsResponse', () => {
       mockResponse,
       mockOptions,
       (s) => s ?? '',
-      (v) => [v] ?? [],
+      (v) => [v],
       (r) => r
     );
     expect(mockResponse).toMatchObject({
@@ -189,7 +189,7 @@ describe('addDataLinksToLogsResponse', () => {
       mockResponse,
       mockOptions,
       (s) => s ?? '',
-      (v) => [v] ?? [],
+      (v) => [v],
       (r) => r
     );
     expect(mockResponse).toMatchObject({

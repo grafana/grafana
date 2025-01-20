@@ -32,8 +32,9 @@ type ZanzanaReconciler struct {
 	lock   *serverlock.ServerLockService
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
-	reconcilers       []resourceReconciler
-	globalReconcilers []globalReconciler
+	reconcilers []resourceReconciler
+	// globalReconcilers are reconcilers that should only run for cluster namespace
+	globalReconcilers []resourceReconciler
 }
 
 func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, folderService folder.Service) *ZanzanaReconciler {
@@ -93,11 +94,11 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 				client,
 			),
 		},
-		globalReconcilers: []globalReconciler{
-			newGlobalReconciler(
+		globalReconcilers: []resourceReconciler{
+			newResourceReconciler(
 				"fixed role pemissions",
 				fixedRolePermissionsCollector(store),
-				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				zanzanaCollector(zanzana.RelationsFolder),
 				client,
 			),
 		},
@@ -146,7 +147,7 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	runGlobal := func(ctx context.Context) {
 		for _, reconciler := range r.globalReconcilers {
 			r.log.Debug("Performing zanzana reconciliation", "reconciler", reconciler.name)
-			if err := reconciler.reconcile(ctx); err != nil {
+			if err := reconciler.reconcile(ctx, zanzana.ClusterNamespace); err != nil {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
 			}
 		}

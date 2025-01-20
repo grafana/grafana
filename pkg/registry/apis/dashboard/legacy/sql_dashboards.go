@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -97,8 +98,10 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
 	q := rawQuery
-	// q = sqltemplate.RemoveEmptyLines(rawQuery)
-	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
+	// if true {
+	// 	pretty := sqltemplate.RemoveEmptyLines(rawQuery)
+	// 	fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
+	// }
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
@@ -262,9 +265,11 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetCreatedBy(getUserID(createdBy, createdByID))
 		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
 		meta.SetDeprecatedInternalID(dashboard_id) //nolint:staticcheck
+		meta.SetGeneration(version)
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
+			meta.SetGeneration(utils.DeletedGeneration)
 		}
 
 		if message.String != "" {
@@ -278,21 +283,24 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		if origin_name.String != "" {
 			ts := time.Unix(origin_ts.Int64, 0)
 
-			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
-			originPath, err := filepath.Rel(
-				resolvedPath,
-				origin_path.String,
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+			repo := &utils.ResourceRepositoryInfo{
 				Name:      origin_name.String,
-				Path:      originPath,
 				Hash:      origin_hash.String,
 				Timestamp: &ts,
-			})
+			}
+			// if the reader cannot be found, it may be an orphaned provisioned dashboard
+			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
+			if resolvedPath != "" {
+				originPath, err := filepath.Rel(
+					resolvedPath,
+					origin_path.String,
+				)
+				if err != nil {
+					return nil, err
+				}
+				repo.Path = originPath
+			}
+			meta.SetRepositoryInfo(repo)
 		} else if plugin_id != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name: "plugin",
@@ -390,6 +398,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
+		PluginID:  service.GetPluginIDFromMeta(meta),
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!

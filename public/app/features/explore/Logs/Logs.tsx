@@ -58,6 +58,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
+import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { getState } from 'app/store/store';
 import { ExploreItemState, useDispatch } from 'app/types';
 
@@ -72,6 +73,7 @@ import {
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
+import { changeQueries } from '../state/query';
 
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -468,6 +470,31 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const newSortOrder =
         logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
       store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
+      if (logsQueries) {
+        let hasLokiQueries = false;
+        const newQueries = logsQueries.map((query) => {
+          if (query.datasource?.type !== 'loki' || !isLokiQuery(query)) {
+            return query;
+          }
+          hasLokiQueries = true;
+
+          if (query.direction === LokiQueryDirection.Scan) {
+            // Don't override Scan. When the direction is Scan it means that the user specifically assigned this direction to the query.
+            return query;
+          }
+          const newDirection =
+            newSortOrder === LogsSortOrder.Ascending ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+          if (newDirection !== query.direction) {
+            query.direction = newDirection;
+          }
+          return query;
+        });
+
+        if (hasLokiQueries) {
+          dispatch(changeQueries({ exploreId, queries: newQueries }));
+        }
+      }
+
       setLogsSortOrder(newSortOrder);
     }, 0);
     cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);
@@ -941,13 +968,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {visualisationType === 'logs' && (
-            <div
-              className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
-              data-testid="logRows"
-              ref={logsContainerRef}
-            >
-              {hasData && (
+          {visualisationType === 'logs' && hasData && (
+            <>
+              <div
+                className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
+                data-testid="logRows"
+                ref={logsContainerRef}
+              >
                 <InfiniteScroll
                   loading={loading}
                   loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
@@ -995,41 +1022,41 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                     renderPreview
                   />
                 </InfiniteScroll>
-              )}
-            </div>
+              </div>
+              <LogsNavigation
+                logsSortOrder={logsSortOrder}
+                visibleRange={navigationRange ?? absoluteRange}
+                absoluteRange={absoluteRange}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                loading={loading}
+                queries={logsQueries ?? []}
+                scrollToTopLogs={scrollToTopLogs}
+                addResultsToCache={addResultsToCache}
+                clearCache={clearCache}
+              />
+            </>
           )}
           {!loading && !hasData && !scanning && (
-            <div className={styles.logRows}>
+            <div className={styles.noDataWrapper}>
               <div className={styles.noData}>
                 <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
-                <Button size="sm" variant="secondary" onClick={onClickScan}>
+                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickScan}>
                   <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
                 </Button>
               </div>
             </div>
           )}
           {scanning && (
-            <div className={styles.logRows}>
+            <div className={styles.noDataWrapper}>
               <div className={styles.noData}>
                 <span>{scanText}</span>
-                <Button size="sm" variant="secondary" onClick={onClickStopScan}>
+                <Button size="sm" variant="secondary" className={styles.scanButton} onClick={onClickStopScan}>
                   <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
                 </Button>
               </div>
             </div>
           )}
-          <LogsNavigation
-            logsSortOrder={logsSortOrder}
-            visibleRange={navigationRange ?? absoluteRange}
-            absoluteRange={absoluteRange}
-            timeZone={timeZone}
-            onChangeTime={onChangeTime}
-            loading={loading}
-            queries={logsQueries ?? []}
-            scrollToTopLogs={scrollToTopLogs}
-            addResultsToCache={addResultsToCache}
-            clearCache={clearCache}
-          />
         </div>
       </PanelChrome>
     </>
@@ -1040,10 +1067,17 @@ export const Logs = withTheme2(UnthemedLogs);
 
 const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
+    noDataWrapper: css({
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',
+      paddingBottom: theme.spacing(2),
+    }),
     noData: css({
-      '& > *': {
-        marginLeft: '0.5em',
-      },
+      display: 'inline-block',
+    }),
+    scanButton: css({
+      marginLeft: theme.spacing(1),
     }),
     logOptions: css({
       display: 'flex',
