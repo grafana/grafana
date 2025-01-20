@@ -180,7 +180,7 @@ Maximum number of times the following reporting rendering requests are retried b
 
 ### allowed_domains
 
-Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org. Default is `*`.
+Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: `allowed_domains = grafana.com`, example.org. Default is `*`.
 
 ## [auditing]
 
