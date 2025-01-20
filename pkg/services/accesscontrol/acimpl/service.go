@@ -464,7 +464,15 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
-				basicRole.Permissions = append(basicRole.Permissions, registration.Role.Permissions...)
+				for _, p := range registration.Role.Permissions {
+					perm := accesscontrol.Permission{
+						Action: p.Action,
+						Scope:  p.Scope,
+					}
+
+					perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
+					basicRole.Permissions = append(basicRole.Permissions, perm)
+				}
 			} else {
 				s.log.Error("Unknown builtin role", "builtInRole", br)
 			}
