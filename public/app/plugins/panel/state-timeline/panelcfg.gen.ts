@@ -9,7 +9,6 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as ui from '@grafana/schema';
-import {TimelineValueAlignment} from '@grafana/schema';
 
 export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
@@ -35,7 +34,7 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
 }
 
 export const defaultOptions: Partial<Options> = {
-  alignValue: TimelineValueAlignment.Left,
+  alignValue: 'left',
   mergeValues: true,
   perPage: 20,
   rowHeight: 0.9,
