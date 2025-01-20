@@ -347,7 +347,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc fold
 	}
 	ctx := identity.WithRequester(context.Background(), &sc.user)
 	folder, err := folderSvc.Create(ctx, &folder.CreateFolderCommand{
-		OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: &sc.user,
+		OrgID: sc.user.OrgID, Title: title, UID: "uid_for_" + title, SignedInUser: &sc.user,
 	})
 	require.NoError(t, err)
 
