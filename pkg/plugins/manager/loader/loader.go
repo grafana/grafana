@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
@@ -19,6 +20,7 @@ import (
 )
 
 type Loader struct {
+	cfg          *pluginsCfg.PluginManagementCfg
 	discovery    discovery.Discoverer
 	bootstrap    bootstrap.Bootstrapper
 	initializer  initialization.Initializer
@@ -28,9 +30,13 @@ type Loader struct {
 	log          log.Logger
 }
 
-func New(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
-	initializer initialization.Initializer, termination termination.Terminator, errorTracker pluginerrs.ErrorTracker) *Loader {
+func New(
+	cfg *pluginsCfg.PluginManagementCfg,
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
+	initializer initialization.Initializer, termination termination.Terminator, errorTracker pluginerrs.ErrorTracker,
+) *Loader {
 	return &Loader{
+		cfg:          cfg,
 		discovery:    discovery,
 		bootstrap:    bootstrap,
 		validation:   validation,
@@ -85,17 +91,29 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		err                error
 	}
 	validateResults := make(chan validateResult, len(bootstrappedPlugins))
+
+	// If the PluginsCDNSyncLoaderEnabled feature is enabled, validate plugins in parallel.
+	// Otherwise, validate plugins sequentially.
+	var limitSize int
+	if l.cfg.Features.PluginsCDNSyncLoaderEnabled {
+		limitSize = len(bootstrappedPlugins)
+	} else {
+		limitSize = 1
+	}
+	limit := make(chan struct{}, limitSize)
 	var validateWg sync.WaitGroup
 	validateWg.Add(len(bootstrappedPlugins))
 	for _, bootstrappedPlugin := range bootstrappedPlugins {
 		bootstrappedPlugin := bootstrappedPlugin
+		limit <- struct{}{}
 		go func() {
-			defer validateWg.Done()
 			err := l.validation.Validate(ctx, bootstrappedPlugin)
 			validateResults <- validateResult{
 				bootstrappedPlugin: bootstrappedPlugin,
 				err:                err,
 			}
+			validateWg.Done()
+			<-limit
 		}()
 	}
 	validateWg.Wait()
