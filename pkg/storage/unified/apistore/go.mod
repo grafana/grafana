@@ -172,7 +172,6 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/alerting v0.0.0-20250115195200-209e052dba64 // indirect
 	github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c // indirect
-	github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
