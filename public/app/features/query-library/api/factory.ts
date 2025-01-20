@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, EditQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
-import { baseQuery } from './query';
+import { baseQuery, baseQuery2 } from './query';
 
 // Currently, we are loading all query templates
 // Organizations can have maximum of 1000 query templates
@@ -27,13 +27,13 @@ export const queryLibraryApi = createApi({
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),
-    deleteQueryTemplate: builder.mutation<void, DeleteQueryTemplateCommand>({
-      query: ({ uid }) => ({
-        url: `/${uid}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['QueryTemplatesList'],
-    }),
+    // deleteQueryTemplate: builder.mutation<void, DeleteQueryTemplateCommand>({
+    //   query: ({ uid }) => ({
+    //     url: `/${uid}`,
+    //     method: 'DELETE',
+    //   }),
+    //   invalidatesTags: ['QueryTemplatesList'],
+    // }),
     editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
       query: (editQueryTemplateCommand) => ({
         url: `/${editQueryTemplateCommand.uid}`,
@@ -47,4 +47,9 @@ export const queryLibraryApi = createApi({
     }),
   }),
   reducerPath: 'queryLibrary',
+});
+
+export const queryLibraryApi2 = createApi({
+  baseQuery: baseQuery2,
+  endpoints: () => ({}),
 });

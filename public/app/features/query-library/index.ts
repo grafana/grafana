@@ -9,15 +9,26 @@
 
 import { config } from '@grafana/runtime';
 
+import { generatedQueryLibraryApi } from './api/endpoints.gen';
 import { queryLibraryApi } from './api/factory';
+import { convertDataQueryResponseToQueryTemplates } from './api/mappers';
 import { mockData } from './api/mocks';
 
 export const {
   useAllQueryTemplatesQuery,
   useAddQueryTemplateMutation,
-  useDeleteQueryTemplateMutation,
+  // useDeleteQueryTemplateMutation,
   useEditQueryTemplateMutation,
 } = queryLibraryApi;
+
+export const { useDeleteQueryTemplateMutation, useListQueryTemplateQuery } = generatedQueryLibraryApi.enhanceEndpoints({
+  endpoints: {
+    // addQueryTemplate,
+    // listQueryTemplate: {
+    //   transformResponse: convertDataQueryResponseToQueryTemplates,
+    // }
+  },
+});
 
 export function isQueryLibraryEnabled() {
   return config.featureToggles.queryLibrary;

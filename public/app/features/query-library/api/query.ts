@@ -56,3 +56,26 @@ export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecRes
     }
   }
 };
+
+export const baseQuery2: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecResponse, Error> = async (
+  requestOptions
+) => {
+  try {
+    const responseObservable = getBackendSrv().fetch<DataQuerySpecResponse>({
+      url: `${requestOptions.url ?? ''}`,
+      showErrorAlert: true,
+      method: requestOptions.method || 'GET',
+      data: requestOptions.data,
+      headers: { ...requestOptions.headers },
+    });
+    return await lastValueFrom(responseObservable);
+  } catch (error) {
+    if (isFetchError(error)) {
+      return { error: new Error(error.data.message) };
+    } else if (error instanceof Error) {
+      return { error };
+    } else {
+      return { error: new Error('Unknown error') };
+    }
+  }
+};

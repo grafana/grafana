@@ -27,7 +27,7 @@ const config: ConfigFile = {
   outputFiles: {
     '../public/app/features/query-library/api/endpoints.gen.ts': {
       apiFile: '../public/app/features/query-library/api/factory.ts',
-      apiImport: 'queryLibraryApi',
+      apiImport: 'queryLibraryApi2',
       filterEndpoints: ['listQueryTemplate', 'createQueryTemplate', 'deleteQueryTemplate', 'updateQueryTemplate'],
       exportName: 'generatedQueryLibraryApi',
       flattenArg: false,

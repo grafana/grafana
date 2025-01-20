@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { getAppEvents } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import { IconButton, Modal } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -35,7 +35,11 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
 
   const onDeleteQuery = (queryUid: string) => {
     const performDelete = (queryUid: string) => {
-      deleteQueryTemplate({ uid: queryUid });
+      deleteQueryTemplate({
+        name: queryUid,
+        namespace: config.namespace,
+        ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
+      });
       dispatch(notifyApp(createSuccessNotification(t('explore.query-library.query-deleted', 'Query deleted'))));
       queryLibaryTrackDeleteQuery();
     };
