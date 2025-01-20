@@ -33,38 +33,79 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
   return (
     <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
       <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
-        {showTime && <span className={styles.timestamp}>{log.timestamp}</span>}
-        {log.logLevel && <span className={styles.level}>{log.logLevel}</span>}
+        {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
+        {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
         {log.body}
       </div>
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  logLine: css({
-    fontFamily: theme.typography.fontFamilyMonospace,
-    fontSize: theme.typography.fontSize,
-    wordBreak: 'break-all',
-    '&:hover': {
-      opacity: 0.5,
-    },
-  }),
-  timestamp: css({
-    display: 'inline-block',
-    marginRight: theme.spacing(1),
-  }),
-  level: css({
-    display: 'inline-block',
-    marginRight: theme.spacing(1),
-  }),
-  overflows: css({
-    outline: 'solid 1px red',
-  }),
-  unwrappedLogLine: css({
-    whiteSpace: 'pre',
-  }),
-  wrappedLogLine: css({
-    whiteSpace: 'pre-wrap',
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const colors = {
+    critical: '#705da0',
+    error: '#e24d42',
+    warning: theme.colors.warning.main,
+    debug: '#1f78c1',
+    trace: '#6ed0e0',
+    info: '#7eb26d',
+  };
+
+  console.log(theme);
+
+  return {
+    logLine: css({
+      color: theme.colors.text.primary,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.fontSize,
+      wordBreak: 'break-all',
+      '&:hover': {
+        opacity: 0.5,
+      },
+    }),
+    timestamp: css({
+      color: theme.colors.text.secondary,
+      display: 'inline-block',
+      marginRight: theme.spacing(1),
+      '&.level-critical': {
+        color: colors.critical,
+      },
+      '&.level-error': {
+        color: colors.error,
+      },
+      '&.level-warning': {
+        color: colors.warning,
+      },
+      '&.level-debug': {
+        color: colors.debug,
+      },
+    }),
+    level: css({
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeightBold,
+      display: 'inline-block',
+      marginRight: theme.spacing(1),
+      '&.level-critical': {
+        color: colors.critical,
+      },
+      '&.level-error': {
+        color: colors.error,
+      },
+      '&.level-warning': {
+        color: colors.warning,
+      },
+      '&.level-debug': {
+        color: colors.debug,
+      },
+    }),
+    overflows: css({
+      outline: 'solid 1px red',
+    }),
+    unwrappedLogLine: css({
+      whiteSpace: 'pre',
+    }),
+    wrappedLogLine: css({
+      whiteSpace: 'pre-wrap',
+    }),
+  };
+};
