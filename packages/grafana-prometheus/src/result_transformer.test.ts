@@ -261,11 +261,11 @@ describe('Prometheus Result Transformer', () => {
           createDataFrame({
             refId: 'A',
             fields: [
-              { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+              { name: 'time', type: FieldType.time, values: [4, 5, 6] },
               {
                 name: 'value',
                 type: FieldType.number,
-                values: [6, 5, 4],
+                values: [4, 5, 6],
                 labels: { label1: 'value1', label2: 'value2' },
               },
             ],
@@ -288,11 +288,13 @@ describe('Prometheus Result Transformer', () => {
 
       expect(series.data.length).toEqual(1);
       expect(series.data[0].fields[0].name).toEqual('Time');
+      expect(series.data[0].fields[0].values).toEqual([2, 3, 4, 5, 6, 7]);
       expect(series.data[0].fields[1].name).toEqual('label1');
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('label3');
       expect(series.data[0].fields[4].name).toEqual('label4');
       expect(series.data[0].fields[5].name).toEqual('Value');
+      expect(series.data[0].fields[5].values).toEqual([2, 3, 4, 5, 6, 7]);
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
