@@ -1,9 +1,9 @@
 package advisor
 
 datasourcecheck: {
-	kind:       "DatasourceCheck"
+	kind:	   "DatasourceCheck"
 	pluralName: "DatasourceChecks"
-	current:    "v0alpha1"
+	current:	"v0alpha1"
 	versions: {
 		"v0alpha1": {
 			codegen: {
@@ -18,15 +18,15 @@ datasourcecheck: {
 				status: {
 					report: {
 						// Number of elements analyzed
-    					count: int
-    					// List of errors
-    					errors: [...{
+						count: int
+						// List of errors
+						errors: [...{
 							// Investigation or Action recommended (severity of the error)
-    						type: "investigation" | "action"
-    						// Human readable reason for the error
-    						reason: string
-    						// Action to take to resolve the error
-    						action: string
+							type: "investigation" | "action"
+							// Human readable reason for the error
+							reason: string
+							// Action to take to resolve the error
+							action: string
 						}]
 					}
 				}
