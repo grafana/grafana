@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/unifiedstorage"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
@@ -28,6 +27,17 @@ import (
 )
 
 const resourceStoreAudience = "resourceStore"
+
+var (
+	// internal provider of the package level resource client
+	pkgResourceClient resource.ResourceClient
+	ready             = make(chan struct{})
+)
+
+func GetResourceClient(ctx context.Context) resource.ResourceClient {
+	<-ready
+	return pkgResourceClient
+}
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(
@@ -38,7 +48,6 @@ func ProvideUnifiedStorageClient(
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
-	us unifiedstorage.UnifiedStorageClientRegistrar,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
@@ -56,7 +65,12 @@ func ProvideUnifiedStorageClient(
 		)
 	}
 
-	us.RegisterClient(client)
+	// only set the package level restConfig once
+	if pkgResourceClient == nil {
+		pkgResourceClient = client
+		close(ready)
+	}
+
 	return client, err
 }
 

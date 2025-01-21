@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -98,10 +99,11 @@ func ProvideService(
 
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
 		k8sHandler := &foldk8sHandler{
-			gvr:                v0alpha1.FolderResourceInfo.GroupVersionResource(),
-			namespacer:         request.GetNamespaceMapper(cfg),
-			cfg:                cfg,
-			restConfigProvider: apiserver.GetRestConfig,
+			gvr:                    v0alpha1.FolderResourceInfo.GroupVersionResource(),
+			namespacer:             request.GetNamespaceMapper(cfg),
+			cfg:                    cfg,
+			restConfigProvider:     apiserver.GetRestConfig,
+			recourceClientProvider: unified.GetResourceClient,
 		}
 
 		unifiedStore := ProvideUnifiedStore(k8sHandler)

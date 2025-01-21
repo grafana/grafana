@@ -36,16 +36,17 @@ import (
 type folderK8sHandler interface {
 	getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
 	getNamespace(orgID int64) string
-	getSearcher() resource.ResourceClient
+	getSearcher(ctx context.Context) resource.ResourceClient
 }
 
 var _ folderK8sHandler = (*foldk8sHandler)(nil)
 
 type foldk8sHandler struct {
-	cfg                *setting.Cfg
-	namespacer         request.NamespaceMapper
-	gvr                schema.GroupVersionResource
-	restConfigProvider func(ctx context.Context) *clientrest.Config
+	cfg                    *setting.Cfg
+	namespacer             request.NamespaceMapper
+	gvr                    schema.GroupVersionResource
+	restConfigProvider     func(ctx context.Context) *clientrest.Config
+	recourceClientProvider func(ctx context.Context) resource.ResourceClient
 }
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -191,7 +192,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		},
 		Limit: 100000}
 
-	client := s.k8sclient.getSearcher()
+	client := s.k8sclient.getSearcher(ctx)
 
 	res, err := client.Search(ctx, request)
 	if err != nil {
@@ -764,6 +765,6 @@ func (fk8s *foldk8sHandler) getNamespace(orgID int64) string {
 	return fk8s.namespacer(orgID)
 }
 
-func (fk8s *foldk8sHandler) getSearcher() resource.ResourceClient {
-	return fk8s.unistoreClientFnc()
+func (fk8s *foldk8sHandler) getSearcher(ctx context.Context) resource.ResourceClient {
+	return fk8s.recourceClientProvider(ctx)
 }
