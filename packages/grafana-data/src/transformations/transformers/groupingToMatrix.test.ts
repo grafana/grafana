@@ -155,7 +155,7 @@ describe('Grouping to Matrix', () => {
     });
   });
 
-  it.only('properly handles null column name values', async () => {
+  it('properly handles null column name values', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,
       options: {
