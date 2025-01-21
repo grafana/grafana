@@ -1,4 +1,4 @@
-package federatedtest
+package federated
 
 import (
 	"context"
@@ -27,9 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -53,7 +51,7 @@ func TestDirectSQLStats(t *testing.T) {
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		folderimpl.ProvideDashboardFolderStore(db), db, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
+		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 
 	// create parent folder
 
@@ -104,7 +102,7 @@ func TestDirectSQLStats(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	store := &federated.LegacyStatsGetter{
+	store := &LegacyStatsGetter{
 		SQL: legacysql.NewDatabaseProvider(db),
 	}
 
