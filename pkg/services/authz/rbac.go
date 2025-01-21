@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -189,4 +190,27 @@ func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessCl
 	}
 
 	return client, nil
+}
+
+func RegisterRBACAuthZService(
+	handler grpcserver.Provider,
+	db legacysql.LegacyDatabaseProvider,
+	tracer tracing.Tracer,
+	reg prometheus.Registerer,
+	cache cache.Cache,
+) {
+	server := rbac.NewService(
+		db,
+		store.NewSQLFolderStore(db, tracer),
+		legacy.NewLegacySQLStores(db),
+		store.NewSQLPermissionStore(db, tracer),
+		log.New("authz-grpc-server"),
+		tracer,
+		reg,
+		cache,
+	)
+
+	srv := handler.GetServer()
+	authzv1.RegisterAuthzServiceServer(srv, server)
+	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
 }
