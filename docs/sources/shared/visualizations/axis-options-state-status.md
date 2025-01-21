@@ -6,5 +6,5 @@ comments: |
 
 | Option    | Description                                                                                      |
 | --------- | ------------------------------------------------------------------------------------------------ |
-| Placement | Select the placement of the y-axis. The axis can only be displayed or hidden.                    |
+| Placement | Controls visibility of series names along the Y axis or time values along the x axis             |
 | Width     | Set a fixed width for the axis. By default, Grafana dynamically calculates the width of an axis. |

@@ -209,7 +209,7 @@ export function addAxisWidth(builder: FieldConfigEditorBuilder<AxisConfig>) {
 /** @internal */
 export function addAxisPlacement(
   builder: FieldConfigEditorBuilder<AxisConfig>,
-  include = (placement: AxisPlacement) => true
+  optionsFilter = (placement: AxisPlacement) => true
 ) {
   builder.addRadio({
     path: 'axisPlacement',
@@ -217,7 +217,7 @@ export function addAxisPlacement(
     category,
     defaultValue: graphFieldOptions.axisPlacement[0].value,
     settings: {
-      options: graphFieldOptions.axisPlacement.filter((placement) => include(placement.value!)),
+      options: graphFieldOptions.axisPlacement.filter((placement) => optionsFilter(placement.value!)),
     },
   });
 }
