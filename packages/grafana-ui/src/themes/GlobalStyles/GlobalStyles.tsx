@@ -19,7 +19,6 @@ import { getLegacySelectStyles } from './legacySelect';
 import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
 import { getQueryEditorStyles } from './queryEditor';
-import { getRcTimePickerStyles } from './rcTimePicker';
 import { getSkeletonStyles } from './skeletonStyles';
 import { getSlateStyles } from './slate';
 import { getUplotStyles } from './uPlot';
@@ -48,7 +47,6 @@ export function GlobalStyles() {
         getMarkdownStyles(theme),
         getPageStyles(theme),
         getQueryEditorStyles(theme),
-        getRcTimePickerStyles(theme),
         getSkeletonStyles(theme),
         getSlateStyles(theme),
         getUplotStyles(theme),

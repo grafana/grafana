@@ -198,13 +198,14 @@ export class BackendSrv implements BackendService {
             }
           }
           process()
-            .catch((e) => {
-              console.log(requestId, 'catch', e);
-            }) // from abort
             .then(() => {
               console.log(requestId, 'complete');
               observer.complete();
-            }); // runs in background
+            }) // runs in background
+            .catch((e) => {
+              console.log(requestId, 'catch', e);
+              observer.error(e);
+            }); // from abort
         },
         error: (e) => {
           observer.error(e);

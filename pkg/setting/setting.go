@@ -475,7 +475,8 @@ type Cfg struct {
 
 	RBAC RBACSettings
 
-	Zanzana ZanzanaSettings
+	ZanzanaClient ZanzanaClientSettings
+	ZanzanaServer ZanzanaServerSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings

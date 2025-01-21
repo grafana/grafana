@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -98,8 +98,10 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
 	q := rawQuery
-	// q = sqltemplate.RemoveEmptyLines(rawQuery)
-	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
+	// if true {
+	// 	pretty := sqltemplate.RemoveEmptyLines(rawQuery)
+	// 	fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
+	// }
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
@@ -263,9 +265,11 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetCreatedBy(getUserID(createdBy, createdByID))
 		meta.SetUpdatedBy(getUserID(updatedBy, updatedByID))
 		meta.SetDeprecatedInternalID(dashboard_id) //nolint:staticcheck
+		meta.SetGeneration(version)
 
 		if deleted.Valid {
 			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
+			meta.SetGeneration(utils.DeletedGeneration)
 		}
 
 		if message.String != "" {
@@ -355,7 +359,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 // SaveDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
 	created := false
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return nil, created, fmt.Errorf("no user found in context")
 	}
@@ -528,10 +532,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		meta.SetCreatedBy(p.CreatedBy)
 		meta.SetUpdatedBy(p.UpdatedBy)
 		meta.SetUpdatedTimestamp(&p.Updated)
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name: "SQL",
-			Path: strconv.FormatInt(p.ID, 10),
-		})
+		meta.SetDeprecatedInternalID(p.ID) // nolint:staticcheck
 
 		res.Items = append(res.Items, item)
 		if len(res.Items) > limit {
