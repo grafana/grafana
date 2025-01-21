@@ -13,8 +13,6 @@ type Interactions = {
     cause: (
       // By clicking the "select" button on that label's breakdown panel
       | 'breakdown_panel'
-      // By clicking the label link on the overview
-      | 'overview_link'
       // By clicking on the label selector at the top of the breakdown
       | 'selector'
     );

@@ -13,7 +13,7 @@ import (
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -27,7 +27,7 @@ func TestSimpleServer(t *testing.T) {
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
-	ctx := claims.WithClaims(context.Background(), testUserA)
+	ctx := claims.WithAuthInfo(context.Background(), testUserA)
 
 	bucket := memblob.OpenBucket(nil)
 	if false {
@@ -119,10 +119,23 @@ func TestSimpleServer(t *testing.T) {
 		obj.SetAnnotation("test", "hello")
 		obj.SetUpdatedTimestampMillis(now)
 		obj.SetUpdatedBy(testUserA.GetUID())
+		obj.SetLabels(map[string]string{
+			utils.LabelKeyGetTrash: "", // should not be allowed to save this!
+		})
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
-
 		updated, err := server.Update(ctx, &UpdateRequest{
+			Key:             key,
+			Value:           raw,
+			ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Equal(t, int32(400), updated.Error.Code) // bad request
+
+		// remove the invalid labels
+		obj.SetLabels(nil)
+		raw, err = json.Marshal(tmp)
+		require.NoError(t, err)
+		updated, err = server.Update(ctx, &UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})

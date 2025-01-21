@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/authlib/cache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 )
@@ -54,7 +55,7 @@ func (c *cacheWrap[T]) Get(ctx context.Context, key string) (T, bool) {
 	var value T
 	data, err := c.cache.Get(ctx, key)
 	if err != nil {
-		if !errors.Is(err, remotecache.ErrCacheItemNotFound) {
+		if !errors.Is(err, cache.ErrNotFound) {
 			c.logger.Warn("failed to get from cache", "key", key, "error", err)
 		}
 		return value, false

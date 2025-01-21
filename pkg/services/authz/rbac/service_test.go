@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/cache"
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
+
+	"github.com/grafana/authlib/cache"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -277,6 +278,7 @@ func TestService_getUserBasicRole(t *testing.T) {
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
 			s.store = store
+			s.permissionStore = store
 
 			if tc.cacheHit {
 				s.basicRoleCache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), tc.expectedRole)
@@ -351,6 +353,7 @@ func TestService_getUserPermissions(t *testing.T) {
 				userPermissions: tc.permissions,
 			}
 			s.store = store
+			s.permissionStore = store
 			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
 
 			perms, err := s.getUserPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
@@ -417,6 +420,7 @@ func TestService_buildFolderTree(t *testing.T) {
 
 			store := &fakeStore{folders: tc.folders}
 			s.store = store
+			s.permissionStore = store
 
 			tree, err := s.buildFolderTree(ctx, ns)
 
@@ -632,18 +636,20 @@ func TestService_listPermission(t *testing.T) {
 func setupService() *Service {
 	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
 	logger := log.New("authz-rbac-service")
+	fStore := &fakeStore{}
 	return &Service{
-		logger:         logger,
-		actionMapper:   mappers.NewK8sRbacMapper(),
-		tracer:         tracing.NewNoopTracerService(),
-		idCache:        newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:      newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		teamCache:      newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache: newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
-		folderCache:    newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
-		store:          &fakeStore{},
-		identityStore:  &fakeIdentityStore{},
-		sf:             new(singleflight.Group),
+		logger:          logger,
+		actionMapper:    mappers.NewK8sRbacMapper(),
+		tracer:          tracing.NewNoopTracerService(),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
+		folderCache:     newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
+		store:           fStore,
+		permissionStore: fStore,
+		identityStore:   &fakeIdentityStore{},
+		sf:              new(singleflight.Group),
 	}
 }
 

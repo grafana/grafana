@@ -4,8 +4,13 @@ import {
   DataSourceGetTagValuesOptions,
   MetricFindValue,
 } from '@grafana/data';
-import { PrometheusDatasource, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from '@grafana/prometheus';
-import PromQlLanguageProvider from '@grafana/prometheus/src/language_provider';
+import {
+  PrometheusDatasource,
+  PromMetricsMetadata,
+  PromMetricsMetadataItem,
+  PromQlLanguageProvider,
+  PromQuery,
+} from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { DataTrail } from '../DataTrail';
@@ -149,6 +154,7 @@ export class MetricDatasourceHelper {
     const ds = await this.getDatasource();
 
     if (ds instanceof PrometheusDatasource) {
+      options.key = unwrapQuotes(options.key);
       const keys = await ds.getTagValues(options);
       return keys;
     }
@@ -171,4 +177,16 @@ export function getMetricDescription(metadata?: PromMetricsMetadataItem) {
   ];
 
   return lines.join('\n\n');
+}
+
+function unwrapQuotes(value: string): string {
+  if (value === '' || !isWrappedInQuotes(value)) {
+    return value;
+  }
+  return value.slice(1, -1);
+}
+
+function isWrappedInQuotes(value: string): boolean {
+  const wrappedInQuotes = /^".*"$/;
+  return wrappedInQuotes.test(value);
 }
