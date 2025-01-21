@@ -1843,6 +1843,10 @@ func TestParseResults(t *testing.T) {
 		TotalHits: 1,
 	}
 
-	_, err := ParseResults(resSearchResp, 0)
+	res, err := ParseResults(resSearchResp, 0)
+
 	require.NoError(t, err)
+	hitFields := res.Hits[0].Field.Object
+	require.Equal(t, int64(100), hitFields[search.DASHBOARD_ERRORS_LAST_1_DAYS])
+	require.Equal(t, int64(25), hitFields[search.DASHBOARD_LINK_COUNT])
 }
