@@ -309,7 +309,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	}
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
+		features, folderPermissions, ac,
 		&foldertest.FakeService{ExpectedFolder: expectedFolder},
 		folder.NewFakeStore(),
 		nil,
@@ -320,6 +320,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		nil,
 	)
 	require.NoError(t, err)
+	service.RegisterDashboardPermissions(dashboardPermissions)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
@@ -400,11 +401,12 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
+		features, folderPermissions, ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, svcErr)
+	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 	guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
@@ -462,11 +464,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
-			features, folderPermissions, dashboardPermissions, ac,
+			features, folderPermissions, ac,
 			foldertest.NewFakeService(), folder.NewFakeStore(),
 			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, dashSvcErr)
+		dashService.RegisterDashboardPermissions(dashboardPermissions)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)
 		fStore := folderimpl.ProvideStore(sqlStore)
 		folderSrv := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore,

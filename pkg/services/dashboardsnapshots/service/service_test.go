@@ -100,7 +100,22 @@ func TestValidateDashboardExists(t *testing.T) {
 	feats := featuremgmt.WithFeatures()
 	dashboardStore, err := dashdb.ProvideDashboardStore(sqlStore, cfg, feats, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
-	dashSvc, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashboardStore, folderimpl.ProvideDashboardFolderStore(sqlStore), feats, nil, nil, acmock.New(), foldertest.NewFakeService(), folder.NewFakeStore(), nil, nil, nil, nil, quotatest.New(false, nil), nil)
+	dashSvc, err := dashsvc.ProvideDashboardServiceImpl(
+		cfg,
+		dashboardStore,
+		folderimpl.ProvideDashboardFolderStore(sqlStore),
+		feats,
+		nil,
+		acmock.New(),
+		foldertest.NewFakeService(),
+		folder.NewFakeStore(),
+		nil,
+		nil,
+		nil,
+		nil,
+		quotatest.New(false, nil),
+		nil,
+	)
 	require.NoError(t, err)
 	s := ProvideService(dsStore, secretsService, dashSvc)
 	ctx := context.Background()

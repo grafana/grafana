@@ -1396,8 +1396,9 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(testDB)
 	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, testDB, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 
-	dashboardService, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), folderPermissions, &actest.FakePermissionsService{}, ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
+	dashboardService, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), folderPermissions, ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
 	require.NoError(t, err)
+	dashboardService.RegisterDashboardPermissions(&actest.FakePermissionsService{})
 	fakeGuardian := &guardian.FakeDashboardGuardian{
 		CanSaveValue: true,
 		CanEditUIDs:  []string{},
