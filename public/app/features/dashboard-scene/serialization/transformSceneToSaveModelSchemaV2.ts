@@ -7,6 +7,7 @@ import {
   dataLayers,
   SceneDataQuery,
   SceneDataTransformer,
+  SceneGridRow,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
@@ -37,6 +38,7 @@ import {
   AnnotationQueryKind,
   DataLink,
   RepeatOptions,
+  GridLayoutRowKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -147,9 +149,12 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): GridLayoutItemKind[] {
+function getGridLayoutItems(
+  state: DashboardSceneState,
+  isSnapshot?: boolean
+): Array<GridLayoutItemKind | GridLayoutRowKind> {
   const body = state.body;
-  let elements: GridLayoutItemKind[] = [];
+  let elements: Array<GridLayoutItemKind | GridLayoutRowKind> = [];
   if (body instanceof DefaultGridLayoutManager) {
     for (const child of body.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
@@ -159,6 +164,8 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
         } else {
           elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
         }
+      } else if (child instanceof SceneGridRow) {
+        elements.push(gridRowToLayoutRowKind(child, isSnapshot));
       }
 
       // TODO: OLD transformer code
@@ -175,7 +182,11 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
   return elements;
 }
 
-export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnapshot = false): GridLayoutItemKind {
+export function gridItemToGridLayoutItemKind(
+  gridItem: DashboardGridItem,
+  isSnapshot = false,
+  yOverride?: number
+): GridLayoutItemKind {
   let elementGridItem: GridLayoutItemKind | undefined;
   let x = 0,
     y = 0,
@@ -201,7 +212,7 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
     kind: 'GridLayoutItem',
     spec: {
       x,
-      y,
+      y: yOverride ?? y,
       width: width,
       height: height,
       element: {
@@ -233,6 +244,26 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
   }
 
   return elementGridItem;
+}
+
+function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayoutRowKind {
+  const children = row.state.children.map((child) => {
+    if (!(child instanceof DashboardGridItem)) {
+      throw new Error('Unsupported row child type');
+    }
+    const y = (child.state.y ?? 0) - (row.state.y ?? 0) - 1;
+    return gridItemToGridLayoutItemKind(child, isSnapshot, y);
+  });
+
+  return {
+    kind: 'GridLayoutRow',
+    spec: {
+      title: row.state.title,
+      y: row.state.y ?? 0,
+      collapsed: Boolean(row.state.isCollapsed),
+      elements: children,
+    },
+  };
 }
 
 function getElements(state: DashboardSceneState) {

@@ -265,7 +265,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       const children = element.spec.elements.map((gridElement) => {
         const panel = dashboard.elements[gridElement.spec.element.name];
         if (panel.kind === 'Panel') {
-          return buildGridItem(gridElement.spec, panel, element.spec.y);
+          return buildGridItem(gridElement.spec, panel, element.spec.y + 1 + gridElement.spec.y);
         } else {
           throw new Error(`Unknown element kind: ${gridElement.kind}`);
         }
