@@ -10,8 +10,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -96,7 +95,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	}
 
 	ctx := stream.Context()
-	user, ok := claims.From(ctx)
+	user, ok := types.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return stream.SendAndClose(&BatchResponse{
 			Error: &ErrorResult{
@@ -142,7 +141,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 				utils.VerbCreate,
 			}
 			for _, verb := range verbs {
-				rsp, err := s.access.Check(ctx, user, authz.CheckRequest{
+				rsp, err := s.access.Check(ctx, user, types.CheckRequest{
 					Namespace: k.Namespace,
 					Group:     k.Group,
 					Resource:  k.Resource,
