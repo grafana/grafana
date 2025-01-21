@@ -49,7 +49,7 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	// If the PluginsCDNSyncLoaderEnabled feature is enabled, run all the validation steps in parallel.
 	// Otherwise, run the validation steps sequentially.
 	var limitSize int
-	if v.cfg.Features.PluginsCDNSyncLoaderEnabled {
+	if v.cfg.Features.PluginsCDNSyncLoaderEnabled && ps.Class == plugins.ClassCDN {
 		limitSize = len(v.validateSteps)
 	} else {
 		limitSize = 1
