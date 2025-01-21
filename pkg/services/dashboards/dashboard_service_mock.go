@@ -138,6 +138,10 @@ func (_m *FakeDashboardService) DeleteAllDashboards(ctx context.Context, orgID i
 	return r0
 }
 
+func (_m *FakeDashboardService) GetSharedDashboardUIDsQuery(ctx context.Context, query *FindPersistedDashboardsQuery) (bool, error) {
+	return false, nil
+}
+
 // FindDashboards provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardService) FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	ret := _m.Called(ctx, query)
