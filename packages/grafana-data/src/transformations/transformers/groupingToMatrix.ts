@@ -127,10 +127,10 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           }
 
           fields.push({
-            config: valueField.config,
             name: columnName?.toString() ?? null,
-            type: valueField.type,
             values: values,
+            config: valueField.config,
+            type: valueField.type,
           });
         }
 
