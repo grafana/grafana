@@ -300,7 +300,7 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
 
 export function getLogLevelInfo(dataFrame: DataFrame) {
   const fieldCache = new FieldCache(dataFrame);
-  const timeField = undefined;
+  const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
   const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
 
   if (!timeField) {
