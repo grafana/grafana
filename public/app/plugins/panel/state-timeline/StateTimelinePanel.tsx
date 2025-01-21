@@ -4,6 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { DashboardCursorSync, DataFrame, PanelProps } from '@grafana/data';
 import {
+  AxisPlacement,
   EventBusPlugin,
   Pagination,
   TooltipDisplayMode,
@@ -209,15 +210,16 @@ export const StateTimelinePanel = ({
                   maxWidth={options.tooltip.maxWidth}
                 />
               )}
-              {/* Renders annotations */}
-              <AnnotationsPlugin2
-                annotations={data.annotations ?? []}
-                config={builder}
-                timeZone={timeZone}
-                newRange={newAnnotationRange}
-                setNewRange={setNewAnnotationRange}
-                canvasRegionRendering={false}
-              />
+              {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
+                <AnnotationsPlugin2
+                  annotations={data.annotations ?? []}
+                  config={builder}
+                  timeZone={timeZone}
+                  newRange={newAnnotationRange}
+                  setNewRange={setNewAnnotationRange}
+                  canvasRegionRendering={false}
+                />
+              )}
               <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
             </>
           );

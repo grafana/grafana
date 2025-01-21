@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
-import { EventBusPlugin, TooltipDisplayMode, TooltipPlugin2, usePanelContext, useTheme2 } from '@grafana/ui';
+import {
+  AxisPlacement,
+  EventBusPlugin,
+  TooltipDisplayMode,
+  TooltipPlugin2,
+  usePanelContext,
+  useTheme2,
+} from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
@@ -141,14 +148,16 @@ export const StatusHistoryPanel = ({
                 maxWidth={options.tooltip.maxWidth}
               />
             )}
-            <AnnotationsPlugin2
-              annotations={data.annotations ?? []}
-              config={builder}
-              timeZone={timeZone}
-              newRange={newAnnotationRange}
-              setNewRange={setNewAnnotationRange}
-              canvasRegionRendering={false}
-            />
+            {alignedFrame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden && (
+              <AnnotationsPlugin2
+                annotations={data.annotations ?? []}
+                config={builder}
+                timeZone={timeZone}
+                newRange={newAnnotationRange}
+                setNewRange={setNewAnnotationRange}
+                canvasRegionRendering={false}
+              />
+            )}
             <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
