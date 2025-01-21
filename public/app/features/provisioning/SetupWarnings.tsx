@@ -116,7 +116,7 @@ export function SetupWarnings() {
       <Collapse isOpen={isWebhookOpen} label="Webhook Support" onToggle={handleWebhookToggle} collapsible>
         <Alert severity="info" title="">
           <Text element="h5">
-            Webhook support requires the server to run on a public URL—and (for now) anonymous access
+            Webhook support requires the server to run on a public URL — and (for now) anonymous access
           </Text>
           <pre>
             <code>{webhook_ini}</code>
