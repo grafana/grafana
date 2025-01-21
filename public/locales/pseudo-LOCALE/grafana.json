@@ -992,20 +992,71 @@
         }
       }
     },
+    "tabs-layout": {
+      "tab": {
+        "repeat": {
+          "learn-more": "Ŀęäřŉ mőřę",
+          "warning": "Päŉęľş įŉ ŧĥįş ŧäþ ūşę ŧĥę {{SHARED_DASHBOARD_QUERY}} đäŧä şőūřčę. Ŧĥęşę päŉęľş ŵįľľ řęƒęřęŉčę ŧĥę päŉęľ įŉ ŧĥę őřįģįŉäľ ŧäþ, ŉőŧ ŧĥę őŉęş įŉ ŧĥę řępęäŧęđ ŧäþş."
+        }
+      }
+    },
     "toolbar": {
       "add": "Åđđ",
+      "add-panel": "Päŉęľ",
+      "add-panel-lib": "Ĩmpőřŧ",
+      "add-row": "Ŗőŵ",
+      "add-tab": "Ŧäþ",
       "alert-rules": "Åľęřŧ řūľęş",
+      "back-to-dashboard": "ßäčĸ ŧő đäşĥþőäřđ",
+      "dashboard-settings": {
+        "label": "Ŝęŧŧįŉģş",
+        "tooltip": "Đäşĥþőäřđ şęŧŧįŉģş"
+      },
+      "discard-library-panel-changes": "Đįşčäřđ ľįþřäřy päŉęľ čĥäŉģęş",
+      "discard-panel": "Đįşčäřđ päŉęľ čĥäŉģęş",
+      "discard-panel-new": "Đįşčäřđ päŉęľ",
+      "edit": {
+        "label": "Ēđįŧ",
+        "tooltip": "Ēŉŧęř ęđįŧ mőđę"
+      },
+      "edit-dashboard-v2-schema": "Ēđįŧ đäşĥþőäřđ v2 şčĥęmä",
+      "enter-edit-mode": {
+        "label": "Mäĸę ęđįŧäþľę",
+        "tooltip": "Ŧĥįş đäşĥþőäřđ ŵäş mäřĸęđ äş řęäđ őŉľy"
+      },
+      "exit-edit-mode": {
+        "label": "Ēχįŧ ęđįŧ",
+        "tooltip": "Ēχįŧş ęđįŧ mőđę äŉđ đįşčäřđş ūŉşävęđ čĥäŉģęş"
+      },
       "mark-favorite": "Mäřĸ äş ƒävőřįŧę",
+      "more-save-options": "Mőřę şävę őpŧįőŉş",
       "open-original": "Øpęŉ őřįģįŉäľ đäşĥþőäřđ",
       "playlist-next": "Ğő ŧő ŉęχŧ đäşĥþőäřđ",
       "playlist-previous": "Ğő ŧő přęvįőūş đäşĥþőäřđ",
       "playlist-stop": "Ŝŧőp pľäyľįşŧ",
+      "public-dashboard": "Pūþľįč",
       "refresh": "Ŗęƒřęşĥ đäşĥþőäřđ",
       "save": "Ŝävę đäşĥþőäřđ",
+      "save-dashboard": {
+        "label": "Ŝävę đäşĥþőäřđ",
+        "tooltip": "Ŝävę čĥäŉģęş"
+      },
+      "save-dashboard-copy": {
+        "label": "Ŝävę äş čőpy",
+        "tooltip": "Ŝävę äş čőpy"
+      },
+      "save-dashboard-short": "Ŝävę",
+      "save-library-panel": "Ŝävę ľįþřäřy päŉęľ",
       "settings": "Đäşĥþőäřđ şęŧŧįŉģş",
-      "share": "Ŝĥäřę đäşĥþőäřđ",
+      "share": {
+        "label": "Ŝĥäřę",
+        "tooltip": "Ŝĥäřę đäşĥþőäřđ"
+      },
       "share-button": "Ŝĥäřę",
       "show-hidden-elements": "Ŝĥőŵ ĥįđđęŉ",
+      "switch-old-dashboard": "Ŝŵįŧčĥ ŧő őľđ đäşĥþőäřđ päģę",
+      "unkink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
+      "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     },
     "validation": {

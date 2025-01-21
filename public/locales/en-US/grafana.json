@@ -992,20 +992,71 @@
         }
       }
     },
+    "tabs-layout": {
+      "tab": {
+        "repeat": {
+          "learn-more": "Learn more",
+          "warning": "Panels in this tab use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original tab, not the ones in the repeated tabs."
+        }
+      }
+    },
     "toolbar": {
       "add": "Add",
+      "add-panel": "Panel",
+      "add-panel-lib": "Import",
+      "add-row": "Row",
+      "add-tab": "Tab",
       "alert-rules": "Alert rules",
+      "back-to-dashboard": "Back to dashboard",
+      "dashboard-settings": {
+        "label": "Settings",
+        "tooltip": "Dashboard settings"
+      },
+      "discard-library-panel-changes": "Discard library panel changes",
+      "discard-panel": "Discard panel changes",
+      "discard-panel-new": "Discard panel",
+      "edit": {
+        "label": "Edit",
+        "tooltip": "Enter edit mode"
+      },
+      "edit-dashboard-v2-schema": "Edit dashboard v2 schema",
+      "enter-edit-mode": {
+        "label": "Make editable",
+        "tooltip": "This dashboard was marked as read only"
+      },
+      "exit-edit-mode": {
+        "label": "Exit edit",
+        "tooltip": "Exits edit mode and discards unsaved changes"
+      },
       "mark-favorite": "Mark as favorite",
+      "more-save-options": "More save options",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
+      "save-dashboard": {
+        "label": "Save dashboard",
+        "tooltip": "Save changes"
+      },
+      "save-dashboard-copy": {
+        "label": "Save as copy",
+        "tooltip": "Save as copy"
+      },
+      "save-dashboard-short": "Save",
+      "save-library-panel": "Save library panel",
       "settings": "Dashboard settings",
-      "share": "Share dashboard",
+      "share": {
+        "label": "Share",
+        "tooltip": "Share dashboard"
+      },
       "share-button": "Share",
       "show-hidden-elements": "Show hidden",
+      "switch-old-dashboard": "Switch to old dashboard page",
+      "unkink-library-panel": "Unlink library panel",
+      "unlink-library-panel": "Unlink library panel",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
