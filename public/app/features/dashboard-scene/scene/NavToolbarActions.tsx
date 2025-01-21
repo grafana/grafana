@@ -580,7 +580,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="secondary"
         data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
       >
-        <Trans i18nKey="dashboard.toolbar.unkink-library-panel">Unlink library panel</Trans>
+        <Trans i18nKey="dashboard.toolbar.unlink-library-panel">Unlink library panel</Trans>
       </Button>
     ),
   });
