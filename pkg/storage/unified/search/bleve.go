@@ -96,17 +96,17 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 func (b *bleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
-	// When the size is known, it will be passed along here
-	// Depending on the size, the backend may choose different options (eg: memory vs disk)
+// When the size is known, it will be passed along here
+// Depending on the size, the backend may choose different options (eg: memory vs disk)
 	size int64,
 
-	// The last known resource version can be used to know that we can skip calling the builder
+// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
 
-	// the non-standard searchable fields
+// the non-standard searchable fields
 	fields resource.SearchableDocumentFields,
 
-	// The builder will write all documents before returning
+// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
@@ -889,13 +889,18 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 	}
 
 	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
-		// The internal ID has the format: <namespace>/<group>/<resourceType>/<name>
-		// Only the internal ID is present on the document match here. Need to use the dvReader for any other fields.
-		id := string(d.IndexInternalID)
-		parts := strings.Split(id, "/")
+		// The doc ID has the format: <namespace>/<group>/<resourceType>/<name>
+		// Need to get the document ID from the internal ID
+		// Tried casting d.IndexInternalID to a string, but its empty when using a file-based index. Unsure why.
+		d.ID, err = i.ExternalID(d.IndexInternalID)
+		if err != nil {
+			return false
+		}
+
+		parts := strings.Split(d.ID, "/")
 		// Exclude doc if id isn't expected format
 		if len(parts) != 4 {
-			q.log.Debug("Unexpected document ID format", "id", id)
+			q.log.Debug("Unexpected document ID format", "id", d.ID)
 			return false
 		}
 		ns := parts[0]
