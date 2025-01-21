@@ -72,16 +72,14 @@ var (
 		&metav1.PartialObjectMetadataList{},
 	}
 
-	ready      chan struct{}
 	restConfig RestConfigProvider
+	ready      = make(chan struct{})
 )
 
 func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-
-	ready = make(chan struct{})
 }
 
 func GetRestConfig(ctx context.Context) *clientrest.Config {
