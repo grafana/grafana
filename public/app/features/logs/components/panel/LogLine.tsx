@@ -25,15 +25,19 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
     if (!onOverflow || !logLineRef.current) {
       return;
     }
-    const actualHeight = hasUnderOrOverflow(logLineRef.current);
+    const calculatedHeight = typeof style.height === 'number' ? style.height : undefined;
+    const actualHeight = hasUnderOrOverflow(logLineRef.current, calculatedHeight);
     if (actualHeight) {
       onOverflow(index, log.uid, actualHeight);
     }
-  }, [index, log.uid, onOverflow]);
+  }, [index, log.uid, onOverflow, style.height]);
 
   return (
     <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
-      <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
+      <div
+        className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}
+        style={{ outline: 'solid 1px red ' }}
+      >
         {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
         {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
         {log.body}

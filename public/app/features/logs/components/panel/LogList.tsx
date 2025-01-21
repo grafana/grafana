@@ -7,7 +7,13 @@ import { useTheme2 } from '@grafana/ui';
 
 import { LogLine } from './LogLine';
 import { preProcessLogs, ProcessedLogModel } from './processing';
-import { getLogLineSize, init as initVirtualization, ScrollToLogsEvent, storeLogLineSize } from './virtualization';
+import {
+  getLogLineSize,
+  init as initVirtualization,
+  resetLogLineSizes,
+  ScrollToLogsEvent,
+  storeLogLineSize,
+} from './virtualization';
 
 interface Props {
   app?: CoreApp;
@@ -56,8 +62,11 @@ export const LogList = ({
     listRef.current?.scrollTo(0);
   }, [forceEscape, logs, sortOrder, timeZone, wrapLogMessage]);
 
-  useLayoutEffect(() => {
-    const handleResize = () => debounce(() => listRef.current?.resetAfterIndex(0), 100);
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      resetLogLineSizes();
+      listRef.current?.resetAfterIndex(0);
+    }, 50);
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
