@@ -268,11 +268,11 @@ Standard Grafana Enterprise licenses include a certain number of seats that can 
 
 For those use-cases we support usage-based billing, where your license includes a certain number of included users and you are billed on a monthly basis for any excess active users during the month.
 
-Usage billing involves a contractual agreement between you and Grafana Labs and an update to your license, and it is only available if Grafana Enterprise version 9.1.0 or higher is configured to [automatically refresh its license token]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license" >}}).
+Usage billing involves a contractual agreement between you and Grafana Labs and an update to your license, and it is only available if Grafana Enterprise version 10.0.0 or higher is configured to [automatically refresh its license token]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license" >}}).
 
-### User de-duplication
+### User deduplication
 
-If your organization has multiple Grafana Enterprise instances with usage billing enabled, then each active user counts only once toward your license, regardless of how many instances that user signs into. Each Grafana Enterprise instance submits an anonymized list of users to grafana.com every day. Each user’s email address is hashed using a one-way sha256 algorithm, and submitted to grafana.com where the anonymized users are de-duplicated across instances.
+If your organization has multiple Grafana Enterprise instances with usage billing enabled, then each active user counts only once toward your license, regardless of how many instances that user signs into. Each Grafana Enterprise instance submits an anonymized list of users to Grafana Labs via API every day. Each user’s email address is hashed using a one-way sha256 algorithm, and submitted to Grafana where the anonymized users are deduplicated across instances.
 
 ### Request usage billing
 
