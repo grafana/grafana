@@ -133,7 +133,7 @@ Controls the opacity of state regions.
 
 ## Axis options
 
-{{< docs/shared lookup="visualizations/axis-options-size.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/axis-options-state-status.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ## Standard options
 
