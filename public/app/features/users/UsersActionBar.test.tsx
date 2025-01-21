@@ -20,12 +20,13 @@ const setup = (propOverrides?: object) => {
     pendingInvitesCount: 0,
     externalUserMngLinkUrl: '',
     externalUserMngLinkName: '',
-    externalUserMngAnalytics: false,
-    externalUserMngAnalyticsParams: '',
     showInvites: false,
   };
 
   Object.assign(props, propOverrides);
+
+  config.externalUserMngLinkUrl = props.externalUserMngLinkUrl;
+  config.externalUserMngLinkName = props.externalUserMngLinkName;
 
   const { rerender } = render(<UsersActionBarUnconnected {...props} />);
 
@@ -63,11 +64,12 @@ describe('Render', () => {
   });
 
   it('should show external user management button with analytics values when configured', () => {
+    config.externalUserMngAnalytics = true;
+    config.externalUserMngAnalyticsParams = 'src=grafananet&other=value1';
+
     setup({
       externalUserMngLinkUrl: 'http://some/url',
       externalUserMngLinkName: 'someUrl',
-      externalUserMngAnalytics: true,
-      externalUserMngAnalyticsParams: 'src=grafananet&other=value1',
     });
 
     expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute(
@@ -77,11 +79,12 @@ describe('Render', () => {
   });
 
   it('should show external user management button without analytics values when disabled', () => {
+    config.externalUserMngAnalytics = false;
+    config.externalUserMngAnalyticsParams = 'src=grafananet&other=value1';
+
     setup({
       externalUserMngLinkUrl: 'http://some/url',
       externalUserMngLinkName: 'someUrl',
-      externalUserMngAnalytics: false,
-      externalUserMngAnalyticsParams: 'src=grafananet&other=value1',
     });
 
     expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'http://some/url');

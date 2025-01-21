@@ -81,8 +81,6 @@ export interface UsersState {
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
-  externalUserMngAnalytics: boolean;
-  externalUserMngAnalyticsParams: string;
   isLoading: boolean;
   rolesLoading?: boolean;
   page: number;

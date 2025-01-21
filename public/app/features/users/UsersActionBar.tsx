@@ -9,6 +9,7 @@ import { selectTotal } from '../invites/state/selectors';
 
 import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
+import { getExternalUserMngLinkUrl } from './utils';
 
 export interface OwnProps {
   showInvites: boolean;
@@ -21,8 +22,6 @@ function mapStateToProps(state: StoreState) {
     pendingInvitesCount: selectTotal(state.invites),
     externalUserMngLinkName: state.users.externalUserMngLinkName,
     externalUserMngLinkUrl: state.users.externalUserMngLinkUrl,
-    externalUserMngAnalytics: state.users.externalUserMngAnalytics,
-    externalUserMngAnalyticsParams: state.users.externalUserMngAnalyticsParams,
   };
 }
 
@@ -37,8 +36,6 @@ export type Props = ConnectedProps<typeof connector> & OwnProps;
 export const UsersActionBarUnconnected = ({
   externalUserMngLinkName,
   externalUserMngLinkUrl,
-  externalUserMngAnalytics,
-  externalUserMngAnalyticsParams,
   searchQuery,
   pendingInvitesCount,
   changeSearchQuery,
@@ -54,26 +51,6 @@ export const UsersActionBarUnconnected = ({
   // 1) the instance is not a hosted Grafana instance (!config.externalUserMngInfo)
   // 2) new basic auth users can be created for this instance (!config.disableLoginForm).
   const showInviteButton: boolean = canAddToOrg && !(config.disableLoginForm && config.externalUserMngInfo);
-
-  const getUrlExternalUrl = () => {
-    const url = new URL(externalUserMngLinkUrl);
-
-    if (externalUserMngAnalytics) {
-      // Add query parameters in config.externalUserMngAnalyticsParams to track conversion
-      if (!!externalUserMngAnalyticsParams) {
-        const params = externalUserMngAnalyticsParams.split('&');
-        params.forEach((param) => {
-          const [key, value] = param.split('=');
-          url.searchParams.append(key, value);
-        });
-      }
-
-      // Add cnt=manage-users to track conversion
-      url.searchParams.append('cnt', 'manage-users');
-    }
-
-    return url.toString();
-  };
 
   return (
     <div className="page-action-bar" data-testid="users-action-bar">
@@ -91,7 +68,7 @@ export const UsersActionBarUnconnected = ({
       )}
       {showInviteButton && <LinkButton href="org/users/invite">Invite</LinkButton>}
       {externalUserMngLinkUrl && (
-        <LinkButton href={getUrlExternalUrl()} target="_blank" rel="noopener">
+        <LinkButton href={getExternalUserMngLinkUrl('manage-users')} target="_blank" rel="noopener">
           {externalUserMngLinkName}
         </LinkButton>
       )}

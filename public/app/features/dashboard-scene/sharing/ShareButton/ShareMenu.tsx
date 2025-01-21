@@ -15,6 +15,7 @@ import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareMo
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
+import { getExternalUserMngLinkUrl } from '../../../users/utils';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
@@ -93,21 +94,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
       renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
       onClick: () => {
-        const url = new URL(config.externalUserMngLinkUrl);
-
-        if (config.externalUserMngAnalytics) {
-          // Add query parameters in config.externalUserMngAnalyticsParams to track conversion
-          if (!!config.externalUserMngAnalyticsParams) {
-            const params = config.externalUserMngAnalyticsParams.split('&');
-            params.forEach((param) => {
-              const [key, value] = param.split('=');
-              url.searchParams.append(key, value);
-            });
-          }
-
-          // Add cnt=share-invite to track conversion
-          url.searchParams.append('cnt', 'share-invite');
-        }
+        const url = getExternalUserMngLinkUrl('share-invite');
 
         window.open(url.toString(), '_blank');
       },

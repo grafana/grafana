@@ -12,8 +12,6 @@ export const initialState: UsersState = {
   externalUserMngInfo: config.externalUserMngInfo,
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,
-  externalUserMngAnalytics: config.externalUserMngAnalytics,
-  externalUserMngAnalyticsParams: config.externalUserMngAnalyticsParams,
   isLoading: false,
   rolesLoading: false,
 };
