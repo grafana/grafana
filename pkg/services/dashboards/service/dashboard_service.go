@@ -95,33 +95,36 @@ type DashboardServiceImpl struct {
 	ac                   accesscontrol.AccessControl
 	k8sclient            client.K8sHandler
 	metrics              *dashboardsMetrics
+
+	dashboardPermissionsReady chan struct{}
 }
+
+var _ dashboards.PermissionsRegistrationService = (*DashboardServiceImpl)(nil)
 
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
+	ac accesscontrol.AccessControl, folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
 	quotaService quota.Service, orgService org.Service,
 ) (*DashboardServiceImpl, error) {
 	k8sHandler := client.NewK8sHandler(request.GetNamespaceMapper(cfg), v0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified)
 
 	dashSvc := &DashboardServiceImpl{
-		cfg:                  cfg,
-		log:                  log.New("dashboard-service"),
-		dashboardStore:       dashboardStore,
-		features:             features,
-		folderPermissions:    folderPermissionsService,
-		dashboardPermissions: dashboardPermissionsService,
-		ac:                   ac,
-		folderStore:          folderStore,
-		folderService:        folderSvc,
-		orgService:           orgService,
-		userService:          userService,
-		k8sclient:            k8sHandler,
-		metrics:              newDashboardsMetrics(r),
+		cfg:                       cfg,
+		log:                       log.New("dashboard-service"),
+		dashboardStore:            dashboardStore,
+		features:                  features,
+		folderPermissions:         folderPermissionsService,
+		ac:                        ac,
+		folderStore:               folderStore,
+		folderService:             folderSvc,
+		orgService:                orgService,
+		userService:               userService,
+		k8sclient:                 k8sHandler,
+		metrics:                   newDashboardsMetrics(r),
+		dashboardPermissionsReady: make(chan struct{}),
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -144,6 +147,19 @@ func ProvideDashboardServiceImpl(
 	}
 
 	return dashSvc, nil
+}
+
+func (dr *DashboardServiceImpl) RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService) {
+	dr.dashboardPermissions = service
+	close(dr.dashboardPermissionsReady)
+}
+
+func (dr *DashboardServiceImpl) getPermissionsService(isFolder bool) accesscontrol.PermissionsService {
+	if isFolder {
+		return dr.folderPermissions
+	}
+	<-dr.dashboardPermissionsReady
+	return dr.dashboardPermissions
 }
 
 func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
@@ -986,11 +1002,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		}...)
 	}
 
-	svc := dr.dashboardPermissions
-	if dash.IsFolder {
-		svc = dr.folderPermissions
-	}
-
+	svc := dr.getPermissionsService(dash.IsFolder)
 	if _, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...); err != nil {
 		dr.log.Error("Could not set default permissions", "dashboard", dash.Title, "error", err)
 	}
