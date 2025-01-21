@@ -2,41 +2,32 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 type exportConnector struct {
 	repoGetter RepoGetter
-	queue      jobs.JobQueue
+	exporter   jobs.Exporter
 }
 
 func (*exportConnector) New() runtime.Object {
 	// This is added as the "ResponseType" regardless what ProducesObject() returns
-	return provisioning.JobResourceInfo.NewFunc()
+	return &provisioning.WorkerProgressMessage{}
 }
 
 func (*exportConnector) Destroy() {}
 
-func (*exportConnector) NamespaceScoped() bool {
-	return true
-}
-
-func (*exportConnector) GetSingularName() string {
-	return "Export"
-}
-
 func (*exportConnector) ProducesMIMETypes(verb string) []string {
-	return []string{"application/json"}
+	return []string{"text/plain"} // could be application/x-ndjson, but that rarely helps anything
 }
 
 func (c *exportConnector) ProducesObject(verb string) any {
@@ -57,49 +48,50 @@ func (c *exportConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
+	repo, err := c.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	ns := repo.Config().GetNamespace()
-	logger := logging.FromContext(ctx).With("logger", "export-connector", "repository", name, "namespace", ns)
-
-	// TODO: We need some way to filter what we export.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logger.WithContext(ctx)
-		ctx := logging.Context(r.Context(), logger)
-
-		job, err := c.queue.Add(ctx, &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: ns,
-				Labels: map[string]string{
-					"repository": repo.Config().GetName(),
-				},
-			},
-			Spec: provisioning.JobSpec{
-				Action: provisioning.JobActionExport,
-			},
-		})
+		options := provisioning.ExportOptions{}
+		err := json.NewDecoder(r.Body).Decode(&options)
 		if err != nil {
-			if _, ok := err.(apierrors.APIStatus); ok {
-				responder.Error(err)
-			} else {
-				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create a job from request: %w", err)))
-			}
-		} else {
-			logger.Info("created an export job from request",
-				"job", job.GetName(),
-				"jobns", job.GetNamespace())
-			responder.Object(http.StatusOK, job)
+			responder.Error(apierrors.NewBadRequest("error decoding request"))
+			return
 		}
+
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			responder.Error(fmt.Errorf("expected http flusher"))
+			return
+		}
+
+		header := w.Header()
+		header.Set("Cache-Control", "no-store")
+		header.Set("X-Content-Type-Options", "nosniff")
+		header.Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusAccepted)
+
+		cb := func(msg *provisioning.WorkerProgressMessage) {
+			body, _ := json.Marshal(msg)
+			body = append(body, []byte("\n")...)
+			_, _ = w.Write(body)
+			flusher.Flush()
+		}
+		msg, err := c.exporter.Export(ctx, repo, options, cb)
+		if err != nil {
+			msg = &provisioning.WorkerProgressMessage{
+				State:   provisioning.JobStateError,
+				Message: err.Error(),
+			}
+		}
+		cb(msg)
 	}), nil
 }
 
 var (
-	_ rest.Connecter            = (*exportConnector)(nil)
-	_ rest.Storage              = (*exportConnector)(nil)
-	_ rest.Scoper               = (*exportConnector)(nil)
-	_ rest.SingularNameProvider = (*exportConnector)(nil)
-	_ rest.StorageMetadata      = (*exportConnector)(nil)
+	_ rest.Connecter       = (*exportConnector)(nil)
+	_ rest.Storage         = (*exportConnector)(nil)
+	_ rest.StorageMetadata = (*exportConnector)(nil)
 )

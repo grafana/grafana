@@ -16,6 +16,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Author":                 schema_pkg_apis_provisioning_v0alpha1_Author(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions":         schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions":          schema_pkg_apis_provisioning_v0alpha1_ExportOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem":               schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList":               schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
@@ -45,6 +46,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.TestResults":            schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookResponse":        schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookStatus":          schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WorkerProgressMessage":  schema_pkg_apis_provisioning_v0alpha1_WorkerProgressMessage(ref),
 	}
 }
 
@@ -113,6 +115,46 @@ func schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref common.ReferenceCa
 					},
 				},
 				Required: []string{"create", "update", "delete"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ExportOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The source folder (or empty) to export",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"history": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Preserve history (if possible)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Target branch for export",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"prefix": {
+						SchemaProps: spec.SchemaProps{
+							Description: "File prefix",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -1569,6 +1611,67 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_WorkerProgressMessage(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Used to return synchronous streaming",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"error", "pending", "success", "working"},
+						},
+					},
+					"index": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"state"},
 			},
 		},
 	}

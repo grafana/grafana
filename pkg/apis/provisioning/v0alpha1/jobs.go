@@ -71,6 +71,32 @@ type JobSpec struct {
 	URL string `json:"url,omitempty"`
 }
 
+type ExportOptions struct {
+	// The source folder (or empty) to export
+	Folder string `json:"folder,omitempty"`
+
+	// Preserve history (if possible)
+	History bool `json:"history,omitempty"`
+
+	// Target branch for export
+	Branch string `json:"branch,omitempty"`
+
+	// File prefix
+	Prefix string `json:"prefix,omitempty"`
+}
+
+// Used to return synchronous streaming
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type WorkerProgressMessage struct {
+	metav1.TypeMeta `json:",inline"`
+
+	State   JobState `json:"state"`
+	Index   int64    `json:"index,omitempty"`
+	Size    int64    `json:"size,omitempty"`
+	Message string   `json:"message,omitempty"`
+	URL     string   `json:"url,omitempty"`
+}
+
 // The job status
 type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
