@@ -244,4 +244,3 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | -------------------------------------- | ----------------------------------------------------------------------------- |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server, including all datasources |
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options                   |
-| `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1                |
