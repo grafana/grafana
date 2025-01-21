@@ -1616,10 +1616,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bsull/augurs@npm:^0.8.0":
-  version: 0.8.1
-  resolution: "@bsull/augurs@npm:0.8.1"
-  checksum: 10/1bb9b019664db0d2f0487923886d08811aa32bd748c54849f27a1d75eba4e99b6d3b0023480e697b50a279123b2775383ba30fe9ca9339922ab90af88394c226
+"@bsull/augurs@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "@bsull/augurs@npm:0.9.0"
+  checksum: 10/284299c0af22ca9f91efc981b4e6471d9a5791de2ffa6b987ed95309c9d0fce1d6bfa6b3f58e8a935859b04b5b3714d3617be1d569f7164c68d4748ba12b6722
   languageName: node
   linkType: hard
 
@@ -17348,7 +17348,7 @@ __metadata:
     "@babel/runtime": "npm:7.26.0"
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
-    "@bsull/augurs": "npm:^0.8.0"
+    "@bsull/augurs": "npm:^0.9.0"
     "@cypress/webpack-preprocessor": "npm:6.0.2"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
