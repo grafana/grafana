@@ -218,8 +218,10 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
-	restConfig = s
-	close(ready)
+	if restConfig == nil {
+		restConfig = s
+		close(ready)
+	}
 
 	return s, nil
 }
