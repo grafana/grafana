@@ -40,6 +40,11 @@ export interface DashboardLayoutManager extends SceneObject {
   addNewRow(): void;
 
   /**
+   * Add tab
+   */
+  addNewTab(): void;
+
+  /**
    * getVizPanels
    */
   getVizPanels(): VizPanel[];
