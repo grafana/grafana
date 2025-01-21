@@ -836,14 +836,15 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
+			cfg, dashboardStore, folderStore, features, folderPermissions,
 			ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, err)
+		dashboardService.(dashboards.PermissionsRegistrationService).RegisterDashboardPermissions(dashboardPermissions)
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
+		cfg, dashboardStore, folderStore, features, folderPermissions,
 		ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, err)

@@ -469,16 +469,15 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
-
-	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
-	require.NoError(b, err)
-
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
+		features, folderPermissions, ac,
 		folderServiceWithFlagOn, fStore, nil, nil, nil, nil, quotaSrv, nil,
 	)
+	require.NoError(b, err)
+
+	_, err = ossaccesscontrol.ProvideDashboardPermissions(
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc)
 	require.NoError(b, err)
 
 	starSvc := startest.NewStarServiceFake()
