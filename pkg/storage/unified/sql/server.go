@@ -7,23 +7,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/authlib/authz"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/storage/unified/search"
-
+	"github.com/grafana/authlib/types"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
 // Creates a new ResourceServer
 func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, docs resource.DocumentBuilderSupplier,
-	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.AccessClient) (resource.ResourceServer, error) {
+	tracer tracing.Tracer, reg prometheus.Registerer, ac types.AccessClient) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
