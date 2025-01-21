@@ -175,6 +175,9 @@ export interface WatchOptions {
   // Query by fields
   // https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/
   fieldSelector?: ListOptionsFieldSelector;
+
+  // Path to a subresource
+  path?: string;
 }
 
 export interface MetaStatus {

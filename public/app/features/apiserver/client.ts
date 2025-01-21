@@ -1,6 +1,6 @@
 import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import { config, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import {
@@ -38,18 +38,35 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
+  private getResourceUrl(name?: string, path?: string) {
+    if (!name) {
+      return this.url;
+    }
+    const url = `${this.url}/${name}`;
+    if (path) {
+      return `${url}/${path}`;
+    }
+    return url;
+  }
+
+  public watch(
+    params?: WatchOptions,
+    config?: Pick<BackendSrvRequest, 'data' | 'method'>
+  ): Observable<ResourceEvent<T, S, K>> {
     const decoder = new TextDecoder();
-    const params = {
-      ...opts,
+    const requestParams = {
+      ...params,
       watch: true,
-      labelSelector: this.parseListOptionsSelector(opts?.labelSelector),
-      fieldSelector: this.parseListOptionsSelector(opts?.fieldSelector),
+      labelSelector: this.parseListOptionsSelector(params?.labelSelector),
+      fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
     };
+    const { name, path, ...rest } = requestParams;
+
     return getBackendSrv()
       .chunked({
-        url: params.name ? `${this.url}/${params.name}` : this.url,
-        params,
+        url: this.getResourceUrl(name, path),
+        params: rest,
+        ...config,
       })
       .pipe(
         filter((response) => response.ok && response.data instanceof Uint8Array),
