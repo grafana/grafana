@@ -912,14 +912,6 @@
         }
       }
     },
-    "edit-pane": {
-      "row": {
-        "repeat": {
-          "learn-more": "Learn more",
-          "warning": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-        }
-      }
-    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
