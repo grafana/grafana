@@ -78,6 +78,9 @@ type sqlResourceRequest struct {
 	GUID       string
 	WriteEvent resource.WriteEvent
 	Folder     string
+
+	// Useful when batch writing
+	ResourceVersion int64
 }
 
 func (r sqlResourceRequest) Validate() error {
@@ -87,6 +90,8 @@ func (r sqlResourceRequest) Validate() error {
 type sqlStatsRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
+	Group     string
+	Resource  string
 	Folder    string
 	MinCount  int
 }
@@ -206,11 +211,25 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 type sqlResourceHistoryDeleteRequest struct {
 	sqltemplate.SQLTemplate
 	GUID string
-	// TODO, add other constraints
+
+	Namespace string
+	Group     string
+	Resource  string
 }
 
 func (r *sqlResourceHistoryDeleteRequest) Validate() error {
-	return nil // TODO
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.GUID == "" {
+		if r.Group == "" {
+			return fmt.Errorf("missing group")
+		}
+		if r.Resource == "" {
+			return fmt.Errorf("missing resource")
+		}
+	}
+	return nil
 }
 
 type sqlGetHistoryRequest struct {
