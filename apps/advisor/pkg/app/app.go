@@ -2,16 +2,48 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
+
+	// Trigger registration of checks
+	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasource"
+)
+
+const (
+	typeLabel        = "advisor.grafana.app/type"
+	statusAnnotation = "advisor.grafana.app/status"
 )
 
 func New(cfg app.Config) (app.App, error) {
+	// Read config
+	advisorConfig, ok := cfg.SpecificConfig.(*checks.AdvisorConfig)
+	if !ok {
+		return nil, fmt.Errorf("invalid config type")
+	}
+
+	// Prepare storage client
+	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
+	client, err := clientGenerator.ClientFor(advisorv0alpha1.CheckKind())
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize checks
+	checkFactories := checks.GetFactories()
+	checkMap := map[string]checks.Check{}
+	for _, r := range checkFactories {
+		c := r.New(advisorConfig)
+		checkMap[c.Type()] = c
+	}
+
 	simpleConfig := simple.AppConfig{
 		Name:       "advisor",
 		KubeConfig: cfg.KubeConfig,
@@ -23,6 +55,21 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: advisorv0alpha1.CheckKind(),
+				Validator: &simple.Validator{
+					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+						_, err := getCheck(req.Object, checkMap)
+						return err
+					},
+				},
+				Watcher: &simple.Watcher{
+					AddFunc: func(ctx context.Context, obj resource.Object) error {
+						check, err := getCheck(obj, checkMap)
+						if err != nil {
+							return err
+						}
+						return processCheck(ctx, client, obj, check)
+					},
+				},
 			},
 		},
 	}
