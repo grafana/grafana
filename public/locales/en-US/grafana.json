@@ -2050,6 +2050,12 @@
       "title": "Why host with Grafana?"
     }
   },
+  "multicombobox": {
+    "all": {
+      "title": "All",
+      "title-filtered": "All (filtered)"
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
