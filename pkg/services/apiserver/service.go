@@ -72,6 +72,7 @@ var (
 		&metav1.PartialObjectMetadataList{},
 	}
 
+	// internal provider of the package level client Config
 	restConfig RestConfigProvider
 	ready      = make(chan struct{})
 )
@@ -82,6 +83,12 @@ func init() {
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
 }
 
+// GetRestConfig return a client Config mounted at package level
+// This resolves circular dependency issues between apiserver, authz,
+// and Folder Service.
+// The client Config gets initialized during the first call to
+// ProvideService.
+// Any call to GetRestConfig will block until we have a restConfig available
 func GetRestConfig(ctx context.Context) *clientrest.Config {
 	<-ready
 	return restConfig.GetRestConfig(ctx)
@@ -218,6 +225,7 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
+	// only set the package level restConfig once
 	if restConfig == nil {
 		restConfig = s
 		close(ready)
