@@ -1,4 +1,5 @@
 import { AdHocVariableFilter, MetricFindValue, RawTimeRange, VariableHide } from '@grafana/data';
+import { isValidLegacyName } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
@@ -110,7 +111,13 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
 
     // add the other OTEL resource filters
     for (let i = 0; i < otelFilters?.length; i++) {
-      const labelName = otelFilters[i].key;
+      let labelName = otelFilters[i].key;
+
+      // when adding an otel resource filter with utfb
+      if (!isValidLegacyName(labelName)) {
+        labelName = `'${labelName}'`;
+      }
+
       const op = otelFilters[i].operator;
       const labelValue = otelFilters[i].value;
 
@@ -211,7 +218,7 @@ export function limitOtelMatchTerms(
 
 /**
  * This updates the OTel join query variable that is interpolated into all queries.
- * When a user is in the breakdown or overview tab, they may want to breakdown a metric by a resource attribute.
+ * When a user is in the breakdown tab, they may want to breakdown a metric by a resource attribute.
  * The only way to do this is by enriching the metric with the target_info resource.
  * This is done by joining on a unique identifier for the resource, job and instance.
  * The we can get the resource attributes for the metric, enrich the metric with the join query and
@@ -281,8 +288,15 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
   );
   // here we start to add the attributes to the group left
   if (attributes.length > 0) {
+    // loop through attributes to check for utf8
+    const utf8Attributes = attributes.map((a) => {
+      if (!isValidLegacyName(a)) {
+        return `'${a}'`;
+      }
+      return a;
+    });
     // update the group left variable that contains all the filtered resource attributes
-    otelGroupLeft.setState({ value: attributes.join(',') });
+    otelGroupLeft.setState({ value: utf8Attributes.join(',') });
     // get the new otel join query that includes the group left attributes
     const resourceObject = getOtelResourcesObject(trail);
     const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);

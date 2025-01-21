@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.23.4
+GO_VERSION = 1.23.5
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -149,7 +149,7 @@ gen-cue: ## Do all CUE/Thema code generation
 .PHONY: gen-cuev2
 gen-cuev2: ## Do all CUE code generation
 	@echo "generate code from .cue files (v2)"
-	go generate ./kindsv2/gen.go
+	@$(MAKE) -C ./kindsv2 all
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:
