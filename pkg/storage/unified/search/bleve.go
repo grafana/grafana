@@ -13,13 +13,17 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
+	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
+	index "github.com/blevesearch/bleve_index_api"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/authlib/authz"
-
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -111,14 +115,14 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	mapper := getBleveMappings(fields)
 
 	if size > b.opts.FileThreshold {
+		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
+			fmt.Sprintf("%s.%s", key.Resource, key.Group),
+		)
 		fname := fmt.Sprintf("rv%d", resourceVersion)
 		if resourceVersion == 0 {
 			fname = b.start.Format("tmp-20060102-150405")
 		}
-		dir := filepath.Join(b.opts.Root, key.Namespace,
-			fmt.Sprintf("%s.%s", key.Resource, key.Group),
-			fname,
-		)
+		dir := filepath.Join(resourceDir, fname)
 		if resourceVersion > 0 {
 			info, _ := os.Stat(dir)
 			if info != nil && info.IsDir() {
@@ -128,6 +132,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 					if err != nil || int64(found) != size {
 						b.log.Info("this size changed since the last time the index opened")
 						_ = index.Close()
+
+						// Pick a new file name
+						fname = b.start.Format("tmp-20060102-150405-changed")
+						dir = filepath.Join(resourceDir, fname)
 						index = nil
 					} else {
 						build = false // no need to build the index
@@ -138,8 +146,15 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 		if index == nil {
 			index, err = bleve.New(dir, mapper)
+			if err != nil {
+				err = fmt.Errorf("error creating new bleve index: %s %w", dir, err)
+			}
 		}
 
+		// Start a background task to cleanup the old index directories
+		if index != nil && err == nil {
+			go b.cleanOldIndexes(resourceDir, fname)
+		}
 		resource.IndexMetrics.IndexTenants.WithLabelValues("file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
@@ -181,6 +196,25 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	b.cache[key] = idx
 	b.cacheMu.Unlock()
 	return idx, nil
+}
+
+func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		b.log.Warn("error cleaning folders from", "directory", dir, "error", err)
+		return
+	}
+	for _, file := range files {
+		if file.IsDir() && file.Name() != skip {
+			fpath := filepath.Join(dir, file.Name())
+			err = os.RemoveAll(fpath)
+			if err != nil {
+				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
+			} else {
+				b.log.Error("Removed old index folder", "directory", fpath)
+			}
+		}
+	}
 }
 
 // TotalDocs returns the total number of documents across all indices
@@ -359,7 +393,7 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.Co
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,
-	access authz.AccessClient,
+	access authlib.AccessClient,
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 ) (*resource.ResourceSearchResponse, error) {
@@ -383,7 +417,7 @@ func (b *bleveIndex) Search(
 	}
 
 	// convert protobuf request to bleve request
-	searchrequest, e := toBleveSearchRequest(req, access)
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
 	if e != nil {
 		response.Error = e
 		return response, nil
@@ -485,7 +519,7 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
 	facets := bleve.FacetsRequest{}
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
@@ -536,15 +570,6 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		queries = append(queries, bleve.NewFuzzyQuery(req.Query))
 	}
 
-	if access != nil {
-		// TODO AUTHZ!!!!
-		// Need to add an authz filter into the mix
-		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
-		// NOTE, we likely want to pass in the already called checker because the resource server
-		// will first need to check if we can see anything (or everything!) for this resource
-		fmt.Printf("TODO... check authorization\n")
-	}
-
 	switch len(queries) {
 	case 0:
 		searchrequest.Query = bleve.NewMatchAllQuery()
@@ -552,6 +577,42 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		searchrequest.Query = queries[0]
 	default:
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
+	}
+
+	// Can we remove this? Is access ever nil?
+	if access != nil {
+		auth, ok := authlib.AuthInfoFrom(ctx)
+		if !ok {
+			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
+		}
+		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+			Namespace: b.key.Namespace,
+			Group:     b.key.Group,
+			Resource:  b.key.Resource,
+			Verb:      utils.VerbList,
+		})
+		if err != nil {
+			return nil, resource.AsErrorResult(err)
+		}
+		checkers := map[string]authlib.ItemChecker{
+			b.key.Resource: checker,
+		}
+
+		// handle federation
+		for _, federated := range req.Federated {
+			checker, err := access.Compile(ctx, auth, authlib.ListRequest{
+				Namespace: federated.Namespace,
+				Group:     federated.Group,
+				Resource:  federated.Resource,
+				Verb:      utils.VerbList,
+			})
+			if err != nil {
+				return nil, resource.AsErrorResult(err)
+			}
+			checkers[federated.Resource] = checker
+		}
+
+		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, checkers)
 	}
 
 	for k, v := range req.Facet {
@@ -795,4 +856,65 @@ func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Fa
 		}
 	}
 	return f
+}
+
+type permissionScopedQuery struct {
+	query.Query
+	checkers map[string]authlib.ItemChecker // one checker per resource
+	log      log.Logger
+}
+
+func newPermissionScopedQuery(q query.Query, checkers map[string]authlib.ItemChecker) *permissionScopedQuery {
+	return &permissionScopedQuery{
+		Query:    q,
+		checkers: checkers,
+		log:      log.New("search_permissions"),
+	}
+}
+
+func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReader, m mapping.IndexMapping, options search.SearcherOptions) (search.Searcher, error) {
+	searcher, err := q.Query.Searcher(ctx, i, m, options)
+	if err != nil {
+		return nil, err
+	}
+	dvReader, err := i.DocValueReader([]string{"folder"})
+	if err != nil {
+		return nil, err
+	}
+
+	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
+		// The internal ID has the format: <namespace>/<group>/<resourceType>/<name>
+		// Only the internal ID is present on the document match here. Need to use the dvReader for any other fields.
+		id := string(d.IndexInternalID)
+		parts := strings.Split(id, "/")
+		// Exclude doc if id isn't expected format
+		if len(parts) != 4 {
+			q.log.Debug("Unexpected document ID format", "id", id)
+			return false
+		}
+		ns := parts[0]
+		resource := parts[2]
+		name := parts[3]
+		folder := ""
+		err = dvReader.VisitDocValues(d.IndexInternalID, func(field string, value []byte) {
+			if field == "folder" {
+				folder = string(value)
+			}
+		})
+		if err != nil {
+			q.log.Debug("Error reading doc values", "error", err)
+			return false
+		}
+		if _, ok := q.checkers[resource]; !ok {
+			q.log.Debug("No resource checker found", "resource", resource)
+			return false
+		}
+		allowed := q.checkers[resource](ns, name, folder)
+		if !allowed {
+			q.log.Debug("Denying access", "ns", ns, "name", name, "folder", folder)
+		}
+		return allowed
+	})
+
+	return filteringSearcher, nil
 }

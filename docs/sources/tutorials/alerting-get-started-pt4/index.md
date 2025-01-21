@@ -99,6 +99,8 @@ In this tutorial, you will learn:
 
 There are different ways you can follow along with this tutorial.
 
+> Note: Some of the templating features in Grafana Alerting discussed in this tutorial are currently available in Grafana Cloud but have not yet been released to the Open Source (OSS) version.
+
 - **Grafana Cloud**
 
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
