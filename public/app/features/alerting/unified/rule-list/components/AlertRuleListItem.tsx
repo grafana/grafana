@@ -200,7 +200,7 @@ interface RuleOperationListItemProps {
   operation: RuleOperation;
 }
 
-export function RuleInTransitionListItem({
+export function RuleOperationListItem({
   name,
   namespace,
   group,

@@ -49,11 +49,13 @@ export function useGrafanaGroupsGenerator() {
     async (options: FetchGroupsOptions) => {
       const response = await getGrafanaGroups(options).unwrap();
 
-      response.data.groups.forEach((group) => {
-        dispatch(
-          alertRuleApi.util.prefetch('getGrafanaRulerGroup', { folderUid: group.folderUid, groupName: group.name }, {})
+      // This is not mandatory to preload ruler rules, but it improves the UX
+      // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
+      const cacheAndRulerPreload = response.data.groups.map(async (group) => {
+        await dispatch(
+          alertRuleApi.endpoints.getGrafanaRulerGroup.initiate({ folderUid: group.folderUid, groupName: group.name })
         );
-        dispatch(
+        await dispatch(
           prometheusApi.util.upsertQueryData(
             'getGrafanaGroups',
             { folderUid: group.folderUid, groupName: group.name },
@@ -61,6 +63,8 @@ export function useGrafanaGroupsGenerator() {
           )
         );
       });
+
+      await Promise.allSettled(cacheAndRulerPreload);
 
       return response;
     },

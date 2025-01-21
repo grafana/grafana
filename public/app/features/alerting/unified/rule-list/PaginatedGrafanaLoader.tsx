@@ -10,7 +10,7 @@ import { prometheusApi } from '../api/prometheusApi';
 import { GrafanaRulesSource } from '../utils/datasource';
 
 import { GrafanaRuleListItem } from './GrafanaRuleLoader';
-import { RuleInTransitionListItem } from './components/AlertRuleListItem';
+import { RuleOperationListItem } from './components/AlertRuleListItem';
 import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
@@ -150,7 +150,7 @@ function GrafanaGroupLoader({ groupIdentifier, namespaceName }: GrafanaGroupLoad
   return (
     <>
       {unmatchedRulerRules.map((rule) => (
-        <RuleInTransitionListItem
+        <RuleOperationListItem
           key={rule.grafana_alert.uid}
           name={rule.grafana_alert.title}
           namespace={namespaceName}
@@ -170,7 +170,7 @@ function GrafanaGroupLoader({ groupIdentifier, namespaceName }: GrafanaGroupLoad
         />
       ))}
       {unmatchedPromRules.map((rule) => (
-        <RuleInTransitionListItem
+        <RuleOperationListItem
           key={rule.uid}
           name={rule.name}
           namespace={namespaceName}
