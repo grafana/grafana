@@ -22,14 +22,29 @@ export function init(theme: GrafanaTheme2) {
     ctx.letterSpacing = `${letterSpacing}px`;
   }
   lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
+
+  widthMap = new Map<number, number>();
+  resetLogLineSizes();
+
   return true;
 }
 
-export function measureTextWidth(text: string) {
+let widthMap = new Map<number, number>();
+export function measureTextWidth(text: string): number {
   if (!ctx || !lineHeight) {
     throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
   }
-  return ctx.measureText(text).width;
+  const key = text.length;
+
+  const storedWidth = widthMap.get(key);
+  if (storedWidth) {
+    return storedWidth;
+  }
+
+  const width = ctx.measureText(text).width;
+  widthMap.set(key, width);
+
+  return width;
 }
 
 export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 0) {
@@ -114,12 +129,13 @@ export function getLogLineSize(
   return height;
 }
 
-export function hasUnderOrOverflow(element: HTMLDivElement): number | null {
-  if (element.scrollHeight > element.clientHeight) {
+export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: number): number | null {
+  const height = calculatedHeight ?? element.clientHeight;
+  if (element.scrollHeight > height) {
     return element.scrollHeight;
   }
   const child = element.firstChild;
-  if (child instanceof HTMLDivElement && child.clientHeight < element.clientHeight) {
+  if (child instanceof HTMLDivElement && child.clientHeight < height) {
     return child.clientHeight;
   }
   return null;
@@ -147,7 +163,10 @@ export function getScrollbarWidth() {
   return width;
 }
 
-const logLineSizesMap = new Map<string, number>();
+let logLineSizesMap = new Map<string, number>();
+export function resetLogLineSizes() {
+  logLineSizesMap = new Map<string, number>();
+}
 
 export function storeLogLineSize(id: string, container: HTMLDivElement, height: number) {
   const key = `${id}_${getLogContainerWidth(container)}`;
