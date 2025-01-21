@@ -19,6 +19,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { RowItem } from './RowItem';
@@ -60,6 +61,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         }),
       ],
     });
+  }
+
+  public addNewTab(): void {
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+    tabsLayout.addNewTab();
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   public getMaxPanelId(): number {
