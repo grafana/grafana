@@ -3344,15 +3344,6 @@
       "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!",
       "subtitle": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy."
     },
-    "metric-overview": {
-      "description-label": "Đęşčřįpŧįőŉ",
-      "labels": "Ŀäþęľş",
-      "metric-attributes": "Åŧŧřįþūŧęş",
-      "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
-      "type-label": "Ŧypę",
-      "unit-label": "Ůŉįŧ",
-      "unknown-type": "Ůŉĸŉőŵŉ"
-    },
     "metric-select": {
       "filter-by": "Fįľŧęř þy",
       "native-histogram": "Ńäŧįvę Ħįşŧőģřäm",
