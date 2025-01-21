@@ -124,7 +124,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;

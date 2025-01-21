@@ -2778,7 +2778,8 @@
       "metadata": {
         "name": "panelTitleSearchInV1",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-13T12:04:24Z"
+        "creationTimestamp": "2023-10-13T12:04:24Z",
+        "deletionTimestamp": "2025-01-20T20:07:05Z"
       },
       "spec": {
         "description": "Enable searching for dashboards using panel title in search v1",
