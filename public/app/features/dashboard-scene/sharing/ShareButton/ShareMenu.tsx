@@ -13,9 +13,9 @@ import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
+import { getExternalUserMngLinkUrl } from '../../../users/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getExternalUserMngLinkUrl } from '../../../users/utils';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
