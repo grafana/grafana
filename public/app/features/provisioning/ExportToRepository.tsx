@@ -5,7 +5,7 @@ import { from, catchError, filter, map, mergeMap } from 'rxjs';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
-import { Repository, WorkerProgressMessage } from './api';
+import { Repository, JobProgressMessage } from './api';
 
 interface Props {
   repo: Repository;
@@ -74,7 +74,7 @@ function ExportRunner({ repo, options }: RunnerProps) {
             return null;
           }
         }),
-        filter((event): event is WorkerProgressMessage => event !== null),
+        filter((event): event is JobProgressMessage => event !== null),
         catchError((error) => {
           console.error('Watch stream error:', error);
           throw error;
