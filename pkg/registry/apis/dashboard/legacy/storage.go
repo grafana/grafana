@@ -9,7 +9,6 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
@@ -305,6 +304,7 @@ func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceS
 	// TODO sort if query.Sort == "" see sortedHits in services/search/service.go
 
 	searchFields := resource.StandardSearchFields()
+	fmt.Println("res ", res)
 	list := &resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
 			Columns: []*resource.ResourceTableColumnDefinition{

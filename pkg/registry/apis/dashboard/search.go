@@ -341,10 +341,11 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var result *resource.ResourceSearchResponse
-	if s.cfg.DualWriterMode == rest.Mode0 {
+	switch s.cfg.DualWriterMode {
+	case rest.Mode0, rest.Mode1, rest.Mode2:
 		// TODO add missing query params to spec above
 		result, err = s.legacyDashboardAccess.Search(ctx, searchRequest)
-	} else {
+	default:
 		result, err = s.client.Search(ctx, searchRequest)
 	}
 
