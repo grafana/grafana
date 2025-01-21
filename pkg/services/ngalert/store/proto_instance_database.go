@@ -67,7 +67,7 @@ func (st ProtoInstanceDBStore) ListAlertInstances(ctx context.Context, cmd *mode
 
 			// Convert proto instances to model instances
 			for _, protoInstance := range instances {
-				modelInstance := alertInstanceProtoToModel(protoInstance)
+				modelInstance := alertInstanceProtoToModel(row.RuleUID, row.OrgID, protoInstance)
 				if modelInstance != nil {
 					// If FlagAlertingNoNormalState is enabled, we should not return instances with normal state and no reason.
 					if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
@@ -169,12 +169,8 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 
 func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInstance {
 	return &pb.AlertInstance{
-		Labels: modelInstance.Labels,
-		Key: &pb.AlertInstanceKey{
-			RuleUid:    modelInstance.RuleUID,
-			RuleOrgId:  modelInstance.RuleOrgID,
-			LabelsHash: modelInstance.LabelsHash,
-		},
+		Labels:            modelInstance.Labels,
+		LabelsHash:        modelInstance.LabelsHash,
 		CurrentState:      string(modelInstance.CurrentState),
 		CurrentStateSince: timestamppb.New(modelInstance.CurrentStateSince),
 		CurrentStateEnd:   timestamppb.New(modelInstance.CurrentStateEnd),
@@ -205,16 +201,16 @@ func compressAlertInstances(instances []*pb.AlertInstance) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func alertInstanceProtoToModel(protoInstance *pb.AlertInstance) *models.AlertInstance {
+func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *pb.AlertInstance) *models.AlertInstance {
 	if protoInstance == nil {
 		return nil
 	}
 
 	return &models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  protoInstance.Key.RuleOrgId,
-			RuleUID:    protoInstance.Key.RuleUid,
-			LabelsHash: protoInstance.Key.LabelsHash,
+			RuleOrgID:  ruleOrgID,
+			RuleUID:    ruleUID,
+			LabelsHash: protoInstance.LabelsHash,
 		},
 		Labels:            protoInstance.Labels,
 		CurrentState:      models.InstanceStateType(protoInstance.CurrentState),

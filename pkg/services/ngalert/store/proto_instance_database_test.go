@@ -43,12 +43,8 @@ func TestAlertInstanceModelToProto(t *testing.T) {
 				ResultFingerprint: "fingerprint",
 			},
 			expected: &pb.AlertInstance{
-				Labels: map[string]string{"key": "value"},
-				Key: &pb.AlertInstanceKey{
-					RuleUid:    "rule-uid-1",
-					RuleOrgId:  1,
-					LabelsHash: "hash123",
-				},
+				Labels:            map[string]string{"key": "value"},
+				LabelsHash:        "hash123",
 				CurrentState:      "Alerting",
 				CurrentStateSince: timestamppb.New(currentStateSince),
 				CurrentStateEnd:   timestamppb.New(currentStateEnd),
@@ -75,6 +71,8 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 	lastEvalTime := currentStateSince.Add(-time.Minute).UTC()
 	lastSentAt := currentStateSince.Add(-2 * time.Minute).UTC()
 	resolvedAt := currentStateSince.Add(-3 * time.Minute).UTC()
+	ruleUID := "rule-uid-1"
+	orgID := int64(1)
 
 	tests := []struct {
 		name     string
@@ -84,12 +82,8 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 		{
 			name: "valid instance",
 			input: &pb.AlertInstance{
-				Labels: map[string]string{"key": "value"},
-				Key: &pb.AlertInstanceKey{
-					RuleUid:    "rule-uid-1",
-					RuleOrgId:  1,
-					LabelsHash: "hash123",
-				},
+				Labels:            map[string]string{"key": "value"},
+				LabelsHash:        "hash123",
 				CurrentState:      "Alerting",
 				CurrentStateSince: timestamppb.New(currentStateSince),
 				CurrentStateEnd:   timestamppb.New(currentStateEnd),
@@ -101,8 +95,8 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 			expected: &models.AlertInstance{
 				Labels: map[string]string{"key": "value"},
 				AlertInstanceKey: models.AlertInstanceKey{
-					RuleUID:    "rule-uid-1",
-					RuleOrgID:  1,
+					RuleUID:    ruleUID,
+					RuleOrgID:  orgID,
 					LabelsHash: "hash123",
 				},
 				CurrentState:      models.InstanceStateFiring,
@@ -118,7 +112,7 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := alertInstanceProtoToModel(tt.input)
+			result := alertInstanceProtoToModel(ruleUID, orgID, tt.input)
 			require.Equal(t, tt.expected, result)
 		})
 	}
@@ -141,12 +135,8 @@ func TestCompressAndDecompressAlertInstances(t *testing.T) {
 
 	alertInstances := []*pb.AlertInstance{
 		{
-			Labels: map[string]string{"label-1": "value-1"},
-			Key: &pb.AlertInstanceKey{
-				RuleUid:    "uid-1",
-				RuleOrgId:  1,
-				LabelsHash: "hash-1",
-			},
+			Labels:            map[string]string{"label-1": "value-1"},
+			LabelsHash:        "hash-1",
 			CurrentState:      "normal",
 			CurrentStateSince: timestamppb.New(now),
 			CurrentStateEnd:   timestamppb.New(now.Add(time.Hour)),
@@ -156,12 +146,8 @@ func TestCompressAndDecompressAlertInstances(t *testing.T) {
 			ResultFingerprint: "fingerprint-1",
 		},
 		{
-			Labels: map[string]string{"label-2": "value-2"},
-			Key: &pb.AlertInstanceKey{
-				RuleUid:    "rule-2",
-				RuleOrgId:  2,
-				LabelsHash: "hash-2",
-			},
+			Labels:            map[string]string{"label-2": "value-2"},
+			LabelsHash:        "hash-2",
 			CurrentState:      "firing",
 			CurrentStateSince: timestamppb.New(now),
 			CurrentReason:     "reason-2",

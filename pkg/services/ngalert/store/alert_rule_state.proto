@@ -5,14 +5,8 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "./pb";
 
-message AlertInstanceKey {
-    int64 rule_org_id = 1;
-    string rule_uid = 2;
-    string labels_hash = 3;
-}
-
 message AlertInstance {
-    AlertInstanceKey key = 1;
+    string labels_hash = 1;
     map<string, string> labels = 2;
     string current_state = 3;
     string current_reason = 4;

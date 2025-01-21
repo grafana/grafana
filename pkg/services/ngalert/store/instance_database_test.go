@@ -664,9 +664,7 @@ func TestIntegration_ProtoInstanceDBStore_VerifyCompressedData(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, decompressedInstances, 1)
-	require.Equal(t, instances[0].RuleOrgID, decompressedInstances[0].Key.RuleOrgId)
-	require.Equal(t, instances[0].RuleUID, decompressedInstances[0].Key.RuleUid)
-	require.Equal(t, instances[0].LabelsHash, decompressedInstances[0].Key.LabelsHash)
+	require.Equal(t, instances[0].LabelsHash, decompressedInstances[0].LabelsHash)
 	require.Equal(t, string(instances[0].CurrentState), decompressedInstances[0].CurrentState)
 	require.Equal(t, instances[0].CurrentReason, decompressedInstances[0].CurrentReason)
 }
