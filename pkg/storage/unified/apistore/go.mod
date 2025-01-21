@@ -15,7 +15,7 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db
+	github.com/grafana/authlib v0.0.0-20250121093725-6a1acb5557ba
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
@@ -172,7 +172,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/alerting v0.0.0-20250115195200-209e052dba64 // indirect
-	github.com/grafana/authlib v0.0.0-20250121093725-6a1acb5557ba // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect

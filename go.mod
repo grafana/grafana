@@ -214,7 +214,7 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240821161612-71f0dae39e9d // @grafana/grafana-search-and-storage
 )
 
-require github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db
+require github.com/grafana/authlib/claims v0.0.0-20240814074258-eae7d47f01db // indirect
 
 require (
 	cel.dev/expr v0.18.0 // indirect

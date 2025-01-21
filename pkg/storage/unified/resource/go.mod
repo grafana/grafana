@@ -10,6 +10,7 @@ replace (
 
 require (
 	github.com/fullstorydev/grpchan v1.1.1
+	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib v0.0.0-20250121093725-6a1acb5557ba
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
@@ -86,7 +87,6 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/getkin/kin-openapi v0.128.0 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
