@@ -216,7 +216,7 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
   // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
-    const { level, valueField, timeField, length } = getLogLevelInfo(dataFrame);
+    const { level, valueField, timeField } = getLogLevelInfo(dataFrame);
 
     if (!timeField || !valueField) {
       return;
@@ -228,7 +228,7 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
       timeFieldConfig: timeField?.config ?? {},
     };
 
-    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+    for (let pointIndex = 0; pointIndex < dataFrame.length; pointIndex++) {
       const time: number = timeField.values[pointIndex];
       const value: number = valueField.values[pointIndex];
       aggregated[level] ??= {};
@@ -315,8 +315,7 @@ export function getLogLevelInfo(dataFrame: DataFrame) {
   }
 
   const level = valueField?.config.displayNameFromDS ?? dataFrame.name ?? 'logs';
-  const length = valueField?.values.length ?? 0;
-  return { level, valueField, timeField, length };
+  return { level, valueField, timeField };
 }
 
 export function targetIsElement(target: EventTarget | null): target is Element {
