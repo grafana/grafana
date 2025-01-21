@@ -273,6 +273,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		}
 
 		if message.String != "" {
+			if len(message.String) > 500 {
+				message.String = message.String[0:490] + "..."
+			}
 			meta.SetMessage(message.String)
 		}
 		if folder_uid.String != "" {
