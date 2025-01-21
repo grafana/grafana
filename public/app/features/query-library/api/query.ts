@@ -16,12 +16,14 @@ export enum QueryTemplateKinds {
   QueryTemplate = 'QueryTemplate',
 }
 
+export const getK8sNamespace = () => config.namespace;
+
 /**
  * Query Library is an experimental feature. API (including the URL path) will likely change.
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/querytemplates`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/${getK8sNamespace()}/querytemplates`;
 
 interface QueryLibraryBackendRequest extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];

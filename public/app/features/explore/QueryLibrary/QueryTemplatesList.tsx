@@ -3,7 +3,7 @@ import { compact, uniq, uniqBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
+import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack, Badge } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createQueryText } from 'app/core/utils/richHistory';
@@ -13,6 +13,7 @@ import { QueryTemplate } from 'app/features/query-library/types';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
+import { getK8sNamespace } from '../../query-library/api/query';
 
 import { QueryLibraryProps } from './QueryLibrary';
 import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
@@ -24,13 +25,12 @@ import { searchQueryLibrary } from './utils/search';
 interface QueryTemplatesListProps extends QueryLibraryProps {}
 
 export function QueryTemplatesList(props: QueryTemplatesListProps) {
-  // TODO extract out namespace/mapper
   const {
     data: rawData,
     isLoading,
     error,
   } = useListQueryTemplateQuery({
-    namespace: config.namespace,
+    namespace: getK8sNamespace(),
   });
   const data = useMemo(() => (rawData ? convertDataQueryResponseToQueryTemplates(rawData) : undefined), [rawData]);
   const [isModalOpen, setIsModalOpen] = useState(false);

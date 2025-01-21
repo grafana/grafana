@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import {
@@ -18,6 +17,7 @@ import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { useListQueryTemplateQuery } from '../../query-library';
+import { getK8sNamespace } from '../../query-library/api/query';
 import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
 import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
@@ -99,9 +99,8 @@ export function RichHistory(props: RichHistoryProps) {
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
 
-  // TODO extract out namespace
   const { data } = useListQueryTemplateQuery({
-    namespace: config.namespace,
+    namespace: getK8sNamespace(),
   });
   const queryTemplatesCount = data?.items?.length ?? 0;
 

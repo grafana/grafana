@@ -1,11 +1,11 @@
 import { t } from 'i18next';
 import { useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
 import { isQueryLibraryEnabled, useListQueryTemplateQuery } from 'app/features/query-library';
 
+import { getK8sNamespace } from '../../query-library/api/query';
 import {
   queryLibraryTrackAddFromQueryHistory,
   queryLibraryTrackAddFromQueryHistoryAddModalShown,
@@ -17,9 +17,8 @@ type Props = {
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
-  // TODO extract out namespace
   const { refetch } = useListQueryTemplateQuery({
-    namespace: config.namespace,
+    namespace: getK8sNamespace(),
   });
   const [isOpen, setIsOpen] = useState(false);
   const [hasBeenSaved, setHasBeenSaved] = useState(false);

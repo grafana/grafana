@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { AppEvents, dateTime } from '@grafana/data';
-import { config, DataSourcePicker, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
+import { DataSourcePicker, getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, InlineSwitch, Modal, RadioButtonGroup, TextArea } from '@grafana/ui';
 import { Field } from '@grafana/ui/';
@@ -13,6 +13,7 @@ import { useCreateQueryTemplateMutation, useUpdateQueryTemplateMutation } from '
 import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec } from '../../query-library/api/mappers';
+import { getK8sNamespace } from '../../query-library/api/query';
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
@@ -62,9 +63,8 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     queryToAdd !== undefined ? [queryToAdd] : templateData?.query !== undefined ? [templateData?.query] : [];
 
   const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
-    // TODO extract out namespace/horrible arg
     return addQueryTemplate({
-      namespace: config.namespace,
+      namespace: getK8sNamespace(),
       comGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate:
         convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
     })
@@ -88,9 +88,8 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
   };
 
   const handleEditQueryTemplate = async (editQueryTemplateCommand: EditQueryTemplateCommand) => {
-    // TODO extract out namespace/horrible arg
     return editQueryTemplate({
-      namespace: config.namespace,
+      namespace: getK8sNamespace(),
       name: editQueryTemplateCommand.uid,
       ioK8SApimachineryPkgApisMetaV1Patch: {
         spec: editQueryTemplateCommand.partialSpec,
