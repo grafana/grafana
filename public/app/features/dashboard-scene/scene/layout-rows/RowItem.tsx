@@ -26,6 +26,7 @@ import { DashboardScene } from '../DashboardScene';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
 
+import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 export interface RowItemState extends SceneObjectState {
@@ -33,8 +34,8 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
+  isClone?: boolean;
   height?: 'expand' | 'min';
-  repeat?: string | undefined;
 }
 
 export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
@@ -125,7 +126,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   };
 
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
+    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key, isClone } = model.useState();
     const dashboard = getDashboardSceneFor(model);
     const { isEditing, showHiddenElements } = dashboard.useState();
     const styles = useStyles2(getStyles);
@@ -140,7 +141,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
           styles.wrapper,
           isCollapsed && styles.wrapperCollapsed,
           shouldGrow && styles.wrapperGrow,
-          isSelected && 'dashboard-selected-element'
+          !isClone && isSelected && 'dashboard-selected-element'
         )}
         ref={ref}
       >
@@ -157,7 +158,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
                 {titleInterpolated}
               </span>
             </button>
-            {isEditing && (
+            {!isClone && isEditing && (
               <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={(evt) => onSelect?.(evt)} />
             )}
           </div>
@@ -270,7 +271,13 @@ export function RowHeightSelect({ row }: { row: RowItem }) {
 }
 
 export function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: DashboardScene }) {
-  const { repeat, layout } = row.useState();
+  const { layout, $behaviors } = row.useState();
+
+  let repeatBehavior: RowItemRepeaterBehavior | undefined = $behaviors?.find(
+    (b) => b instanceof RowItemRepeaterBehavior
+  );
+  const { variableName } = repeatBehavior?.state ?? {};
+
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
     return runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
@@ -280,9 +287,20 @@ export function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: D
     <>
       <RepeatRowSelect2
         sceneContext={dashboard}
-        repeat={repeat}
-        onChange={(newRepeat) => {
-          row.setState({ repeat: newRepeat });
+        repeat={variableName}
+        onChange={(repeat) => {
+          if (repeat) {
+            // Remove repeat behavior if it exists to trigger repeat when adding new one
+            if (repeatBehavior) {
+              repeatBehavior.removeBehavior();
+            }
+
+            repeatBehavior = new RowItemRepeaterBehavior({ variableName: repeat });
+            row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
+            repeatBehavior.activate();
+          } else {
+            repeatBehavior?.removeBehavior();
+          }
         }}
       />
       {isAnyPanelUsingDashboardDS ? (
@@ -294,7 +312,7 @@ export function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: D
           bottomSpacing={0}
         >
           <p>
-            <Trans i18nKey="dashboard.edit-pane.row.repeat.warning">
+            <Trans i18nKey="dashboard.rows-layout.row.repeat.warning">
               Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the panel
               in the original row, not the ones in the repeated rows.
             </Trans>
@@ -305,7 +323,7 @@ export function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: D
               'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
             }
           >
-            <Trans i18nKey="dashboard.edit-pane.row.repeat.learn-more">Learn more</Trans>
+            <Trans i18nKey="dashboard.rows-layout.row.repeat.learn-more">Learn more</Trans>
           </TextLink>
         </Alert>
       ) : undefined}

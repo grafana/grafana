@@ -15,13 +15,14 @@ import { useStyles2 } from '@grafana/ui';
 import { isClonedSceneObject } from '../../utils/clone';
 
 import { DashboardScene } from '../DashboardScene';
-import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { RowItem } from './RowItem';
+import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 
 interface RowsLayoutManagerState extends SceneObjectState {
   rows: RowItem[];
@@ -92,6 +93,23 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return [];
   }
 
+  public activateRepeaters() {
+    this.state.rows.forEach((row) => {
+      if (row.state.$behaviors) {
+        for (const behavior of row.state.$behaviors) {
+          if (behavior instanceof RowItemRepeaterBehavior && !row.isActive) {
+            row.activate();
+            break;
+          }
+        }
+
+        if (!row.getLayout().isActive) {
+          row.getLayout().activate();
+        }
+      }
+    });
+  }
+
   public getDescriptor(): LayoutRegistryItem {
     return RowsLayoutManager.getDescriptor();
   }
@@ -118,6 +136,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       const config: Array<{
         title?: string;
         isCollapsed?: boolean;
+        isDraggable?: boolean;
+        isResizable?: boolean;
         children: SceneGridItemLike[];
         repeat?: string;
       }> = [];
@@ -132,12 +152,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           if (!isClonedSceneObject(child)) {
             const behaviour = child.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
 
-            config.push({
-              title: child.state.title,
-              isCollapsed: !!child.state.isCollapsed,
-              children: child.state.children,
-              repeat: behaviour?.state.variableName,
-            });
+          config.push({
+            title: child.state.title,
+            isCollapsed: !!child.state.isCollapsed,
+            isDraggable: child.state.isDraggable,
+            isResizable: child.state.isResizable,
+            children: child.state.children,
+            repeat: behaviour?.state.variableName,
+          });
 
             // Since we encountered a row item, any subsequent panels should be added to a new row
             children = undefined;
@@ -157,7 +179,11 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           new RowItem({
             title: rowConfig.title ?? 'Row title',
             isCollapsed: !!rowConfig.isCollapsed,
-            layout: DefaultGridLayoutManager.fromGridItems(rowConfig.children),
+            layout: DefaultGridLayoutManager.fromGridItems(
+              rowConfig.children,
+              rowConfig.isDraggable,
+              rowConfig.isResizable
+            ),
           })
       );
 

@@ -19,11 +19,11 @@ import {
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
-import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
-import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { DashboardGridItem } from './DashboardGridItem';
+import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { RowActions } from './row-actions/RowActions';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
@@ -389,9 +389,15 @@ export class DefaultGridLayoutManager
   /**
    * Useful for preserving items positioning when switching layouts
    * @param gridItems
+   * @param isDraggable
+   * @param isResizable
    * @returns
    */
-  public static fromGridItems(gridItems: SceneGridItemLike[]): DefaultGridLayoutManager {
+  public static fromGridItems(
+    gridItems: SceneGridItemLike[],
+    isDraggable?: boolean,
+    isResizable?: boolean
+  ): DefaultGridLayoutManager {
     const children = gridItems.reduce<SceneGridItemLike[]>((acc, gridItem) => {
       gridItem.clearParent();
       acc.push(gridItem);
@@ -402,8 +408,8 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children,
-        isDraggable: true,
-        isResizable: true,
+        isDraggable,
+        isResizable,
       }),
     });
   }

@@ -33,7 +33,7 @@ import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { PanelTimeRange } from './PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { RowActions } from './row-actions/RowActions';
+import { RowActions } from './layout-default/row-actions/RowActions';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
