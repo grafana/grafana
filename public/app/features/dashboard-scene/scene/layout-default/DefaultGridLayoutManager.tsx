@@ -18,10 +18,12 @@ import {
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
+  getDashboardSceneFor,
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -105,6 +107,12 @@ export class DefaultGridLayoutManager
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
 
     return row;
+  }
+
+  public addNewTab(): void {
+    const tabsLayout = TabsLayoutManager.createFromLayout(this);
+    tabsLayout.addNewTab();
+    getDashboardSceneFor(this).switchLayout(tabsLayout);
   }
 
   /**
