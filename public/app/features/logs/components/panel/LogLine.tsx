@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { ProcessedLogModel } from './processing';
+import { hasUnderOrOverflow } from './virtualization';
 
 interface Props {
   index: number;
@@ -24,9 +25,9 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
     if (!onOverflow || !logLineRef.current) {
       return;
     }
-    const hasOverflow = logLineRef.current.scrollHeight > logLineRef.current.clientHeight;
-    if (hasOverflow) {
-      onOverflow(index, log.uid, logLineRef.current.scrollHeight);
+    const actualHeight = hasUnderOrOverflow(logLineRef.current);
+    if (actualHeight) {
+      onOverflow(index, log.uid, actualHeight);
     }
   }, [index, log.uid, onOverflow]);
 
