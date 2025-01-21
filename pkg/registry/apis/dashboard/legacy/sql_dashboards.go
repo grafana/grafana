@@ -273,6 +273,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		}
 
 		if message.String != "" {
+			if len(message.String) > 500 {
+				message.String = message.String[0:490] + "..."
+			}
 			meta.SetMessage(message.String)
 		}
 		if folder_uid.String != "" {
@@ -488,6 +491,10 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		lastID = p.ID
 
 		item := dashboard.LibraryPanel{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: fmt.Sprintf("%s/%s", dashboard.GROUP, "v0alpha1"),
+				Kind:       "LibraryPanel",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              p.UID,
 				CreationTimestamp: metav1.NewTime(p.Created),
@@ -509,13 +516,13 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 
 		if item.Spec.Title != p.Name {
-			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("title mismatch (expected: %s)", p.Name))
+			status.Warnings = append(status.Warnings, fmt.Sprintf("title mismatch (expected: %s)", p.Name))
 		}
 		if item.Spec.Description != p.Description {
-			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("description mismatch (expected: %s)", p.Description))
+			status.Warnings = append(status.Warnings, fmt.Sprintf("description mismatch (expected: %s)", p.Description))
 		}
 		if item.Spec.Type != p.Type {
-			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("type mismatch (expected: %s)", p.Type))
+			status.Warnings = append(status.Warnings, fmt.Sprintf("type mismatch (expected: %s)", p.Type))
 		}
 		item.Status = status
 
@@ -530,9 +537,15 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 		meta.SetFolder(p.FolderUID)
 		meta.SetCreatedBy(p.CreatedBy)
-		meta.SetUpdatedBy(p.UpdatedBy)
-		meta.SetUpdatedTimestamp(&p.Updated)
-		meta.SetDeprecatedInternalID(p.ID) // nolint:staticcheck
+		meta.SetGeneration(1)
+		meta.SetDeprecatedInternalID(p.ID) //nolint:staticcheck
+
+		// Only set updated metadata if it is different
+		if p.UpdatedBy != p.CreatedBy || p.Updated.Sub(p.Created) > time.Second {
+			meta.SetUpdatedBy(p.UpdatedBy)
+			meta.SetUpdatedTimestamp(&p.Updated)
+			meta.SetGeneration(2)
+		}
 
 		res.Items = append(res.Items, item)
 		if len(res.Items) > limit {
