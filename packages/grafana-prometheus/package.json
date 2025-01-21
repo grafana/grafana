@@ -92,7 +92,7 @@
     "@types/jest": "29.5.14",
     "@types/jquery": "3.5.32",
     "@types/lodash": "4.17.14",
-    "@types/node": "22.10.6",
+    "@types/node": "22.10.7",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.5",
     "@types/react": "18.3.18",
