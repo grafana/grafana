@@ -204,7 +204,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
-	if hits.Hits == nil || len(hits.Hits) == 0 {
+	if len(hits.Hits) == 0 {
 		return nil, dashboards.ErrFolderNotFound
 	}
 
