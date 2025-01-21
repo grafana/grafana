@@ -17,6 +17,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
+	"github.com/grafana/authlib/types"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -213,37 +214,38 @@ func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequ
 	return listReq, nil
 }
 
-func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceInfo, error) {
+func validateNamespace(ctx context.Context, nameSpace string) (types.NamespaceInfo, error) {
 	if nameSpace == "" {
-		return claims.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
+		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
 	}
-	authInfo, has := claims.AuthInfoFrom(ctx)
+	authInfo, has := types.AuthInfoFrom(ctx)
 	if !has {
-		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
+		return types.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
 	}
-	if !claims.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
-		return claims.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
+	if !types.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
+		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
 	}
 
-	ns, err := claims.ParseNamespace(nameSpace)
+	ns, err := types.ParseNamespace(nameSpace)
 	if err != nil {
-		return claims.NamespaceInfo{}, err
+		return types.NamespaceInfo{}, err
 	}
 	return ns, nil
 }
 
-func (s *Service) validateSubject(ctx context.Context, subject string) (string, claims.IdentityType, error) {
+func (s *Service) validateSubject(ctx context.Context, subject string) (string, types.IdentityType, error) {
 	if subject == "" {
 		return "", "", status.Error(codes.InvalidArgument, "subject is required")
 	}
 
 	ctxLogger := s.logger.FromContext(ctx)
-	identityType, userUID, err := claims.ParseTypeID(subject)
+	identityType, userUID, err := types.ParseTypeID(subject)
 	if err != nil {
 		return "", "", err
 	}
+
 	// Permission check currently only checks user, anonymous user, service account and renderer permissions
-	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount || identityType == claims.TypeAnonymous || identityType == claims.TypeRenderService) {
+	if !(identityType == types.TypeUser || identityType == types.TypeServiceAccount || identityType == types.TypeAnonymous || identityType == types.TypeRenderService) {
 		ctxLogger.Error("unsupported identity type", "type", identityType)
 		return "", "", status.Error(codes.PermissionDenied, "unsupported identity type")
 	}
@@ -268,7 +270,7 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 	return action, nil
 }
 
-func (s *Service) getIdentityPermissions(ctx context.Context, ns claims.NamespaceInfo, idType claims.IdentityType, userID, action string) (map[string]bool, error) {
+func (s *Service) getIdentityPermissions(ctx context.Context, ns types.NamespaceInfo, idType types.IdentityType, userID, action string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getIdentityPermissions")
 	defer span.End()
 
@@ -280,7 +282,7 @@ func (s *Service) getIdentityPermissions(ctx context.Context, ns claims.Namespac
 	}
 
 	switch idType {
-	case claims.TypeAnonymous:
+	case types.TypeAnonymous:
 		return s.getAnonymousPermissions(ctx, ns, action, actionSets)
 	case claims.TypeRenderService:
 		return s.getRendererPermissions(ctx, action)
@@ -346,7 +348,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	return res.(map[string]bool), nil
 }
 
-func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string, actionSets []string) (map[string]bool, error) {
+func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.NamespaceInfo, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getAnonymousPermissions")
 	defer span.End()
 
@@ -382,7 +384,7 @@ func (s *Service) getRendererPermissions(ctx context.Context, action string) (ma
 	return map[string]bool{}, nil
 }
 
-func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
+func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
 	uidCacheKey := userIdentifierCacheKey(ns.Value, userUID)
 	if cached, ok := s.idCache.Get(ctx, uidCacheKey); ok {
 		return &cached, nil
@@ -411,7 +413,7 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInf
 	return userIdentifiers, nil
 }
 
-func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
+func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserTeams")
 	defer span.End()
 
@@ -445,7 +447,7 @@ func (s *Service) getUserTeams(ctx context.Context, ns claims.NamespaceInfo, use
 	return teamIDs, nil
 }
 
-func (s *Service) getUserBasicRole(ctx context.Context, ns claims.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
+func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserBasicRole")
 	defer span.End()
 
@@ -544,7 +546,7 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 	return false, nil
 }
 
-func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (map[string]FolderNode, error) {
+func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (map[string]FolderNode, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.buildFolderTree")
 	defer span.End()
 

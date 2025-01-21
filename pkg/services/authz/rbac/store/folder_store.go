@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/grafana/authlib/claims"
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -11,7 +11,7 @@ import (
 )
 
 type FolderStore interface {
-	ListFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error)
+	ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error)
 }
 
 type Folder struct {
@@ -55,7 +55,7 @@ func newListFolders(sql *legacysql.LegacyDatabaseHelper, query *FolderQuery) lis
 	}
 }
 
-func (s *SQLFolderStore) ListFolders(ctx context.Context, ns claims.NamespaceInfo) ([]Folder, error) {
+func (s *SQLFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.ListFolders")
 	defer span.End()
 
