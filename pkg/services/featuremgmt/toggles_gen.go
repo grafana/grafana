@@ -568,7 +568,7 @@ const (
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
 	// FlagAlertingSaveStateCompressed
-	// Uses the compressed state format to save alert state to the database
+	// Enables the compressed protobuf-based alert state storage
 	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
 
 	// FlagScopeApi

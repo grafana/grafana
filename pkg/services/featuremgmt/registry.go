@@ -1054,7 +1054,7 @@ var (
 		},
 		{
 			Name:         "alertingSaveStateCompressed",
-			Description:  "Uses the compressed state format to save alert state to the database",
+			Description:  "Enables the compressed protobuf-based alert state storage",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
