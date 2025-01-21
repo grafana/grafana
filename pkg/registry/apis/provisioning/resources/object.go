@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -19,9 +18,6 @@ type ResourceListerFromSearch struct {
 }
 
 func NewResourceLister(index resource.RepositoryIndexClient) ResourceLister {
-	if index == nil {
-		return &errorLister{}
-	}
 	return &ResourceListerFromSearch{
 		index: index,
 	}
@@ -79,16 +75,4 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		})
 	}
 	return stats, nil
-}
-
-type errorLister struct{}
-
-// List implements ResourceLister.
-func (e *errorLister) List(ctx context.Context, namespace string, repository string) (*provisioning.ResourceList, error) {
-	return nil, fmt.Errorf("missing search index")
-}
-
-// Stats implements ResourceLister.
-func (e *errorLister) Stats(ctx context.Context, namespace string, repository string) (*provisioning.ResourceStats, error) {
-	return nil, fmt.Errorf("missing search index")
 }
