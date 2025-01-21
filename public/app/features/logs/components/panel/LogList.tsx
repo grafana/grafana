@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ListChildComponentProps, VariableSizeList } from 'react-window';
 
@@ -7,7 +8,6 @@ import { useTheme2 } from '@grafana/ui';
 import { LogLine } from './LogLine';
 import { preProcessLogs, ProcessedLogModel } from './processing';
 import { getLogLineSize, init as initVirtualization, ScrollToLogsEvent, storeLogLineSize } from './virtualization';
-import { debounce } from 'lodash';
 
 interface Props {
   app?: CoreApp;
