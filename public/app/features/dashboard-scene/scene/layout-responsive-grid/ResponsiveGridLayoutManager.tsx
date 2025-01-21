@@ -4,6 +4,8 @@ import { Select } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { changeLayoutTo } from '../layouts-shared/DashboardLayoutSelector';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -32,7 +34,7 @@ export class ResponsiveGridLayoutManager
   }
 
   public addNewRow(): void {
-    throw new Error('Method not implemented.');
+    changeLayoutTo(this, RowsLayoutManager.getDescriptor());
   }
 
   public getNextPanelId(): number {
