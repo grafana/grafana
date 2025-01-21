@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	"github.com/grafana/authlib/types"
 )
 
 type inProcExchanger struct {
@@ -33,7 +33,7 @@ func createInProcToken() (*authn.TokenExchangeResponse, error) {
 		Claims: jwt.Claims{
 			Audience: []string{"resourceStore"},
 			Issuer:   "grafana",
-			Subject:  claims.NewTypeID(claims.TypeAccessPolicy, "1"),
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "1"),
 		},
 		Rest: authn.AccessTokenClaims{
 			Namespace:            "*",
