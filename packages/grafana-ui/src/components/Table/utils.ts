@@ -9,6 +9,7 @@ import {
   DisplayValue,
   DisplayValueAlignmentFactors,
   Field,
+  FieldConfigSource,
   fieldReducers,
   FieldType,
   formattedValueToString,
@@ -713,19 +714,14 @@ export function guessTextBoundingBox(
  * To do this we either select a single record if there aren't many records
  * or we select records at random and sample their size.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function guessLongestField(fieldConfig: any, data: DataFrame) {
+export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFrame) {
   let longestField = undefined;
   const SAMPLE_SIZE = 3;
 
   // If the default field option is set to allow text wrapping
   // we determine the field to wrap text with here and then
   // pass it to the RowsList
-  if (
-    fieldConfig !== undefined &&
-    fieldConfig.defaults.custom !== undefined &&
-    fieldConfig.defaults.custom.cellOptions.wrapText
-  ) {
+  if (fieldConfig.defaults.custom?.cellOptions?.wrapText) {
     const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
 
     if (stringFields.length >= 1 && stringFields[0].values.length > 0) {
