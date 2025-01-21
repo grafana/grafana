@@ -57,8 +57,11 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: advisorv0alpha1.CheckKind(),
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-						_, err := getCheck(req.Object, checkMap)
-						return err
+						if req.Object != nil {
+							_, err := getCheck(req.Object, checkMap)
+							return err
+						}
+						return nil
 					},
 				},
 				Watcher: &simple.Watcher{
