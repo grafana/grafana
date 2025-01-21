@@ -109,14 +109,14 @@ refs:
 
 # Create and manage reports
 
-**Reporting** allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud and in Grafana Enterprise.
+**Reporting** allows you to send automated and scheduled emails from any of your dashboards and have Grafana. You can configure several elements of these reports including generating PDF and CSV file attachments or including and embedded images. This feature is available in Grafana Cloud and in Grafana Enterprise.
 
 {{< admonition type="note" >}}
 If you have [Role-based access control](ref:role-based-access-control) enabled, for some actions you would need to have relevant permissions.
 Refer to specific guides to understand what permissions are required.
 {{< /admonition >}}
 
-Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes, unless you've configured a custom time range.
+Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
 
 ## Requirements
 
@@ -149,7 +149,7 @@ To create a report, follow these steps:
 
 1. Click **Dashboards > Reporting** in the main menu.
 1. Click **+ Create a new report**.
-1. Complete the report steps, as needed; you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
+1. Complete the report steps, as needed:
    - [Select dashboard](#1-select-dashboard)
    - [Format report](#2-format-report)
    - [Schedule](#3-schedule)
@@ -163,6 +163,8 @@ To create a report, follow these steps:
 ### 1. Select dashboard
 
 At this step, select the dashboard or dashboards on which the report is based, as well as the variables and time range for those dashboards. The options are:
+
+<!-- continue here -->
 
 <!-- prettier-ignore-start -->
 
