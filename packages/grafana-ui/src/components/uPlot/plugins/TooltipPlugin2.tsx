@@ -346,7 +346,7 @@ export const TooltipPlugin2 = ({
             dataLinks = getLinksRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
             const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
-            if (oneClickLink) {
+            if (oneClickLink != null) {
               window.open(oneClickLink.href, oneClickLink.target ?? '_self');
             }
 

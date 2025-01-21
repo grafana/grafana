@@ -18,7 +18,7 @@ export const ADD_ANNOTATION_ID = 'add-annotation-button';
 const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>) => {
   const oneClickLink = dataLinks.find((link) => link.oneClick === true);
 
-  if (oneClickLink) {
+  if (oneClickLink != null) {
     return (
       <Stack direction="column" justifyContent="flex-start" gap={0.5}>
         <span className={styles.oneClickWrapper}>
@@ -50,17 +50,15 @@ const renderActions = (actions: ActionModel[]) => {
   );
 };
 
-export const VizTooltipFooter = ({ dataLinks, actions, annotate }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
-  const oneClickLink = dataLinks.find((link) => link.oneClick === true);
+  const hasOneClickLink = dataLinks.some((link) => link.oneClick === true);
 
   return (
     <div className={styles.wrapper}>
-      {dataLinks?.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
-      {actions && actions.length > 0 && !oneClickLink && (
-        <div className={styles.dataLinks}>{renderActions(actions)}</div>
-      )}
-      {annotate != null && !oneClickLink && (
+      {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
+      {!hasOneClickLink && actions.length > 0 && <div className={styles.dataLinks}>{renderActions(actions)}</div>}
+      {!hasOneClickLink && annotate != null && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>

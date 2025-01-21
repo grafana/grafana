@@ -82,9 +82,9 @@ export const TimeSeriesTooltip = ({
 
   if (seriesIdx != null) {
     const field = series.fields[seriesIdx];
-    const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
+    const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
-    if (isPinned || oneClickLink) {
+    if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables, dataIdx);
 
