@@ -41,8 +41,8 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"updatedBy": "user:XYZ",
 		"name": "test1",
 		"repo": {
-			"name": "SQL",
-			"path": "15",
+			"name": "something",
+			"path": "path/in/system.json",
 			"hash": "xyz"
 		}
 		}`, string(jj))
