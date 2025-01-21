@@ -16,7 +16,6 @@ import { Box, Icon, LinkButton, Stack, Tab, TabsBar, ToolbarButton, Tooltip, use
 
 import { getExploreUrl } from '../../core/utils/explore';
 
-import { buildMetricOverviewScene } from './ActionTabs/MetricOverviewScene';
 import { buildRelatedMetricsScene } from './ActionTabs/RelatedMetricsScene';
 import { buildLabelBreakdownActionScene } from './Breakdown/LabelBreakdownScene';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
@@ -39,7 +38,7 @@ import {
 } from './shared';
 import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
-const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLogs;
+const { exploreMetricsRelatedLogs } = config.featureToggles;
 
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
@@ -69,7 +68,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   private _onActivate() {
     if (this.state.actionView === undefined) {
-      this.setActionView('overview');
+      this.setActionView('breakdown');
     }
 
     if (config.featureToggles.enableScopesInMetricsExplore) {
@@ -124,7 +123,6 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 }
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
-  { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildLabelBreakdownActionScene },
   {
     displayName: 'Related metrics',
@@ -134,7 +132,7 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
   },
 ];
 
-if (relatedLogsFeatureEnabled) {
+if (exploreMetricsRelatedLogs) {
   actionViewsDefinitions.push({
     displayName: 'Related logs',
     value: 'related_logs',
@@ -197,7 +195,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               icon="compass"
               tooltip="Open in explore"
               onClick={model.openExploreLink}
-            ></ToolbarButton>
+            />
             <ShareTrailButton trail={trail} />
             <ToolbarButton
               variant={'canvas'}

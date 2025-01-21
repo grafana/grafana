@@ -3344,15 +3344,6 @@
       "start-your-metrics-exploration": "Start your metrics exploration!",
       "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
     },
-    "metric-overview": {
-      "description-label": "Description",
-      "labels": "Labels",
-      "metric-attributes": "Attributes",
-      "no-description": "No description available",
-      "type-label": "Type",
-      "unit-label": "Unit",
-      "unknown-type": "Unknown"
-    },
     "metric-select": {
       "filter-by": "Filter by",
       "native-histogram": "Native Histogram",
