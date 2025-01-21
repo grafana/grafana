@@ -32,15 +32,6 @@ export const {
   },
 });
 
-// TODO probably remove
-export function withNamespace<T extends (...args: any[]) => any>(queryMethod: T) {
-  return (args: Omit<Parameters<T>[0], 'namespace'>) =>
-    queryMethod({
-      namespace: config.namespace,
-      ...args,
-    });
-}
-
 export function isQueryLibraryEnabled() {
   return config.featureToggles.queryLibrary;
 }
