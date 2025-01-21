@@ -76,7 +76,12 @@ jest.mock('../state/hooks', () => ({
   useFetchDetailsLazy: () => jest.fn(),
 }));
 
+jest.mock('../hooks/usePluginConfig', () => ({
+  usePluginConfig: jest.fn().mockReturnValue({ value: {}, loading: false }),
+}));
+
 const mockUseGetSingle = jest.requireMock('../state/hooks').useGetSingle;
+const mockUsePluginConfig = jest.requireMock('../hooks/usePluginConfig').usePluginConfig;
 
 describe('PluginDetailsPage', () => {
   beforeEach(() => {
@@ -140,5 +145,13 @@ describe('PluginDetailsPage', () => {
 
     render(<PluginDetailsPage pluginId="test-plugin" />);
     expect(screen.getByRole('tab', { name: 'Plugin details' })).toBeInTheDocument();
+  });
+
+  it('should show "Datasource connections" tab when plugin is type of datasource', () => {
+    config.featureToggles.datasourceConnectionsTab = true;
+    mockUseGetSingle.mockReturnValue({ ...plugin, type: PluginType.datasource });
+    mockUsePluginConfig.mockReturnValue({ value: {}, loading: false });
+    render(<PluginDetailsPage pluginId={plugin.id} />);
+    expect(screen.getByRole('tab', { name: 'Data source connections' })).toBeVisible();
   });
 });
