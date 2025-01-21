@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -35,7 +35,7 @@ func ProvideUnifiedStorageClient(
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc authz.AccessClient,
+	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
@@ -62,7 +62,7 @@ func newClient(opts options.StorageOptions,
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc authz.AccessClient,
+	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
