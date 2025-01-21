@@ -26,7 +26,25 @@ For even more detail about all the changes in this release, refer to the [change
 
 # What's new
 
+## Grafana Cloud Migration Assistant
+
+### Grafana Cloud Migration Assistant supports all plugins and Grafana Alerting
+
+<!-- #wg-everyone-to-cloud -->
+
+_Available in public preview in all editions of Grafana_
+
+The Grafana Cloud Migration Assistant enables you to seamlessly migrate resources from your Grafana OSS/Enterprise instance to Grafana Cloud in just a few clicks. The Migration Assistant launched in Grafana 11.2, with initial support for dashboards, data sources, and folders.
+
+We're excited to announce plugin migration support. You can now migrate any of the hundreds of plugins in the [plugins catalog](https://grafana.com/grafana/plugins/all-plugins/) using the assistant.
+
+We've also made it possible to easily migrate your Grafana Alerting resources from your self-managed instance. Grafana Alerting is a widely used feature and has numerous configuration options. The Migration Assistant saves you time and makes it simple to copy your alerts to a Grafana Cloud instance within minutes.
+
+Ready to make the move? Explore our [docs](https://grafana.com/docs/grafana-cloud/account-management/migration-guide/#grafana-cloud-migration-assistant) to learn more about the Cloud Migration Assistant today and begin your effortless transition to Grafana Cloud.
+
 ## Authentication and authorization
+
+### OAuth and SAML session handling improvements
 
 <!-- #identity-access, Mihaly Gyongyosi (@Misi) -->
 
@@ -193,6 +211,18 @@ Select a time column from the **Column** drop-down and a time interval from the 
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/#macros)
 
+### Elasticsearch cross-cluster search
+
+<!-- #grafana-aws-datasources" -->
+
+_Available in public preview in all editions of Grafana_
+
+The Elasticsearch data source plugin now offers support for Elasticsearch's Cross-cluster Search feature.
+
+If you’re a big Elasticsearch user, you might have multiple clusters set up for geographical separation, different teams or departments, compliance, or scaling reasons. Previously, you needed to set up a separate data source in Grafana for each cluster. Now with cross-cluster search, you can query data across all these clusters from a single Grafana data source. This makes it simpler and more convenient to query all of your Elasticsearch logs. You can learn more about this feature in the [Elasticsearch docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-cross-cluster-search.html).
+
+To use this, it must be enabled in Elasticsearch ([docs](https://www.elastic.co/guide/en/cloud/current/ec-enable-ccs.html)) and enabled in Grafana with the `elasticsearchCrossClusterSearch` [feature toggle](https://grafana.com/docs/grafana/l<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
 ## Other
 
 ### Public dashboards are now Shared dashboards
@@ -223,4 +253,23 @@ In addition to adding these theme options, we've also renamed the **Report brand
 
 You can set these options under **Dashboards > Reporting > Settings**.
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION/dashboards/create-reports/#report-settings)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#report-settings)
+
+## Plugins
+
+### Plugin Frontend Sandbox
+
+<!-- #grafana-plugins-platform -->
+
+_Available in public preview in all editions of Grafana_
+
+The Plugin Frontend Sandbox is a security feature that isolates plugin frontend code from the main Grafana application. When enabled, plugins run in a separate JavaScript context, which provides several security benefits:
+
+- Prevents plugins from modifying parts of the Grafana interface outside their designated areas
+- Stops plugins from interfering with other plugins functionality
+- Protects core Grafana features from being altered by plugins
+- Prevents plugins from modifying global browser objects and behaviors
+
+Plugins running inside the Frontend Sandbox should continue to work normally without any noticeable changes in their intended functionality.
+
+We are currently rolling this functionality, which is disabled by default, to our cloud and on-prem customers. Please [read the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/#enable-frontend-sandbox) on how to enable and use the sandbox on your instance.
