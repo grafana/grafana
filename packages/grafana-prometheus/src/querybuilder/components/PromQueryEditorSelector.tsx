@@ -46,6 +46,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     onAddQuery,
     datasource: { defaultEditor },
     queries,
+    queryBuilderOnly,
   } = props;
 
   const [parseModalOpen, setParseModalOpen] = useState(false);
@@ -75,6 +76,10 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         }
       }
       changeEditorMode(query, newMetricEditorMode, onChange);
+      if (queryBuilderOnly) {
+        // Trigger onRunQuery to change URL to reflect the new editor mode.
+        onRunQuery();
+      }
     },
     [onChange, query, app]
   );
@@ -160,7 +165,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
             showExplain={explain}
           />
         )}
-        <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />
+        {!queryBuilderOnly && <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />}
       </EditorRows>
     </>
   );

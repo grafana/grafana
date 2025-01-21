@@ -62,9 +62,10 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
+  queryBuilderOnly?: boolean;
 }
 
-export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen, queryBuilderOnly }: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
@@ -206,8 +207,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
 
   return (
     <div>
-      {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      {!isSingleTopNav && (
+      {!queryBuilderOnly && refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
+      {!queryBuilderOnly && !isSingleTopNav && (
         <div>
           <AppChromeUpdate actions={navBarActions} />
         </div>
@@ -215,7 +216,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
-          <ToolbarButton
+          !queryBuilderOnly && <ToolbarButton
             key="content-outline"
             variant="canvas"
             tooltip="Content outline"
@@ -228,7 +229,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           >
             Outline
           </ToolbarButton>,
-          <DataSourcePicker
+          !queryBuilderOnly && <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed={!isCorrelationsEditorMode}
             onChange={onChangeDatasource}
@@ -241,8 +242,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
         forceShowLeftItems
       >
         {[
-          <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
-          !splitted ? (
+          !queryBuilderOnly && <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
+          !queryBuilderOnly && !splitted ? (
             <ToolbarButton
               variant="canvas"
               key="split"
@@ -254,7 +255,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               <Trans i18nKey="explore.toolbar.split-title">Split</Trans>
             </ToolbarButton>
           ) : (
-            <ButtonGroup key="split-controls">
+            !queryBuilderOnly && <ButtonGroup key="split-controls">
               <ToolbarButton
                 variant="canvas"
                 tooltip={
@@ -277,7 +278,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} timeZone={timeZone} />,
+          !queryBuilderOnly && <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} timeZone={timeZone} />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

@@ -15,6 +15,7 @@ import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
+  queryBuilderOnly?: boolean;
 }
 
 const makeSelectors = (exploreId: string) => {
@@ -31,7 +32,7 @@ const makeSelectors = (exploreId: string) => {
   };
 };
 
-export const QueryRows = ({ exploreId }: Props) => {
+export const QueryRows = ({ exploreId, queryBuilderOnly }: Props) => {
   const dispatch = useDispatch();
   const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
     () => makeSelectors(exploreId),
@@ -88,6 +89,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      queryBuilderOnly={queryBuilderOnly}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}
