@@ -676,22 +676,25 @@ spec:
 
 	sub = oas.Paths.Paths[repoprefix+"/export"]
 	if sub != nil {
+		optionsSchema := defs[defsBase+"ExportOptions"].Schema
 		sub.Post.Description = "Export from grafana into the remote repository"
-		// sub.Post.Parameters = append(sub.Post.Parameters,
-		// 	&spec3.Parameter{ParameterProps: spec3.ParameterProps{
-		// 		Name:        "folder",
-		// 		In:          "query",
-		// 		Description: "optional source folder",
-		// 		Schema:      spec.StringProperty(),
-		// 		Required:    false,
-		// 	}},
-		// 	&spec3.Parameter{ParameterProps: spec3.ParameterProps{
-		// 		Name:        "history",
-		// 		In:          "query",
-		// 		Description: "Keep the resource history",
-		// 		Schema:      spec.BoolProperty(),
-		// 		Required:    false,
-		// 	}})
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &optionsSchema,
+							Example: &provisioning.ExportOptions{
+								Folder:  "grafan-folder-ref",
+								History: true,
+								Branch:  "target-branch",
+								Prefix:  "prefix/in/repo/tree",
+							},
+						},
+					},
+				},
+			},
+		}
 	}
 
 	// The root API discovery list
