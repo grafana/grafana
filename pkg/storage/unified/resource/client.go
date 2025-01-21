@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"

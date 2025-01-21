@@ -12,8 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
