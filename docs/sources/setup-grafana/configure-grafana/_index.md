@@ -1277,7 +1277,7 @@ Override token URL for Azure Active Directory.
 
 By default is the same as token URL configured for AAD authentication settings.
 
-### user_identity_client_authentication
+### `user_identity_client_authentication`
 
 Override client authentication method for Azure Active Directory.
 
