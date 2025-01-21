@@ -26,6 +26,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { isNotFoundError } from '../alerting/unified/api/util';
 
+import { ExportToRepository } from './ExportToRepository';
 import { StatusBadge } from './StatusBadge';
 import {
   useListJobQuery,
@@ -42,6 +43,7 @@ enum TabSelection {
   Resources = 'resources',
   Files = 'files',
   Jobs = 'jobs',
+  Export = 'export',
   Health = 'health',
 }
 
@@ -49,6 +51,7 @@ const tabInfo: SelectableValue<TabSelection> = [
   { value: TabSelection.Resources, label: 'Resources', title: 'Resources saved in grafana database' },
   { value: TabSelection.Files, label: 'Files', title: 'The raw file list from the repository' },
   { value: TabSelection.Jobs, label: 'Recent events' },
+  { value: TabSelection.Export, label: 'Export' },
   { value: TabSelection.Health, label: 'Repository health' },
 ];
 
@@ -97,6 +100,7 @@ export default function RepositoryStatusPage() {
                   {tab === TabSelection.Resources && <ResourcesView repo={data} />}
                   {tab === TabSelection.Files && <FilesView repo={data} />}
                   {tab === TabSelection.Jobs && <JobsView repo={data} />}
+                  {tab === TabSelection.Export && <ExportToRepository repo={data} />}
                   {tab === TabSelection.Health && <RepositoryHealth repo={data} />}
                 </TabContent>
               </>

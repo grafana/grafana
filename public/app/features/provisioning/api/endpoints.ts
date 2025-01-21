@@ -84,6 +84,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/export`,
           method: 'POST',
+          body: queryArg.body,
         }),
         invalidatesTags: ['Repository'],
       }),
@@ -276,9 +277,15 @@ export type DeleteRepositoryArg = {
   propagationPolicy?: string;
   body: DeleteOptions;
 };
-export type CreateRepositoryExportResponse = Job;
+export type CreateRepositoryExportResponse = WorkerProgressMessage;
 export type CreateRepositoryExportArg = {
   name: string;
+  body: {
+    branch?: string;
+    folder?: string;
+    history?: boolean;
+    prefix?: string;
+  };
 };
 export type GetRepositoryFilesResponse = {
   apiVersion?: string;
@@ -570,6 +577,15 @@ export type DeleteOptions = {
   orphanDependents?: boolean;
   preconditions?: Preconditions;
   propagationPolicy?: string;
+};
+export type WorkerProgressMessage = {
+  apiVersion?: string;
+  index?: number;
+  kind?: string;
+  message?: string;
+  size?: number;
+  state: 'error' | 'pending' | 'success' | 'working';
+  url?: string;
 };
 export type LintIssue = {
   message: string;
