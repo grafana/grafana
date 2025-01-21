@@ -224,17 +224,18 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
       timeFieldConfig: timeField?.config ?? {},
     };
 
-    if (timeField && valueField) {
-      for (let pointIndex = 0; pointIndex < length; pointIndex++) {
-        const time: number = timeField.values[pointIndex];
-        const value: number = valueField.values[pointIndex];
-        aggregated[level] ??= {};
-        aggregated[level][time] = (aggregated[level][time] || 0) + value;
+    if (!timeField || !valueField) {
+      return;
+    }
+    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+      const time: number = timeField.values[pointIndex];
+      const value: number = valueField.values[pointIndex];
+      aggregated[level] ??= {};
+      aggregated[level][time] = (aggregated[level][time] || 0) + value;
 
-        totals[time] = (totals[time] || 0) + value;
-        if (totals[time] > maximumValue) {
-          maximumValue = totals[time];
-        }
+      totals[time] = (totals[time] || 0) + value;
+      if (totals[time] > maximumValue) {
+        maximumValue = totals[time];
       }
     }
   });
