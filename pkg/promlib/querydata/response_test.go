@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -67,4 +68,40 @@ func TestAddMetadataToMultiFrame(t *testing.T) {
 		assert.Len(t, result.Frames, 1)
 		assert.Equal(t, "yMin", result.Frames[0].Fields[1].Name)
 	})
+}
+
+// Helper function to create mock HTTP response
+func createMockResponse(statusCode int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: statusCode,
+		Body:       io.NopCloser(bytes.NewReader([]byte(body))),
+	}
+}
+
+func TestParseResponse_ErrorCases(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name       string
+		statusCode int
+		body       string
+	}{
+		{"500 Internal Server Error", http.StatusInternalServerError, `{"error":"internal server error"}`},
+		{"404 Not Found", http.StatusNotFound, `{"error":"not found"}`},
+		{"401 Unauthorized", http.StatusUnauthorized, `{"error":"unauthorized"}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := createMockResponse(tt.statusCode, tt.body)
+			q := &models.Query{}
+			qd := QueryData{exemplarSampler: exemplar.NewStandardDeviationSampler}
+			qd.log = log.New()
+			resp := qd.parseResponse(ctx, q, res)
+
+			assert.NotNil(t, resp.Error)
+			assert.Contains(t, resp.Error.Error(), "unexpected response")
+			assert.Equal(t, 1, len(resp.Frames))
+		})
+	}
 }
