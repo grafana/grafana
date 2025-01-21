@@ -40,7 +40,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 			hs.DashboardService = svc
 
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService)
 		})
 	}
 

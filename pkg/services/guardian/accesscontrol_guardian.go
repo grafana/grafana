@@ -158,17 +158,23 @@ func NewAccessControlFolderGuardian(
 	folderService folder.Service,
 ) (DashboardGuardian, error) {
 	if f.UID == "" || f.ID == 0 {
-		folder, err := folderService.Get(ctx, &folder.GetFolderQuery{
-			ID:           &f.ID,
-			UID:          &f.UID,
+		query := &folder.GetFolderQuery{
 			OrgID:        orgID,
 			SignedInUser: user,
-		})
+		}
+
+		if f.UID != "" {
+			query.UID = &f.UID
+		} else {
+			query.ID = &f.ID
+		}
+
+		folder, err := folderService.Get(ctx, query)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder by id: %w", err)
+				return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder: %w", err)
 			}
-			return nil, ErrGuardianGetFolderFailure.Errorf("failed to get folder by id: %w", err)
+			return nil, ErrGuardianGetFolderFailure.Errorf("failed to get folder: %w", err)
 		}
 		f = folder
 	}

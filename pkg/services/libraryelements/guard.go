@@ -46,6 +46,9 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 		UID:   folderUID,
 		OrgID: user.GetOrgID(),
 	}, user.GetOrgID(), user)
+	if err != nil {
+		return err
+	}
 
 	canEdit, err := g.CanEdit()
 	if err != nil {
