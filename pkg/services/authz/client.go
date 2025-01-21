@@ -64,6 +64,7 @@ func ProvideAuthZClient(
 		// Register the server
 		server := rbac.NewService(
 			sql,
+			store.NewSQLFolderStore(sql, tracer),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),

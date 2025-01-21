@@ -713,7 +713,7 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace claims.Nam
 	return f.userPermissions, nil
 }
 
-func (f *fakeStore) GetFolders(ctx context.Context, namespace claims.NamespaceInfo) ([]store.Folder, error) {
+func (f *fakeStore) ListFolders(ctx context.Context, namespace claims.NamespaceInfo) ([]store.Folder, error) {
 	f.calls++
 	if f.err {
 		return nil, fmt.Errorf("store error")

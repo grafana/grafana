@@ -23,6 +23,7 @@ func RegisterRBACAuthZService(
 	cache cache.Cache) {
 	server := rbac.NewService(
 		db,
+		store.NewSQLFolderStore(db, tracer),
 		legacy.NewLegacySQLStores(db),
 		store.NewSQLPermissionStore(db, tracer),
 		log.New("authz-grpc-server"),

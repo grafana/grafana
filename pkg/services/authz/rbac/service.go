@@ -42,6 +42,7 @@ type Service struct {
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
 	store           store.Store
+	folderStore     store.FolderStore
 	permissionStore store.PermissionStore
 	identityStore   legacy.LegacyIdentityStore
 
@@ -64,6 +65,7 @@ type Service struct {
 
 func NewService(
 	sql legacysql.LegacyDatabaseProvider,
+	folderStore store.FolderStore,
 	identityStore legacy.LegacyIdentityStore,
 	permissionStore store.PermissionStore,
 	logger log.Logger,
@@ -73,6 +75,7 @@ func NewService(
 ) *Service {
 	return &Service{
 		store:           store.NewStore(sql, tracer),
+		folderStore:     folderStore,
 		permissionStore: permissionStore,
 		identityStore:   identityStore,
 		logger:          logger,
@@ -551,7 +554,7 @@ func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) 
 	}
 
 	res, err, _ := s.sf.Do(ns.Value+"_buildFolderTree", func() (interface{}, error) {
-		folders, err := s.store.GetFolders(ctx, ns)
+		folders, err := s.folderStore.ListFolders(ctx, ns)
 		if err != nil {
 			return nil, fmt.Errorf("could not get folders: %w", err)
 		}
