@@ -890,8 +890,9 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 
 	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
 		// The doc ID has the format: <namespace>/<group>/<resourceType>/<name>
-		// Need to get the document ID from the internal ID
-		// Tried casting d.IndexInternalID to a string, but its empty when using a file-based index. Unsure why.
+		// IndexInternalID will be the same as the doc ID when using an in-memory index, but when using a file-based
+		// index it becomes a binary encoded number that has some other internal meaning. Using ExternalID() will get the
+		// correct doc ID regardless of the index type.
 		d.ID, err = i.ExternalID(d.IndexInternalID)
 		if err != nil {
 			q.log.Debug("Error getting external ID", "error", err)
