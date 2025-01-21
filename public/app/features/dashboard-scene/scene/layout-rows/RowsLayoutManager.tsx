@@ -15,6 +15,7 @@ import { useStyles2 } from '@grafana/ui';
 import { isClonedSceneObject } from '../../utils/clone';
 
 import { DashboardScene } from '../DashboardScene';
+import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
@@ -118,6 +119,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         title?: string;
         isCollapsed?: boolean;
         children: SceneGridItemLike[];
+        repeat?: string;
       }> = [];
       let children: SceneGridItemLike[] | undefined;
 
@@ -128,11 +130,16 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
         if (child instanceof SceneGridRow) {
           if (!isClonedSceneObject(child)) {
+            const behaviour = child.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+
             config.push({
               title: child.state.title,
               isCollapsed: !!child.state.isCollapsed,
               children: child.state.children,
+              repeat: behaviour?.state.variableName,
             });
+
+            // Since we encountered a row item, any subsequent panels should be added to a new row
             children = undefined;
           }
         } else {
