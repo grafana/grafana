@@ -126,12 +126,14 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         }
 
         if (child instanceof SceneGridRow) {
-          config.push({
-            title: child.state.title,
-            isCollapsed: !!child.state.isCollapsed,
-            children: child.state.children,
-          });
-          children = undefined;
+          if (!child.state.key?.includes('-clone-')) {
+            config.push({
+              title: child.state.title,
+              isCollapsed: !!child.state.isCollapsed,
+              children: child.state.children,
+            });
+            children = undefined;
+          }
         } else {
           if (!children) {
             children = [];
