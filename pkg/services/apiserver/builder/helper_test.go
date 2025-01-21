@@ -11,8 +11,8 @@ import (
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	apiserverimpl "github.com/grafana/grafana/pkg/services/apiserver/serviceimpl"
 )
 
 func TestAddPostStartHooks(t *testing.T) {
@@ -60,7 +60,7 @@ func TestAddPostStartHooks(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := server.NewRecommendedConfig(apiserverimpl.Codecs)
+			config := server.NewRecommendedConfig(apiserver.Codecs)
 			err := builder.AddPostStartHooks(config, tt.builders)
 			if tt.wantErr {
 				require.Error(t, err)

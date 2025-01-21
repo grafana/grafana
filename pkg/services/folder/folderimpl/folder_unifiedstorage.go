@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -22,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/unifiedstorage"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,7 +39,6 @@ type foldk8sHandler struct {
 	cfg        *setting.Cfg
 	namespacer request.NamespaceMapper
 	gvr        schema.GroupVersionResource
-	usReg      unifiedstorage.DependencyRegistry
 }
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -681,7 +680,7 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 // -----------------------------------------------------------------------------------------
 
 func (fk8s *foldk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	cfg := fk8s.usReg.GetRestConfigProvider().GetRestConfig(ctx)
+	cfg := apiserver.GetRestConfig(ctx)
 	if cfg == nil {
 		return nil, false
 	}

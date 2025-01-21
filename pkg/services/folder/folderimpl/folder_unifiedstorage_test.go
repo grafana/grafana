@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/unifiedstorage/unifiedstorageimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -159,18 +158,14 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	db, cfg := sqlstore.InitTestDB(t)
 
-	restCfgProvider := rcp{
-		Host: folderApiServerMock.URL,
-	}
-
-	usReg := unifiedstorageimpl.ProvideRegistry()
-	usReg.RegisterRestConfigProvider(restCfgProvider)
+	//restCfgProvider := rcp{
+	//	Host: folderApiServerMock.URL,
+	//}
 
 	k8sHandler := &foldk8sHandler{
 		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
 		namespacer: request.GetNamespaceMapper(cfg),
 		cfg:        cfg,
-		usReg:      usReg,
 	}
 
 	unifiedStore := ProvideUnifiedStore(k8sHandler)

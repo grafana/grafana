@@ -35,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
-	"github.com/grafana/grafana/pkg/services/unifiedstorage"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -75,13 +74,11 @@ func ProvideService(
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
-	usReg unifiedstorage.DependencyRegistry,
 ) *Service {
 	k8sHandler := &foldk8sHandler{
 		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
 		namespacer: request.GetNamespaceMapper(cfg),
 		cfg:        cfg,
-		usReg:      usReg,
 	}
 
 	unifiedStore := ProvideUnifiedStore(k8sHandler)
