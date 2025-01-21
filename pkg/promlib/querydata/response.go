@@ -32,7 +32,8 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	statusCode := res.StatusCode
 
 	switch {
-	// Status codes that Prometheus might return so we want to parse the response
+	// Status codes that Prometheus might return
+	// so we want to parse the response
 	// https://prometheus.io/docs/prometheus/latest/querying/api/#format-overview
 	case statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices,
 		statusCode == http.StatusBadRequest,
@@ -73,9 +74,6 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 			Error:       fmt.Errorf("unexpected response with status code %d: %s", statusCode, tb),
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(statusCode),
 		}
-
-		// Maybe use this instead of creating the response manually
-		// backend.ErrorResponseWithErrorSource()
 
 		f := data.NewFrame("")
 		addMetadataToMultiFrame(q, f)
