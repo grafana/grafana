@@ -239,9 +239,9 @@ func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReportErrors(ref common
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"type": {
+					"severity": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Investigation or Action recommended (severity of the error)",
+							Description: "Severity of the error",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -264,7 +264,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReportErrors(ref common
 						},
 					},
 				},
-				Required: []string{"type", "reason", "action"},
+				Required: []string{"severity", "reason", "action"},
 			},
 		},
 	}

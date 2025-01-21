@@ -47,17 +47,17 @@ const (
 )
 
 // +k8s:openapi-gen=true
-type CheckStatusType string
+type CheckStatusSeverity string
 
 const (
-	CheckStatusTypeInvestigation CheckStatusType = "investigation"
-	CheckStatusTypeAction        CheckStatusType = "action"
+	CheckStatusSeverityHigh CheckStatusSeverity = "high"
+	CheckStatusSeverityLow  CheckStatusSeverity = "low"
 )
 
 // +k8s:openapi-gen=true
 type CheckV0alpha1StatusReportErrors struct {
-	// Investigation or Action recommended (severity of the error)
-	Type CheckStatusType `json:"type"`
+	// Severity of the error
+	Severity CheckStatusSeverity `json:"severity"`
 	// Human readable reason for the error
 	Reason string `json:"reason"`
 	// Action to take to resolve the error

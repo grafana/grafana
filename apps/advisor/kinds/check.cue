@@ -1,6 +1,6 @@
 package advisor
 
-datasourcecheck: {
+check: {
 	kind:	   "Check"
 	pluralName: "Checks"
 	current:	"v0alpha1"
@@ -21,8 +21,8 @@ datasourcecheck: {
 						count: int
 						// List of errors
 						errors: [...{
-							// Investigation or Action recommended (severity of the error)
-							type: "investigation" | "action"
+							// Severity of the error
+							severity: "high" | "low"
 							// Human readable reason for the error
 							reason: string
 							// Action to take to resolve the error
