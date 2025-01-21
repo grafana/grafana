@@ -38,6 +38,8 @@ import {
   DataLink,
   RepeatOptions,
   DashboardCursorSync,
+  FieldConfig,
+  FieldColor,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -54,7 +56,7 @@ import {
 } from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
-import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -238,14 +240,41 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
 
 function getElements(state: DashboardSceneState) {
   const panels = state.body.getVizPanels() ?? [];
+
   const panelsArray = panels.map((vizPanel: VizPanel) => {
+    // Handle type conversion for color mode
+    const rawColor = vizPanel.state.fieldConfig.defaults.color;
+    let color: FieldColor | undefined;
+
+    if (rawColor) {
+      const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+
+      if (convertedMode) {
+        color = {
+          ...rawColor,
+          mode: convertedMode,
+        };
+      }
+    }
+
+    // Remove null from the defaults because schema V2 doesn't support null or these fields
+    const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+    const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+    const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+    const defaults: FieldConfig = {
+      ...vizPanel.state.fieldConfig.defaults,
+      decimals,
+      min,
+      max,
+      color,
+    };
+
     const vizFieldConfig: FieldConfigSource = {
       ...vizPanel.state.fieldConfig,
-      defaults: {
-        ...vizPanel.state.fieldConfig,
-        decimals: vizPanel.state.fieldConfig.defaults.decimals ?? undefined,
-      },
+      defaults,
     };
+
     const elementSpec: PanelKind = {
       kind: 'Panel',
       spec: {
@@ -271,11 +300,9 @@ function getElements(state: DashboardSceneState) {
         },
       },
     };
-
     return elementSpec;
   });
 
-  // create elements
   const elements = createElements(panelsArray);
   return elements;
 }
@@ -346,7 +373,7 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
             id: transformation.filter?.id ?? '',
             options: transformation.filter?.options ?? {},
           },
-          topic: transformation.topic,
+          ...(transformation.topic && { topic: transformation.topic }),
           options: transformation.options,
         };
 
