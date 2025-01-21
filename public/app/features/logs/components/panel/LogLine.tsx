@@ -34,10 +34,7 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
 
   return (
     <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
-      <div
-        className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}
-        style={{ outline: 'solid 1px red ' }}
-      >
+      <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
         {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
         {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
         {log.body}
