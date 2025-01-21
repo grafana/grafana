@@ -232,7 +232,9 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
         aggregated[level][time] = (aggregated[level][time] || 0) + value;
 
         totals[time] = (totals[time] || 0) + value;
-        maximumValue = Math.max(totals[time], maximumValue);
+        if (totals[time] > maximumValue) {
+          maximumValue = totals[time];
+        }
       }
     }
   });
