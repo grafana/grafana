@@ -681,6 +681,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
           includeAll: v.spec.includeAll,
         };
         variables.push(cv);
+        break;
       case 'ConstantVariable':
         const constant: VariableModel = {
           ...commonProperties,
@@ -688,7 +689,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
             text: v.spec.current.value,
             value: v.spec.current.value,
           },
-          hide: VariableHide.hideVariable,
+          hide: transformVariableHideToEnumV1(v.spec.hide),
           // @ts-expect-error
           query: v.spec.current.value,
         };
@@ -701,7 +702,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
             text: v.spec.current.value,
             value: v.spec.current.value,
           },
-          hide: VariableHide.hideVariable,
+          hide: transformVariableHideToEnumV1(v.spec.hide),
           query: v.spec.query,
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           options: v.spec.options,
@@ -773,51 +774,71 @@ function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): Annotati
   });
 }
 
-function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spec['layout']): Panel[] {
+interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos'> {}
+
+function getPanelsV1(
+  panels: DashboardV2Spec['elements'],
+  layout: DashboardV2Spec['layout']
+): Array<Panel | LibraryPanelDTO> {
   return Object.entries(panels).map(([key, p]) => {
-    const panel = p.spec;
     const layoutElement = layout.spec.items.find(
       (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === key
     );
     const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
     const gridPos = { x, y, w: width, h: height };
-    return {
-      id: panel.id,
-      type: panel.vizConfig.kind,
-      title: panel.title,
-      description: panel.description,
-      fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
-      options: panel.vizConfig.spec.options,
-      pluginVersion: panel.vizConfig.spec.pluginVersion,
-      links:
-        // @ts-expect-error - Panel link is wrongly typed as DashboardLink
-        panel.links?.map<DashboardLink>((l) => ({
-          title: l.title,
-          url: l.url,
-          ...(l.targetBlank && { targetBlank: l.targetBlank }),
-        })) || [],
-      targets: panel.data.spec.queries.map((q) => {
-        return {
-          refId: q.spec.refId,
-          hide: q.spec.hidden,
-          datasource: q.spec.datasource,
-          ...q.spec.query.spec,
-        };
-      }),
-      transformations: panel.data.spec.transformations.map((t) => t.spec),
-      gridPos,
-      cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-      maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
-      interval: panel.data.spec.queryOptions.interval,
-      hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
-      queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-      timeFrom: panel.data.spec.queryOptions.timeFrom,
-      timeShift: panel.data.spec.queryOptions.timeShift,
-      transparent: panel.transparent,
-      ...(repeat?.value && { repeat: repeat.value }),
-      ...(repeat?.direction && { repeatDirection: repeat.direction }),
-      ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
-    };
+    if (p.kind === 'Panel') {
+      const panel = p.spec;
+      return {
+        id: panel.id,
+        type: panel.vizConfig.kind,
+        title: panel.title,
+        description: panel.description,
+        fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
+        options: panel.vizConfig.spec.options,
+        pluginVersion: panel.vizConfig.spec.pluginVersion,
+        links:
+          // @ts-expect-error - Panel link is wrongly typed as DashboardLink
+          panel.links?.map<DashboardLink>((l) => ({
+            title: l.title,
+            url: l.url,
+            ...(l.targetBlank && { targetBlank: l.targetBlank }),
+          })) || [],
+        targets: panel.data.spec.queries.map((q) => {
+          return {
+            refId: q.spec.refId,
+            hide: q.spec.hidden,
+            datasource: q.spec.datasource,
+            ...q.spec.query.spec,
+          };
+        }),
+        transformations: panel.data.spec.transformations.map((t) => t.spec),
+        gridPos,
+        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+        maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
+        interval: panel.data.spec.queryOptions.interval,
+        hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
+        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+        timeFrom: panel.data.spec.queryOptions.timeFrom,
+        timeShift: panel.data.spec.queryOptions.timeShift,
+        transparent: panel.transparent,
+        ...(repeat?.value && { repeat: repeat.value }),
+        ...(repeat?.direction && { repeatDirection: repeat.direction }),
+        ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
+      };
+    } else if (p.kind === 'LibraryPanel') {
+      const panel = p.spec;
+      return {
+        id: 0, //TODO: LibraryPanelSpec.id will be available after https://github.com/grafana/grafana/pull/99281/ is merged
+        title: panel.name,
+        gridPos,
+        libraryPanel: {
+          uid: panel.uid,
+          name: panel.name,
+        },
+      };
+    } else {
+      throw new Error(`Unknown element kind: ${p}`);
+    }
   });
 }
 
