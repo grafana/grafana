@@ -10,12 +10,12 @@ import { Alert, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafan
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { selectFolderRepository } from 'app/features/provisioning/api';
+import { Repository } from 'app/features/provisioning/api';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString, useSelector } from 'app/types';
+import { PermissionLevelString } from 'app/types';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -40,7 +40,7 @@ export interface NestedFolderPickerProps {
   permission?: PermissionLevelString.View | PermissionLevelString.Edit;
 
   /* Callback for when the user selects a folder */
-  onChange?: (folderUID: string | undefined, folderName: string | undefined, repository?: string) => void;
+  onChange?: (folderUID: string | undefined, folderName: string | undefined, repository?: Repository) => void;
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
@@ -260,12 +260,12 @@ export function NestedFolderPicker({
   if (value === '') {
     label = 'Dashboards';
   }
-  const repo = useSelector((state) => selectFolderRepository(state, selectedFolder.data?.uid));
+  const repo = selectedFolder.data?.repository;
   if (repo && label && !overlayOpen) {
     label = (
       <Stack alignItems={'center'}>
         <Text truncate>{label}</Text>
-        <FolderRepo name={repo?.metadata?.name} />
+        <FolderRepo repo={repo} />
       </Stack>
     );
   }

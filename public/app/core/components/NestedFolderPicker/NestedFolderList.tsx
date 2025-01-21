@@ -215,7 +215,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
-          <FolderRepo name={item.repository} />
+          <FolderRepo repo={item.repository} />
         </label>
       </div>
     </div>

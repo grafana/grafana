@@ -95,7 +95,7 @@ function getListParams<T extends ListOptions>(queryArg: T | void) {
 
 const emptyRepos: RepositoryList['items'] = [];
 
-const repositoriesResult = generatedAPI.endpoints.listRepository.select();
+const repositoriesResult = provisioningAPI.endpoints.listRepository.select();
 export const selectAllRepos = createSelector(repositoriesResult, (repos) => repos.data?.items || emptyRepos);
 export const selectFolderRepository = createSelector(
   selectAllRepos,
