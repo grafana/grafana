@@ -220,18 +220,20 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
     configs[level] = {
       meta: dataFrame.meta,
-      valueFieldConfig: valueField.config,
-      timeFieldConfig: timeField.config,
+      valueFieldConfig: valueField?.config ?? {},
+      timeFieldConfig: timeField?.config ?? {},
     };
 
-    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
-      const time: number = timeField.values[pointIndex];
-      const value: number = valueField.values[pointIndex];
-      aggregated[level] ??= {};
-      aggregated[level][time] = (aggregated[level][time] || 0) + value;
+    if (timeField && valueField) {
+      for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+        const time: number = timeField.values[pointIndex];
+        const value: number = valueField.values[pointIndex];
+        aggregated[level] ??= {};
+        aggregated[level][time] = (aggregated[level][time] || 0) + value;
 
-      totals[time] = (totals[time] || 0) + value;
-      maximumValue = Math.max(totals[time], maximumValue);
+        totals[time] = (totals[time] || 0) + value;
+        maximumValue = Math.max(totals[time], maximumValue);
+      }
     }
   });
 
@@ -298,18 +300,18 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
 
 export function getLogLevelInfo(dataFrame: DataFrame) {
   const fieldCache = new FieldCache(dataFrame);
-  const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+  const timeField = undefined;
   const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
 
   if (!timeField) {
-    throw new Error('Missing time field');
+    console.error('Time field missing in data frame');
   }
   if (!valueField) {
-    throw new Error('Missing value field');
+    console.error('Value field missing in data frame');
   }
 
-  const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
-  const length = valueField.values.length;
+  const level = valueField?.config.displayNameFromDS || dataFrame.name || 'logs';
+  const length = valueField?.values.length ?? 0;
   return { level, valueField, timeField, length };
 }
 
