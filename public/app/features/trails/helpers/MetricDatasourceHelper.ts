@@ -4,8 +4,13 @@ import {
   DataSourceGetTagValuesOptions,
   MetricFindValue,
 } from '@grafana/data';
-import { PrometheusDatasource, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from '@grafana/prometheus';
-import PromQlLanguageProvider from '@grafana/prometheus/src/language_provider';
+import {
+  PrometheusDatasource,
+  PromMetricsMetadata,
+  PromMetricsMetadataItem,
+  PromQlLanguageProvider,
+  PromQuery,
+} from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { DataTrail } from '../DataTrail';
@@ -19,6 +24,8 @@ export class MetricDatasourceHelper {
   public reset() {
     this._datasource = undefined;
     this._metricsMetadata = undefined;
+    this._classicHistograms = {};
+    this._nativeHistograms = [];
   }
 
   private _trail: DataTrail;
@@ -61,6 +68,67 @@ export class MetricDatasourceHelper {
     return metadata?.[metric];
   }
 
+  private _classicHistograms: Record<string, number> = {};
+  private _nativeHistograms: string[] = [];
+
+  public listNativeHistograms() {
+    return this._nativeHistograms;
+  }
+  /**
+   * Identify native histograms by querying classic histograms and all metrics,
+   * then comparing the results and build the collection of native histograms.
+   *
+   * classic histogram = test_metric_bucket
+   * native histogram = test_metric
+   */
+  public async initializeHistograms() {
+    const ds = await this.getDatasource();
+    if (Object.keys(this._classicHistograms).length === 0 && ds instanceof PrometheusDatasource) {
+      const classicHistogramsCall = ds.metricFindQuery('metrics(.*_bucket)');
+      const allMetricsCall = ds.metricFindQuery('metrics(.*)');
+
+      const [classicHistograms, allMetrics] = await Promise.all([classicHistogramsCall, allMetricsCall]);
+
+      classicHistograms.forEach((m) => {
+        this._classicHistograms[m.text] = 1;
+      });
+
+      allMetrics.forEach((m) => {
+        if (this.isNativeHistogram(m.text)) {
+          // Build the collection of native histograms.
+          this.addNativeHistogram(m.text);
+        }
+      });
+    }
+  }
+
+  /**
+   *
+   * If a metric name + _bucket exists in the classic histograms, then it is a native histogram
+   *
+   * classic histogram = test_metric_bucket
+   * native histogram = test_metric
+   * @param metric
+   * @returns
+   */
+  public isNativeHistogram(metric: string): boolean {
+    if (!metric) {
+      return false;
+    }
+
+    if (this._classicHistograms[`${metric}_bucket`]) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private addNativeHistogram(metric: string) {
+    if (!this._nativeHistograms.includes(metric)) {
+      this._nativeHistograms.push(metric);
+    }
+  }
+
   /**
    * Used for additional filtering for adhoc vars labels in Explore metrics.
    * @param options
@@ -86,6 +154,7 @@ export class MetricDatasourceHelper {
     const ds = await this.getDatasource();
 
     if (ds instanceof PrometheusDatasource) {
+      options.key = unwrapQuotes(options.key);
       const keys = await ds.getTagValues(options);
       return keys;
     }
@@ -108,4 +177,16 @@ export function getMetricDescription(metadata?: PromMetricsMetadataItem) {
   ];
 
   return lines.join('\n\n');
+}
+
+function unwrapQuotes(value: string): string {
+  if (value === '' || !isWrappedInQuotes(value)) {
+    return value;
+  }
+  return value.slice(1, -1);
+}
+
+function isWrappedInQuotes(value: string): boolean {
+  const wrappedInQuotes = /^".*"$/;
+  return wrappedInQuotes.test(value);
 }
