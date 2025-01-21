@@ -47,7 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	grafanaapiserversvc "github.com/grafana/grafana/pkg/services/apiserver/serviceimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
@@ -392,7 +392,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	authz.WireSet,
 	// Kubernetes API server
-	grafanaapiserver.WireSet,
+	grafanaapiserversvc.WireSet,
 	apiregistry.WireSet,
 	appregistry.WireSet,
 )
