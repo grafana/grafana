@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"google.golang.org/grpc"
 )
@@ -23,6 +25,7 @@ func TestSearchHandlerFields(t *testing.T) {
 		log:    log.New("test", "test"),
 		client: mockClient,
 		tracer: tracing.NewNoopTracerService(),
+		cfg:    setting.UnifiedStorageConfig{DualWriterMode: rest.Mode5},
 	}
 
 	t.Run("Multiple comma separated fields will be appended to default dashboard search fields", func(t *testing.T) {
