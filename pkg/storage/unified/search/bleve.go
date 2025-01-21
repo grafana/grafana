@@ -889,6 +889,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 		parts := strings.Split(id, "/")
 		// Exclude doc if id isn't expected format
 		if len(parts) != 4 {
+			q.log.Debug("Unexpected document ID format", "id", id)
 			return false
 		}
 		ns := parts[0]
@@ -900,6 +901,10 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 				folder = string(value)
 			}
 		})
+		if err != nil {
+			q.log.Debug("Error reading doc values", "error", err)
+			return false
+		}
 		if _, ok := q.checkers[resource]; !ok {
 			q.log.Debug("No resource checker found", "resource", resource)
 			return false
