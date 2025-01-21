@@ -1,3 +1,3 @@
 DELETE FROM "resource_history"
- WHERE 1 = 1
+ WHERE "namespace" = 'ns'
    AND "guid" = 'xxxx'
