@@ -5,7 +5,6 @@ import { catchError, map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateMath,
@@ -17,7 +16,14 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
@@ -32,7 +38,7 @@ export interface JaegerJsonData extends DataSourceJsonData {
   traceIdTimeParams?: TraceIdTimeParamsOptions;
 }
 
-export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
+export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
   traceIdTimeParams?: TraceIdTimeParamsOptions;
@@ -188,6 +194,10 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   }
 
   async testDatasource() {
+    if (config.featureToggles.jaegerBackendMigration) {
+      return await super.testDatasource();
+    }
+
     return lastValueFrom(
       this._request('/api/services').pipe(
         map((res) => {
