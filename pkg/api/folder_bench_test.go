@@ -120,6 +120,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
+			desc:        "impl=permissionsFilterRefactoredQuery nested_folders=on list all inherited dashboards",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(all),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery),
+		},
+		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on list all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
@@ -132,6 +138,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
+			desc:        "impl=permissionsFilterRefactoredQuery nested_folders=on search for pattern",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery),
+		},
+		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
@@ -142,6 +154,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "impl=permissionsFilterRefactoredQuery nested_folders=on search for specific dashboard",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for specific dashboard",
