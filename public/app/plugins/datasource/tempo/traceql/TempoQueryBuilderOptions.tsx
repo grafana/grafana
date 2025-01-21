@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
@@ -78,74 +78,76 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
   ];
 
   return (
-    <div className={styles.options}>
-      <QueryOptionGroup title="Search Options" collapsedInfo={collapsedSearchOptions}>
-        <EditorField label="Limit" tooltip="Maximum number of traces to return.">
-          <AutoSizeInput
-            className="width-4"
-            placeholder="auto"
-            type="number"
-            min={1}
-            defaultValue={query.limit || DEFAULT_LIMIT}
-            onCommitChange={onLimitChange}
-            value={query.limit}
-          />
-        </EditorField>
-        <EditorField label="Span Limit" tooltip="Maximum number of spans to return for each span set.">
-          <AutoSizeInput
-            className="width-4"
-            placeholder="auto"
-            type="number"
-            min={1}
-            defaultValue={query.spss || DEFAULT_SPSS}
-            onCommitChange={onSpssChange}
-            value={query.spss}
-          />
-        </EditorField>
-        <EditorField label="Table Format" tooltip="How the query data should be displayed in the results table">
-          <RadioButtonGroup
-            options={[
-              { label: 'Traces', value: SearchTableType.Traces },
-              { label: 'Spans', value: SearchTableType.Spans },
-            ]}
-            value={query.tableType}
-            onChange={onTableTypeChange}
-          />
-        </EditorField>
-        <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
-          <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
-        </EditorField>
-      </QueryOptionGroup>
+    <EditorRow>
+      <div className={styles.options}>
+        <QueryOptionGroup title="Search Options" collapsedInfo={collapsedSearchOptions}>
+          <EditorField label="Limit" tooltip="Maximum number of traces to return.">
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="number"
+              min={1}
+              defaultValue={query.limit || DEFAULT_LIMIT}
+              onCommitChange={onLimitChange}
+              value={query.limit}
+            />
+          </EditorField>
+          <EditorField label="Span Limit" tooltip="Maximum number of spans to return for each span set.">
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="number"
+              min={1}
+              defaultValue={query.spss || DEFAULT_SPSS}
+              onCommitChange={onSpssChange}
+              value={query.spss}
+            />
+          </EditorField>
+          <EditorField label="Table Format" tooltip="How the query data should be displayed in the results table">
+            <RadioButtonGroup
+              options={[
+                { label: 'Traces', value: SearchTableType.Traces },
+                { label: 'Spans', value: SearchTableType.Spans },
+              ]}
+              value={query.tableType}
+              onChange={onTableTypeChange}
+            />
+          </EditorField>
+          <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
+            <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
+          </EditorField>
+        </QueryOptionGroup>
 
-      <QueryOptionGroup title="Metrics Options" collapsedInfo={collapsedMetricsOptions}>
-        <EditorField
-          label="Step"
-          tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
-        >
-          <AutoSizeInput
-            className="width-4"
-            placeholder="auto"
-            type="string"
-            defaultValue={query.step}
-            onCommitChange={onStepChange}
-            value={query.step}
-          />
-        </EditorField>
-        {/*<EditorField*/}
-        {/*  label="Exemplars"*/}
-        {/*  tooltip="Defines the amount of exemplars to request for metric queries. A value of 0 means no exemplars."*/}
-        {/*>*/}
-        {/*  <AutoSizeInput*/}
-        {/*    className="width-4"*/}
-        {/*    placeholder="auto"*/}
-        {/*    type="string"*/}
-        {/*    defaultValue={query.exemplars}*/}
-        {/*    onCommitChange={onExemplarsChange}*/}
-        {/*    value={query.exemplars}*/}
-        {/*  />*/}
-        {/*</EditorField>*/}
-      </QueryOptionGroup>
-    </div>
+        <QueryOptionGroup title="Metrics Options" collapsedInfo={collapsedMetricsOptions}>
+          <EditorField
+            label="Step"
+            tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
+          >
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="string"
+              defaultValue={query.step}
+              onCommitChange={onStepChange}
+              value={query.step}
+            />
+          </EditorField>
+          {/*<EditorField*/}
+          {/*  label="Exemplars"*/}
+          {/*  tooltip="Defines the amount of exemplars to request for metric queries. A value of 0 means no exemplars."*/}
+          {/*>*/}
+          {/*  <AutoSizeInput*/}
+          {/*    className="width-4"*/}
+          {/*    placeholder="auto"*/}
+          {/*    type="string"*/}
+          {/*    defaultValue={query.exemplars}*/}
+          {/*    onCommitChange={onExemplarsChange}*/}
+          {/*    value={query.exemplars}*/}
+          {/*  />*/}
+          {/*</EditorField>*/}
+        </QueryOptionGroup>
+      </div>
+    </EditorRow>
   );
 });
 
