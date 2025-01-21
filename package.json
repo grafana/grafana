@@ -86,7 +86,7 @@
     "@react-types/button": "3.10.2",
     "@react-types/menu": "3.9.14",
     "@react-types/overlays": "3.8.12",
-    "@react-types/shared": "3.26.0",
+    "@react-types/shared": "3.27.0",
     "@rsdoctor/webpack-plugin": "^0.4.6",
     "@rtk-query/codegen-openapi": "^2.0.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
