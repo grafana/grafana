@@ -105,7 +105,6 @@ recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-panelTitleSearchInV1,experimental,@grafana/search-and-storage,true,false,false
 managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/oss-big-tent,false,false,true
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
