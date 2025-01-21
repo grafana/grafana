@@ -2886,6 +2886,10 @@
     "title": "Unable to find application file"
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "The message is {{messageLength}} characters, which exceeds the maximum length of 500 characters. Please shorten it before saving.",
+      "title": "Message too long"
+    },
     "name-exists": {
       "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",
       "message-suggestion": "Please choose a different name or folder.",

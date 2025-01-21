@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -49,7 +50,26 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
+  const isMessageTooLongError = (message?: string) => {
+    return message && message.length > 500;
+  };
+
   function renderFooter(error?: Error) {
+    if (isMessageTooLongError(options.message)) {
+      const messageLength = options.message?.length ?? 0;
+
+      return (
+        <Alert title={t('save-dashboards.message-length.title', 'Message too long')} severity="error">
+          <p>
+            <Trans i18nKey="save-dashboards.message-length.info">
+              The message is {{ messageLength }} characters, which exceeds the maximum length of 500 characters. Please
+              shorten it before saving.
+            </Trans>
+          </p>
+        </Alert>
+      );
+    }
+
     if (isVersionMismatchError(error)) {
       return (
         <Alert title="Someone else has updated this dashboard" severity="error">
