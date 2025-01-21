@@ -151,6 +151,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
+	"github.com/grafana/grafana/pkg/services/unifiedstorage/unifiedstorageimpl"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -391,6 +392,7 @@ var wireBasicSet = wire.NewSet(
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	authz.WireSet,
+	unifiedstorageimpl.ProvideRegistry,
 	// Kubernetes API server
 	grafanaapiserversvc.WireSet,
 	apiregistry.WireSet,

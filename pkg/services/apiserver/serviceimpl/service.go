@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/unifiedstorage"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -127,6 +128,7 @@ func ProvideService(
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	unified resource.ResourceClient,
+	usReg unifiedstorage.DependencyRegistry,
 ) (*service, error) {
 	s := &service{
 		log:               log.New(modules.GrafanaAPIServer),
@@ -191,6 +193,8 @@ func ProvideService(
 	s.rr.Group("/healthz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
+
+	usReg.RegisterRestConfigProvider(s)
 
 	return s, nil
 }
