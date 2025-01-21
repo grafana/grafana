@@ -246,8 +246,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [outlineItems]);
 
   const registerLogLevelsWithContentOutline = useCallback(() => {
+    if (!logsVolumeData) {
+      return;
+    }
     const levelsArr = Object.keys(LogLevelColor);
-    const logVolumeDataFrames = new Set(logsVolumeData?.data);
+    const logVolumeDataFrames = new Set(logsVolumeData.data);
     // TODO remove this once filtering multiple log volumes is supported
     const logVolData = logsVolumeData?.data.filter(
       (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
@@ -266,7 +269,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     // check if we have dataFrames that return the same level
     const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
     logVolumeDataFrames.forEach((dataFrame) => {
-      const { level } = getLogLevelInfo(dataFrame);
+      const { level } = getLogLevelInfo(dataFrame, logsVolumeData.data);
       logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
     });
 
@@ -300,7 +303,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         }
       });
     }
-  }, [logsVolumeData?.data, unregisterAllChildren, logsVolumeEnabled, hiddenLogLevels, register, toggleLegendRef]);
+  }, [hiddenLogLevels, logsVolumeData, logsVolumeEnabled, register, unregisterAllChildren]);
 
   useEffect(() => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {

@@ -14,6 +14,7 @@ import {
   QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -216,7 +217,7 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
   // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
-    const { level, valueField, timeField } = getLogLevelInfo(dataFrame);
+    const { level, valueField, timeField } = getLogLevelInfo(dataFrame, dataFrames);
 
     if (!timeField || !valueField) {
       return;
@@ -302,7 +303,7 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
   }
 };
 
-export function getLogLevelInfo(dataFrame: DataFrame) {
+export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
   const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
@@ -314,7 +315,7 @@ export function getLogLevelInfo(dataFrame: DataFrame) {
     console.error('Value field missing in data frame');
   }
 
-  const level = valueField?.config.displayNameFromDS ?? dataFrame.name ?? 'logs';
+  const level = valueField ? getFieldDisplayName(valueField, dataFrame, allDataFrames) : 'logs';
   return { level, valueField, timeField };
 }
 
