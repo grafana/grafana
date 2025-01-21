@@ -19,8 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -170,7 +169,7 @@ type ResourceServerOptions struct {
 	WriteHooks WriteAccessHooks
 
 	// Link RBAC
-	AccessClient authz.AccessClient
+	AccessClient claims.AccessClient
 
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
@@ -192,7 +191,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	if opts.AccessClient == nil {
-		opts.AccessClient = &staticAuthzClient{allowed: true} // everything OK
+		opts.AccessClient = claims.FixedAccessClient(true) // everything OK
 	}
 
 	if opts.Diagnostics == nil {
@@ -234,7 +233,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	// Make this cancelable
-	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
+	ctx, cancel := context.WithCancel(claims.WithAuthInfo(context.Background(),
 		&identity.StaticRequester{
 			Type:           claims.TypeServiceAccount,
 			Login:          "watcher", // admin user for watch
@@ -281,7 +280,7 @@ type server struct {
 	blob         BlobSupport
 	search       *searchSupport
 	diagnostics  DiagnosticsServer
-	access       authz.AccessClient
+	access       claims.AccessClient
 	writeHooks   WriteAccessHooks
 	lifecycle    LifecycleHooks
 	now          func() int64
@@ -378,7 +377,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
-	check := authz.CheckRequest{
+	check := claims.CheckRequest{
 		Verb:      utils.VerbCreate,
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -478,7 +477,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	defer span.End()
 
 	rsp := &CreateResponse{}
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		rsp.Error = &ErrorResult{
 			Message: "no user found in context",
@@ -516,7 +515,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	defer span.End()
 
 	rsp := &UpdateResponse{}
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		rsp.Error = &ErrorResult{
 			Message: "no user found in context",
@@ -569,7 +568,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	if req.ResourceVersion < 0 {
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		rsp.Error = &ErrorResult{
 			Message: "no user found in context",
@@ -590,7 +589,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return rsp, nil
 	}
 
-	access, err := s.access.Check(ctx, user, authz.CheckRequest{
+	access, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "delete",
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -615,7 +614,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
-	requester, ok := claims.From(ctx)
+	requester, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
@@ -650,7 +649,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &ReadResponse{
 			Error: &ErrorResult{
@@ -669,7 +668,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 
 	rsp := s.backend.ReadResource(ctx, req)
 
-	a, err := s.access.Check(ctx, user, authz.CheckRequest{
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -706,7 +705,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 		}
 	}
 
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &ListResponse{
 			Error: &ErrorResult{
@@ -730,7 +729,7 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	rsp := &ListResponse{}
 
 	key := req.Options.Key
-	checker, err := s.access.Compile(ctx, user, authz.ListRequest{
+	checker, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -793,7 +792,7 @@ func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResp
 	defer span.End()
 
 	// check that the user has access
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &RestoreResponse{
 			Error: &ErrorResult{
@@ -806,7 +805,7 @@ func (s *server) Restore(ctx context.Context, req *RestoreRequest) (*RestoreResp
 		return nil, err
 	}
 
-	checker, err := s.access.Compile(ctx, user, authz.ListRequest{
+	checker, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Namespace: req.Key.Namespace,
@@ -933,13 +932,13 @@ func (s *server) initWatcher() error {
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	ctx := srv.Context()
 
-	user, ok := claims.From(ctx)
+	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return apierrors.NewUnauthorized("no user found in context")
 	}
 
 	key := req.Options.Key
-	checker, err := s.access.Compile(ctx, user, authz.ListRequest{
+	checker, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,

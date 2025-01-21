@@ -18,14 +18,12 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/authlib/authz"
-
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -395,7 +393,7 @@ func (b *bleveIndex) CountRepositoryObjects(ctx context.Context) ([]*resource.Co
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,
-	access authz.AccessClient,
+	access authlib.AccessClient,
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 ) (*resource.ResourceSearchResponse, error) {
@@ -521,7 +519,7 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
 	facets := bleve.FacetsRequest{}
 	for _, f := range req.Facet {
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
@@ -583,11 +581,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 
 	// Can we remove this? Is access ever nil?
 	if access != nil {
-		auth, ok := claims.From(ctx)
+		auth, ok := authlib.AuthInfoFrom(ctx)
 		if !ok {
-			return nil, resource.AsErrorResult(fmt.Errorf("missing claims"))
+			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
 		}
-		checker, err := access.Compile(ctx, auth, authz.ListRequest{
+		checker, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
@@ -596,13 +594,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		if err != nil {
 			return nil, resource.AsErrorResult(err)
 		}
-		checkers := map[string]authz.ItemChecker{
+		checkers := map[string]authlib.ItemChecker{
 			b.key.Resource: checker,
 		}
 
 		// handle federation
 		for _, federated := range req.Federated {
-			checker, err := access.Compile(ctx, auth, authz.ListRequest{
+			checker, err := access.Compile(ctx, auth, authlib.ListRequest{
 				Namespace: federated.Namespace,
 				Group:     federated.Group,
 				Resource:  federated.Resource,
@@ -862,11 +860,11 @@ func newResponseFacet(v *search.FacetResult) *resource.ResourceSearchResponse_Fa
 
 type permissionScopedQuery struct {
 	query.Query
-	checkers map[string]authz.ItemChecker // one checker per resource
+	checkers map[string]authlib.ItemChecker // one checker per resource
 	log      log.Logger
 }
 
-func newPermissionScopedQuery(q query.Query, checkers map[string]authz.ItemChecker) *permissionScopedQuery {
+func newPermissionScopedQuery(q query.Query, checkers map[string]authlib.ItemChecker) *permissionScopedQuery {
 	return &permissionScopedQuery{
 		Query:    q,
 		checkers: checkers,
