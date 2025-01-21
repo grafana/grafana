@@ -31,12 +31,12 @@ type DashboardQuery struct {
 	// List dashboards with a deletion timestamp
 	GetTrash bool
 
-	// Only folders
-	GetFolders bool
-
 	// Get dashboards from the history table
 	GetHistory bool
 	Version    int64
+
+	// Only folders
+	GetFolders bool
 
 	// The label requirements
 	Labels []*resource.Requirement
