@@ -10,6 +10,7 @@
 import { config } from '@grafana/runtime';
 
 import { generatedQueryLibraryApi } from './api/endpoints.gen';
+import { QUERY_LIBRARY_GET_LIMIT } from './api/factory';
 import { mockData } from './api/mocks';
 
 export const {
@@ -19,15 +20,28 @@ export const {
   useUpdateQueryTemplateMutation,
 } = generatedQueryLibraryApi.enhanceEndpoints({
   endpoints: {
+    // Need to mutate the generated query to force query limit
+    listQueryTemplate: (endpointDefinition) => {
+      const originalQuery = endpointDefinition.query;
+      if (originalQuery) {
+        endpointDefinition.query = (requestOptions) =>
+          originalQuery({
+            ...requestOptions,
+            limit: QUERY_LIBRARY_GET_LIMIT,
+          });
+      }
+    },
     // Need to mutate the generated query to set the Content-Type header correctly
     updateQueryTemplate: (endpointDefinition) => {
-      const oldQuery = endpointDefinition.query;
-      endpointDefinition.query = (requestOptions) => ({
-        ...oldQuery?.(requestOptions),
-        headers: {
-          'Content-Type': 'application/merge-patch+json',
-        },
-      });
+      const originalQuery = endpointDefinition.query;
+      if (originalQuery) {
+        endpointDefinition.query = (requestOptions) => ({
+          ...originalQuery(requestOptions),
+          headers: {
+            'Content-Type': 'application/merge-patch+json',
+          },
+        });
+      }
     },
   },
 });

@@ -12,7 +12,6 @@ import { getUserInfo } from 'app/features/query-library/api/user';
 import { QueryTemplate } from 'app/features/query-library/types';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { QUERY_LIBRARY_GET_LIMIT } from '../../query-library/api/factory';
 import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
 
 import { QueryLibraryProps } from './QueryLibrary';
@@ -25,13 +24,12 @@ import { searchQueryLibrary } from './utils/search';
 interface QueryTemplatesListProps extends QueryLibraryProps {}
 
 export function QueryTemplatesList(props: QueryTemplatesListProps) {
-  // TODO extract out namespace/limit/mapper
+  // TODO extract out namespace/mapper
   const {
     data: rawData,
     isLoading,
     error,
   } = useListQueryTemplateQuery({
-    limit: QUERY_LIBRARY_GET_LIMIT,
     namespace: config.namespace,
   });
   const data = useMemo(() => (rawData ? convertDataQueryResponseToQueryTemplates(rawData) : undefined), [rawData]);

@@ -6,7 +6,6 @@ import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
 import { isQueryLibraryEnabled, useListQueryTemplateQuery } from 'app/features/query-library';
 
-import { QUERY_LIBRARY_GET_LIMIT } from '../../query-library/api/factory';
 import {
   queryLibraryTrackAddFromQueryHistory,
   queryLibraryTrackAddFromQueryHistoryAddModalShown,
@@ -18,9 +17,8 @@ type Props = {
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
-  // TODO extract out namespace/limit
+  // TODO extract out namespace
   const { refetch } = useListQueryTemplateQuery({
-    limit: QUERY_LIBRARY_GET_LIMIT,
     namespace: config.namespace,
   });
   const [isOpen, setIsOpen] = useState(false);

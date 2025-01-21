@@ -99,8 +99,8 @@ export function RichHistory(props: RichHistoryProps) {
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
 
+  // TODO extract out namespace
   const { data } = useListQueryTemplateQuery({
-    limit: QUERY_LIBRARY_GET_LIMIT,
     namespace: config.namespace,
   });
   const queryTemplatesCount = data?.items?.length ?? 0;
