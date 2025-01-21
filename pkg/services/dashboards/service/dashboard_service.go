@@ -859,6 +859,11 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 			return err
 		}
 		// cleanup things related to dashboards that are not stored in unistore yet
+		err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
+		if err != nil {
+			return err
+		}
+
 		return dr.dashboardStore.CleanupAfterDelete(ctx, cmd)
 	}
 
