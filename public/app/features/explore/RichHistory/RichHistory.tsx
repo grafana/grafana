@@ -12,7 +12,7 @@ import {
   RichHistorySettings,
   createDatasourcesList,
 } from 'app/core/utils/richHistory';
-import { QUERY_LIBRARY_GET_LIMIT, queryLibraryApi } from 'app/features/query-library/api/factory';
+import { QUERY_LIBRARY_GET_LIMIT } from 'app/features/query-library/api/factory';
 import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
 

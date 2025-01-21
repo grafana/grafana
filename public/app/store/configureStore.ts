@@ -11,7 +11,7 @@ import { StoreState } from 'app/types/store';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
-import { queryLibraryApi, queryLibraryApi2 } from '../features/query-library/api/factory';
+import { queryLibraryApi } from '../features/query-library/api/factory';
 
 import { setStore } from './store';
 
@@ -40,7 +40,6 @@ export function configureStore(initialState?: Partial<StoreState>) {
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
         queryLibraryApi.middleware,
-        queryLibraryApi2.middleware,
         userPreferencesAPI.middleware,
         ...extraMiddleware
       ),

@@ -12,7 +12,7 @@ import { getUserInfo } from 'app/features/query-library/api/user';
 import { QueryTemplate } from 'app/features/query-library/types';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { convertDataQueryResponseToQueryTemplates2 } from '../../query-library/api/mappers';
+import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
 
 import { QueryLibraryProps } from './QueryLibrary';
 import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
@@ -33,7 +33,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
     limit: 1000,
     namespace: config.namespace,
   });
-  const data = useMemo(() => (rawData ? convertDataQueryResponseToQueryTemplates2(rawData) : undefined), [rawData]);
+  const data = useMemo(() => (rawData ? convertDataQueryResponseToQueryTemplates(rawData) : undefined), [rawData]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [datasourceFilters, setDatasourceFilters] = useState<Array<SelectableValue<string>>>(

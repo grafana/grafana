@@ -1,4 +1,4 @@
-import { queryLibraryApi2 as api } from './factory';
+import { queryLibraryApi as api } from './factory';
 export const addTagTypes = ['QueryTemplate'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({

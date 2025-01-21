@@ -10,15 +10,7 @@
 import { config } from '@grafana/runtime';
 
 import { generatedQueryLibraryApi } from './api/endpoints.gen';
-import { queryLibraryApi } from './api/factory';
 import { mockData } from './api/mocks';
-
-export const {
-  // useAllQueryTemplatesQuery,
-  // useAddQueryTemplateMutation,
-  // useDeleteQueryTemplateMutation,
-  // useEditQueryTemplateMutation,
-} = queryLibraryApi;
 
 export const {
   useCreateQueryTemplateMutation,

@@ -12,7 +12,7 @@ import { getQueryDisplayText } from 'app/core/utils/richHistory';
 import { useCreateQueryTemplateMutation, useUpdateQueryTemplateMutation } from 'app/features/query-library';
 import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
 
-import { convertAddQueryTemplateCommandToDataQuerySpec2 } from '../../query-library/api/mappers';
+import { convertAddQueryTemplateCommandToDataQuerySpec } from '../../query-library/api/mappers';
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
@@ -66,7 +66,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     return addQueryTemplate({
       namespace: config.namespace,
       comGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate:
-        convertAddQueryTemplateCommandToDataQuerySpec2(addQueryTemplateCommand),
+        convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
     })
       .unwrap()
       .then(() => {
