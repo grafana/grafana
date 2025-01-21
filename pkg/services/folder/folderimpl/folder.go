@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -76,12 +77,13 @@ func ProvideService(
 	tracer tracing.Tracer,
 ) *Service {
 	k8sHandler := &foldk8sHandler{
-		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
-		namespacer: request.GetNamespaceMapper(cfg),
-		cfg:        cfg,
+		gvr:                v0alpha1.FolderResourceInfo.GroupVersionResource(),
+		namespacer:         request.GetNamespaceMapper(cfg),
+		cfg:                cfg,
+		restConfigProvider: apiserver.GetRestConfig,
 	}
 
-	unifiedStore := ProvideUnifiedStore(cfg)
+	unifiedStore := ProvideUnifiedStore(k8sHandler)
 
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
