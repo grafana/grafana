@@ -44,20 +44,24 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
    */
   isApplicable: (data: DataFrame[]) => {
     let numFields = 0;
-    data.forEach(({ fields }) => (numFields += fields.length));
+
+    for (const frame of data) {
+      numFields += frame.fields.length;
+    }
 
     return numFields >= 3
       ? TransformationApplicabilityLevels.Applicable
       : TransformationApplicabilityLevels.NotApplicable;
   },
-
   isApplicableDescription: (data: DataFrame[]) => {
     let numFields = 0;
-    data.forEach(({ fields }) => (numFields += fields.length));
+
+    for (const frame of data) {
+      numFields += frame.fields.length;
+    }
 
     return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
-
   operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
       map((data) => {
@@ -86,16 +90,17 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 
         const matrixValues: { [key: string]: { [key: string]: unknown } } = {};
 
-        valueField.values.forEach((value, index) => {
+        for (let index = 0; index < valueField.values.length; index++) {
           const columnName = keyColumnField.values[index];
           const rowName = keyRowField.values[index];
+          const value = valueField.values[index];
 
           if (!matrixValues[columnName]) {
             matrixValues[columnName] = {};
           }
 
           matrixValues[columnName][rowName] = value;
-        });
+        }
 
         const fields: Field[] = [
           {
@@ -106,12 +111,12 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           },
         ];
 
-        columnValues.forEach((columnName: string) => {
+        for (const columnName of columnValues) {
           let values: Array<{} | null> = [];
-          rowValues.forEach((rowName: string) => {
+          for (const rowName of rowValues) {
             const value = matrixValues[columnName][rowName] ?? getSpecialValue(emptyValue);
             values.push(value);
-          });
+          }
 
           // setting the displayNameFromDS in prometheus overrides
           // the column name based on value fields that are numbers
@@ -122,12 +127,12 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           }
 
           fields.push({
-            config: valueField.config,
-            name: columnName.toString(),
             type: valueField.type,
+            name: columnName.toString(),
             values: values,
+            config: valueField.config,
           });
-        });
+        }
 
         return [
           {
