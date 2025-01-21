@@ -16,6 +16,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 import { getCloneKey, isInCloneChain, joinCloneKeys } from '../../utils/clone';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
+import { getRepeatKey } from '../layouts-shared/repeatUtils';
 
 import { RepeatDirection } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
