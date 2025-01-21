@@ -3,7 +3,7 @@ package clientmiddleware
 import (
 	"context"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"

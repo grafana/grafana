@@ -3,13 +3,14 @@ package server
 import (
 	"context"
 
-	"github.com/grafana/authlib/claims"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	claims "github.com/grafana/authlib/types"
 )
 
 func authorize(ctx context.Context, namespace string) error {
-	c, ok := claims.From(ctx)
+	c, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, "unauthenticated")
 	}

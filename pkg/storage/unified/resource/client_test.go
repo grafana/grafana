@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/stretchr/testify/assert"
+
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func TestIDTokenExtractor(t *testing.T) {
