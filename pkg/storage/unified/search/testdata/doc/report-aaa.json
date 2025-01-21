@@ -8,8 +8,10 @@
     "resourceVersion": "1706690655000",
     "creationTimestamp": "2024-01-31T08:44:15Z",
     "annotations": {
-      "grafana.app/createdBy": "user:abc",
-      "grafana.app/originName": "SQL"
+      "grafana.app/createdBy": "user:abc"
+    },
+    "labels": {
+      "grafana.app/deprecatedInternalID": "123"
     }
   },
   "spec": {
