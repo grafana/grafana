@@ -3,6 +3,7 @@ import { Registry } from '@grafana/data';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { LayoutRegistryItem } from '../types';
 
 export const layoutRegistry: Registry<LayoutRegistryItem> = new Registry<LayoutRegistryItem>(() => {
@@ -10,5 +11,6 @@ export const layoutRegistry: Registry<LayoutRegistryItem> = new Registry<LayoutR
     DefaultGridLayoutManager.getDescriptor(),
     ResponsiveGridLayoutManager.getDescriptor(),
     RowsLayoutManager.getDescriptor(),
+    TabsLayoutManager.getDescriptor(),
   ];
 });

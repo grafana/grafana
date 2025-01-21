@@ -595,6 +595,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.state.body.addNewRow();
   }
 
+  public onCreateNewTab() {
+    this.state.body.addNewTab();
+  }
+
   public onCreateNewPanel(): VizPanel {
     const vizPanel = getDefaultVizPanel();
 
