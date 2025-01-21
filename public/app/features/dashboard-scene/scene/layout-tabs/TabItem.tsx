@@ -118,13 +118,15 @@ export class TabItem extends SceneObjectBase<TabItemState> implements LayoutPare
         onPointerDown={(evt) => {
           evt.stopPropagation();
 
-          if (isEditing && !isClone) {
-            onSelect?.(evt);
+          if (isEditing) {
+            if (isClone) {
+              dashboard.state.editPane.clearSelection();
+            } else {
+              onSelect?.(evt);
+            }
           }
 
-          if (model !== currentTab) {
-            model.onChangeTab();
-          }
+          model.onChangeTab();
         }}
       />
     );

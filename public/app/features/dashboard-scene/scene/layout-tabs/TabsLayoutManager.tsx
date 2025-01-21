@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -176,14 +177,25 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
             <TabItem.Component model={tab} key={tab.state.key!} />
           ))}
         </TabsBar>
-        <TabContent>{layout && <layout.Component model={layout} />}</TabContent>
+        <TabContent className={styles.tabContentContainer}>{layout && <layout.Component model={layout} />}</TabContent>
       </>
     );
   };
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   tabsContainer: css({
+    flexShrink: 1,
+    padding: '2px 2px 0 2px',
+    marginBottom: theme.spacing(1),
+  }),
+  tabContentContainer: css({
+    backgroundColor: 'transparent',
+    display: 'flex',
+    flex: 1,
+    height: '100%',
+    overflow: 'auto',
+    scrollbarWidth: 'thin',
     padding: '2px 2px 0 2px',
   }),
 });
