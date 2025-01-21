@@ -203,6 +203,10 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
+	if hits.Hits == nil || len(hits.Hits) == 0 {
+		return nil, dashboards.ErrFolderNotFound
+	}
+
 	uid := hits.Hits[0].Name
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -761,5 +765,5 @@ func (fk8s *foldk8sHandler) getNamespace(orgID int64) string {
 }
 
 func (fk8s *foldk8sHandler) getSearcher() resource.ResourceClient {
-	return fk8s.unified
+	return fk8s.unistoreClientFnc()
 }
