@@ -36,6 +36,8 @@ import {
   AdhocVariableKind,
   AnnotationQueryKind,
   DataLink,
+  LibraryPanelKind,
+  Element,
   RepeatOptions,
   DashboardCursorSync,
   FieldConfig,
@@ -48,6 +50,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
+  getLibraryPanelBehavior,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
@@ -242,69 +245,79 @@ function getElements(state: DashboardSceneState) {
   const panels = state.body.getVizPanels() ?? [];
 
   const panelsArray = panels.map((vizPanel: VizPanel) => {
-    // Handle type conversion for color mode
-    const rawColor = vizPanel.state.fieldConfig.defaults.color;
-    let color: FieldColor | undefined;
+    if (isLibraryPanel(vizPanel)) {
+      const behavior = getLibraryPanelBehavior(vizPanel)!;
+      const elementSpec: LibraryPanelKind = {
+        kind: 'LibraryPanel',
+        spec: {
+          name: behavior.state.name,
+          uid: behavior.state.uid,
+        },
+      };
+      return elementSpec;
+    } else {
+      // Handle type conversion for color mode
+      const rawColor = vizPanel.state.fieldConfig.defaults.color;
+      let color: FieldColor | undefined;
 
-    if (rawColor) {
-      const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+      if (rawColor) {
+        const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
 
-      if (convertedMode) {
-        color = {
-          ...rawColor,
-          mode: convertedMode,
-        };
+        if (convertedMode) {
+          color = {
+            ...rawColor,
+            mode: convertedMode,
+          };
+        }
       }
+
+      // Remove null from the defaults because schema V2 doesn't support null or these fields
+      const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+      const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+      const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+      const defaults: FieldConfig = {
+        ...vizPanel.state.fieldConfig.defaults,
+        decimals,
+        min,
+        max,
+        color,
+      };
+
+      const vizFieldConfig: FieldConfigSource = {
+        ...vizPanel.state.fieldConfig,
+        defaults,
+      };
+
+      const elementSpec: PanelKind = {
+        kind: 'Panel',
+        spec: {
+          id: getPanelIdForVizPanel(vizPanel),
+          title: vizPanel.state.title,
+          description: vizPanel.state.description ?? '',
+          links: getPanelLinks(vizPanel),
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: getVizPanelQueries(vizPanel),
+              transformations: getVizPanelTransformations(vizPanel),
+              queryOptions: getVizPanelQueryOptions(vizPanel),
+            },
+          },
+          vizConfig: {
+            kind: vizPanel.state.pluginId,
+            spec: {
+              pluginVersion: vizPanel.state.pluginVersion ?? '',
+              options: vizPanel.state.options,
+              fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
+            },
+          },
+        },
+      };
+      return elementSpec;
     }
-
-    // Remove null from the defaults because schema V2 doesn't support null or these fields
-    const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
-    const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
-    const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
-
-    const defaults: FieldConfig = {
-      ...vizPanel.state.fieldConfig.defaults,
-      decimals,
-      min,
-      max,
-      color,
-    };
-
-    const vizFieldConfig: FieldConfigSource = {
-      ...vizPanel.state.fieldConfig,
-      defaults,
-    };
-
-    const elementSpec: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        id: getPanelIdForVizPanel(vizPanel),
-        title: vizPanel.state.title,
-        description: vizPanel.state.description ?? '',
-        links: getPanelLinks(vizPanel),
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries: getVizPanelQueries(vizPanel),
-            transformations: getVizPanelTransformations(vizPanel),
-            queryOptions: getVizPanelQueryOptions(vizPanel),
-          },
-        },
-        vizConfig: {
-          kind: vizPanel.state.pluginId,
-          spec: {
-            pluginVersion: vizPanel.state.pluginVersion ?? '',
-            options: vizPanel.state.options,
-            fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
-          },
-        },
-      },
-    };
-    return elementSpec;
   });
-
-  const elements = createElements(panelsArray);
-  return elements;
+  return createElements(panelsArray);
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -418,11 +431,11 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(panels: PanelKind[]): Record<string, PanelKind> {
-  const elements: Record<string, PanelKind> = {};
+function createElements(panels: Element[]): Record<string, Element> {
+  const elements: Record<string, Element> = {};
 
   for (const panel of panels) {
-    const key = getVizPanelKeyForPanelId(panel.spec.id);
+    const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
     elements[key] = panel;
   }
 

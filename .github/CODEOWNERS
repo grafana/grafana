@@ -69,6 +69,7 @@
 /apps/alerting/ @grafana/alerting-backend
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/investigation/ @fcjack @matryer
+/apps/advisor/ @grafana/plugins-platform-backend
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
@@ -725,6 +726,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
+/pkg/registry/apps/advisor @grafana/plugins-platform-backend
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code

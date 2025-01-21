@@ -10,7 +10,7 @@ import (
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/events"
@@ -36,9 +36,10 @@ type folderK8sHandler interface {
 var _ folderK8sHandler = (*foldk8sHandler)(nil)
 
 type foldk8sHandler struct {
-	cfg        *setting.Cfg
-	namespacer request.NamespaceMapper
-	gvr        schema.GroupVersionResource
+	cfg                *setting.Cfg
+	namespacer         request.NamespaceMapper
+	gvr                schema.GroupVersionResource
+	restConfigProvider func(ctx context.Context) *clientrest.Config
 }
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -680,20 +681,16 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 // -----------------------------------------------------------------------------------------
 
 func (fk8s *foldk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	cfg := &rest.Config{
-		Host:    fk8s.cfg.AppURL,
-		APIPath: "/apis",
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: true, // Skip TLS verification
-		},
-		Username: fk8s.cfg.AdminUser,
-		Password: fk8s.cfg.AdminPassword,
+	cfg := fk8s.restConfigProvider(ctx)
+	if cfg == nil {
+		return nil, false
 	}
 
 	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, false
 	}
+
 	return dyn.Resource(fk8s.gvr).Namespace(fk8s.getNamespace(orgID)), true
 }
 
