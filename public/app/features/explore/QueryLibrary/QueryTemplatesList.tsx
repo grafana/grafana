@@ -12,6 +12,7 @@ import { getUserInfo } from 'app/features/query-library/api/user';
 import { QueryTemplate } from 'app/features/query-library/types';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { QUERY_LIBRARY_GET_LIMIT } from '../../query-library/api/factory';
 import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
 
 import { QueryLibraryProps } from './QueryLibrary';
@@ -30,7 +31,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
     isLoading,
     error,
   } = useListQueryTemplateQuery({
-    limit: 1000,
+    limit: QUERY_LIBRARY_GET_LIMIT,
     namespace: config.namespace,
   });
   const data = useMemo(() => (rawData ? convertDataQueryResponseToQueryTemplates(rawData) : undefined), [rawData]);

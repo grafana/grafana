@@ -88,6 +88,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
   };
 
   const handleEditQueryTemplate = async (editQueryTemplateCommand: EditQueryTemplateCommand) => {
+    // TODO extract out namespace/horrible arg
     return editQueryTemplate({
       namespace: config.namespace,
       name: editQueryTemplateCommand.uid,

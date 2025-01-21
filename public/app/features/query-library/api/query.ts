@@ -4,8 +4,6 @@ import { lastValueFrom } from 'rxjs';
 import { config } from '@grafana/runtime';
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
-import { DataQuerySpecResponse } from './types';
-
 /**
  * @alpha
  */
@@ -29,17 +27,15 @@ export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/que
 interface QueryLibraryBackendRequest extends Pick<BackendSrvRequest, 'data' | 'method'> {
   url?: string;
   headers?: { [key: string]: string };
+  body?: BackendSrvRequest['data'];
 }
 
-export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecResponse, Error> = async (
-  requestOptions
-) => {
+export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, unknown, Error> = async (requestOptions) => {
   try {
-    const responseObservable = getBackendSrv().fetch<DataQuerySpecResponse>({
+    const responseObservable = getBackendSrv().fetch({
       url: `${requestOptions.url ?? ''}`,
       showErrorAlert: true,
       method: requestOptions.method || 'GET',
-      // TODO requestOptions.data doesn't work with the generated api
       data: requestOptions.body,
       headers: { ...requestOptions.headers },
     });

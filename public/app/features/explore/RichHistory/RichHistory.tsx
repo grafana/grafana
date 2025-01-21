@@ -17,7 +17,7 @@ import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
-import { generatedQueryLibraryApi } from '../../query-library/api/endpoints.gen';
+import { useListQueryTemplateQuery } from '../../query-library';
 import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
 import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
@@ -99,12 +99,11 @@ export function RichHistory(props: RichHistoryProps) {
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
 
-  // TODO fix this
-  const listQueryTemplateSelector = generatedQueryLibraryApi.endpoints.listQueryTemplate.select({
+  const { data } = useListQueryTemplateQuery({
     limit: QUERY_LIBRARY_GET_LIMIT,
     namespace: config.namespace,
   });
-  const queryTemplatesCount = useSelector(listQueryTemplateSelector).data?.items?.length || 0;
+  const queryTemplatesCount = data?.items?.length ?? 0;
 
   const QueryLibraryTab: TabConfig = {
     label: `${i18n.queryLibrary} (${queryTemplatesCount}/${QUERY_LIBRARY_GET_LIMIT})`,
