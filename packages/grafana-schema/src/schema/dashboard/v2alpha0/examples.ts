@@ -182,6 +182,13 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
+    'library-panel-1': {
+      kind: 'LibraryPanel',
+      spec: {
+        uid: 'library-panel-1',
+        name: 'Library Panel',
+      },
+    },
   },
   layout: {
     kind: 'GridLayout',
@@ -203,6 +210,19 @@ export const handyTestingSchema: DashboardV2Spec = {
               value: 'customVar',
               maxPerRow: 3,
             },
+          },
+        },
+        {
+          kind: 'GridLayoutItem',
+          spec: {
+            element: {
+              kind: 'ElementReference',
+              name: 'library-panel-1',
+            },
+            height: 100,
+            width: 200,
+            x: 0,
+            y: 2,
           },
         },
       ],
@@ -380,7 +400,6 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
         description: 'A group by variable',
         hide: 'dontHide',
-        includeAll: false,
         label: 'Group By Variable',
         multi: false,
         name: 'groupByVar',
