@@ -1301,7 +1301,7 @@ Override the AAD managed identity client ID.
 
 By default is the same as used in AAD authentication or can be set to another managed identity (for OBO flow).
 
-### user_identity_federated_credential_audience
+### `user_identity_federated_credential_audience`
 
 Override the AAD federated credential audience.
 
