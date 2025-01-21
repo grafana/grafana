@@ -218,15 +218,16 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
   dataFrames.forEach((dataFrame) => {
     const { level, valueField, timeField, length } = getLogLevelInfo(dataFrame);
 
+    if (!timeField || !valueField) {
+      return;
+    }
+
     configs[level] = {
       meta: dataFrame.meta,
       valueFieldConfig: valueField?.config ?? {},
       timeFieldConfig: timeField?.config ?? {},
     };
 
-    if (!timeField || !valueField) {
-      return;
-    }
     for (let pointIndex = 0; pointIndex < length; pointIndex++) {
       const time: number = timeField.values[pointIndex];
       const value: number = valueField.values[pointIndex];
