@@ -609,10 +609,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ body: layout });
+    layout.activateRepeaters?.();
   }
 
   /**
-   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   * Called by the SceneQueryRunner to provide contextual parameters (tracking) props for the request
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
     const dashboard = getDashboardSceneFor(sceneObject);

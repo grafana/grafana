@@ -47,9 +47,9 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getLibraryPanelBehavior,
@@ -174,7 +174,7 @@ function getGridLayoutItems(
           elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
         }
       } else if (child instanceof SceneGridRow) {
-        if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
+        if (isRepeatedSceneObject(child) && !isSnapshot) {
           // Skip repeat rows
           continue;
         }

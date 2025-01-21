@@ -15,6 +15,7 @@ import {
 } from '@grafana/scenes';
 
 import { getMultiVariableValues } from '../../utils/utils';
+import { getRepeatKeyForSceneObject, isRepeatedSceneObjectOf } from '../layouts-shared/repeatUtils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -47,11 +48,10 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const layout = this._getLayout();
     const originalRow = this._getRow();
-    const filterKey = originalRow.state.key + '-clone-';
 
     const sub = layout.subscribeToState(() => {
       const repeatedRows = layout.state.children.filter(
-        (child) => child instanceof SceneGridRow && child.state.key?.includes(filterKey)
+        (child) => child instanceof SceneGridRow && isRepeatedSceneObjectOf(child, originalRow)
       );
 
       // go through cloned rows, search for panels that are not clones
@@ -159,7 +159,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       for (const source of rowContent) {
         const sourceItemY = source.state.y ?? 0;
         const itemY = sourceItemY + (rowContentHeight + 1) * index;
-        const itemKey = index > 0 ? `${source.state.key}-clone-${localValue}` : source.state.key;
+        const itemKey = index > 0 ? getRepeatKeyForSceneObject(source, localValue) : source.state.key;
         const itemClone = source.clone({ key: itemKey, y: itemY });
 
         // Make sure all the child scene objects have unique keys
@@ -229,7 +229,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const sourceRowY = rowToRepeat.state.y ?? 0;
 
     return rowToRepeat.clone({
-      key: `${rowToRepeat.state.key}-clone-${value}`,
+      key: getRepeatKeyForSceneObject(rowToRepeat, value),
       $variables: new SceneVariableSet({
         variables: [
           new LocalValueVariable({
@@ -311,13 +311,7 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
 }
 
 function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowToRepeat: SceneGridRow) {
-  return layout.state.children.filter((child) => {
-    if (child.state.key?.startsWith(`${rowToRepeat.state.key}-clone-`)) {
-      return false;
-    }
-
-    return true;
-  });
+  return layout.state.children.filter((child) => !isRepeatedSceneObjectOf(child, rowToRepeat));
 }
 
 function ensureUniqueKeys(item: SceneGridItemLike, localValue: VariableValueSingle) {

@@ -24,6 +24,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
+import { getRepeatKeyForSceneObject } from '../layouts-shared/repeatUtils';
 import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
@@ -138,7 +139,7 @@ export class DashboardGridItem
             }),
           ],
         }),
-        key: `${panelToRepeat.state.key}-clone-${index}`,
+        key: getRepeatKeyForSceneObject(panelToRepeat, index),
       };
       const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);

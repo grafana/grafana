@@ -34,6 +34,7 @@ import { PanelTimeRange } from './PanelTimeRange';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
+import { getRepeatKey } from './layouts-shared/repeatUtils';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -642,7 +643,7 @@ describe('DashboardScene', () => {
 
     it('Should hash the key of the cloned panels and set it as panelId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
-      const expectedPanelId = djb2Hash('panel-2-clone-1');
+      const expectedPanelId = djb2Hash(getRepeatKey('panel-2', '1'));
       expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(expectedPanelId);
     });
   });
@@ -915,7 +916,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           new DashboardGridItem({
             body: new VizPanel({
               title: 'Panel B',
-              key: 'panel-2-clone-1',
+              key: getRepeatKey('panel-2', '1'),
               pluginId: 'table',
               $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
             }),

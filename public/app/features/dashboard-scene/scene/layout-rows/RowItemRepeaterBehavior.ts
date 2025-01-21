@@ -16,6 +16,7 @@ import {
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
 import { repeatPanelMenuBehavior } from '../PanelMenuBehavior';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { getRepeatKeyForSceneObject, isRepeatedSceneObjectOf } from '../layouts-shared/repeatUtils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
 import { RowItem } from './RowItem';
@@ -126,7 +127,7 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
     }
 
     return rowToRepeat.clone({
-      key: `${rowToRepeat.state.key}-clone-${value}`,
+      key: getRepeatKeyForSceneObject(rowToRepeat, value),
       $variables,
       $behaviors: [],
       layout,
@@ -213,5 +214,5 @@ function updateLayout(layout: RowsLayoutManager, rows: RowItem[], rowToRepeat: R
 }
 
 function getRowsFilterOutRepeatClones(layout: RowsLayoutManager, rowToRepeat: RowItem) {
-  return layout.state.rows.filter((row) => !row.state.key?.startsWith(`${rowToRepeat.state.key}-clone-`));
+  return layout.state.rows.filter((row) => !isRepeatedSceneObjectOf(row, rowToRepeat));
 }

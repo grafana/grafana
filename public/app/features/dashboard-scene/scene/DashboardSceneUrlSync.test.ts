@@ -6,6 +6,7 @@ import { KioskMode } from 'app/types';
 import { DashboardScene } from './DashboardScene';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { getRepeatKey } from './layouts-shared/repeatUtils';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 describe('DashboardSceneUrlSync', () => {
@@ -82,7 +83,7 @@ describe('DashboardSceneUrlSync', () => {
     let errorNotice = 0;
     appEvents.on(AppEvents.alertError, (evt) => errorNotice++);
 
-    scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1-clone-1' });
+    scene.urlSync?.updateFromUrl({ viewPanel: getRepeatKey('panel-1', '1') });
 
     expect(scene.state.viewPanelScene).toBeUndefined();
     // Verify no error notice was shown
@@ -98,7 +99,7 @@ describe('DashboardSceneUrlSync', () => {
           x: 0,
           body: new VizPanel({
             title: 'Clone Panel A',
-            key: 'panel-1-clone-1',
+            key: getRepeatKey('panel-1', '1'),
             pluginId: 'table',
           }),
         }),
@@ -107,7 +108,7 @@ describe('DashboardSceneUrlSync', () => {
 
     // Verify it subscribes to DashboardRepeatsProcessedEvent
     scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
-    expect(scene.state.viewPanelScene?.getUrlKey()).toBe('panel-1-clone-1');
+    expect(scene.state.viewPanelScene?.getUrlKey()).toBe(getRepeatKey('panel-1', '1'));
   });
 });
 
