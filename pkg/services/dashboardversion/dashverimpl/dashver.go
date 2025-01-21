@@ -3,12 +3,26 @@ package dashverimpl
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -17,19 +31,31 @@ const (
 )
 
 type Service struct {
-	cfg     *setting.Cfg
-	store   store
-	dashSvc dashboards.DashboardService
-	log     log.Logger
+	cfg       *setting.Cfg
+	store     store
+	dashSvc   dashboards.DashboardService
+	k8sclient client.K8sHandler
+	features  featuremgmt.FeatureToggles
+	log       log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService) dashver.Service {
+func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, features featuremgmt.FeatureToggles,
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient) dashver.Service {
+
 	return &Service{
 		cfg: cfg,
 		store: &sqlStore{
 			db:      db,
 			dialect: db.GetDialect(),
 		},
+		features: features,
+		k8sclient: client.NewK8sHandler(
+			request.GetNamespaceMapper(cfg),
+			v0alpha1.DashboardResourceInfo.GroupVersionResource(),
+			restConfigProvider,
+			unified,
+			userService,
+		),
 		dashSvc: dashboardService,
 		log:     log.New("dashboard-version"),
 	}
@@ -54,6 +80,14 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 			return nil, err
 		}
 		query.DashboardID = id
+	}
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, int64(query.Version))
+		if err != nil {
+			return nil, err
+		}
+		return version, nil
 	}
 
 	version, err := s.store.Get(ctx, query)
@@ -118,6 +152,20 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 	if query.Limit == 0 {
 		query.Limit = 1000
 	}
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+		versions, err := s.listHistoryThroughK8s(
+			ctx,
+			query.OrgID,
+			query.DashboardUID,
+			int64(query.Limit),
+		)
+		if err != nil {
+			return nil, err
+		}
+		return versions, nil
+	}
+
 	dvs, err := s.store.List(ctx, query)
 	if err != nil {
 		return nil, err
@@ -162,4 +210,119 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string) (int64, e
 		}
 	}
 	return result.ID, nil
+}
+
+func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, rv int64) (*dashver.DashboardVersionDTO, error) {
+	out, err := s.k8sclient.Get(ctx, dashboardUID, orgID, v1.GetOptions{ResourceVersion: strconv.FormatInt(rv, 10)})
+	if err != nil {
+		return nil, err
+	} else if out == nil {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+	fmt.Println(fmt.Sprintf("%+v", out))
+
+	dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, out, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return dash, nil
+}
+
+// TODO: need to get the "continue" token
+// TODO: make sure that things are working in the fallback mode too, and likely change legacy sql
+func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64) ([]*dashver.DashboardVersionDTO, error) {
+	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
+		LabelSelector:        utils.LabelKeyGetHistory + "=" + dashboardUID,
+		ResourceVersion:      "1", // everything
+		Limit:                limit,
+		ResourceVersionMatch: v1.ResourceVersionMatchNotOlderThan{}, // TODO: implement
+	})
+	if err != nil {
+		return nil, err
+	} else if out == nil {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+	fmt.Println(fmt.Sprintf("%+v", out))
+
+	dashboards := make([]*dashver.DashboardVersionDTO, 0)
+	for _, item := range out.Items {
+		dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, &item, orgID)
+		if err != nil {
+			return nil, err
+		}
+		dashboards = append(dashboards, dash)
+	}
+
+	return dashboards, nil
+}
+
+func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashver.DashboardVersionDTO, error) {
+	spec, ok := item.Object["spec"].(map[string]any)
+	if !ok {
+		return nil, errors.New("error parsing dashboard from k8s response")
+	}
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil, err
+	}
+	uid := obj.GetName()
+	spec["uid"] = uid
+
+	dashVersion := 0
+	parentVersion := 0
+	if version, ok := spec["version"].(int64); ok {
+		dashVersion = int(version)
+		parentVersion = dashVersion - 1 // TODO: is this valid?
+	}
+
+	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := obj.GetResourceVersionInt64()
+	if err != nil {
+		return nil, err
+	}
+
+	restoreVer, err := getRestoreVersion(obj.GetMessage())
+	if err != nil {
+		return nil, err
+	}
+
+	out := dashver.DashboardVersionDTO{
+		ID:            id,
+		DashboardID:   obj.GetDeprecatedInternalID(), // nolint:staticcheck
+		DashboardUID:  uid,
+		Created:       obj.GetCreationTimestamp().Time,
+		CreatedBy:     createdBy.ID,
+		Message:       obj.GetMessage(),
+		RestoredFrom:  restoreVer,
+		Version:       dashVersion,
+		ParentVersion: parentVersion,
+		Data:          simplejson.NewFromAny(spec),
+	}
+
+	return &out, nil
+}
+
+var restoreMsg = "Restored from version "
+
+func DashboardRestoreMessage(version int) string {
+	return fmt.Sprintf("%s%d", restoreMsg, version)
+}
+
+func getRestoreVersion(msg string) (int, error) {
+	parts := strings.Split(msg, restoreMsg)
+	if len(parts) < 2 {
+		return 0, nil
+	}
+
+	ver, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(ver), nil
 }

@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import { PureComponent } from 'react';
 import * as React from 'react';
 
@@ -84,8 +86,15 @@ export class VersionsSettings extends PureComponent<Props, State> {
       isLoading: true,
     });
 
-    const lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
-    const rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.version);
+    let lhs, rhs;
+    if (config.featureToggles.kubernetesCliDashboards) {
+      // the id here is the resource version in k8s, use this instead to get the specific version
+      lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.id);
+      rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.id);
+    } else {
+      lhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, baseInfo.version);
+      rhs = await historySrv.getDashboardVersion(this.props.dashboard.uid, newInfo.version);
+    }
 
     this.setState({
       baseInfo,

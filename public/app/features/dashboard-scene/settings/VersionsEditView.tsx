@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import * as React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
@@ -127,9 +129,15 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     if (!this._dashboard.state.uid) {
       return;
     }
-
-    const lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
-    const rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
+let lhs, rhs;
+    if (config.featureToggles.kubernetesCliDashboards) {
+      // the id here is the resource version in k8s, use this instead to get the specific version
+      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.id);
+      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.id);
+    } else {
+      lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.version);
+      rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.version);
+    }
 
     this.setState({
       baseInfo,
