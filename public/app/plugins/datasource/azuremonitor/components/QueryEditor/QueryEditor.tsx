@@ -44,7 +44,7 @@ const QueryEditor = ({
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
   const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
-  
+
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
       onChange(newQuery);
@@ -52,7 +52,7 @@ const QueryEditor = ({
     },
     [onChange, onRunQuery]
   );
-  
+
   useEffectOnce(() => {
     if (baseQuery.queryType === AzureQueryType.TraceExemplar) {
       datasource.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription().then((subscription) => {
@@ -60,7 +60,7 @@ const QueryEditor = ({
       });
     }
   });
-  
+
   const query = usePreparedQuery(baseQuery, onQueryChange, defaultSubscriptionId);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
@@ -88,15 +88,19 @@ const QueryEditor = ({
     }
   }
 
-  return ( 
+  return (
     <div data-testid="azure-monitor-query-editor">
-    <AzureCheatSheetModal
+      <AzureCheatSheetModal
         datasource={datasource.azureLogAnalyticsDatasource}
         isOpen={azureLogsCheatSheetModalOpen}
         onClose={() => setAzureLogsCheatSheetModalOpen(false)}
         onChange={(a) => onChange({ ...a, queryType: AzureQueryType.LogAnalytics })}
       />
-      <QueryHeader query={query} onQueryChange={onQueryChange} setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen} />
+      <QueryHeader
+        query={query}
+        onQueryChange={onQueryChange}
+        setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen}
+      />
       <EditorForQueryType
         data={data}
         subscriptionId={subscriptionId}

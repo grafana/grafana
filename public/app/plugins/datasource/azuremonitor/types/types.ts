@@ -426,4 +426,3 @@ export type CheatsheetQueries = {
 export type DropdownCategories = {
   [key: string]: boolean;
 };
-

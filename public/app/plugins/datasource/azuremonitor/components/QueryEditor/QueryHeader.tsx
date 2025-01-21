@@ -78,30 +78,32 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
           options={queryTypes}
           onChange={handleChange}
         />
-        {(query.queryType === AzureQueryType.LogAnalytics && query.azureLogAnalytics?.mode === LogsEditorMode.Raw) && (
+        {query.queryType === AzureQueryType.LogAnalytics && query.azureLogAnalytics?.mode === LogsEditorMode.Raw && (
           <Button
-          aria-label="Azure logs kick start your query button"
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            setAzureLogsCheatSheetModalOpen((prevValue: boolean) => !prevValue);
-            
-            reportInteraction('grafana_azure_logs_query_patterns_opened', {
-              version: 'v2',
-              editorMode: query.azureLogAnalytics,
-            });
-          }}
+            aria-label="Azure logs kick start your query button"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setAzureLogsCheatSheetModalOpen((prevValue: boolean) => !prevValue);
+
+              reportInteraction('grafana_azure_logs_query_patterns_opened', {
+                version: 'v2',
+                editorMode: query.azureLogAnalytics,
+              });
+            }}
           >
             Kick start your query
           </Button>
         )}
         <FlexItem grow={1} />
-        {query.azureLogAnalytics?.mode === LogsEditorMode.Builder && <RadioButtonGroup
-          size="sm"
-          options={EDITOR_MODES}
-          value={query.azureLogAnalytics?.mode || LogsEditorMode.Builder}
-          onChange={(newMode) => onLogsModeChange(newMode as LogsEditorMode)}
-        />}
+        {query.azureLogAnalytics?.mode === LogsEditorMode.Builder && (
+          <RadioButtonGroup
+            size="sm"
+            options={EDITOR_MODES}
+            value={query.azureLogAnalytics?.mode || LogsEditorMode.Builder}
+            onChange={(newMode) => onLogsModeChange(newMode as LogsEditorMode)}
+          />
+        )}
       </EditorHeader>
     </span>
   );

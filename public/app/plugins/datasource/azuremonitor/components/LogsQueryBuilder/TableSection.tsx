@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
-import { SelectableValue } from "@grafana/data";
-import { EditorField, EditorFieldGroup, EditorRow } from "@grafana/experimental";
-import { Select } from "@grafana/ui";
+import { SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
-import { AzureMonitorQuery } from "../../types";
-import { setKustoQuery } from "../LogsQueryEditor/setQueryValue";
+import { AzureMonitorQuery } from '../../types';
+import { setKustoQuery } from '../LogsQueryEditor/setQueryValue';
 
 interface TableSectionProps {
   query: AzureMonitorQuery;
@@ -31,9 +31,9 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const [selectedTable, setSelectedTable] = useState<SelectableValue<string> | null>(null);
   const [columnOptions, setColumnOptions] = useState<Array<SelectableValue<string>>>([]);
   const [selectedColumn, setSelectedColumn] = useState<SelectableValue<string> | null>(null);
-  const [queryString, setQueryString] = useState<string>("");
+  const [queryString, setQueryString] = useState<string>('');
 
-  const toColumnName = (column: AzureLogsColumnSchema) => column.name.split("[")[0];
+  const toColumnName = (column: AzureLogsColumnSchema) => column.name.split('[')[0];
 
   useEffect(() => {
     if (tables.length > 0) {
@@ -51,7 +51,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
     setSelectedColumn([]);
 
     const selectedTableDetails = tableOptions.find((t) => t.value === selected.value);
-    if (selectedTableDetails && "columns" in selectedTableDetails) {
+    if (selectedTableDetails && 'columns' in selectedTableDetails) {
       const newColumnOptions = (selectedTableDetails.columns as AzureLogsColumnSchema[]).map((col) => ({
         label: toColumnName(col),
         value: col.name,
@@ -59,7 +59,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       setColumnOptions(newColumnOptions);
     } else {
       setColumnOptions([]);
-    };
+    }
 
     setQueryString(selected.label!);
     onChange(setKustoQuery(query, selected.label!));
@@ -88,12 +88,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
               setSelectedColumn(selected);
               if (selected.length > 0) {
                 const uniqueLabels = [...new Set(selected.map((c: SelectableValue<string>) => c.label!))];
-                const baseQuery = queryString.split(" | project")[0]; 
-                const newQueryString = `${baseQuery} | project ${uniqueLabels.join(", ")}`;
+                const baseQuery = queryString.split(' | project')[0];
+                const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')}`;
                 setQueryString(newQueryString);
                 onChange(setKustoQuery(query, newQueryString));
               } else {
-                const baseQuery = queryString.split(" | project")[0]; 
+                const baseQuery = queryString.split(' | project')[0];
                 setQueryString(baseQuery);
                 onChange(setKustoQuery(query, baseQuery));
               }
