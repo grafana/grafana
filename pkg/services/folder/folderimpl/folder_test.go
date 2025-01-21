@@ -64,7 +64,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		db, cfg := db.InitTestDBWithCfg(t)
 		store := ProvideStore(db)
 		ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
-			featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+			featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest(), nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
