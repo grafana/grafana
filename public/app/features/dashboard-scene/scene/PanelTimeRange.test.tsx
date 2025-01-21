@@ -84,6 +84,19 @@ describe('PanelTimeRange', () => {
 
     expect(panelTime.state.timeInfo).toBe('Last 15 seconds timeshift -25s');
   });
+
+  it('should update panelTimeRange from/to based on scene timeRange on activate', () => {
+    const panelTime = new PanelTimeRange({});
+    const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+    const scene = new SceneFlexLayout({
+      $timeRange: new SceneTimeRange({ from: 'now-12h', to: 'now-2h' }),
+      children: [new SceneFlexItem({ body: panel })],
+    });
+    activateFullSceneTree(scene);
+
+    expect(panelTime.state.from).toBe('now-12h');
+    expect(panelTime.state.to).toBe('now-2h');
+  });
 });
 
 function buildAndActivateSceneFor(panelTime: PanelTimeRange) {

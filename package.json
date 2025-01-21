@@ -123,7 +123,7 @@
     "@types/lodash": "4.17.14",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
-    "@types/node": "22.10.6",
+    "@types/node": "22.10.7",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
     "@types/pluralize": "^0.0.33",
@@ -177,7 +177,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "28.10.0",
     "eslint-plugin-jest-dom": "^5.4.0",
-    "eslint-plugin-jsdoc": "50.6.1",
+    "eslint-plugin-jsdoc": "50.6.2",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-lodash": "8.0.0",
     "eslint-plugin-no-barrel-files": "^1.1.1",
@@ -248,7 +248,7 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
-    "@bsull/augurs": "^0.8.0",
+    "@bsull/augurs": "^0.9.0",
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",

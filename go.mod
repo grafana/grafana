@@ -71,8 +71,9 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20250115195200-209e052dba64 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c // @grafana/identity-access-team
 	github.com/grafana/dashboard-linter v0.0.0-20241106223805-1e7999311752 // @grafana/grafana-app-platform-squad
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -215,6 +216,8 @@ require (
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20240821183201-2f012860344d // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240821161612-71f0dae39e9d // @grafana/grafana-search-and-storage
 )
+
+require github.com/grafana/grafana/apps/advisor v0.0.0-20250121115006-c1eac9f9973f
 
 require (
 	cel.dev/expr v0.18.0 // indirect
