@@ -98,7 +98,6 @@ export const RuleListIcon = memo(function RuleListIcon({
     stateName = operation;
   }
 
-  // @TODO only show spinner if there is an operation
   return (
     <Tooltip content={stateName} placement="right">
       <div>
@@ -109,27 +108,29 @@ export const RuleListIcon = memo(function RuleListIcon({
               the actual icon is static and the "spinning" part is just a semi-transparent darker circle overlayed on top.
               This makes it look like there is a small bright colored spinner rotating.
             */}
-            <svg
-              width={ICON_SIZE}
-              height={ICON_SIZE}
-              viewBox="0 0 24 24"
-              version="1.1"
-              xmlns="http://www.w3.org/2000/svg"
-              className={styles.spinning}
-            >
-              <circle
-                r={ICON_SIZE / 2}
-                cx="12"
-                cy="12"
-                // make sure to match this color to the color of the list item background where it's being used! Works for both light and dark themes.
-                stroke={theme.colors.background.primary}
-                strokeWidth="3"
-                strokeLinecap="round"
-                fill="transparent"
-                strokeOpacity={0.85}
-                strokeDasharray="24px"
-              />
-            </svg>
+            {operation && (
+              <svg
+                width={ICON_SIZE}
+                height={ICON_SIZE}
+                viewBox="0 0 24 24"
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+                className={styles.spinning}
+              >
+                <circle
+                  r={ICON_SIZE / 2}
+                  cx="12"
+                  cy="12"
+                  // make sure to match this color to the color of the list item background where it's being used! Works for both light and dark themes.
+                  stroke={theme.colors.background.primary}
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  fill="transparent"
+                  strokeOpacity={0.85}
+                  strokeDasharray="24px"
+                />
+              </svg>
+            )}
           </div>
         </Text>
       </div>

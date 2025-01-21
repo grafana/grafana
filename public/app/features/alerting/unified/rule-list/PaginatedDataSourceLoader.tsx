@@ -2,6 +2,7 @@ import { groupBy, intersection } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Alert, Icon, Stack, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 import { PromRuleDTO, RulerCloudRuleDTO, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -13,7 +14,7 @@ import { getPromRuleFingerprint, getRulerRuleFingerprint, hashRule } from '../ut
 import { isAlertingRulerRule, isCloudRulerRule, isRecordingRulerRule } from '../utils/rules';
 
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
-import { RuleInTransitionListItem } from './components/AlertRuleListItem';
+import { RuleOperationListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
@@ -165,7 +166,7 @@ function DataSourceGroupLoader({
 
   const {
     data: rulerGroup,
-    isLoading: isRulerGroupLoading,
+    isFetching: isRulerGroupFetching,
     isError: isRulerGroupError,
   } = useGetRuleGroupForNamespaceQuery(
     {
@@ -176,7 +177,7 @@ function DataSourceGroupLoader({
     { skip: !dsFeatures?.rulerConfig }
   );
 
-  const isLoading = isPromResponseLoading || isDsFeaturesLoading || isRulerGroupLoading;
+  const isLoading = isPromResponseLoading || isDsFeaturesLoading || isRulerGroupFetching;
   if (isLoading) {
     return (
       <>
@@ -189,7 +190,19 @@ function DataSourceGroupLoader({
 
   const isError = isPromResponseError || isDsFeaturesError || isRulerGroupError;
   if (isError) {
-    return <Alert title="Failed to load rules group" severity="error" />;
+    return (
+      <Alert
+        title={t(
+          'alerting.ds-group-loader.group-load-failed',
+          'Failed to load rules from group {{ groupName }} in {{ namespaceName }}',
+          {
+            groupName,
+            namespaceName,
+          }
+        )}
+        severity="error"
+      />
+    );
   }
 
   const promGroup = promResponse?.data.groups.find((g) => g.file === namespaceName && g.name === groupName);
@@ -228,7 +241,19 @@ function DataSourceGroupLoader({
   }
 
   // This should never happen
-  return <Alert title="Cannot find rules for this group" severity="warning" />;
+  return (
+    <Alert
+      title={t(
+        'alerting.ds-group-loader.group-load-failed',
+        'Cannot find rules for group {{ groupName }} in {{ namespaceName }}',
+        {
+          groupName,
+          namespaceName,
+        }
+      )}
+      severity="warning"
+    />
+  );
 }
 
 interface RulerEnabledDataSourceGroupLoaderProps extends DataSourceGroupLoaderProps {
@@ -245,37 +270,40 @@ function RulerEnabledDataSourceGroupLoader({
   promRules,
   rulerRules,
 }: RulerEnabledDataSourceGroupLoaderProps) {
-  const { matching, promOnlyRules, rulerOnlyRules } = useMemo(() => {
-    return matchRules(promRules, rulerRules);
+  const { matches, promOnlyRules } = useMemo(() => {
+    return matchRules(rulerRules, promRules);
   }, [promRules, rulerRules]);
 
   return (
     <>
-      {rulerOnlyRules.map((rule) => (
-        <RuleInTransitionListItem
-          key={getRuleName(rule)}
-          name={getRuleName(rule)}
-          namespace={namespaceName}
-          group={groupName}
-          rulesSource={groupIdentifier.rulesSource}
-          application={application}
-          operation={RuleOperation.Creating}
-        />
-      ))}
-      {matching.map(({ promRule, rulerRule }) => (
-        <DataSourceRuleListItem
-          key={hashRule(promRule)}
-          rule={promRule}
-          rulerRule={rulerRule}
-          groupIdentifier={groupIdentifier}
-          application={application}
-          actions={
-            <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
-          }
-        />
-      ))}
+      {rulerRules.map((rulerRule) => {
+        const promRule = matches.get(rulerRule);
+
+        return promRule ? (
+          <DataSourceRuleListItem
+            key={hashRule(promRule)}
+            rule={promRule}
+            rulerRule={rulerRule}
+            groupIdentifier={groupIdentifier}
+            application={application}
+            actions={
+              <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
+            }
+          />
+        ) : (
+          <RuleOperationListItem
+            key={getRuleName(rulerRule)}
+            name={getRuleName(rulerRule)}
+            namespace={namespaceName}
+            group={groupName}
+            rulesSource={groupIdentifier.rulesSource}
+            application={application}
+            operation={RuleOperation.Creating}
+          />
+        );
+      })}
       {promOnlyRules.map((rule) => (
-        <RuleInTransitionListItem
+        <RuleOperationListItem
           key={rule.name}
           name={rule.name}
           namespace={namespaceName}
@@ -299,31 +327,25 @@ function getRuleName(rule: RulerRuleDTO): string {
   return '';
 }
 
-interface RuleMatch {
-  promRule: PromRuleDTO;
-  rulerRule: RulerRuleDTO;
-}
-
 interface MatchingResult {
-  matching: RuleMatch[];
+  matches: Map<RulerRuleDTO, PromRuleDTO>;
   promOnlyRules: PromRuleDTO[];
-  rulerOnlyRules: RulerRuleDTO[];
 }
 
-export function matchRules(promRules: PromRuleDTO[], rulerRules: RulerCloudRuleDTO[]): MatchingResult {
+export function matchRules(rulerRules: RulerCloudRuleDTO[], promRules: PromRuleDTO[]): MatchingResult {
   const promRulesByHashWithQuery = new Map(promRules.map((rule) => [getPromRuleIdentifier(rule, true), rule]));
   const promRulesByHashWithoutQuery = new Map(promRules.map((rule) => [getPromRuleIdentifier(rule, false), rule]));
 
   const matchingResult = rulerRules.reduce<MatchingResult>(
     (acc, rulerRule) => {
-      const { matching, rulerOnlyRules } = acc;
+      const { matches } = acc;
 
       // We try to match including the query first, if it fails we try without it
       const rulerBasedIdentifier = getRulerRuleIdentifier(rulerRule, true);
       const promRuleMatchedWithQuery = promRulesByHashWithQuery.get(rulerBasedIdentifier);
 
       if (promRuleMatchedWithQuery) {
-        matching.push({ promRule: promRuleMatchedWithQuery, rulerRule });
+        matches.set(rulerRule, promRuleMatchedWithQuery);
         promRulesByHashWithQuery.delete(rulerBasedIdentifier);
         return acc;
       }
@@ -332,18 +354,17 @@ export function matchRules(promRules: PromRuleDTO[], rulerRules: RulerCloudRuleD
       const promRuleMatchedWithoutQuery = promRulesByHashWithoutQuery.get(rulerBasedIdentifierWithoutQuery);
 
       if (promRuleMatchedWithoutQuery) {
-        matching.push({ promRule: promRuleMatchedWithoutQuery, rulerRule });
+        matches.set(rulerRule, promRuleMatchedWithoutQuery);
         promRulesByHashWithoutQuery.delete(rulerBasedIdentifierWithoutQuery);
         return acc;
       }
 
-      rulerOnlyRules.push(rulerRule);
       return acc;
     },
-    { matching: [], promOnlyRules: [], rulerOnlyRules: [] }
+    { matches: new Map(), promOnlyRules: [] }
   );
 
-  // Truly unmatched rules are the ones which are still present in both maps
+  // Truly unmatched Prometheus rules are the ones which are still present in both maps
   const unmatchedPromRules = intersection(
     Array.from(promRulesByHashWithQuery.values()),
     Array.from(promRulesByHashWithoutQuery.values())
