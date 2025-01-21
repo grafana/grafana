@@ -11,7 +11,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -32,7 +32,7 @@ var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 type IdentityAccessManagementAPIBuilder struct {
 	store        legacy.LegacyIdentityStore
 	authorizer   authorizer.Authorizer
-	accessClient authz.AccessClient
+	accessClient types.AccessClient
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
