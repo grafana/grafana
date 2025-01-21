@@ -1363,9 +1363,9 @@ By default is the same as token URL configured for AAD authentication settings.
 
 ### `user_identity_client_authentication`
 
-Override client authentication method for Azure Active Directory.
+Override client authentication method for Azure Active Directory. Currently supported values are `client_secret_post` and `managed_identity`.
 
-By default is the same as client authentication method configured for AAD authentication settings
+By default is the same as client authentication method configured for AAD authentication settings.
 
 ### `user_identity_client_id`
 
@@ -1381,13 +1381,13 @@ By default is the same as used in AAD authentication or can be set to another ap
 
 ### `user_identity_managed_identity_client_id`
 
-Override the AAD managed identity client ID.
+Override the AAD application managed identity client ID of the federated credential configured as a user-assigned managed identity.
 
 By default is the same as used in AAD authentication or can be set to another managed identity (for OBO flow).
 
 ### `user_identity_federated_credential_audience`
 
-Override the AAD federated credential audience.
+Override the AAD federated credential audience of the federated credential configured as a user-assigned managed identity.
 
 By default is the same as used in AAD authentication or can be set to another audience (for OBO flow).
 
