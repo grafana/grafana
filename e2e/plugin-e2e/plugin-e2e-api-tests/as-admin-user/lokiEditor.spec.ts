@@ -30,7 +30,6 @@ test.describe('Loki editor', () => {
     // switch to code editor
     await page.getByLabel('Code').click();
 
-    // Waits for monaco to load?
     await page.waitForFunction(() => window.monaco);
     await expect(queryEditor).toHaveCount(1);
     await assertQueryEditorEmpty();
