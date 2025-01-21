@@ -155,6 +155,8 @@
 /pkg/services/tag/ @grafana/grafana-search-and-storage
 /pkg/services/team/ @grafana/access-squad
 /pkg/services/temp_user/ @grafana/grafana-backend-group
+/pkg/services/unifiedstorage/ @grafana/grafana-search-and-storage
+/pkg/services/unifiedstorage/unifiedstorageimpl/ @grafana/grafana-search-and-storage
 /pkg/services/updatechecker/ @grafana/grafana-backend-group
 /pkg/services/user/ @grafana/access-squad
 /pkg/services/validations/ @grafana/grafana-backend-group
