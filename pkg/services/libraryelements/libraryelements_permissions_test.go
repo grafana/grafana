@@ -94,7 +94,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
 				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
-				result.Result.Meta.FolderName = "General" //
+				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = "general"
 				result.Result.FolderUID = "general"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
@@ -123,7 +123,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.FolderName = "General"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
-				resp = sc.service.getAllHandler(sc.reqContext) //
+				resp = sc.service.getAllHandler(sc.reqContext)
 				require.Equal(t, 200, resp.Status())
 				var actual libraryElementsSearch
 				err := json.Unmarshal(resp.Body(), &actual)

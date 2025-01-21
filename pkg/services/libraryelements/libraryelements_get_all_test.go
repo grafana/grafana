@@ -5,12 +5,13 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetAllLibraryElements(t *testing.T) {
