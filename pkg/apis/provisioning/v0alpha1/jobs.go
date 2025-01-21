@@ -87,9 +87,11 @@ type ExportOptions struct {
 
 // Used to return synchronous streaming
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type WorkerProgressMessage struct {
+type JobProgressMessage struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// For async jobs, the job will be set to the job name (identifier)
+	Job     string   `json:"job,omitempty"`
 	State   JobState `json:"state"`
 	Index   int64    `json:"index,omitempty"`
 	Size    int64    `json:"size,omitempty"`

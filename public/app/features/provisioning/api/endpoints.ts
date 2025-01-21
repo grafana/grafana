@@ -277,7 +277,7 @@ export type DeleteRepositoryArg = {
   propagationPolicy?: string;
   body: DeleteOptions;
 };
-export type CreateRepositoryExportResponse = WorkerProgressMessage;
+export type CreateRepositoryExportResponse = JobProgressMessage;
 export type CreateRepositoryExportArg = {
   name: string;
   body: {
@@ -578,9 +578,10 @@ export type DeleteOptions = {
   preconditions?: Preconditions;
   propagationPolicy?: string;
 };
-export type WorkerProgressMessage = {
+export type JobProgressMessage = {
   apiVersion?: string;
   index?: number;
+  job?: string;
   kind?: string;
   message?: string;
   size?: number;

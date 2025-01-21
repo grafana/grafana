@@ -21,7 +21,7 @@ type exportConnector struct {
 
 func (*exportConnector) New() runtime.Object {
 	// This is added as the "ResponseType" regardless what ProducesObject() returns
-	return &provisioning.WorkerProgressMessage{}
+	return &provisioning.JobProgressMessage{}
 }
 
 func (*exportConnector) Destroy() {}
@@ -73,7 +73,7 @@ func (c *exportConnector) Connect(
 		header.Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusAccepted)
 
-		cb := func(msg *provisioning.WorkerProgressMessage) {
+		cb := func(msg *provisioning.JobProgressMessage) {
 			body, _ := json.Marshal(msg)
 			body = append(body, []byte("\n")...)
 			_, _ = w.Write(body)
@@ -81,7 +81,7 @@ func (c *exportConnector) Connect(
 		}
 		msg, err := c.exporter.Export(ctx, repo, options, cb)
 		if err != nil {
-			msg = &provisioning.WorkerProgressMessage{
+			msg = &provisioning.JobProgressMessage{
 				State:   provisioning.JobStateError,
 				Message: err.Error(),
 			}

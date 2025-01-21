@@ -121,7 +121,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&ResourceStats{},
 		&Job{},
 		&JobList{},
-		&WorkerProgressMessage{},
+		&JobProgressMessage{},
 	)
 	return nil
 }

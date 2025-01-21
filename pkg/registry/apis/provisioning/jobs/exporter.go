@@ -17,8 +17,8 @@ type Exporter interface {
 	Export(ctx context.Context,
 		repo repository.Repository,
 		options provisioning.ExportOptions,
-		cb func(*provisioning.WorkerProgressMessage),
-	) (*provisioning.WorkerProgressMessage, error)
+		cb func(*provisioning.JobProgressMessage),
+	) (*provisioning.JobProgressMessage, error)
 }
 
 // Dummy for now...
@@ -31,12 +31,12 @@ type dummyExporter struct{}
 func (s *dummyExporter) Export(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.ExportOptions,
-	cb func(*provisioning.WorkerProgressMessage),
-) (*provisioning.WorkerProgressMessage, error) {
+	cb func(*provisioning.JobProgressMessage),
+) (*provisioning.JobProgressMessage, error) {
 	logger := logging.FromContext(ctx).With("logger", "exporter", "repository", repo.Config().Name, "namespace", repo.Config().Name)
 	logger.Info("start export", "folder", options.Folder)
 
-	msg := &provisioning.WorkerProgressMessage{
+	msg := &provisioning.JobProgressMessage{
 		State: provisioning.JobStatePending,
 		Index: 0,
 		Size:  10 + rand.Int64N(100),
