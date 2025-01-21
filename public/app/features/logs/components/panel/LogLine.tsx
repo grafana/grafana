@@ -28,7 +28,7 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
     if (hasOverflow) {
       onOverflow(index, log.uid, logLineRef.current.scrollHeight);
     }
-  }, [index, log.body, log.uid, onOverflow]);
+  }, [index, log.uid, onOverflow]);
 
   return (
     <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
