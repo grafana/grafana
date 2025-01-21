@@ -53,6 +53,7 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     );
 
     const { timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+
     // set initial values on activate
     this.setState({
       value: timeRange,
