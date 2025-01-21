@@ -532,10 +532,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		meta.SetCreatedBy(p.CreatedBy)
 		meta.SetUpdatedBy(p.UpdatedBy)
 		meta.SetUpdatedTimestamp(&p.Updated)
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name: "SQL",
-			Path: strconv.FormatInt(p.ID, 10),
-		})
+		meta.SetDeprecatedInternalID(p.ID) // nolint:staticcheck
 
 		res.Items = append(res.Items, item)
 		if len(res.Items) > limit {
