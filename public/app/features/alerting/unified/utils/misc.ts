@@ -133,8 +133,8 @@ export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels
 
   const matcherParams = getMatcherQueryParams(labels);
   matcherParams.forEach((value, key) => silenceUrlParams.append(key, value));
-
-  return createUrl('/alerting/silence/new', silenceUrlParams);
+  // LOGZ.IO GRAFANA CHANGE :: DEV-47948 - fix link
+  return createUrl('alerting/silence/new', silenceUrlParams);
 }
 
 export function makeDataSourceLink(uid: string) {
@@ -142,7 +142,8 @@ export function makeDataSourceLink(uid: string) {
 }
 
 export function makeFolderLink(folderUID: string): string {
-  return createUrl(`/dashboards/f/${folderUID}`);
+  // LOGZ.IO GRAFANA CHANGE :: DEV-47948 - fix links
+  return createUrl(`dashboards/f/${folderUID}`);
 }
 
 export function makeFolderAlertsLink(folderUID: string, title: string): string {

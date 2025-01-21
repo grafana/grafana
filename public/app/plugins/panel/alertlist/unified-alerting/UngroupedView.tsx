@@ -65,7 +65,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
               : undefined;
 
           const href = createUrl(
-            `/grafana-app/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
+            `/grafana-app/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`, // LOGZ.IO GRAFANA CHANGE :: DEV-47948 - fix url in alerts list panel plugin
             { returnTo: returnTo ?? '' }
           );
           if (alertingRule) {
