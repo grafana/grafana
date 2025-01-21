@@ -8,7 +8,7 @@ import {
   ConnectionSettings,
   DataSourceDescription,
   convertLegacyAuthProps,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 import { NodeGraphSection, SpanBarSection, TraceToLogsSection, TraceToMetricsSection } from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
 import { useStyles2, Divider, Stack, SecureSocksProxySettings } from '@grafana/ui';
