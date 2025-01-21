@@ -9,6 +9,7 @@ import { useDeleteQueryTemplateMutation } from 'app/features/query-library';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { getK8sNamespace } from '../../../query-library/api/query';
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
 import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
 import {
@@ -35,7 +36,11 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
 
   const onDeleteQuery = (queryUid: string) => {
     const performDelete = (queryUid: string) => {
-      deleteQueryTemplate({ uid: queryUid });
+      deleteQueryTemplate({
+        name: queryUid,
+        namespace: getK8sNamespace(),
+        ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
+      });
       dispatch(notifyApp(createSuccessNotification(t('explore.query-library.query-deleted', 'Query deleted'))));
       queryLibaryTrackDeleteQuery();
     };

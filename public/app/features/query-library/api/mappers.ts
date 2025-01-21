@@ -2,21 +2,29 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
+import {
+  ComGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate,
+  ListQueryTemplateApiResponse,
+} from './endpoints.gen';
 import { API_VERSION, QueryTemplateKinds } from './query';
-import { CREATED_BY_KEY, DataQueryFullSpec, DataQuerySpecResponse, DataQueryTarget } from './types';
+import { CREATED_BY_KEY } from './types';
 
-export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecResponse): QueryTemplate[] => {
+export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTemplateApiResponse): QueryTemplate[] => {
   if (!result.items) {
     return [];
   }
   return result.items.map((spec) => {
     return {
-      uid: spec.metadata.name || '',
-      title: spec.spec.title,
-      targets: spec.spec.targets.map((target: DataQueryTarget) => target.properties),
-      createdAtTimestamp: new Date(spec.metadata.creationTimestamp || '').getTime(),
+      uid: spec.metadata?.name ?? '',
+      title: spec.spec?.title ?? '',
+      targets:
+        spec.spec?.targets.map((target) => ({
+          ...target.properties,
+          refId: target.properties.refId ?? '',
+        })) ?? [],
+      createdAtTimestamp: new Date(spec.metadata?.creationTimestamp ?? '').getTime(),
       user: {
-        uid: spec.metadata.annotations?.[CREATED_BY_KEY] || '',
+        uid: spec.metadata?.annotations?.[CREATED_BY_KEY] ?? '',
       },
     };
   });
@@ -24,7 +32,7 @@ export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecRe
 
 export const convertAddQueryTemplateCommandToDataQuerySpec = (
   addQueryTemplateCommand: AddQueryTemplateCommand
-): DataQueryFullSpec => {
+): ComGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate => {
   const { title, targets } = addQueryTemplateCommand;
   return {
     apiVersion: API_VERSION,
@@ -41,7 +49,13 @@ export const convertAddQueryTemplateCommandToDataQuerySpec = (
       vars: [], // TODO: Detect variables in #86838
       targets: targets.map((dataQuery) => ({
         variables: {},
-        properties: dataQuery,
+        properties: {
+          ...dataQuery,
+          datasource: {
+            ...dataQuery.datasource,
+            type: dataQuery.datasource?.type ?? '',
+          },
+        },
       })),
     },
   };
