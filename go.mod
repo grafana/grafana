@@ -33,6 +33,7 @@ require (
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
 	github.com/blevesearch/bleve/v2 v2.4.3 // @grafana/grafana-search-and-storage
+	github.com/blevesearch/bleve_index_api v1.1.12 // @grafana/grafana-search-and-storage
 	github.com/blugelabs/bluge v0.2.2 // @grafana/grafana-backend-group
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/grafana-backend-group
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874 // @grafana/grafana-backend-group
@@ -105,7 +106,7 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
 	github.com/jeremywohl/flatten v1.0.1 // @grafana/grafana-app-platform-squad
 	github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
-	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
+	github.com/jmespath/go-jmespath v0.4.0 // indirect; // @grafana/grafana-backend-group
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
@@ -254,7 +255,6 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.12.0 // indirect
-	github.com/blevesearch/bleve_index_api v1.1.12 // indirect
 	github.com/blevesearch/geo v0.1.20 // indirect
 	github.com/blevesearch/go-faiss v1.0.23 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
