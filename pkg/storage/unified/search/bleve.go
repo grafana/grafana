@@ -18,6 +18,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -53,9 +54,11 @@ type bleveBackend struct {
 	// cache info
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
+
+	features featuremgmt.FeatureToggles
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) (*bleveBackend, error) {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgmt.FeatureToggles) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
@@ -68,11 +71,12 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer) (*bleveBackend, err
 	}
 
 	return &bleveBackend{
-		log:    slog.Default().With("logger", "bleve-backend"),
-		tracer: tracer,
-		cache:  make(map[resource.NamespacedResource]*bleveIndex),
-		opts:   opts,
-		start:  time.Now(),
+		log:      slog.Default().With("logger", "bleve-backend"),
+		tracer:   tracer,
+		cache:    make(map[resource.NamespacedResource]*bleveIndex),
+		opts:     opts,
+		start:    time.Now(),
+		features: features,
 	}, nil
 }
 
@@ -172,6 +176,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		batchSize: b.opts.BatchSize,
 		fields:    fields,
 		standard:  resource.StandardSearchFields(),
+		features:  b.features,
 	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
@@ -243,6 +248,8 @@ type bleveIndex struct {
 	// only valid in single thread
 	batch     *bleve.Batch
 	batchSize int // ??? not totally sure the units here
+
+	features featuremgmt.FeatureToggles
 }
 
 // Write implements resource.DocumentIndex.
@@ -579,8 +586,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
 	}
 
-	// Can we remove this? Is access ever nil?
-	if access != nil {
+	if access != nil && b.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering) {
 		auth, ok := authlib.AuthInfoFrom(ctx)
 		if !ok {
 			return nil, resource.AsErrorResult(fmt.Errorf("missing auth info"))
