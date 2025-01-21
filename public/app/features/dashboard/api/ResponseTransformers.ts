@@ -686,7 +686,7 @@ function getPanelsV1(panels: DashboardV2Spec['elements'], layout: DashboardV2Spe
       transparent: panel.transparent,
       ...(repeat?.value && { repeat: repeat.value }),
       ...(repeat?.direction && { repeatDirection: repeat.direction }),
-      ...(repeat?.maxPerRow && { maxPerRow: repeat?.maxPerRow }),
+      ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
     };
   });
 }
