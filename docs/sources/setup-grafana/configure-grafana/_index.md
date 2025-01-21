@@ -1295,7 +1295,7 @@ Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
-### user_identity_managed_identity_client_id
+### `user_identity_managed_identity_client_id`
 
 Override the AAD managed identity client ID.
 
