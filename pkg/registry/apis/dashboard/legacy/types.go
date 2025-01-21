@@ -25,6 +25,9 @@ type DashboardQuery struct {
 	GetHistory bool
 	Version    int64
 
+	// Only folders
+	GetFolders bool
+
 	// The label requirements
 	Labels []*resource.Requirement
 }
