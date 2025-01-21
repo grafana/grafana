@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+
 import { isClonedSceneObject } from '../../utils/clone';
 
 import { DashboardScene } from '../DashboardScene';
