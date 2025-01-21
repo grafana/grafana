@@ -1,10 +1,12 @@
 import { t } from 'i18next';
 import { useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
 import { isQueryLibraryEnabled, useListQueryTemplateQuery } from 'app/features/query-library';
 
+import { QUERY_LIBRARY_GET_LIMIT } from '../../query-library/api/factory';
 import {
   queryLibraryTrackAddFromQueryHistory,
   queryLibraryTrackAddFromQueryHistoryAddModalShown,
@@ -18,8 +20,8 @@ type Props = {
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
   // TODO extract out namespace/limit
   const { refetch } = useListQueryTemplateQuery({
-    limit: 1000,
-    namespace: 'default',
+    limit: QUERY_LIBRARY_GET_LIMIT,
+    namespace: config.namespace,
   });
   const [isOpen, setIsOpen] = useState(false);
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
