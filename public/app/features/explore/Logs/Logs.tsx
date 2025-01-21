@@ -303,7 +303,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         }
       });
     }
-  }, [hiddenLogLevels, logsVolumeData, logsVolumeEnabled, register, unregisterAllChildren]);
+  }, [logsVolumeData, unregisterAllChildren, logsVolumeEnabled, hiddenLogLevels, register, toggleLegendRef]);
 
   useEffect(() => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
