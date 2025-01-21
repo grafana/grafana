@@ -29,6 +29,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
+import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -91,7 +92,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
-  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
+  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
+  const { queryLibraryAvailable } = useQueryLibraryContext();
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
