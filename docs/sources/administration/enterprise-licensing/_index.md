@@ -272,7 +272,7 @@ Usage billing involves a contractual agreement between you and Grafana Labs and 
 
 ### User deduplication
 
-If your organization has multiple Grafana Enterprise instances with usage billing enabled, then each active user counts only once toward your license, regardless of how many instances that user signs into. Each Grafana Enterprise instance submits an anonymized list of users to Grafana Labs via API every day. Each user’s email address is hashed using a one-way sha256 algorithm, and submitted to Grafana where the anonymized users are deduplicated across instances.
+If your organization has multiple Grafana Enterprise instances with usage billing enabled, then each active user counts only once toward your license, regardless of how many instances that user signs into. Each Grafana Enterprise instance submits an anonymized list of users to Grafana Labs via API every day. Each user email address or anonymous device ID is hashed using a one-way sha256 algorithm, and submitted to Grafana where the hashed users are deduplicated across instances.
 
 ### Request usage billing
 
