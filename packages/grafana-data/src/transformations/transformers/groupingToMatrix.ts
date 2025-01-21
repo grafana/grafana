@@ -112,7 +112,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         ];
 
         for (const columnName of columnValues) {
-          let values: Array<{} | null> = [];
+          let values = [];
           for (const rowName of rowValues) {
             const value = matrixValues[columnName][rowName] ?? getSpecialValue(emptyValue);
             values.push(value);
