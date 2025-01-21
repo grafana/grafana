@@ -16,28 +16,29 @@ type Provider struct{}
 func ProvideService(
 	cfg *setting.Cfg, ac accesscontrol.AccessControl,
 	dashboardService dashboards.DashboardService, teamService team.Service,
+	folderService folder.Service,
 ) *Provider {
 	// TODO: Fix this hack, see https://github.com/grafana/grafana-enterprise/issues/2935
-	InitAccessControlGuardian(cfg, ac, dashboardService)
+	InitAccessControlGuardian(cfg, ac, dashboardService, folderService)
 	return &Provider{}
 }
 
 func InitAccessControlGuardian(
-	cfg *setting.Cfg, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+	cfg *setting.Cfg, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, folderService folder.Service,
 ) {
 	New = func(ctx context.Context, dashId int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-		return NewAccessControlDashboardGuardian(ctx, cfg, dashId, user, ac, dashboardService)
+		return NewAccessControlDashboardGuardian(ctx, cfg, dashId, user, ac, dashboardService, folderService)
 	}
 
 	NewByUID = func(ctx context.Context, dashUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-		return NewAccessControlDashboardGuardianByUID(ctx, cfg, dashUID, user, ac, dashboardService)
+		return NewAccessControlDashboardGuardianByUID(ctx, cfg, dashUID, user, ac, dashboardService, folderService)
 	}
 
 	NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-		return NewAccessControlDashboardGuardianByDashboard(ctx, cfg, dash, user, ac, dashboardService)
+		return NewAccessControlDashboardGuardianByDashboard(ctx, cfg, dash, user, ac, dashboardService, folderService)
 	}
 
 	NewByFolder = func(ctx context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-		return NewAccessControlFolderGuardian(ctx, cfg, f, user, ac, dashboardService)
+		return NewAccessControlFolderGuardian(ctx, cfg, f, user, ac, orgId, dashboardService, folderService)
 	}
 }

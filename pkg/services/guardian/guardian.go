@@ -15,6 +15,7 @@ var (
 	ErrGuardianGetDashboardFailure = errutil.Internal("guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
 	ErrGuardianDashboardNotFound   = errutil.NotFound("guardian.dashboardNotFound")
 	ErrGuardianFolderNotFound      = errutil.NotFound("guardian.folderNotFound")
+	ErrGuardianGetFolderFailure    = errutil.Internal("guardian.getFolderFailure", errutil.WithPublicMessage("Failed to get folder"))
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
