@@ -3,13 +3,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
-import { EditableRuleIdentifier, RuleGroupIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
-import { getGroupOriginName } from '../../utils/groupIdentifier';
+import { ruleGroupIdentifierV2toV1 } from '../../utils/groupIdentifier';
 import { isCloudRuleIdentifier } from '../../utils/rules';
 
 type DeleteModalHook = [
@@ -41,14 +41,8 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
 
     const { ruleIdentifier, groupIdentifier } = ruleToDelete;
 
-    const rulesSourceName = getGroupOriginName(groupIdentifier);
-
-    const groupIdentifierV1: RuleGroupIdentifier = {
-      dataSourceName: rulesSourceName,
-      namespaceName:
-        'uid' in groupIdentifier.namespace ? groupIdentifier.namespace.uid : groupIdentifier.namespace.name,
-      groupName: groupIdentifier.groupName,
-    };
+    const groupIdentifierV1 = ruleGroupIdentifierV2toV1(groupIdentifier);
+    const rulesSourceName = groupIdentifierV1.dataSourceName;
 
     await deleteRuleFromGroup.execute(groupIdentifierV1, ruleIdentifier);
 
