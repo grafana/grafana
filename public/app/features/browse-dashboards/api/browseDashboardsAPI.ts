@@ -1,4 +1,4 @@
-import { BaseQueryFn, createApi, QueryReturnValue } from '@reduxjs/toolkit/query/react';
+import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
@@ -100,41 +100,18 @@ export const browseDashboardsAPI = createApi({
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
-      queryFn: async ({ parentUid, limit, page, permission }, queryApi, extraOptions, baseQuery) => {
-        const response: QueryReturnValue<FolderListItemDTO[], unknown, {}> = (await baseQuery({
-          url: '/folders',
-          params: { parentUid, limit, page, permission },
-        })) as QueryReturnValue<FolderListItemDTO[], unknown, {}>;
-
-        if (response.error || !response.data?.length) {
-          return { data: [] };
-        }
-
-        const data = await addRepositoryData(response.data);
-        return {
-          data,
-        };
-      },
+      query: ({ parentUid, limit, page, permission }) => ({
+        url: '/folders',
+        params: { parentUid, limit, page, permission },
+      }),
+      transformResponse: addRepositoryData,
     }),
 
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
-      queryFn: async (folderUID, queryApi, extraOptions, baseQuery) => {
-        const response = (await baseQuery({
-          url: `/folders/${folderUID}`,
-          params: { accesscontrol: true },
-        })) as QueryReturnValue<FolderDTO, unknown, {}>;
-
-        if (response.error || !response.data) {
-          return { data: {} as FolderDTO };
-        }
-
-        const data = await addRepositoryData(response.data);
-        return {
-          data,
-        };
-      },
+      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+      transformResponse: addRepositoryData,
     }),
 
     // create a new folder
