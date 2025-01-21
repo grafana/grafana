@@ -276,17 +276,18 @@
     {
       "metadata": {
         "name": "alertingNotificationsStepMode",
-        "resourceVersion": "1732272457848",
+        "resourceVersion": "1737362059637",
         "creationTimestamp": "2024-11-06T09:35:49Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-11-22 10:47:37.848635 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-20 08:34:19.63725 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables simplified step mode in the notifications section",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -308,14 +309,18 @@
     {
       "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
-        "resourceVersion": "1725978395461",
-        "creationTimestamp": "2024-09-26T06:33:14Z"
+        "resourceVersion": "1737362059637",
+        "creationTimestamp": "2024-09-26T06:33:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-20 08:34:19.63725 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables step mode for alerting queries and expressions",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
