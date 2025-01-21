@@ -423,7 +423,8 @@ export function TableNG(props: TableNGProps) {
         return index === 0 ? `Count: ${filteredRows.length}` : '';
       }
       if (index === 0) {
-        return footerOptions ? fieldReducers.get(footerOptions.reducer[0]).name : '';
+        const footerCalcReducer = footerOptions?.reducer[0];
+        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
       return getFooterItemNG(filteredRows, field, footerOptions);
     });
