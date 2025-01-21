@@ -7,7 +7,6 @@ import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-da
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { useRepositoryList } from 'app/features/provisioning/hooks';
 import { RootState } from 'app/store/configureStore';
 import { FolderListItemDTO, PermissionLevelString } from 'app/types';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -69,7 +68,7 @@ const listAllFoldersSelector = createSelector(
 );
 
 /**
- * Returns the whether the set of pages are 'fully loaded', and the last page number
+ * Returns whether the set of pages are 'fully loaded', and the last page number
  */
 function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined] {
   const lastPage = pages.at(-1);
@@ -101,8 +100,6 @@ export function useFoldersQuery(
   const state = useSelector((rootState: RootState) => {
     return listAllFoldersSelector(rootState, requestsRef.current);
   });
-
-  const [repositoryConfigs] = useRepositoryList();
 
   // Loads the next page of folders for the given parent UID by inspecting the
   // state to determine what the next page is
@@ -149,7 +146,6 @@ export function useFoldersQuery(
 
         return pageItems.flatMap((item) => {
           const folderIsOpen = openFolders[item.uid];
-          const repo = repositoryConfigs?.find((repo) => repo.spec?.folder === item.uid);
           const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
             isOpen: Boolean(folderIsOpen),
             level: level,
@@ -157,7 +153,7 @@ export function useFoldersQuery(
               kind: 'folder' as const,
               title: item.title,
               uid: item.uid,
-              repository: repo?.metadata?.name,
+              repository: item.repository,
             },
           };
 
@@ -183,7 +179,7 @@ export function useFoldersQuery(
     rootFlatTree.unshift(ROOT_FOLDER_ITEM);
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, repositoryConfigs]);
+  }, [state, isBrowsing, openFolders]);
 
   return {
     items: treeList,

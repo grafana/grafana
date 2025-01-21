@@ -43,12 +43,6 @@ describe('NestedFolderPicker', () => {
         });
       }),
 
-      http.get('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories', () => {
-        return HttpResponse.json({
-          items: [],
-        });
-      }),
-
       http.get('/api/folders', ({ request }) => {
         const url = new URL(request.url);
         const parentUid = url.searchParams.get('parentUid') ?? undefined;

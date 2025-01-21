@@ -2,6 +2,8 @@ import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
 
+import { Repository } from '../provisioning/api';
+
 import { QueryResponse } from './service/types';
 
 export enum DashboardSearchItemType {
@@ -80,7 +82,7 @@ export interface DashboardViewItem {
   // For enterprise sort options
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
-  repository?: string;
+  repository?: Repository;
 }
 
 export interface SearchAction extends Action {
