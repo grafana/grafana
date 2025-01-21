@@ -1,4 +1,4 @@
-package playlist
+package folder
 
 import (
 	"bytes"
@@ -114,54 +114,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		  }`, string(v1Disco))
 	})
 
-	t.Run("with k8s api flag", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: true,
-			DisableAnonymous:  true,
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
-
-	t.Run("with dual write (file, mode 0)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
-
-	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
-
 	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
@@ -196,104 +148,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
 			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
-	})
-
-	t.Run("with dual write (unified-grpc, mode 0)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified-grpc",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
-
-	t.Run("with dual write (unified-grpc, mode 1)", func(t *testing.T) {
-		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified-grpc",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		}))
-	})
-
-	t.Run("with dual write (etcd, mode 0)", func(t *testing.T) {
-		// NOTE: running local etcd, that will be wiped clean!
-		t.Skip("local etcd testing")
-
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "etcd",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		})
-
-		// Clear the collection before starting (etcd)
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  gvr,
-		})
-		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
-		require.NoError(t, err)
-
-		doFolderTests(t, helper)
-	})
-
-	t.Run("with dual write (etcd, mode 1)", func(t *testing.T) {
-		// NOTE: running local etcd, that will be wiped clean!
-		t.Skip("local etcd testing")
-
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "etcd",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
-		})
-
-		// Clear the collection before starting (etcd)
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
-			GVR:  gvr,
-		})
-		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
-		require.NoError(t, err)
-
-		doFolderTests(t, helper)
 	})
 
 	t.Run("with dual write (unified storage, mode 1, create nested folders)", func(t *testing.T) {
