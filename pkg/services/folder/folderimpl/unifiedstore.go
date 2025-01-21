@@ -15,9 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,13 +27,7 @@ type FolderUnifiedStoreImpl struct {
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(cfg *setting.Cfg) *FolderUnifiedStoreImpl {
-	k8sHandler := &foldk8sHandler{
-		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
-		namespacer: request.GetNamespaceMapper(cfg),
-		cfg:        cfg,
-	}
-
+func ProvideUnifiedStore(k8sHandler *foldk8sHandler) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
 		k8sclient: k8sHandler,
 		log:       log.New("folder-store"),
