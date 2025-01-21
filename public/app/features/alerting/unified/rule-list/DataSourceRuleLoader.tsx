@@ -8,9 +8,9 @@ import { equal, fromRule, fromRulerRule, stringifyIdentifier } from '../utils/ru
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
-import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;

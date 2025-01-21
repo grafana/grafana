@@ -6,6 +6,7 @@ import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
 import { isLoading } from '../hooks/useAsync';
 import { stringifyErrorLike } from '../utils/misc';
+import { isGrafanaRulerRulePaused } from '../utils/rules';
 
 interface Props {
   rule: RulerGrafanaRuleDTO;
@@ -24,7 +25,7 @@ const MenuItemPauseRule = ({ rule, groupIdentifier, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
   const [pauseRule, updateState] = usePauseRuleInGroup();
 
-  const [icon, title] = rule.grafana_alert.is_paused
+  const [icon, title] = isGrafanaRulerRulePaused(rule)
     ? ['play' as const, 'Resume evaluation']
     : ['pause' as const, 'Pause evaluation'];
 
