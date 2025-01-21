@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -7,6 +7,7 @@ import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/uti
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
+import { SceneCSSGridLayout } from './SceneCSSGridLayout';
 
 interface ResponsiveGridLayoutManagerState extends SceneObjectState {
   layout: SceneCSSGridLayout;
@@ -123,6 +124,7 @@ export class ResponsiveGridLayoutManager
   activateRepeaters?(): void {
     throw new Error('Method not implemented.');
   }
+
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return <model.state.layout.Component model={model.state.layout} />;
   };

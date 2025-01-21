@@ -44,6 +44,7 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { DragManager } from '../scene/layout-responsive-grid/DragManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -235,6 +236,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       uid: oldModel.uid,
       version: oldModel.version,
     }),
+    new DragManager({}),
   ];
   const dashboardScene = new DashboardScene({
     description: oldModel.description,
