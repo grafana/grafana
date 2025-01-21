@@ -15,6 +15,7 @@ import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
 
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, VIRTUAL_OVERSCAN_ITEMS } from './Combobox';
+import { NotFoundError } from './MessageRows';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
 import { itemFilter, itemToString } from './filter';
@@ -303,6 +304,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   );
                 })}
               </ul>
+              <div aria-live="polite">{items.length === 0 && <NotFoundError />}</div>
             </ScrollContainer>
           )}
         </div>

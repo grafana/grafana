@@ -106,10 +106,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.primary,
       },
     }),
-    warningIcon: css({
-      label: 'combobox-warning-icon',
-      color: theme.colors.text.secondary,
-    }),
     input: css({
       label: 'combobox-input',
       '> div > div:last-child': {
