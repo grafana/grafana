@@ -5,6 +5,7 @@ go 1.23.5
 
 use (
 	. // skip:golangci-lint
+	./apps/advisor
 	./apps/alerting/notifications
 	./apps/investigation
 	./apps/playlist
