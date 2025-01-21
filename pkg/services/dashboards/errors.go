@@ -70,6 +70,10 @@ var (
 		Reason:     "uid too long, max 40 characters",
 		StatusCode: 400,
 	}
+	ErrDashboardMessageTooLong = DashboardErr{
+		Reason:     "message too long, max 500 characters",
+		StatusCode: 400,
+	}
 	ErrDashboardCannotSaveProvisionedDashboard = DashboardErr{
 		Reason:     "Cannot save provisioned dashboard",
 		StatusCode: 400,
