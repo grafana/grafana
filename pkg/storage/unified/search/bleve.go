@@ -894,6 +894,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 		// Tried casting d.IndexInternalID to a string, but its empty when using a file-based index. Unsure why.
 		d.ID, err = i.ExternalID(d.IndexInternalID)
 		if err != nil {
+			q.log.Debug("Error getting external ID", "error", err)
 			return false
 		}
 
