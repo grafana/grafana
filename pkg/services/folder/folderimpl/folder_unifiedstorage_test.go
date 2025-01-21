@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -31,6 +32,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+type rcp struct {
+	Host string
+}
+
+func (r rcp) GetRestConfig(ctx context.Context) *clientrest.Config {
+	return &clientrest.Config{
+		Host: r.Host,
+	}
+}
 
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	if testing.Short() {
@@ -148,14 +159,15 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	db, cfg := sqlstore.InitTestDB(t)
 	cfg.AppURL = folderApiServerMock.URL
 
-	//restCfgProvider := rcp{
-	//	Host: folderApiServerMock.URL,
-	//}
+	restCfgProvider := rcp{
+		Host: folderApiServerMock.URL,
+	}
 
 	k8sHandler := &foldk8sHandler{
-		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
-		namespacer: request.GetNamespaceMapper(cfg),
-		cfg:        cfg,
+		gvr:                v0alpha1.FolderResourceInfo.GroupVersionResource(),
+		namespacer:         request.GetNamespaceMapper(cfg),
+		cfg:                cfg,
+		restConfigProvider: restCfgProvider.GetRestConfig,
 	}
 
 	unifiedStore := ProvideUnifiedStore(k8sHandler)

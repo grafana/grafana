@@ -10,12 +10,12 @@ import (
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -36,9 +36,10 @@ type folderK8sHandler interface {
 var _ folderK8sHandler = (*foldk8sHandler)(nil)
 
 type foldk8sHandler struct {
-	cfg        *setting.Cfg
-	namespacer request.NamespaceMapper
-	gvr        schema.GroupVersionResource
+	cfg                *setting.Cfg
+	namespacer         request.NamespaceMapper
+	gvr                schema.GroupVersionResource
+	restConfigProvider func(ctx context.Context) *clientrest.Config
 }
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -680,7 +681,7 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 // -----------------------------------------------------------------------------------------
 
 func (fk8s *foldk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	cfg := apiserver.GetRestConfig(ctx)
+	cfg := fk8s.restConfigProvider(ctx)
 	if cfg == nil {
 		return nil, false
 	}
