@@ -13,7 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -37,7 +37,7 @@ func formatBytes(numBytes int) string {
 
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) ([]byte, error) {
-	claims, ok := claims.From(ctx)
+	claims, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing claims in context")
 	}
@@ -88,7 +88,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 // Called on update
 func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) ([]byte, error) {
-	claims, ok := claims.From(ctx)
+	claims, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing claims in context")
 	}

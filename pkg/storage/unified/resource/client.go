@@ -137,7 +137,7 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 		return "", nil
 	}
 
-	authInfo, ok := claims.From(ctx)
+	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
 	}

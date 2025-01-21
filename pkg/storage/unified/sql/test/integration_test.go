@@ -12,7 +12,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -70,7 +71,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ctx := claims.WithClaims(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Subject: "testuser",
 		},
@@ -418,7 +419,7 @@ func TestClientServer(t *testing.T) {
 	require.NoError(t, err)
 	var client resource.ResourceStoreClient
 
-	clientCtx := claims.WithClaims(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+	clientCtx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Subject: "testuser",
 		},
