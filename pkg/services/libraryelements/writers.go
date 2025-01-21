@@ -23,10 +23,17 @@ func selectLibraryElementByParam(params []Pair) (string, []any) {
 		conditions = append(conditions, "le."+p.key+"=?")
 		values = append(values, p.value)
 	}
-	return ` WHERE ` + strings.Join(conditions, " AND "), values
+	return strings.Join(conditions, " AND "), values
 }
 
 func writeParamSelectorSQL(builder *db.SQLBuilder, params ...Pair) {
+	if len(params) > 0 {
+		conditionString, paramValues := selectLibraryElementByParam(params)
+		builder.Write(` WHERE `+conditionString, paramValues...)
+	}
+}
+
+func writeParamSelectorSQLWithoutWhere(builder *db.SQLBuilder, params ...Pair) {
 	if len(params) > 0 {
 		conditionString, paramValues := selectLibraryElementByParam(params)
 		builder.Write(conditionString, paramValues...)

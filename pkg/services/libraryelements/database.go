@@ -290,11 +290,10 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
 		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
-		builder.Write(" OR le.folder_id <> 0 AND (le.org_id=? AND le.uid=? OR le.folder_id=0)")
+		builder.Write(" OR le.folder_id <> 0 AND ")
 
-		sql := builder.GetSQLString()
-		params := append(builder.GetParams(), []any{1, cmd.UID}...)
-		if err := session.SQL(sql, params...).Find(&libraryElements); err != nil {
+		writeParamSelectorSQLWithoutWhere(&builder, params...)
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
 		}
 		if len(libraryElements) == 0 {
