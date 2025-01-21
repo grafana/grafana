@@ -1157,6 +1157,22 @@
     },
     {
       "metadata": {
+        "name": "datasourceConnectionsTab",
+        "resourceVersion": "1737049826022",
+        "creationTimestamp": "2025-01-16T17:36:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-16 17:50:26.022636488 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Shows defined connections for a data source in the plugins detail page",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceProxyDisableRBAC",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-05-21T13:05:16Z",

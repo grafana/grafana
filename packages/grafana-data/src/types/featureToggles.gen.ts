@@ -254,4 +254,5 @@ export interface FeatureToggles {
   queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  datasourceConnectionsTab?: boolean;
 }

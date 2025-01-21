@@ -1759,6 +1759,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 		},
+		{
+			Name:            "datasourceConnectionsTab",
+			Description:     "Shows defined connections for a data source in the plugins detail page",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresDevMode: false,
+			FrontendOnly:    true,
+		},
 	}
 )
 
