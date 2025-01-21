@@ -314,7 +314,7 @@ export function getLogLevelInfo(dataFrame: DataFrame) {
     console.error('Value field missing in data frame');
   }
 
-  const level = valueField?.config.displayNameFromDS || dataFrame.name || 'logs';
+  const level = valueField?.config.displayNameFromDS ?? dataFrame.name ?? 'logs';
   const length = valueField?.values.length ?? 0;
   return { level, valueField, timeField, length };
 }
