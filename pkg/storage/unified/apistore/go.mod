@@ -16,9 +16,9 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240821161612-71f0dae39e9d
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250121113133-e747350fee2d
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
