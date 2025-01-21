@@ -9,6 +9,7 @@ import { selectTotal } from '../invites/state/selectors';
 
 import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
+import { getExternalUserMngLinkUrl } from './utils';
 
 export interface OwnProps {
   showInvites: boolean;
@@ -67,7 +68,7 @@ export const UsersActionBarUnconnected = ({
       )}
       {showInviteButton && <LinkButton href="org/users/invite">Invite</LinkButton>}
       {externalUserMngLinkUrl && (
-        <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
+        <LinkButton href={getExternalUserMngLinkUrl('manage-users')} target="_blank" rel="noopener">
           {externalUserMngLinkName}
         </LinkButton>
       )}
