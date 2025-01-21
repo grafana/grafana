@@ -415,7 +415,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibraryElementDTOWithMeta)
-			builder.Write(", 'General' as folder_name ")
 			builder.Write(", '' as folder_uid ")
 			builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.GetOrgID())
@@ -426,7 +425,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			builder.Write(" UNION ")
 		}
 		builder.Write(selectLibraryElementDTOWithMeta)
-		builder.Write(", le.folder_uid as folder_name ") // #TODO stop setting this
 		builder.Write(", le.folder_uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		builder.Write(` WHERE le.org_id=? AND folder_id<>0`, signedInUser.GetOrgID())
