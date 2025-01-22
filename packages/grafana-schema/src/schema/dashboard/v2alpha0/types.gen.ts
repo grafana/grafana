@@ -1173,6 +1173,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	collapseFilters?: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
