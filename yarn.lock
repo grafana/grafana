@@ -2711,8 +2711,8 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
-    "@grafana/experimental": "npm:2.1.6"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
+    "@grafana/plugin-ui": "npm:^0.9.6"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -2822,9 +2822,9 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:2.1.6"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
+    "@grafana/plugin-ui": "npm:^0.9.6"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -2895,8 +2895,8 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
-    "@grafana/experimental": "npm:2.1.6"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
+    "@grafana/plugin-ui": "npm:^0.9.6"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -3064,9 +3064,9 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:2.1.6"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
+    "@grafana/plugin-ui": "npm:^0.9.6"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -3448,8 +3448,8 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^1.11.0":
-  version: 1.15.0
-  resolution: "@grafana/plugin-e2e@npm:1.15.0"
+  version: 1.16.0
+  resolution: "@grafana/plugin-e2e@npm:1.16.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.5.0-216908"
     semver: "npm:^7.5.4"
@@ -3457,13 +3457,13 @@ __metadata:
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/b40907f78ef6af17b2988563a39482a0daac338e2edf4cb154a77dde39bb1a41015576df7454da266c107d43fd393c8831f4a79d0f66031262471ae19480bc59
+  checksum: 10/9d04359ca5da7f302c95fc57bef1c218a62708aff35d2f321af753490e790b625700a573f6dfbddc637771ac86c2fb7d0d46cae8bf6b4633cf1c08e7fc7b374f
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.9.3":
-  version: 0.9.3
-  resolution: "@grafana/plugin-ui@npm:0.9.3"
+"@grafana/plugin-ui@npm:^0.9.3, @grafana/plugin-ui@npm:^0.9.6":
+  version: 0.9.6
+  resolution: "@grafana/plugin-ui@npm:0.9.6"
   dependencies:
     "@hello-pangea/dnd": "npm:^17.0.0"
     lodash: "npm:^4.17.21"
@@ -3487,7 +3487,7 @@ __metadata:
     rxjs: ^7.8.1
   bin:
     changeset-improved: dist/utils/changeset/index.js
-  checksum: 10/63fba0489f2588f86b284368ea62accb4cdda658533c77c89a2ba214e5acc295ee1b7e9fb53cef7f59cea1f4e3da38a11f00a6b2c02fbf9c6d2aaf1ad4981b06
+  checksum: 10/260317fd20becd3bed4b7beb758e855075c707952622169e1cd1c8624ff40e2d297b8b92584abb55a012cecbf81f1712372bc5420c3b93cfb0079504e649f858
   languageName: node
   linkType: hard
 
@@ -3547,7 +3547,7 @@ __metadata:
     eslint: "npm:9.18.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-jest: "npm:28.10.0"
+    eslint-plugin-jest: "npm:28.11.0"
     eslint-plugin-jsdoc: "npm:50.6.2"
     eslint-plugin-jsx-a11y: "npm:6.10.2"
     eslint-plugin-lodash: "npm:8.0.0"
@@ -3678,11 +3678,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:5.37.0":
-  version: 5.37.0
-  resolution: "@grafana/scenes-react@npm:5.37.0"
+"@grafana/scenes-react@npm:5.37.1":
+  version: 5.37.1
+  resolution: "@grafana/scenes-react@npm:5.37.1"
   dependencies:
-    "@grafana/scenes": "npm:5.37.0"
+    "@grafana/scenes": "npm:5.37.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3693,13 +3693,13 @@ __metadata:
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/cbc737a65ac9e36afaf82095ca8f8f9b4ed38727be572c768033c5b2989917bb486b039f36ddd92cfcf304dd1de967b8164080944ed24f46f3fb613fd9b1be3b
+  checksum: 10/bedcda5da7220bb7e190f35cf4f9178f03f854fb7b9dc8c253a069321d7a6ff412af7c7692de80f86ea1ddb612ca09b65761ffb6eac5f12bd92f08649a1357d0
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.37.0":
-  version: 5.37.0
-  resolution: "@grafana/scenes@npm:5.37.0"
+"@grafana/scenes@npm:5.37.1":
+  version: 5.37.1
+  resolution: "@grafana/scenes@npm:5.37.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3716,7 +3716,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/f16d02ab49cb28a3bfc74d11f875866108cf06d056ae1fd74c3f3ddb4272b81e729e78d2a022ecaf8e69bb5ea2e0eaa59f2a491b4f57ca7f9786472e1a4b1ada
+  checksum: 10/82a3d98444bf8a66f21bee88635d057af8b9eb35e0752cb77c21dda136b278a056d6ddaf3deccc404c9964b203820d4c2f68333c5a9090b86190642d2733097f
   languageName: node
   linkType: hard
 
@@ -12138,13 +12138,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:5.2.2":
-  version: 5.2.2
-  resolution: "centrifuge@npm:5.2.2"
+"centrifuge@npm:5.3.0":
+  version: 5.3.0
+  resolution: "centrifuge@npm:5.3.0"
   dependencies:
     events: "npm:^3.3.0"
     protobufjs: "npm:^7.2.5"
-  checksum: 10/c6893c3dee7145df313803e2bf290178280f3fa6a1abbe36247fc020ce2d2e853f1691b731d2bbc06a3b1e664607cdadb28e737f1987cf30b489a80a4def253a
+  checksum: 10/a55619852b5f36073a522777ad6e47a0a9bf297badcd1309eb4ad6db8270c64335e48eb3c7dc5089c15fcfe83a4e72e7d705e8a89ac1874cbb70858d79fb70ee
   languageName: node
   linkType: hard
 
@@ -15558,9 +15558,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jest@npm:28.10.0":
-  version: 28.10.0
-  resolution: "eslint-plugin-jest@npm:28.10.0"
+"eslint-plugin-jest@npm:28.11.0":
+  version: 28.11.0
+  resolution: "eslint-plugin-jest@npm:28.11.0"
   dependencies:
     "@typescript-eslint/utils": "npm:^6.0.0 || ^7.0.0 || ^8.0.0"
   peerDependencies:
@@ -15572,7 +15572,7 @@ __metadata:
       optional: true
     jest:
       optional: true
-  checksum: 10/cb19f2171e93873d9207425c4fa52ec49018579d73ece23a1ffea90f3ffd284b0e48f74ff4f50b15ff31882b06b03fec0e48c9c6ca830acdeff8931802ef0a9e
+  checksum: 10/7f3896ec2dc03110688bb9f359a7aa1ba1a6d9a60ffbc3642361c4aaf55afcba9ce36b6609b20b1507028c2170ffe29b0f3e9cc9b7fe12fdd233740a2f9ce0a1
   languageName: node
   linkType: hard
 
@@ -16678,13 +16678,13 @@ __metadata:
   linkType: hard
 
 "fs-extra@npm:^11.1.1, fs-extra@npm:^11.2.0":
-  version: 11.2.0
-  resolution: "fs-extra@npm:11.2.0"
+  version: 11.3.0
+  resolution: "fs-extra@npm:11.3.0"
   dependencies:
     graceful-fs: "npm:^4.2.0"
     jsonfile: "npm:^6.0.1"
     universalify: "npm:^2.0.0"
-  checksum: 10/0579bf6726a4cd054d4aa308f10b483f52478bb16284f32cf60b4ce0542063d551fca1a08a2af365e35db21a3fa5a06cf2a6ed614004b4368982bc754cb816b3
+  checksum: 10/c9fe7b23dded1efe7bbae528d685c3206477e20cc60e9aaceb3f024f9b9ff2ee1f62413c161cb88546cc564009ab516dec99e9781ba782d869bb37e4fe04a97f
   languageName: node
   linkType: hard
 
@@ -17367,8 +17367,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.37.0"
-    "@grafana/scenes-react": "npm:5.37.0"
+    "@grafana/scenes": "npm:5.37.1"
+    "@grafana/scenes-react": "npm:5.37.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -17485,7 +17485,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
-    centrifuge: "npm:5.2.2"
+    centrifuge: "npm:5.3.0"
     chance: "npm:^1.0.10"
     chrome-remote-interface: "npm:0.33.2"
     classnames: "npm:2.5.1"
@@ -17514,7 +17514,7 @@ __metadata:
     eslint: "npm:9.18.0"
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-jest: "npm:28.10.0"
+    eslint-plugin-jest: "npm:28.11.0"
     eslint-plugin-jest-dom: "npm:^5.4.0"
     eslint-plugin-jsdoc: "npm:50.6.2"
     eslint-plugin-jsx-a11y: "npm:6.10.2"
@@ -29721,9 +29721,9 @@ __metadata:
   linkType: hard
 
 "undici@npm:^6.19.5":
-  version: 6.19.8
-  resolution: "undici@npm:6.19.8"
-  checksum: 10/19ae4ba38b029a664d99fd330935ef59136cf99edb04ed821042f27b5a9e84777265fb744c8a7abc83f2059afb019446c69a4ebef07bbc0ed6b2de8d67ef4090
+  version: 6.21.1
+  resolution: "undici@npm:6.21.1"
+  checksum: 10/eeccc07e9073ae8e755fdc0dc8cdfaa426c01ec6f815425c3ecedba2e5394cea4993962c040dd168951714a82f0d001a13018c3ae3ad4534f0fa97afe425c08d
   languageName: node
   linkType: hard
 

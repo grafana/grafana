@@ -70,7 +70,8 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 			Root:          root,
 			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
-		}, tracer)
+		}, tracer, features)
+
 		if err != nil {
 			return nil, err
 		}
