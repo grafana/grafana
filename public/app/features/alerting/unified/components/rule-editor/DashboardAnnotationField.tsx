@@ -1,7 +1,4 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Stack, Text, TextLink } from '@grafana/ui';
 import { DashboardDataDTO } from 'app/types';
 
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
@@ -23,61 +20,48 @@ const DashboardAnnotationField = ({
   onEditClick: () => void;
   onDeleteClick: () => void;
 }) => {
-  const styles = useStyles2(getStyles);
-
   const dashboardLink = makeDashboardLink(dashboard?.uid || dashboardUid);
   const panelLink = makePanelLink(dashboard?.uid || dashboardUid, panel?.id?.toString() || panelId);
-  return (
-    <div className={styles.container}>
-      {dashboard && (
-        <a
-          href={dashboardLink}
-          className={styles.link}
-          target="_blank"
-          rel="noreferrer"
-          data-testid="dashboard-annotation"
-        >
-          {dashboard.title} <Icon name={'external-link-alt'} />
-        </a>
-      )}
 
-      {!dashboard && <span className={styles.noLink}>Dashboard {dashboardUid} </span>}
+  return (
+    <Stack direction="row" alignItems="center">
+      {dashboard && (
+        <TextLink href={dashboardLink} data-testid="dashboard-annotation" external inline={false} variant="bodySmall">
+          {dashboard.title}
+        </TextLink>
+      )}
 
       {panel && (
-        <a href={panelLink} className={styles.link} target="_blank" rel="noreferrer" data-testid="panel-annotation">
-          {panel.title || '<No title>'} <Icon name={'external-link-alt'} />
-        </a>
+        <>
+          {' '}
+          ·{' '}
+          <TextLink href={panelLink} data-testid="panel-annotation" external inline={false} variant="bodySmall">
+            {panel.title || '<No title>'}
+          </TextLink>
+        </>
       )}
 
-      {!panel && <span className={styles.noLink}> - Panel {panelId}</span>}
+      {!dashboard && (
+        <Text color="secondary" variant="bodySmall">
+          <Icon name="apps" size="sm" /> Dashboard {dashboardUid}
+        </Text>
+      )}
+
+      {!panel && (
+        <Text color="secondary" variant="bodySmall">
+          {' '}
+          - Panel {panelId}
+        </Text>
+      )}
 
       {(dashboard || panel) && (
         <>
-          <Icon name={'pen'} onClick={onEditClick} className={styles.icon} />
-          <Icon name={'trash-alt'} onClick={onDeleteClick} className={styles.icon} />
+          <IconButton name="pen" onClick={onEditClick} variant="secondary" aria-label="edit link" />
+          <IconButton name="trash-alt" onClick={onDeleteClick} variant="secondary" aria-label="delete link" />
         </>
       )}
-    </div>
+    </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    marginTop: '5px',
-  }),
-
-  noLink: css({
-    color: theme.colors.text.secondary,
-  }),
-  link: css({
-    color: theme.colors.text.link,
-    marginRight: theme.spacing(1.5),
-  }),
-
-  icon: css({
-    marginRight: theme.spacing(1),
-    cursor: 'pointer',
-  }),
-});
 
 export default DashboardAnnotationField;

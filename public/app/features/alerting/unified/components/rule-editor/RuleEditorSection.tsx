@@ -1,16 +1,17 @@
 import { css, cx } from '@emotion/css';
-import * as React from 'react';
-import { ComponentPropsWithoutRef, PropsWithChildren, ReactElement, ReactNode, useMemo } from 'react';
+import { isFunction } from 'lodash';
+import { ComponentPropsWithoutRef, PropsWithChildren, ReactNode, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
+import { FieldSet, IconButton, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 
 export interface RuleEditorSectionProps {
   title: string;
   stepNo: number;
-  description?: string | ReactElement;
+  description?: string;
+  helpInfo?: ComponentPropsWithoutRef<typeof NeedHelpInfo>;
   fullWidth?: boolean;
   switchMode?: {
     isAdvancedMode: boolean;
@@ -21,20 +22,21 @@ export interface RuleEditorSectionProps {
 export const RuleEditorSection = ({
   title,
   stepNo,
-  children,
-  fullWidth = false,
   description,
+  children,
+  helpInfo,
+  fullWidth = false,
   switchMode,
-}: React.PropsWithChildren<RuleEditorSectionProps>) => {
+}: PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
 
   const titleElement = useMemo(
     () => (
-      <div className={styles.padded}>
+      <div className={styles.section} id={`step-${stepNo}`}>
         <Stack direction="column" gap={0.5}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             {/* title */}
-            <Text variant="h3">
+            <Text variant="h4">
               {stepNo}. {title}
             </Text>
 
@@ -53,25 +55,39 @@ export const RuleEditorSection = ({
                   label="Advanced options"
                   showLabel
                   transparent
-                  className={styles.reverse}
+                  className={styles.switch}
                 />
               </Text>
             )}
           </Stack>
-          {/* description */}
-          {description ? description : null}
+
+          <Stack direction="row" gap={0.5} alignItems="center">
+            {/* description */}
+            {description ? (
+              <Text color="secondary" variant="bodySmall">
+                {description}
+              </Text>
+            ) : null}
+            {/* help button */}
+            {helpInfo ? (
+              <NeedHelpInfo
+                title={helpInfo.linkText}
+                contentText={helpInfo.contentText}
+                externalLink={helpInfo.externalLink}
+                linkText={'Read more on our documentation website'}
+              />
+            ) : null}
+          </Stack>
         </Stack>
       </div>
     ),
-    [description, stepNo, styles.padded, styles.reverse, switchMode, title]
+    [styles.section, styles.switch, stepNo, title, switchMode, description, helpInfo]
   );
 
   return (
     <div className={styles.parent}>
-      <FieldSet className={cx(fullWidth && styles.fullWidth)} label={titleElement}>
-        <Stack direction="column" gap={2} alignItems="flex-start">
-          {children}
-        </Stack>
+      <FieldSet className={cx(fullWidth && styles.fullWidth, styles.fieldSetFix)} label={titleElement}>
+        {children}
       </FieldSet>
     </div>
   );
@@ -81,41 +97,67 @@ interface RuleEditorSubSectionProps extends PropsWithChildren {
   title?: ReactNode;
   description?: ReactNode;
   helpInfo?: ComponentPropsWithoutRef<typeof NeedHelpInfo>;
+  onToggle?: () => void;
+  isCollapsed?: boolean;
 }
 
-export const RuleEditorSubSection = ({ title, description, helpInfo, children }: RuleEditorSubSectionProps) => {
+export const RuleEditorSubSection = ({
+  title,
+  description,
+  helpInfo,
+  children,
+  onToggle,
+  isCollapsed = false,
+}: RuleEditorSubSectionProps) => {
   const styles = useStyles2(getStyles);
+  const showHeader = title || description;
 
   return (
     <div className={styles.subSection}>
-      <Stack direction="column" alignItems="flex-start">
-        <Stack direction="column" alignItems="flex-start" gap={0}>
-          {title && <Text variant="h5">{title}</Text>}
-          {description && (
-            <Stack direction="row" alignItems="center" gap={0.5}>
-              <Text variant="bodySmall" color="secondary">
-                {description}
-              </Text>
-              {helpInfo && <NeedHelpInfo {...helpInfo} />}
+      <Stack direction="column" gap={2}>
+        {showHeader && (
+          <>
+            <Stack direction="column" alignItems="flex-start" gap={0}>
+              <Stack direction="row" gap={0}>
+                {isFunction(onToggle) && (
+                  <IconButton
+                    name={isCollapsed ? 'angle-right' : 'angle-down'}
+                    onClick={onToggle}
+                    aria-label="Toggle advanced evaluation behavior options"
+                  />
+                )}
+                {title && (
+                  <Text variant="body" color="primary">
+                    {title}
+                  </Text>
+                )}
+              </Stack>
+              {description && (
+                <Stack direction="row" alignItems="center" gap={0.5}>
+                  <Text variant="bodySmall" color="secondary">
+                    {description}
+                  </Text>
+                  {helpInfo && <NeedHelpInfo {...helpInfo} />}
+                </Stack>
+              )}
             </Stack>
-          )}
-        </Stack>
-        {children}
+          </>
+        )}
+        {isCollapsed ? null : children}
       </Stack>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  section: css({
+    padding: theme.spacing(1.5, 2),
+    background: theme.colors.background.secondary,
+  }),
   subSection: css({
     borderTop: `solid 1px ${theme.colors.border.weak}`,
-    padding: `${theme.spacing(2)} ${theme.spacing(3)}`,
-    paddingBottom: 0,
+    padding: theme.spacing(2),
     width: '100%',
-  }),
-  padded: css({
-    padding: `${theme.spacing(2)} ${theme.spacing(3)}`,
-    paddingBottom: 0,
   }),
   parent: css({
     border: `solid 1px ${theme.colors.border.weak}`,
@@ -124,8 +166,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   fullWidth: css({
     width: '100%',
   }),
-  reverse: css({
-    flexDirection: 'row-reverse',
-    gap: theme.spacing(1),
+  switch: css({
+    padding: 0,
+    height: 'auto',
+  }),
+  // fieldset automatically adds a margin to the <Legend> and this messes up our layout
+  fieldSetFix: css({
+    legend: {
+      marginBottom: 0,
+    },
   }),
 });

@@ -436,7 +436,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval"
+        "select-folder-before": "An evaluation group defines an evaluation interval - how often a rule is evaluated."
       },
       "evaluation-behaviour": {
         "description": {
@@ -469,7 +469,7 @@
         "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders."
       },
       "labels": {
-        "help-info": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications."
+        "help-info": "Labels are used to differentiate an alert from all other alerts. You can use them for searching, silencing, and routing notifications."
       },
       "pause": {
         "label": "Pause evaluation"

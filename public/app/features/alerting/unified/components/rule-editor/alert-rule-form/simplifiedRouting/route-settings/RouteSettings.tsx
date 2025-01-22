@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
+import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/src/components/Select/MultiValue';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
@@ -14,6 +14,7 @@ import {
   stringsToSelectableValues,
 } from 'app/features/alerting/unified/utils/amroutes';
 
+import { GroupingOptionsMeta, TimingOptionsMeta } from '../../../../notification-policies/Policy';
 import { getFormStyles } from '../../../../notification-policies/formStyles';
 import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timingOptions';
 
@@ -54,16 +55,13 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   }, [overrideGrouping, setValue, alertManager, groupByCount]);
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={0}>
+      {/* override groupings */}
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
         <InlineField label="Override grouping" transparent={true} className={styles.switchElement}>
           <Switch id="override-grouping-toggle" {...register(`contactPoints.${alertManager}.overrideGrouping`)} />
         </InlineField>
-        {!overrideGrouping && (
-          <Text variant="body" color="secondary">
-            Grouping: <strong>{REQUIRED_FIELDS_IN_GROUPBY.join(', ')}</strong>
-          </Text>
-        )}
+        {!overrideGrouping && <GroupingOptionsMeta groupBy={REQUIRED_FIELDS_IN_GROUPBY} />}
       </Stack>
       {overrideGrouping && (
         <Field
@@ -136,16 +134,20 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
           />
         </Field>
       )}
+
+      {/* override timings */}
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
         <InlineField label="Override timings" transparent={true} className={styles.switchElement}>
           <Switch id="override-timings-toggle" {...register(`contactPoints.${alertManager}.overrideTimings`)} />
         </InlineField>
         {!overrideTimings && (
-          <Text variant="body" color="secondary">
-            Group wait: <strong>{groupWaitValue}, </strong>
-            Group interval: <strong>{groupIntervalValue}, </strong>
-            Repeat interval: <strong>{repeatIntervalValue}</strong>
-          </Text>
+          <TimingOptionsMeta
+            timingOptions={{
+              group_interval: groupIntervalValue,
+              group_wait: groupWaitValue,
+              repeat_interval: repeatIntervalValue,
+            }}
+          />
         )}
       </Stack>
       {overrideTimings && (
@@ -160,11 +162,11 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   switchElement: css({
     flexFlow: 'row-reverse',
-    gap: theme.spacing(1),
     alignItems: 'center',
+    // reset from design system
+    margin: 0,
   }),
   optionalContent: css({
     marginLeft: '49px',
-    marginBottom: theme.spacing(1),
   }),
 });

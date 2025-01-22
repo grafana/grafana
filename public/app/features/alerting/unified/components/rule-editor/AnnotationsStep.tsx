@@ -5,8 +5,8 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { Button, Field, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { RuleFormValues } from '../../types/rule-form';
@@ -16,8 +16,7 @@ import { isGrafanaManagedRuleByType } from '../../utils/rules';
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
-import { NeedHelpInfo } from './NeedHelpInfo';
-import { RuleEditorSection } from './RuleEditorSection';
+import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 import { useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
@@ -91,21 +90,6 @@ const AnnotationsStep = () => {
     setShowPanelSelector(true);
   };
 
-  function getAnnotationsSectionDescription() {
-    return (
-      <Stack direction="row" gap={0.5} alignItems="center">
-        <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="alerting.annotations.description">Add more context to your alert notifications.</Trans>
-        </Text>
-        <NeedHelpInfo
-          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
-          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
-          Annotations can contain a combination of text and template code.`}
-          title="Annotations"
-        />
-      </Stack>
-    );
-  }
   // when using Grafana managed rules, the annotations step is the 6th step, as we have an additional step for the configure labels and notifications
   const step = isGrafanaManagedRuleByType(type) ? 6 : 5;
 
@@ -113,72 +97,78 @@ const AnnotationsStep = () => {
     <RuleEditorSection
       stepNo={step}
       title={t('alerting.annotations.title', 'Configure notification message')}
-      description={getAnnotationsSectionDescription()}
+      description={t('alerting.annotations.description', 'Add more context to your alert notifications.')}
+      helpInfo={{
+        title: 'Annotations',
+        contentText: `Annotations add metadata to provide more information on the alert in your alert notification messages.
+        For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
+        Annotations can contain a combination of text and template code.`,
+      }}
       fullWidth
     >
-      <Stack direction="column" gap={1}>
+      <RuleEditorSubSection>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
           // eslint-disable-next-line
           const annotation = annotationField.key as Annotation;
-          return (
-            <div key={annotationField.id} className={styles.flexRow}>
-              <div>
-                <AnnotationHeaderField
-                  annotationField={annotationField}
-                  annotations={annotations}
-                  annotation={annotation}
-                  index={index}
-                />
-                {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
-                  <DashboardAnnotationField
-                    dashboard={selectedDashboard}
-                    panel={selectedPanel}
-                    dashboardUid={selectedDashboardUid.toString()}
-                    panelId={selectedPanelId.toString()}
-                    onEditClick={handleEditDashboardAnnotation}
-                    onDeleteClick={handleDeleteDashboardAnnotation}
-                  />
-                )}
+          const annotationError = errors.annotations?.[index]?.value?.message;
 
-                {
-                  <div className={styles.annotationValueContainer}>
-                    <Field
-                      hidden={
-                        annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
+          return (
+            <Stack key={annotationField.id} direction="column" alignItems="flex-start" gap={0.5}>
+              <AnnotationHeaderField
+                annotationField={annotationField}
+                annotations={annotations}
+                annotation={annotation}
+                index={index}
+              />
+              {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
+                <DashboardAnnotationField
+                  dashboard={selectedDashboard}
+                  panel={selectedPanel}
+                  dashboardUid={selectedDashboardUid.toString()}
+                  panelId={selectedPanelId.toString()}
+                  onEditClick={handleEditDashboardAnnotation}
+                  onDeleteClick={handleDeleteDashboardAnnotation}
+                />
+              )}
+
+              {
+                <div className={styles.annotationValueContainer}>
+                  <Field
+                    hidden={
+                      annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
+                    }
+                    invalid={Boolean(annotationError)}
+                    error={annotationError}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <ValueInputComponent
+                      data-testid={`annotation-value-${index}`}
+                      className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                      {...register(`annotations.${index}.value`)}
+                      placeholder={
+                        isUrl
+                          ? 'https://'
+                          : ((annotationField.key && `Enter a ${annotationField.key}`) ??
+                            'Enter custom annotation content')
                       }
-                      className={cx(styles.flexRowItemMargin, styles.field)}
-                      invalid={!!errors.annotations?.[index]?.value?.message}
-                      error={errors.annotations?.[index]?.value?.message}
-                    >
-                      <ValueInputComponent
-                        data-testid={`annotation-value-${index}`}
-                        className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                        {...register(`annotations.${index}.value`)}
-                        placeholder={
-                          isUrl
-                            ? 'https://'
-                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
-                              'Enter custom annotation content...'
-                        }
-                        defaultValue={annotationField.value}
-                      />
-                    </Field>
-                    {!annotationLabels[annotation] && (
-                      <Button
-                        type="button"
-                        className={styles.deleteAnnotationButton}
-                        aria-label="delete annotation"
-                        icon="trash-alt"
-                        variant="secondary"
-                        onClick={() => remove(index)}
-                      />
-                    )}
-                  </div>
-                }
-              </div>
-            </div>
+                      defaultValue={annotationField.value}
+                    />
+                  </Field>
+                  {!annotationLabels[annotation] && (
+                    <Button
+                      type="button"
+                      className={styles.deleteAnnotationButton}
+                      aria-label="delete annotation"
+                      icon="trash-alt"
+                      variant="secondary"
+                      onClick={() => remove(index)}
+                    />
+                  )}
+                </div>
+              }
+            </Stack>
           );
         })}
         <Stack direction="row" gap={1}>
@@ -209,7 +199,7 @@ const AnnotationsStep = () => {
             onDismiss={() => setShowPanelSelector(false)}
           />
         )}
-      </Stack>
+      </RuleEditorSubSection>
     </RuleEditorSection>
   );
 };
@@ -226,38 +216,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     display: 'flex',
   }),
-  field: css({
-    marginBottom: theme.spacing(0.5),
-  }),
-  flexRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-  }),
-  flexRowItemMargin: css({
-    marginTop: theme.spacing(1),
-  }),
   deleteAnnotationButton: css({
     display: 'inline-block',
     marginTop: '10px',
     marginLeft: '10px',
   }),
-
-  annotationTitle: css({
-    color: theme.colors.text.primary,
-    marginBottom: '3px',
-  }),
-
-  annotationContainer: css({
-    marginTop: '5px',
-  }),
-
-  annotationDescription: css({
-    color: theme.colors.text.secondary,
-  }),
-
   annotationValueContainer: css({
     display: 'flex',
+    marginTop: theme.spacing(0.5),
   }),
 });
 

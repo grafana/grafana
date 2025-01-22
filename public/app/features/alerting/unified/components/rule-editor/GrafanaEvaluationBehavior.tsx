@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ComponentPropsWithoutRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -36,7 +36,6 @@ import {
   isGrafanaRulerRule,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
-import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
@@ -44,7 +43,7 @@ import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
-import { RuleEditorSection } from './RuleEditorSection';
+import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 export const MAX_GROUP_RESULTS = 1000;
@@ -167,7 +166,7 @@ export function GrafanaEvaluationBehaviorStep({
   enableProvisionedGroups: boolean;
 }) {
   const styles = useStyles2(getStyles);
-  const [showErrorHandling, setShowErrorHandling] = useState(false);
+  const [showAdvancedEvaluationOptions, setShowAdvancedEvaluationOptions] = useState(false);
 
   const {
     watch,
@@ -234,28 +233,36 @@ export function GrafanaEvaluationBehaviorStep({
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
-  const label =
+  const evaluationGroupDescription =
     isGrafanaManagedRuleByType(type) && !folder
       ? t(
           'alerting.rule-form.evaluation.select-folder-before',
-          'Select a folder before setting evaluation group and interval'
+          'An evaluation group defines an evaluation interval - how often a rule is evaluated.'
         )
       : t('alerting.rule-form.evaluation.evaluation-group-and-interval', 'Evaluation group and interval');
 
+  const description = isGrafanaRecordingRule
+    ? t(
+        'alerting.alert-recording-rule-form.evaluation-behaviour.description.text',
+        'Define how the recording rule is evaluated.'
+      )
+    : t('alerting.rule-form.evaluation-behaviour.description.text', 'Define how the alert rule is evaluated.');
+
+  const helpInfo = getHelpInfo(isGrafanaRecordingRule);
+
+  const groupError = errors.group?.message;
+
   return (
     // TODO remove "and alert condition" for recording rules
-    <RuleEditorSection
-      stepNo={step}
-      title="Set evaluation behavior"
-      description={getDescription(isGrafanaRecordingRule)}
-    >
-      <Stack direction="column" justify-content="flex-start" align-items="flex-start">
+    <RuleEditorSection stepNo={step} title="Set evaluation behavior" description={description} helpInfo={helpInfo}>
+      <RuleEditorSubSection title="Evaluation group" description={evaluationGroupDescription}>
+        {/* folder selector */}
         <Field
-          label={label}
           data-testid="group-picker"
           className={styles.formInput}
-          error={errors.group?.message}
-          invalid={!!errors.group?.message}
+          style={{ marginBottom: 0 }}
+          error={groupError}
+          invalid={Boolean(groupError)}
           htmlFor="group"
         >
           <Controller
@@ -322,6 +329,7 @@ export function GrafanaEvaluationBehaviorStep({
           />
         </Field>
 
+        {/* create new group modal */}
         {isCreatingEvaluationGroup && (
           <EvaluationGroupCreationModal
             onCreate={handleEvalGroupCreation}
@@ -329,12 +337,19 @@ export function GrafanaEvaluationBehaviorStep({
             groupfoldersForGrafana={groupfoldersForGrafana?.result}
           />
         )}
+      </RuleEditorSubSection>
 
-        {/* Show the pending period input only for Grafana alerting rules */}
+      {/* Show the pending period input only for Grafana alerting rules */}
+      <RuleEditorSubSection
+        title={<Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>}
+        description={
+          'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+        }
+      >
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
 
         {existing && (
-          <Field htmlFor="pause-alert-switch">
+          <Field htmlFor="pause-alert-switch" style={{ marginBottom: 0 }}>
             <Controller
               render={() => (
                 <Stack gap={1} direction="row" alignItems="center">
@@ -357,18 +372,27 @@ export function GrafanaEvaluationBehaviorStep({
             />
           </Field>
         )}
-      </Stack>
+      </RuleEditorSubSection>
+
       {isGrafanaAlertingRule && (
-        <>
-          <CollapseToggle
-            isCollapsed={!showErrorHandling}
-            onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
-            text="Configure no data and error handling"
-          />
-          {showErrorHandling && (
+        <RuleEditorSubSection
+          title="Configure no data and error handling"
+          description={
+            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.info-help.text">
+              Define the alert behavior when the evaluation fails or the query returns no data.
+            </Trans>
+          }
+          helpInfo={needHelpInfoForConfigureNoDataError}
+          isCollapsed={!showAdvancedEvaluationOptions}
+          onToggle={() => setShowAdvancedEvaluationOptions(!showAdvancedEvaluationOptions)}
+        >
+          {
             <>
-              <NeedHelpInfoForConfigureNoDataError />
-              <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
+              <Field
+                htmlFor="no-data-state-input"
+                label="Alert state if no data or all values are null"
+                className={styles.inlineField}
+              >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
                     <GrafanaAlertStatePicker
@@ -383,7 +407,12 @@ export function GrafanaEvaluationBehaviorStep({
                   name="noDataState"
                 />
               </Field>
-              <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
+
+              <Field
+                htmlFor="exec-err-state-input"
+                label="Alert state if execution error or timeout"
+                className={styles.inlineField}
+              >
                 <Controller
                   render={({ field: { onChange, ref, ...field } }) => (
                     <GrafanaAlertStatePicker
@@ -399,8 +428,8 @@ export function GrafanaEvaluationBehaviorStep({
                 />
               </Field>
             </>
-          )}
-        </>
+          }
+        </RuleEditorSubSection>
       )}
     </RuleEditorSection>
   );
@@ -550,14 +579,6 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
 
   return (
     <Field
-      label={
-        <Label
-          htmlFor={evaluateForId}
-          description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
-        >
-          <Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
-        </Label>
-      }
       className={styles.inlineField}
       error={errors.evaluateFor?.message}
       invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
@@ -575,71 +596,42 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   );
 }
 
-function NeedHelpInfoForConfigureNoDataError() {
-  const docsLink =
-    'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling';
+const needHelpInfoForConfigureNoDataError = {
+  externalLink:
+    'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling',
+  contentText:
+    'These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.',
+  linkText: `Read more about this option`,
+  title: 'Configure no data and error handling',
+};
 
-  return (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="alerting.rule-form.evaluation-behaviour.info-help.text">
-          Define the alert behavior when the evaluation fails or the query returns no data.
-        </Trans>
-      </Text>
-      <NeedHelpInfo
-        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
-        externalLink={docsLink}
-        linkText={`Read more about this option`}
-        title="Configure no data and error handling"
-      />
-    </Stack>
-  );
-}
-
-function getDescription(isGrafanaRecordingRule: boolean) {
-  const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
-
-  return (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      <Text variant="bodySmall" color="secondary">
-        {isGrafanaRecordingRule ? (
-          <Trans i18nKey="alerting.alert-recording-rule-form.evaluation-behaviour.description.text">
-            Define how the recording rule is evaluated.
+function getHelpInfo(isGrafanaRecordingRule: boolean): ComponentPropsWithoutRef<typeof NeedHelpInfo> {
+  return {
+    title: 'Alert rule evaluation',
+    contentText: (
+      <>
+        <p>
+          <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description1">
+            Evaluation groups are containers for evaluating alert and recording rules.
           </Trans>
-        ) : (
-          <Trans i18nKey="alerting.rule-form.evaluation-behaviour.description.text">
-            Define how the alert rule is evaluated.
+        </p>
+        <p>
+          <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description2">
+            An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the
+            same evaluation group are evaluated over the same evaluation interval.
           </Trans>
-        )}
-      </Text>
-      <NeedHelpInfo
-        contentText={
-          <>
-            <p>
-              <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description1">
-                Evaluation groups are containers for evaluating alert and recording rules.
-              </Trans>
-            </p>
-            <p>
-              <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description2">
-                An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within
-                the same evaluation group are evaluated over the same evaluation interval.
-              </Trans>
-            </p>
-            <p>
-              <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description3">
-                Pending period specifies how long the threshold condition must be met before the alert starts firing.
-                This option helps prevent alerts from being triggered by temporary issues.
-              </Trans>
-            </p>
-          </>
-        }
-        externalLink={docsLink}
-        linkText={`Read about evaluation and alert states`}
-        title="Alert rule evaluation"
-      />
-    </Stack>
-  );
+        </p>
+        <p>
+          <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description3">
+            Pending period specifies how long the threshold condition must be met before the alert starts firing. This
+            option helps prevent alerts from being triggered by temporary issues.
+          </Trans>
+        </p>
+      </>
+    ),
+    linkText: 'Read about evaluation and alert states',
+    externalLink: 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/',
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

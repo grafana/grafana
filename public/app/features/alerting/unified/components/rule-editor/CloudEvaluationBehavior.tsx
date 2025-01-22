@@ -23,6 +23,7 @@ export const CloudEvaluationBehavior = () => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
+  // @TODO convert to RuleEditorSubSection(s)
   return (
     <RuleEditorSection stepNo={3} title="Set evaluation behavior">
       <Field

@@ -45,7 +45,6 @@ import {
 } from '../../../utils/rules';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
-import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection, RuleEditorSubSection } from '../RuleEditorSection';
@@ -478,7 +477,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     condition,
   ]);
 
-  const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
+  const { sectionTitle, sectionDescription, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
 
   if (!type) {
     return null;
@@ -504,21 +503,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       <RuleEditorSection
         stepNo={2}
         title={sectionTitle}
+        description={sectionDescription}
         fullWidth={true}
         // @TODO make this easier to define, see RuleEditorSubSection
-        description={
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <Text variant="bodySmall" color="secondary">
-              {helpLabel}
-            </Text>
-            <NeedHelpInfo
-              contentText={helpContent}
-              externalLink={helpLink}
-              linkText={'Read more on our documentation website'}
-              title={helpLabel}
-            />
-          </Stack>
-        }
+        helpInfo={{
+          title: sectionDescription,
+          contentText: helpContent,
+          externalLink: helpLink,
+          linkText: 'Read more on our documentation website',
+        }}
         switchMode={switchMode}
       >
         <RuleEditorSubSection>

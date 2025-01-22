@@ -14,16 +14,22 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Nee
 
   return (
     <Toggletip
-      content={<div className={styles.mutedText}>{contentText}</div>}
+      content={
+        <Text color="primary" variant="bodySmall">
+          {contentText}
+        </Text>
+      }
       title={
         <Stack gap={0.5} direction="row" alignItems="center">
           <Icon name="question-circle" />
-          {title}
+          <Text variant="body" color="primary" weight="medium">
+            {title}
+          </Text>
         </Stack>
       }
       footer={
         externalLink ? (
-          <TextLink href={externalLink} external>
+          <TextLink variant="bodySmall" href={externalLink} external>
             {linkText}
           </TextLink>
         ) : undefined
@@ -43,10 +49,6 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Nee
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  mutedText: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.size.sm,
-  }),
   helpInfo: css({
     cursor: 'pointer',
     textDecoration: 'underline',

@@ -64,7 +64,7 @@ export const ContactPointSelector = ({
   }
 
   return (
-    <Stack>
+    <Stack alignItems="center">
       <Select
         virtualized={options.length > MAX_CONTACT_POINTS_RENDERED}
         options={options}
@@ -78,7 +78,7 @@ export const ContactPointSelector = ({
           onClick={onClickRefresh}
           aria-label="Refresh contact points"
           tooltip="Refresh contact points list"
-          className={cx(styles.refreshButton, {
+          className={cx({
             [styles.loading]: loaderSpinning || isLoading,
           })}
         />
@@ -90,23 +90,22 @@ export const ContactPointSelector = ({
 const rotation = keyframes({
   from: {
     transform: 'rotate(0deg)',
+    opacity: 0.8,
+  },
+  '50%': {
+    opacity: 0.5,
   },
   to: {
-    transform: 'rotate(720deg)',
+    transform: 'rotate(360deg)',
+    opacity: 0.8,
   },
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  refreshButton: css({
-    color: theme.colors.text.secondary,
-    cursor: 'pointer',
-    borderRadius: theme.shape.radius.circle,
-    overflow: 'hidden',
-  }),
   loading: css({
     pointerEvents: 'none',
     [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${rotation} 2s infinite linear`,
+      animation: `${rotation} 1s infinite linear`,
     },
     [theme.transitions.handleMotion('reduce')]: {
       animation: `${rotation} 6s infinite linear`,

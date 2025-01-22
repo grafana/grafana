@@ -1,12 +1,12 @@
 import { useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, Input, Stack, Text } from '@grafana/ui';
+import { Field, Input, Stack } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
-import { RuleEditorSection } from './RuleEditorSection';
+import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 
 const recordingRuleNameValidationPattern = (type: RuleFormType) => ({
   message: isGrafanaRecordingRuleByType(type)
@@ -36,47 +36,51 @@ export const AlertRuleNameAndMetric = () => {
   const recordingLabel = isGrafanaRecordingRule ? 'recording rule and metric' : 'recording rule';
   const namePlaceholder = isRecording ? 'recording rule' : 'alert rule';
   const entityName = isRecording ? recordingLabel : 'alert rule';
+
+  const nameError = errors?.name?.message;
+  const metricError = errors?.metric?.message;
+
   return (
     <RuleEditorSection
       stepNo={1}
       title={`Enter ${entityName} name`}
-      description={
-        <Text variant="bodySmall" color="secondary">
-          Enter a name to identify your {entityName}.
-        </Text>
-      }
+      description={`Enter a name to identify your ${entityName}.`}
     >
-      <Stack direction="column">
-        <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
-          <Input
-            data-testid={selectors.components.AlertRules.ruleNameField}
-            id="name"
-            width={38}
-            {...register('name', {
-              required: { value: true, message: 'Must enter a name' },
-              pattern: isCloudRecordingRule
-                ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
-                : undefined,
-            })}
-            aria-label="name"
-            placeholder={`Give your ${namePlaceholder} a name`}
-          />
-        </Field>
-        {isGrafanaRecordingRule && (
-          <Field label="Metric" error={errors?.metric?.message} invalid={!!errors.metric?.message}>
+      <RuleEditorSubSection>
+        {/* no gap, the Field components add margins (sigh) */}
+        <Stack direction="column" gap={0}>
+          <Field label="Name" error={nameError} invalid={Boolean(nameError)} style={{ marginBottom: 0 }}>
             <Input
-              id="metric"
+              data-testid={selectors.components.AlertRules.ruleNameField}
+              autoFocus
+              id="name"
               width={38}
-              {...register('metric', {
-                required: { value: true, message: 'Must enter a metric name' },
-                pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
+              {...register('name', {
+                required: { value: true, message: 'Must enter a name' },
+                pattern: isCloudRecordingRule
+                  ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
+                  : undefined,
               })}
-              aria-label="metric"
-              placeholder={`Give the name of the new recorded metric`}
+              aria-label="name"
+              placeholder={`Give your ${namePlaceholder} a name`}
             />
           </Field>
-        )}
-      </Stack>
+          {isGrafanaRecordingRule && (
+            <Field label="Metric" error={metricError} invalid={Boolean(metricError)}>
+              <Input
+                id="metric"
+                width={38}
+                {...register('metric', {
+                  required: { value: true, message: 'Must enter a metric name' },
+                  pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
+                })}
+                aria-label="metric"
+                placeholder={`Give the name of the new recorded metric`}
+              />
+            </Field>
+          )}
+        </Stack>
+      </RuleEditorSubSection>
     </RuleEditorSection>
   );
 };
