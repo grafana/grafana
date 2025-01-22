@@ -19,7 +19,6 @@ import (
 const INPUT_DIR = "testdata/input"
 const OUTPUT_DIR = "testdata/output"
 
-// Use the UPDATE_SNAPSHOTS=true environment variable to update the output files.
 func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
@@ -28,7 +27,19 @@ func TestMigrate(t *testing.T) {
 		if f.IsDir() {
 			continue
 		}
-		inputVersion, name := parseInputName(t, f.Name())
+
+		inputDash, inputVersion, name := load(t, filepath.Join(INPUT_DIR, f.Name()))
+
+		t.Run("input check "+f.Name(), func(t *testing.T) {
+			// use input version as the target version to ensure there are no changes
+			require.NoError(t, migration.Migrate(inputDash, inputVersion), "input check migration failed")
+			outBytes, err := json.MarshalIndent(inputDash, "", "  ")
+			require.NoError(t, err, "failed to marshal migrated dashboard")
+			expectedDash, err := os.ReadFile(filepath.Join(INPUT_DIR, f.Name()))
+			require.NoError(t, err, "failed to read expected output file")
+			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", f.Name())
+		})
+
 		for targetVersion := range schemaversion.Migrations {
 			testName := fmt.Sprintf("%s v%d to v%d", name, inputVersion, targetVersion)
 			t.Run(testName, func(t *testing.T) {
@@ -41,18 +52,20 @@ func TestMigrate(t *testing.T) {
 func testMigration(t *testing.T, file fs.DirEntry, targetVersion int) {
 	t.Helper()
 	dash, inputVersion, name := load(t, filepath.Join(INPUT_DIR, file.Name()))
-	require.NoError(t, migration.Migrate(dash, targetVersion), "migration failed")
+	require.NoError(t, migration.Migrate(dash, targetVersion), "%d migration failed", targetVersion)
 
 	outPath := filepath.Join(OUTPUT_DIR, fmt.Sprintf("%d.%s.%d.json", inputVersion, name, targetVersion))
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
-	if _, err := os.Stat(outPath); os.IsNotExist(err) || os.Getenv("UPDATE_SNAPSHOTS") == "true" {
+	if _, err := os.Stat(outPath); os.IsNotExist(err) {
 		err = os.WriteFile(outPath, outBytes, 0644)
 		require.NoError(t, err, "failed to write new output file", outPath)
 		return
 	}
 
+	// We can ignore gosec G304 here since it's a test
+	// nolint:gosec
 	existingBytes, err := os.ReadFile(outPath)
 	require.NoError(t, err, "failed to read existing output file")
 	require.JSONEq(t, string(existingBytes), string(outBytes), "%s did not match", outPath)
@@ -70,6 +83,8 @@ func parseInputName(t *testing.T, name string) (int, string) {
 }
 
 func load(t *testing.T, path string) (dash map[string]interface{}, inputVersion int, name string) {
+	// We can ignore gosec G304 here since it's a test
+	// nolint:gosec
 	inputBytes, err := os.ReadFile(path)
 	require.NoError(t, err, "failed to read embedded input file")
 	require.NoError(t, json.Unmarshal(inputBytes, &dash), "failed to unmarshal dashboard JSON")
