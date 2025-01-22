@@ -35,6 +35,8 @@ func TestMigrate(t *testing.T) {
 			require.NoError(t, migration.Migrate(inputDash, inputVersion), "input check migration failed")
 			outBytes, err := json.MarshalIndent(inputDash, "", "  ")
 			require.NoError(t, err, "failed to marshal migrated dashboard")
+			// We can ignore gosec G304 here since it's a test
+			// nolint:gosec
 			expectedDash, err := os.ReadFile(filepath.Join(INPUT_DIR, f.Name()))
 			require.NoError(t, err, "failed to read expected output file")
 			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", f.Name())
