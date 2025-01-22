@@ -3,7 +3,9 @@ import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 import { ProcessedLogModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
-let lineHeight: number | null = null;
+let gridSize = 8;
+let paddingBottom = gridSize * 0.5;
+let lineHeight = 22;
 
 export function init(theme: GrafanaTheme2) {
   const letterSpacing = theme.typography.body.letterSpacing
@@ -21,6 +23,9 @@ export function init(theme: GrafanaTheme2) {
   if (letterSpacing) {
     ctx.letterSpacing = `${letterSpacing}px`;
   }
+
+  gridSize = theme.spacing.gridSize;
+  paddingBottom = gridSize * 0.5;
   lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
 
   widthMap = new Map<number, number>();
@@ -31,7 +36,7 @@ export function init(theme: GrafanaTheme2) {
 
 let widthMap = new Map<number, number>();
 export function measureTextWidth(text: string): number {
-  if (!ctx || !lineHeight) {
+  if (!ctx) {
     throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
   }
   const key = text.length;
@@ -48,10 +53,6 @@ export function measureTextWidth(text: string): number {
 }
 
 export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 0) {
-  if (!lineHeight) {
-    throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
-  }
-
   let logLines = 0;
   const charWidth = measureTextWidth('ee') / 2;
   let logLineCharsLength = Math.round(maxWidth / charWidth);
@@ -62,7 +63,7 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
   if (textLines.length === 1 && text.length < firstLineCharsLength) {
     return {
       lines: 1,
-      height: lineHeight,
+      height: lineHeight + paddingBottom,
     };
   }
 
@@ -85,7 +86,7 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
     }
   }
 
-  const height = logLines * lineHeight;
+  const height = logLines * lineHeight + paddingBottom;
 
   return {
     lines: logLines,
@@ -104,20 +105,17 @@ export function getLogLineSize(
   { wrap, showTime }: DisplayOptions,
   index: number
 ) {
-  if (!lineHeight) {
-    throw new Error(`Measuring context canvas is not initialized. Call init() before.`);
-  }
   if (!container) {
     return 0;
   }
   if (!wrap) {
-    return lineHeight;
+    return lineHeight + paddingBottom;
   }
   const storedSize = retrieveLogLineSize(logs[index].uid, container);
   if (storedSize) {
     return storedSize;
   }
-  const gap = 8;
+  const gap = gridSize;
   let optionsWidth = 0;
   if (showTime) {
     optionsWidth += logs[index].dimensions.timestampWidth + gap;
