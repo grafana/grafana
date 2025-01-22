@@ -98,6 +98,7 @@ import {
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
 const DEFAULT_DATASOURCE = 'default';
 
@@ -284,10 +285,16 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
           throw new Error(`Unknown element kind: ${gridElement.kind}`);
         }
       });
+      let behaviors: SceneObject[] | undefined;
+      if (element.spec.repeat) {
+        // For repeated rows the children are stored in the behavior
+        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat })];
+      }
       return new SceneGridRow({
         y: element.spec.y,
         isCollapsed: element.spec.collapsed,
         title: element.spec.title,
+        $behaviors: behaviors,
         children,
       });
     } else {

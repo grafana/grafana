@@ -500,9 +500,9 @@ GridLayoutRowKind: {
 GridLayoutRowSpec: {
   y: int
   collapsed: bool
-  repeat?: RepeatOptions
   title: string
   elements: [...GridLayoutItemKind]
+  repeat?: string
 }
 
 GridLayoutSpec: {

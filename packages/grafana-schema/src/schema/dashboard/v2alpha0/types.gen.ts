@@ -731,9 +731,9 @@ export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
 export interface GridLayoutRowSpec {
 	y: number;
 	collapsed: boolean;
-	repeat?: RepeatOptions;
 	title: string;
 	elements: GridLayoutItemKind[];
+	repeat?: string;
 }
 
 export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
