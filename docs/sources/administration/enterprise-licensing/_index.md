@@ -276,4 +276,4 @@ If your organization has multiple Grafana Enterprise instances with usage billin
 
 ### Request usage billing
 
-To request usage billing, contact your Grafana Labs account team or [submit a support ticket](https://grafana.com/profile/org#support). 
+To request usage billing, contact your Grafana Labs account team or [submit a support ticket](https://grafana.com/profile/org#support).
