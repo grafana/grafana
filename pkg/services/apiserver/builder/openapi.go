@@ -10,6 +10,7 @@ import (
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
 )
 
 // This should eventually live in grafana-app-sdk
@@ -17,6 +18,7 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
 		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, migration.GetOpenAPIDefinitions(ref)) // dashboard migration
 		// TODO: remove when https://github.com/grafana/grafana-plugin-sdk-go/pull/1062 is merged
 		maps.Copy(defs, map[string]common.OpenAPIDefinition{
 			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataSourceRef": {

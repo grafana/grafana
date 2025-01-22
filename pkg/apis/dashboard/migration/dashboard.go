@@ -8,6 +8,7 @@ import (
 )
 
 // Unstructured is a type alias for a map[string]interface{}.
+// +k8s:openapi-gen=true
 type Unstructured map[string]interface{}
 
 func (u Unstructured) DeepCopy() Unstructured {
@@ -16,8 +17,17 @@ func (u Unstructured) DeepCopy() Unstructured {
 	return clone
 }
 
+func (u Unstructured) DeepCopyInto(out *Unstructured) {
+	{
+		u := &u
+		*out = u.DeepCopy()
+		return
+	}
+}
+
 // DashboardSpec is a specification for a migrated dashboard body.
 // This is used by the kubernetes internal dashboard API version.
+// +k8s:openapi-gen=true
 type DashboardSpec struct {
 	Refresh       string `json:"refresh,omitempty"`
 	SchemaVersion int    `json:"schemaVersion"`

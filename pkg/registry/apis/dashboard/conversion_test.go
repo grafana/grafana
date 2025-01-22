@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -38,7 +37,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 	labels := map[string]string{"starred-by": "you"}
 	rv := "1"
 	body := map[string]interface{}{"title": title, "description": "A new dashboard"}
-	spec := dashboard.DashboardSpec{}
+	spec := dashboardinternal.DashboardSpec{}
 	err = spec.FromUnstructured(body)
 	require.NoError(t, err)
 	expectedDashbaord := dashboardinternal.Dashboard{
