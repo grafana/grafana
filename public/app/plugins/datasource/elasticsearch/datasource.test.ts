@@ -353,6 +353,20 @@ describe('ElasticDatasource', () => {
       ).toEqual(undefined);
     });
 
+    it('does not return logs volume query for hidden query', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1' }],
+            query: 'foo="bar"',
+            hide: true,
+          }
+        )
+      ).toEqual(undefined);
+    });
+
     it('returns logs volume query for log query', () => {
       expect(
         ds.getSupplementaryQuery(
@@ -417,6 +431,20 @@ describe('ElasticDatasource', () => {
         metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
       });
     });
+
+    it('does not return logs samples for hidden time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            query: '',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+            hide: true,
+          }
+        )
+      ).toEqual(undefined);
+    });
   });
 
   describe('getDataProvider', () => {
@@ -432,6 +460,21 @@ describe('ElasticDatasource', () => {
       };
 
       expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+    });
+
+    it('does not create a logs volume provider for hidden queries', () => {
+      const options: DataQueryRequest<ElasticsearchQuery> = {
+        ...dataQueryDefaults,
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+            hide: true,
+          },
+        ],
+      };
+
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
 
     it('does create a logs sample provider for time series query', () => {
