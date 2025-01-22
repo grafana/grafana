@@ -695,36 +695,50 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		}
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
-		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
+		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email") //dashboard.uid = connection.uid
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
-		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
+		// builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
+		// if signedInUser.GetOrgRole() != org.RoleAdmin {
+		// 	builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
+		// }
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
 		}
+
+		// getting all folders a user can see
 		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
 		if err != nil {
 			return err
 		}
 		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
 		var folderUIDS = []string{"general", ""}
+		folderMap := map[string]string{}
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
+			folderMap[f.UID] = f.Title
 		}
-
+		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, connection := range libraryElementConnections {
 			if !signedInUser.HasRole(org.RoleAdmin) {
 				if !contains(folderUIDS, element.FolderUID) {
 					continue
 				}
 			}
+			if folderMap[element.FolderUID] == "" {
+				folderMap[element.FolderUID] = dashboards.RootFolderName
+			}
+			ds, err := l.dashboardsService.GetDashboardUIDByID(c, &dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID})
+			if err != nil {
+				return err
+			}
 			connections = append(connections, model.LibraryElementConnectionDTO{
 				ID:            connection.ID,
 				Kind:          connection.Kind,
 				ElementID:     connection.ElementID,
 				ConnectionID:  connection.ConnectionID,
-				ConnectionUID: connection.ConnectionUID,
+				ConnectionUID: ds.UID,
 				Created:       connection.Created,
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        connection.CreatedBy,
