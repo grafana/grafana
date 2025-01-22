@@ -27,13 +27,12 @@ export const preProcessLogs = (
   { escape, order, timeZone, wrap }: PreProcessOptions
 ): ProcessedLogModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { wrap, escape, timeZone, prettify: false, expanded: false }));
+  return orderedLogs.map((log) => preProcessLog(log, { wrap, escape, timeZone, expanded: false }));
 };
 
 interface PreProcessLogOptions {
   escape: boolean;
-  expanded: boolean;
-  prettify: boolean; // Not used for now
+  expanded: boolean; // Not yet implemented
   timeZone: string;
   wrap: boolean;
 }
