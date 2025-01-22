@@ -947,6 +947,10 @@ const (
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
+	// FlagExploreMetricsUseExternalAppPlugin
+	// Use the externalized Explore Metrics app plugin
+	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
+
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page
 	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"

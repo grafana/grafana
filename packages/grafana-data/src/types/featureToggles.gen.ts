@@ -253,5 +253,6 @@ export interface FeatureToggles {
   queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  exploreMetricsUseExternalAppPlugin?: boolean;
   datasourceConnectionsTab?: boolean;
 }

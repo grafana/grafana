@@ -1513,6 +1513,20 @@
     },
     {
       "metadata": {
+        "name": "exploreMetricsUseExternalAppPlugin",
+        "resourceVersion": "1737501890653",
+        "creationTimestamp": "2025-01-21T23:24:50Z"
+      },
+      "spec": {
+        "description": "Use the externalized Explore Metrics app plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-02-17T00:59:11Z"

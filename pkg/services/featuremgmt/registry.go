@@ -1756,6 +1756,14 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
+			Name:         "exploreMetricsUseExternalAppPlugin",
+			Description:  "Use the externalized Explore Metrics app plugin",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
 			Name:            "datasourceConnectionsTab",
 			Description:     "Shows defined connections for a data source in the plugins detail page",
 			Stage:           FeatureStageExperimental,
