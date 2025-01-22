@@ -34,7 +34,6 @@ func main() {
 			".yarnrc.yml",
 			"nx.json",
 			"project.json",
-			"lerna.json",
 			"**/package.json",
 			"**/yarn.lock",
 		},
@@ -70,7 +69,7 @@ func WithUpdatedVersion(d *dagger.Client, src *dagger.Directory, nodeVersion, ve
 		WithWorkdir("/src").
 		WithExec([]string{"yarn", "install"}).
 		WithExec([]string{"npm", "version", version, "--no-git-tag-version"}).
-		WithExec([]string{"yarn", "run", "lerna", "version", version, "--no-push", "--no-git-tag-version", "--force-publish", "--exact", "--yes"}).
+		WithExec([]string{"yarn", "nx", "release", "version", version, "--no-git-commit", "--no-git-tag", "--no-stage-changes", "--group grafanaPackages"}).
 		WithExec([]string{"yarn", "install"}).
 		WithExec([]string{"yarn", "prettier:write"}).
 		Directory("/src").
