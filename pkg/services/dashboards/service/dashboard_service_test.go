@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -784,6 +783,7 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 
 func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
+	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
@@ -791,6 +791,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		orgService: &orgtest.FakeOrgService{
 			ExpectedOrgs: []*org.OrgDTO{{ID: 1}, {ID: 2}},
 		},
+		publicDashboardService: fakePublicDashboardService,
 	}
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
@@ -810,6 +811,7 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{UID: "uid", OrgID: 1}).Return(nil).Once()
 		fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{UID: "uid3", OrgID: 2}).Return(nil).Once()
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name": "uid",
@@ -1223,6 +1225,7 @@ func TestDeleteDashboard(t *testing.T) {
 		fakeStore.On("DeleteDashboard", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.Anything).Return(nil, nil).Once()
 		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
 		err := service.DeleteDashboard(context.Background(), 1, "uid", 1)
 		require.NoError(t, err)
 		fakeStore.AssertExpectations(t)
@@ -1232,6 +1235,7 @@ func TestDeleteDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		err := service.DeleteDashboard(ctx, 1, "uid", 1)
 		require.NoError(t, err)
@@ -1242,6 +1246,7 @@ func TestDeleteDashboard(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		fakeStore.On("CleanupAfterDelete", mock.Anything, mock.Anything).Return(nil).Once()
+		fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{

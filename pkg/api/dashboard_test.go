@@ -842,7 +842,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
+		cfg, dashboardStore, folderStore, features, folderPermissions,
 		ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil, nil,
 	)
 	require.NoError(t, err)
