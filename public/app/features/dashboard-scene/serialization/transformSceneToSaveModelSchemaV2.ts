@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { get, omit } from 'lodash';
 
 import { AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -169,17 +169,12 @@ function getGridLayoutItems(
           elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
         }
       } else if (child instanceof SceneGridRow) {
+        if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
+          // Skip repeat rows
+          continue;
+        }
         elements.push(gridRowToLayoutRowKind(child, isSnapshot));
       }
-
-      // TODO: OLD transformer code
-      // if (child instanceof SceneGridRow) {
-      //   // Skip repeat clones or when generating a snapshot
-      //   if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
-      //     continue;
-      //   }
-      //   gridRowToSaveModel(child, panels, isSnapshot);
-      // }
     }
   }
 
@@ -250,6 +245,17 @@ export function gridItemToGridLayoutItemKind(
   return elementGridItem;
 }
 
+function getRowRepeatVariable(row: SceneGridRow): string | undefined {
+  if (row.state.$behaviors) {
+    for (const behavior of row.state.$behaviors) {
+      if (behavior instanceof RowRepeaterBehavior) {
+        return behavior.state.variableName;
+      }
+    }
+  }
+  return undefined;
+}
+
 function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayoutRowKind {
   const children = row.state.children.map((child) => {
     if (!(child instanceof DashboardGridItem)) {
@@ -259,17 +265,6 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
     return gridItemToGridLayoutItemKind(child, isSnapshot, y);
   });
 
-  let repeat: string | undefined;
-
-  if (row.state.$behaviors) {
-    for (const behavior of row.state.$behaviors) {
-      if (behavior instanceof RowRepeaterBehavior) {
-        repeat = behavior.state.variableName;
-        break;
-      }
-    }
-  }
-
   return {
     kind: 'GridLayoutRow',
     spec: {
@@ -277,7 +272,7 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
       y: row.state.y ?? 0,
       collapsed: Boolean(row.state.isCollapsed),
       elements: children,
-      repeat,
+      repeat: getRowRepeatVariable(row),
     },
   };
 }
