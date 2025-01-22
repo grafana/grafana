@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorField, EditorRow, EditorSwitch } from '@grafana/experimental';
+import { EditorField, EditorRow, EditorSwitch } from '@grafana/plugin-ui';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
