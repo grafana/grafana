@@ -29,10 +29,10 @@ kubernetesFoldersServiceV2 = true
 grafanaAPIServerEnsureKubectlAccess = true
 
 [unified_storage.dashboards.dashboard.grafana.app]
-dualWriterMode = 3
+dualWriterMode = 5
 
 [unified_storage.folders.folder.grafana.app]
-dualWriterMode = 3
+dualWriterMode = 5
 
 # For Github webhook support, you will need something like:
 [server]
