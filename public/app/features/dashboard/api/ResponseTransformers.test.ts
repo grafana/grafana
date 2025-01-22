@@ -367,7 +367,6 @@ describe('ResponseTransformers', () => {
       expect(spec.title).toBe(dashboardV1.title);
       expect(spec.description).toBe(dashboardV1.description);
       expect(spec.tags).toEqual(dashboardV1.tags);
-      expect(spec.schemaVersion).toBe(dashboardV1.schemaVersion);
       expect(spec.cursorSync).toBe('Off'); // Assuming transformCursorSynctoEnum(0) returns 'Off'
       expect(spec.preload).toBe(dashboardV1.preload);
       expect(spec.liveNow).toBe(dashboardV1.liveNow);
@@ -516,7 +515,6 @@ describe('ResponseTransformers', () => {
           title: 'Dashboard Title',
           description: 'Dashboard Description',
           tags: ['tag1', 'tag2'],
-          schemaVersion: 1,
           cursorSync: 'Off',
           preload: true,
           liveNow: false,
@@ -596,7 +594,7 @@ describe('ResponseTransformers', () => {
       expect(dashboard.title).toBe(dashboardV2.spec.title);
       expect(dashboard.description).toBe(dashboardV2.spec.description);
       expect(dashboard.tags).toEqual(dashboardV2.spec.tags);
-      expect(dashboard.schemaVersion).toBe(dashboardV2.spec.schemaVersion);
+      expect(dashboard.schemaVersion).toBe(40);
       //   expect(dashboard.graphTooltip).toBe(0); // Assuming transformCursorSynctoEnum('Off') returns 0
       expect(dashboard.preload).toBe(dashboardV2.spec.preload);
       expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);

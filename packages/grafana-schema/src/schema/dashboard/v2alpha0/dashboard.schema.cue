@@ -49,9 +49,6 @@ DashboardV2Spec: {
 
   layout: GridLayoutKind
 
-  // Version of the JSON schema, incremented each time a Grafana update brings
-  // changes to said schema.
-  schemaVersion: uint16 | *39
 
   // Plugins only. The version of the dashboard installed together with the plugin.
   // This is used to determine if the dashboard should be updated when the plugin is updated.

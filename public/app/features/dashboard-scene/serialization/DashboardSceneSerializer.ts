@@ -179,7 +179,7 @@ export class V2DashboardSerializer
 
     if (this.initialSaveModel) {
       return {
-        schemaVersion: this.initialSaveModel.schemaVersion,
+        schemaVersion: 40,
         uid: s.state.uid,
         title: this.initialSaveModel.title,
         panels_count: panelPluginIds.length || 0,
