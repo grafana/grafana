@@ -956,7 +956,9 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 	if dryRun {
 		return result, nil, nil
 	}
-	return result, nil, st.UpdateAlertRules(ctx, updates)
+	// Provide empty user identifier to ensure it's clear that the rule update was made by the system
+	// and not by the user who changed the receiver's title.
+	return result, nil, st.UpdateAlertRules(ctx, nil, updates)
 }
 
 // RenameTimeIntervalInNotificationSettings renames all rules that use old time interval name to the new name.
@@ -1031,7 +1033,9 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	if dryRun {
 		return result, nil, nil
 	}
-	return result, nil, st.UpdateAlertRules(ctx, updates)
+	// Provide empty user identifier to ensure it's clear that the rule update was made by the system
+	// and not by the user who changed the receiver's title.
+	return result, nil, st.UpdateAlertRules(ctx, nil, updates)
 }
 
 func ruleConstraintViolationToErr(sess *db.Session, rule ngmodels.AlertRule, err error, logger log.Logger) error {
