@@ -131,3 +131,26 @@ func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID 
 
 	return v.Versions, nil
 }
+
+func (m *Manager) PluginInfo(ctx context.Context, pluginID string) (*PluginInfo, error) {
+	u, err := url.Parse(m.client.grafanaComAPIURL)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Path = path.Join(u.Path, pluginID)
+
+	body, err := m.client.SendReq(ctx, u, CompatOpts{})
+	if err != nil {
+		return nil, err
+	}
+
+	var v PluginInfo
+	err = json.Unmarshal(body, &v)
+	if err != nil {
+		m.log.Error("Failed to unmarshal plugin repo response", "error", err)
+		return nil, err
+	}
+
+	return &v, nil
+}
