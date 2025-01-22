@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
+import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
 import { TemplateSrv, config, getTemplateSrv } from '@grafana/runtime';
 import { COMMON_FNS, DB, FuncParameter, SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
 
