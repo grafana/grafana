@@ -306,6 +306,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     // This function was named poorly, it's not detected label values, it's detected field values! :facepalm
     return this.fetchDetectedLabelValues(labelName, queryOptions, requestOptions);
   }
+
+  /**
+   * @deprecated: use fetchDetectedFieldValues instead
+   */
   async fetchDetectedLabelValues(
     labelName: string,
     queryOptions?: {
