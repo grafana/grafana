@@ -350,11 +350,16 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}()
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-	logzHeaders := http.Header{}
-	for k, v := range req.Headers {
-		logzHeaders[k] = []string{v}
+	ctxWithLogzio := ctx
+	_, ok := models.LogzIoHeadersFromContext(ctx)
+	if !ok {
+		logger.Debug("Adding logz context because it is missing")
+		logzHeaders := http.Header{}
+		for k, v := range req.Headers {
+			logzHeaders[k] = []string{v}
+		}
+		ctxWithLogzio = models.WithLogzHeaders(ctx, logzHeaders)
 	}
-	ctxWithLogzio := models.WithLogzHeaders(ctx, logzHeaders)
 
 	resp, err := s.dataService.QueryData(ctxWithLogzio, req)
 	// LOGZ.IO GRAFANA CHANGE :: End
