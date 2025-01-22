@@ -79,7 +79,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				return
 			}
 
-			rsp, err := repo.ReadTree(ctx, ref)
+			rsp, err := repo.ReadTree(ctx, ref, repo.Config().Spec.CleanBaseDirectory())
 			if err != nil {
 				responder.Error(err)
 				return
@@ -91,7 +91,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 					continue // folder item
 				}
 				files.Items = append(files.Items, provisioning.FileItem{
-					Path: v.Path,
 					Size: v.Size,
 					Hash: v.Hash,
 				})

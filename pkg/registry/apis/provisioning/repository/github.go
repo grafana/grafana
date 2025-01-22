@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -34,7 +35,10 @@ type githubRepository struct {
 	webhookURL string
 }
 
-var _ Repository = (*githubRepository)(nil)
+var (
+	_ Repository          = (*githubRepository)(nil)
+	_ VersionedRepository = (*githubRepository)(nil)
+)
 
 func NewGitHub(
 	ctx context.Context,
@@ -174,7 +178,14 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 	}, nil
 }
 
-func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
+// Gets all files in the repository tree under the ref and base.
+//
+// The base is a path to the base directory where the files are wanted. Empty string means `/`. Trailing slashes are ignored.
+func (r *githubRepository) ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error) {
+	if base == "" {
+		base = "/"
+	}
+	base = strings.TrimSuffix(base, "/")
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
@@ -182,7 +193,12 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 	repo := r.config.Spec.GitHub.Repository
 	ctx, logger := r.logger(ctx, ref)
 
-	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, ref, true)
+	baseTreeRef, err := r.findBaseRef(ctx, ref, base)
+	if err != nil {
+		return nil, err // err is already a status error
+	}
+
+	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, baseTreeRef, true)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -192,15 +208,20 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 				},
 			}
 		}
+		return nil, apierrors.NewInternalError(err)
 	}
 	if truncated {
 		logger.Warn("tree from github was truncated")
 	}
 
+	pathPrefix := ""
+	if base != "" {
+		pathPrefix = base + "/"
+	}
 	entries := make([]FileTreeEntry, 0, len(tree))
 	for _, entry := range tree {
 		converted := FileTreeEntry{
-			Path: entry.GetPath(),
+			Path: pathPrefix + entry.GetPath(),
 			Size: entry.GetSize(),
 			Hash: entry.GetSHA(),
 			Blob: !entry.IsDirectory(),
@@ -208,6 +229,56 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 		entries = append(entries, converted)
 	}
 	return entries, nil
+}
+
+func (r *githubRepository) findBaseRef(ctx context.Context, ref, base string) (string, error) {
+	base = path.Clean(base)
+	if base == "" || base == "." {
+		base = "/"
+	}
+	base = strings.Trim(base, "/")
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+
+	baseTreeRef := ref
+	for base != "" {
+		entries, truncated, err := r.gh.GetTree(ctx, owner, repo, baseTreeRef, false)
+		if err != nil {
+			if errors.Is(err, pgh.ErrResourceNotFound) {
+				return "", &apierrors.StatusError{
+					ErrStatus: metav1.Status{
+						Message: fmt.Sprintf("tree not found; ref=%s (truncated=%t)", ref, truncated),
+						Code:    http.StatusNotFound,
+					},
+				}
+			}
+			return "", apierrors.NewInternalError(err)
+		}
+
+		expectedPath, newBase, _ := strings.Cut(base, "/")
+		found := false
+		for _, entry := range entries {
+			if entry.GetPath() == expectedPath {
+				found = true
+				baseTreeRef = entry.GetSHA()
+				break
+			}
+		}
+		base = newBase
+		if !found {
+			return "", &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: fmt.Sprintf("tree not found; ref=%s (truncated=%t)", ref, truncated),
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
+	}
+
+	return baseTreeRef, nil
 }
 
 func (r *githubRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
@@ -538,7 +609,7 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	return branch.Sha, nil
 }
 
-func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error) {
+func (r *githubRepository) CompareFiles(ctx context.Context, base, ref, baseDirectory string) ([]FileChange, error) {
 	if ref == "" {
 		var err error
 		ref, err = r.LatestRef(ctx)
@@ -555,8 +626,14 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
 
-	changes := make([]FileChange, 0)
+	var changes []FileChange
 	for _, f := range files {
+		if baseDirectory != "" && !strings.HasPrefix(f.GetFilename(), baseDirectory) {
+			logger.Debug("ignoring file in diff due to missing base directory",
+				"newFileName", f.GetFilename(), "oldFileName", f.GetPreviousFilename())
+			continue
+		}
+
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch f.GetStatus() {
 		case "added", "copied":

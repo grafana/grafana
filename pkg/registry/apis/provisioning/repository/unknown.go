@@ -57,7 +57,7 @@ func (r *unknownRepository) Read(ctx context.Context, path, ref string) (*FileIn
 	}
 }
 
-func (r *unknownRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
+func (r *unknownRepository) ReadTree(ctx context.Context, ref, base string) ([]FileTreeEntry, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read file tree resource is not yet implemented",

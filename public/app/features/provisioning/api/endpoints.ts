@@ -502,6 +502,7 @@ export type RepositorySpec = {
   s3?: S3RepositoryConfig;
   title: string;
   type: 'github' | 'local' | 's3';
+  baseDirectory?: string;
 };
 export type HealthStatus = {
   checked?: number;
