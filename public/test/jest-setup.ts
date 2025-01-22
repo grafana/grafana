@@ -42,6 +42,22 @@ window.matchMedia = (query) => ({
   dispatchEvent: jest.fn(),
 });
 
+window.MessageChannel = jest.fn().mockImplementation(() => {
+  let onmessage: Function;
+  return {
+    port1: {
+      set onmessage(cb: Function) {
+        onmessage = cb;
+      },
+    },
+    port2: {
+      postMessage: (data: unknown) => {
+        onmessage?.({ data });
+      },
+    },
+  };
+});
+
 angular.module('grafana', ['ngRoute']);
 angular.module('grafana.services', ['ngRoute', '$strap.directives']);
 angular.module('grafana.panels', []);
