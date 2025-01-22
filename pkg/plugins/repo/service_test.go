@@ -108,6 +108,31 @@ func TestGetPluginArchive(t *testing.T) {
 	}
 }
 
+func TestPluginInfo(t *testing.T) {
+	const (
+		pluginID = "grafana-test-datasource"
+	)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, fmt.Sprintf("/%s", pluginID), r.URL.Path)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(fmt.Sprintf(`{ "id": 1, "slug": "%s", "status": "active" }`, pluginID)))
+	}))
+	t.Cleanup(srv.Close)
+
+	m := NewManager(ManagerCfg{
+		SkipTLSVerify: false,
+		BaseURL:       srv.URL,
+		Logger:        log.NewTestPrettyLogger(),
+	})
+	pi, err := m.PluginInfo(context.Background(), pluginID)
+	require.NoError(t, err)
+	require.Equal(t, 1, pi.ID)
+	require.Equal(t, pluginID, pi.Slug)
+	require.Equal(t, "active", pi.Status)
+}
+
 func verifyArchive(t *testing.T, archive *PluginArchive) {
 	t.Helper()
 	require.NotNil(t, archive)

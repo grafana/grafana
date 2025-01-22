@@ -21,4 +21,12 @@ describe('Dashboard keybindings', () => {
     e2e.components.Panels.Panel.title('server = A, pod = Bob').should('be.visible');
     e2e.components.Panels.Panel.title('server = B, pod = Bob').should('be.visible');
   });
+
+  it('should open panel inspect', () => {
+    e2e.flows.openDashboard({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
+    e2e.components.Panels.Panel.title('Panel #1').type('i');
+    e2e.components.PanelInspector.Json.content().should('be.visible');
+    cy.get('body').type('{esc}');
+    e2e.components.PanelInspector.Json.content().should('not.exist');
+  });
 });
