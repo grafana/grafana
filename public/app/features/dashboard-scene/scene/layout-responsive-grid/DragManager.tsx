@@ -4,7 +4,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { getPortalContainer } from '@grafana/ui';
 
-import { SceneCSSGridItem } from './SceneCSSGridItem';
+import { ResponsiveGridItem } from './ResponsiveGridItem';
 import { Rect, SceneCSSGridLayout } from './SceneCSSGridLayout';
 
 export type DropZone = Rect & { layoutKey: string };
@@ -36,19 +36,16 @@ export class DragManager extends SceneObjectBase<DragManagerState> {
     this.layouts[layout.state.key!] = layout;
   }
 
-  private oldBodyStyles = '';
   public onDragStart(e: PointerEvent, layout: SceneCSSGridLayout, item: SceneObject) {
     // find closest layout item
-    const layoutItem = sceneGraph.getAncestor(item, SceneCSSGridItem);
+    const layoutItem = sceneGraph.getAncestor(item, ResponsiveGridItem);
     this.originLayout = layout;
     const root = getPortalContainer().appendChild(document.createElement('div'));
     this.portalRoot = createRoot(root);
 
     document.addEventListener('pointermove', this.onDrag);
     document.addEventListener('pointerup', this.onDragEnd);
-    this.oldBodyStyles = document.body.style.cssText;
-    document.body.style.cursor = 'move';
-    document.body.style.userSelect = 'none';
+    document.body.classList.add('dragging-active');
 
     // request drop zones from registered layouts
     const dropZones = [];
@@ -166,7 +163,7 @@ export class DragManager extends SceneObjectBase<DragManagerState> {
 
     this.setState({ activeItem: undefined, dropZone: undefined });
     this.portalRoot.unmount();
-    document.body.style.cssText = this.oldBodyStyles;
+    document.body.classList.remove('dragging-active');
   }
 
   /** Given an array of rectangles and a point, calculate the rectangle closest to the point */

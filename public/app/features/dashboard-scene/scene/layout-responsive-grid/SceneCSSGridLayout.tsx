@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import React, { ComponentType, CSSProperties, useLayoutEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneLayout, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneLayout, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { DragManager, DropZone } from './DragManager';
-import { SceneCSSGridItem, SceneCSSGridItemRenderProps } from './SceneCSSGridItem';
+import { ResponsiveGridItem, ResponsiveGridItemRenderProps } from './ResponsiveGridItem';
 
 export interface SceneCSSGridLayoutState extends SceneObjectState, SceneCSSGridLayoutOptions {
-  children: Array<SceneCSSGridItem | SceneObject>;
+  children: Array<ResponsiveGridItem | SceneObject>;
   /**
    * True when the item should rendered but not visible.
    * Useful for conditional display of layout items
@@ -62,6 +62,7 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     });
 
     this.onPointerDown = this.onPointerDown.bind(this);
+    this.getDragHooks = this.getDragHooks.bind(this);
     this.addActivationHandler(() => {
       const dragManager = findDragManager(this);
       if (dragManager) {
@@ -83,7 +84,11 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     return 'grid-drag-cancel';
   }
 
-  public onPointerDown(e: React.PointerEvent, item: SceneObject) {
+  public getDragHooks() {
+    return { onDragStart: this.onPointerDown };
+  }
+
+  public onPointerDown(e: React.PointerEvent, panel: VizPanel) {
     if (!this.container || this.cannotDrag(e.target) || !this.dragManager) {
       return;
     }
@@ -91,7 +96,7 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     e.preventDefault();
     e.stopPropagation();
 
-    this.dragManager.onDragStart(e.nativeEvent, this, item);
+    this.dragManager.onDragStart(e.nativeEvent, this, panel);
   }
 
   private cannotDrag(el: EventTarget) {
@@ -139,7 +144,7 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
 }
 
 const dragManagerDefaults = { activeItem: undefined, activeLayout: undefined, dropZone: undefined };
-function SceneCSSGridLayoutRenderer({ model }: SceneCSSGridItemRenderProps<SceneCSSGridLayout>) {
+function SceneCSSGridLayoutRenderer({ model }: ResponsiveGridItemRenderProps<SceneCSSGridLayout>) {
   const { children, isHidden } = model.useState();
   const styles = useStyles2(getStyles, model.state);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -187,7 +192,7 @@ function SceneCSSGridLayoutRenderer({ model }: SceneCSSGridItemRenderProps<Scene
       }}
     >
       {children.map((item, i) => {
-        const Component = item.Component as ComponentType<SceneCSSGridItemRenderProps<SceneObject>>;
+        const Component = item.Component as ComponentType<ResponsiveGridItemRenderProps<SceneObject>>;
         // const Wrapper = isLazy ? LazyLoader : 'div';
         const Wrapper = 'div';
         const isHidden = 'isHidden' in item.state && typeof item.state.isHidden === 'boolean' && item.state.isHidden;
@@ -198,7 +203,7 @@ function SceneCSSGridLayoutRenderer({ model }: SceneCSSGridItemRenderProps<Scene
 
         return (
           <Wrapper key={item.state.key!} className={styles.itemWrapper} data-order={isHidden ? -1 : i}>
-            <Component model={item} parentState={model.state} />
+            <Component model={item} />
           </Wrapper>
         );
       })}

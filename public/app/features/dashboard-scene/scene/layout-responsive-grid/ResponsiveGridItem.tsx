@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, VizPanel, SceneObjectBase, SceneObject, SceneComponentProps } from '@grafana/scenes';
@@ -8,10 +9,22 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { DashboardLayoutItem } from '../types';
 
+export interface ResponsiveGridItemStatePlacement {
+  /**
+   * Useful for making content span across multiple rows or columns
+   */
+  gridColumn?: CSSProperties['gridColumn'];
+  gridRow?: CSSProperties['gridRow'];
+}
+
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
   hideWhenNoData?: boolean;
+  gridColumn?: CSSProperties['gridColumn'];
+  gridRow?: CSSProperties['gridRow'];
 }
+
+export interface ResponsiveGridItemRenderProps<T> extends SceneComponentProps<T> {}
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
   public constructor(state: ResponsiveGridItemState) {
@@ -68,21 +81,25 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridItem>) => {
     const { body } = model.useState();
-    const style = useStyles2(getStyles);
+    const style = useStyles2(getStyles, model.state);
+
+    if (!body) {
+      return null;
+    }
 
     return (
-      <div className={cx(style.wrapper)}>
+      <div className={style.wrapper}>
         <body.Component model={body} />
       </div>
     );
   };
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, state: ResponsiveGridItemState) {
   return {
     wrapper: css({
-      width: '100%',
-      height: '100%',
+      gridColumn: state.gridColumn || 'unset',
+      gridRow: state.gridRow || 'unset',
       position: 'relative',
     }),
   };
