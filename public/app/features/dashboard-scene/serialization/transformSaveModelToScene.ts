@@ -72,6 +72,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
   scene.setInitialSaveModel(rsp.dashboard);
+
   return scene;
 }
 
