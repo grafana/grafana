@@ -271,18 +271,20 @@ function getElements(state: DashboardSceneState) {
         }
       }
 
-      // Remove null from the defaults because schema V2 doesn't support null or these fields
+      // Remove null from the defaults because schema V2 doesn't support null for these fields
       const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
       const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
       const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
 
-      const defaults: FieldConfig = {
-        ...vizPanel.state.fieldConfig.defaults,
-        decimals,
-        min,
-        max,
-        color,
-      };
+      const defaults: FieldConfig = Object.fromEntries(
+        Object.entries({
+          ...vizPanel.state.fieldConfig.defaults,
+          decimals,
+          min,
+          max,
+          color,
+        }).filter(([_, value]) => value !== undefined)
+      );
 
       const vizFieldConfig: FieldConfigSource = {
         ...vizPanel.state.fieldConfig,
