@@ -57,8 +57,12 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 // grafanaIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
 var grafanaIdentityPermissions = getWildcardPermissions(
-	"dashboards:read",
 	"folders:read",
+	"folders:create",
+	"folders:write",
+	"dashboards:read",
+	"dashboards:create",
+	"datasources:read",
 )
 
 func IsGrafanaIdentity(ctx context.Context) bool {
