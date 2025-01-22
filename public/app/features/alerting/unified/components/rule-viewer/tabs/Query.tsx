@@ -4,6 +4,7 @@ import { useObservable } from 'react-use';
 import { LoadingState, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
@@ -47,10 +48,18 @@ const QueryResults = ({ rule }: Props) => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
 
+  if (isError(data)) {
+    return (
+      <Alert title="Error" severity="error">
+        <Trans i18nKey="alerting.rule-view.query.error">Error loading query results</Trans>
+      </Alert>
+    );
+  }
+
   return (
     <>
       {loadingData ? (
-        'Loading...'
+        <Trans i18nKey="alerting.common.loading">Loading...</Trans>
       ) : (
         <>
           {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
@@ -81,7 +90,9 @@ const QueryResults = ({ rule }: Props) => {
           )}
           {!isFederatedRule && !allDataSourcesAvailable && (
             <Alert title="Query not available" severity="warning">
-              Cannot display the query preview. Some of the data sources used in the queries are not available.
+              <Trans i18nKey="alerting.rule-view.query.datasources-na">
+                Cannot display the query preview. Some of the data sources used in the queries are not available.
+              </Trans>
             </Alert>
           )}
         </>
@@ -96,6 +107,14 @@ function isLoading(data?: Record<string, PanelData>): boolean {
   }
 
   return !!Object.values(data).find((d) => d.state === LoadingState.Loading);
+}
+
+function isError(data?: Record<string, PanelData>): boolean {
+  if (!data) {
+    return false;
+  }
+
+  return !!Object.values(data).find((d) => d.state === LoadingState.Error);
 }
 
 export { QueryResults };

@@ -17,9 +17,10 @@ import {
 import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQuery } from 'app/features/expressions/types';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDagFromQueries, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
@@ -52,7 +53,14 @@ export class AlertingQueryRunner {
 
   async run(queries: AlertQuery[], condition: string) {
     const empty = initialState(queries, LoadingState.Done);
-    const queriesToRun = await this.prepareQueries(queries);
+    const error = initialState(queries, LoadingState.Error);
+    let queriesToRun: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [];
+    try {
+      queriesToRun = await this.prepareQueries(queries);
+    } catch {
+      this.subject.next(error);
+      return;
+    }
 
     if (queriesToRun.length === 0) {
       return this.subject.next(empty);
