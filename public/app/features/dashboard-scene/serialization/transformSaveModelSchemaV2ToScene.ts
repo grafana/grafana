@@ -298,6 +298,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         children,
       });
     } else {
+      // If this has been validated by the schema we should never reach this point, which is why TS is telling us this is an error.
       //@ts-expect-error
       throw new Error(`Unknown layout element kind: ${element.kind}`);
     }
