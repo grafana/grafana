@@ -41,8 +41,9 @@ func TestAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
+		UserUID: util.GenerateShortUID(),
+		UserID:  1,
+		OrgID:   orgID,
 	}
 
 	t.Run("group creation should set the right provenance", func(t *testing.T) {
@@ -196,7 +197,7 @@ func TestAlertRuleService(t *testing.T) {
 			},
 		}
 		rule.Metadata = ruleMetadata
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
@@ -233,7 +234,7 @@ func TestAlertRuleService(t *testing.T) {
 			},
 		}
 		rule.Metadata = ruleMetadata
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{rule})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
@@ -624,7 +625,7 @@ func TestAlertRuleService(t *testing.T) {
 
 func TestCreateAlertRule(t *testing.T) {
 	orgID := rand.Int63()
-	u := &user.SignedInUser{OrgID: orgID}
+	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
 	gen := models.RuleGen
@@ -1008,7 +1009,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 			rule := models.CopyRule(rules[0])
 
-			_, err := service.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{*rule})
+			_, err := service.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.AlertRule{*rule})
 			require.NoError(t, err)
 
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
@@ -1626,7 +1627,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
 			createTestRule("my-cool-group", "my-cool-group", orgID, namespaceUID),
 		})
 		require.NoError(t, err)
@@ -1657,7 +1658,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(&signedInUser), []models.AlertRule{
 			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespaceUID),
 		})
 		require.NoError(t, err)

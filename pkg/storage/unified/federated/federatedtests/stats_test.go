@@ -69,7 +69,7 @@ func TestDirectSQLStats(t *testing.T) {
 
 	// create an alert rule inside of folder test2
 	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
-	_, err = ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{
+	_, err = ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.AlertRule{
 		{
 			DashboardUID: &folder2UID,
 			UID:          "test",

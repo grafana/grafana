@@ -113,7 +113,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 	}
 	require.NoError(t, err)
 
-	_, err = dbstore.InsertAlertRules(ctx, []models.AlertRule{
+	_, err = dbstore.InsertAlertRules(ctx, models.NewUserUID(user), []models.AlertRule{
 		{
 
 			ID:        0,
