@@ -38,6 +38,9 @@ import {
   LibraryPanelKind,
   Element,
   RepeatOptions,
+  DashboardCursorSync,
+  FieldConfig,
+  FieldColor,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -55,7 +58,7 @@ import {
 } from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
-import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -238,7 +241,8 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
 
 function getElements(state: DashboardSceneState) {
   const panels = state.body.getVizPanels() ?? [];
-  const panelsArray = panels.reduce((acc: Element[], vizPanel: VizPanel) => {
+
+  const panelsArray = panels.map((vizPanel: VizPanel) => {
     if (isLibraryPanel(vizPanel)) {
       const behavior = getLibraryPanelBehavior(vizPanel)!;
       const elementSpec: LibraryPanelKind = {
@@ -248,8 +252,43 @@ function getElements(state: DashboardSceneState) {
           uid: behavior.state.uid,
         },
       };
-      acc.push(elementSpec);
+      return elementSpec;
     } else {
+      // Handle type conversion for color mode
+      const rawColor = vizPanel.state.fieldConfig.defaults.color;
+      let color: FieldColor | undefined;
+
+      if (rawColor) {
+        const convertedMode = colorIdEnumToColorIdV2(rawColor.mode);
+
+        if (convertedMode) {
+          color = {
+            ...rawColor,
+            mode: convertedMode,
+          };
+        }
+      }
+
+      // Remove null from the defaults because schema V2 doesn't support null for these fields
+      const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
+      const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
+      const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+
+      const defaults: FieldConfig = Object.fromEntries(
+        Object.entries({
+          ...vizPanel.state.fieldConfig.defaults,
+          decimals,
+          min,
+          max,
+          color,
+        }).filter(([_, value]) => value !== undefined)
+      );
+
+      const vizFieldConfig: FieldConfigSource = {
+        ...vizPanel.state.fieldConfig,
+        defaults,
+      };
+
       const elementSpec: PanelKind = {
         kind: 'Panel',
         spec: {
@@ -270,20 +309,15 @@ function getElements(state: DashboardSceneState) {
             spec: {
               pluginVersion: vizPanel.state.pluginVersion ?? '',
               options: vizPanel.state.options,
-              fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
+              fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
             },
           },
         },
       };
-      acc.push(elementSpec);
+      return elementSpec;
     }
-
-    return acc;
-  }, []);
-  // create elements
-
-  const elements = createElements(panelsArray);
-  return elements;
+  });
+  return createElements(panelsArray);
 }
 
 function getPanelLinks(panel: VizPanel): DataLink[] {
@@ -326,12 +360,8 @@ export function getDataQueryKind(query: SceneDataQuery): string {
   return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
 }
 
-export function getDataQuerySpec(query: SceneDataQuery): Record<string, any> {
-  const dataQuerySpec = {
-    kind: getDataQueryKind(query),
-    spec: query,
-  };
-  return dataQuerySpec;
+export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {
+  return query;
 }
 
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
@@ -339,30 +369,35 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   const dataProvider = vizPanel.state.$data;
   if (dataProvider instanceof SceneDataTransformer) {
     const transformationList = dataProvider.state.transformations;
+
     if (transformationList.length === 0) {
       return [];
     }
-    transformationList.forEach((transformationItem) => {
-      const transformation = transformationItem as DataTransformerConfig;
-      const transformationSpec: DataTransformerConfig = {
-        id: transformation.id,
-        disabled: transformation.disabled,
-        filter: {
-          id: transformation.filter?.id ?? '',
-          options: transformation.filter?.options ?? {},
-        },
-        options: transformation.options,
-      };
 
-      if (transformation.topic !== undefined) {
-        transformationSpec.topic = transformation.topic;
+    for (const transformationItem of transformationList) {
+      const transformation = transformationItem;
+
+      if ('id' in transformation) {
+        // Transformation is a DataTransformerConfig
+        const transformationSpec: DataTransformerConfig = {
+          id: transformation.id,
+          disabled: transformation.disabled,
+          filter: {
+            id: transformation.filter?.id ?? '',
+            options: transformation.filter?.options ?? {},
+          },
+          ...(transformation.topic && { topic: transformation.topic }),
+          options: transformation.options,
+        };
+
+        transformations.push({
+          kind: transformation.id,
+          spec: transformationSpec,
+        });
+      } else {
+        throw new Error('Unsupported transformation type');
       }
-
-      transformations.push({
-        kind: transformation.id,
-        spec: transformationSpec,
-      });
-    });
+    }
   }
   return transformations;
 }
@@ -397,14 +432,14 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 }
 
 function createElements(panels: Element[]): Record<string, Element> {
-  return panels.reduce(
-    (acc, panel) => {
-      const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
-      acc[key] = panel;
-      return acc;
-    },
-    {} as Record<string, Element>
-  );
+  const elements: Record<string, Element> = {};
+
+  for (const panel of panels) {
+    const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
+    elements[key] = panel;
+  }
+
+  return elements;
 }
 
 function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
@@ -553,97 +588,111 @@ export function getDefaultDataSourceRef(): DataSourceRef | undefined {
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
-function validateDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
+function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null) {
     throw new Error('Dashboard is not an object or is null');
   }
 
-  if (typeof dash.title !== 'string') {
+  if ('title' in dash && typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if (typeof dash.description !== 'string') {
+  if ('description' in dash && typeof dash.description !== 'string') {
     throw new Error('Description is not a string');
   }
-  if (typeof dash.cursorSync !== 'string') {
-    throw new Error('CursorSync is not a string');
+  if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
+    const validCursorSyncValues = ((): string[] => {
+      const typeValues: DashboardCursorSync[] = ['Off', 'Crosshair', 'Tooltip'];
+      return typeValues;
+    })();
+
+    if (
+      'cursorSync' in dash &&
+      (typeof dash.cursorSync !== 'string' || !validCursorSyncValues.includes(dash.cursorSync))
+    ) {
+      throw new Error('CursorSync is not a string');
+    }
   }
-  if (typeof dash.liveNow !== 'boolean') {
+  if ('liveNow' in dash && typeof dash.liveNow !== 'boolean') {
     throw new Error('LiveNow is not a boolean');
   }
-  if (typeof dash.preload !== 'boolean') {
+  if ('preload' in dash && typeof dash.preload !== 'boolean') {
     throw new Error('Preload is not a boolean');
   }
-  if (typeof dash.editable !== 'boolean') {
+  if ('editable' in dash && typeof dash.editable !== 'boolean') {
     throw new Error('Editable is not a boolean');
   }
-  if (!Array.isArray(dash.links)) {
+  if ('links' in dash && !Array.isArray(dash.links)) {
     throw new Error('Links is not an array');
   }
-  if (!Array.isArray(dash.tags)) {
+  if ('tags' in dash && !Array.isArray(dash.tags)) {
     throw new Error('Tags is not an array');
   }
 
-  if (dash.id !== undefined && typeof dash.id !== 'number') {
+  if ('id' in dash && dash.id !== undefined && typeof dash.id !== 'number') {
     throw new Error('ID is not a number');
   }
 
   // Time settings
-  if (typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
+  if (!('timeSettings' in dash) || typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
     throw new Error('TimeSettings is not an object or is null');
   }
-  if (typeof dash.timeSettings.timezone !== 'string') {
+  if (!('timezone' in dash.timeSettings) || typeof dash.timeSettings.timezone !== 'string') {
     throw new Error('Timezone is not a string');
   }
-  if (typeof dash.timeSettings.from !== 'string') {
+  if (!('from' in dash.timeSettings) || typeof dash.timeSettings.from !== 'string') {
     throw new Error('From is not a string');
   }
-  if (typeof dash.timeSettings.to !== 'string') {
+  if (!('to' in dash.timeSettings) || typeof dash.timeSettings.to !== 'string') {
     throw new Error('To is not a string');
   }
-  if (typeof dash.timeSettings.autoRefresh !== 'string') {
+  if (!('autoRefresh' in dash.timeSettings) || typeof dash.timeSettings.autoRefresh !== 'string') {
     throw new Error('AutoRefresh is not a string');
   }
-  if (!Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
+  if (!('autoRefreshIntervals' in dash.timeSettings) || !Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
     throw new Error('AutoRefreshIntervals is not an array');
   }
-  if (!Array.isArray(dash.timeSettings.quickRanges)) {
+  if (!('quickRanges' in dash.timeSettings) || !Array.isArray(dash.timeSettings.quickRanges)) {
     throw new Error('QuickRanges is not an array');
   }
-  if (typeof dash.timeSettings.hideTimepicker !== 'boolean') {
+  if (!('hideTimepicker' in dash.timeSettings) || typeof dash.timeSettings.hideTimepicker !== 'boolean') {
     throw new Error('HideTimepicker is not a boolean');
   }
-  if (typeof dash.timeSettings.weekStart !== 'string') {
+  if (!('weekStart' in dash.timeSettings) || typeof dash.timeSettings.weekStart !== 'string') {
     throw new Error('WeekStart is not a string');
   }
-  if (typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
+  if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
     throw new Error('FiscalYearStartMonth is not a number');
   }
-  if (dash.timeSettings.nowDelay !== undefined && typeof dash.timeSettings.nowDelay !== 'string') {
+  if (
+    'nowDelay' in dash.timeSettings &&
+    dash.timeSettings.nowDelay !== undefined &&
+    typeof dash.timeSettings.nowDelay !== 'string'
+  ) {
     throw new Error('NowDelay is not a string');
   }
 
   // Other sections
-  if (!Array.isArray(dash.variables)) {
+  if (!('variables' in dash) || !Array.isArray(dash.variables)) {
     throw new Error('Variables is not an array');
   }
-  if (typeof dash.elements !== 'object' || dash.elements === null) {
+  if (!('elements' in dash) || typeof dash.elements !== 'object' || dash.elements === null) {
     throw new Error('Elements is not an object or is null');
   }
-  if (!Array.isArray(dash.annotations)) {
+  if (!('annotations' in dash) || !Array.isArray(dash.annotations)) {
     throw new Error('Annotations is not an array');
   }
 
   // Layout
-  if (typeof dash.layout !== 'object' || dash.layout === null) {
+  if (!('layout' in dash) || typeof dash.layout !== 'object' || dash.layout === null) {
     throw new Error('Layout is not an object or is null');
   }
-  if (dash.layout.kind !== 'GridLayout') {
+  if (!('kind' in dash.layout) || dash.layout.kind !== 'GridLayout') {
     throw new Error('Layout kind is not GridLayout');
   }
-  if (typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
+  if (!('spec' in dash.layout) || typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
     throw new Error('Layout spec is not an object or is null');
   }
-  if (!Array.isArray(dash.layout.spec.items)) {
+  if (!('items' in dash.layout.spec) || !Array.isArray(dash.layout.spec.items)) {
     throw new Error('Layout spec items is not an array');
   }
 
