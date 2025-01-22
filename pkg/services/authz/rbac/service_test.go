@@ -24,6 +24,7 @@ func TestService_checkPermission(t *testing.T) {
 		name        string
 		permissions []accesscontrol.Permission
 		check       CheckRequest
+		folders     []store.Folder
 		expected    bool
 	}
 
@@ -145,14 +146,42 @@ func TestService_checkPermission(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "should return true if user permissions on folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: strPtr("parent")},
+			},
+			check: CheckRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "some_dashboard",
+				ParentFolder: "child",
+			},
+			expected: true,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			folderCache := localcache.New(shortCacheTTL, shortCleanupInterval)
+			folderCache.Set(folderCacheKey("default"), newFolderTree(tc.folders), 0)
+			tc.check.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
+
 			s := &Service{
-				logger: log.NewNopLogger(),
-				tracer: tracing.NewNoopTracerService(),
-				mapper: newMapper(),
+				logger:      log.NewNopLogger(),
+				tracer:      tracing.NewNoopTracerService(),
+				mapper:      newMapper(),
+				folderCache: folderCache,
 			}
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
@@ -395,96 +424,11 @@ func TestService_getUserPermissions(t *testing.T) {
 	}
 }
 
-func TestService_buildFolderTree(t *testing.T) {
-	type testCase struct {
-		name         string
-		folders      []store.Folder
-		cacheHit     bool
-		expectedTree map[string]FolderNode
-	}
-
-	testCases := []testCase{
-		{
-			name: "should return folder tree from cache if available",
-			folders: []store.Folder{
-				{UID: "folder1", ParentUID: nil},
-				{UID: "folder2", ParentUID: strPtr("folder1")},
-			},
-			cacheHit: true,
-			expectedTree: map[string]FolderNode{
-				"folder1": {uid: "folder1", childrenUIDs: []string{"folder2"}},
-				"folder2": {uid: "folder2", parentUID: strPtr("folder1")},
-			},
-		},
-		{
-			name: "should return folder tree from store if not in cache",
-			folders: []store.Folder{
-				{UID: "folder1", ParentUID: nil},
-				{UID: "folder2", ParentUID: strPtr("folder1")},
-			},
-			cacheHit: false,
-			expectedTree: map[string]FolderNode{
-				"folder1": {uid: "folder1", childrenUIDs: []string{"folder2"}},
-				"folder2": {uid: "folder2", parentUID: strPtr("folder1")},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
-
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
-			if tc.cacheHit {
-				cacheService.Set(folderCacheKey(ns.Value), tc.expectedTree, 0)
-			}
-
-			store := &fakeStore{folders: tc.folders}
-
-			s := &Service{
-				store:           store,
-				permissionStore: store,
-				folderCache:     cacheService,
-				logger:          log.New("test"),
-				sf:              new(singleflight.Group),
-				tracer:          tracing.NewNoopTracerService(),
-			}
-
-			tree, err := s.buildFolderTree(ctx, ns)
-
-			require.NoError(t, err)
-			require.Len(t, tree, len(tc.expectedTree))
-			for _, folder := range tc.folders {
-				node, ok := tree[folder.UID]
-				require.True(t, ok)
-				// Check parent
-				if folder.ParentUID != nil {
-					require.NotNil(t, node.parentUID)
-					require.Equal(t, *folder.ParentUID, *node.parentUID)
-				} else {
-					require.Nil(t, node.parentUID)
-				}
-				// Check children
-				if len(node.childrenUIDs) > 0 {
-					epectedChildren := tc.expectedTree[folder.UID].childrenUIDs
-					require.ElementsMatch(t, node.childrenUIDs, epectedChildren)
-				}
-			}
-			if tc.cacheHit {
-				require.Zero(t, store.calls)
-			} else {
-				require.Equal(t, 1, store.calls)
-			}
-		})
-	}
-}
-
 func TestService_listPermission(t *testing.T) {
 	type testCase struct {
 		name               string
 		permissions        []accesscontrol.Permission
-		folderTree         map[string]FolderNode
+		folders            []store.Folder
 		list               ListRequest
 		expectedDashboards []string
 		expectedFolders    []string
@@ -533,9 +477,9 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_2",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_1": {uid: "some_folder_1"},
-				"some_folder_2": {uid: "some_folder_2"},
+			folders: []store.Folder{
+				{UID: "some_folder_1"},
+				{UID: "some_folder_2"},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -556,13 +500,13 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_1",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_parent":      {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":       {uid: "some_folder_child", parentUID: strPtr("some_folder_parent"), childrenUIDs: []string{"some_folder_subchild1", "some_folder_subchild2"}},
-				"some_folder_subchild1":   {uid: "some_folder_subchild1", parentUID: strPtr("some_folder_child")},
-				"some_folder_subchild2":   {uid: "some_folder_subchild2", parentUID: strPtr("some_folder_child"), childrenUIDs: []string{"some_folder_subsubchild"}},
-				"some_folder_subsubchild": {uid: "some_folder_subsubchild", parentUID: strPtr("some_folder_subchild2")},
-				"some_folder_1":           {uid: "some_folder_1", parentUID: strPtr("some_other_folder")},
+			folders: []store.Folder{
+				{UID: "some_folder_parent"},
+				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+				{UID: "some_folder_subchild1", ParentUID: strPtr("some_folder_child")},
+				{UID: "some_folder_subchild2", ParentUID: strPtr("some_folder_child")},
+				{UID: "some_folder_subsubchild", ParentUID: strPtr("some_folder_subchild2")},
+				{UID: "some_folder_1", ParentUID: strPtr("some_other_folder")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -589,9 +533,9 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_parent",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_parent": {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":  {uid: "some_folder_child", parentUID: strPtr("some_folder_parent")},
+			folders: []store.Folder{
+				{UID: "some_folder_parent"},
+				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -619,10 +563,10 @@ func TestService_listPermission(t *testing.T) {
 					Identifier: "some_folder_parent",
 				},
 			},
-			folderTree: map[string]FolderNode{
-				"some_folder_parent":   {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":    {uid: "some_folder_child", parentUID: strPtr("some_folder_parent"), childrenUIDs: []string{"some_folder_subchild"}},
-				"some_folder_subchild": {uid: "some_folder_subchild", parentUID: strPtr("some_folder_child")},
+			folders: []store.Folder{
+				{UID: "some_folder_parent"},
+				{UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+				{UID: "some_folder_subchild", ParentUID: strPtr("some_folder_child")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -634,8 +578,9 @@ func TestService_listPermission(t *testing.T) {
 		{
 			name:        "return no dashboards and folders if the user doesn't have access to any resources",
 			permissions: []accesscontrol.Permission{},
-			folderTree: map[string]FolderNode{
-				"some_folder_1": {uid: "some_folder_1"},
+
+			folders: []store.Folder{
+				{UID: "some_folder_1"},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -648,9 +593,8 @@ func TestService_listPermission(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			folderCache := localcache.New(shortCacheTTL, shortCleanupInterval)
-			if tc.folderTree != nil {
-				folderCache.Set(folderCacheKey("default"), tc.folderTree, 0)
-			}
+			folderCache.Set(folderCacheKey("default"), newFolderTree(tc.folders), 0)
+
 			s := &Service{
 				logger:      log.New("test"),
 				folderCache: folderCache,
