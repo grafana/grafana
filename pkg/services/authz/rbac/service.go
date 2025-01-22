@@ -594,7 +594,6 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 			}
 			folderSet[identifier] = struct{}{}
 			getChildren(folderMap, identifier, folderSet)
-
 		} else {
 			identifier := strings.TrimPrefix(scope, prefix)
 			itemSet[identifier] = struct{}{}
