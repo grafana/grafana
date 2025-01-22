@@ -43,11 +43,11 @@ const defaultProps = {
     getMetricNamespaces: jest
       .fn()
       .mockImplementation(
-        async (subscriptionId: string, resourceGroup?: string, resourceUri?: string, custom?: boolean) => {
+        async (_subscriptionId: string, _resourceGroup?: string, _resourceUri?: string, custom?: boolean) => {
           if (custom !== true) {
-            return Promise.resolve([{ text: 'foo/bar', value: 'foo/bar' }]);
+            return [{ text: 'foo/bar', value: 'foo/bar' }];
           }
-          return Promise.resolve([{ text: 'foo/custom', value: 'foo/custom' }]);
+          return [{ text: 'foo/custom', value: 'foo/custom' }];
         }
       ),
     getResourceNames: jest.fn().mockResolvedValue([{ text: 'foobar', value: 'foobar' }]),
