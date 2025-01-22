@@ -18,7 +18,7 @@ import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, VIRTUAL_OVERSC
 import { NotFoundError } from './MessageRows';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
-import { fuzzyFind, itemFilter, itemToString } from './filter';
+import { fuzzyFind, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
