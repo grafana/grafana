@@ -30,6 +30,9 @@ func checkNilRequester(r Requester) bool {
 	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
 }
 
+// WithGrafanaIdentity sets creates an identity representing grafana in provided org and store it in context.
+// This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
+// static permissions so it can be used in legacy code paths.
 func WithGrafanaIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
 	r := &StaticRequester{
 		Type:           types.TypeAccessPolicy,
