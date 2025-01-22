@@ -3,12 +3,13 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 
@@ -48,20 +49,31 @@ func (s *jobStore) Register(worker Worker) {
 // Add implements JobQueue.
 func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
 	if job.Namespace == "" {
-		return nil, fmt.Errorf("expecting namespace")
+		return nil, apierrors.NewBadRequest("missing metadata.namespace")
 	}
-	_, ok := job.Labels["repository"]
-	if !ok {
-		return nil, fmt.Errorf("expecting repository name label")
+	if job.Name != "" {
+		return nil, apierrors.NewBadRequest("name will always be generated")
+	}
+	if job.Spec.Repository == "" {
+		return nil, apierrors.NewBadRequest("missing spec.repository")
 	}
 	if job.Spec.Action == "" {
-		return nil, fmt.Errorf("missing spec.action")
+		return nil, apierrors.NewBadRequest("missing spec.action")
+	}
+	if job.Spec.Action == provisioning.JobActionExport && job.Spec.Export == nil {
+		return nil, apierrors.NewBadRequest("missing spec.export")
 	}
 
 	// Only for add
 	if job.Status.State != "" {
-		return nil, fmt.Errorf("must add jobs with empty state")
+		return nil, apierrors.NewBadRequest("must add jobs with empty status")
 	}
+
+	if job.Labels == nil {
+		job.Labels = make(map[string]string)
+	}
+	job.Labels["repository"] = job.Spec.Repository // for now, make sure we can search Multi-tenant
+	job.Name = fmt.Sprintf("%s:%s:%s", job.Spec.Repository, job.Spec.Action, util.GenerateShortUID())
 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -69,9 +81,6 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 	s.rv++
 	job.ResourceVersion = strconv.FormatInt(s.rv, 10)
 	job.Status.State = provisioning.JobStatePending
-	job.Labels["action"] = string(job.Spec.Action) // make it searchable
-	job.Labels["state"] = string(job.Status.State)
-	job.Name = util.GenerateShortUID()
 	job.CreationTimestamp = metav1.NewTime(time.Now())
 
 	jobs := make([]provisioning.Job, 0, len(s.jobs)+2)
@@ -110,7 +119,7 @@ func (s *jobStore) drainPending() {
 	for {
 		time.Sleep(time.Microsecond * 200)
 
-		job := s.Checkout(ctx, nil)
+		job := s.Next(ctx)
 		if job == nil {
 			return // done
 		}
@@ -127,7 +136,9 @@ func (s *jobStore) drainPending() {
 				},
 			}
 		} else {
-			status, err = s.worker.Process(ctx, *job)
+			status, err = s.worker.Process(ctx, *job, func(j provisioning.JobStatus) error {
+				return s.Update(ctx, job.Namespace, job.Name, j)
+			})
 			if err != nil {
 				logger.Error("error processing job", "error", err)
 				status = &provisioning.JobStatus{
@@ -143,7 +154,7 @@ func (s *jobStore) drainPending() {
 		status.Started = started.UnixMilli()
 		status.Finished = time.Now().UnixMilli()
 
-		err = s.Complete(ctx, job.Namespace, job.Name, *status)
+		err = s.Update(ctx, job.Namespace, job.Name, *status)
 		if err != nil {
 			logger.Error("error running job", "error", err)
 		}
@@ -152,7 +163,7 @@ func (s *jobStore) drainPending() {
 }
 
 // Checkout the next "pending" job
-func (s *jobStore) Checkout(ctx context.Context, query labels.Selector) *provisioning.Job {
+func (s *jobStore) Next(ctx context.Context) *provisioning.Job {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -164,7 +175,6 @@ func (s *jobStore) Checkout(ctx context.Context, query labels.Selector) *provisi
 			s.rv++
 			s.jobs[i].ResourceVersion = strconv.FormatInt(s.rv, 10)
 			s.jobs[i].Status.State = provisioning.JobStateWorking
-			s.jobs[i].Labels["state"] = string(provisioning.JobStateWorking)
 			s.jobs[i].Status.Started = time.Now().UnixMilli()
 			job := s.jobs[i]
 
@@ -179,20 +189,34 @@ func (s *jobStore) Checkout(ctx context.Context, query labels.Selector) *provisi
 }
 
 // Complete implements JobQueue.
-func (s *jobStore) Complete(ctx context.Context, namespace string, name string, status provisioning.JobStatus) error {
+func (s *jobStore) Update(ctx context.Context, namespace string, name string, status provisioning.JobStatus) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	s.rv++
 
+	if status.State == "" {
+		return apierrors.NewBadRequest("The state must be set")
+	}
+	if status.Progress > 100 || status.Progress < 0 {
+		return apierrors.NewBadRequest("progress must be between 0 and 100")
+	}
+
 	for idx, job := range s.jobs {
 		if job.Name == name && job.Namespace == namespace {
-			oldObj := job.DeepCopyObject()
+			if job.Status.State.Finished() {
+				return &apierrors.StatusError{ErrStatus: metav1.Status{
+					Code:    http.StatusPreconditionFailed,
+					Message: "The job is already finished and can not be updated",
+				}}
+			}
+			if status.State.Finished() {
+				status.Finished = time.Now().UnixMilli()
+			}
 
-			status.Finished = time.Now().UnixMilli()
+			oldObj := job.DeepCopyObject()
 			job.ResourceVersion = strconv.FormatInt(s.rv, 10)
 			job.Status = status
-			job.Labels["state"] = string(status.State)
 			s.jobs[idx] = job
 
 			s.watchSet.notifyWatchers(watch.Event{
@@ -203,5 +227,5 @@ func (s *jobStore) Complete(ctx context.Context, namespace string, name string, 
 		}
 	}
 
-	return fmt.Errorf("not found")
+	return apierrors.NewNotFound(provisioning.JobResourceInfo.GroupResource(), name)
 }

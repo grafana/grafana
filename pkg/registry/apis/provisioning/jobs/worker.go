@@ -59,7 +59,7 @@ func NewJobWorker(
 	}
 }
 
-func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
+func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress func(provisioning.JobStatus) error) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	ctx = logging.Context(ctx, logger)
 
@@ -69,10 +69,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	}
 
 	ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
-	repoName, ok := job.Labels["repository"]
-	if !ok {
-		return nil, fmt.Errorf("missing repository name in label")
-	}
+	repoName := job.Spec.Repository
 	logger = logger.With("repository", repoName)
 	ctx = logging.Context(ctx, logger)
 
@@ -171,10 +168,14 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, fmt.Errorf("error processing pull request: %w", err)
 		}
 	case provisioning.JobActionExport:
-		err := replicator.Export(ctx)
-		if err != nil {
-			return nil, err
+		dummy := &dummyExporter{}
+		if job.Spec.Export == nil {
+			return &provisioning.JobStatus{
+				State:  provisioning.JobStateError,
+				Errors: []string{"Export job missing export settings"},
+			}, nil
 		}
+		return dummy.Export(ctx, repo, *job.Spec.Export, progress)
 	default:
 		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
 	}

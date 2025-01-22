@@ -60,6 +60,9 @@ func (j JobState) Finished() bool {
 type JobSpec struct {
 	Action JobAction `json:"action"`
 
+	// The the repository reference (for now also in labels)
+	Repository string `json:"repository"`
+
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
@@ -69,6 +72,23 @@ type JobSpec struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
+
+	// Required when the action is `export`
+	Export *ExportOptions `json:"export,omitempty"`
+}
+
+type ExportOptions struct {
+	// The source folder (or empty) to export
+	Folder string `json:"folder,omitempty"`
+
+	// Preserve history (if possible)
+	History bool `json:"history,omitempty"`
+
+	// Target branch for export
+	Branch string `json:"branch,omitempty"`
+
+	// File prefix
+	Prefix string `json:"prefix,omitempty"`
 }
 
 // The job status
@@ -78,6 +98,9 @@ type JobStatus struct {
 	Finished int64    `json:"finished,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
+
+	// Optional value 0-100 that can be set while running
+	Progress float64 `json:"progress,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

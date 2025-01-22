@@ -84,6 +84,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/export`,
           method: 'POST',
+          body: queryArg.body,
         }),
         invalidatesTags: ['Repository'],
       }),
@@ -279,6 +280,12 @@ export type DeleteRepositoryArg = {
 export type CreateRepositoryExportResponse = Job;
 export type CreateRepositoryExportArg = {
   name: string;
+  body: {
+    branch?: string;
+    folder?: string;
+    history?: boolean;
+    prefix?: string;
+  };
 };
 export type GetRepositoryFilesResponse = {
   apiVersion?: string;
@@ -422,8 +429,15 @@ export type ObjectMeta = {
   selfLink?: string;
   uid?: string;
 };
+export type ExportOptions = {
+  branch?: string;
+  folder?: string;
+  history?: boolean;
+  prefix?: string;
+};
 export type JobSpec = {
   action: 'export' | 'pr' | 'sync';
+  export?: ExportOptions;
   hash?: string;
   pr?: number;
   ref?: string;
@@ -433,6 +447,7 @@ export type JobStatus = {
   errors?: string[];
   finished?: number;
   message?: string;
+  progress?: number;
   started?: number;
   state?: 'error' | 'pending' | 'success' | 'working';
 };

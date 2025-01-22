@@ -1243,8 +1243,41 @@
         "tags": [
           "Repository"
         ],
-        "description": "connect POST requests to export of Repository",
+        "description": "Export from grafana into the remote repository",
         "operationId": "createRepositoryExport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "description": "Target branch for export",
+                    "type": "string"
+                  },
+                  "folder": {
+                    "description": "The source folder (or empty) to export",
+                    "type": "string"
+                  },
+                  "history": {
+                    "description": "Preserve history (if possible)",
+                    "type": "boolean"
+                  },
+                  "prefix": {
+                    "description": "File prefix",
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "branch": "target-branch",
+                "folder": "grafan-folder-ref",
+                "history": true,
+                "prefix": "prefix/in/repo/tree"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -3575,6 +3608,27 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "description": "Target branch for export",
+            "type": "string"
+          },
+          "folder": {
+            "description": "The source folder (or empty) to export",
+            "type": "string"
+          },
+          "history": {
+            "description": "Preserve history (if possible)",
+            "type": "boolean"
+          },
+          "prefix": {
+            "description": "File prefix",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
         "properties": {
@@ -3744,6 +3798,14 @@
               "sync"
             ]
           },
+          "export": {
+            "description": "Required when the action is `export`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions"
+              }
+            ]
+          },
           "hash": {
             "type": "string"
           },
@@ -3779,6 +3841,11 @@
           },
           "message": {
             "type": "string"
+          },
+          "progress": {
+            "description": "Optional value 0-1 that can be set while running",
+            "type": "number",
+            "format": "double"
           },
           "started": {
             "type": "integer",
