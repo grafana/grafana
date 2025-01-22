@@ -1,12 +1,12 @@
 /**
  * To generate query library k8s APIs, run:
- * `npx rtk-query-codegen-openapi ./public/app/features/query-library/api/scripts/generate-rtk-apis.ts` from the root of the repo
+ * `ts-node ./scripts/process-spec.ts && npx rtk-query-codegen-openapi ./public/app/features/query-library/api/scripts/generate-rtk-apis.ts` from the root of the repo
  */
 
 import { ConfigFile } from '@rtk-query/codegen-openapi';
 import { accessSync } from 'fs';
 
-const schemaFile = '../../../../../../data/query-library/openapi.json';
+const schemaFile = '../../../../../../data/specs/query-library/spec.json';
 
 try {
   // Check we have the OpenAPI before generating query library RTK APIs,
