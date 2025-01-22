@@ -136,9 +136,8 @@ func (s *jobStore) drainPending() {
 				},
 			}
 		} else {
-			status, err = s.worker.Process(ctx, *job, func(s provisioning.JobStatus) error {
-				//s.Update(ctx, )
-				return nil
+			status, err = s.worker.Process(ctx, *job, func(j provisioning.JobStatus) error {
+				return s.Update(ctx, job.Namespace, job.Name, j)
 			})
 			if err != nil {
 				logger.Error("error processing job", "error", err)

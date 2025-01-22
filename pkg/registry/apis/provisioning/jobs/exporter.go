@@ -38,23 +38,17 @@ func (s *dummyExporter) Export(ctx context.Context,
 	for i := 0; i < size; i++ {
 		status.Progress = 1.2
 
-		name, err := util.GetRandomString(rand.IntN(20 + 4))
-		if err != nil {
-			return nil, err
-		}
-
 		sleep := time.Duration(400+rand.IntN(800)) * time.Millisecond
-		status.Message = fmt.Sprintf("processing %s (%s)", name, sleep)
+		status.Message, _ = util.GetRandomString(rand.IntN(10 + 15))
 		time.Sleep(sleep)
 		err = progress(status)
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	status.State = provisioning.JobStateSuccess
-	status.Message = "exported xyz"
+	status.Message = fmt.Sprintf("pretended to export %d", size)
 	status.Progress = 0
 
 	logger.Info("finished export", "folder", options.Folder)
