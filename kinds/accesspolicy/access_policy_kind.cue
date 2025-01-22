@@ -1,51 +1,36 @@
-package kind
+spec: {
+	// The scope where these policies should apply
+	scope: #ResourceRef
 
-name:              "AccessPolicy"
-maturity:          "merged"
-description:       "Access rules for a scope+role.  NOTE there is a unique constraint on role+scope"
-pluralName:        "AccessPolicies"
-machineName:       "accesspolicy"
-pluralMachineName: "accesspolicies"
+	// The role that must apply this policy 
+	role: #RoleRef
 
-lineage: schemas: [{
-	version: [0, 0]
-	schema: {
-		spec: {
-			// The scope where these policies should apply
-			scope: #ResourceRef
+	// The set of rules to apply.  Note that * is required to modify
+	// access policy rules, and that "none" will reject all actions
+	rules: [...#AccessRule]
+} @cuetsy(kind="interface")
 
-			// The role that must apply this policy 
-			role: #RoleRef
+#RoleRef: {
+	// Policies can apply to roles, teams, or users
+	// Applying policies to individual users is supported, but discouraged
+	kind:  "Role" | "BuiltinRole" | "Team" | "User"
+	name:  string
+	xname: string // temporary
+} @cuetsy(kind="interface")
 
-			// The set of rules to apply.  Note that * is required to modify
-			// access policy rules, and that "none" will reject all actions
-			rules: [...#AccessRule]
-		} @cuetsy(kind="interface")
+#ResourceRef: {
+	kind: string // explicit resource or folder will cascade
+	name: string
+} @cuetsy(kind="interface")
 
-		#RoleRef: {
-			// Policies can apply to roles, teams, or users
-			// Applying policies to individual users is supported, but discouraged
-			kind:  "Role" | "BuiltinRole" | "Team" | "User"
-			name:  string
-			xname: string // temporary
-		} @cuetsy(kind="interface")
+#AccessRule: {
+	// The kind this rule applies to (dashboards, alert, etc)
+	kind: "*" | string
 
-		#ResourceRef: {
-			kind: string // explicit resource or folder will cascade
-			name: string
-		} @cuetsy(kind="interface")
+	// READ, WRITE, CREATE, DELETE, ...
+	// should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete" 
+	verb: "*" | "none" | string
 
-		#AccessRule: {
-			// The kind this rule applies to (dashboards, alert, etc)
-			kind: "*" | string
-
-			// READ, WRITE, CREATE, DELETE, ...
-			// should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete" 
-			verb: "*" | "none" | string
-
-			// Specific sub-elements like "alert.rules" or "dashboard.permissions"????
-			target?: string
-		} @cuetsy(kind="interface")
-	}
-},
-]
+	// Specific sub-elements like "alert.rules" or "dashboard.permissions"????
+	target?: string
+} @cuetsy(kind="interface")
