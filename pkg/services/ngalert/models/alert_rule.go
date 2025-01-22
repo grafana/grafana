@@ -538,7 +538,7 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 }
 
 // PreSave sets default values and loads the updated model for each alert query.
-func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
+func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) error {
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
@@ -547,6 +547,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 		alertRule.Data[i] = q
 	}
 	alertRule.Updated = timeNow()
+	alertRule.UpdatedBy = userUID
 	return nil
 }
 
