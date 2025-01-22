@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -38,6 +39,10 @@ type DashboardService interface {
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
 	GetSharedDashboardUIDsQuery(ctx context.Context, query *FindPersistedDashboardsQuery) (bool, error)
+}
+
+type PermissionsRegistrationService interface {
+	RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService)
 }
 
 // PluginService is a service for operating on plugin dashboards.
