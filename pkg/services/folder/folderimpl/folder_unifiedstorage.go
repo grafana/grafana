@@ -174,8 +174,8 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 
 	folderkey := &resource.ResourceKey{
 		Namespace: s.k8sclient.getNamespace(orgID),
-		Group:     "folder.grafana.app",
-		Resource:  "folders",
+		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource: v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
 	request := &resource.ResourceSearchRequest{
