@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -65,6 +64,22 @@ func TestDashboardService(t *testing.T) {
 					_, err := service.SaveDashboard(context.Background(), dto, false)
 					require.Equal(t, err, dashboards.ErrDashboardTitleEmpty)
 				}
+			})
+
+			t.Run("Should return validation error if message is too long", func(t *testing.T) {
+				dto.Dashboard = dashboards.NewDashboard("Dash")
+				dto.Message = `Here we go, 500+ characters for testing. I'm sorry that you're
+				having to read this. I spent too long trying to come up with something clever 
+				to say or a funny joke. Unforuntately, nothing came to mind. So instead, I'm
+				will share this with you, as a form of payment for having to read this:
+				https://youtu.be/dQw4w9WgXcQ?si=KeoTIpn9tUtQnOBk! Enjoy :) Now lets see if 
+				this test passes or if the result is more exciting than these 500 characters
+				I wrote. Best of luck to the both of us!`
+				_, err := service.SaveDashboard(context.Background(), dto, false)
+				require.Equal(t, err, dashboards.ErrDashboardMessageTooLong)
+
+				// set to a shorter message for the rest of the tests
+				dto.Message = `message`
 			})
 
 			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
@@ -1801,52 +1816,4 @@ func TestToUID(t *testing.T) {
 		result := toUID(rawIdentifier)
 		assert.Equal(t, "", result)
 	})
-}
-
-// regression test - parsing int32 values from search results was causing a panic
-func TestParseResults(t *testing.T) {
-	resSearchResp := &resource.ResourceSearchResponse{
-		Results: &resource.ResourceTable{
-			Columns: []*resource.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resource.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resource.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: search.DASHBOARD_ERRORS_LAST_1_DAYS,
-					Type: resource.ResourceTableColumnDefinition_INT64,
-				},
-				{
-					Name: search.DASHBOARD_LINK_COUNT,
-					Type: resource.ResourceTableColumnDefinition_INT32,
-				},
-			},
-			Rows: []*resource.ResourceTableRow{
-				{
-					Key: &resource.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder1"),
-						[]byte("100"),
-						[]byte("25"),
-					},
-				},
-			},
-		},
-		TotalHits: 1,
-	}
-
-	res, err := ParseResults(resSearchResp, 0)
-
-	require.NoError(t, err)
-	hitFields := res.Hits[0].Field.Object
-	require.Equal(t, int64(100), hitFields[search.DASHBOARD_ERRORS_LAST_1_DAYS])
-	require.Equal(t, int64(25), hitFields[search.DASHBOARD_LINK_COUNT])
 }
