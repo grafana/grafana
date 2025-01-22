@@ -69,9 +69,6 @@ func (gen *genTSVeneerIndex) Generate(sfg ...SchemaForGen) (*codejen.File, error
 }
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *ast.File) ([]ast.Decl, error) {
-	// Check the root, then walk the tree
-	rootv := def.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
-
 	var raw, custom, rawD, customD ast.Idents
 
 	var terr errors.Error
@@ -137,7 +134,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *
 
 		return true
 	}
-	walk(rootv, visit, nil)
+	walk(def.CueFile, visit, nil)
 
 	if len(errors.Errors(terr)) != 0 {
 		return nil, terr
