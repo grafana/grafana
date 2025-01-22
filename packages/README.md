@@ -57,7 +57,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 To build individual packages, run:
 
 ```
-yarn nx run @grafana/<data|e2e|e2e-selectors|runtime|schema|ui>:build
+yarn nx run @grafana/<data|e2e-selectors|runtime|schema|ui>:build
 ```
 
 ### Setting up @grafana/\* packages for local development
