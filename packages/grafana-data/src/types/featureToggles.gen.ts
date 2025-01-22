@@ -218,6 +218,7 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
+  unifiedStorageSearchPermissionFiltering?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;

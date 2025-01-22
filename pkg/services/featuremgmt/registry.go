@@ -1508,6 +1508,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedStorageSearchPermissionFiltering",
+			Description:       "Enable permission filtering on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
