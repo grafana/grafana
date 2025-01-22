@@ -8,6 +8,7 @@ import {
   sceneGraph,
   sceneUtils,
   SceneComponentProps,
+  SceneGridItemLike,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
@@ -379,6 +380,28 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: children,
+        isDraggable: true,
+        isResizable: true,
+      }),
+    });
+  }
+
+  /**
+   * Useful for preserving items positioning when switching layouts
+   * @param gridItems
+   * @returns
+   */
+  public static fromGridItems(gridItems: SceneGridItemLike[]): DefaultGridLayoutManager {
+    const children = gridItems.reduce<SceneGridItemLike[]>((acc, gridItem) => {
+      gridItem.clearParent();
+      acc.push(gridItem);
+
+      return acc;
+    }, []);
+
+    return new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children,
         isDraggable: true,
         isResizable: true,
       }),
