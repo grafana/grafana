@@ -323,7 +323,7 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
   // Synthetic series
   const syntheticMetadata: PromMetricsMetadata = {};
   syntheticMetadata['ALERTS'] = {
-    type: 'counter',
+    type: 'gauge',
     help: 'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
   };
 
