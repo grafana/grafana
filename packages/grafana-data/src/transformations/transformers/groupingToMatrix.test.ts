@@ -155,6 +155,77 @@ describe('Grouping to Matrix', () => {
     });
   });
 
+  it('properly handles null column name values', async () => {
+    const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
+      id: DataTransformerID.groupingToMatrix,
+      options: {
+        columnField: 'Column',
+        rowField: 'Row',
+        valueField: 'Temp',
+      },
+    };
+
+    const seriesA = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'Column', type: FieldType.string, values: ['C1', null, 'C2'] },
+        { name: 'Row', type: FieldType.string, values: ['R1', 'R2', 'R1'] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5], config: { units: 'celsius' } },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        [
+          {
+            "config": {},
+            "name": "Row\\Column",
+            "type": "string",
+            "values": [
+              "R1",
+              "R2",
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": "C1",
+            "type": "number",
+            "values": [
+              1,
+              "",
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": null,
+            "type": "number",
+            "values": [
+              "",
+              4,
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": "C2",
+            "type": "number",
+            "values": [
+              5,
+              "",
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
   it('generates Matrix with multiple fields and value type', async () => {
     const cfg: DataTransformerConfig<GroupingToMatrixTransformerOptions> = {
       id: DataTransformerID.groupingToMatrix,

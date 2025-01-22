@@ -127,7 +127,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           }
 
           fields.push({
-            name: columnName.toString(),
+            name: columnName?.toString() ?? null,
             values: values,
             config: valueField.config,
             type: valueField.type,
