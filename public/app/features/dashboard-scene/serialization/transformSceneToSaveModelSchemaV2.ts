@@ -593,43 +593,42 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
     throw new Error('Dashboard is not an object or is null');
   }
 
-  if (!('title' in dash) || typeof dash.title !== 'string') {
+  if ('title' in dash && typeof dash.title !== 'string') {
     throw new Error('Title is not a string');
   }
-  if (!('description' in dash) || typeof dash.description !== 'string') {
+  if ('description' in dash && typeof dash.description !== 'string') {
     throw new Error('Description is not a string');
   }
-  if (!('cursorSync' in dash) || typeof dash.cursorSync !== 'string') {
+  if ('cursorSync' in dash && typeof dash.cursorSync !== 'string') {
     const validCursorSyncValues = ((): string[] => {
       const typeValues: DashboardCursorSync[] = ['Off', 'Crosshair', 'Tooltip'];
       return typeValues;
     })();
 
     if (
-      !('cursorSync' in dash) ||
-      typeof dash.cursorSync !== 'string' ||
-      !validCursorSyncValues.includes(dash.cursorSync)
+      'cursorSync' in dash &&
+      (typeof dash.cursorSync !== 'string' || !validCursorSyncValues.includes(dash.cursorSync))
     ) {
       throw new Error('CursorSync is not a string');
     }
   }
-  if (!('liveNow' in dash) || typeof dash.liveNow !== 'boolean') {
+  if ('liveNow' in dash && typeof dash.liveNow !== 'boolean') {
     throw new Error('LiveNow is not a boolean');
   }
-  if (!('preload' in dash) || typeof dash.preload !== 'boolean') {
+  if ('preload' in dash && typeof dash.preload !== 'boolean') {
     throw new Error('Preload is not a boolean');
   }
-  if (!('editable' in dash) || typeof dash.editable !== 'boolean') {
+  if ('editable' in dash && typeof dash.editable !== 'boolean') {
     throw new Error('Editable is not a boolean');
   }
-  if (!('links' in dash) || !Array.isArray(dash.links)) {
+  if ('links' in dash && !Array.isArray(dash.links)) {
     throw new Error('Links is not an array');
   }
-  if (!('tags' in dash) || !Array.isArray(dash.tags)) {
+  if ('tags' in dash && !Array.isArray(dash.tags)) {
     throw new Error('Tags is not an array');
   }
 
-  if (!('id' in dash) || typeof dash.id !== 'number') {
+  if ('id' in dash && dash.id !== undefined && typeof dash.id !== 'number') {
     throw new Error('ID is not a number');
   }
 
@@ -664,7 +663,11 @@ function validateDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
     throw new Error('FiscalYearStartMonth is not a number');
   }
-  if ('nowDelay' in dash.timeSettings && typeof dash.timeSettings.nowDelay !== 'string') {
+  if (
+    'nowDelay' in dash.timeSettings &&
+    dash.timeSettings.nowDelay !== undefined &&
+    typeof dash.timeSettings.nowDelay !== 'string'
+  ) {
     throw new Error('NowDelay is not a string');
   }
 
