@@ -54,9 +54,8 @@ type dashboardSqlAccess struct {
 	provisioning provisioning.ProvisioningService
 
 	// Use for writing (not reading)
-	dashStore   dashboards.Store
-	dashService dashboards.DashboardService
-	softDelete  bool
+	dashStore  dashboards.Store
+	softDelete bool
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -66,7 +65,6 @@ type dashboardSqlAccess struct {
 func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
-	dashService dashboards.DashboardService,
 	provisioning provisioning.ProvisioningService,
 	softDelete bool,
 ) DashboardAccess {
@@ -74,7 +72,6 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		sql:          sql,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
-		dashService:  dashService,
 		provisioning: provisioning,
 		softDelete:   softDelete,
 	}

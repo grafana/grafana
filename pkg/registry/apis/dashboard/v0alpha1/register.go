@@ -71,7 +71,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
-	legacyDashboardAccess := legacy.NewDashboardAccess(dbp, namespacer, dashStore, dashboardService, provisioning, softDelete)
+	legacyDashboardAccess := legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v0alpha1"),
 		DashboardsAPIBuilder: dashboard.DashboardsAPIBuilder{
