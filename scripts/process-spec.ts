@@ -15,19 +15,36 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
 
   // Process 'paths' property
   const newPaths: Record<string, any> = {};
-  for (const path in newSpec.paths) {
+  for (const [path, pathItem] of Object.entries<Record<string, any>>(newSpec.paths)) {
     // Remove the specified part from the path key
-    const newPathKey = path.replace(/^\/apis\/[^\/]+\/[^\/]+\/namespaces\/\{namespace\}/, '');
+    const newPathKey = path.replace(/^\/apis\/[^\/]+\/[^\/]+\/namespaces\/\{namespace}/, '');
+
+    // Remove 'namespace' parameter from the path-item parameters
+    if (newPathKey === 'parameters') {
+      pathItem.parameters = pathItem.parameters?.filter((param: any) => param.name !== 'namespace');
+    }
+
+    // Handle path parameters
+    const pathParameters = extractPathParameters(newPathKey);
 
     // Process each method in the path (e.g., get, post)
-    const pathItem = newSpec.paths[path];
     const newPathItem: Record<string, any> = {};
+    for (const [method] of Object.entries(pathItem)) {
+      if (method === 'parameters') {
+        // We've already handled parameters at the path-item level
+        continue;
+      }
 
-    for (const method in pathItem) {
       const operation = pathItem[method];
 
       // Remove 'description' fields recursively
       removeDescription(operation);
+
+      // Remove 'namespace' parameter from the operation-level parameters
+      removeNamespaceParameter(operation);
+
+      // Ensure all path parameters are defined
+      ensurePathParameters(operation, pathParameters);
 
       // Update $ref fields in 'responses' and 'requestBody'
       if (operation.responses) {
@@ -47,6 +64,11 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
       newPathItem[method] = operation;
     }
 
+    // Add path-level parameters if needed
+    if (pathParameters.length > 0) {
+      newPathItem.parameters = pathParameters;
+    }
+
     newPaths[newPathKey] = newPathItem;
   }
   newSpec.paths = newPaths;
@@ -61,7 +83,7 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
     const schemaObject = newSpec.components.schemas[schemaKey];
     removeDescription(schemaObject);
 
-    // Update $ref fields in the schema object
+    // Update any $ref fields within the schema object
     updateRefs(schemaObject);
 
     newSchemas[newKey] = schemaObject;
@@ -81,6 +103,12 @@ function removeDescription(obj: any) {
     for (const key in obj) {
       removeDescription(obj[key]);
     }
+  }
+}
+
+function removeNamespaceParameter(target: any) {
+  if (target.parameters && Array.isArray(target.parameters)) {
+    target.parameters = target.parameters.filter((param: any) => param.name !== 'namespace');
   }
 }
 
@@ -122,6 +150,41 @@ function simplifySchemaName(schemaName: string): string {
     return schemaName;
   }
 }
+
+function extractPathParameters(path: string): any[] {
+  const params = [];
+  const regex = /\{([^}]+)\}/g;
+  let match;
+  while ((match = regex.exec(path)) !== null) {
+    const paramName = match[1];
+    params.push({
+      name: paramName,
+      in: 'path',
+      required: true,
+      schema: {
+        type: 'string',
+      },
+    });
+  }
+  return params;
+}
+
+function ensurePathParameters(operation: any, pathParameters: any[]) {
+  // Merge operation.parameters and pathParameters
+  const opParams = operation.parameters || [];
+  const opParamNames = opParams.map((param: any) => param.name);
+
+  for (const pathParam of pathParameters) {
+    if (!opParamNames.includes(pathParam.name)) {
+      opParams.push(pathParam);
+    }
+  }
+
+  if (typeof operation.parameters === 'object') {
+    operation.parameters = opParams;
+  }
+}
+
 const filePath = path.resolve(__dirname, '../data/specs/query-library/openapi.json');
 const outputFilePath = path.resolve(__dirname, '../data/specs/query-library/spec.json');
 
