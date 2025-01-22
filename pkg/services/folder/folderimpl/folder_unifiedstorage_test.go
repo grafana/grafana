@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/stretchr/testify/mock"
 	"io"
 	"log/slog"
 	"net/http"
@@ -171,17 +173,20 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagKubernetesFoldersServiceV2}
 	features := featuremgmt.WithFeatures(featuresArr...)
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	folderService := &Service{
-		log:          slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
-		unifiedStore: unifiedStore,
-		features:     features,
-		bus:          bus.ProvideBus(tracing.InitializeTracerForTest()),
-		// db:            db,
-		accessControl: acimpl.ProvideAccessControl(features),
-		registry:      make(map[string]folder.RegistryService),
-		metrics:       newFoldersMetrics(nil),
-		tracer:        tracing.InitializeTracerForTest(),
+		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		unifiedStore:           unifiedStore,
+		features:               features,
+		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
+		accessControl:          acimpl.ProvideAccessControl(features),
+		registry:               make(map[string]folder.RegistryService),
+		metrics:                newFoldersMetrics(nil),
+		tracer:                 tracing.InitializeTracerForTest(),
+		dashboardStore:         dashboardStore,
+		publicDashboardService: publicDashboardService,
 	}
 
 	require.NoError(t, folderService.RegisterService(alertingStore))
@@ -313,6 +318,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil)
+				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
 					UID:              "deletefolder",
 					OrgID:            orgID,
