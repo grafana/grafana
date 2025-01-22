@@ -8,7 +8,7 @@ import {
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
-import { SingleStatBaseOptions, SortWithReducer, VizOrientation } from '@grafana/schema';
+import { SingleStatBaseOptions, SortOrder, VizOrientation } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -93,12 +93,12 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       category: valueOptionsCategory,
       settings: {
         options: [
-          { value: SortWithReducer.None, label: 'None' },
-          { value: SortWithReducer.Az, label: 'A-Z' },
-          { value: SortWithReducer.Za, label: 'Z-A' },
+          { value: SortOrder.None, label: 'None' },
+          { value: SortOrder.Ascending, label: 'Ascending' },
+          { value: SortOrder.Descending, label: 'Descending' },
         ],
       },
-      defaultValue: SortWithReducer.None,
+      defaultValue: SortOrder.None,
     });
   }
 }

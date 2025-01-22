@@ -154,7 +154,7 @@ ReduceDataOptions: {
 	// Which fields to show.  By default this is only numeric fields
 	fields?: string
 	// what sort order, if any, to give to the final display of the values
-	sort?: SortWithReducer
+	sort?: SortOrder
   	
 } @cuetsy(kind="interface")
 
@@ -276,5 +276,3 @@ Labels: {
 
 // Compare two values
 ComparisonOperation: "eq" | "neq" | "lt" | "lte" | "gt" | "gte" @cuetsy(kind="enum",memberNames="EQ|NEQ|LT|LTE|GT|GTE")
-
-SortWithReducer: "none" | "az" | "za"  @cuetsy(kind="enum")
