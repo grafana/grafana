@@ -236,11 +236,6 @@ export function isReadOnlyClone(sceneObject: SceneObject): boolean {
   return false;
 }
 
-/**
- * Just a behavior that does nothing, used to mark an object as read only clone
- */
-export function readOnlyCloneBehavior(sceneObject: SceneObject) {}
-
 export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
