@@ -1,73 +1,52 @@
-import { useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@grafana/ui';
 
-import { ScopedResourceClient } from '../apiserver/client';
-
-import { Repository, RepositorySpec, RepositoryStatus } from './api';
+import { Repository, Job, useCreateRepositoryExportMutation } from './api';
 
 interface Props {
   repo: Repository;
 }
 
 export function ExportToRepository({ repo }: Props) {
-  const [running, setRunning] = useState(false);
+  const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
+  const [job, setJob] = useState<Job>();
 
-  if (running) {
+  useEffect(() => {
+    if (exportQuery.isSuccess) {
+      setJob(exportQuery.data);
+    }
+  }, [exportQuery.isSuccess, exportQuery.data]);
+
+  if (job) {
     return (
-      <ExportRunner
-        repo={repo.metadata?.name!}
-        options={{
-          folder: 'folder-uid',
-          branch: 'export-branch',
-          history: true,
-          prefix: 'prefix/in/remote/tree',
-
-          // POST body:
-          // branch?: string;
-          // folder?: string;
-          // history?: boolean;
-          // prefix?: string;
-        }}
-      />
+      <div>
+        <h5>TODO... watch and update until done</h5>
+        <pre>{JSON.stringify(job, null, '  ')}</pre>
+      </div>
     );
   }
 
   return (
     <>
-      <Button variant={'secondary'} onClick={() => setRunning(true)}>
-        export
+      <Button
+        variant={'secondary'}
+        icon={exportQuery.isLoading ? 'spinner' : undefined}
+        disabled={exportQuery.isLoading}
+        onClick={() =>
+          exportRepo({
+            name: repo.metadata?.name!,
+            body: {
+              branch: 'my-branch',
+              folder: 'some-folder',
+              history: true,
+              prefix: 'prefix/in/remote/tree',
+            },
+          })
+        }
+      >
+        Export
       </Button>
     </>
-  );
-}
-
-interface RunnerProps {
-  repo: string;
-  options: object; // the data object
-}
-
-function ExportRunner({ repo, options }: RunnerProps) {
-  const client = useMemo(
-    () =>
-      new ScopedResourceClient<RepositorySpec, RepositoryStatus>({
-        group: 'provisioning.grafana.app',
-        version: 'v0alpha1',
-        resource: 'repositories',
-      }),
-    []
-  );
-
-  const sub = useMemo(
-    () => client.watch({ name: repo, path: 'export' }, { data: options, method: 'POST' }),
-    [client, options, repo]
-  );
-  const progress = useObservable(sub);
-
-  return (
-    <div>
-      <pre>{JSON.stringify(progress, null, 2)}</pre>
-    </div>
   );
 }

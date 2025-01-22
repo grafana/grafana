@@ -166,7 +166,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"name": "repositories/export",
 					"singularName": "",
 					"namespaced": true,
-					"kind": "JobProgressMessage",
+					"kind": "Job",
 					"verbs": [
 						"create"
 					]

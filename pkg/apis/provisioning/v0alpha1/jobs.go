@@ -60,6 +60,9 @@ func (j JobState) Finished() bool {
 type JobSpec struct {
 	Action JobAction `json:"action"`
 
+	// The the repository reference (for now also in labels)
+	Repository string `json:"repository"`
+
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
@@ -69,6 +72,9 @@ type JobSpec struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
+
+	// Required when the action is `export`
+	Export *ExportOptions `json:"export,omitempty"`
 }
 
 type ExportOptions struct {
@@ -85,20 +91,6 @@ type ExportOptions struct {
 	Prefix string `json:"prefix,omitempty"`
 }
 
-// Used to return synchronous streaming
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type JobProgressMessage struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// For async jobs, the job will be set to the job name (identifier)
-	Job     string   `json:"job,omitempty"`
-	State   JobState `json:"state"`
-	Index   int64    `json:"index,omitempty"`
-	Size    int64    `json:"size,omitempty"`
-	Message string   `json:"message,omitempty"`
-	URL     string   `json:"url,omitempty"`
-}
-
 // The job status
 type JobStatus struct {
 	State    JobState `json:"state,omitempty"`
@@ -106,6 +98,9 @@ type JobStatus struct {
 	Finished int64    `json:"finished,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
+
+	// Optional value 0-1 that can be set while running
+	Progress float64 `json:"progress,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

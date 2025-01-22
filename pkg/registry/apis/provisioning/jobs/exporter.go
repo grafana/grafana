@@ -12,59 +12,51 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type Exporter interface {
-	// Long running process that will export values into the target repository
-	Export(ctx context.Context,
-		repo repository.Repository,
-		options provisioning.ExportOptions,
-		cb func(*provisioning.JobProgressMessage),
-	) (*provisioning.JobProgressMessage, error)
-}
-
-// Dummy for now...
-func NewExporter() Exporter {
-	return &dummyExporter{}
-}
-
 type dummyExporter struct{}
 
 func (s *dummyExporter) Export(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.ExportOptions,
-	cb func(*provisioning.JobProgressMessage),
-) (*provisioning.JobProgressMessage, error) {
+	progress func(provisioning.JobStatus) error,
+) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx).With("logger", "exporter", "repository", repo.Config().Name, "namespace", repo.Config().Name)
 	logger.Info("start export", "folder", options.Folder)
 
-	msg := &provisioning.JobProgressMessage{
-		State: provisioning.JobStatePending,
-		Index: 0,
-		Size:  10 + rand.Int64N(100),
+	size := 2 + rand.IntN(10)
+
+	status := provisioning.JobStatus{
+		State:    provisioning.JobStateWorking,
+		Message:  "exporting..." + repo.Config().Spec.Title,
+		Progress: 0,
 	}
 
-	msg.Message = "exporting... " + repo.Config().Spec.Title
-	cb(msg)
+	err := progress(status)
+	if err != nil {
+		return nil, err
+	}
 	time.Sleep(200 * time.Millisecond)
-	msg.State = provisioning.JobStateWorking
-	for i := msg.Index; i < msg.Size; i++ {
-		msg.Index = i
+	for i := 0; i < size; i++ {
+		status.Progress = 1.2
+
 		name, err := util.GetRandomString(rand.IntN(20 + 4))
 		if err != nil {
 			return nil, err
 		}
 
-		sleep := time.Duration(50+rand.IntN(200)) * time.Millisecond
-		msg.Message = fmt.Sprintf("processing %s (%s)", name, sleep)
+		sleep := time.Duration(400+rand.IntN(800)) * time.Millisecond
+		status.Message = fmt.Sprintf("processing %s (%s)", name, sleep)
 		time.Sleep(sleep)
-		cb(msg)
+		err = progress(status)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
-	msg.State = provisioning.JobStateSuccess
-	msg.Message = "exported xyz"
-	msg.Index = 0
-	msg.Size = 0
-	msg.URL = "https://github.com/grafana/git-ui-sync-demo/tree/ryan-test"
+	status.State = provisioning.JobStateSuccess
+	status.Message = "exported xyz"
+	status.Progress = 0
 
 	logger.Info("finished export", "folder", options.Folder)
-	return msg, nil
+	return &status, nil
 }

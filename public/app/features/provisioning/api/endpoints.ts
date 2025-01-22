@@ -277,7 +277,7 @@ export type DeleteRepositoryArg = {
   propagationPolicy?: string;
   body: DeleteOptions;
 };
-export type CreateRepositoryExportResponse = JobProgressMessage;
+export type CreateRepositoryExportResponse = Job;
 export type CreateRepositoryExportArg = {
   name: string;
   body: {
@@ -429,8 +429,15 @@ export type ObjectMeta = {
   selfLink?: string;
   uid?: string;
 };
+export type ExportOptions = {
+  branch?: string;
+  folder?: string;
+  history?: boolean;
+  prefix?: string;
+};
 export type JobSpec = {
   action: 'export' | 'pr' | 'sync';
+  export?: ExportOptions;
   hash?: string;
   pr?: number;
   ref?: string;
@@ -440,6 +447,7 @@ export type JobStatus = {
   errors?: string[];
   finished?: number;
   message?: string;
+  progress?: number;
   started?: number;
   state?: 'error' | 'pending' | 'success' | 'working';
 };
@@ -577,16 +585,6 @@ export type DeleteOptions = {
   orphanDependents?: boolean;
   preconditions?: Preconditions;
   propagationPolicy?: string;
-};
-export type JobProgressMessage = {
-  apiVersion?: string;
-  index?: number;
-  job?: string;
-  kind?: string;
-  message?: string;
-  size?: number;
-  state: 'error' | 'pending' | 'success' | 'working';
-  url?: string;
 };
 export type LintIssue = {
   message: string;

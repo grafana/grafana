@@ -1284,7 +1284,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobProgressMessage"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1293,7 +1293,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "JobProgressMessage",
+          "kind": "Job",
           "version": "v0alpha1"
         }
       },
@@ -1301,7 +1301,7 @@
         {
           "name": "name",
           "in": "path",
-          "description": "name of the JobProgressMessage",
+          "description": "name of the Job",
           "required": true,
           "schema": {
             "type": "string",
@@ -3608,6 +3608,27 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "description": "Target branch for export",
+            "type": "string"
+          },
+          "folder": {
+            "description": "The source folder (or empty) to export",
+            "type": "string"
+          },
+          "history": {
+            "description": "Preserve history (if possible)",
+            "type": "boolean"
+          },
+          "prefix": {
+            "description": "File prefix",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
         "properties": {
@@ -3761,64 +3782,6 @@
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobProgressMessage": {
-        "description": "Used to return synchronous streaming",
-        "type": "object",
-        "required": [
-          "state"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "index": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "job": {
-            "description": "For async jobs, the job will be set to the job name (identifier)",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "state": {
-            "description": "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "error",
-              "pending",
-              "success",
-              "working"
-            ]
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "JobProgressMessage",
-            "version": "__internal"
-          },
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "JobProgressMessage",
-            "version": "v0alpha1"
-          }
-        ]
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
         "required": [
@@ -3833,6 +3796,14 @@
               "export",
               "pr",
               "sync"
+            ]
+          },
+          "export": {
+            "description": "Required when the action is `export`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions"
+              }
             ]
           },
           "hash": {
@@ -3870,6 +3841,11 @@
           },
           "message": {
             "type": "string"
+          },
+          "progress": {
+            "description": "Optional value 0-1 that can be set while running",
+            "type": "number",
+            "format": "double"
           },
           "started": {
             "type": "integer",

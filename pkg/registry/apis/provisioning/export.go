@@ -3,10 +3,10 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -16,18 +16,17 @@ import (
 
 type exportConnector struct {
 	repoGetter RepoGetter
-	exporter   jobs.Exporter
+	jobs       jobs.JobQueue
 }
 
 func (*exportConnector) New() runtime.Object {
-	// This is added as the "ResponseType" regardless what ProducesObject() returns
-	return &provisioning.JobProgressMessage{}
+	return &provisioning.Job{}
 }
 
 func (*exportConnector) Destroy() {}
 
 func (*exportConnector) ProducesMIMETypes(verb string) []string {
-	return []string{"text/plain"} // could be application/x-ndjson, but that rarely helps anything
+	return []string{"application/json"}
 }
 
 func (c *exportConnector) ProducesObject(verb string) any {
@@ -52,41 +51,30 @@ func (c *exportConnector) Connect(
 	if err != nil {
 		return nil, err
 	}
+	cfg := repo.Config()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		options := provisioning.ExportOptions{}
-		err := json.NewDecoder(r.Body).Decode(&options)
+		options := &provisioning.ExportOptions{}
+		err := json.NewDecoder(r.Body).Decode(options)
 		if err != nil {
 			responder.Error(apierrors.NewBadRequest("error decoding request"))
 			return
 		}
-
-		flusher, ok := w.(http.Flusher)
-		if !ok {
-			responder.Error(fmt.Errorf("expected http flusher"))
-			return
-		}
-
-		header := w.Header()
-		header.Set("Cache-Control", "no-store")
-		header.Set("X-Content-Type-Options", "nosniff")
-		header.Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusAccepted)
-
-		cb := func(msg *provisioning.JobProgressMessage) {
-			body, _ := json.Marshal(msg)
-			body = append(body, []byte("\n")...)
-			_, _ = w.Write(body)
-			flusher.Flush()
-		}
-		msg, err := c.exporter.Export(ctx, repo, options, cb)
+		job, err := c.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: cfg.Namespace,
+			},
+			Spec: provisioning.JobSpec{
+				Action:     provisioning.JobActionExport,
+				Repository: cfg.Name,
+				Export:     options,
+			},
+		})
 		if err != nil {
-			msg = &provisioning.JobProgressMessage{
-				State:   provisioning.JobStateError,
-				Message: err.Error(),
-			}
+			responder.Error(err)
+		} else {
+			responder.Object(http.StatusAccepted, job)
 		}
-		cb(msg)
 	}), nil
 }
 
