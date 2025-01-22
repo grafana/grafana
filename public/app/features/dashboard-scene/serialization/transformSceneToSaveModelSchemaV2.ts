@@ -11,7 +11,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import {
   DashboardV2Spec,
@@ -83,7 +82,6 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     editable: oldDash.editable,
     links: oldDash.links,
     tags: oldDash.tags,
-    schemaVersion: DASHBOARD_SCHEMA_VERSION,
     // EOF dashboard settings
 
     // time settings
