@@ -9,8 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	authClaims "github.com/grafana/authlib/claims"
-
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -74,7 +73,7 @@ func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, er
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
-		user.Type = authClaims.TypeUser
+		user.Type = types.TypeUser
 		user.UserID, err = strconv.ParseInt(getter("grafana-userid"), 10, 64)
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, "invalid user id")
@@ -86,7 +85,7 @@ func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, er
 		return user, nil
 	}
 
-	typ, id, err := authClaims.ParseTypeID(getter(mdUserID))
+	typ, id, err := types.ParseTypeID(getter(mdUserID))
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid user id")
 	}
@@ -96,7 +95,7 @@ func (f *Authenticator) decodeMetadata(meta metadata.MD) (identity.Requester, er
 		return nil, status.Error(codes.Unauthenticated, "invalid user id")
 	}
 
-	_, uid, err := authClaims.ParseTypeID(getter(mdUserUID))
+	_, uid, err := types.ParseTypeID(getter(mdUserUID))
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid user uid")
 	}
