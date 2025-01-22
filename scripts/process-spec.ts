@@ -16,6 +16,10 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
   // Process 'paths' property
   const newPaths: Record<string, any> = {};
   for (const [path, pathItem] of Object.entries<Record<string, any>>(newSpec.paths)) {
+    // Remove 'watch' paths as they're deprecated
+    if (path.includes('/watch/')) {
+      continue;
+    }
     // Remove the specified part from the path key
     const newPathKey = path.replace(/^\/apis\/[^\/]+\/[^\/]+\/namespaces\/\{namespace}/, '');
 
@@ -38,7 +42,7 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
   }
   newSpec.paths = newPaths;
 
-  // Process 'components.schemas'
+  // Process 'components.schemas', i.e., type definitions
   const newSchemas: Record<string, any> = {};
   for (const schemaKey of Object.keys(newSpec.components.schemas)) {
     const newKey = simplifySchemaName(schemaKey);
@@ -112,6 +116,7 @@ function simplifySchemaName(schemaName: string) {
   }
 }
 
+// TODO make this to run for all resources in the spec folder
 const filePath = path.resolve(__dirname, '../data/specs/query-library/openapi.json');
 const outputFilePath = path.resolve(__dirname, '../data/specs/query-library/spec.json');
 
