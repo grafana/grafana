@@ -148,7 +148,7 @@ func (m *Manager) PluginInfo(ctx context.Context, pluginID string) (*PluginInfo,
 	var v PluginInfo
 	err = json.Unmarshal(body, &v)
 	if err != nil {
-		m.log.Error("Failed to unmarshal plugin repo response", err)
+		m.log.Error("Failed to unmarshal plugin repo response", "error", err)
 		return nil, err
 	}
 
