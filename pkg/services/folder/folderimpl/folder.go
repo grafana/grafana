@@ -992,6 +992,12 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 			}
 		}
 
+		err = s.store.Delete(ctx, []string{cmd.UID}, cmd.OrgID)
+		if err != nil {
+			s.log.InfoContext(ctx, "failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
+			return err
+		}
+
 		if err = s.legacyDelete(ctx, cmd, folders); err != nil {
 			return err
 		}
@@ -1241,11 +1247,10 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		descendantUIDs = append(descendantUIDs, f.UID)
 	}
 	s.log.InfoContext(ctx, "deleting folder and its descendants", "org_id", cmd.OrgID, "uid", cmd.UID)
-	toDelete := append(descendantUIDs, cmd.UID)
-	err = s.store.Delete(ctx, toDelete, cmd.OrgID)
+
+	err = s.store.Delete(ctx, descendantUIDs, cmd.OrgID)
 	if err != nil {
-		s.log.InfoContext(ctx, "failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
-		return descendantUIDs, err
+		s.log.InfoContext(ctx, "failed deleting descendants", "org_id", cmd.OrgID, "parent_uid", cmd.UID, "err", err)
 	}
 	return descendantUIDs, nil
 }
