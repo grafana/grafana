@@ -7,7 +7,6 @@ import {
   Panel,
   VariableModel,
   VariableType,
-  VariableHide,
   FieldConfigSource as FieldConfigSourceV1,
   FieldColorModeId as FieldColorModeIdV1,
   ThresholdsMode as ThresholdsModeV1,
