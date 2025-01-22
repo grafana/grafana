@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { defaults, isArray, sumBy, uniqueId } from 'lodash';
+import { isArray, sumBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
 import { FC, Fragment, ReactNode, useState } from 'react';
@@ -8,18 +8,18 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  Badge,
-  Button,
-  Dropdown,
-  Icon,
-  IconButton,
-  Menu,
-  Stack,
-  Text,
-  TextLink,
-  Tooltip,
-  getTagColorsFromName,
-  useStyles2,
+    Badge,
+    Button,
+    Dropdown,
+    Icon,
+    IconButton,
+    Menu,
+    Stack,
+    Text,
+    TextLink,
+    Tooltip,
+    getTagColorsFromName,
+    useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
@@ -27,11 +27,11 @@ import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 import {
-  AlertmanagerGroup,
-  MatcherOperator,
-  ObjectMatcher,
-  Receiver,
-  RouteWithID,
+    AlertmanagerGroup,
+    MatcherOperator,
+    ObjectMatcher,
+    Receiver,
+    RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
@@ -51,7 +51,9 @@ import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
 import { RoutesMatchingFilters } from './NotificationPoliciesList';
-import { TIMING_OPTIONS_DEFAULTS, TimingOptions } from './timingOptions';
+import { TimingOptions } from './timingOptions';
+
+const POLICIES_PER_PAGE = 20;
 
 interface PolicyComponentProps {
   receivers?: Receiver[];
@@ -171,8 +173,6 @@ const Policy = (props: PolicyComponentProps) => {
   contactPointErrors.forEach((error) => {
     errors.push(error);
   });
-
-  const POLICIES_PER_PAGE = 20;
 
   const [visibleChildPolicies, setVisibleChildPolicies] = useState(POLICIES_PER_PAGE);
 
@@ -513,9 +513,7 @@ function MetadataRow({
         )}
         {timingOptions && (
           // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
-          <TimingOptionsMeta
-            timingOptions={isDefaultPolicy ? defaults(timingOptions, TIMING_OPTIONS_DEFAULTS) : timingOptions}
-          />
+          <TimingOptionsMeta timingOptions={timingOptions} />
         )}
         {hasInheritedProperties && (
           <>
