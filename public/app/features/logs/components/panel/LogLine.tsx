@@ -106,9 +106,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     unwrappedLogLine: css({
       whiteSpace: 'pre',
+      paddingBottom: theme.spacing(0.5),
     }),
     wrappedLogLine: css({
       whiteSpace: 'pre-wrap',
+      paddingBottom: theme.spacing(0.5),
     }),
   };
 };
