@@ -161,15 +161,30 @@ export class AppChromeService {
 
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const isSameUrl = lastEntry && newEntry.url === lastEntry.url;
+    const isSameUrl = lastEntry && newEntry.url.includes(lastEntry.url);
 
-    // To avoid adding an entry with the same url twice, we always use the latest one
-    if (isSameUrl) {
+    // We should manage duplicated entries
+    // --- HACKY USE CASES ---
+    // 1. The explore page, it loads a first entry just with 'Explore' title and '/explore' path with no query params
+    if (newEntry.url === '/explore' && newEntry.name === 'Explore') {
+      entries[0] = newEntry;
+    }
+    // 2. The dashboard page (not browse dashboards), it loads a first entry with the dashboard title and '/d/' path
+    else if (newEntry.name === 'Dashboards' && newEntry.url.includes('\/d\/')) {
+      entries = entries;
+    }
+    // 3. The frontend page redirects itself and creates a duplicate entry, the first one finishing in an anchor '>'
+    else if (newEntry.name === 'Frontend' && !newEntry.url.includes('\/apps')) {
+      entries[0] = newEntry;
+    }
+    /// --- END OF HACKY USE CASES ---
+
+    // 4. Avoid duplicated url
+    else if (isSameUrl) {
       entries[0] = newEntry;
     } else {
       entries = [newEntry, ...entries];
     }
-
     return entries;
   }
 
