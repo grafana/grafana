@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -175,7 +176,7 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 	folderkey := &resource.ResourceKey{
 		Namespace: s.k8sclient.getNamespace(orgID),
 		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-		Resource: v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
 	}
 
 	request := &resource.ResourceSearchRequest{
