@@ -271,7 +271,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
         : undefined;
 
     if (!interpolatedExpr) {
-      throw new Error('Detected fields requires query!');
+      throw new Error('fetchDetectedFields requires query expression');
     }
 
     const url = `detected_fields`;
