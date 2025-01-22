@@ -22,7 +22,7 @@ func (s *dummyExporter) Export(ctx context.Context,
 	logger := logging.FromContext(ctx).With("logger", "exporter", "repository", repo.Config().Name, "namespace", repo.Config().Name)
 	logger.Info("start export", "folder", options.Folder)
 
-	size := 2 + rand.IntN(10)
+	size := 4 + rand.IntN(15)
 
 	status := provisioning.JobStatus{
 		State:    provisioning.JobStateWorking,
@@ -36,8 +36,7 @@ func (s *dummyExporter) Export(ctx context.Context,
 	}
 	time.Sleep(200 * time.Millisecond)
 	for i := 0; i < size; i++ {
-		status.Progress = 1.2
-
+		status.Progress = float64(i) / float64(size)
 		sleep := time.Duration(400+rand.IntN(800)) * time.Millisecond
 		status.Message, _ = util.GetRandomString(rand.IntN(10 + 15))
 		time.Sleep(sleep)

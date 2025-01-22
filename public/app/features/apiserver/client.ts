@@ -38,34 +38,25 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  private getResourceUrl(name?: string, path?: string) {
-    if (!name) {
-      return this.url;
-    }
-    const url = `${this.url}/${name}`;
-    if (path) {
-      return `${url}/${path}`;
-    }
-    return url;
-  }
-
   public watch(
     params?: WatchOptions,
     config?: Pick<BackendSrvRequest, 'data' | 'method'>
   ): Observable<ResourceEvent<T, S, K>> {
     const decoder = new TextDecoder();
+    const { name, ...rest } = params ?? {}; // name needs to be added to fieldSelector
     const requestParams = {
-      ...params,
+      ...rest,
       watch: true,
       labelSelector: this.parseListOptionsSelector(params?.labelSelector),
       fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
     };
-    const { name, path, ...rest } = requestParams;
-
+    if (name) {
+      requestParams.fieldSelector = `metadata.name=${name}`;
+    }
     return getBackendSrv()
       .chunked({
-        url: this.getResourceUrl(name, path),
-        params: rest,
+        url: this.url,
+        params: requestParams,
         ...config,
       })
       .pipe(
