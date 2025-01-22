@@ -12,7 +12,7 @@ require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib v0.0.0-20250121093725-6a1acb5557ba
+	github.com/grafana/authlib v0.0.0-20250121165650-ec72a17b3737
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
