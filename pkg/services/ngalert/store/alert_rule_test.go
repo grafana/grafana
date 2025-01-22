@@ -126,6 +126,9 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			called = true
 			return nil
 		}
+		t.Cleanup(func() {
+			b.publishFn = nil
+		})
 
 		newRule := models.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
@@ -135,6 +138,58 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		}})
 		require.NoError(t, err)
 		require.True(t, called)
+	})
+
+	t.Run("should set UpdatedBy", func(t *testing.T) {
+		rule := createRule(t, store, gen)
+		newRule := models.CopyRule(rule)
+		newRule.Title = util.GenerateShortUID()
+		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		},
+		})
+		require.NoError(t, err)
+
+		dbrule := &alertRule{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
+			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
+			return err
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, dbrule.UpdatedBy)
+		require.Equal(t, string(usr), *dbrule.UpdatedBy)
+
+		t.Run("should set CreatedBy in rule version table", func(t *testing.T) {
+			dbVersion := &alertRuleVersion{}
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				exist, err := sess.Table(alertRuleVersion{}).Where("rule_uid = ? AND version = ?", dbrule.UID, dbrule.Version).Get(dbVersion)
+				require.Truef(t, exist, fmt.Sprintf("new version of the rule does not exist in version table"))
+				return err
+			})
+			require.NoError(t, err)
+			require.NotNil(t, dbVersion.CreatedBy)
+			require.Equal(t, *dbrule.UpdatedBy, *dbVersion.CreatedBy)
+		})
+
+		t.Run("nil identity should be handled correctly", func(t *testing.T) {
+			rule.Version++
+			newRule.Title = util.GenerateShortUID()
+			err = store.UpdateAlertRules(context.Background(), nil, []models.UpdateRule{{
+				Existing: rule,
+				New:      *newRule,
+			},
+			})
+			dbrule := &alertRule{}
+			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
+				require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
+				return err
+			})
+			assert.Nil(t, dbrule.UpdatedBy)
+		})
 	})
 }
 
@@ -779,6 +834,14 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		}
 	})
 
+	t.Run("inserted rules should have UpdatedBy set", func(t *testing.T) {
+		for _, rule := range dbRules {
+			if assert.NotNil(t, rule.UpdatedBy) {
+				assert.Equal(t, usr, *rule.UpdatedBy)
+			}
+		}
+	})
+
 	t.Run("inserted recording rules fail validation if metric name is invalid", func(t *testing.T) {
 		t.Run("invalid UTF-8", func(t *testing.T) {
 			invalidMetric := "my_metric\x80"
@@ -836,6 +899,9 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
 		rule := gen.Generate()
 		called := false
+		t.Cleanup(func() {
+			b.publishFn = nil
+		})
 		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
 			event, ok := msg.(*RuleChangeEvent)
 			require.True(t, ok)
@@ -850,6 +916,18 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, rules, 1)
 		require.True(t, called)
+	})
+
+	t.Run("nil identity should be handled correctly", func(t *testing.T) {
+		rule := gen.Generate()
+		ids, err = store.InsertAlertRules(context.Background(), nil, []models.AlertRule{rule})
+		require.NoError(t, err)
+		insertedRule, err := store.GetRuleByID(context.Background(), models.GetAlertRuleByIDQuery{
+			ID:    ids[0].ID,
+			OrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.Nil(t, insertedRule.UpdatedBy)
 	})
 }
 
