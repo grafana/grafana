@@ -105,7 +105,7 @@ func genCommon(ctx *cue.Context, groot string) (*codejen.FS, error) {
 	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
 
 	commonFiles := make([]string, 0)
-	filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(d.Name()) != ".cue" {
 			return nil
 		}
@@ -175,7 +175,7 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 
 		// It's assuming that we only have one file in each folder
 		entry := filepath.Join(dir.Name(), entries[0].Name())
-		cueFile, err := os.ReadFile(entry)
+		cueFile, err := os.ReadFile(filepath.Clean(entry))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s", dir, entries[0].Name(), err)
 			os.Exit(1)
