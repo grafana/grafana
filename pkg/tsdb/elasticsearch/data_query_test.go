@@ -576,7 +576,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Aggregation.Type, "histogram")
 			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
 			require.Equal(t, hAgg.Field, "bytes")
-			require.Equal(t, hAgg.Interval, 10)
+			require.Equal(t, hAgg.Interval, float64(10))
 			require.Equal(t, hAgg.MinDocCount, 2)
 			require.Equal(t, *hAgg.Missing, 5)
 		})
@@ -619,7 +619,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 
 			firstLevel := sr.Aggs[0]
 			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
-			require.Equal(t, hAgg.Interval, 1000)
+			require.Equal(t, hAgg.Interval, float64(1000))
 		})
 
 		t.Run("With histogram (from frontend tests)", func(t *testing.T) {
@@ -643,7 +643,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Aggregation.Type, "histogram")
 			hAgg := firstLevel.Aggregation.Aggregation.(*es.HistogramAgg)
 			require.Equal(t, hAgg.Field, "bytes")
-			require.Equal(t, hAgg.Interval, 10)
+			require.Equal(t, hAgg.Interval, float64(10))
 			require.Equal(t, hAgg.MinDocCount, 2)
 		})
 
