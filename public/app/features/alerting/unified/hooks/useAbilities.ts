@@ -484,13 +484,7 @@ function useGrafanaRulesSilenceSupport() {
 
 function useFolderPermissions(folderUID?: string): Record<string, boolean> {
   const { folder } = useFolder(folderUID);
-
-  if (!folder) {
-    return {};
-  }
-
-  const { accessControl = {} } = folder;
-  return accessControl;
+  return folder?.accessControl ?? {};
 }
 
 // just a convenient function

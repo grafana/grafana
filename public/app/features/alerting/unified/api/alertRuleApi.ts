@@ -271,9 +271,6 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     getGrafanaRulerGroup: build.query<RulerRuleGroupDTO<RulerGrafanaRuleDTO>, GrafanaRuleGroupIdentifier>({
       query: ({ namespace, groupName }) => {
-        if (!groupName) {
-          throw new Error('Empty group name provided. Group name is required to fetch Grafana ruler group');
-        }
         const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespaceGroup(namespace.uid, groupName);
         return { url: path, params };
       },

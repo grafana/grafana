@@ -47,6 +47,13 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
     },
 
     namespaceGroup: (namespaceUID: string, group: string): RulerRequestUrl => {
+      if (!namespaceUID) {
+        throw new Error('Namespace UID is required to fetch ruler group');
+      }
+      if (!group) {
+        throw new Error('Group name is required to fetch ruler group');
+      }
+
       const { namespace: finalNs, searchParams: nsParams } = queryDetailsProvider.namespace(namespaceUID);
       const { group: finalGroup, searchParams: groupParams } = queryDetailsProvider.group(group);
 
