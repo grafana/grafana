@@ -6,6 +6,9 @@ import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureAPIResponse, AzureMonitorDataSourceInstanceSettings, Location } from '../types';
 
+// We want replace to just return the value as is in general/
+// We declare this as a function so that we can overwrite it in each test
+// without affecting the rest of the @grafana/runtime module.
 let replace = (val: string) => val;
 
 jest.mock('@grafana/runtime', () => {
