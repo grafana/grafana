@@ -1,6 +1,18 @@
 import { TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, DataQuery, DataSourceRef, Panel } from '@grafana/schema';
+import {
+  AnnotationQuery,
+  DataQuery,
+  DataSourceRef,
+  Panel,
+  VariableModel,
+  VariableType,
+  FieldConfigSource as FieldConfigSourceV1,
+  FieldColorModeId as FieldColorModeIdV1,
+  ThresholdsMode as ThresholdsModeV1,
+  MappingType as MappingTypeV1,
+  SpecialValueMatch as SpecialValueMatchV1,
+} from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -12,6 +24,10 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TransformationKind,
+  FieldColorModeId,
+  FieldConfigSource,
+  ThresholdsMode,
+  SpecialValueMatch,
   AdhocVariableKind,
   CustomVariableKind,
   ConstantVariableKind,
@@ -19,7 +35,7 @@ import {
   TextVariableKind,
   GroupByVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
+import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -31,8 +47,14 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
-import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
+import {
+  transformCursorSyncV2ToV1,
+  transformSortVariableToEnumV1,
+  transformVariableHideToEnumV1,
+  transformVariableRefreshToEnumV1,
+} from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   transformCursorSynctoEnum,
   transformDataTopic,
@@ -179,6 +201,9 @@ export function ensureV1Response(
     };
   } else {
     // if dashboard is on v2 schema convert to v1 schema
+    const annotations = getAnnotationsV1(spec.annotations);
+    const variables = getVariablesV1(spec.variables);
+    const panels = getPanelsV1(spec.elements, spec.layout);
     return {
       meta: {
         created: dashboard.metadata.creationTimestamp,
@@ -224,9 +249,9 @@ export function ensureV1Response(
         weekStart: spec.timeSettings.weekStart,
         version: parseInt(dashboard.metadata.resourceVersion, 10),
         links: spec.links,
-        annotations: { list: [] }, // TODO
-        panels: [], // TODO
-        templating: { list: [] }, // TODO
+        annotations: { list: annotations },
+        panels,
+        templating: { list: variables },
       },
     };
   }
@@ -592,4 +617,373 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
     };
     return aq;
   });
+}
+
+function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
+  const variables: VariableModel[] = [];
+
+  for (const v of vars) {
+    const commonProperties = {
+      name: v.spec.name,
+      label: v.spec.label,
+      ...(v.spec.description && { description: v.spec.description }),
+      skipUrlSync: v.spec.skipUrlSync,
+      hide: transformVariableHideToEnumV1(v.spec.hide),
+      type: transformToV1VariableTypes(v),
+    };
+
+    switch (v.kind) {
+      case 'QueryVariable':
+        const qv: VariableModel = {
+          ...commonProperties,
+          current: v.spec.current,
+          options: v.spec.options,
+          query: typeof v.spec.query === 'string' ? v.spec.query : v.spec.query.spec,
+          datasource: v.spec.datasource,
+          sort: transformSortVariableToEnumV1(v.spec.sort),
+          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
+          regex: v.spec.regex,
+          allValue: v.spec.allValue,
+          includeAll: v.spec.includeAll,
+          multi: v.spec.multi,
+          // @ts-expect-error - definition is not part of v1 VariableModel
+          definition: v.spec.definition,
+        };
+        variables.push(qv);
+        break;
+      case 'DatasourceVariable':
+        const dv: VariableModel = {
+          ...commonProperties,
+          current: v.spec.current,
+          options: [],
+          regex: v.spec.regex,
+          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
+          query: v.spec.pluginId,
+          multi: v.spec.multi,
+          allValue: v.spec.allValue,
+          includeAll: v.spec.includeAll,
+        };
+        variables.push(dv);
+        break;
+      case 'CustomVariable':
+        const cv: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          options: v.spec.options,
+          query: v.spec.query,
+          multi: v.spec.multi,
+          allValue: v.spec.allValue,
+          includeAll: v.spec.includeAll,
+        };
+        variables.push(cv);
+        break;
+      case 'ConstantVariable':
+        const constant: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          hide: transformVariableHideToEnumV1(v.spec.hide),
+          // @ts-expect-error
+          query: v.spec.current.value,
+        };
+        variables.push(constant);
+        break;
+      case 'IntervalVariable':
+        const iv: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          hide: transformVariableHideToEnumV1(v.spec.hide),
+          query: v.spec.query,
+          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
+          options: v.spec.options,
+          // @ts-expect-error
+          auto: v.spec.auto,
+          auto_min: v.spec.auto_min,
+          auto_count: v.spec.auto_count,
+        };
+        variables.push(iv);
+        break;
+      case 'TextVariable':
+        const current = {
+          text: v.spec.current.value,
+          value: v.spec.current.value,
+        };
+
+        const tv: VariableModel = {
+          ...commonProperties,
+          current: {
+            text: v.spec.current.value,
+            value: v.spec.current.value,
+          },
+          options: [{ ...current, selected: true }],
+          query: v.spec.query,
+        };
+        variables.push(tv);
+        break;
+      case 'GroupByVariable':
+        const gv: VariableModel = {
+          ...commonProperties,
+          datasource: v.spec.datasource,
+          current: v.spec.current,
+          options: v.spec.options,
+        };
+        variables.push(gv);
+        break;
+      case 'AdhocVariable':
+        const av: VariableModel = {
+          ...commonProperties,
+          datasource: v.spec.datasource,
+          // @ts-expect-error
+          baseFilters: v.spec.baseFilters,
+          filters: v.spec.filters,
+          defaultKeys: v.spec.defaultKeys,
+        };
+        variables.push(av);
+        break;
+      default:
+        // do not throw error, just log it
+        console.error(`Variable transformation not implemented: ${v}`);
+    }
+  }
+  return variables;
+}
+
+function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): AnnotationQuery[] {
+  // @ts-expect-error - target v2 query is not compatible with v1 target
+  return annotations.map((a) => {
+    return {
+      name: a.spec.name,
+      datasource: a.spec.datasource,
+      enable: a.spec.enable,
+      hide: a.spec.hide,
+      iconColor: a.spec.iconColor,
+      builtIn: a.spec.builtIn ? 1 : 0,
+      target: a.spec.query?.spec,
+      filter: a.spec.filter,
+    };
+  });
+}
+
+interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos'> {}
+
+function getPanelsV1(
+  panels: DashboardV2Spec['elements'],
+  layout: DashboardV2Spec['layout']
+): Array<Panel | LibraryPanelDTO> {
+  return Object.entries(panels).map(([key, p]) => {
+    const layoutElement = layout.spec.items.find(
+      (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === key
+    );
+    const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
+    const gridPos = { x, y, w: width, h: height };
+    if (p.kind === 'Panel') {
+      const panel = p.spec;
+      return {
+        id: panel.id,
+        type: panel.vizConfig.kind,
+        title: panel.title,
+        description: panel.description,
+        fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
+        options: panel.vizConfig.spec.options,
+        pluginVersion: panel.vizConfig.spec.pluginVersion,
+        links:
+          // @ts-expect-error - Panel link is wrongly typed as DashboardLink
+          panel.links?.map<DashboardLink>((l) => ({
+            title: l.title,
+            url: l.url,
+            ...(l.targetBlank && { targetBlank: l.targetBlank }),
+          })) || [],
+        targets: panel.data.spec.queries.map((q) => {
+          return {
+            refId: q.spec.refId,
+            hide: q.spec.hidden,
+            datasource: q.spec.datasource,
+            ...q.spec.query.spec,
+          };
+        }),
+        transformations: panel.data.spec.transformations.map((t) => t.spec),
+        gridPos,
+        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+        maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
+        interval: panel.data.spec.queryOptions.interval,
+        hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
+        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+        timeFrom: panel.data.spec.queryOptions.timeFrom,
+        timeShift: panel.data.spec.queryOptions.timeShift,
+        transparent: panel.transparent,
+        ...(repeat?.value && { repeat: repeat.value }),
+        ...(repeat?.direction && { repeatDirection: repeat.direction }),
+        ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
+      };
+    } else if (p.kind === 'LibraryPanel') {
+      const panel = p.spec;
+      return {
+        id: 0, //TODO: LibraryPanelSpec.id will be available after https://github.com/grafana/grafana/pull/99281/ is merged
+        title: panel.name,
+        gridPos,
+        libraryPanel: {
+          uid: panel.uid,
+          name: panel.name,
+        },
+      };
+    } else {
+      throw new Error(`Unknown element kind: ${p}`);
+    }
+  });
+}
+
+export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
+  const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
+    switch (mode) {
+      case 'absolute':
+        return ThresholdsModeV1.Absolute;
+      case 'percentage':
+        return ThresholdsModeV1.Percentage;
+      default:
+        return ThresholdsModeV1.Absolute;
+    }
+  };
+
+  const transformedDefaults: any = {
+    ...fieldConfig.defaults,
+  };
+
+  if (fieldConfig.defaults.mappings) {
+    transformedDefaults.mappings = fieldConfig.defaults.mappings.map((mapping) => {
+      switch (mapping.type) {
+        case 'value':
+          return {
+            ...mapping,
+            type: MappingTypeV1.ValueToText,
+          };
+        case 'range':
+          return {
+            ...mapping,
+            type: MappingTypeV1.RangeToText,
+          };
+        case 'regex':
+          return {
+            ...mapping,
+            type: MappingTypeV1.RegexToText,
+          };
+        case 'special':
+          return {
+            ...mapping,
+            options: {
+              ...mapping.options,
+              match: transformSpecialValueMatchToV1(mapping.options.match),
+            },
+            type: MappingTypeV1.SpecialValue,
+          };
+        default:
+          return mapping;
+      }
+    });
+  }
+
+  if (fieldConfig.defaults.thresholds) {
+    transformedDefaults.thresholds = {
+      ...fieldConfig.defaults.thresholds,
+      mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
+    };
+  }
+
+  if (fieldConfig.defaults.color?.mode) {
+    transformedDefaults.color = {
+      ...fieldConfig.defaults.color,
+      mode: colorIdToEnumv1(fieldConfig.defaults.color.mode),
+    };
+  }
+
+  return {
+    ...fieldConfig,
+    defaults: transformedDefaults,
+  };
+}
+
+function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
+  switch (colorId) {
+    case 'thresholds':
+      return FieldColorModeIdV1.Thresholds;
+    case 'palette-classic':
+      return FieldColorModeIdV1.PaletteClassic;
+    case 'palette-classic-by-name':
+      return FieldColorModeIdV1.PaletteClassicByName;
+    case 'continuous-GrYlRd':
+      return FieldColorModeIdV1.ContinuousGrYlRd;
+    case 'continuous-RdYlGr':
+      return FieldColorModeIdV1.ContinuousRdYlGr;
+    case 'continuous-BlYlRd':
+      return FieldColorModeIdV1.ContinuousBlYlRd;
+    case 'continuous-YlRd':
+      return FieldColorModeIdV1.ContinuousYlRd;
+    case 'continuous-BlPu':
+      return FieldColorModeIdV1.ContinuousBlPu;
+    case 'continuous-YlBl':
+      return FieldColorModeIdV1.ContinuousYlBl;
+    case 'continuous-blues':
+      return FieldColorModeIdV1.ContinuousBlues;
+    case 'continuous-reds':
+      return FieldColorModeIdV1.ContinuousReds;
+    case 'continuous-greens':
+      return FieldColorModeIdV1.ContinuousGreens;
+    case 'continuous-purples':
+      return FieldColorModeIdV1.ContinuousPurples;
+    case 'fixed':
+      return FieldColorModeIdV1.Fixed;
+    case 'shades':
+      return FieldColorModeIdV1.Shades;
+    default:
+      return FieldColorModeIdV1.Thresholds;
+  }
+}
+
+function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 {
+  switch (match) {
+    case 'true':
+      return SpecialValueMatchV1.True;
+    case 'false':
+      return SpecialValueMatchV1.False;
+    case 'null':
+      return SpecialValueMatchV1.Null;
+    case 'nan':
+      return SpecialValueMatchV1.NaN;
+    case 'null+nan':
+      return SpecialValueMatchV1.NullAndNan;
+    case 'empty':
+      return SpecialValueMatchV1.Empty;
+    default:
+      throw new Error(`Unknown match type: ${match}`);
+  }
+}
+
+function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableType {
+  switch (variable.kind) {
+    case 'QueryVariable':
+      return 'query';
+    case 'DatasourceVariable':
+      return 'datasource';
+    case 'CustomVariable':
+      return 'custom';
+    case 'ConstantVariable':
+      return 'constant';
+    case 'IntervalVariable':
+      return 'interval';
+    case 'TextVariable':
+      return 'textbox';
+    case 'GroupByVariable':
+      return 'groupby';
+    case 'AdhocVariable':
+      return 'adhoc';
+    default:
+      throw new Error(`Unknown variable type: ${variable}`);
+  }
 }
