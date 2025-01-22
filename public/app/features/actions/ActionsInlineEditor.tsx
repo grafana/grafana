@@ -97,7 +97,7 @@ export const ActionsInlineEditor = ({
       {showOneClick && actionsSafe.length > 0 && (
         <div className={styles.oneClickOverlay}>
           <span className={styles.oneClickSpan}>
-            <Trans i18nKey="actions-editor.inline.one-click-link">One-click link</Trans>
+            <Trans i18nKey="actions-editor.inline.one-click-action">One-click action</Trans>
           </span>
         </div>
       )}

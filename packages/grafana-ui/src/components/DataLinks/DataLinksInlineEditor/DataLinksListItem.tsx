@@ -57,8 +57,8 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
             {oneClick && (
               <Badge
                 color="blue"
-                text={t('grafana-ui.data-link-editor.one-click', 'One click')}
-                tooltip={t('grafana-ui.data-link-editor.one-click-enabled', 'One click enabled')}
+                text={t('grafana-ui.data-links-inline-editor.one-click', 'One click')}
+                tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
               />
             )}
             <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />

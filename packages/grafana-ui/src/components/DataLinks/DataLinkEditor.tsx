@@ -67,7 +67,13 @@ export const DataLinkEditor = memo(({ index, value, onChange, suggestions, isLas
         <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
       </Field>
 
-      <Field label={t('grafana-ui.data-link-editor.one-click', 'One click')}>
+      <Field
+        label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
+        description={t(
+          'grafana-ui.data-link-editor-modal.one-click-description',
+          'Only one link can have one click enabled at a time'
+        )}
+      >
         <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
       </Field>
 
