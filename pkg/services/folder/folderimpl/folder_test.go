@@ -493,8 +493,9 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			})
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil, nil, nil, nil, quotaService, nil, publicDashboardFakeService)
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil, nil, nil, nil, quotaService, nil, publicDashboardFakeService)
 			require.NoError(t, err)
+			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b)
 			require.NoError(t, err)
@@ -578,9 +579,9 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
-				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, nil, nil, nil, quotaService, nil, publicDashboardFakeService)
+				folderPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, nil, nil, nil, quotaService, nil, publicDashboardFakeService)
 			require.NoError(t, err)
-
+			dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
 			require.NoError(t, err)
 
@@ -725,8 +726,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.store = nestedFolderStore
 				publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, tc.service.store, nil, nil, nil, nil, quotaService, nil, publicDashboardFakeService)
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, tc.service, tc.service.store, nil, nil, nil, nil, quotaService, nil, publicDashboardFakeService)
 				require.NoError(t, err)
+				dashSrv.RegisterDashboardPermissions(dashboardPermissions)
+
 				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac, b)
 				require.NoError(t, err)
 
@@ -1502,7 +1505,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		cfg, dashStore, folderStore,
 		featuresFlagOn,
 		acmock.NewMockedPermissionsService(),
-		dashboardPermissions,
 		actest.FakeAccessControl{},
 		serviceWithFlagOn,
 		nestedFolderStore,
@@ -1515,7 +1517,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		nil,
 	)
 	require.NoError(t, err)
-
+	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
 			dashboards.ActionFoldersRead: {},

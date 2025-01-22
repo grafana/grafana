@@ -13,8 +13,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -31,7 +35,18 @@ import (
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+type rcp struct {
+	Host string
+}
+
+func (r rcp) GetRestConfig(ctx context.Context) *clientrest.Config {
+	return &clientrest.Config{
+		Host: r.Host,
+	}
+}
 
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	if testing.Short() {
@@ -44,6 +59,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	unifiedStorageFolder.Kind = "folder"
 
 	fooFolder := &folder.Folder{
+		ID:           123,
 		Title:        "Foo Folder",
 		OrgID:        orgID,
 		UID:          "foo",
@@ -149,7 +165,23 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	db, cfg := sqlstore.InitTestDB(t)
 	cfg.AppURL = folderApiServerMock.URL
 
-	unifiedStore := ProvideUnifiedStore(cfg)
+	restCfgProvider := rcp{
+		Host: folderApiServerMock.URL,
+	}
+
+	f := func(ctx context.Context) resource.ResourceClient {
+		return resourceClientMock{}
+	}
+
+	k8sHandler := &foldk8sHandler{
+		gvr:                    v0alpha1.FolderResourceInfo.GroupVersionResource(),
+		namespacer:             request.GetNamespaceMapper(cfg),
+		cfg:                    cfg,
+		restConfigProvider:     restCfgProvider.GetRestConfig,
+		recourceClientProvider: f,
+	}
+
+	unifiedStore := ProvideUnifiedStore(k8sHandler)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -185,6 +217,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		registry:               make(map[string]folder.RegistryService),
 		metrics:                newFoldersMetrics(nil),
 		tracer:                 tracing.InitializeTracerForTest(),
+		k8sclient:              k8sHandler,
 		dashboardStore:         dashboardStore,
 		publicDashboardService: publicDashboardService,
 	}
@@ -387,6 +420,32 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
+			t.Run("When get folder by ID should return folder", func(t *testing.T) {
+				id := int64(123)
+				query := &folder.GetFolderQuery{
+					ID:           &id,
+					OrgID:        1,
+					SignedInUser: usr,
+				}
+
+				actual, err := folderService.Get(context.Background(), query)
+				require.Equal(t, fooFolder, actual)
+				require.NoError(t, err)
+			})
+
+			t.Run("When get folder by non existing ID should return not found error", func(t *testing.T) {
+				id := int64(111111)
+				query := &folder.GetFolderQuery{
+					ID:           &id,
+					OrgID:        1,
+					SignedInUser: usr,
+				}
+
+				actual, err := folderService.Get(context.Background(), query)
+				require.Nil(t, actual)
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			})
+
 			// TODO!!
 			/*
 				t.Run("When get folder by title should return folder", func(t *testing.T) {
@@ -418,4 +477,91 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 		})
 	})
+}
+
+type resourceClientMock struct{}
+
+func (r resourceClientMock) Read(ctx context.Context, in *resource.ReadRequest, opts ...grpc.CallOption) (*resource.ReadResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) Create(ctx context.Context, in *resource.CreateRequest, opts ...grpc.CallOption) (*resource.CreateResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) Update(ctx context.Context, in *resource.UpdateRequest, opts ...grpc.CallOption) (*resource.UpdateResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) Delete(ctx context.Context, in *resource.DeleteRequest, opts ...grpc.CallOption) (*resource.DeleteResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) List(ctx context.Context, in *resource.ListRequest, opts ...grpc.CallOption) (*resource.ListResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) Watch(ctx context.Context, in *resource.WatchRequest, opts ...grpc.CallOption) (resource.ResourceStore_WatchClient, error) {
+	return nil, nil
+}
+func (r resourceClientMock) Search(ctx context.Context, in *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
+	if len(in.Options.Labels) > 0 &&
+		in.Options.Labels[0].Key == utils.LabelKeyDeprecatedInternalID &&
+		in.Options.Labels[0].Operator == "in" &&
+		len(in.Options.Labels[0].Values) > 0 &&
+		in.Options.Labels[0].Values[0] == "123" {
+		return &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "_id",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "foo",
+							Resource: "folders",
+						},
+						Cells: [][]byte{
+							[]byte("123"),
+							[]byte("folder1"),
+							[]byte(""),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil
+	}
+
+	// not found
+	return &resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{},
+	}, nil
+}
+func (r resourceClientMock) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) CountRepositoryObjects(ctx context.Context, in *resource.CountRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.CountRepositoryObjectsResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) ListRepositoryObjects(ctx context.Context, in *resource.ListRepositoryObjectsRequest, opts ...grpc.CallOption) (*resource.ListRepositoryObjectsResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) PutBlob(ctx context.Context, in *resource.PutBlobRequest, opts ...grpc.CallOption) (*resource.PutBlobResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) GetBlob(ctx context.Context, in *resource.GetBlobRequest, opts ...grpc.CallOption) (*resource.GetBlobResponse, error) {
+	return nil, nil
+}
+func (r resourceClientMock) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
+	return nil, nil
 }

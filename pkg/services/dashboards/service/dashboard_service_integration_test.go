@@ -886,7 +886,6 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			cfg, dashboardStore, folderStore,
 			featuremgmt.WithFeatures(),
 			folderPermissions,
-			dashboardPermissions,
 			ac,
 			folderService,
 			folder.NewFakeStore(),
@@ -898,6 +897,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			nil,
 			nil,
 		)
+		dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
 
@@ -961,7 +961,6 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
 		folderPermissions,
-		dashboardPermissions,
 		actest.FakeAccessControl{},
 		folderService,
 		folder.NewFakeStore(),
@@ -974,6 +973,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		nil,
 	)
 	require.NoError(t, err)
+	service.RegisterDashboardPermissions(dashboardPermissions)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
@@ -996,7 +996,6 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
-		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
 		folderService,
 		folder.NewFakeStore(),
@@ -1009,6 +1008,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		nil,
 	)
 	require.NoError(t, err)
+	service.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 	_, err = service.SaveDashboard(context.Background(), &dto, false)
 	return err
 }
@@ -1050,7 +1050,6 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		cfg, dashboardStore, folderStore,
 		features,
 		accesscontrolmock.NewMockedPermissionsService(),
-		dashboardPermissions,
 		actest.FakeAccessControl{},
 		folderService,
 		folder.NewFakeStore(),
@@ -1063,6 +1062,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		nil,
 	)
 	require.NoError(t, err)
+	service.RegisterDashboardPermissions(dashboardPermissions)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 
 	require.NoError(t, err)
@@ -1111,7 +1111,6 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
 		folderPermissions,
-		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
 		folderService,
 		folder.NewFakeStore(),
@@ -1124,6 +1123,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		nil,
 	)
 	require.NoError(t, err)
+	service.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
 
