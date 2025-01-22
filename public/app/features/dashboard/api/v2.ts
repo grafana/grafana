@@ -17,12 +17,14 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
 
-import { SaveDashboardCommandV2 } from '../components/SaveDashboard/types';
+import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 
-export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO> {
+export class K8sDashboardV2API
+  implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
+{
   private client: ResourceClient<DashboardV2Spec>;
 
   constructor(private convertToV1: boolean) {
@@ -67,7 +69,7 @@ export class K8sDashboardV2API implements DashboardAPI<DashboardWithAccessInfo<D
     throw new Error('Method not implemented.');
   }
 
-  async saveDashboard(options: SaveDashboardCommandV2): Promise<SaveDashboardResponseDTO> {
+  async saveDashboard(options: SaveDashboardCommand<DashboardV2Spec>): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard;
 
     const obj: ResourceForCreate<DashboardV2Spec> = {
