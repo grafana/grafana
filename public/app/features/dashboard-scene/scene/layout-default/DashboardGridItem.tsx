@@ -15,7 +15,6 @@ import {
   MultiValueVariable,
   LocalValueVariable,
   CustomVariable,
-  VizPanelMenu,
   VizPanelState,
   VariableValueSingle,
   SceneVariable,
@@ -25,7 +24,6 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
-import { repeatPanelMenuBehavior } from '../PanelMenuBehavior';
 import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
@@ -142,11 +140,6 @@ export class DashboardGridItem
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,
       };
-      if (index > 0) {
-        cloneState.menu = new VizPanelMenu({
-          $behaviors: [repeatPanelMenuBehavior],
-        });
-      }
       const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);
     }
