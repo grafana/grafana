@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -13,7 +14,7 @@ func getCheck(obj resource.Object, checks map[string]checks.Check) (checks.Check
 	labels := obj.GetLabels()
 	objTypeLabel, ok := labels[typeLabel]
 	if !ok {
-		return nil, fmt.Errorf("missing check type as label")
+		return nil, errors.New("missing check type as label")
 	}
 	c, ok := checks[objTypeLabel]
 	if !ok {

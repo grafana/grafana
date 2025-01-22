@@ -11,23 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockClient struct {
-	resource.Client
-}
-
-func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
-	return nil
-}
-
-type mockCheck struct {
-	checks.Check
-	err error
-}
-
-func (m *mockCheck) Run(ctx context.Context, spec *advisorv0alpha1.CheckSpec) (*advisorv0alpha1.CheckV0alpha1StatusReport, error) {
-	return &advisorv0alpha1.CheckV0alpha1StatusReport{}, m.err
-}
-
 func TestGetCheck(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetLabels(map[string]string{typeLabel: "testType"})
@@ -110,4 +93,21 @@ func TestProcessCheck_RunError(t *testing.T) {
 	err := processCheck(ctx, client, obj, check)
 	assert.Error(t, err)
 	assert.Equal(t, "error", obj.GetAnnotations()[statusAnnotation])
+}
+
+type mockClient struct {
+	resource.Client
+}
+
+func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
+	return nil
+}
+
+type mockCheck struct {
+	checks.Check
+	err error
+}
+
+func (m *mockCheck) Run(ctx context.Context, spec *advisorv0alpha1.CheckSpec) (*advisorv0alpha1.CheckV0alpha1StatusReport, error) {
+	return &advisorv0alpha1.CheckV0alpha1StatusReport{}, m.err
 }

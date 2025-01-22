@@ -13,36 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockDatasourceSvc struct {
-	datasources.DataSourceService
-
-	dss []*datasources.DataSource
-}
-
-func (m *MockDatasourceSvc) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) ([]*datasources.DataSource, error) {
-	return m.dss, nil
-}
-
-type MockPluginContextProvider struct {
-	datasource.PluginContextWrapper
-
-	pCtx backend.PluginContext
-}
-
-func (m *MockPluginContextProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
-	return m.pCtx, nil
-}
-
-type MockPluginClient struct {
-	plugins.Client
-
-	res *backend.CheckHealthResult
-}
-
-func (m *MockPluginClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return m.res, nil
-}
-
 func TestCheck_Run(t *testing.T) {
 	t.Run("should return no errors when all datasources are healthy", func(t *testing.T) {
 		datasources := []*datasources.DataSource{
@@ -118,4 +88,34 @@ func TestCheck_Run(t *testing.T) {
 		assert.Len(t, report.Errors, 1)
 		assert.Equal(t, "Health check failed: Prometheus", report.Errors[0].Reason)
 	})
+}
+
+type MockDatasourceSvc struct {
+	datasources.DataSourceService
+
+	dss []*datasources.DataSource
+}
+
+func (m *MockDatasourceSvc) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) ([]*datasources.DataSource, error) {
+	return m.dss, nil
+}
+
+type MockPluginContextProvider struct {
+	datasource.PluginContextWrapper
+
+	pCtx backend.PluginContext
+}
+
+func (m *MockPluginContextProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+	return m.pCtx, nil
+}
+
+type MockPluginClient struct {
+	plugins.Client
+
+	res *backend.CheckHealthResult
+}
+
+func (m *MockPluginClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return m.res, nil
 }
