@@ -112,16 +112,17 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		}
 		dashFolder, err = s.unifiedStore.Get(ctx, *q)
 		if err != nil {
-			return nil, err
+			return nil, toFolderError(err)
 		}
 	// nolint:staticcheck
 	case q.ID != nil:
 		dashFolder, err = s.getFolderByIDFromApiServer(ctx, *q.ID, q.OrgID)
 		if err != nil {
-			return nil, err
+			return nil, toFolderError(err)
 		}
 	case q.Title != nil:
 		// not implemented
+		return nil, folder.ErrBadRequest.Errorf("not implemented")
 	default:
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
