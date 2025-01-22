@@ -91,7 +91,7 @@ Note that `No Data` and `Error` states are supported only for Grafana-managed al
 
 {{< docs/shared lookup="alerts/table-configure-no-data-and-error.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Note that when you configure the **No Data** or **Error** behavior to `Alerting` or `Normal`, Grafana attempts to keep a stable set of fields under notification `Values`. If your query returns no data or an error, Grafana re-uses the latest known set of fields in `Values`, but will use `-1` in place of the measured value.
+Note that when you configure the **No Data** or **Error** behavior to `Alerting` or `Normal`, Grafana attempts to keep a stable set of fields under notification `Values`. If your query returns no data or an error, Grafana reuses the latest known set of fields in `Values`, but will use `-1` in place of the measured value.
 
 ### Reduce `No Data` or `Error` alerts
 
