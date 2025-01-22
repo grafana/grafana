@@ -45,6 +45,7 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -59,7 +60,6 @@ import {
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object

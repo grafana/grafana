@@ -285,6 +285,7 @@ export const handyTestingSchema: DashboardV2Spec = {
             y: 10,
             collapsed: true,
             title: 'Row 1',
+            repeat: 'customVar',
             elements: [
               {
                 kind: 'GridLayoutItem',
