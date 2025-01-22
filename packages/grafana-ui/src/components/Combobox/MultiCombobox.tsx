@@ -34,6 +34,57 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
+// A hook to handle sync or async options
+// intended to be used by both MultiCombobox and Combobox
+function useOptions<T extends string | number>(options: MultiComboboxBaseProps<T>['options']) {
+  const isAsync = typeof options === 'function';
+  const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
+  const [asyncLoading, setAsyncLoading] = useState(false);
+  const [asyncError, setAsyncError] = useState(false);
+
+  // This hook keeps its own inputValue state (rather than accepting it as an arg) because it needs to be
+  // told it for async options loading anyway.
+  const [userTypedSearch, setUserTypedSearch] = useState('');
+
+  const loadOptionsWhenUserTypes = useCallback(
+    (inputValue: string) => {
+      console.log('loadOptionsWhenUserTypes', inputValue);
+      if (!isAsync) {
+        setUserTypedSearch(inputValue);
+        return;
+      }
+
+      setAsyncLoading(true);
+
+      options(inputValue)
+        .then((options) => {
+          setAsyncOptions(options);
+          setAsyncLoading(false);
+          setAsyncError(false);
+        })
+        .catch((error) => {
+          setAsyncError(true);
+          setAsyncLoading(false);
+
+          if (error) {
+            console.error('Error loading async options for Combobox', error);
+          }
+        });
+    },
+    [options, isAsync]
+  );
+
+  const finalOptions = useMemo(() => {
+    if (isAsync) {
+      return asyncOptions;
+    } else {
+      return options.filter(itemFilter(userTypedSearch));
+    }
+  }, [options, asyncOptions, isAsync, userTypedSearch]);
+
+  return { options: finalOptions, loadOptionsWhenUserTypes, asyncLoading, asyncError };
+}
+
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const {
     options,
@@ -48,16 +99,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     minWidth,
     maxWidth,
   } = props;
-  const isAsync = typeof options === 'function';
+
+  const { options: newOptions, loadOptionsWhenUserTypes /*, asyncLoading, asyncError */ } = useOptions(props.options);
 
   const selectedItems = useMemo(() => {
-    if (!value || isAsync) {
-      //TODO handle async
+    if (!value) {
       return [];
     }
 
-    return getSelectedItemsFromValue<T>(value, options);
-  }, [value, options, isAsync]);
+    return getSelectedItemsFromValue<T>(value, newOptions);
+  }, [value, newOptions]);
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
@@ -74,18 +125,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [inputValue]);
 
   const baseItems = useMemo(() => {
-    return isAsync ? [] : enableAllOption ? [allOptionItem, ...options] : options;
-  }, [options, enableAllOption, allOptionItem, isAsync]);
+    return enableAllOption ? [allOptionItem, ...newOptions] : newOptions;
+  }, [newOptions, enableAllOption, allOptionItem]);
 
   const items = useMemo(() => {
-    const newItems = baseItems.filter(itemFilter(inputValue));
-
-    if (enableAllOption && newItems.length === 1 && newItems[0] === allOptionItem) {
+    if (enableAllOption && baseItems.length === 1 && baseItems[0] === allOptionItem) {
       return [];
     }
 
-    return newItems;
-  }, [baseItems, inputValue, enableAllOption, allOptionItem]);
+    return baseItems;
+  }, [baseItems, enableAllOption, allOptionItem]);
 
   const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
@@ -155,7 +204,23 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputValue,
     selectedItem: null,
     stateReducer: (state, actionAndChanges) => {
-      const { changes, type } = actionAndChanges;
+      const { type } = actionAndChanges;
+      let { changes } = actionAndChanges;
+      const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
+      // const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
+
+      // Reset the input value when the menu is opened. If the menu is opened due to an input change
+      // then make sure we keep that.
+      // This will trigger onInputValueChange to load async options
+      if (menuBeingOpened && changes.inputValue === state.inputValue) {
+        changes = {
+          ...changes,
+          inputValue: '',
+        };
+      }
+
+      // TODO: handle menuBeingClosed?
+
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
@@ -171,7 +236,15 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       }
     },
 
+    onIsOpenChange: ({ isOpen, inputValue }) => {
+      console.log('onIsOpenChange', { isOpen, inputValue });
+      if (isOpen && inputValue === '') {
+        loadOptionsWhenUserTypes(inputValue);
+      }
+    },
+
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
+      console.log('state change', type);
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
@@ -204,6 +277,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           break;
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
+          loadOptionsWhenUserTypes(newInputValue ?? '');
+
           break;
         default:
           break;

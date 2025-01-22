@@ -1,9 +1,10 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { useCallback } from 'react';
 
 import { MultiCombobox } from './MultiCombobox';
-import { generateOptions } from './storyUtils';
+import { generateOptions, fakeSearchAPI } from './storyUtils';
 import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
@@ -103,4 +104,37 @@ export const ManyOptions: StoryObj<ManyOptionsArgs> = {
     value: undefined,
   },
   render: ManyOptionsStory,
+};
+
+const loadOptionsAction = action('loadOptions called');
+const AsyncStory: StoryFn = (args) => {
+  // Combobox
+  const [selectedOption, setSelectedOption] = useState<Array<ComboboxOption<string>> | undefined>([]);
+
+  // This simulates a kind of search API call
+  const loadOptionsWithLabels = useCallback((inputValue: string) => {
+    loadOptionsAction(inputValue);
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+  }, []);
+
+  const { onChange, ...rest } = args;
+
+  return (
+    <MultiCombobox
+      {...rest}
+      id="test-combobox-one"
+      placeholder="Select an option"
+      options={loadOptionsWithLabels}
+      value={selectedOption}
+      onChange={(val: any[] | undefined) => {
+        action('onChange')(val);
+        setSelectedOption(val);
+      }}
+      createCustomValue={args.createCustomValue}
+    />
+  );
+};
+
+export const Async: StoryObj = {
+  render: AsyncStory,
 };
