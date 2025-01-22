@@ -33,7 +33,7 @@ func createInProcToken() (*authn.TokenExchangeResponse, error) {
 		Claims: jwt.Claims{
 			Audience: []string{"resourceStore"},
 			Issuer:   "grafana",
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "1"),
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		},
 		Rest: authn.AccessTokenClaims{
 			Namespace:            "*",
