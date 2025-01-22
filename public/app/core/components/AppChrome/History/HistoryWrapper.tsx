@@ -16,7 +16,7 @@ export function HistoryWrapper() {
     return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
   });
   const [numItemsToShow, setNumItemsToShow] = useState(5);
-
+  const state = chrome.useState();
   const selectedTime = history.find((entry) => {
     return entry.url === window.location.href || entry.views.some((view) => view.url === window.location.href);
   })?.time;
@@ -50,7 +50,7 @@ export function HistoryWrapper() {
                     key={index}
                     entry={entry}
                     isSelected={entry.time === selectedTime}
-                    onClick={() => chrome.setHistoryOpen(false)}
+                    onClick={() => !state.historyDocked && chrome.setHistoryOpen(false)}
                   />
                 );
               })}
