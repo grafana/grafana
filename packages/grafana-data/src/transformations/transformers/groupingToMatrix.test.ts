@@ -175,7 +175,54 @@ describe('Grouping to Matrix', () => {
     });
 
     await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
-      expect(received[0][0].fields.some(({ name }) => name === null)).toBe(true);
+      const processed = received[0];
+
+      expect(processed[0].fields).toMatchInlineSnapshot(`
+        [
+          {
+            "config": {},
+            "name": "Row\\Column",
+            "type": "string",
+            "values": [
+              "R1",
+              "R2",
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": "C1",
+            "type": "number",
+            "values": [
+              1,
+              "",
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": null,
+            "type": "number",
+            "values": [
+              "",
+              4,
+            ],
+          },
+          {
+            "config": {
+              "units": "celsius",
+            },
+            "name": "C2",
+            "type": "number",
+            "values": [
+              5,
+              "",
+            ],
+          },
+        ]
+      `);
     });
   });
 
