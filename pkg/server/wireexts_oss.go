@@ -71,6 +71,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	validations.ProvideValidator,
 	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
+	validations.ProvideURLValidator,
+	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	backgroundsvcs.ProvideBackgroundServiceRegistry,

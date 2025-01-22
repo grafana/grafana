@@ -15,3 +15,13 @@ func (*OSSDataSourceRequestValidator) Validate(*datasources.DataSource, *http.Re
 func ProvideValidator() *OSSDataSourceRequestValidator {
 	return &OSSDataSourceRequestValidator{}
 }
+
+type OSSDataSourceRequestURLValidator struct{}
+
+func (*OSSDataSourceRequestURLValidator) Validate(string) error {
+	return nil
+}
+
+func ProvideURLValidator() *OSSDataSourceRequestURLValidator {
+	return &OSSDataSourceRequestURLValidator{}
+}
