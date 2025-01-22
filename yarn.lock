@@ -3448,8 +3448,8 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^1.11.0":
-  version: 1.15.0
-  resolution: "@grafana/plugin-e2e@npm:1.15.0"
+  version: 1.16.0
+  resolution: "@grafana/plugin-e2e@npm:1.16.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.5.0-216908"
     semver: "npm:^7.5.4"
@@ -3457,7 +3457,7 @@ __metadata:
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/b40907f78ef6af17b2988563a39482a0daac338e2edf4cb154a77dde39bb1a41015576df7454da266c107d43fd393c8831f4a79d0f66031262471ae19480bc59
+  checksum: 10/9d04359ca5da7f302c95fc57bef1c218a62708aff35d2f321af753490e790b625700a573f6dfbddc637771ac86c2fb7d0d46cae8bf6b4633cf1c08e7fc7b374f
   languageName: node
   linkType: hard
 
@@ -3678,11 +3678,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:5.37.0":
-  version: 5.37.0
-  resolution: "@grafana/scenes-react@npm:5.37.0"
+"@grafana/scenes-react@npm:5.37.1":
+  version: 5.37.1
+  resolution: "@grafana/scenes-react@npm:5.37.1"
   dependencies:
-    "@grafana/scenes": "npm:5.37.0"
+    "@grafana/scenes": "npm:5.37.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3693,13 +3693,13 @@ __metadata:
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/cbc737a65ac9e36afaf82095ca8f8f9b4ed38727be572c768033c5b2989917bb486b039f36ddd92cfcf304dd1de967b8164080944ed24f46f3fb613fd9b1be3b
+  checksum: 10/bedcda5da7220bb7e190f35cf4f9178f03f854fb7b9dc8c253a069321d7a6ff412af7c7692de80f86ea1ddb612ca09b65761ffb6eac5f12bd92f08649a1357d0
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.37.0":
-  version: 5.37.0
-  resolution: "@grafana/scenes@npm:5.37.0"
+"@grafana/scenes@npm:5.37.1":
+  version: 5.37.1
+  resolution: "@grafana/scenes@npm:5.37.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3716,7 +3716,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/f16d02ab49cb28a3bfc74d11f875866108cf06d056ae1fd74c3f3ddb4272b81e729e78d2a022ecaf8e69bb5ea2e0eaa59f2a491b4f57ca7f9786472e1a4b1ada
+  checksum: 10/82a3d98444bf8a66f21bee88635d057af8b9eb35e0752cb77c21dda136b278a056d6ddaf3deccc404c9964b203820d4c2f68333c5a9090b86190642d2733097f
   languageName: node
   linkType: hard
 
@@ -6418,16 +6418,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.26.0":
-  version: 3.26.0
-  resolution: "@react-types/shared@npm:3.26.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
-  checksum: 10/82d212b1712faf86141b3993204b7155f8a053c3c8091de095889097c0f923519c4e5eb26285c0e8764ab1540f495235c7b3fbdc39f38b1a8711661eee43cbf4
-  languageName: node
-  linkType: hard
-
-"@react-types/shared@npm:^3.27.0":
+"@react-types/shared@npm:3.27.0, @react-types/shared@npm:^3.27.0":
   version: 3.27.0
   resolution: "@react-types/shared@npm:3.27.0"
   peerDependencies:
@@ -12147,13 +12138,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:5.2.2":
-  version: 5.2.2
-  resolution: "centrifuge@npm:5.2.2"
+"centrifuge@npm:5.3.0":
+  version: 5.3.0
+  resolution: "centrifuge@npm:5.3.0"
   dependencies:
     events: "npm:^3.3.0"
     protobufjs: "npm:^7.2.5"
-  checksum: 10/c6893c3dee7145df313803e2bf290178280f3fa6a1abbe36247fc020ce2d2e853f1691b731d2bbc06a3b1e664607cdadb28e737f1987cf30b489a80a4def253a
+  checksum: 10/a55619852b5f36073a522777ad6e47a0a9bf297badcd1309eb4ad6db8270c64335e48eb3c7dc5089c15fcfe83a4e72e7d705e8a89ac1874cbb70858d79fb70ee
   languageName: node
   linkType: hard
 
@@ -17376,8 +17367,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.37.0"
-    "@grafana/scenes-react": "npm:5.37.0"
+    "@grafana/scenes": "npm:5.37.1"
+    "@grafana/scenes-react": "npm:5.37.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -17408,7 +17399,7 @@ __metadata:
     "@react-types/button": "npm:3.10.2"
     "@react-types/menu": "npm:3.9.14"
     "@react-types/overlays": "npm:3.8.12"
-    "@react-types/shared": "npm:3.26.0"
+    "@react-types/shared": "npm:3.27.0"
     "@reduxjs/toolkit": "npm:2.5.0"
     "@rsdoctor/webpack-plugin": "npm:^0.4.6"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
@@ -17494,7 +17485,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
-    centrifuge: "npm:5.2.2"
+    centrifuge: "npm:5.3.0"
     chance: "npm:^1.0.10"
     chrome-remote-interface: "npm:0.33.2"
     classnames: "npm:2.5.1"
@@ -29730,9 +29721,9 @@ __metadata:
   linkType: hard
 
 "undici@npm:^6.19.5":
-  version: 6.19.8
-  resolution: "undici@npm:6.19.8"
-  checksum: 10/19ae4ba38b029a664d99fd330935ef59136cf99edb04ed821042f27b5a9e84777265fb744c8a7abc83f2059afb019446c69a4ebef07bbc0ed6b2de8d67ef4090
+  version: 6.21.1
+  resolution: "undici@npm:6.21.1"
+  checksum: 10/eeccc07e9073ae8e755fdc0dc8cdfaa426c01ec6f815425c3ecedba2e5394cea4993962c040dd168951714a82f0d001a13018c3ae3ad4534f0fa97afe425c08d
   languageName: node
   linkType: hard
 
