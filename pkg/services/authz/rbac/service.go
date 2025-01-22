@@ -7,14 +7,15 @@ import (
 	"strings"
 	"time"
 
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
+
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -200,7 +201,7 @@ func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceI
 	if nameSpace == "" {
 		return claims.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
 	}
-	authInfo, has := claims.From(ctx)
+	authInfo, has := claims.AuthInfoFrom(ctx)
 	if !has {
 		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
 	}
