@@ -33,7 +33,7 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				if dash != nil {
 					return []interface{}{
 						dash.Name,
-						dash.Spec.GetNestedString("title"),
+						dash.Spec["title"],
 						dash.CreationTimestamp.UTC().Format(time.RFC3339),
 					}, nil
 				}

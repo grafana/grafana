@@ -5,6 +5,7 @@ import (
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -16,7 +17,7 @@ type Dashboard struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The dashboard body (unstructured for now)
-	Spec common.Unstructured `json:"spec"`
+	Spec migration.Unstructured `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
