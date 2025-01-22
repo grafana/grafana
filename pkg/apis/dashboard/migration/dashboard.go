@@ -16,8 +16,6 @@ func (u Unstructured) DeepCopy() Unstructured {
 	return clone
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // DashboardSpec is a specification for a migrated dashboard body.
 // This is used by the kubernetes internal dashboard API version.
 type DashboardSpec struct {
@@ -29,56 +27,53 @@ type DashboardSpec struct {
 }
 
 func (d *DashboardSpec) DeepCopy() *DashboardSpec {
-	return &DashboardSpec{
-		Refresh:       d.Refresh,
-		SchemaVersion: d.SchemaVersion,
-		Title:         d.Title,
-		unstructured:  d.unstructured.DeepCopy(),
-	}
+	clone := &DashboardSpec{}
+	d.DeepCopyInto(clone)
+	return clone
 }
 
 func (d *DashboardSpec) DeepCopyInto(out *DashboardSpec) {
-	out.Refresh = d.Refresh
-	out.SchemaVersion = d.SchemaVersion
-	out.Title = d.Title
 	out.unstructured = d.unstructured.DeepCopy()
+
+	out.Refresh = d.Refresh
+	delete(out.unstructured, "refresh")
+
+	out.SchemaVersion = d.SchemaVersion
+	delete(out.unstructured, "schemaVersion")
+
+	out.Title = d.Title
+	delete(out.unstructured, "title")
 }
 
 func (d *DashboardSpec) ToUnstructured() (Unstructured, error) {
-	type ds DashboardSpec
-	raw, err := json.Marshal((*ds)(d))
-	if err != nil {
-		return nil, err
-	}
-
 	tmpDash := map[string]interface{}{}
 	maps.Copy(tmpDash, d.unstructured)
-	err = json.Unmarshal(raw, &tmpDash)
-	if err != nil {
-		return nil, err
-	}
+
+	tmpDash["refresh"] = d.Refresh
+	tmpDash["schemaVersion"] = d.SchemaVersion
+	tmpDash["title"] = d.Title
 
 	return tmpDash, nil
 }
 
 func (d *DashboardSpec) FromUnstructured(u Unstructured) error {
-	d.unstructured = u
-
-	dash := d.unstructured.DeepCopy()
-	if err := Migrate(dash, schemaversion.LATEST_VERSION); err != nil {
+	type ds DashboardSpec
+	tmpDash := &ds{}
+	tmpDash.unstructured = u
+	if err := Migrate(tmpDash.unstructured, schemaversion.LATEST_VERSION); err != nil {
 		return err
 	}
 
-	migratedData, err := json.Marshal(dash)
+	migratedData, err := json.Marshal(tmpDash.unstructured)
 	if err != nil {
 		return err
 	}
 
-	type ds DashboardSpec
-	if err := json.Unmarshal(migratedData, (*ds)(d)); err != nil {
+	if err := json.Unmarshal(migratedData, tmpDash); err != nil {
 		return err
 	}
 
+	(*DashboardSpec)(tmpDash).DeepCopyInto(d)
 	return err
 }
 

@@ -227,8 +227,13 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			return fmt.Errorf("expected v1alpha1 dashboard")
 		}
 
-		if id, ok := dash.Spec.Object["id"].(float64); ok {
-			delete(dash.Spec.Object, "id")
+		u, err := dash.Spec.ToUnstructured()
+		if err != nil {
+			return fmt.Errorf("failed to convert to unstructured: %w", err)
+		}
+
+		if id, ok := u["id"].(float64); ok {
+			delete(u, "id")
 			if id != 0 {
 				meta, err := utils.MetaAccessor(obj)
 				if err != nil {
@@ -237,6 +242,11 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 				meta.SetDeprecatedInternalID(int64(id)) // nolint:staticcheck
 			}
 		}
+		err = dash.Spec.FromUnstructured(u)
+		if err != nil {
+			return fmt.Errorf("failed to convert from unstructured: %w", err)
+		}
+		obj.(*dashboardv1alpha1.Dashboard).Spec = dash.Spec
 	}
 	return nil
 }

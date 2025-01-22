@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,7 +30,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should return an error if data is found",
 			inputObj: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -49,7 +49,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should return an error if unable to check",
 			inputObj: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -68,7 +68,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should be okay if error is provisioned dashboard not found",
 			inputObj: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -87,7 +87,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "Should still run the check for delete if grace period is not 0",
 			inputObj: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -106,7 +106,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should not run the check for delete if grace period is set to 0",
 			inputObj: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},

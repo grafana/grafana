@@ -31,7 +31,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedPanelCount := 19
-	panels, found, err := unstructured.NestedSlice(dash.Spec.Object, "panels")
+	panels, found, err := unstructured.NestedSlice(dash.Spec, "panels")
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Len(t, panels, expectedPanelCount)
@@ -62,7 +62,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	require.NoError(t, err)
 
 	// check that all panels exist again
-	panels, found, err = unstructured.NestedSlice(dash.Spec.Object, "panels")
+	panels, found, err = unstructured.NestedSlice(dash.Spec, "panels")
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Len(t, panels, expectedPanelCount)

@@ -317,7 +317,15 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				return row, err
 			}
 		}
-		dash.Spec.Remove("id")
+		u, err := dash.Spec.ToUnstructured()
+		if err != nil {
+			return row, err
+		}
+		delete(u, "id")
+		err = dash.Spec.FromUnstructured(u)
+		if err != nil {
+			return row, err
+		}
 	}
 	return row, err
 }
@@ -367,8 +375,13 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		return nil, created, fmt.Errorf("no user found in context")
 	}
 
+	u, err := dash.Spec.ToUnstructured()
+	if err != nil {
+		return nil, false, err
+	}
+
 	if dash.Name != "" {
-		dash.Spec.Set("uid", dash.Name)
+		u["uid"] = dash.Name
 
 		// Get the previous version to set the internal ID
 		old, _ := a.dashStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
@@ -376,14 +389,19 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 			UID:   dash.Name,
 		})
 		if old != nil {
-			dash.Spec.Set("id", old.ID)
+			u["id"] = old.ID
 		} else {
-			dash.Spec.Remove("id") // existing of "id" makes it an update
+			delete(u, "id")
 			created = true
 		}
 	} else {
-		dash.Spec.Remove("id")
-		dash.Spec.Remove("uid")
+		delete(u, "uid")
+		delete(u, "id")
+	}
+
+	err = dash.Spec.FromUnstructured(u)
+	if err != nil {
+		return nil, false, err
 	}
 
 	var userID int64
@@ -402,7 +420,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
 		PluginID:  service.GetPluginIDFromMeta(meta),
-		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
+		Dashboard: simplejson.NewFromAny(u),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
 		UserID:    userID,

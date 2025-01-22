@@ -164,7 +164,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 	}
 
-	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))
+	access.Slug = slugify.Slugify(dash.Spec.Title)
 	access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

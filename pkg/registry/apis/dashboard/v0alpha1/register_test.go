@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -23,10 +23,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should remove id and add as label in create",
 			verb: "CREATE",
 			input: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{
-						"id": float64(1),
-					},
+				Spec: map[string]interface{}{
+					"id": float64(1),
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -36,9 +34,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{},
-				},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -52,10 +48,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should remove id and add as label in update",
 			verb: "UPDATE",
 			input: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{
-						"id": float64(1),
-					},
+				Spec: map[string]interface{}{
+					"id": float64(1),
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -65,9 +59,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{},
-				},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -81,11 +73,9 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should only remove id ",
 			verb: "UPDATE",
 			input: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{
-						"id":      float64(1),
-						"testing": "this",
-					},
+				Spec: map[string]interface{}{
+					"id":      float64(1),
+					"testing": "this",
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -95,10 +85,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{
-						"testing": "this",
-					},
+				Spec: map[string]interface{}{
+					"testing": "this",
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -113,10 +101,8 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should not set label if id is 0",
 			verb: "CREATE",
 			input: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{
-						"id": float64(0),
-					},
+				Spec: map[string]interface{}{
+					"id": float64(0),
 				},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
@@ -126,9 +112,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v0alpha1.Dashboard{
-				Spec: common.Unstructured{
-					Object: map[string]interface{}{},
-				},
+				Spec: migration.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},

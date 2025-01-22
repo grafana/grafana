@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
-	commonV0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -26,17 +25,24 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 			if err != nil {
 				return err
 			}
-			old := dash.Spec.Object
-			spec := commonV0.Unstructured{Object: make(map[string]any)}
-			dash.Spec = spec
+			old, err := dash.Spec.ToUnstructured()
+			if err != nil {
+				return fmt.Errorf("failed to convert to unstructured: %w", err)
+			}
+			u := map[string]interface{}{}
 			dash.SetManagedFields(nil) // this could be bigger than the object!
 
 			keep := []string{"title", "description", "schemaVersion"}
 			for _, k := range keep {
 				v, ok := old[k]
 				if ok {
-					spec.Object[k] = v
+					u[k] = v
 				}
+			}
+
+			err = dash.Spec.FromUnstructured(u)
+			if err != nil {
+				return fmt.Errorf("failed to convert from unstructured: %w", err)
 			}
 
 			if err := scheme.Convert(dash, obj, nil); err != nil {

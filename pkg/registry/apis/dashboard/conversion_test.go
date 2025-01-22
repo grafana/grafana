@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/apis/dashboard/migration"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
@@ -37,6 +38,9 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 	labels := map[string]string{"starred-by": "you"}
 	rv := "1"
 	body := map[string]interface{}{"title": title, "description": "A new dashboard"}
+	spec := dashboard.DashboardSpec{}
+	err = spec.FromUnstructured(body)
+	require.NoError(t, err)
 	expectedDashbaord := dashboardinternal.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
 			Name:              name,
@@ -46,9 +50,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: common.Unstructured{
-			Object: body,
-		},
+		Spec: spec,
 	}
 	dashV0 := &dashboardv0alpha1.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
@@ -59,14 +61,14 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: common.Unstructured{
-			Object: body,
-		},
+		Spec: migration.Unstructured(body),
 	}
 
 	dash, err := ToInternalDashboard(scheme, dashV0)
 	require.NoError(t, err)
 	require.Equal(t, expectedDashbaord, *dash)
+	specWithTitle := spec
+	specWithTitle.Title = title
 
 	dashV1 := &dashboardv1alpha1.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
@@ -77,10 +79,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: dashboardv1alpha1.DashboardSpec{
-			Title:        title,
-			Unstructured: common.Unstructured{Object: body},
-		},
+		Spec: *specWithTitle.DeepCopy(),
 	}
 	dash, err = ToInternalDashboard(scheme, dashV1)
 	require.NoError(t, err)
@@ -95,10 +94,7 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 			Labels:            labels,
 			ResourceVersion:   rv,
 		},
-		Spec: dashboardv2alpha1.DashboardSpec{
-			Title:        title,
-			Unstructured: common.Unstructured{Object: body},
-		},
+		Spec: *specWithTitle.DeepCopy(),
 	}
 	dash, err = ToInternalDashboard(scheme, dashV2)
 	require.NoError(t, err)

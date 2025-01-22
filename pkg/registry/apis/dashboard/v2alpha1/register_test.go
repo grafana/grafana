@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -23,14 +22,9 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should remove id and add as label in create",
 			verb: "CREATE",
 			input: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{
-							"id": float64(1),
-						},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{
+					"id": float64(1),
+				}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -39,12 +33,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -58,14 +47,9 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should remove id and add as label in update",
 			verb: "UPDATE",
 			input: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{
-							"id": float64(1),
-						},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{
+					"id": float64(1),
+				}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -74,12 +58,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -93,15 +72,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should only remove id ",
 			verb: "UPDATE",
 			input: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{
-							"id":      float64(1),
-							"testing": "this",
-						},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{
+					"id":      float64(1),
+					"testing": "this",
+				}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -110,14 +84,9 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{
-							"testing": "this",
-						},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{
+					"testing": "this",
+				}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -131,14 +100,9 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			name: "should not set label if id is 0",
 			verb: "CREATE",
 			input: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{
-							"id": float64(0),
-						},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{
+					"id": float64(0),
+				}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -147,12 +111,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				},
 			},
 			expected: &v2alpha1.Dashboard{
-				Spec: v2alpha1.DashboardSpec{
-					Title: "test",
-					Unstructured: common.Unstructured{
-						Object: map[string]interface{}{},
-					},
-				},
+				Spec: dashboardSpecWithOverrides(v2alpha1.DashboardSpec{Title: "test"}, map[string]interface{}{}),
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Dashboard",
 				},
@@ -183,4 +142,20 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			require.Equal(t, tt.expected, tt.input)
 		})
 	}
+}
+
+func dashboardSpecWithOverrides(dash v2alpha1.DashboardSpec, overrides map[string]interface{}) v2alpha1.DashboardSpec {
+	u, err := dash.ToUnstructured()
+	if err != nil {
+		panic(err)
+	}
+	for k, v := range overrides {
+		u[k] = v
+	}
+	err = dash.FromUnstructured(u)
+	if err != nil {
+		panic(err)
+	}
+
+	return dash
 }

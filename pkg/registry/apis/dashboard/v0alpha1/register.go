@@ -240,8 +240,8 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			return fmt.Errorf("expected v0alpha1 dashboard")
 		}
 
-		if id, ok := dash.Spec.Object["id"].(float64); ok {
-			delete(dash.Spec.Object, "id")
+		if id, ok := dash.Spec["id"].(float64); ok {
+			delete(dash.Spec, "id")
 			if id != 0 {
 				meta, err := utils.MetaAccessor(obj)
 				if err != nil {

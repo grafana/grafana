@@ -17,8 +17,10 @@ type Dashboard struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The dashboard body (unstructured for now)
-	Spec migration.DashboardSpec `json:"spec"`
+	Spec DashboardSpec `json:"spec"`
 }
+
+type DashboardSpec = migration.DashboardSpec
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardList struct {
