@@ -40,7 +40,11 @@ import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import {
+  getLibraryPanelElement,
+  getPanelElement,
+  transformSaveModelSchemaV2ToScene,
+} from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -219,32 +223,47 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels).toHaveLength(2);
-    const vizPanel = vizPanels[0];
-    validateVizPanel(vizPanel, dash);
+    expect(vizPanels).toHaveLength(3);
 
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
-    expect(layout.state.grid.state.children.length).toBe(2);
-    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
+
+    // Panel
+    const panel = getPanelElement(dash, 'panel-1')!;
+    expect(layout.state.grid.state.children.length).toBe(3);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
     const gridLayoutItemSpec = dash.layout.spec.items[0].spec as GridLayoutItemSpec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
+    const vizPanel = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    validateVizPanel(vizPanel, dash);
 
-    expect((layout.state.grid.state.children[1] as SceneGridRow).state.isCollapsed).toBe(true);
-    expect((layout.state.grid.state.children[1] as SceneGridRow).state.y).toBe(10);
+    // Library Panel
+    const libraryPanel = getLibraryPanelElement(dash, 'library-panel-1')!;
+    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.uid}`);
+    const libraryGridLayoutItemSpec = dash.layout.spec.items[1].spec as GridLayoutItemSpec;
+    expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
+    expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
+    expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
+    expect(layout.state.grid.state.children[1].state.y).toBe(libraryGridLayoutItemSpec.y);
+    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'library-panel-1')!;
+    validateVizPanel(vizLibraryPanel, dash);
+
+    expect((layout.state.grid.state.children[2] as SceneGridRow).state.isCollapsed).toBe(true);
+    expect((layout.state.grid.state.children[2] as SceneGridRow).state.y).toBe(10);
 
     // Transformations
-    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+    const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
     );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -265,14 +284,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(2);
+    expect(vizPanels.length).toBe(3);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -293,14 +312,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(2);
+    expect(vizPanels.length).toBe(3);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
   });
 
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -317,7 +336,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(2);
+    expect(vizPanels.length).toBe(3);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
