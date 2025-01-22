@@ -6,6 +6,7 @@ package server
 
 import (
 	"github.com/google/wire"
+
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
