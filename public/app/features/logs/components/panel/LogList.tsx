@@ -38,6 +38,7 @@ export const LogList = ({
   wrapLogMessage,
 }: Props) => {
   const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
+  const [listHeight, setListHeight] = useState(window.innerHeight * 0.75)
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
 
@@ -64,6 +65,7 @@ export const LogList = ({
 
   useEffect(() => {
     const handleResize = debounce(() => {
+      setListHeight(window.innerHeight * 0.75);
       resetLogLineSizes();
       listRef.current?.resetAfterIndex(0);
     }, 50);
@@ -99,8 +101,6 @@ export const LogList = ({
     [handleOverflow, processedLogs, showTime, wrapLogMessage]
   );
 
-  const height = window.innerHeight * 0.75;
-
   if (!containerElement) {
     // Wait for container to be rendered
     return null;
@@ -108,7 +108,7 @@ export const LogList = ({
 
   return (
     <VariableSizeList
-      height={height}
+      height={listHeight}
       itemCount={processedLogs.length}
       itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
       itemKey={(index: number) => processedLogs[index].uid}
