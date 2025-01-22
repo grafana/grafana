@@ -86,11 +86,6 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 		return nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 	}
 
-	replicator, err := resources.NewReplicator(repo, parser)
-	if err != nil {
-		return nil, fmt.Errorf("error creating replicator")
-	}
-
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
 		started := time.Now()
@@ -108,8 +103,13 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			return nil, fmt.Errorf("update repository status: %w", err)
 		}
 
+		syncer, err := NewSyncer(repo, parser)
+		if err != nil {
+			return nil, fmt.Errorf("error creating replicator")
+		}
+
 		// Sync the repository
-		ref, syncError := replicator.Sync(ctx)
+		ref, syncError := syncer.Sync(ctx)
 		status = &provisioning.SyncStatus{
 			State:    provisioning.JobStateSuccess,
 			JobID:    job.GetName(),
@@ -168,14 +168,26 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			return nil, fmt.Errorf("error processing pull request: %w", err)
 		}
 	case provisioning.JobActionExport:
-		dummy := &dummyExporter{}
 		if job.Spec.Export == nil {
 			return &provisioning.JobStatus{
 				State:  provisioning.JobStateError,
 				Errors: []string{"Export job missing export settings"},
 			}, nil
 		}
-		return dummy.Export(ctx, repo, *job.Spec.Export, progress)
+
+		var exporter Exporter
+
+		// Test for now... so we have something with long spinners for UI testing!!!
+		if job.Spec.Export.Branch == "*dummy*" {
+			exporter = &dummyExporter{}
+		} else {
+			exporter, err = NewExporter(repo, parser)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return exporter.Export(ctx, repo, *job.Spec.Export, progress)
+
 	default:
 		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
 	}

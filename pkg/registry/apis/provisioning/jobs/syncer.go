@@ -1,15 +1,12 @@
-package resources
+package jobs
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,23 +19,24 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type UnsyncOptions struct {
 	KeepDashboards bool
 }
 
-type Replicator struct {
-	client     *DynamicClient
-	parser     *Parser
+type Syncer struct {
+	client     *resources.DynamicClient
+	parser     *resources.Parser
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
 
-func NewReplicator(
+func NewSyncer(
 	repo repository.Repository,
-	parser *Parser,
-) (*Replicator, error) {
+	parser *resources.Parser,
+) (*Syncer, error) {
 	dynamicClient := parser.Client()
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
@@ -46,7 +44,7 @@ func NewReplicator(
 		Resource: "folders",
 	})
 
-	return &Replicator{
+	return &Syncer{
 		parser:     parser,
 		client:     dynamicClient,
 		folders:    folders,
@@ -55,7 +53,7 @@ func NewReplicator(
 }
 
 // Sync replicates all files in the repository.
-func (r *Replicator) Sync(ctx context.Context) (string, error) {
+func (r *Syncer) Sync(ctx context.Context) (string, error) {
 	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
 	lastCommit := cfg.Status.Sync.Hash
@@ -104,7 +102,7 @@ func (r *Replicator) Sync(ctx context.Context) (string, error) {
 	return latest, nil
 }
 
-func (r *Replicator) Unsync(ctx context.Context, opts UnsyncOptions) error {
+func (r *Syncer) Unsync(ctx context.Context, opts UnsyncOptions) error {
 	cfg := r.repository.Config()
 
 	logger := logging.FromContext(ctx)
@@ -138,7 +136,7 @@ func (r *Replicator) Unsync(ctx context.Context, opts UnsyncOptions) error {
 }
 
 // replicateTree replicates all files in the repository.
-func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
+func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 	tree, err := r.repository.ReadTree(ctx, ref)
 	if err != nil {
 		return fmt.Errorf("read tree: %w", err)
@@ -166,7 +164,7 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 		info.Modified = nil // modified?
 
 		if err := r.replicateFile(ctx, info); err != nil {
-			if errors.Is(err, ErrUnableToReadResourceBytes) {
+			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 				logger.Info("file does not contain a resource")
 				continue
 			}
@@ -179,7 +177,7 @@ func (r *Replicator) replicateTree(ctx context.Context, ref string) error {
 
 // replicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *Syncer) replicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	logger := logging.FromContext(ctx).With("file", fileInfo.Path, "ref", fileInfo.Ref)
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
@@ -241,7 +239,7 @@ func (r *Replicator) replicateFile(ctx context.Context, fileInfo *repository.Fil
 	return nil
 }
 
-func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (string, error) {
+func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string, error) {
 	dir := path.Dir(filePath)
 	parent := r.repository.Config().Spec.Folder
 	if dir == "." || dir == "/" {
@@ -304,7 +302,7 @@ func (r *Replicator) createFolderPath(ctx context.Context, filePath string) (str
 	return parent, nil
 }
 
-func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
+func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	for _, change := range changes {
 		if r.parser.ShouldIgnore(change.Path) {
 			continue
@@ -343,7 +341,7 @@ func (r *Replicator) replicateChanges(ctx context.Context, changes []repository.
 	return nil
 }
 
-func (r *Replicator) deleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
+func (r *Syncer) deleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
@@ -368,7 +366,7 @@ func (r *Replicator) deleteFile(ctx context.Context, fileInfo *repository.FileIn
 	return nil
 }
 
-func (r *Replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedResource, error) {
+func (r *Syncer) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*resources.ParsedResource, error) {
 	file, err := r.parser.Parse(ctx, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
@@ -385,163 +383,7 @@ func (r *Replicator) parseResource(ctx context.Context, fileInfo *repository.Fil
 	return file, nil
 }
 
-func (r *Replicator) Export(ctx context.Context) error {
-	logger := logging.FromContext(ctx)
-	dashboardIface := r.client.Resource(schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v2alpha1",
-		Resource: "dashboards",
-	})
-
-	// TODO: handle pagination
-	folders, err := r.fetchRepoFolderTree(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to list folders: %w", err)
-	}
-
-	// TODO: handle pagination
-	dashboardList, err := dashboardIface.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to list dashboards: %w", err)
-	}
-
-	for _, item := range dashboardList.Items {
-		if ctx.Err() != nil {
-			logger.Debug("cancelling replication process due to ctx error", "error", err)
-			return ctx.Err()
-		}
-
-		name := item.GetName()
-		logger := logger.With("item", name)
-		ns := r.repository.Config().GetNamespace()
-		if item.GetNamespace() != ns {
-			logger.Debug("skipping dashboard item due to mismatching namespace", "got", ns)
-			continue
-		}
-
-		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
-		logger = logger.With("folder", folder)
-		if !folders.In(folder) {
-			logger.Debug("folder of item was not in tree of repository")
-			continue
-		}
-
-		delete(item.Object, "metadata")
-		marshalledBody, baseFileName, err := r.marshalPreferredFormat(item.Object, name, r.repository)
-		if err != nil {
-			return fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
-		}
-		fileName := filepath.Join(folders.DirPath(folder), baseFileName)
-		logger = logger.With("file", fileName)
-
-		var ref string
-		if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
-			ref = r.repository.Config().Spec.GitHub.Branch
-		}
-		logger = logger.With("ref", ref)
-
-		_, err = r.repository.Read(ctx, fileName, ref)
-		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.Error("failed to check if file exists before writing", "error", err)
-			return fmt.Errorf("failed to check if file exists before writing: %w", err)
-		} else if err != nil { // ErrFileNotFound
-			err = r.repository.Create(ctx, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
-		} else {
-			err = r.repository.Update(ctx, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
-		}
-		if err != nil {
-			logger.Error("failed to write a file in repository", "error", err)
-			return fmt.Errorf("failed to write file in repo: %w", err)
-		}
-		logger.Debug("successfully exported item")
-	}
-
-	return nil
-}
-
-type folderTree struct {
-	tree       map[string]string
-	repoFolder string
-}
-
-func (t *folderTree) In(folder string) bool {
-	_, ok := t.tree[folder]
-	return ok
-}
-
-// DirPath creates the path to the directory with slashes.
-// The repository folder is not included in the path.
-// If In(folder) is false, this will panic, because it would be undefined behaviour.
-func (t *folderTree) DirPath(folder string) string {
-	if folder == t.repoFolder {
-		return ""
-	}
-	if !t.In(folder) {
-		panic("undefined behaviour")
-	}
-
-	dirPath := folder
-	parent := t.tree[folder]
-	for parent != "" && parent != t.repoFolder {
-		dirPath = path.Join(parent, dirPath)
-		parent = t.tree[parent]
-	}
-	// Not using Clean here is intentional. We don't want `.` or similar.
-	return dirPath
-}
-
-func (r *Replicator) fetchRepoFolderTree(ctx context.Context) (*folderTree, error) {
-	iface := r.client.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
-
-	// TODO: handle pagination
-	rawFolders, err := iface.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	folders := make(map[string]string, len(rawFolders.Items))
-	for _, rf := range rawFolders.Items {
-		name := rf.GetName()
-		// TODO: Can I use MetaAccessor here?
-		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
-		folders[name] = parent
-	}
-
-	// folders now includes a map[folder name]parent name
-	// The top-most folder has a parent of "". Any folders below have parent refs.
-	// We want to find only folders which are or start in repoFolder.
-	repoFolder := r.repository.Config().Spec.Folder
-	for folder, parent := range folders {
-		if folder == repoFolder {
-			continue
-		}
-
-		hasRepoRoot := false
-		for parent != "" {
-			if parent == repoFolder {
-				hasRepoRoot = true
-				break
-			}
-			parent = folders[parent]
-		}
-		if !hasRepoRoot {
-			delete(folders, folder)
-		}
-	}
-
-	// folders now only includes the tree of the repoFolder.
-
-	return &folderTree{
-		tree:       folders,
-		repoFolder: repoFolder,
-	}, nil
-}
-
-func (r *Replicator) ensureRepositoryFolderExists(ctx context.Context) error {
+func (r *Syncer) ensureRepositoryFolderExists(ctx context.Context) error {
 	if r.repository.Config().Spec.Folder == "" {
 		return nil
 	}
@@ -602,14 +444,4 @@ func (r *Replicator) ensureRepositoryFolderExists(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (*Replicator) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
-	if repo.Config().Spec.PreferYAML {
-		body, err = yaml.Marshal(obj)
-		return body, name + ".yaml", err
-	} else {
-		body, err := json.MarshalIndent(obj, "", "    ")
-		return body, name + ".json", err
-	}
 }

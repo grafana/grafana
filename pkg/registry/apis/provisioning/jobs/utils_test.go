@@ -1,4 +1,4 @@
-package resources
+package jobs
 
 import (
 	"testing"

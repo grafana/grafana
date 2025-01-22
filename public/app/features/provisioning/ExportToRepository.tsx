@@ -86,7 +86,7 @@ export function ExportToRepository({ repo }: Props) {
           exportRepo({
             name: repo.metadata?.name!,
             body: {
-              branch: 'my-branch',
+              branch: '*dummy*', // << triggers a fake exporter
               folder: 'some-folder',
               history: true,
               prefix: 'prefix/in/remote/tree',

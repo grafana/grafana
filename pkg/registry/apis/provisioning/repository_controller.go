@@ -246,12 +246,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 		}
 
-		replicator, err := resources.NewReplicator(repo, parser)
+		replicator, err := jobs.NewSyncer(repo, parser)
 		if err != nil {
 			return fmt.Errorf("error creating replicator")
 		}
 
-		if err := replicator.Unsync(ctx, resources.UnsyncOptions{}); err != nil {
+		if err := replicator.Unsync(ctx, jobs.UnsyncOptions{}); err != nil {
 			return fmt.Errorf("unsync repository: %w", err)
 		}
 
