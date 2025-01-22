@@ -69,6 +69,13 @@ func TestDashboardQueries(t *testing.T) {
 						LastID: 22,
 					}),
 				},
+				{
+					Name: "folders",
+					Data: getQuery(&DashboardQuery{
+						OrgID:      2,
+						GetFolders: true,
+					}),
+				},
 			},
 			sqlQueryPanels: {
 				{

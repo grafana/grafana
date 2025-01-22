@@ -26,6 +26,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.dropdown,
       position: 'relative',
       borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
     }),
     menuUlContainer: css({
       label: 'combobox-menu-ul-container',
@@ -104,10 +105,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         color: theme.colors.text.primary,
       },
-    }),
-    warningIcon: css({
-      label: 'combobox-warning-icon',
-      color: theme.colors.text.secondary,
     }),
     input: css({
       label: 'combobox-input',

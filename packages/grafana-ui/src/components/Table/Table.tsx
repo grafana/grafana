@@ -10,7 +10,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
+import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher, Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -22,10 +22,11 @@ import { Pagination } from '../Pagination/Pagination';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
 import { RowsList } from './RowsList';
+import { TableCellInspector } from './TableCellInspector';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
-import { FooterItem, GrafanaTableState, Props } from './types';
+import { FooterItem, GrafanaTableState, InspectCell, Props } from './types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -72,6 +73,7 @@ export const Table = memo((props: Props) => {
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const noValuesDisplayText = fieldConfig?.defaults?.noValue ?? NO_DATA_TEXT;
+  const [inspectCell, setInspectCell] = useState<InspectCell | null>(null);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
@@ -306,9 +308,12 @@ export const Table = memo((props: Props) => {
   // Try to determine the longet field
   // TODO: do we wrap only one field?
   // What if there are multiple fields with long text?
-  const longestField = guessLongestField(fieldConfig, data);
+  let longestField: Field | undefined = undefined;
   let textWrapField = undefined;
-  if (fieldConfig !== undefined) {
+
+  if (fieldConfig) {
+    longestField = guessLongestField(fieldConfig, data);
+
     data.fields.forEach((field) => {
       fieldConfig.overrides.forEach((override) => {
         const matcher = getFieldMatcher(override.matcher);
@@ -324,66 +329,82 @@ export const Table = memo((props: Props) => {
   }
 
   return (
-    <div
-      {...getTableProps()}
-      className={tableStyles.table}
-      aria-label={ariaLabel}
-      role="table"
-      ref={tableDivRef}
-      style={{ width, height }}
-    >
-      <CustomScrollbar hideVerticalTrack={true}>
-        <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-          {!noHeader && (
-            <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
-          )}
-          {itemCount > 0 ? (
-            <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <RowsList
-                headerGroups={headerGroups}
-                data={data}
-                rows={rows}
-                width={width}
-                cellHeight={cellHeight}
-                headerHeight={headerHeight}
-                rowHeight={tableStyles.rowHeight}
-                itemCount={itemCount}
-                pageIndex={state.pageIndex}
-                listHeight={listHeight}
-                listRef={listRef}
-                tableState={state}
-                prepareRow={prepareRow}
-                timeRange={timeRange}
-                onCellFilterAdded={onCellFilterAdded}
-                nestedDataField={nestedDataField}
+    <>
+      <div
+        {...getTableProps()}
+        className={tableStyles.table}
+        aria-label={ariaLabel}
+        role="table"
+        ref={tableDivRef}
+        style={{ width, height }}
+      >
+        <CustomScrollbar hideVerticalTrack={true}>
+          <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
+            {!noHeader && (
+              <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
+            )}
+            {itemCount > 0 ? (
+              <div
+                data-testid={selectors.components.Panels.Visualization.Table.body}
+                ref={variableSizeListScrollbarRef}
+              >
+                <RowsList
+                  headerGroups={headerGroups}
+                  data={data}
+                  rows={rows}
+                  width={width}
+                  cellHeight={cellHeight}
+                  headerHeight={headerHeight}
+                  rowHeight={tableStyles.rowHeight}
+                  itemCount={itemCount}
+                  pageIndex={state.pageIndex}
+                  listHeight={listHeight}
+                  listRef={listRef}
+                  tableState={state}
+                  prepareRow={prepareRow}
+                  timeRange={timeRange}
+                  onCellFilterAdded={onCellFilterAdded}
+                  nestedDataField={nestedDataField}
+                  tableStyles={tableStyles}
+                  footerPaginationEnabled={Boolean(enablePagination)}
+                  enableSharedCrosshair={enableSharedCrosshair}
+                  initialRowIndex={initialRowIndex}
+                  longestField={longestField}
+                  textWrapField={textWrapField}
+                  getActions={getActions}
+                  replaceVariables={replaceVariables}
+                  setInspectCell={setInspectCell}
+                />
+              </div>
+            ) : (
+              <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
+                {noValuesDisplayText}
+              </div>
+            )}
+            {footerItems && (
+              <FooterRow
+                isPaginationVisible={Boolean(enablePagination)}
+                footerValues={footerItems}
+                footerGroups={footerGroups}
+                totalColumnsWidth={totalColumnsWidth}
                 tableStyles={tableStyles}
-                footerPaginationEnabled={Boolean(enablePagination)}
-                enableSharedCrosshair={enableSharedCrosshair}
-                initialRowIndex={initialRowIndex}
-                longestField={longestField}
-                textWrapField={textWrapField}
-                getActions={getActions}
-                replaceVariables={replaceVariables}
               />
-            </div>
-          ) : (
-            <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
-              {noValuesDisplayText}
-            </div>
-          )}
-          {footerItems && (
-            <FooterRow
-              isPaginationVisible={Boolean(enablePagination)}
-              footerValues={footerItems}
-              footerGroups={footerGroups}
-              totalColumnsWidth={totalColumnsWidth}
-              tableStyles={tableStyles}
-            />
-          )}
-        </div>
-      </CustomScrollbar>
-      {paginationEl}
-    </div>
+            )}
+          </div>
+        </CustomScrollbar>
+        {paginationEl}
+      </div>
+
+      {inspectCell !== null && (
+        <TableCellInspector
+          mode={inspectCell.mode}
+          value={inspectCell.value}
+          onDismiss={() => {
+            setInspectCell(null);
+          }}
+        />
+      )}
+    </>
   );
 });
 

@@ -1,8 +1,10 @@
 import { config } from '@grafana/runtime';
 import { CustomVariable, GroupByVariable } from '@grafana/scenes';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { LibraryPanel } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import * as libpanels from 'app/features/library-panels/state/api';
 
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
@@ -42,6 +44,23 @@ jest.mock('@grafana/runtime', () => ({
     },
   },
 }));
+
+const libraryPanel: LibraryPanel = {
+  name: 'LibraryPanel A',
+  uid: '111',
+  type: 'table',
+  model: {
+    title: 'LibraryPanel A title',
+    type: 'table',
+    options: { showHeader: true },
+    fieldConfig: { defaults: {}, overrides: [] },
+    datasource: { uid: 'abcdef' },
+    targets: [{ refId: 'A' }],
+  },
+  version: 1,
+};
+
+jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue(libraryPanel);
 
 describe('V2 Transformers', () => {
   beforeAll(() => {

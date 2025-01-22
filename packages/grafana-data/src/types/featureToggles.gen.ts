@@ -124,7 +124,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
@@ -252,4 +251,8 @@ export interface FeatureToggles {
   teamHttpHeadersMimir?: boolean;
   ABTestFeatureToggleA?: boolean;
   ABTestFeatureToggleB?: boolean;
+  queryLibraryDashboards?: boolean;
+  grafanaAdvisor?: boolean;
+  elasticsearchImprovedParsing?: boolean;
+  datasourceConnectionsTab?: boolean;
 }
