@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
@@ -15,9 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,13 +29,7 @@ type FolderUnifiedStoreImpl struct {
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(cfg *setting.Cfg) *FolderUnifiedStoreImpl {
-	k8sHandler := &foldk8sHandler{
-		gvr:        v0alpha1.FolderResourceInfo.GroupVersionResource(),
-		namespacer: request.GetNamespaceMapper(cfg),
-		cfg:        cfg,
-	}
-
+func ProvideUnifiedStore(k8sHandler *foldk8sHandler) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
 		k8sclient: k8sHandler,
 		log:       log.New("folder-store"),
@@ -165,10 +159,11 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	}
 
 	out, err := client.Get(newCtx, *q.UID, v1.GetOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
+	} else if err != nil || out == nil {
+		return nil, dashboards.ErrFolderNotFound
 	}
-
 	dashFolder, _ := internalfolders.UnstructuredToLegacyFolder(*out, q.SignedInUser.GetOrgID())
 	return dashFolder, nil
 }
@@ -432,7 +427,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 }
 
 func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]*folder.Folder, ancestor_uid string, descendantsMap map[string]*folder.Folder) {
-	for uid, _ := range tree[ancestor_uid] {
+	for uid := range tree[ancestor_uid] {
 		descendantsMap[uid] = nodes[uid]
 		getDescendants(nodes, tree, uid, descendantsMap)
 	}

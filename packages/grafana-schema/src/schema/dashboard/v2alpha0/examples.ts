@@ -1,4 +1,4 @@
-import { DashboardV2Spec } from './dashboard.gen';
+import { DashboardV2Spec } from './types.gen';
 
 export const handyTestingSchema: DashboardV2Spec = {
   id: 1,
@@ -8,7 +8,6 @@ export const handyTestingSchema: DashboardV2Spec = {
   liveNow: false,
   preload: false,
   editable: true,
-  schemaVersion: 40,
   tags: ['tag1', 'tag2'],
   timeSettings: {
     autoRefresh: '5s',
@@ -182,6 +181,13 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
+    'library-panel-1': {
+      kind: 'LibraryPanel',
+      spec: {
+        uid: 'library-panel-1',
+        name: 'Library Panel',
+      },
+    },
   },
   layout: {
     kind: 'GridLayout',
@@ -203,6 +209,19 @@ export const handyTestingSchema: DashboardV2Spec = {
               value: 'customVar',
               maxPerRow: 3,
             },
+          },
+        },
+        {
+          kind: 'GridLayoutItem',
+          spec: {
+            element: {
+              kind: 'ElementReference',
+              name: 'library-panel-1',
+            },
+            height: 100,
+            width: 200,
+            x: 0,
+            y: 2,
           },
         },
       ],
@@ -380,7 +399,6 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
         description: 'A group by variable',
         hide: 'dontHide',
-        includeAll: false,
         label: 'Group By Variable',
         multi: false,
         name: 'groupByVar',

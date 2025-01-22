@@ -42,6 +42,8 @@ var (
 	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
 	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -72,6 +74,9 @@ type sqlResourceRequest struct {
 	GUID       string
 	WriteEvent resource.WriteEvent
 	Folder     string
+
+	// Useful when batch writing
+	ResourceVersion int64
 }
 
 func (r sqlResourceRequest) Validate() error {
@@ -81,6 +86,8 @@ func (r sqlResourceRequest) Validate() error {
 type sqlStatsRequest struct {
 	sqltemplate.SQLTemplate
 	Namespace string
+	Group     string
+	Resource  string
 	Folder    string
 	MinCount  int
 }
@@ -195,6 +202,41 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 		ResourceVersion: r.Response.ResourceVersion,
 		Value:           r.Response.Value,
 	}, nil
+}
+
+type sqlResourceHistoryDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	GUID string
+
+	Namespace string
+	Group     string
+	Resource  string
+}
+
+func (r *sqlResourceHistoryDeleteRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.GUID == "" {
+		if r.Group == "" {
+			return fmt.Errorf("missing group")
+		}
+		if r.Resource == "" {
+			return fmt.Errorf("missing resource")
+		}
+	}
+	return nil
+}
+
+type sqlGetHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	Key     *resource.ResourceKey
+	Trash   bool  // only deleted items
+	StartRV int64 // from NextPageToken
+}
+
+func (r sqlGetHistoryRequest) Validate() error {
+	return nil // TODO
 }
 
 // update resource history

@@ -43,21 +43,32 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: PanelKind // |* more element types in the future
+  elements: [ElementReference.name]: Element 
 
   annotations: [...AnnotationQueryKind]
 
   layout: GridLayoutKind
 
-  // Version of the JSON schema, incremented each time a Grafana update brings
-  // changes to said schema.
-  schemaVersion: uint16 | *39
 
   // Plugins only. The version of the dashboard installed together with the plugin.
   // This is used to determine if the dashboard should be updated when the plugin is updated.
   revision?: uint16
 }
 
+// Supported dashboard elements
+Element: PanelKind | LibraryPanelKind // |* more element types in the future
+
+LibraryPanelKind: {
+  kind: "LibraryPanel"
+  spec: LibraryPanelSpec
+}
+
+LibraryPanelSpec: {
+  // Library panel name
+  name: string
+  // Library panel UID
+  uid: string
+}
 
 AnnotationPanelFilter: {
   // Should the specified panels be included or excluded
@@ -753,8 +764,6 @@ GroupByVariableSpec: {
   }
   options: [...VariableOption] | *[]
   multi: bool | *false
-  includeAll: bool | *false
-  allValue?: string
   label?: string
   hide: VariableHide
   skipUrlSync: bool | *false

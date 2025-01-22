@@ -10,17 +10,15 @@ import {
   SceneVariableSet,
   TestVariable,
   VariableValueOption,
-  VizPanel,
-  VizPanelMenu,
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { activateFullSceneTree } from '../utils/test-utils';
+import { isReadOnlyClone } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { panelMenuBehavior, repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
-import { DashboardGridItem, RepeatDirection } from './layout-default/DashboardGridItem';
+import { RepeatDirection } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './row-actions/RowActions';
 
@@ -67,6 +65,13 @@ describe('RowRepeaterBehavior', () => {
       // Should give repeated panels unique keys
       const gridItem = row2.state.children[0] as SceneGridItem;
       expect(gridItem.state.body?.state.key).toBe('canvas-1-clone-B1');
+    });
+
+    it('Repeated rows should be read only', () => {
+      const row1 = grid.state.children[1] as SceneGridRow;
+      const row2 = grid.state.children[2] as SceneGridRow;
+      expect(isReadOnlyClone(row1)).toBe(false);
+      expect(isReadOnlyClone(row2)).toBe(true);
     });
 
     it('Should update all rows when a panel is added to a clone', async () => {
@@ -165,50 +170,6 @@ describe('RowRepeaterBehavior', () => {
       expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
 
       notifyPanelsSpy.mockRestore();
-    });
-  });
-
-  describe('Given scene with DashboardGridItem', () => {
-    let scene: DashboardScene;
-    let grid: SceneGridLayout;
-    let rowToRepeat: SceneGridRow;
-
-    beforeEach(async () => {
-      const menu = new VizPanelMenu({
-        $behaviors: [panelMenuBehavior],
-      });
-
-      ({ scene, grid, rowToRepeat } = buildScene({ variableQueryTime: 0 }));
-      const panel = new VizPanel({ pluginId: 'text', menu });
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-      rowToRepeat.setState({
-        children: [
-          new DashboardGridItem({
-            body: panel,
-          }),
-        ],
-      });
-
-      activateFullSceneTree(scene);
-      await new Promise((r) => setTimeout(r, 1));
-    });
-
-    it('Should set repeat specific panel menu for repeated rows but not original one', () => {
-      const row1 = grid.state.children[1] as SceneGridRow;
-      const row2 = grid.state.children[2] as SceneGridRow;
-      const panelMenuBehaviorOriginal = (
-        ((row1.state.children[0] as DashboardGridItem).state.body as VizPanel).state.menu as VizPanelMenu
-      ).state.$behaviors;
-      const panelMenuBehaviorClone = (
-        ((row2.state.children[0] as DashboardGridItem).state.body as VizPanel).state.menu as VizPanelMenu
-      ).state.$behaviors;
-
-      expect(panelMenuBehaviorOriginal).toBeDefined();
-      expect(panelMenuBehaviorOriginal![0]).toBe(panelMenuBehavior);
-
-      expect(panelMenuBehaviorClone).toBeDefined();
-      expect(panelMenuBehaviorClone![0]).toBe(repeatPanelMenuBehavior);
     });
   });
 

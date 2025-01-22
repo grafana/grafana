@@ -7,14 +7,15 @@ import (
 	"strings"
 	"time"
 
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/endpoints/request"
+
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -40,9 +41,10 @@ type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	store         store.Store
-	identityStore legacy.LegacyIdentityStore
-	actionMapper  *mappers.K8sRbacMapper
+	store           store.Store
+	permissionStore store.PermissionStore
+	identityStore   legacy.LegacyIdentityStore
+	actionMapper    *mappers.K8sRbacMapper
 
 	logger log.Logger
 	tracer tracing.Tracer
@@ -58,19 +60,27 @@ type Service struct {
 	sf *singleflight.Group
 }
 
-func NewService(sql legacysql.LegacyDatabaseProvider, identityStore legacy.LegacyIdentityStore, logger log.Logger, tracer tracing.Tracer) *Service {
+func NewService(
+	sql legacysql.LegacyDatabaseProvider,
+	identityStore legacy.LegacyIdentityStore,
+	permissionStore store.PermissionStore,
+	logger log.Logger,
+	tracer tracing.Tracer,
+
+) *Service {
 	return &Service{
-		store:          store.NewStore(sql, tracer),
-		identityStore:  identityStore,
-		actionMapper:   mappers.NewK8sRbacMapper(),
-		logger:         logger,
-		tracer:         tracer,
-		idCache:        localcache.New(longCacheTTL, longCleanupInterval),
-		permCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
-		teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
-		basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
-		folderCache:    localcache.New(shortCacheTTL, shortCleanupInterval),
-		sf:             new(singleflight.Group),
+		store:           store.NewStore(sql, tracer),
+		permissionStore: permissionStore,
+		identityStore:   identityStore,
+		actionMapper:    mappers.NewK8sRbacMapper(),
+		logger:          logger,
+		tracer:          tracer,
+		idCache:         localcache.New(longCacheTTL, longCleanupInterval),
+		permCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
+		teamCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
+		basicRoleCache:  localcache.New(longCacheTTL, longCleanupInterval),
+		folderCache:     localcache.New(shortCacheTTL, shortCleanupInterval),
+		sf:              new(singleflight.Group),
 	}
 }
 
@@ -191,7 +201,7 @@ func validateNamespace(ctx context.Context, nameSpace string) (claims.NamespaceI
 	if nameSpace == "" {
 		return claims.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
 	}
-	authInfo, has := claims.From(ctx)
+	authInfo, has := claims.AuthInfoFrom(ctx)
 	if !has {
 		return claims.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
 	}
@@ -241,8 +251,15 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
 	defer span.End()
 
+	// When checking folder creation permissions, also check edit and admin action sets for folder, as the scoped folder create actions aren't stored in the DB separately
+	var actionSets []string
+	if action == "folders:create" {
+		actionSets = append(actionSets, "folders:edit")
+		actionSets = append(actionSets, "folders:admin")
+	}
+
 	if idType == claims.TypeAnonymous {
-		return s.getAnonymousPermissions(ctx, ns, action)
+		return s.getAnonymousPermissions(ctx, ns, action, actionSets)
 	}
 
 	userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, userID)
@@ -269,12 +286,13 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 		userPermQuery := store.PermissionsQuery{
 			UserID:        userIdentifiers.ID,
 			Action:        action,
+			ActionSets:    actionSets,
 			TeamIDs:       teamIDs,
 			Role:          basicRoles.Role,
 			IsServerAdmin: basicRoles.IsAdmin,
 		}
 
-		permissions, err := s.store.GetUserPermissions(ctx, ns, userPermQuery)
+		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, userPermQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -293,7 +311,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 	return res.(map[string]bool), nil
 }
 
-func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string) (map[string]bool, error) {
+func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.NamespaceInfo, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getAnonymousPermissions")
 	defer span.End()
 
@@ -303,7 +321,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 	}
 
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
-		permissions, err := s.store.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, Role: "Viewer"})
+		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
 		if err != nil {
 			return nil, err
 		}
