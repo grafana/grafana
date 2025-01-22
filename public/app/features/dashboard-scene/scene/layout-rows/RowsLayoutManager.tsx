@@ -104,7 +104,6 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       name: 'Rows',
       description: 'Rows layout',
       id: 'rows-layout',
-      level: 1,
       createFromLayout: RowsLayoutManager.createFromLayout,
     };
   }
