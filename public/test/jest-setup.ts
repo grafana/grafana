@@ -61,6 +61,9 @@ const mockIntersectionObserver = jest
     disconnect: jest.fn(),
   }));
 global.IntersectionObserver = mockIntersectionObserver;
+Object.defineProperty(document, 'fonts', {
+  value: { ready: Promise.resolve({}) },
+});
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
