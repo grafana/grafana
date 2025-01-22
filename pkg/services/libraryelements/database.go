@@ -291,9 +291,9 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		// nolint:staticcheck
 		writeParamSelectorSQL(&builder, ` WHERE `, append(params, Pair{"folder_id", cmd.FolderID})...)
 
-		builder.Write(" OR le.folder_id <> 0")
-		writeParamSelectorSQL(&builder, ` AND `, params...)
-		builder.Write(` OR le.folder_id=0`)
+		builder.Write(" OR (le.folder_id <> 0")
+		writeParamSelectorSQL(&builder, ` AND (`, params...)
+		builder.Write(` OR le.folder_id=0))`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
 		}
