@@ -187,7 +187,7 @@ This section describes the steps you must complete to access Grafana via web bro
 
 ## Customize Grafana default configuration
 
-Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests to be re-used across different environments. These manifests are written in a templating language, allowing you to provide configuration values via `values.yaml` file, or in-line using Helm, to replace the placeholders in the manifest where these configurations should reside.
+Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests to be reused across different environments. These manifests are written in a templating language, allowing you to provide configuration values via `values.yaml` file, or in-line using Helm, to replace the placeholders in the manifest where these configurations should reside.
 
 The `values.yaml` file allows you to customize the chart's configuration by specifying values for various parameters such as image versions, resource limits, service configurations, etc.
 
