@@ -74,6 +74,7 @@ export class MetricDatasourceHelper {
   public listNativeHistograms() {
     return this._nativeHistograms;
   }
+
   /**
    * Identify native histograms by querying classic histograms and all metrics,
    * then comparing the results and build the collection of native histograms.
