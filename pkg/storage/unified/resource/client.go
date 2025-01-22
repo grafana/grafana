@@ -133,7 +133,7 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
-	if identity.IsBackgroundCall(ctx) {
+	if identity.IsGrafanaIdentity(ctx) {
 		return "", nil
 	}
 
@@ -142,9 +142,8 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no claims found")
 	}
 
-	extra := authInfo.GetExtra()
-	if token, exists := extra["id-token"]; exists && len(token) != 0 && token[0] != "" {
-		return token[0], nil
+	if token := authInfo.GetIDToken(); len(token) != 0 {
+		return token, nil
 	}
 
 	// Future proofing: if we ever stop signing ID token for services

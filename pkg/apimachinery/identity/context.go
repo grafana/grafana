@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"reflect"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 )
 
 type ctxUserKey struct{}
 
 // WithRequester attaches the requester to the context.
 func WithRequester(ctx context.Context, usr Requester) context.Context {
-	ctx = claims.WithAuthInfo(ctx, usr) // also set the upstream auth info claims
+	ctx = types.WithAuthInfo(ctx, usr) // also set the upstream auth info claims
 	return context.WithValue(ctx, ctxUserKey{}, usr)
 }
 
@@ -30,12 +30,41 @@ func checkNilRequester(r Requester) bool {
 	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
 }
 
-type backgroundCallKey struct{}
+func WithGrafanaIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
+	r := &StaticRequester{
+		Type:           types.TypeAccessPolicy,
+		UserUID:        "grafana",
+		OrgRole:        RoleAdmin,
+		IsGrafanaAdmin: true,
+		AuthID:         "grafana",
+		OrgID:          orgID,
+		Permissions: map[int64]map[string][]string{
+			orgID: grafanaIdentityPermissions,
+		},
+	}
 
-func WithBackgroundCallFlag(ctx context.Context) context.Context {
-	return context.WithValue(ctx, backgroundCallKey{}, true)
+	return WithRequester(ctx, r), r
 }
 
-func IsBackgroundCall(ctx context.Context) bool {
-	return ctx.Value(backgroundCallKey{}) != nil
+func getWildcardPermissions(actions ...string) map[string][]string {
+	permissions := make(map[string][]string, len(actions))
+	for _, a := range actions {
+		permissions[a] = []string{"*"}
+	}
+	return permissions
+}
+
+// grafanaIdentityPermissions is a list of wildcard permissions for provided actions.
+// We should add every action required "internally" here.
+var grafanaIdentityPermissions = getWildcardPermissions(
+	"dashboards:read",
+	"folders:read",
+)
+
+func IsGrafanaIdentity(ctx context.Context) bool {
+	ident, err := GetRequester(ctx)
+	if err != nil {
+		return false
+	}
+	return ident.GetUID() == types.NewTypeID(types.TypeAccessPolicy, "grafana")
 }

@@ -15,8 +15,8 @@ func TestIDTokenExtractor(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, token)
 	})
-	t.Run("should return an empty token when background call flag is set", func(t *testing.T) {
-		ctx := identity.WithBackgroundCallFlag(context.Background())
+	t.Run("should return an empty token when grafana identity is set", func(t *testing.T) {
+		ctx, _ := identity.WithGrafanaIdentity(context.Background(), 0)
 		token, err := idTokenExtractor(ctx)
 		assert.NoError(t, err)
 		assert.Empty(t, token)
