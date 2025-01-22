@@ -145,7 +145,7 @@ jobs:
 
       - name: Add package.json changes
         run: |
-          git add package.json lerna.json yarn.lock packages public
+          git add package.json yarn.lock packages public
           test -e e2e/test-plugins && git add e2e/test-plugins
           git commit -m "Update version to ${{ inputs.version }}"
 
