@@ -5,6 +5,7 @@ import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@graf
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../../utils/test-utils';
+import { isReadOnlyClone } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
@@ -41,6 +42,9 @@ describe('PanelRepeaterGridItem', () => {
     expect(panel1.state.$variables?.state.variables[0].getValue()).toBe('1');
     expect(panel1.state.$variables?.state.variables[0].getValueText?.()).toBe('A');
     expect(panel2.state.$variables?.state.variables[0].getValue()).toBe('2');
+
+    expect(isReadOnlyClone(panel1)).toBe(false);
+    expect(isReadOnlyClone(panel2)).toBe(true);
   });
 
   it('Should wait for variable to load', async () => {
