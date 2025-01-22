@@ -42,10 +42,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	g, err := guardian.NewByFolder(ctx, &folder.Folder{
-		UID:   folderUID,
-		OrgID: user.GetOrgID(),
-	}, user.GetOrgID(), user)
+	g, err := guardian.NewByFolderUID(ctx, folderUID, user.GetOrgID(), user)
 	if err != nil {
 		return err
 	}

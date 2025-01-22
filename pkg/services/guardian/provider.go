@@ -30,12 +30,12 @@ func InitAccessControlGuardian(
 		return NewAccessControlDashboardGuardian(ctx, cfg, dashId, user, ac, dashboardService, folderService)
 	}
 
-	NewByUID = func(ctx context.Context, dashUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
-		return NewAccessControlDashboardGuardianByUID(ctx, cfg, dashUID, user, ac, dashboardService, folderService)
-	}
-
 	NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		return NewAccessControlDashboardGuardianByDashboard(ctx, cfg, dash, user, ac, dashboardService, folderService)
+	}
+
+	NewByFolderUID = func(ctx context.Context, folderUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
+		return NewAccessControlDashboardGuardianByFolderUID(ctx, cfg, folderUID, user, ac, dashboardService, folderService)
 	}
 
 	NewByFolder = func(ctx context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {

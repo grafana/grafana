@@ -625,7 +625,6 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
 			ID:    d.FolderID, // nolint:staticcheck
-			UID:   d.FolderUID,
 			OrgID: d.OrgID,
 		}, d.OrgID, user)
 		if err != nil {

@@ -65,56 +65,6 @@ func NewAccessControlDashboardGuardian(
 	}, nil
 }
 
-// NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboardUID.
-func NewAccessControlDashboardGuardianByUID(
-	ctx context.Context, cfg *setting.Cfg, dashboardUID string, user identity.Requester,
-	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, foldersService folder.Service,
-) (DashboardGuardian, error) {
-	var dashboard *dashboards.Dashboard
-	if dashboardUID != "" {
-		q := &dashboards.GetDashboardQuery{
-			UID:   dashboardUID,
-			OrgID: user.GetOrgID(),
-		}
-
-		qResult, err := dashboardService.GetDashboard(ctx, q)
-		if err != nil {
-			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
-			}
-			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
-		}
-		dashboard = qResult
-	}
-
-	if dashboard != nil && dashboard.IsFolder {
-		return &accessControlFolderGuardian{
-			accessControlBaseGuardian: accessControlBaseGuardian{
-				ctx:              ctx,
-				cfg:              cfg,
-				log:              log.New("folder.permissions"),
-				user:             user,
-				ac:               ac,
-				dashboardService: dashboardService,
-			},
-			folder: dashboards.FromDashboard(dashboard),
-		}, nil
-	}
-
-	return &accessControlDashboardGuardian{
-		accessControlBaseGuardian: accessControlBaseGuardian{
-			cfg:              cfg,
-			ctx:              ctx,
-			log:              log.New("dashboard.permissions"),
-			user:             user,
-			ac:               ac,
-			dashboardService: dashboardService,
-			folderService:    foldersService,
-		},
-		dashboard: dashboard,
-	}, nil
-}
-
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
 // This constructor should be preferred over the other two if the dashboard in available
 // since it avoids querying the database for fetching the dashboard.
@@ -151,22 +101,54 @@ func NewAccessControlDashboardGuardianByDashboard(
 	}, nil
 }
 
+// NewAccessControlDashboardGuardianByFolderUID creates a folder guardian by the provided folderUID.
+func NewAccessControlDashboardGuardianByFolderUID(
+	ctx context.Context, cfg *setting.Cfg, folderUID string, user identity.Requester,
+	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, foldersService folder.Service,
+) (DashboardGuardian, error) {
+	var f *folder.Folder
+	if folderUID != "" {
+		q := &folder.GetFolderQuery{
+			UID:          &folderUID,
+			OrgID:        user.GetOrgID(),
+			SignedInUser: user,
+		}
+
+		qResult, err := foldersService.Get(ctx, q)
+		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", err)
+			}
+			return nil, ErrGuardianGetFolderFailure.Errorf("failed to get folder by UID: %w", err)
+		}
+		f = qResult
+	}
+
+	return &accessControlFolderGuardian{
+		accessControlBaseGuardian: accessControlBaseGuardian{
+			ctx:              ctx,
+			cfg:              cfg,
+			log:              log.New("folder.permissions"),
+			user:             user,
+			ac:               ac,
+			dashboardService: dashboardService,
+			folderService:    foldersService,
+		},
+		folder: f,
+	}, nil
+}
+
 // NewAccessControlFolderGuardian creates a folder guardian by the provided folder.
 func NewAccessControlFolderGuardian(
 	ctx context.Context, cfg *setting.Cfg, f *folder.Folder, user identity.Requester,
 	ac accesscontrol.AccessControl, orgID int64, dashboardService dashboards.DashboardService,
 	folderService folder.Service,
 ) (DashboardGuardian, error) {
-	if f.UID == "" || f.ID == 0 {
+	if f.UID == "" { // nolint:staticcheck
 		query := &folder.GetFolderQuery{
+			ID:           &f.ID, // nolint:staticcheck
 			OrgID:        orgID,
 			SignedInUser: user,
-		}
-
-		if f.UID != "" {
-			query.UID = &f.UID
-		} else {
-			query.ID = &f.ID
 		}
 
 		folder, err := folderService.Get(ctx, query)
