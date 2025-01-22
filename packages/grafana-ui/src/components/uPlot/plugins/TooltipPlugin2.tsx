@@ -626,13 +626,6 @@ export const TooltipPlugin2 = ({
 
         transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
 
-        // TODO: revisit
-        // if (closestSeriesIdx != null && persistentLinks[closestSeriesIdx]?.length > 0) {
-        //   u.over.style.cursor = 'pointer';
-        // } else {
-        //   u.over.style.cursor = 'default';
-        // }
-
         if (domRef.current != null) {
           domRef.current.style.transform = transform;
         } else {
