@@ -71,7 +71,7 @@ export function measureTextHeight(text: string, maxWidth: number, beforeWidth = 
       let testLogLine: string;
       let width = 0;
       let delta = 0;
-      let availableWidth = maxWidth - beforeWidth - charWidth / 2;
+      let availableWidth = maxWidth - beforeWidth;
       do {
         testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
         width = measureTextWidth(testLogLine);
@@ -128,7 +128,7 @@ export function getLogLineSize(
   const { height } = measureTextHeight(logs[index].body, getLogContainerWidth(container), optionsWidth);
   return height;
 }
-
+let count = 0;
 export function hasUnderOrOverflow(element: HTMLDivElement, calculatedHeight?: number): number | null {
   const height = calculatedHeight ?? element.clientHeight;
   if (element.scrollHeight > height) {
