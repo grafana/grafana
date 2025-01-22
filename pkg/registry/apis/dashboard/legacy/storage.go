@@ -304,7 +304,6 @@ func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceS
 	// TODO sort if query.Sort == "" see sortedHits in services/search/service.go
 
 	searchFields := resource.StandardSearchFields()
-	fmt.Println("res ", res)
 	list := &resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
 			Columns: []*resource.ResourceTableColumnDefinition{
