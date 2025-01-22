@@ -166,7 +166,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			dbVersion := &alertRuleVersion{}
 			err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 				exist, err := sess.Table(alertRuleVersion{}).Where("rule_uid = ? AND version = ?", dbrule.UID, dbrule.Version).Get(dbVersion)
-				require.Truef(t, exist, fmt.Sprintf("new version of the rule does not exist in version table"))
+				require.Truef(t, exist, "new version of the rule does not exist in version table")
 				return err
 			})
 			require.NoError(t, err)
@@ -1691,7 +1691,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		err = store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
 			New:      *middleRule,
-		}}) //second entry in `rule_version_history` table happens here
+		}}) // second entry in `rule_version_history` table happens here
 		require.NoError(t, err)
 
 		rule.Version = rule.Version + 1
@@ -1700,7 +1700,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		err = store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
 			New:      *newerRule,
-		}}) //second entry in `rule_version_history` table happens here
+		}}) // second entry in `rule_version_history` table happens here
 		require.NoError(t, err)
 
 		// only the `old-record` should be deleted since limit is set to 1 and there are total 2 records
