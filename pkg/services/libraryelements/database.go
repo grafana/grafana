@@ -293,7 +293,10 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 
 		builder.Write(" OR (le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, ` AND (`, params...)
-		builder.Write(` OR le.folder_id=0))`)
+		builder.Write(` OR le.folder_id=0)`)
+		if len(params) > 0 {
+			builder.Write(`)`)
+		}
 		/* SQL QUERY:
 
 		Option 1 (depends on the result of the param selector):
@@ -439,7 +442,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", le.folder_uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-		builder.Write(` WHERE le.org_id=? AND folder_id<>0`, signedInUser.GetOrgID())
+		builder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder)
 		writeExcludeSQL(query, &builder)
