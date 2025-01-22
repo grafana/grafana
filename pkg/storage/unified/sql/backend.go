@@ -700,7 +700,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 	// Get the latest RV
 	since, err := b.listLatestRVs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get the latest resource version: %w", err)
+		return nil, fmt.Errorf("watch, get latest resource version: %w", err)
 	}
 	// Start the poller
 	stream := make(chan *resource.WrittenEvent)
@@ -718,11 +718,12 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 		case <-b.done:
 			return
 		case <-t.C:
+			fmt.Printf("POLLER... get latest rv...\n")
 			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
-				b.log.Error("get the latest resource version", "err", err)
+				b.log.Error("poller get latest resource version", "err", err)
 				t.Reset(b.pollingInterval)
 				continue
 			}

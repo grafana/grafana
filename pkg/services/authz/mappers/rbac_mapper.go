@@ -30,7 +30,7 @@ func NewK8sRbacMapper() *K8sRbacMapper {
 			utils.VerbUpdate:           fmt.Sprintf("%s:write", r),
 			utils.VerbPatch:            fmt.Sprintf("%s:write", r),
 			utils.VerbDelete:           fmt.Sprintf("%s:delete", r),
-			utils.VerbDeleteCollection: fmt.Sprintf("%s:delete", r),
+			utils.VerbDeleteCollection: fmt.Sprintf("%s:delete", r), // ????  SHOULD THIS something more??? %s.permissions:write
 			utils.VerbGetPermissions:   fmt.Sprintf("%s.permissions:read", r),
 			utils.VerbSetPermissions:   fmt.Sprintf("%s.permissions:write", r),
 		}

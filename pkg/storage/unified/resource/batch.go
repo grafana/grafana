@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -95,7 +95,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	}
 
 	ctx := stream.Context()
-	user, ok := types.AuthInfoFrom(ctx)
+	user, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return stream.SendAndClose(&BatchResponse{
 			Error: &ErrorResult{
@@ -113,6 +113,10 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 				Code:    http.StatusPreconditionFailed,
 			},
 		})
+	}
+	runner := &batchRunner{
+		checker: make(map[string]authlib.ItemChecker), // Can create
+		stream:  stream,
 	}
 	settings, err := NewBatchSettings(md)
 	if err != nil {
@@ -136,25 +140,36 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 
 	if settings.RebuildCollection {
 		for _, k := range settings.Collection {
-			verbs := []string{
-				utils.VerbDeleteCollection,
-				utils.VerbCreate,
-			}
-			for _, verb := range verbs {
-				rsp, err := s.access.Check(ctx, user, types.CheckRequest{
-					Namespace: k.Namespace,
-					Group:     k.Group,
-					Resource:  k.Resource,
-					Verb:      verb,
+			// Can we delete the whole collection
+			rsp, err := s.access.Check(ctx, user, authlib.CheckRequest{
+				Namespace: k.Namespace,
+				Group:     k.Group,
+				Resource:  k.Resource,
+				Verb:      utils.VerbDeleteCollection,
+			})
+			if err != nil || !rsp.Allowed {
+				return stream.SendAndClose(&BatchResponse{
+					Error: &ErrorResult{
+						Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
+						Code:    http.StatusForbidden,
+					},
 				})
-				if err != nil || !rsp.Allowed {
-					return stream.SendAndClose(&BatchResponse{
-						Error: &ErrorResult{
-							Message: fmt.Sprintf("Requester must be able to: %s", verb),
-							Code:    http.StatusForbidden,
-						},
-					})
-				}
+			}
+
+			// Get a specific checker
+			runner.checker[k.SearchID()], err = s.access.Compile(ctx, user, authlib.ListRequest{
+				Namespace: k.Namespace,
+				Group:     k.Group,
+				Resource:  k.Resource,
+				Verb:      utils.VerbCreate,
+			})
+			if err != nil {
+				return stream.SendAndClose(&BatchResponse{
+					Error: &ErrorResult{
+						Message: fmt.Sprintf("unable to compile create request"),
+						Code:    http.StatusForbidden,
+					},
+				})
 			}
 		}
 	} else {
@@ -167,7 +182,6 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	}
 
 	// BatchProcess requests
-	runner := newBatchRunner(settings, stream)
 	rsp, err := backend.ProcessBatch(ctx, settings, runner)
 	if rsp == nil {
 		rsp = &BatchResponse{}
@@ -212,18 +226,7 @@ type batchRunner struct {
 	rollback bool
 	request  *BatchRequest
 	err      error
-	valid    map[string]bool
-}
-
-func newBatchRunner(settings BatchSettings, stream ResourceStore_BatchProcessServer) *batchRunner {
-	runner := &batchRunner{
-		valid:  make(map[string]bool),
-		stream: stream,
-	}
-	for _, key := range settings.Collection {
-		runner.valid[key.SearchID()] = true
-	}
-	return runner
+	checker  map[string]authlib.ItemChecker
 }
 
 // Next implements BatchRequestIterator.
@@ -248,8 +251,12 @@ func (b *batchRunner) Next() bool {
 	if b.request != nil {
 		key := b.request.Key
 		k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
-		if !b.valid[k] {
-			b.err = fmt.Errorf("key is not from the requested collection")
+		checker, ok := b.checker[k]
+		if !ok {
+			b.err = fmt.Errorf("missing access control for: %s", k)
+			b.rollback = true
+		} else if !checker(key.Namespace, key.Name, b.request.Folder) {
+			b.err = fmt.Errorf("not allowed to create resource")
 			b.rollback = true
 		}
 		return true
