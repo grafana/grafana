@@ -34,9 +34,6 @@ export interface DashboardV2Spec {
 	elements: Record<string, Element>;
 	annotations: AnnotationQueryKind[];
 	layout: GridLayoutKind;
-	// Version of the JSON schema, incremented each time a Grafana update brings
-	// changes to said schema.
-	schemaVersion: number;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
@@ -54,7 +51,6 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	elements: {},
 	annotations: [],
 	layout: defaultGridLayoutKind(),
-	schemaVersion: 39,
 });
 
 // Supported dashboard elements

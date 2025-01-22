@@ -8,7 +8,6 @@ export const handyTestingSchema: DashboardV2Spec = {
   liveNow: false,
   preload: false,
   editable: true,
-  schemaVersion: 40,
   tags: ['tag1', 'tag2'],
   timeSettings: {
     autoRefresh: '5s',
