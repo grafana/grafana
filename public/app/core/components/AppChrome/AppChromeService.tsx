@@ -161,7 +161,9 @@ export class AppChromeService {
 
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const isSameUrl = lastEntry && newEntry.url.includes(lastEntry.url);
+    const newEntryPath = newEntry.url.substring(0, newEntry.url.indexOf('?'));
+    const lastEntryPath = lastEntry?.url.substring(0, lastEntry.url.indexOf('?'));
+    const isSamePath = lastEntry && newEntryPath.includes(lastEntryPath);
 
     // We should manage duplicated entries
     // --- HACKY USE CASES ---
@@ -179,8 +181,8 @@ export class AppChromeService {
     }
     /// --- END OF HACKY USE CASES ---
 
-    // 4. Avoid duplicated url
-    else if (isSameUrl) {
+    // 4. Avoid duplicated paths
+    else if (isSamePath) {
       entries[0] = newEntry;
     } else {
       entries = [newEntry, ...entries];
