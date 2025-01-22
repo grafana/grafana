@@ -1,5 +1,6 @@
 import { connect, ConnectedProps } from 'react-redux';
 
+import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -10,7 +11,6 @@ import { selectTotal } from '../invites/state/selectors';
 import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
 import { getExternalUserMngLinkUrl } from './utils';
-import { reportInteraction } from '@grafana/runtime';
 
 export interface OwnProps {
   showInvites: boolean;
