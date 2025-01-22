@@ -576,7 +576,7 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 				},
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesFolders,
+					featuremgmt.FlagKubernetesFoldersServiceV2,
 				},
 			})
 
@@ -676,9 +676,8 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 					},
 				},
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 					featuremgmt.FlagNestedFolders,
-					featuremgmt.FlagKubernetesFolders,
+					featuremgmt.FlagKubernetesFoldersServiceV2,
 				},
 			})
 
@@ -1024,9 +1023,8 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 						},
 					},
 					EnableFeatureToggles: []string{
-						featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 						featuremgmt.FlagNestedFolders,
-						featuremgmt.FlagKubernetesFolders,
+						featuremgmt.FlagKubernetesFoldersServiceV2,
 					},
 				})
 
