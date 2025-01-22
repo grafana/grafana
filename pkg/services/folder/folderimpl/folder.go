@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -76,21 +77,11 @@ func ProvideService(
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 ) *Service {
-	k8sHandler := &foldk8sHandler{
-		gvr:                v0alpha1.FolderResourceInfo.GroupVersionResource(),
-		namespacer:         request.GetNamespaceMapper(cfg),
-		cfg:                cfg,
-		restConfigProvider: apiserver.GetRestConfig,
-	}
-
-	unifiedStore := ProvideUnifiedStore(k8sHandler)
-
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,
-		unifiedStore:         unifiedStore,
 		features:             features,
 		accessControl:        ac,
 		bus:                  bus,
@@ -98,7 +89,6 @@ func ProvideService(
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
 		tracer:               tracer,
-		k8sclient:            k8sHandler,
 	}
 	srv.DBMigration(db)
 
@@ -106,6 +96,22 @@ func ProvideService(
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
+
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		k8sHandler := &foldk8sHandler{
+			gvr:                    v0alpha1.FolderResourceInfo.GroupVersionResource(),
+			namespacer:             request.GetNamespaceMapper(cfg),
+			cfg:                    cfg,
+			restConfigProvider:     apiserver.GetRestConfig,
+			recourceClientProvider: unified.GetResourceClient,
+		}
+
+		unifiedStore := ProvideUnifiedStore(k8sHandler)
+
+		srv.unifiedStore = unifiedStore
+		srv.k8sclient = k8sHandler
+	}
+
 	return srv
 }
 

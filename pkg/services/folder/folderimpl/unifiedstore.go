@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -157,10 +159,11 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	}
 
 	out, err := client.Get(newCtx, *q.UID, v1.GetOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
+	} else if err != nil || out == nil {
+		return nil, dashboards.ErrFolderNotFound
 	}
-
 	dashFolder, _ := internalfolders.UnstructuredToLegacyFolder(*out, q.SignedInUser.GetOrgID())
 	return dashFolder, nil
 }
