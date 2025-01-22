@@ -1,17 +1,24 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { ComponentProps, useState } from 'react';
 
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 
 import { createDatasourcesList } from '../../../core/utils/richHistory';
 import { useSelector } from '../../../types';
+import ExploreRunQueryButton from '../ExploreRunQueryButton';
 import { queryLibraryTrackToggle } from '../QueryLibrary/QueryLibraryAnalyticsEvents';
-import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
+import { QueryActionButton, useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
 import { selectExploreDSMaps } from '../state/selectors';
 
 import { useQueriesDrawerContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
+
+// This makes TS happy as ExploreRunQueryButton has optional onClick prop while QueryActionButton doesn't
+// in addition to map the rootDatasourceUid prop.
+function ExploreRunQueryButtonWrapper(props: ComponentProps<QueryActionButton>) {
+  return <ExploreRunQueryButton {...props} rootDatasourceUid={props.datasourceUid} />;
+}
 
 type Props = {
   variant: 'compact' | 'full';
@@ -57,10 +64,12 @@ export function QueriesDrawerDropdown({ variant }: Props) {
       // Get current dataSource that is open. As this is only used in Explore we get it from Explore state.
       const listOfDatasources = createDatasourcesList();
       const activeDatasources = exploreActiveDS.dsToExplore
-        .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
+        .map((eDs) => {
+          return listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name;
+        })
         .filter((name): name is string => !!name);
 
-      openQueryLibraryDrawer(activeDatasources);
+      openQueryLibraryDrawer(activeDatasources, ExploreRunQueryButtonWrapper);
     }
     queryLibraryTrackToggle(!queryLibraryDrawerOpened);
   }

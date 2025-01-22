@@ -4,6 +4,7 @@ import { SortByFn } from 'react-table';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Column, InteractiveTable, useStyles2 } from '@grafana/ui';
 
+import { QueryActionButton, useQueryLibraryContext } from '../QueryLibraryContext';
 import ActionsCell from './ActionsCell';
 import { AddedByCell } from './AddedByCell';
 import { DatasourceTypeCell } from './DatasourceTypeCell';
@@ -17,19 +18,26 @@ const timestampSort: SortByFn<QueryTemplateRow> = (rowA, rowB, _, desc) => {
   return desc ? timeA - timeB : timeB - timeA;
 };
 
-const columns: Array<Column<QueryTemplateRow>> = [
-  { id: 'description', header: 'Data source and query', cell: QueryDescriptionCell },
-  { id: 'addedBy', header: 'Added by', cell: ({ row: { original } }) => <AddedByCell user={original.user} /> },
-  { id: 'datasourceType', header: 'Datasource type', cell: DatasourceTypeCell, sortType: 'string' },
-  { id: 'createdAtTimestamp', header: 'Date added', cell: DateAddedCell, sortType: timestampSort },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row: { original } }) => (
-      <ActionsCell queryTemplate={original} rootDatasourceUid={original.datasourceRef?.uid} queryUid={original.uid} />
-    ),
-  },
-];
+function createColumns(queryActionButton?: QueryActionButton): Array<Column<QueryTemplateRow>> {
+  return [
+    { id: 'description', header: 'Data source and query', cell: QueryDescriptionCell },
+    { id: 'addedBy', header: 'Added by', cell: ({ row: { original } }) => <AddedByCell user={original.user} /> },
+    { id: 'datasourceType', header: 'Datasource type', cell: DatasourceTypeCell, sortType: 'string' },
+    { id: 'createdAtTimestamp', header: 'Date added', cell: DateAddedCell, sortType: timestampSort },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row: { original } }) => (
+        <ActionsCell
+          queryTemplate={original}
+          rootDatasourceUid={original.datasourceRef?.uid}
+          queryUid={original.uid}
+          QueryActionButton={queryActionButton}
+        />
+      ),
+    },
+  ];
+}
 
 type Props = {
   queryTemplateRows: QueryTemplateRow[];
@@ -37,6 +45,10 @@ type Props = {
 
 export default function QueryTemplatesTable({ queryTemplateRows }: Props) {
   const styles = useStyles2(getStyles);
+  const { queryActionButton } = useQueryLibraryContext();
+
+  const columns = createColumns(queryActionButton);
+
   return (
     <InteractiveTable
       columns={columns}

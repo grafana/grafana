@@ -1,7 +1,7 @@
-import { PropsWithChildren, useState, createContext, useContext, useCallback } from 'react';
+import { PropsWithChildren, useState, createContext, useContext, useCallback, ComponentType } from 'react';
 
 import { config } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema/dist/esm/veneer/common.types';
+import { DataQuery } from '@grafana/schema';
 
 /**
  * Context with state and action to interact with Query Library. The Query Library feature consists of a drawer
@@ -14,15 +14,33 @@ type QueryLibraryContextType = {
   queryLibraryAvailable: boolean;
   drawerOpened: boolean;
 
-  activeDatasources: string[] | undefined;
-  openDrawer: (datasources: string[] | undefined) => void;
+  /**
+   * Opens a drawer with query library.
+   * @param datasources Data sources that will be used for initial filter in the library.
+   * @param queryActionButton Action button will be shown in the library next to the query and can implement context
+   *   specific actions with the library, like running the query or updating some query in the current app.
+   */
+  openDrawer: (datasources: string[] | undefined, queryActionButton?: QueryActionButton) => void;
   closeDrawer: () => void;
+  activeDatasources: string[] | undefined;
+  queryActionButton: QueryActionButton | undefined;
 
   activeQuery: DataQuery | undefined;
   addQueryModalOpened: boolean;
+
+  /**
+   * Opens a modal for adding a query to the library.
+   * @param query
+   */
   openAddQueryModal: (query: DataQuery) => void;
   closeAddQueryModal: () => void;
 };
+
+export type QueryActionButton = ComponentType<{
+  queries: DataQuery[];
+  datasourceUid?: string;
+  onClick: () => void;
+}>;
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   queryLibraryAvailable: false,
@@ -31,6 +49,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   activeDatasources: undefined,
   openDrawer: () => {},
   closeDrawer: () => {},
+  queryActionButton: undefined,
 
   activeQuery: undefined,
   addQueryModalOpened: false,
@@ -48,14 +67,21 @@ export function QueryLibraryDrawerContextProvider({ children }: PropsWithChildre
   const [activeDatasources, setActiveDatasources] = useState<string[] | undefined>(undefined);
   const [addQueryModalOpened, setAddQueryModalOpened] = useState<boolean>(false);
   const [activeQuery, setActiveQuery] = useState<DataQuery | undefined>(undefined);
+  const [queryActionButton, setQueryActionButton] = useState<QueryActionButton | undefined>(undefined);
 
-  const openDrawer = useCallback((datasources: string[] | undefined) => {
-    setActiveDatasources(datasources);
-    setDrawerOpened(true);
-  }, []);
+  const openDrawer = useCallback(
+    (datasources: string[] | undefined, queryActionButton: QueryActionButton | undefined) => {
+      setActiveDatasources(datasources);
+      // Because the queryActionButton can be a function component it would be called as a callback if just passed in.
+      setQueryActionButton(() => queryActionButton);
+      setDrawerOpened(true);
+    },
+    []
+  );
 
   const closeDrawer = useCallback(() => {
     setActiveDatasources(undefined);
+    setQueryActionButton(undefined);
     setDrawerOpened(false);
   }, []);
 
@@ -81,6 +107,7 @@ export function QueryLibraryDrawerContextProvider({ children }: PropsWithChildre
         closeAddQueryModal,
         activeDatasources,
         activeQuery,
+        queryActionButton,
       }}
     >
       {children}
