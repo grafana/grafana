@@ -65,12 +65,6 @@ export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayo
  */
 export interface LayoutRegistryItem extends RegistryItem {
   /**
-   * An indicator for setting how deep a layout can be used
-   * Useful for disallowing nesting of layouts
-   */
-  level: number;
-
-  /**
    * When switching between layouts
    * @param currentLayout
    */

@@ -4,38 +4,38 @@ import { Select } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
 
 import { layoutRegistry } from './layoutRegistry';
+import { findParentLayout } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
 }
 
 export function DashboardLayoutSelector({ layoutManager }: Props) {
-  const dashboard = getDashboardSceneFor(layoutManager);
-  const { body: rootLayoutManager } = dashboard.useState();
-  const isRootLayout = rootLayoutManager === layoutManager;
-  const rootLayoutManagerLevel = rootLayoutManager.getDescriptor().level;
+  const options = useMemo(() => {
+    const parentLayout = findParentLayout(layoutManager);
+    const parentLayoutId = parentLayout?.getDescriptor().id;
 
-  const options = layoutRegistry
-    .list()
-    .filter((layout) => isRootLayout || layout.level > rootLayoutManagerLevel)
-    .map((layout) => ({
-      label: layout.name,
-      value: layout,
-    }));
+    return layoutRegistry
+      .list()
+      .filter((layout) => layout.id !== parentLayoutId)
+      .map((layout) => ({
+        label: layout.name,
+        value: layout,
+      }));
+  }, [layoutManager]);
 
   const currentLayoutId = layoutManager.getDescriptor().id;
-  const currentLayoutOption = options.find((option) => option.value.id === currentLayoutId);
+  const currentOption = options.find((option) => option.value.id === currentLayoutId);
 
   return (
     <Select
       options={options}
-      value={currentLayoutOption}
+      value={currentOption}
       onChange={(option) => {
-        if (option.value?.id !== currentLayoutOption?.value.id) {
+        if (option.value?.id !== currentOption?.value.id) {
           changeLayoutTo(layoutManager, option.value!);
         }
       }}

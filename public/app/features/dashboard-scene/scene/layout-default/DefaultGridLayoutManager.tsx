@@ -330,7 +330,6 @@ export class DefaultGridLayoutManager
       name: 'Default grid',
       description: 'The default grid layout',
       id: 'default-grid',
-      level: 2,
       createFromLayout: DefaultGridLayoutManager.createFromLayout,
     };
   }

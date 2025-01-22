@@ -88,7 +88,6 @@ export class ResponsiveGridLayoutManager
       name: 'Responsive grid',
       description: 'CSS layout that adjusts to the available space',
       id: 'responsive-grid',
-      level: 2,
       createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
     };
   }
