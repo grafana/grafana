@@ -59,6 +59,7 @@ import {
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -258,6 +259,17 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
     return gridItemToGridLayoutItemKind(child, isSnapshot, y);
   });
 
+  let repeat: string | undefined;
+
+  if (row.state.$behaviors) {
+    for (const behavior of row.state.$behaviors) {
+      if (behavior instanceof RowRepeaterBehavior) {
+        repeat = behavior.state.variableName;
+        break;
+      }
+    }
+  }
+
   return {
     kind: 'GridLayoutRow',
     spec: {
@@ -265,6 +277,7 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
       y: row.state.y ?? 0,
       collapsed: Boolean(row.state.isCollapsed),
       elements: children,
+      repeat,
     },
   };
 }
