@@ -252,14 +252,10 @@ describe('AzureMonitorDatasource', () => {
           return Promise.reject('failed to retrieve due to timeout');
         }
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
-        let expected =
+        const expected =
           basePath +
-          '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview';
-
-        if (path.includes('&region=global')) {
-          expected = expected + '&region=global';
-        }
+          '/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview' +
+          (path.includes('&region=global') ? '&region=global' : '');
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
