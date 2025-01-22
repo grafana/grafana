@@ -10,7 +10,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
+import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher, Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -308,9 +308,12 @@ export const Table = memo((props: Props) => {
   // Try to determine the longet field
   // TODO: do we wrap only one field?
   // What if there are multiple fields with long text?
-  const longestField = guessLongestField(fieldConfig, data);
+  let longestField: Field | undefined = undefined;
   let textWrapField = undefined;
-  if (fieldConfig !== undefined) {
+
+  if (fieldConfig) {
+    longestField = guessLongestField(fieldConfig, data);
+
     data.fields.forEach((field) => {
       fieldConfig.overrides.forEach((override) => {
         const matcher = getFieldMatcher(override.matcher);
