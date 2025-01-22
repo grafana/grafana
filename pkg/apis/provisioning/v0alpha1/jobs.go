@@ -99,7 +99,7 @@ type JobStatus struct {
 	Message  string   `json:"message,omitempty"`
 	Errors   []string `json:"errors,omitempty"`
 
-	// Optional value 0-1 that can be set while running
+	// Optional value 0-100 that can be set while running
 	Progress float64 `json:"progress,omitempty"`
 }
 

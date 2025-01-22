@@ -41,7 +41,36 @@ export function ExportToRepository({ repo }: Props) {
   if (job) {
     return (
       <div>
-        <h5>TODO... watch and update until done</h5>
+        {/** https://codepen.io/tmac/pen/QgVRKb  ??? */}
+        {job.status && (
+          <div>
+            <div>
+              {job.status.message} // {job.status.state}
+              {job.status.progress && (
+                <div
+                  style={{
+                    background: '#999',
+                    width: '400px',
+                    height: '10px',
+                  }}
+                >
+                  <div
+                    style={{
+                      background: 'green',
+                      width: `${job.status.progress}%`,
+                      height: '10px',
+                    }}
+                  >
+                    &nbsp;
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <br />
+        <br />
         <pre>{JSON.stringify(job, null, '  ')}</pre>
       </div>
     );

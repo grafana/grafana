@@ -195,6 +195,13 @@ func (s *jobStore) Update(ctx context.Context, namespace string, name string, st
 
 	s.rv++
 
+	if status.State == "" {
+		return apierrors.NewBadRequest("The state must be set")
+	}
+	if status.Progress > 100 || status.Progress < 0 {
+		return apierrors.NewBadRequest("progress must be between 0 and 100")
+	}
+
 	for idx, job := range s.jobs {
 		if job.Name == name && job.Namespace == namespace {
 			if job.Status.State.Finished() {

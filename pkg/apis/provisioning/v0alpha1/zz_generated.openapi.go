@@ -594,6 +594,14 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Enum:        []interface{}{"export", "pr", "sync"},
 						},
 					},
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The the repository reference (for now also in labels)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The branch of commit hash",
@@ -628,7 +636,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"action"},
+				Required: []string{"action", "repository"},
 			},
 		},
 		Dependencies: []string{
@@ -685,7 +693,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 					},
 					"progress": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional value 0-1 that can be set while running",
+							Description: "Optional value 0-100 that can be set while running",
 							Type:        []string{"number"},
 							Format:      "double",
 						},
