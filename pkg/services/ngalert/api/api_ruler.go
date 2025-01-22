@@ -443,7 +443,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 					New:      *update.New,
 				})
 			}
-			err = srv.store.UpdateAlertRules(tranCtx, updates)
+			err = srv.store.UpdateAlertRules(tranCtx, ngmodels.NewUserUID(c.SignedInUser), updates)
 			if err != nil {
 				return fmt.Errorf("failed to update rules: %w", err)
 			}
@@ -454,7 +454,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			for _, rule := range finalChanges.New {
 				inserts = append(inserts, *rule)
 			}
-			added, err := srv.store.InsertAlertRules(tranCtx, inserts)
+			added, err := srv.store.InsertAlertRules(tranCtx, ngmodels.NewUserUID(c.SignedInUser), inserts)
 			if err != nil {
 				return fmt.Errorf("failed to add rules: %w", err)
 			}

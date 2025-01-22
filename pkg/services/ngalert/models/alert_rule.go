@@ -245,6 +245,19 @@ func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 
 type UserUID string
 
+func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
+	// use anonymous interface to abstract from identity package, which is part of apimachinery
+	if requester == nil {
+		return nil
+	}
+	identifier := requester.GetIdentifier()
+	if identifier == "" {
+		return nil
+	}
+	userUID := UserUID(identifier)
+	return &userUID
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64

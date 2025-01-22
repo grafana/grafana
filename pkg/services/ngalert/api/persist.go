@@ -22,8 +22,8 @@ type RuleStore interface {
 
 	// InsertAlertRules will insert all alert rules passed into the function
 	// and return the map of uuid to id.
-	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error)
-	UpdateAlertRules(ctx context.Context, rule []ngmodels.UpdateRule) error
+	InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error)
+	UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 
 	// IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace uids
