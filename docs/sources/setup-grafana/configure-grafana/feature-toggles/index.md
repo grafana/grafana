@@ -235,6 +235,7 @@ Experimental features might be changed or removed without prior notice.
 | `queryLibraryDashboards`                      | Enables Query Library feature in Dashboards                                                                                                                                                                                                                                       |
 | `grafanaAdvisor`                              | Enables Advisor app                                                                                                                                                                                                                                                               |
 | `elasticsearchImprovedParsing`                | Enables less memory intensive Elasticsearch result parsing                                                                                                                                                                                                                        |
+| `datasourceConnectionsTab`                    | Shows defined connections for a data source in the plugins detail page                                                                                                                                                                                                            |
 
 ## Development feature toggles
 
@@ -244,4 +245,3 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | -------------------------------------- | ----------------------------------------------------------------------------- |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server, including all datasources |
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options                   |
-| `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1                |

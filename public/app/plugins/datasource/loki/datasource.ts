@@ -206,6 +206,10 @@ export class LokiDatasource
    * @returns A supplemented Loki query or undefined if unsupported.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: LokiQuery): LokiQuery | undefined {
+    if (query.hide) {
+      return undefined;
+    }
+
     const normalizedQuery = getNormalizedLokiQuery(query);
     let expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
