@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Column, InteractiveTable, useStyles2 } from '@grafana/ui';
 
 import { QueryActionButton, useQueryLibraryContext } from '../QueryLibraryContext';
+
 import ActionsCell from './ActionsCell';
 import { AddedByCell } from './AddedByCell';
 import { DatasourceTypeCell } from './DatasourceTypeCell';

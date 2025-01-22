@@ -36,11 +36,13 @@ type QueryLibraryContextType = {
   closeAddQueryModal: () => void;
 };
 
-export type QueryActionButton = ComponentType<{
+export type QueryActionButtonProps = {
   queries: DataQuery[];
   datasourceUid?: string;
   onClick: () => void;
-}>;
+};
+
+export type QueryActionButton = ComponentType<QueryActionButtonProps>;
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   queryLibraryAvailable: false,

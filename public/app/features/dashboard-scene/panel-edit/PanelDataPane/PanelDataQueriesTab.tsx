@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -24,6 +26,7 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types';
 
+import { QueryActionButtonProps, useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
@@ -312,6 +315,14 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   }
 
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
+  const { queryLibraryAvailable, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+
+  // Make the final query library action button by injecting actual addQuery functionality into the button.
+  const addQueryActionButton = makeQueryActionButton((queries) => {
+    for (const query of queries) {
+      model.onQueriesChange(addQuery(model.getQueries(), query));
+    }
+  });
 
   return (
     <div data-testid={selectors.components.QueryTab.content}>
@@ -336,14 +347,28 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
 
       <Stack gap={2}>
         {showAddButton && (
-          <Button
-            icon="plus"
-            onClick={model.addQueryClick}
-            variant="secondary"
-            data-testid={selectors.components.QueryTab.addQuery}
-          >
-            Add query
-          </Button>
+          <>
+            <Button
+              icon="plus"
+              onClick={model.addQueryClick}
+              variant="secondary"
+              data-testid={selectors.components.QueryTab.addQuery}
+            >
+              Add query
+            </Button>
+            {queryLibraryAvailable && (
+              <Button
+                icon="plus"
+                onClick={() => {
+                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), addQueryActionButton);
+                }}
+                variant="secondary"
+                data-testid={selectors.components.QueryTab.addQuery}
+              >
+                {t('dashboards.panel-queries.add-query-from-library', 'from library')}
+              </Button>
+            )}
+          </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
           <Button
@@ -359,6 +384,38 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
       </Stack>
     </div>
   );
+}
+
+/**
+ * Creates a button component that will be used in query library as action next to each query.
+ * @param addQueries
+ */
+function makeQueryActionButton(addQueries: (queries: DataQuery[]) => void) {
+  return function AddQueryFromLibraryButton(props: QueryActionButtonProps) {
+    const label = t('dashboards.query-library.add-query-button', 'Add query');
+    return (
+      <Button
+        variant={'primary'}
+        aria-label={label}
+        onClick={() => {
+          addQueries(props.queries);
+          props.onClick();
+        }}
+      >
+        {label}
+      </Button>
+    );
+  };
+}
+
+function getDatasourceNames(datasource: DataSourceApi, queries: DataQuery[]): string[] {
+  if (datasource.uid === '-- Mixed --') {
+    // If datasource is mixed, the datasource UID is on the query. Here we map the UIDs to datasource names.
+    const dsSrv = getDataSourceSrv();
+    return queries.map((ds) => dsSrv.getInstanceSettings(ds.datasource)?.name).filter((name) => name !== undefined);
+  } else {
+    return [datasource.name];
+  }
 }
 
 interface QueriesTabProps extends PanelDataTabHeaderProps {
