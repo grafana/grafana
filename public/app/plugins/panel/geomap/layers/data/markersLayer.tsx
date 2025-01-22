@@ -75,7 +75,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...options?.config,
     };
 
-    const style = await getStyleConfigState(config.style);
+    const style = await getStyleConfigState(config.style, true);
     //TODO make this more robust and handle webgl supported shapes: circle, square, triangle, RegularShape
     const src = await prepareSVG(getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''));
 

@@ -296,7 +296,7 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 }
 
 // Will prepare symbols as necessary
-export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): Promise<StyleMaker> {
+export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean, webGL?: boolean): Promise<StyleMaker> {
   if (!symbol) {
     return hasTextLabel ? textMarker : circleMarker;
   }
