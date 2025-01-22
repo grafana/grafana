@@ -59,6 +59,34 @@ describe('ShareMenu', () => {
     expect(await screen.queryByTestId(selector.inviteUser)).not.toBeInTheDocument();
   });
 
+  it('should render invite user with analytics when config is provided', async () => {
+    Object.defineProperty(contextSrv, 'isSignedIn', {
+      value: true,
+    });
+    grantUserPermissions([AccessControlAction.OrgUsersAdd]);
+
+    config.externalUserMngLinkUrl = 'http://localhost:3000/users';
+    config.externalUserMngAnalytics = true;
+    config.externalUserMngAnalyticsParams = 'src=grafananet&other=value1';
+    setup({ meta: { canEdit: true } });
+
+    const inviteUser = await screen.findByTestId(selector.inviteUser);
+    // Mock window.open
+    const windowOpenMock = jest.spyOn(window, 'open').mockImplementation(() => null);
+
+    // Simulate click event
+    inviteUser.click();
+
+    // Assert window.open was called with the correct URL
+    expect(windowOpenMock).toHaveBeenCalledWith(
+      'http://localhost:3000/users?src=grafananet&other=value1&cnt=share-invite',
+      '_blank'
+    );
+
+    // Restore the original implementation
+    windowOpenMock.mockRestore();
+  });
+
   it('should not render invite user when externalUserMngLinkUrl is not provided', async () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
