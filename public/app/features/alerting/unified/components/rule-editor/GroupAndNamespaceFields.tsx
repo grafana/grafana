@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, useStyles2, VirtualizedSelect } from '@grafana/ui';
+import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 

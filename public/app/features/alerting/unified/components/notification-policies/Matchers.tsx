@@ -3,7 +3,7 @@ import { take, takeRight, uniqueId } from 'lodash';
 import { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getTagColorsFromName, useStyles2, Stack } from '@grafana/ui';
+import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';

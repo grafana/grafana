@@ -56,3 +56,13 @@ export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } 
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
+export { usePluginUserStorage } from './utils/userStorage';
+export {
+  type CorrelationsService,
+  type CorrelationData,
+  type CorrelationsData,
+  type CorrelationExternal,
+  type CorrelationQuery,
+  getCorrelationsService,
+  setCorrelationsService,
+} from './services/CorrelationsService';

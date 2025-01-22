@@ -269,7 +269,7 @@ describe('LokiDatasource', () => {
         },
       ];
       expect(ds.applyTemplateVariables(query, {}, adhocFilters).expr).toBe(
-        'rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\\'.*"} |= "bar" [5m])'
+        `rate({bar="baz", job="foo", k1=~"v.*", k2=~"v'.*"} |= "bar" [5m])`
       );
     });
 
@@ -325,8 +325,15 @@ describe('LokiDatasource', () => {
       variable = {} as unknown as CustomVariableModel;
     });
 
-    it('should only escape single quotes', () => {
-      expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", variable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+    it('should not escape', () => {
+      expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", variable)).toEqual("abc'$^*{}[]+?.()|");
+    });
+
+    it('should not escape single quotes in line filters', () => {
+      expect(ds.interpolateQueryExpr("|= `abc'$^*{}[]+?.()|`", variable)).toEqual("|= `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("|~ `abc'$^*{}[]+?.()|`", variable)).toEqual("|~ `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("!= `abc'$^*{}[]+?.()|`", variable)).toEqual("!= `abc'$^*{}[]+?.()|`");
+      expect(ds.interpolateQueryExpr("!~ `abc'$^*{}[]+?.()|`", variable)).toEqual("!~ `abc'$^*{}[]+?.()|`");
     });
 
     it('should return a number', () => {
@@ -442,9 +449,74 @@ describe('LokiDatasource', () => {
       expect(res.length).toBe(2);
       expect(res[0].text).toBe('hello');
       expect(res[0].tags).toEqual(['value']);
+      expect(res[0].time).toEqual(1);
 
       expect(res[1].text).toBe('hello 2');
       expect(res[1].tags).toEqual(['value2']);
+      expect(res[1].time).toEqual(2);
+    });
+
+    it('should transform the loki dataplane data to annotation response', async () => {
+      const originalDataplaneState = config.featureToggles.lokiLogsDataplane;
+      config.featureToggles.lokiLogsDataplane = true;
+      const testFrame: DataFrame = {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1, 2],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['hello', 'hello 2'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            config: {},
+            values: [
+              {
+                label: 'value',
+                label2: 'value ',
+              },
+              {
+                label: '',
+                label2: 'value2',
+                label3: ' ',
+              },
+            ],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            config: {},
+            values: ['1000000', '2000000'],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            config: {},
+            values: ['id1', 'id2'],
+          },
+        ],
+        length: 2,
+      };
+      const res = await getTestContext(testFrame, { stepInterval: '15s' });
+
+      expect(res.length).toBe(2);
+      expect(res[0].text).toBe('hello');
+      expect(res[0].tags).toEqual(['value']);
+      expect(res[0].time).toEqual(1);
+
+      expect(res[1].text).toBe('hello 2');
+      expect(res[1].tags).toEqual(['value2']);
+      expect(res[1].time).toEqual(2);
+
+      config.featureToggles.lokiLogsDataplane = originalDataplaneState;
     });
 
     describe('Formatting', () => {

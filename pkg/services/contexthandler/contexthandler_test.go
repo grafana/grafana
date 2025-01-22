@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -152,7 +152,7 @@ func TestContextHandler(t *testing.T) {
 
 	t.Run("id response headers", func(t *testing.T) {
 		run := func(cfg *setting.Cfg, id string) *http.Response {
-			typ, i, err := identity.ParseTypeAndID(id)
+			typ, i, err := claims.ParseTypeID(id)
 			require.NoError(t, err)
 
 			handler := contexthandler.ProvideService(

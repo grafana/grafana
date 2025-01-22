@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,6 +17,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -68,13 +68,30 @@ var (
 		&metav1.APIGroupList{},
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
 	}
+
+	// internal provider of the package level client Config
+	restConfig RestConfigProvider
+	ready      = make(chan struct{})
 )
 
 func init() {
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
+}
+
+// GetRestConfig return a client Config mounted at package level
+// This resolves circular dependency issues between apiserver, authz,
+// and Folder Service.
+// The client Config gets initialized during the first call to
+// ProvideService.
+// Any call to GetRestConfig will block until we have a restConfig available
+func GetRestConfig(ctx context.Context) *clientrest.Config {
+	<-ready
+	return restConfig.GetRestConfig(ctx)
 }
 
 type Service interface {
@@ -208,6 +225,12 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
+	// only set the package level restConfig once
+	if restConfig == nil {
+		restConfig = s
+		close(ready)
+	}
+
 	return s, nil
 }
 
@@ -295,6 +318,8 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 
+	var optsregister apistore.StorageOptionsRegister
+
 	if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeEtcd {
 		if err := o.RecommendedOptions.Etcd.Validate(); len(err) > 0 {
 			return err[0]
@@ -303,14 +328,11 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		// This is needed as the apistore doesn't allow any core grafana dependencies.
-		features := make(map[string]any)
-		if s.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-			features[featuremgmt.FlagUnifiedStorageBigObjectsSupport] = struct{}{}
-		}
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		optsregister = getter.RegisterOptions
+
 		// Use unified storage client
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
-			s.unified, o.RecommendedOptions.Etcd.StorageConfig, features)
+		serverConfig.Config.RESTOptionsGetter = getter
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -337,7 +359,9 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService, s.features,
+		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
+		optsregister,
 	)
 	if err != nil {
 		return err

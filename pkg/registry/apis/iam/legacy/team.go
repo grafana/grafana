@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -206,7 +205,7 @@ type TeamMember struct {
 }
 
 func (m TeamMember) MemberID() string {
-	return identity.NewTypedIDString(claims.TypeUser, m.UserUID)
+	return claims.NewTypeID(claims.TypeUser, m.UserUID)
 }
 
 type TeamBinding struct {

@@ -11,13 +11,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -33,9 +39,12 @@ var (
 )
 
 type legacyStorage struct {
-	service        folder.Service
-	namespacer     request.NamespaceMapper
-	tableConverter rest.TableConvertor
+	service              folder.Service
+	namespacer           request.NamespaceMapper
+	tableConverter       rest.TableConvertor
+	cfg                  *setting.Cfg
+	features             featuremgmt.FeatureToggles
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -66,7 +75,6 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	parentUID := ""
 	// // translate grafana.app/* label selectors into field requirements
 	// requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
 	// if err != nil {
@@ -88,13 +96,13 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	// When nested folders are not enabled, all folders are root folders
-	hits, err := s.service.GetChildren(ctx, &folder.GetChildrenQuery{
-		UID:          parentUID, // NOTE!  we should do a different query when nested folders are enabled!
+	// List must return all folders
+	hits, err := s.service.GetFoldersLegacy(ctx, folder.GetFoldersQuery{
 		SignedInUser: user,
-		Limit:        paging.page,
 		OrgID:        orgId,
-		Page:         paging.limit,
+		// TODO: enable pagination
+		// Limit:        paging.page,
+		// Page:         paging.limit,
 	})
 	if err != nil {
 		return nil, err
@@ -125,7 +133,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	dto, err := s.service.Get(ctx, &folder.GetFolderQuery{
+	dto, err := s.service.GetLegacy(ctx, &folder.GetFolderQuery{
 		SignedInUser: user,
 		UID:          &name,
 		OrgID:        info.OrgID,
@@ -178,7 +186,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 
 	parent := accessor.GetFolder()
 
-	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
+	out, err := s.service.CreateLegacy(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
 		UID:          p.Name,
 		Title:        p.Spec.Title,
@@ -190,6 +198,12 @@ func (s *legacyStorage) Create(ctx context.Context,
 		statusErr := apierrors.ToFolderStatusError(err)
 		return nil, &statusErr
 	}
+
+	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, out)
+	if err != nil {
+		return nil, err
+	}
+
 	// #TODO can we directly convert instead of doing a Get? the result of the Create
 	// has more data than the one of Get so there is more we can include in the k8s resource
 	// this way
@@ -199,6 +213,34 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 	return r, nil
+}
+
+func (s *legacyStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
+	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
+
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
+
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+		})
+	}
+	isNested := folder.ParentUID != ""
+	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}...)
+	}
+	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, folder.UID, permissions...)
+	return err
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -243,7 +285,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	oldParent := mOld.GetFolder()
 	newParent := mNew.GetFolder()
 	if oldParent != newParent {
-		_, err = s.service.Move(ctx, &folder.MoveFolderCommand{
+		_, err = s.service.MoveLegacy(ctx, &folder.MoveFolderCommand{
 			SignedInUser: user,
 			UID:          name,
 			OrgID:        info.OrgID,
@@ -270,7 +312,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		changed = true
 	}
 	if changed {
-		_, err = s.service.Update(ctx, cmd)
+		_, err = s.service.UpdateLegacy(ctx, cmd)
 		if err != nil {
 			return nil, false, err
 		}
@@ -298,7 +340,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}
-	err = s.service.Delete(ctx, &folder.DeleteFolderCommand{
+	err = s.service.DeleteLegacy(ctx, &folder.DeleteFolderCommand{
 		UID:          name,
 		OrgID:        info.OrgID,
 		SignedInUser: user,

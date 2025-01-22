@@ -5,7 +5,7 @@ export interface TemplateExampleItem {
 
 export const GlobalTemplateDataExamples: TemplateExampleItem[] = [
   {
-    description: 'Default template for notification titles',
+    description: 'Default templates for notification titles',
     example: `{{- /* This is a copy of the "default.title" template. */ -}}
 {{- /* Edit the template name and template content as needed. */ -}}
 {{ define "default.title.copy" }}
@@ -13,7 +13,7 @@ export const GlobalTemplateDataExamples: TemplateExampleItem[] = [
 {{ end }}`,
   },
   {
-    description: 'Default template for notification messages',
+    description: 'Default templates for notification messages',
     example: `{{- /* This is a copy of the "default.message" template. */ -}}
 {{- /* Edit the template name and template content as needed. */ -}}
 {{ define "default.message.copy" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**

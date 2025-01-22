@@ -33,6 +33,7 @@ type FrontendSettingsAuthDTO struct {
 
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
+	PasswordlessEnabled           bool `json:"passwordlessEnabled"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -199,6 +200,8 @@ type FrontendSettingsDTO struct {
 	ExternalUserMngInfo                 string   `json:"externalUserMngInfo"`
 	ExternalUserMngLinkUrl              string   `json:"externalUserMngLinkUrl"`
 	ExternalUserMngLinkName             string   `json:"externalUserMngLinkName"`
+	ExternalUserMngAnalytics            bool     `json:"externalUserMngAnalytics"`
+	ExternalUserMngAnalyticsParams      string   `json:"externalUserMngAnalyticsParams"`
 	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
 	AngularSupportEnabled               bool     `json:"angularSupportEnabled"`
 	EditorsCanAdmin                     bool     `json:"editorsCanAdmin"`
@@ -241,6 +244,8 @@ type FrontendSettingsDTO struct {
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
+	DefaultDatasourceManageAlertsUIToggle bool `json:"defaultDatasourceManageAlertsUiToggle"`
+
 	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
 	Reporting               FrontendSettingsReportingDTO       `json:"reporting"`
@@ -253,6 +258,7 @@ type FrontendSettingsDTO struct {
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 	SharedWithMeFolderUID   string                             `json:"sharedWithMeFolderUID"`
 	RootFolderUID           string                             `json:"rootFolderUID"`
+	PasswordlessEnabled     string                             `json:"passwordlessEnabled"`
 
 	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`

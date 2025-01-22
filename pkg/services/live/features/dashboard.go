@@ -43,7 +43,7 @@ func newUserDisplayDTOFromRequester(requester identity.Requester) *userDisplayDT
 		ID:    userID,
 		UID:   requester.GetRawIdentifier(),
 		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
+		Name:  requester.GetName(),
 	}
 }
 

@@ -26,6 +26,16 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
+  sns:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
+  gchat:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-google-chat/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-google-chat/
   email:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email/
@@ -71,36 +81,46 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-teams/
-  external-alertmanager:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
   mqtt:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-mqtt/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-mqtt/
+  alertmanager-architecture:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
+  external-alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+  manage-notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
 ---
 
 # Configure contact points
 
-Use contact points to select your preferred communication channel for receiving notifications when your alert rules are firing. You can add, edit, delete, export, and test a contact point.
+Use contact points to specify where to receive alert notifications. Contact points contain the configuration for sending alert notifications, including destinations like email, Slack, OnCall, webhooks, and their notification messages.
 
-Testing a contact point is only available for Grafana Alertmanager.
+A contact point can have one or multiple destinations, known as [contact point integrations](#list-of-supported-integrations). Alert notifications are sent to each integration within the chosen contact point.
 
 On the **Contact Points** tab, you can:
 
+- Add, edit, and view contact points and integrations.
 - Search for name and type of contact points and integrations.
-- View all existing contact points and integrations.
 - View how many notification policies each contact point is being used for and navigate directly to the linked notification policies.
 - View the status of notification deliveries.
 - Export individual contact points or all contact points in JSON, YAML, or Terraform format.
 - Delete contact points. Note that you cannot delete contact points that are in use by a notification policy. To proceed, either delete the notification policy or update it to use another contact point.
 
-On the **Notification templates** tab, you can:
-
-- View, edit, copy or delete existing notification templates.
+{{% admonition type="note" %}}
+Contact points are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and cannot be used by notification policies in other Alertmanagers.
+{{% /admonition %}}
 
 ## Add a contact point
 
@@ -114,41 +134,23 @@ Complete the following steps to add a contact point.
 1. From **Integration**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel and users who should be contacted.
 1. Some contact point integrations, like email or Webhook, have optional settings. In **Optional settings**, specify additional settings for the selected contact point integration.
 1. In Notification settings, optionally select **Disable resolved message** if you do not want to be notified when an alert resolves.
-1. To add another contact point integration, click **Add contact point integration** and repeat steps 6 through 8.
 1. Save your changes.
 
-## Use notification templates
+## Add another contact point integration
 
-Use templates in contact points to customize your notifications.
+A contact point can have multiple integrations, or destinations for sending notifications.
 
-Complete the following steps to add templates to your contact point.
+To add another integration to a contact point, complete the following steps.
 
-1. Click an existing contact point or create a new one
-1. In **Optional settings**, click any field that contains templates.
-
-   For example, if you are creating an email contact point integration, click **Message** or **Subject**.
-
-1. Click **Edit**.
-   A dialog box opens where you can select templates.
-1. [Optional] Click **Select existing template** to select a template and preview it using the default payload.
-
-   Click **Save** to use just a single template in the field.
-
-   You can also copy the selected template and use it in the custom tab.
-
-1. [Optional] Click **Enter custom message** to customize and edit the field directly. Note that the title changes depending on the field you are editing.
-
-   Click **Save** to use just a single template in the field.
-
-1. You can switch between the two tabs to access the list of available templates and copy them across to the customized version.
-
-1. Click **Save contact point**.
+1. Add or edit an existing contact point.
+1. Click **Add contact point integration** and repeat the same steps as [Add a contact point](#add-a-contact-point).
+   - From **Integration**, select a type and fill out mandatory fields.
+   - In **Optional settings**, specify additional settings for the selected contact point integration.
+1. Save your changes.
 
 ## Test a contact point
 
-** For Grafana Alertmanager only.**
-
-Complete the following steps to test a contact point.
+Testing a contact point is only available for Grafana Alertmanager. Complete the following steps to test a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
@@ -156,6 +158,16 @@ Complete the following steps to test a contact point.
 1. Click **Test** to open the contact point testing dialog box.
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.
+
+## Customize notification messages
+
+In contact points, you can also customize notification messages. For example, when setting up an email contact point integration, click **Message** or **Subject** to modify it.
+
+By default, notification messages include common alert details, which are usually sufficient for most cases.
+
+If necessary, you can customize the content and format of notification messages. You can create a custom notification template, which can then be applied to one or more contact points.
+
+On the **Notification templates** tab, you can view, edit, copy or delete notification templates. Refer to [manage notification templates](ref:manage-notification-templates) for instructions on selecting or creating a template for a contact point.
 
 ## List of supported integrations
 
@@ -166,17 +178,17 @@ The following table lists the contact point integrations supported by Grafana.
 | Name                         | Type                      |
 | ---------------------------- | ------------------------- |
 | Alertmanager                 | `prometheus-alertmanager` |
-| Amazon SNS                   | `sns`                     |
+| [Amazon SNS](ref:sns)        | `sns`                     |
 | Cisco Webex Teams            | `webex`                   |
 | DingDing                     | `dingding`                |
 | [Discord](ref:discord)       | `discord`                 |
 | [Email](ref:email)           | `email`                   |
-| Google Chat                  | `googlechat`              |
+| [Google Chat](ref:gchat)     | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Kafka REST Proxy             | `kafka`                   |
-| [MQTT](ref:mqtt)             | `mqtt`                    |
 | Line                         | `line`                    |
 | [Microsoft Teams](ref:teams) | `teams`                   |
+| [MQTT](ref:mqtt)             | `mqtt`                    |
 | [Opsgenie](ref:opsgenie)     | `opsgenie`                |
 | [Pagerduty](ref:pagerduty)   | `pagerduty`               |
 | Pushover                     | `pushover`                |
@@ -185,7 +197,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [Telegram](ref:telegram)     | `telegram`                |
 | Threema Gateway              | `threema`                 |
 | VictorOps                    | `victorops`               |
-| WeCom                        | `wecom`                   |
 | [Webhook](ref:webhook)       | `webhook`                 |
+| WeCom                        | `wecom`                   |
 
 Some of these integrations are not compatible with [external Alertmanagers](ref:external-alertmanager). For the list of Prometheus Alertmanager integrations, refer to the [Prometheus Alertmanager receiver settings](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings).

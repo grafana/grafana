@@ -2,198 +2,124 @@ package server
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"strings"
+	"sync"
+	"time"
 
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"github.com/openfga/language/pkg/go/transformer"
 	"go.opentelemetry.io/otel"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	resourceType     = "resource"
-	namespaceType    = "namespace"
-	folderTypePrefix = "folder2:"
-)
+const cacheCleanInterval = 2 * time.Minute
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
 
-var errStoreNotFound = errors.New("store not found")
+type OpenFGAServer interface {
+	openfgav1.OpenFGAServiceServer
+	IsReady(ctx context.Context) (bool, error)
+}
 
 type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openfga openfgav1.OpenFGAServiceServer
+	openfga       OpenFGAServer
+	openfgaClient openfgav1.OpenFGAServiceClient
 
+	cfg      setting.ZanzanaServerSettings
 	logger   log.Logger
-	modules  []transformer.ModuleFile
-	tenantID string
-	storeID  string
-	modelID  string
+	stores   map[string]storeInfo
+	storesMU *sync.Mutex
+	cache    *localcache.CacheService
 }
 
-type ServerOption func(s *Server)
-
-func WithTenantID(tenantID string) ServerOption {
-	return func(s *Server) {
-		s.tenantID = tenantID
-	}
+type storeInfo struct {
+	ID      string
+	ModelID string
 }
 
-func WithLogger(logger log.Logger) ServerOption {
-	return func(s *Server) {
-		s.logger = logger
+func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger) (*Server, error) {
+	channel := &inprocgrpc.Channel{}
+	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
+	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
+
+	s := &Server{
+		openfga:       openfga,
+		openfgaClient: openFGAClient,
+		storesMU:      &sync.Mutex{},
+		stores:        make(map[string]storeInfo),
+		cfg:           cfg,
+		cache:         localcache.New(cfg.CheckQueryCacheTTL, cacheCleanInterval),
+		logger:        logger,
 	}
-}
-
-func WithSchema(modules []transformer.ModuleFile) ServerOption {
-	return func(s *Server) {
-		s.modules = modules
-	}
-}
-
-func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
-	s := &Server{openfga: openfga}
-
-	for _, o := range opts {
-		o(s)
-	}
-
-	if s.logger == nil {
-		s.logger = log.New("authz-server")
-	}
-
-	if s.tenantID == "" {
-		s.tenantID = "stacks-default"
-	}
-
-	if len(s.modules) == 0 {
-		s.modules = schema.SchemaModules
-	}
-
-	ctx := context.Background()
-	store, err := s.getOrCreateStore(ctx, s.tenantID)
-	if err != nil {
-		return nil, err
-	}
-
-	s.storeID = store.GetId()
-
-	modelID, err := s.loadModel(ctx, s.storeID, s.modules)
-	if err != nil {
-		return nil, err
-	}
-
-	s.modelID = modelID
 
 	return s, nil
 }
 
-func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	store, err := s.getStore(ctx, name)
-
-	if errors.Is(err, errStoreNotFound) {
-		var res *openfgav1.CreateStoreResponse
-		res, err = s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: name})
-		if res != nil {
-			store = &openfgav1.Store{
-				Id:        res.GetId(),
-				Name:      res.GetName(),
-				CreatedAt: res.GetCreatedAt(),
-			}
-		}
-	}
-
-	return store, err
+func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
+	return s.openfga.IsReady(ctx)
 }
 
-func (s *Server) getStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	var continuationToken string
-
-	// OpenFGA client does not support any filters for stores.
-	// We should create an issue to support some way to get stores by name.
-	// For now we need to go thourh all stores until we find a match or we hit the end.
-	for {
-		res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
-			PageSize:          &wrapperspb.Int32Value{Value: 20},
-			ContinuationToken: continuationToken,
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to initiate zanzana tenant: %w", err)
-		}
-
-		for _, s := range res.GetStores() {
-			if s.GetName() == name {
-				return s, nil
-			}
-		}
-
-		// we have no more stores to check
-		if res.GetContinuationToken() == "" {
-			return nil, errStoreNotFound
-		}
-
-		continuationToken = res.GetContinuationToken()
-	}
-}
-
-func (s *Server) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
-	var continuationToken string
-
-	model, err := schema.TransformModulesToModel(modules)
+func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1.ContextualTupleKeys, error) {
+	contextuals, err := s.getGlobalAuthorizationContext(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	for {
-		// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
-		// So with a pageSize of 1 we will get the latest model.
-		res, err := s.openfga.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
-			StoreId:           storeID,
-			PageSize:          &wrapperspb.Int32Value{Value: 20},
-			ContinuationToken: continuationToken,
-		})
-
-		if err != nil {
-			return "", fmt.Errorf("failed to load authorization model: %w", err)
-		}
-
-		for _, m := range res.GetAuthorizationModels() {
-			// If provided dsl is equal to a stored dsl we use that as the authorization id
-			if schema.EqualModels(m, model) {
-				return m.GetId(), nil
-			}
-		}
-
-		// If we have not found any matching authorization model we break the loop and create a new one
-		if res.GetContinuationToken() == "" {
-			break
-		}
-
-		continuationToken = res.GetContinuationToken()
+	if strings.HasPrefix(subject, common.TypeRenderService+":") {
+		contextuals = append(
+			contextuals,
+			&openfgav1.TupleKey{
+				User:     subject,
+				Relation: common.RelationSetView,
+				Object: common.NewGroupResourceIdent(
+					dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
+					dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+					"",
+				),
+			},
+		)
 	}
 
-	writeRes, err := s.openfga.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-		StoreId:         s.storeID,
-		TypeDefinitions: model.GetTypeDefinitions(),
-		SchemaVersion:   model.GetSchemaVersion(),
-		Conditions:      model.GetConditions(),
+	if len(contextuals) > 0 {
+		return &openfgav1.ContextualTupleKeys{TupleKeys: contextuals}, nil
+	}
+
+	return nil, nil
+}
+
+func (s *Server) getGlobalAuthorizationContext(ctx context.Context) ([]*openfgav1.TupleKey, error) {
+	const cacheKey = "global_authorization_context"
+	cached, found := s.cache.Get(cacheKey)
+	if found {
+		return cached.([]*openfgav1.TupleKey), nil
+	}
+
+	res, err := s.Read(ctx, &authzextv1.ReadRequest{
+		Namespace: common.ClusterNamespace,
 	})
-
 	if err != nil {
-		return "", fmt.Errorf("failed to load authorization model: %w", err)
+		return nil, err
 	}
 
-	return writeRes.GetAuthorizationModelId(), nil
+	contextualTuples := make([]*openfgav1.TupleKey, 0, len(res.GetTuples()))
+	tuples := common.ToOpenFGATuples(res.GetTuples())
+	for _, t := range tuples {
+		contextualTuples = append(contextualTuples, t.GetKey())
+	}
+
+	s.cache.SetDefault(cacheKey, contextualTuples)
+	return contextualTuples, nil
 }

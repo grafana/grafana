@@ -2,7 +2,7 @@ import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes'
 import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../../home/Insights';
-import { InsightsRatingModal } from '../../RatingModal';
+import { InsightsMenuButton } from '../../InsightsMenuButton';
 
 export function getRuleGroupIntervalScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
@@ -29,7 +29,7 @@ export function getRuleGroupIntervalScene(datasource: DataSourceRef, panelTitle:
       .setData(query)
       .setUnit('s')
       .setOption('graphMode', BigValueGraphMode.Area)
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

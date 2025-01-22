@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -23,15 +24,19 @@ type Client struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	retryCount          int
+	grafanaComAPIToken  string
+	grafanaComAPIURL    string
 
 	log log.PrettyLogger
 }
 
-func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
+func NewClient(skipTLSVerify bool, grafanaComAPIToken, grafanaComAPIURL string, logger log.PrettyLogger) *Client {
 	return &Client{
 		httpClient:          MakeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: MakeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
+		grafanaComAPIToken:  grafanaComAPIToken,
+		grafanaComAPIURL:    grafanaComAPIURL,
 	}
 }
 
@@ -153,6 +158,14 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 	// Note: This is also used as part of the grafana plugin install CLI operation
 	bodyReader, err := c.sendReqNoTimeout(ctx, u, compatOpts)
 	if err != nil {
+		var errResp ErrResponse4xx
+		if errors.As(err, &errResp) {
+			if errResp.StatusCode() == 401 {
+				c.log.Error("Unauthorized download plugin", "error", err)
+				return err
+			}
+		}
+
 		if c.retryCount < 3 {
 			c.retryCount++
 			c.log.Debug("Failed downloading. Will retry.")
@@ -221,6 +234,10 @@ func (c *Client) createReq(ctx context.Context, url *url.URL, compatOpts CompatO
 
 	if orig := ctx.Value(requestOrigin{}); orig != nil {
 		req.Header.Set("grafana-origin", orig.(string))
+	}
+
+	if strings.HasPrefix(url.String(), c.grafanaComAPIURL) && c.grafanaComAPIToken != "" {
+		req.Header.Set("Authorization", "Bearer "+c.grafanaComAPIToken)
 	}
 
 	return req, err

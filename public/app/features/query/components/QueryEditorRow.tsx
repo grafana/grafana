@@ -389,7 +389,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
-  renderWarnings = (): JSX.Element | null => {
+  renderWarnings = (type: string): JSX.Element | null => {
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId)?.series ?? [];
 
@@ -398,7 +398,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         return acc;
       }
 
-      const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
+      const warnings = filter(serie.meta.notices, (item: QueryResultMetaNotice) => item.severity === type) ?? [];
       return acc.concat(warnings);
     }, []);
 
@@ -409,16 +409,20 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return null;
     }
 
+    const key = 'query-' + type + 's';
+    const colour = type === 'warning' ? 'orange' : 'blue';
+    const iconName = type === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
+
     const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
 
     return (
       <Badge
-        key="query-warning"
-        color="orange"
-        icon="exclamation-triangle"
+        key={key}
+        color={colour}
+        icon={iconName}
         text={
           <>
-            {uniqueWarnings.length} {pluralize('warning', uniqueWarnings.length)}
+            {uniqueWarnings.length} {pluralize(type, uniqueWarnings.length)}
           </>
         }
         tooltip={serializedWarnings}
@@ -450,7 +454,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       )
       .filter(Boolean);
 
-    extraActions.push(this.renderWarnings());
+    extraActions.push(this.renderWarnings('info'));
+    extraActions.push(this.renderWarnings('warning'));
 
     return extraActions;
   };

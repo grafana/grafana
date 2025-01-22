@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
+
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -86,7 +87,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		now := time.Now()
 		idClaims := &auth.IDClaims{
-			Claims: &jwt.Claims{
+			Claims: jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
 				Subject:  id.GetID(),
@@ -102,10 +103,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		if id.IsIdentityType(claims.TypeUser) {
 			idClaims.Rest.Email = id.GetEmail()
-			idClaims.Rest.EmailVerified = id.IsEmailVerified()
+			idClaims.Rest.EmailVerified = id.GetEmailVerified()
 			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			idClaims.Rest.Username = id.GetLogin()
-			idClaims.Rest.DisplayName = id.GetDisplayName()
+			idClaims.Rest.DisplayName = id.GetName()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, idClaims)

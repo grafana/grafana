@@ -3,9 +3,9 @@ import { useMemo, useRef } from 'react';
 
 import {
   AlertGroupTotals,
-  AlertingRule,
-  AlertInstanceTotals,
   AlertInstanceTotalState,
+  AlertInstanceTotals,
+  AlertingRule,
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -25,9 +25,9 @@ import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../api/featureDiscoveryApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import {
+  GRAFANA_RULES_SOURCE_NAME,
   getAllRulesSources,
   getRulesSourceByName,
-  GRAFANA_RULES_SOURCE_NAME,
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
@@ -368,7 +368,9 @@ function calculateAllGroupsTotals(groups: CombinedRuleGroup[]): AlertGroupTotals
         totals[key] = 0;
       }
 
-      totals[key] += value;
+      if (value !== undefined && value !== null) {
+        totals[key] += value;
+      }
     });
   });
 

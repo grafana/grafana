@@ -21,11 +21,12 @@ import { GroupActionComponents } from 'app/features/query/components/QueryAction
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types';
 
-import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
+import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
+import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
@@ -190,38 +191,30 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   };
 
   public onQueryOptionsChange = (options: QueryGroupOptions) => {
-    const panelObj = this.state.panelRef.resolve();
+    const panel = this.state.panelRef.resolve();
     const dataObj = this.queryRunner;
-    const timeRangeObj = panelObj.state.$timeRange;
 
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
-    const timeRangeObjStateUpdate: Partial<PanelTimeRangeState> = {};
+    const panelStateUpdate: Partial<VizPanel['state']> = {};
 
     if (options.maxDataPoints !== dataObj.state.maxDataPoints) {
       dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
     }
 
-    if (options.minInterval !== dataObj.state.minInterval && options.minInterval !== null) {
-      dataObjStateUpdate.minInterval = options.minInterval;
+    if (options.minInterval !== dataObj.state.minInterval) {
+      dataObjStateUpdate.minInterval = options.minInterval ?? undefined;
     }
 
-    if (options.timeRange) {
-      timeRangeObjStateUpdate.timeFrom = options.timeRange.from ?? undefined;
-      timeRangeObjStateUpdate.timeShift = options.timeRange.shift ?? undefined;
-      timeRangeObjStateUpdate.hideTimeOverride = options.timeRange.hide;
-    }
+    const timeFrom = options.timeRange?.from ?? undefined;
+    const timeShift = options.timeRange?.shift ?? undefined;
+    const hideTimeOverride = options.timeRange?.hide;
 
-    if (timeRangeObj instanceof PanelTimeRange) {
-      if (timeRangeObjStateUpdate.timeFrom !== undefined || timeRangeObjStateUpdate.timeShift !== undefined) {
-        // update time override
-        timeRangeObj.setState(timeRangeObjStateUpdate);
-      } else {
-        // remove time override
-        panelObj.setState({ $timeRange: undefined });
-      }
+    if (timeFrom !== undefined || timeShift !== undefined) {
+      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange);
     } else {
-      // no time override present on the panel, let's create one first
-      panelObj.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
+      panelStateUpdate.$timeRange = undefined;
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, undefined);
     }
 
     if (options.cacheTimeout !== dataObj?.state.cacheTimeout) {
@@ -231,6 +224,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     if (options.queryCachingTTL !== dataObj?.state.queryCachingTTL) {
       dataObjStateUpdate.queryCachingTTL = options.queryCachingTTL;
     }
+
+    panel.setState(panelStateUpdate);
 
     dataObj.setState(dataObjStateUpdate);
     dataObj.runQueries();

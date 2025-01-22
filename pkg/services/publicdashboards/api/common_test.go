@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -50,14 +49,13 @@ func setupTestServer(
 	cfg *setting.Cfg,
 	service publicdashboards.Service,
 	user *user.SignedInUser,
-	ffEnabled bool,
 ) *web.Mux {
 	t.Helper()
 
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	// build mux
 	m := web.New()
@@ -66,9 +64,6 @@ func setupTestServer(
 	m.Use(contextProvider(&testContext{user}))
 
 	features := featuremgmt.WithFeatures()
-	if ffEnabled {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-	}
 
 	if cfg == nil {
 		cfg = setting.NewCfg()

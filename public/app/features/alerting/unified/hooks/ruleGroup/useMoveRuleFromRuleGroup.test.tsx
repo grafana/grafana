@@ -14,7 +14,7 @@ import {
   grafanaRulerNamespace,
   grafanaRulerRule,
 } from '../../mocks/grafanaRulerApi';
-import { group1, GROUP_3, NAMESPACE_1, NAMESPACE_2 } from '../../mocks/mimirRulerApi';
+import { GROUP_3, NAMESPACE_1, NAMESPACE_2, group1 } from '../../mocks/mimirRulerApi';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';

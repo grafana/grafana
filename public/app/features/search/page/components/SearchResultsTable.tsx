@@ -14,7 +14,7 @@ import { useTableStyles } from '@grafana/ui/src/components/Table/styles';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
-import { QueryResponse } from '../../service';
+import { QueryResponse } from '../../service/types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
@@ -225,7 +225,7 @@ export const SearchResultsTable = React.memo(
 SearchResultsTable.displayName = 'SearchResultsTable';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
+  const rowHoverBg = theme.colors.action.hover;
 
   return {
     noData: css({

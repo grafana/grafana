@@ -177,9 +177,14 @@ func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResource
 	}
 
 	values := url.Values{}
-
 	for _, s := range selectorList {
 		vs := parser.VectorSelector{Name: s, LabelMatchers: matchers}
+		values.Add("match[]", vs.String())
+	}
+
+	// if no timeserie name is provided, but scopes are, the scope is still rendered and passed as match param.
+	if len(selectorList) == 0 && len(sugReq.Scopes) > 0 {
+		vs := parser.VectorSelector{LabelMatchers: matchers}
 		values.Add("match[]", vs.String())
 	}
 

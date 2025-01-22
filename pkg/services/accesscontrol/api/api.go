@@ -1,7 +1,15 @@
 package api
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
+
+	"go.opentelemetry.io/otel"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -10,16 +18,17 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"go.opentelemetry.io/otel"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/api")
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
-	features featuremgmt.FeatureToggles) *AccessControlAPI {
+	userSvc user.Service, features featuremgmt.FeatureToggles) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
+		userSvc:       userSvc,
 		AccessControl: accesscontrol,
 		features:      features,
 	}
@@ -29,6 +38,7 @@ type AccessControlAPI struct {
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
+	userSvc       user.Service
 	features      featuremgmt.FeatureToggles
 }
 
@@ -81,7 +91,20 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
-		TypedID:      c.Query("namespacedId"),
+	}
+
+	// namespacedId is the typed identifier of an identity
+	// it is specified using user/service account IDs or UIDs (ex: user:3, service-account:4, user:adisufjf93e9sd)
+	if typedID := c.Query("namespacedId"); typedID != "" {
+		userID, err := api.ComputeUserID(ctx, c.Query("namespacedId"))
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return response.JSON(http.StatusBadRequest, err.Error())
+			}
+			return response.JSON(http.StatusInternalServerError, err.Error())
+		}
+
+		searchOptions.UserID = userID
 	}
 
 	// Validate inputs
@@ -89,7 +112,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
 
-	if searchOptions.TypedID == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+	if searchOptions.UserID <= 0 && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 
@@ -105,4 +128,31 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	return response.JSON(http.StatusOK, permsByAction)
+}
+
+func (api *AccessControlAPI) ComputeUserID(ctx context.Context, typedID string) (int64, error) {
+	if typedID == "" {
+		return -1, nil
+	}
+
+	typ, idStr, err := claims.ParseTypeID(typedID)
+	if err != nil {
+		return 0, err
+	}
+
+	if !claims.IsIdentityType(typ, claims.TypeUser, claims.TypeServiceAccount) {
+		return 0, fmt.Errorf("invalid type: %s", typ)
+	}
+
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err == nil {
+		return id, nil
+	}
+
+	user, err := api.userSvc.GetByUID(ctx, &user.GetUserByUIDQuery{UID: idStr})
+	if err != nil {
+		return 0, err
+	}
+
+	return user.ID, nil
 }

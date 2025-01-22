@@ -10,7 +10,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { isAlertingRule } from '../../utils/rules';
 
 import { AlertRuleListItem } from './AlertRuleListItem';
-import EvaluationGroup from './EvaluationGroup';
+import { EvaluationGroup } from './EvaluationGroup';
 import { SkeletonListItem } from './ListItem';
 
 interface EvaluationGroupLoaderProps {
@@ -51,27 +51,42 @@ export const EvaluationGroupLoader = ({
 
   return (
     <EvaluationGroup name={name} interval={interval} provenance={provenance} isOpen={isOpen} onToggle={toggle}>
-      <>
-        {/* @TODO nicer error handling */}
-        {error && <Alert title="Something went wrong when trying to fetch group details">{String(error)}</Alert>}
-        {isLoading ? (
-          <GroupLoadingIndicator />
-        ) : (
-          pageItems.map((rule, index) => {
-            <AlertRuleListItem
-              key={index}
-              state={PromAlertingRuleState.Inactive}
-              name={rule.name}
-              href={'/'}
-              summary={isAlertingRule(rule) ? rule.annotations?.summary : undefined}
-            />;
+      {/* @TODO nicer error handling */}
+      {error ? (
+        <Alert title="Something went wrong when trying to fetch group details">{String(error)}</Alert>
+      ) : (
+        <>
+          {isLoading ? (
+            <GroupLoadingIndicator />
+          ) : (
+            pageItems.map((rule, index) => {
+              <AlertRuleListItem
+                key={index}
+                state={PromAlertingRuleState.Inactive}
+                name={rule.name}
+                href={'/'}
+                summary={isAlertingRule(rule) ? rule.annotations?.summary : undefined}
+              />;
 
-            return null;
-          })
-        )}
-        {numberOfPages > 1 && <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />}
-      </>
+              return null;
+            })
+          )}
+          {numberOfPages > 1 && (
+            <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />
+          )}
+        </>
+      )}
     </EvaluationGroup>
+  );
+};
+
+export const LoadingIndicator = ({ datasourceUid }: { datasourceUid: string }) => {
+  const [ref, { width }] = useMeasure<HTMLDivElement>();
+
+  return (
+    <div ref={ref} data-testid={`ds-loading-indicator-${datasourceUid}`}>
+      <LoadingBar width={width} />
+    </div>
   );
 };
 

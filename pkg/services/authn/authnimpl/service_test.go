@@ -8,12 +8,13 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -507,7 +508,7 @@ func TestService_Logout(t *testing.T) {
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
-				LogoutFunc: func(ctx context.Context, _ identity.Requester) (*authn.Redirect, bool) {
+				LogoutFunc: func(ctx context.Context, _ identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, bool) {
 					return &authn.Redirect{URL: "http://idp.com/logout"}, true
 				},
 			},

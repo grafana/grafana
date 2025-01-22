@@ -6,7 +6,8 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "resolveJsonModule": true
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",

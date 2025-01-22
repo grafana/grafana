@@ -170,6 +170,8 @@ export interface GrafanaConfig {
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
+  externalUserMngAnalytics: boolean;
+  externalUserMngAnalyticsParams: string;
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
   defaultDatasource: string;
@@ -278,5 +280,6 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
+  passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
 }

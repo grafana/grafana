@@ -12,6 +12,7 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 )
@@ -48,13 +49,15 @@ type queryParser struct {
 	legacy service.LegacyDataSourceLookup
 	reader *expr.ExpressionQueryReader
 	tracer tracing.Tracer
+	logger log.Logger
 }
 
-func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDataSourceLookup, tracer tracing.Tracer) *queryParser {
+func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDataSourceLookup, tracer tracing.Tracer, logger log.Logger) *queryParser {
 	return &queryParser{
 		reader: reader,
 		legacy: legacy,
 		tracer: tracer,
+		logger: logger,
 	}
 }
 
@@ -80,8 +83,9 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			return rsp, MakePublicQueryError(q.RefID, "multiple queries with same refId")
 		}
 
-		ds, err := p.getValidDataSourceRef(ctx, q)
+		ds, err := p.getValidDataSourceRef(ctx, q.Datasource, q.DatasourceID)
 		if err != nil {
+			p.logger.Error("Failed to get valid datasource ref", "error", err)
 			return rsp, err
 		}
 
@@ -93,14 +97,17 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			// but this approach lets us focus on well typed behavior first
 			raw, err := json.Marshal(q)
 			if err != nil {
+				p.logger.Error("Failed to marshal query for expression", "error", err)
 				return rsp, err
 			}
 			iter, err := jsoniter.ParseBytes(jsoniter.ConfigDefault, raw)
 			if err != nil {
+				p.logger.Error("Failed to parse bytes for expression", "error", err)
 				return rsp, err
 			}
 			exp, err := p.reader.ReadQuery(q, iter)
 			if err != nil {
+				p.logger.Error("Failed to read query for expression", "error", err)
 				return rsp, NewErrorWithRefID(q.RefID, err)
 			}
 			exp.GraphID = int64(len(expressions) + 1)
@@ -170,6 +177,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		// Add the sorted expressions
 		sortedNodes, err := topo.SortStabilized(dg, nil)
 		if err != nil {
+			p.logger.Error("Error when sorting nodes", "error", err)
 			return rsp, makeCyclicError("")
 		}
 		for _, v := range sortedNodes {
@@ -194,35 +202,21 @@ func getTimeRangeForQuery(parentTimerange, queryTimerange *data.TimeRange) data.
 	}
 }
 
-func (p *queryParser) getValidDataSourceRef(ctx context.Context, dataQuery data.DataQuery) (*data.DataSourceRef, error) {
-	ds := dataQuery.Datasource
-	id := dataQuery.DatasourceID
-
+func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSourceRef, id int64) (*data.DataSourceRef, error) {
 	if ds == nil {
 		if id == 0 {
-			return nil, NewErrorWithRefID(dataQuery.RefID, fmt.Errorf("missing datasource reference or id"))
+			return nil, fmt.Errorf("missing datasource reference or id")
 		}
-
 		if p.legacy == nil {
 			return nil, fmt.Errorf("legacy datasource lookup unsupported (id:%d)", id)
 		}
 		return p.legacy.GetDataSourceFromDeprecatedFields(ctx, "", id)
 	}
-
-	if ds.UID[0] == '$' {
-		uid, ok := dataQuery.Get("datasourceUid")
-		if ok {
-			return p.legacy.GetDataSourceFromDeprecatedFields(ctx, uid.(string), 0) // uid can be name in this scenario
-		} else {
-			return nil, NewErrorWithRefID(dataQuery.RefID, fmt.Errorf("missing datasource reference or id"))
-		}
-	}
-
 	if ds.Type == "" {
 		if ds.UID == "" {
 			return nil, fmt.Errorf("missing name/uid in data source reference")
 		}
-		if ds.UID == expr.DatasourceType {
+		if expr.IsDataSource(ds.UID) {
 			return ds, nil
 		}
 		if p.legacy == nil {

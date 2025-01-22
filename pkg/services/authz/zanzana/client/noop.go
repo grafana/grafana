@@ -3,14 +3,11 @@ package client
 import (
 	"context"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
+	authlib "github.com/grafana/authlib/types"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-var _ authz.AccessClient = (*NoopClient)(nil)
+var _ authlib.AccessClient = (*NoopClient)(nil)
 
 func NewNoop() *NoopClient {
 	return &NoopClient{}
@@ -18,30 +15,22 @@ func NewNoop() *NoopClient {
 
 type NoopClient struct{}
 
-func (nc *NoopClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
-	return authz.CheckResponse{}, nil
+func (nc *NoopClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{}, nil
 }
 
-func (nc *NoopClient) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
+func (nc *NoopClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
 	return nil, nil
 }
 
-func (nc *NoopClient) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
+func (nc NoopClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
-func (nc NoopClient) CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
-	return nil, nil
-}
-
-func (nc NoopClient) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
-	return nil, nil
-}
-
-func (nc NoopClient) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	return nil, nil
-}
-
-func (nc NoopClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
+}
+
+func (nc NoopClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
+	return nil, nil
 }

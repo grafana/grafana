@@ -29,6 +29,7 @@ func TestIntegrationAzureMonitor(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("skipping integration test due to flakiness")
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})

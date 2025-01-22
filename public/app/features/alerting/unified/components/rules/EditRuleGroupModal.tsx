@@ -6,6 +6,7 @@ import { FieldValues, FormProvider, RegisterOptions, useForm, useFormContext } f
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Badge, Button, Field, Input, Label, LinkButton, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -178,7 +179,7 @@ export interface ModalProps {
   hideFolder?: boolean;
 }
 
-export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
+export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose, intervalEditOnly, folderUid } = props;
 
   const styles = useStyles2(getStyles);
@@ -384,7 +385,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   onClick={() => onClose(false)}
                   fill="outline"
                 >
-                  Cancel
+                  <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                 </Button>
                 <Button type="submit" disabled={!isDirty || !isValid || loading}>
                   {loading ? 'Saving...' : 'Save'}

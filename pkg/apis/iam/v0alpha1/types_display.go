@@ -1,9 +1,9 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	claims "github.com/grafana/authlib/types"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -47,5 +47,5 @@ type IdentityRef struct {
 }
 
 func (i *IdentityRef) String() string {
-	return identity.NewTypedIDString(i.Type, i.Name)
+	return claims.NewTypeID(i.Type, i.Name)
 }
