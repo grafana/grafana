@@ -1,7 +1,8 @@
 import { groupBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
-import { Icon, Stack, Text } from '@grafana/ui';
+import { Alert, Icon, Stack, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, GrafanaPromRuleGroupDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -11,6 +12,7 @@ import { GrafanaRulesSource } from '../utils/datasource';
 
 import { GrafanaRuleListItem } from './GrafanaRuleLoader';
 import { RuleOperationListItem } from './components/AlertRuleListItem';
+import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
 import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
@@ -111,16 +113,6 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
       actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
       <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
-      {/* {group.rules.map((rule) => {
-        return (
-          <GrafanaRuleLoader
-            key={rule.uid}
-            rule={rule}
-            namespaceName={namespaceName}
-            groupIdentifier={groupIdentifier}
-          />
-        );
-      })} */}
     </ListGroup>
   );
 }
@@ -128,48 +120,80 @@ export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGr
 interface GrafanaGroupLoaderProps {
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
+  expectedRulesCount?: number;
 }
 
-function GrafanaGroupLoader({ groupIdentifier, namespaceName }: GrafanaGroupLoaderProps) {
-  const { data: promResponse } = useGetGrafanaGroupsQuery({
+function GrafanaGroupLoader({ groupIdentifier, namespaceName, expectedRulesCount = 3 }: GrafanaGroupLoaderProps) {
+  const { data: promResponse, isLoading: isPromResponseLoading } = useGetGrafanaGroupsQuery({
     folderUid: groupIdentifier.namespace.uid,
     groupName: groupIdentifier.groupName,
   });
-  const { data: rulerResponse } = useGetGrafanaRulerGroupQuery({
+  const { data: rulerResponse, isLoading: isRulerGroupLoading } = useGetGrafanaRulerGroupQuery({
     folderUid: groupIdentifier.namespace.uid,
     groupName: groupIdentifier.groupName,
   });
 
-  const { matching, unmatchedPromRules, unmatchedRulerRules } = useMemo(() => {
+  const { matches, promOnlyRules } = useMemo(() => {
     if (!promResponse || !rulerResponse) {
-      return { matching: [], unmatchedPromRules: [], unmatchedRulerRules: [] };
+      return { matches: new Map(), promOnlyRules: [] };
     }
     return matchRules(promResponse.data.groups.at(0)?.rules ?? [], rulerResponse.rules);
   }, [promResponse, rulerResponse]);
 
+  const isLoading = isPromResponseLoading || isRulerGroupLoading;
+  if (isLoading) {
+    return (
+      <>
+        {Array.from({ length: expectedRulesCount }).map((_, index) => (
+          <AlertRuleListItemLoader key={index} />
+        ))}
+      </>
+    );
+  }
+
+  if (!rulerResponse || !promResponse) {
+    return (
+      <Alert
+        title={t(
+          'alerting.group-loader.group-load-failed',
+          'Failed to load rules from group {{ groupName }} in {{ namespaceName }}',
+          { groupName: groupIdentifier.groupName, namespaceName }
+        )}
+        severity="error"
+      />
+    );
+  }
+
   return (
     <>
-      {unmatchedRulerRules.map((rule) => (
-        <RuleOperationListItem
-          key={rule.grafana_alert.uid}
-          name={rule.grafana_alert.title}
-          namespace={namespaceName}
-          group={groupIdentifier.groupName}
-          rulesSource={GrafanaRulesSource}
-          application="grafana"
-          operation={RuleOperation.Creating}
-        />
-      ))}
-      {matching.map(({ promRule, rulerRule }) => (
-        <GrafanaRuleListItem
-          key={promRule.uid}
-          rule={promRule}
-          rulerRule={rulerRule}
-          groupIdentifier={groupIdentifier}
-          namespaceName={namespaceName}
-        />
-      ))}
-      {unmatchedPromRules.map((rule) => (
+      {rulerResponse.rules.map((rulerRule) => {
+        const promRule = matches.get(rulerRule);
+
+        if (!promRule) {
+          return (
+            <RuleOperationListItem
+              key={rulerRule.grafana_alert.uid}
+              name={rulerRule.grafana_alert.title}
+              namespace={namespaceName}
+              group={groupIdentifier.groupName}
+              rulesSource={GrafanaRulesSource}
+              application="grafana"
+              operation={RuleOperation.Creating}
+            />
+          );
+        }
+
+        return (
+          <GrafanaRuleListItem
+            key={promRule.uid}
+            rule={promRule}
+            rulerRule={rulerRule}
+            groupIdentifier={groupIdentifier}
+            namespaceName={namespaceName}
+          />
+        );
+      })}
+      {promOnlyRules.map((rule) => (
         <RuleOperationListItem
           key={rule.uid}
           name={rule.name}
@@ -184,41 +208,31 @@ function GrafanaGroupLoader({ groupIdentifier, namespaceName }: GrafanaGroupLoad
   );
 }
 
-interface RuleMatch {
-  promRule: GrafanaPromRuleDTO;
-  rulerRule: RulerGrafanaRuleDTO;
-}
-
 interface MatchingResult {
-  matching: RuleMatch[];
+  matches: Map<RulerGrafanaRuleDTO, GrafanaPromRuleDTO>;
   /**
    * Rules that were already removed from the Ruler but the changes has not been yet propagated to Prometheus
    */
-  unmatchedPromRules: GrafanaPromRuleDTO[];
-  /**
-   * Rules that has been just added to the Ruler but the changes has not been yet propagated to Prometheus
-   */
-  unmatchedRulerRules: RulerGrafanaRuleDTO[];
+  promOnlyRules: GrafanaPromRuleDTO[];
 }
 
 function matchRules(promRules: GrafanaPromRuleDTO[], rulerRules: RulerGrafanaRuleDTO[]): Readonly<MatchingResult> {
   const promRulesMap = new Map(promRules.map((rule) => [rule.uid, rule]));
 
   const matchingResult = rulerRules.reduce<MatchingResult>(
-    ({ matching, unmatchedPromRules, unmatchedRulerRules }, rulerRule) => {
+    (acc, rulerRule) => {
+      const { matches } = acc;
       const promRule = promRulesMap.get(rulerRule.grafana_alert.uid);
       if (promRule) {
-        matching.push({ promRule, rulerRule });
+        matches.set(rulerRule, promRule);
         promRulesMap.delete(rulerRule.grafana_alert.uid);
-      } else {
-        unmatchedRulerRules.push(rulerRule);
       }
-      return { matching, unmatchedPromRules, unmatchedRulerRules };
+      return acc;
     },
-    { matching: [], unmatchedPromRules: [], unmatchedRulerRules: [] }
+    { matches: new Map(), promOnlyRules: [] }
   );
 
-  matchingResult.unmatchedPromRules.push(...promRulesMap.values());
+  matchingResult.promOnlyRules.push(...promRulesMap.values());
 
   return matchingResult;
 }
