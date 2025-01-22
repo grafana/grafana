@@ -193,15 +193,7 @@ For additional functions to display or format data, refer to:
 Here’s an example of creating a `severity` label based on a query value:
 
 ```go
-{{ if (gt $values.A.Value 90.0) -}}
-critical
-{{ else if (gt $values.A.Value 80.0) -}}
-high
-{{ else if (gt $values.A.Value 60.0) -}}
-medium
-{{ else -}}
-low
-{{- end }}
+{{ if (gt $values.A.Value 90.0) }}critical{{ else if (gt $values.A.Value 80.0) }}high{{ else if (gt $values.A.Value 60.0) }}medium{{ else }}low{{ end }}
 ```
 
 In this example, the `severity` label is determined by the query value:
