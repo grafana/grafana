@@ -28,6 +28,7 @@ interface Props {
 }
 
 export const LogList = ({
+  app,
   containerElement,
   logs,
   eventBus,
@@ -38,7 +39,9 @@ export const LogList = ({
   wrapLogMessage,
 }: Props) => {
   const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
-  const [listHeight, setListHeight] = useState(window.innerHeight * 0.75);
+  const [listHeight, setListHeight] = useState(
+    app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement?.clientHeight
+  );
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement?.clientWidth);
@@ -66,13 +69,14 @@ export const LogList = ({
 
   useEffect(() => {
     const handleResize = debounce(() => {
-      setListHeight(window.innerHeight * 0.75);
+      setListHeight(app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement?.clientHeight);
     }, 50);
     window.addEventListener('resize', handleResize);
+    handleResize();
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [processedLogs]);
+  }, [app, containerElement?.clientHeight]);
 
   useLayoutEffect(() => {
     if (widthRef.current === containerElement?.clientWidth) {
@@ -109,7 +113,7 @@ export const LogList = ({
     [handleOverflow, processedLogs, showTime, wrapLogMessage]
   );
 
-  if (!containerElement) {
+  if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
     return null;
   }
