@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ListChildComponentProps, VariableSizeList } from 'react-window';
 
 import { CoreApp, EventBus, LogRowModel, LogsSortOrder } from '@grafana/data';
@@ -38,9 +38,10 @@ export const LogList = ({
   wrapLogMessage,
 }: Props) => {
   const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
-  const [listHeight, setListHeight] = useState(window.innerHeight * 0.75)
+  const [listHeight, setListHeight] = useState(window.innerHeight * 0.75);
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
+  const widthRef = useRef(containerElement?.clientWidth);
 
   useEffect(() => {
     initVirtualization(theme);
@@ -66,14 +67,21 @@ export const LogList = ({
   useEffect(() => {
     const handleResize = debounce(() => {
       setListHeight(window.innerHeight * 0.75);
-      resetLogLineSizes();
-      listRef.current?.resetAfterIndex(0);
     }, 50);
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
     };
   }, [processedLogs]);
+
+  useLayoutEffect(() => {
+    if (widthRef.current === containerElement?.clientWidth) {
+      return;
+    }
+    resetLogLineSizes();
+    listRef.current?.resetAfterIndex(0);
+    widthRef.current = containerElement?.clientWidth;
+  });
 
   const handleOverflow = useCallback(
     (index: number, id: string, height: number) => {
