@@ -17,15 +17,18 @@ import (
 	fmt "fmt"
 )
 
-type BuiltinRoleRef struct {
-	Kind string             `json:"kind"`
-	Name BuiltinRoleRefName `json:"name"`
+type Spec struct {
+	// The role we are discussing
+	Role BuiltinRoleRefOrCustomRoleRef `json:"role"`
+	// The team or user that has the specified role
+	Subject RoleBindingSubject `json:"subject"`
 }
 
-// NewBuiltinRoleRef creates a new BuiltinRoleRef object.
-func NewBuiltinRoleRef() *BuiltinRoleRef {
-	return &BuiltinRoleRef{
-		Kind: "BuiltinRole",
+// NewSpec creates a new Spec object.
+func NewSpec() *Spec {
+	return &Spec{
+		Role:    *NewBuiltinRoleRefOrCustomRoleRef(),
+		Subject: *NewRoleBindingSubject(),
 	}
 }
 
@@ -41,6 +44,18 @@ func NewCustomRoleRef() *CustomRoleRef {
 	}
 }
 
+type BuiltinRoleRef struct {
+	Kind string             `json:"kind"`
+	Name BuiltinRoleRefName `json:"name"`
+}
+
+// NewBuiltinRoleRef creates a new BuiltinRoleRef object.
+func NewBuiltinRoleRef() *BuiltinRoleRef {
+	return &BuiltinRoleRef{
+		Kind: "BuiltinRole",
+	}
+}
+
 type RoleBindingSubject struct {
 	Kind RoleBindingSubjectKind `json:"kind"`
 	// The team/user identifier name
@@ -50,21 +65,6 @@ type RoleBindingSubject struct {
 // NewRoleBindingSubject creates a new RoleBindingSubject object.
 func NewRoleBindingSubject() *RoleBindingSubject {
 	return &RoleBindingSubject{}
-}
-
-type Spec struct {
-	// The role we are discussing
-	Role BuiltinRoleRefOrCustomRoleRef `json:"role"`
-	// The team or user that has the specified role
-	Subject RoleBindingSubject `json:"subject"`
-}
-
-// NewSpec creates a new Spec object.
-func NewSpec() *Spec {
-	return &Spec{
-		Role:    *NewBuiltinRoleRefOrCustomRoleRef(),
-		Subject: *NewRoleBindingSubject(),
-	}
 }
 
 type BuiltinRoleRefName string
