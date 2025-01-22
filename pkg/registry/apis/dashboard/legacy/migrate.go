@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/authlib/claims"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -16,7 +16,7 @@ import (
 type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error
 
 func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error) {
-	info, err := claims.ParseNamespace(opts.Namespace)
+	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
 		return nil, err
 	}
