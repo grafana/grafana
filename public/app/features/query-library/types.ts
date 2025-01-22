@@ -1,6 +1,17 @@
 import { DataQuery } from '@grafana/schema';
 
-import { DataQueryPartialSpec } from './api/types';
+export type DataQueryTarget = {
+  variables: object; // TODO: Detect variables in #86838
+  properties: DataQuery;
+};
+
+export type DataQuerySpec = {
+  title: string;
+  vars: object[]; // TODO: Detect variables in #86838
+  targets: DataQueryTarget[];
+};
+
+export type DataQueryPartialSpec = Partial<DataQuerySpec>;
 
 export type QueryTemplate = {
   uid: string;

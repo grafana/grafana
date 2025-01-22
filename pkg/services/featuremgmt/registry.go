@@ -793,13 +793,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:            "panelTitleSearchInV1",
-			Description:     "Enable searching for dashboards using panel title in search v1",
-			RequiresDevMode: true,
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
 			Stage:           FeatureStageGeneralAvailability,
@@ -1765,6 +1758,14 @@ var (
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "datasourceConnectionsTab",
+			Description:     "Shows defined connections for a data source in the plugins detail page",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresDevMode: false,
+			FrontendOnly:    true,
 		},
 	}
 )
