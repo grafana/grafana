@@ -129,7 +129,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       name: 'Tabs',
       description: 'Tabs layout',
       id: 'tabs-layout',
-      level: 0,
       createFromLayout: TabsLayoutManager.createFromLayout,
     };
   }
