@@ -294,6 +294,21 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(" OR (le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, ` AND (`, params...)
 		builder.Write(` OR le.folder_id=0))`)
+		/* SQL QUERY:
+
+		Option 1 (depends on the result of the param selector):
+		SELECT DISTINCT
+		le.name, le.id, le.org_id, le.folder_id, le.uid, le.kind, le.type, le.description, le.model, le.created, le.created_by, le.updated,
+		le.updated_by, le.version, u1.login AS created_by_name, u1.email AS created_by_email, u2.login AS updated_by_name, u2.email AS updated_by_email,
+		(SELECT COUNT(connection_id) FROM library_element_connection WHERE element_id = le.id AND kind=1) AS connected_dashboards
+		FROM library_element AS le
+		LEFT JOIN `user` AS u1 ON le.created_by = u1.idLEFT JOIN `user` AS u2 ON le.updated_by = u2.id
+		WHERE le.org_id=? AND le.uid=? AND le.folder_id=? OR (le.folder_id <> 0 AND (le.org_id=? AND le.uid=? OR le.folder_id=0))
+
+		Option 2:
+		The last line could instead be:
+		WHERE le.org_id=? AND le.name=? AND le.folder_id=? OR (le.folder_id <> 0 AND (le.org_id=? AND le.name=? OR le.folder_id=0))
+		*/
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
 		}
