@@ -793,13 +793,6 @@ var (
 			FrontendOnly: false,
 		},
 		{
-			Name:            "panelTitleSearchInV1",
-			Description:     "Enable searching for dashboards using panel title in search v1",
-			RequiresDevMode: true,
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
 			Stage:           FeatureStageGeneralAvailability,
@@ -1473,15 +1466,17 @@ var (
 		{
 			Name:         "alertingQueryAndExpressionsStepMode",
 			Description:  "Enables step mode for alerting queries and expressions",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
-			Name:        "improvedExternalSessionHandling",
-			Description: "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       identityAccessTeam,
+			Name:           "improvedExternalSessionHandling",
+			Description:    "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
+			Stage:          FeatureStagePublicPreview,
+			Owner:          identityAccessTeam,
+			AllowSelfServe: true,
 		},
 		{
 			Name:        "useSessionStorageForRedirection",
@@ -1507,6 +1502,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchSprinkles",
 			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "unifiedStorageSearchPermissionFiltering",
+			Description:       "Enable permission filtering on unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
@@ -1646,9 +1649,10 @@ var (
 		{
 			Name:         "alertingNotificationsStepMode",
 			Description:  "Enables simplified step mode in the notifications section",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:            "useV2DashboardsAPI",
@@ -1714,10 +1718,11 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "improvedExternalSessionHandlingSAML",
-			Description: "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       identityAccessTeam,
+			Name:           "improvedExternalSessionHandlingSAML",
+			Description:    "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
+			Stage:          FeatureStagePublicPreview,
+			Owner:          identityAccessTeam,
+			AllowSelfServe: true,
 		},
 		{
 			Name:           "teamHttpHeadersMimir",
@@ -1751,10 +1756,24 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:        "grafanaAdvisor",
+			Description: "Enables Advisor app",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:        "elasticsearchImprovedParsing",
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "datasourceConnectionsTab",
+			Description:     "Shows defined connections for a data source in the plugins detail page",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresDevMode: false,
+			FrontendOnly:    true,
 		},
 	}
 )
