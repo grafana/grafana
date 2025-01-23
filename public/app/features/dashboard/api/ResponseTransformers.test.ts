@@ -638,7 +638,10 @@ describe('ResponseTransformers', () => {
       expect(panelV2.kind).toBe('Panel');
       validatePanel(dashboard.panels![0], panelV2, dashboardV2.spec.layout, panelKey);
       // library panel
-      expect(dashboard.panels![1].libraryPanel).toEqual(dashboardV2.spec.elements['library-panel-1'].spec);
+      expect(dashboard.panels![1].libraryPanel).toEqual({
+        uid: 'uid-for-library-panel',
+        name: 'Library Panel',
+      });
     });
 
     describe('getPanelQueries', () => {

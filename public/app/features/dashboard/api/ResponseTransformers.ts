@@ -826,12 +826,12 @@ function getPanelsV1(
     } else if (p.kind === 'LibraryPanel') {
       const panel = p.spec;
       return {
-        id: 0, //TODO: LibraryPanelSpec.id will be available after https://github.com/grafana/grafana/pull/99281/ is merged
-        title: panel.name,
+        id: panel.id,
+        title: panel.title,
         gridPos,
         libraryPanel: {
-          uid: panel.uid,
-          name: panel.name,
+          uid: panel.libraryPanel.uid,
+          name: panel.libraryPanel.name,
         },
       };
     } else {
