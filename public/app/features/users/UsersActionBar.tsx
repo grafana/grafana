@@ -56,7 +56,7 @@ export const UsersActionBarUnconnected = ({
   const onExternalUserMngClick = () => {
     reportInteraction('users_admin_actions_clicked', {
       category: 'org_users',
-      item: 'manage_users_grafanacom',
+      item: 'manage_users_external',
     });
   };
 
