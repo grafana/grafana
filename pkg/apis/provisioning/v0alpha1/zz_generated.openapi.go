@@ -880,13 +880,6 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-					"preferYaml": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Should we prefer emitting YAML for this repository, e.g. upon export? Editing existing dashboards will continue to emit the file format used in the repository. (TODO: implement this) If you delete and then recreate a dashboard, it will switch to the preferred format.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"editing": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Edit options within the repository",
