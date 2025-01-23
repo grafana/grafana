@@ -57,6 +57,7 @@ func calculateKubernetesNameFromPath(cleanDirPath string) string {
 	const maxKubeNameLen = 253
 	const cutNameAt = maxKubeNameLen - 1 /* hyphen */ - suffixLen
 
+	// TODO: Should we maybe use the last N characters than the first N? That'd make it align more with what the user expects from the UI...
 	if len(kubernetesName) > cutNameAt {
 		kubernetesName = kubernetesName[:cutNameAt]
 	}

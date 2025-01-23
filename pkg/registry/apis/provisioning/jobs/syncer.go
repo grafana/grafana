@@ -255,20 +255,21 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 		}
 
 		currentPath = path.Join(currentPath, folder)
+		folderID := resources.ParseFolderID(currentPath)
 
-		logger := logger.With("folder", folder)
-		obj, err := r.folders.Get(ctx, folder, metav1.GetOptions{})
+		logger := logger.With("folder", currentPath)
+		obj, err := r.folders.Get(ctx, folderID.KubernetesName, metav1.GetOptions{})
 		// FIXME: Check for IsNotFound properly
 		if obj != nil || err == nil {
 			logger.Debug("folder already existed")
-			parent = folder
+			parent = folderID.KubernetesName
 			continue
 		}
 
 		obj = &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"spec": map[string]any{
-					"title":       folder, // TODO: how do we want to get this?
+					"title":       folderID.Title,
 					"description": "Repository-managed folder.",
 				},
 			},
@@ -280,7 +281,7 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 		}
 
 		obj.SetNamespace(r.client.GetNamespace())
-		obj.SetName(folder)
+		obj.SetName(folderID.KubernetesName)
 		meta.SetFolder(parent)
 		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 			Name:      r.repository.Config().Name,
@@ -291,10 +292,10 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 
 		_, err = r.folders.Create(ctx, obj, metav1.CreateOptions{})
 		if err != nil {
-			return parent, fmt.Errorf("failed to create folder '%s': %w", folder, err)
+			return parent, fmt.Errorf("failed to create folder '%s': %w", folderID.KubernetesName, err)
 		}
 
-		parent = folder
+		parent = folderID.KubernetesName
 		logger.Info("folder created")
 	}
 
