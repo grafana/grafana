@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
 import { Button, Field, Input, Legend, Switch } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { ScopedResourceClient } from '../apiserver/client';
-
-import { Repository, Job, useCreateRepositoryExportMutation, JobSpec, JobStatus } from './api';
+import { Repository, useCreateRepositoryExportMutation, useListJobQuery } from './api';
 import { ExportOptions } from './api/types';
 
 interface Props {
@@ -15,7 +12,7 @@ interface Props {
 
 export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
-  const [job, setJob] = useState<Job>();
+  const exportName = exportQuery.data?.metadata?.name;
 
   const onSubmit: SubmitHandler<ExportOptions> = (body) =>
     exportRepo({
@@ -31,72 +28,12 @@ export function ExportToRepository({ repo }: Props) {
     },
   });
 
-  useEffect(() => {
-    if (exportQuery.isSuccess) {
-      setJob(exportQuery.data);
-
-      const name = exportQuery.data.metadata?.name!;
-      console.log('Start watching: ', name);
-      const client = new ScopedResourceClient<JobSpec, JobStatus>({
-        group: 'provisioning.grafana.app',
-        version: 'v0alpha1',
-        resource: 'jobs',
-      });
-      client.watch({ name }).subscribe((v) => {
-        const state = v.object.status?.state;
-        console.log('GOT: ', state, v);
-        if (v.object) {
-          setJob(v.object as Job);
-        }
-        if (state === 'success' || state === 'error') {
-          console.warn('TODO, unsubscribe job:', name);
-        }
-      });
-    }
-  }, [exportQuery.isSuccess, exportQuery.data]);
-
-  if (job) {
-    return (
-      <div>
-        {/** https://codepen.io/tmac/pen/QgVRKb  ??? */}
-        {job.status && (
-          <div>
-            <div>
-              {job.status.message} // {job.status.state}
-              {job.status.progress && (
-                <div
-                  style={{
-                    background: '#999',
-                    width: '400px',
-                    height: '10px',
-                  }}
-                >
-                  <div
-                    style={{
-                      background: 'green',
-                      width: `${job.status.progress}%`,
-                      height: '10px',
-                    }}
-                  >
-                    &nbsp;
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <br />
-        <br />
-        <pre>{JSON.stringify(job, null, '  ')}</pre>
-      </div>
-    );
+  if (exportName) {
+    return <ExportJobStatus name={exportName} />;
   }
 
   return (
     <>
-      <br />
-      <br />
       <form onSubmit={handleSubmit(onSubmit)}>
         <Legend>Export from grafana into repository</Legend>
 
@@ -130,5 +67,49 @@ export function ExportToRepository({ repo }: Props) {
         </Button>
       </form>
     </>
+  );
+}
+
+function ExportJobStatus({ name }: { name: string }) {
+  const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
+  const job = jobQuery.data?.items?.[0];
+
+  if (!job) {
+    return null;
+  }
+  return (
+    <div>
+      {/** https://codepen.io/tmac/pen/QgVRKb  ??? */}
+      {job.status && (
+        <div>
+          <div>
+            {job.status.message} // {job.status.state}
+            {job.status.progress && (
+              <div
+                style={{
+                  background: '#999',
+                  width: '400px',
+                  height: '10px',
+                }}
+              >
+                <div
+                  style={{
+                    background: 'green',
+                    width: `${job.status.progress}%`,
+                    height: '10px',
+                  }}
+                >
+                  &nbsp;
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <br />
+      <br />
+      <pre>{JSON.stringify(job, null, '  ')}</pre>
+    </div>
   );
 }
