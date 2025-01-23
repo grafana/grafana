@@ -114,8 +114,8 @@ var VerbMapping = map[string]string{
 	utils.VerbPatch:            RelationUpdate,
 	utils.VerbDelete:           RelationDelete,
 	utils.VerbDeleteCollection: RelationDelete,
-	utils.VerbGetPermissions:   RelationGet,
-	utils.VerbSetPermissions:   RelationDelete,
+	utils.VerbGetPermissions:   RelationGetPermissions,
+	utils.VerbSetPermissions:   RelationSetPermissions,
 }
 
 // RelationToVerbMapping is mapping a zanzana relation to k8s verb.

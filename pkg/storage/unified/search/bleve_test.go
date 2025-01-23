@@ -9,13 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -40,7 +41,7 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService())
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering))
 	require.NoError(t, err)
 
 	// AVOID NPE in test
@@ -536,7 +537,7 @@ func asTimePointer(milli int64) *time.Time {
 	return nil
 }
 
-var _ authz.AccessClient = (*StubAccessClient)(nil)
+var _ authlib.AccessClient = (*StubAccessClient)(nil)
 
 func NewStubAccessClient(permissions map[string]bool) *StubAccessClient {
 	return &StubAccessClient{resourceResponses: permissions}
@@ -546,11 +547,11 @@ type StubAccessClient struct {
 	resourceResponses map[string]bool // key is the resource name, and bool if what the checker will return
 }
 
-func (nc *StubAccessClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
-	return authz.CheckResponse{Allowed: nc.resourceResponses[req.Resource]}, nil
+func (nc *StubAccessClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: nc.resourceResponses[req.Resource]}, nil
 }
 
-func (nc *StubAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
+func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, error) {
 	return func(namespace string, name, folder string) bool {
 		return nc.resourceResponses[req.Resource]
 	}, nil

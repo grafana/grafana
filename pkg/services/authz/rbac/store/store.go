@@ -3,8 +3,9 @@ package store
 import (
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
 	"golang.org/x/net/context"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"

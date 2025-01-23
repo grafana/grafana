@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -9,21 +10,26 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -31,14 +37,17 @@ import (
 type folderK8sHandler interface {
 	getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
 	getNamespace(orgID int64) string
+	getSearcher(ctx context.Context) resource.ResourceClient
 }
 
 var _ folderK8sHandler = (*foldk8sHandler)(nil)
 
 type foldk8sHandler struct {
-	cfg        *setting.Cfg
-	namespacer request.NamespaceMapper
-	gvr        schema.GroupVersionResource
+	cfg                    *setting.Cfg
+	namespacer             request.NamespaceMapper
+	gvr                    schema.GroupVersionResource
+	restConfigProvider     func(ctx context.Context) *clientrest.Config
+	recourceClientProvider func(ctx context.Context) resource.ResourceClient
 }
 
 func (s *Service) getFoldersFromApiServer(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -92,6 +101,8 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
+	ctx = identity.WithRequester(ctx, q.SignedInUser)
+
 	var dashFolder *folder.Folder
 	var err error
 	switch {
@@ -101,13 +112,19 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 		}
 		dashFolder, err = s.unifiedStore.Get(ctx, *q)
 		if err != nil {
-			return nil, err
+			return nil, toFolderError(err)
 		}
 	// nolint:staticcheck
 	case q.ID != nil:
-		// not implemented
+		dashFolder, err = s.getFolderByIDFromApiServer(ctx, *q.ID, q.OrgID)
+		if err != nil {
+			return nil, toFolderError(err)
+		}
 	case q.Title != nil:
-		// not implemented
+		dashFolder, err = s.getFolderByTitleFromApiServer(ctx, q.OrgID, *q.Title, q.ParentUID)
+		if err != nil {
+			return nil, toFolderError(err)
+		}
 	default:
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
@@ -152,6 +169,125 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	}
 
 	return f, err
+}
+
+func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
+	if id == 0 {
+		return &folder.GeneralFolder, nil
+	}
+
+	folderkey := &resource.ResourceKey{
+		Namespace: s.k8sclient.getNamespace(orgID),
+		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+
+	request := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Key:    folderkey,
+			Fields: []*resource.Requirement{},
+			Labels: []*resource.Requirement{
+				{
+					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+					Operator: string(selection.In),
+					Values:   []string{fmt.Sprintf("%d", id)},
+				},
+			},
+		},
+		Limit: 100000}
+
+	client := s.k8sclient.getSearcher(ctx)
+
+	res, err := client.Search(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	hits, err := dashboardsearch.ParseResults(res, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(hits.Hits) == 0 {
+		return nil, dashboards.ErrFolderNotFound
+	}
+
+	uid := hits.Hits[0].Name
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
+	if title == "" {
+		return nil, dashboards.ErrFolderTitleEmpty
+	}
+
+	folderkey := &resource.ResourceKey{
+		Namespace: s.k8sclient.getNamespace(orgID),
+		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+
+	request := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Key: folderkey,
+			Fields: []*resource.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_TITLE,
+					Operator: string(selection.In),
+					Values:   []string{title},
+				},
+			},
+			Labels: []*resource.Requirement{},
+		},
+		Limit: 100000}
+
+	if parentUID != nil {
+		req := []*resource.Requirement{{
+			Key:      resource.SEARCH_FIELD_FOLDER,
+			Operator: string(selection.In),
+			Values:   []string{*parentUID},
+		}}
+		request.Options.Fields = append(request.Options.Fields, req...)
+	}
+
+	client := s.k8sclient.getSearcher(ctx)
+
+	res, err := client.Search(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	hits, err := dashboardsearch.ParseResults(res, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(hits.Hits) == 0 {
+		return nil, dashboards.ErrFolderNotFound
+	}
+
+	uid := hits.Hits[0].Name
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
@@ -680,23 +816,23 @@ func (s *Service) getDescendantCountsFromApiServer(ctx context.Context, q *folde
 // -----------------------------------------------------------------------------------------
 
 func (fk8s *foldk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
-	cfg := &rest.Config{
-		Host:    fk8s.cfg.AppURL,
-		APIPath: "/apis",
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: true, // Skip TLS verification
-		},
-		Username: fk8s.cfg.AdminUser,
-		Password: fk8s.cfg.AdminPassword,
+	cfg := fk8s.restConfigProvider(ctx)
+	if cfg == nil {
+		return nil, false
 	}
 
 	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, false
 	}
+
 	return dyn.Resource(fk8s.gvr).Namespace(fk8s.getNamespace(orgID)), true
 }
 
 func (fk8s *foldk8sHandler) getNamespace(orgID int64) string {
 	return fk8s.namespacer(orgID)
+}
+
+func (fk8s *foldk8sHandler) getSearcher(ctx context.Context) resource.ResourceClient {
+	return fk8s.recourceClientProvider(ctx)
 }

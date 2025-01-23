@@ -2540,6 +2540,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": "Ŧĥę đäŧä şőūřčę čőŉŉęčŧįőŉş þęľőŵ äřę äľľ {{pluginName}}. Ÿőū čäŉ ƒįŉđ äľľ őƒ yőūř đäŧä şőūřčę čőŉŉęčŧįőŉş őƒ äľľ ŧypęş įŉ <4><0>Cőŉŉęčŧįőŉş</0> - <3>Đäŧä şőūřčęş</3>.</4>"
+      },
       "labels": {
         "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
         "dependencies": "Đępęŉđęŉčįęş",
@@ -2886,6 +2889,10 @@
     "title": "Ůŉäþľę ŧő ƒįŉđ äppľįčäŧįőŉ ƒįľę"
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "Ŧĥę męşşäģę įş {{messageLength}} čĥäřäčŧęřş, ŵĥįčĥ ęχčęęđş ŧĥę mäχįmūm ľęŉģŧĥ őƒ 500 čĥäřäčŧęřş. Pľęäşę şĥőřŧęŉ įŧ þęƒőřę şävįŉģ.",
+      "title": "Męşşäģę ŧőő ľőŉģ"
+    },
     "name-exists": {
       "message-info": "Å đäşĥþőäřđ ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę şęľęčŧęđ ƒőľđęř äľřęäđy ęχįşŧş, įŉčľūđįŉģ řęčęŉŧľy đęľęŧęđ đäşĥþőäřđş.",
       "message-suggestion": "Pľęäşę čĥőőşę ä đįƒƒęřęŉŧ ŉämę őř ƒőľđęř.",
@@ -3339,15 +3346,6 @@
       "lets-start": "Ŀęŧ'ş şŧäřŧ!",
       "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!",
       "subtitle": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy."
-    },
-    "metric-overview": {
-      "description-label": "Đęşčřįpŧįőŉ",
-      "labels": "Ŀäþęľş",
-      "metric-attributes": "Åŧŧřįþūŧęş",
-      "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
-      "type-label": "Ŧypę",
-      "unit-label": "Ůŉįŧ",
-      "unknown-type": "Ůŉĸŉőŵŉ"
     },
     "metric-select": {
       "filter-by": "Fįľŧęř þy",
