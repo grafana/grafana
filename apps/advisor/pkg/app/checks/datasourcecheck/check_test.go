@@ -1,4 +1,4 @@
-package datasource
+package datasourcecheck
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -24,13 +23,11 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
 
-		cfg := &checks.AdvisorConfig{
+		check := &check{
 			DatasourceSvc:         mockDatasourceSvc,
 			PluginContextProvider: mockPluginContextProvider,
 			PluginClient:          mockPluginClient,
 		}
-
-		check := &check{cfg: cfg}
 
 		report, err := check.Run(context.Background(), &advisor.CheckSpec{})
 
@@ -48,13 +45,11 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
 
-		cfg := &checks.AdvisorConfig{
+		check := &check{
 			DatasourceSvc:         mockDatasourceSvc,
 			PluginContextProvider: mockPluginContextProvider,
 			PluginClient:          mockPluginClient,
 		}
-
-		check := &check{cfg: cfg}
 
 		report, err := check.Run(context.Background(), &advisor.CheckSpec{})
 
@@ -73,13 +68,11 @@ func TestCheck_Run(t *testing.T) {
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError}}
 
-		cfg := &checks.AdvisorConfig{
+		check := &check{
 			DatasourceSvc:         mockDatasourceSvc,
 			PluginContextProvider: mockPluginContextProvider,
 			PluginClient:          mockPluginClient,
 		}
-
-		check := &check{cfg: cfg}
 
 		report, err := check.Run(context.Background(), &advisor.CheckSpec{})
 

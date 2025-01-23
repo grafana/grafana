@@ -6,11 +6,6 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 )
 
-// Factory defines the method that a check factory needs to implement.
-type Factory interface {
-	New(cfg *AdvisorConfig) Check
-}
-
 // Check defines the methods that a check must implement to be executed.
 type Check interface {
 	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec) (*advisorv0alpha1.CheckV0alpha1StatusReport, error)

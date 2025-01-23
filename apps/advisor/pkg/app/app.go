@@ -9,12 +9,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
-
-	// Trigger registration of checks
-	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasource"
 )
 
 const (
@@ -24,7 +22,7 @@ const (
 
 func New(cfg app.Config) (app.App, error) {
 	// Read config
-	advisorConfig, ok := cfg.SpecificConfig.(*checks.AdvisorConfig)
+	checkRegistry, ok := cfg.SpecificConfig.(checkregistry.CheckService)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
 	}
@@ -37,10 +35,8 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	// Initialize checks
-	checkFactories := checks.GetFactories()
 	checkMap := map[string]checks.Check{}
-	for _, r := range checkFactories {
-		c := r.New(advisorConfig)
+	for _, c := range checkRegistry.Checks() {
 		checkMap[c.Type()] = c
 	}
 
