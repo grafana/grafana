@@ -373,7 +373,7 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		return nil
 
-	case social.ClientSecretPost:
+	case social.ClientSecretPost, "":
 		if info.ClientSecret == "" {
 			return ssosettings.ErrInvalidOAuthConfig("Client secret is required for Client secret authentication.")
 		}
