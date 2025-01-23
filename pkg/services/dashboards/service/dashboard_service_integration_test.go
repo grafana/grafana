@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -896,7 +897,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		)
 		dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
+		guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderService, log.NewNopLogger())
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.UID, sqlStore)

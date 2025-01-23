@@ -56,6 +56,7 @@ var (
 	provisionerPermissions = []accesscontrol.Permission{
 		{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
+		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
 		{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
@@ -611,13 +612,28 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 	if newDashboard {
 		// if it's a new dashboard/folder check the parent folder permissions
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		guard, err := guardian.New(ctx, d.FolderID, d.OrgID, user)
+		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
+			ID:    d.FolderID, // nolint:staticcheck
+			OrgID: d.OrgID,
+		}, d.OrgID, user)
 		if err != nil {
 			return nil, err
 		}
 		return guard, nil
 	}
+
+	if d.IsFolder {
+		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
+			ID:    d.ID, // nolint:staticcheck
+			UID:   d.UID,
+			OrgID: d.OrgID,
+		}, d.OrgID, user)
+		if err != nil {
+			return nil, err
+		}
+		return guard, nil
+	}
+
 	guard, err := guardian.NewByDashboard(ctx, d, d.OrgID, user)
 	if err != nil {
 		return nil, err

@@ -37,6 +37,7 @@ composableKinds: PanelCfg: {
 					colWidth?: float & <=1 | *0.9
 				} @cuetsy(kind="interface")
 				FieldConfig: {
+					ui.AxisConfig
 					ui.HideableFieldConfig
 					lineWidth?:   uint32 & <=10 | *1
 					fillOpacity?: uint32 & <=100 | *70
