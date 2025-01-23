@@ -3,7 +3,7 @@ name: Crowdin Download Action
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 0 * * *"
 
 jobs:
   download-sources-from-crowdin:
@@ -41,17 +41,11 @@ jobs:
           pull_request_body:  |
             :robot: Automatic download of translations from Crowdin.
 
-            Steps for merging:
-              1. A quick sanity check of the changes and approve. Things to look out for:
-                - No changes in the English file. The source of truth is in the main branch, NOT in Crowdin.
-                - Translations maybe be removed if the English phrase was removed, but there should not be many of these
-                - Anything else that looks 'funky'. Ask if you're not sure.
-              2. Approve & (Auto-)merge. :tada:
+            This runs once per day and will merge automatically if all the required checks pass.
 
-            If there's a conflict, close the pull request and **delete the branch**. A GH action will recreate the pull request.
-            Remember, the longer this pull request is open, the more likely it is that it'll get conflicts.
+            If there's a conflict, close the pull request and **delete the branch**.
+            You can then either wait for the schedule to trigger a new PR, or rerun the action manually.
           pull_request_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
-          pull_request_reviewers: 'grafana-frontend-platform'
           pull_request_base_branch_name: 'main'
           base_url: 'https://grafana.api.crowdin.com'
           config: 'crowdin.yml'
@@ -119,3 +113,16 @@ jobs:
         with:
           pr: ${{ steps.crowdin-download.outputs.pull_request_number }}
           token: ${{ steps.generate_token.outputs.token }}
+
+      - name: Enable automerge
+        if: steps.crowdin-download.outputs.pull_request_url
+        shell: bash
+        # Only automerge if there are no changes in the en-US folder
+        run: |
+          if [ $(gh pr diff --name-only ${{ steps.crowdin-download.outputs.pull_request_url }} | grep "public/locales/en-US" | wc -l) -eq 0 ]
+            then
+            echo "Enabling automerge"
+            gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
+          fi
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
