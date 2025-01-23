@@ -101,7 +101,7 @@ func TestParseResponse_ErrorCases(t *testing.T) {
 
 			require.Error(t, resp.Error)
 			assert.Contains(t, resp.Error.Error(), "unexpected response")
-			assert.Equal(t, 1, len(resp.Frames))
+			assert.Len(t, resp.Frames, 1)
 			assert.NoError(t, res.Body.Close())
 		})
 	}
