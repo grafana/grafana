@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	clientrest "k8s.io/client-go/rest"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -200,21 +202,23 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	featuresArr := []any{
-		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagKubernetesFoldersServiceV2}
 	features := featuremgmt.WithFeatures(featuresArr...)
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	folderService := &Service{
-		log:          slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
-		unifiedStore: unifiedStore,
-		features:     features,
-		bus:          bus.ProvideBus(tracing.InitializeTracerForTest()),
-		// db:            db,
-		accessControl: acimpl.ProvideAccessControl(features),
-		registry:      make(map[string]folder.RegistryService),
-		metrics:       newFoldersMetrics(nil),
-		tracer:        tracing.InitializeTracerForTest(),
-		k8sclient:     k8sHandler,
+		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		unifiedStore:           unifiedStore,
+		features:               features,
+		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
+		accessControl:          acimpl.ProvideAccessControl(features),
+		registry:               make(map[string]folder.RegistryService),
+		metrics:                newFoldersMetrics(nil),
+		tracer:                 tracing.InitializeTracerForTest(),
+		k8sclient:              k8sHandler,
+		dashboardStore:         dashboardStore,
+		publicDashboardService: publicDashboardService,
 	}
 
 	require.NoError(t, folderService.RegisterService(alertingStore))
@@ -346,6 +350,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil)
+				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
 					UID:              "deletefolder",
 					OrgID:            orgID,
@@ -438,16 +445,31 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 
-			// TODO!!
-			/*
-				t.Run("When get folder by title should return folder", func(t *testing.T) {
-					expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
+			t.Run("When get folder by Title should return folder", func(t *testing.T) {
+				title := "foo"
+				query := &folder.GetFolderQuery{
+					Title:        &title,
+					OrgID:        1,
+					SignedInUser: usr,
+				}
 
-					actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title, nil)
-					require.Equal(t, expected, actual)
-					require.NoError(t, err)
-				})
-			*/
+				actual, err := folderService.Get(context.Background(), query)
+				require.Equal(t, fooFolder, actual)
+				require.NoError(t, err)
+			})
+
+			t.Run("When get folder by non existing Title should return not found error", func(t *testing.T) {
+				title := "does not exists"
+				query := &folder.GetFolderQuery{
+					Title:        &title,
+					OrgID:        1,
+					SignedInUser: usr,
+				}
+
+				actual, err := folderService.Get(context.Background(), query)
+				require.Nil(t, actual)
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			})
 
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
@@ -500,6 +522,45 @@ func (r resourceClientMock) Search(ctx context.Context, in *resource.ResourceSea
 		in.Options.Labels[0].Operator == "in" &&
 		len(in.Options.Labels[0].Values) > 0 &&
 		in.Options.Labels[0].Values[0] == "123" {
+		return &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "_id",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "foo",
+							Resource: "folders",
+						},
+						Cells: [][]byte{
+							[]byte("123"),
+							[]byte("folder1"),
+							[]byte(""),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil
+	}
+
+	if len(in.Options.Fields) > 0 &&
+		in.Options.Fields[0].Key == resource.SEARCH_FIELD_TITLE &&
+		in.Options.Fields[0].Operator == "in" &&
+		len(in.Options.Fields[0].Values) > 0 &&
+		in.Options.Fields[0].Values[0] == "foo" {
 		return &resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{
