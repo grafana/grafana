@@ -69,18 +69,9 @@ function queryTree(children: TreeNode[], query: string[], queryIndex: number): T
   return result;
 }
 
-let i = 0;
-
 export function queryMetricTree(query: string): TreeNode[] {
   if (query.indexOf('value') === 0) {
     return [{ name: query, children: [] }];
-  }
-
-  if (i === 1) {
-    query = 'B.*';
-    i = 0;
-  } else {
-    i = 1;
   }
 
   const children = buildMetricTree('', 0);
