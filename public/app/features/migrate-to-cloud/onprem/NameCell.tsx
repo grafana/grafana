@@ -9,6 +9,7 @@ import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Trans } from 'app/core/internationalization';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
+import { LocalPlugin } from '../../plugins/admin/types';
 import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
 
 import { ResourceTableItem } from './types';
@@ -205,6 +206,7 @@ function BasicResourceInfo({ data }: { data: ResourceTableItem }) {
 function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const styles = useStyles2(getIconStyles);
   const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
+  const pluginLogo = usePluginLogo(resource.type === 'PLUGIN' ? resource.plugin : undefined);
 
   switch (resource.type) {
     case 'DASHBOARD':
@@ -229,6 +231,11 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
       return <Icon size="xl" name="bell" />;
     case 'ALERT_RULE':
       return <Icon size="xl" name="bell" />;
+    case 'PLUGIN':
+      if (pluginLogo) {
+        return <img className={styles.icon} src={pluginLogo} alt="" />;
+      }
+      return <Icon size="xl" name="plug" />;
     default:
       return undefined;
   }
@@ -256,4 +263,15 @@ function useDatasource(datasourceUID: string | undefined): DataSourceInstanceSet
   }, [datasourceUID]);
 
   return datasource;
+}
+
+function usePluginLogo(plugin: LocalPlugin | undefined): string | undefined {
+  const logos = useMemo(() => {
+    if (!plugin) {
+      return undefined;
+    }
+    return plugin?.info?.logos;
+  }, [plugin]);
+
+  return logos?.small;
 }

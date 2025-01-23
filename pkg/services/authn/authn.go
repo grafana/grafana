@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
@@ -30,6 +30,7 @@ const (
 	ClientProxy        = "auth.client.proxy"
 	ClientSAML         = "auth.client.saml"
 	ClientPasswordless = "auth.client.passwordless"
+	ClientLDAP         = "ldap"
 )
 
 const (
@@ -94,6 +95,10 @@ type SSOClientConfig interface {
 	IsAutoLoginEnabled() bool
 	// IsSingleLogoutEnabled returns true if the client has single logout enabled
 	IsSingleLogoutEnabled() bool
+	// IsSkipOrgRoleSyncEnabled returns true if the client has enabled skipping org role sync
+	IsSkipOrgRoleSyncEnabled() bool
+	// IsAllowAssignGrafanaAdminEnabled returns true if the client has enabled assigning grafana admin
+	IsAllowAssignGrafanaAdminEnabled() bool
 }
 
 type Service interface {

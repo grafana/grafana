@@ -3,7 +3,15 @@ import { uniqueId } from 'lodash';
 import { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { DataFrame, GrafanaTheme2, LoadingState, PanelData, dateTimeFormat, isTimeSeriesFrames } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  GrafanaTheme2,
+  LoadingState,
+  PanelData,
+  dateTimeFormat,
+  isTimeSeriesFrames,
+} from '@grafana/data';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
@@ -95,7 +103,15 @@ export const Expression: FC<ExpressionProps> = ({
           return <Math onChange={onChangeQuery} query={query} labelWidth={'auto'} onRunQuery={() => {}} />;
 
         case ExpressionQueryType.reduce:
-          return <Reduce onChange={onChangeQuery} refIds={availableRefIds} labelWidth={'auto'} query={query} />;
+          return (
+            <Reduce
+              onChange={onChangeQuery}
+              refIds={availableRefIds}
+              labelWidth={'auto'}
+              app={CoreApp.UnifiedAlerting}
+              query={query}
+            />
+          );
 
         case ExpressionQueryType.resample:
           return <Resample onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
@@ -353,13 +369,17 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
-        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={alertCondition} />
+        <ExpressionStatusIndicator
+          refId={refId}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={alertCondition}
+        />
         <IconButton
           name="trash-alt"
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
-          tooltip="Remove expression"
+          tooltip={`Remove expression "${refId}"`}
         />
       </Stack>
     </header>

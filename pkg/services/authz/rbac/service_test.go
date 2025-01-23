@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authz/mappers"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
 
@@ -149,7 +149,11 @@ func TestService_checkPermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper()}
+			s := &Service{
+				logger: log.NewNopLogger(),
+				tracer: tracing.NewNoopTracerService(),
+				mapper: newMapper(),
+			}
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
@@ -207,6 +211,7 @@ func TestService_getUserTeams(t *testing.T) {
 				teamCache:     cacheService,
 				identityStore: identityStore,
 				logger:        log.New("test"),
+				tracer:        tracing.NewNoopTracerService(),
 			}
 
 			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
@@ -285,9 +290,11 @@ func TestService_getUserBasicRole(t *testing.T) {
 			}
 
 			s := &Service{
-				basicRoleCache: cacheService,
-				store:          store,
-				logger:         log.New("test"),
+				basicRoleCache:  cacheService,
+				store:           store,
+				permissionStore: store,
+				logger:          log.New("test"),
+				tracer:          tracing.NewNoopTracerService(),
 			}
 
 			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
@@ -359,15 +366,17 @@ func TestService_getUserPermissions(t *testing.T) {
 			}
 
 			s := &Service{
-				store:          store,
-				identityStore:  &fakeIdentityStore{teams: []int64{1, 2}},
-				actionMapper:   mappers.NewK8sRbacMapper(),
-				logger:         log.New("test"),
-				tracer:         tracing.NewNoopTracerService(),
-				idCache:        localcache.New(longCacheTTL, longCleanupInterval),
-				permCache:      cacheService,
-				basicRoleCache: localcache.New(longCacheTTL, longCleanupInterval),
-				teamCache:      localcache.New(shortCacheTTL, shortCleanupInterval),
+				store:           store,
+				permissionStore: store,
+				identityStore:   &fakeIdentityStore{teams: []int64{1, 2}},
+				logger:          log.NewNopLogger(),
+				tracer:          tracing.NewNoopTracerService(),
+				mapper:          newMapper(),
+				idCache:         localcache.New(longCacheTTL, longCleanupInterval),
+				permCache:       cacheService,
+				sf:              new(singleflight.Group),
+				basicRoleCache:  localcache.New(longCacheTTL, longCleanupInterval),
+				teamCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
 			}
 
 			perms, err := s.getUserPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
@@ -434,10 +443,12 @@ func TestService_buildFolderTree(t *testing.T) {
 			store := &fakeStore{folders: tc.folders}
 
 			s := &Service{
-				store:       store,
-				folderCache: cacheService,
-				logger:      log.New("test"),
-				sf:          new(singleflight.Group),
+				store:           store,
+				permissionStore: store,
+				folderCache:     cacheService,
+				logger:          log.New("test"),
+				sf:              new(singleflight.Group),
+				tracer:          tracing.NewNoopTracerService(),
 			}
 
 			tree, err := s.buildFolderTree(ctx, ns)
@@ -640,7 +651,12 @@ func TestService_listPermission(t *testing.T) {
 			if tc.folderTree != nil {
 				folderCache.Set(folderCacheKey("default"), tc.folderTree, 0)
 			}
-			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper(), folderCache: folderCache}
+			s := &Service{
+				logger:      log.New("test"),
+				folderCache: folderCache,
+				mapper:      newMapper(),
+				tracer:      tracing.NewNoopTracerService(),
+			}
 			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)

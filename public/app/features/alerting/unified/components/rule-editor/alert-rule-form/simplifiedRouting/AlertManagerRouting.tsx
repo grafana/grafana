@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,7 @@ import { CollapsableSection, Stack, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
+import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
@@ -26,12 +27,26 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
+  const { watch } = useFormContext<RuleFormValues>();
+
+  const contactPointInForm = watch(`contactPoints.${alertManagerName}.selectedContactPoint`);
+  const { contactPoints } = useContactPointsWithStatus({
+    // we only fetch the contact points with metadata for the first time we render an existing alert rule
+    alertmanager: alertManagerName,
+    skip: Boolean(selectedContactPointWithMetadata),
+  });
+  const contactPointWithMetadata = contactPoints.find((cp) => cp.name === contactPointInForm);
+
+  useEffect(() => {
+    if (contactPointWithMetadata && !selectedContactPointWithMetadata) {
+      onSelectContactPoint(contactPointWithMetadata);
+    }
+  }, [contactPointWithMetadata, selectedContactPointWithMetadata]);
 
   const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
     setSelectedContactPointWithMetadata(contactPoint);
   };
 
-  const { watch } = useFormContext<RuleFormValues>();
   const hasRouteSettings =
     watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
     watch(`contactPoints.${alertManagerName}.overrideTimings`) ||
@@ -40,13 +55,13 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <div className={styles.firstAlertManagerLine}></div>
+        <div className={styles.firstAlertManagerLine} />
         <div className={styles.alertManagerName}>
           Alertmanager:
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
           {alertManagerName}
         </div>
-        <div className={styles.secondAlertManagerLine}></div>
+        <div className={styles.secondAlertManagerLine} />
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
         <ContactPointSelector alertManager={alertManagerName} onSelectContactPoint={onSelectContactPoint} />
