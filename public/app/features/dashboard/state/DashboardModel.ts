@@ -56,6 +56,12 @@ export interface CloneOptions {
 
 export type DashboardLinkType = 'link' | 'dashboards';
 
+/** @experimental */
+export interface ScopeMeta {
+  trait: string;
+  groups: string[];
+}
+
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
   id: any;
@@ -87,6 +93,7 @@ export class DashboardModel implements TimeModel {
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
   fiscalYearStartMonth?: number;
+  scopesMeta?: ScopeMeta;
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
@@ -155,6 +162,9 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
+    // @ts-expect-error - experimental so it's not included in the schema
+    // but the backend will still return this field
+    this.scopesMeta = data.scopeMeta;
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
