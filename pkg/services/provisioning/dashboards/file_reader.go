@@ -360,11 +360,6 @@ func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.Dash
 }
 
 func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, string, error) {
-	// fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, &dashboards.SaveDashboardDTO{}, &dashboards.DashboardProvisioning{
-	// 	ExternalID: "path",
-	// 	Name:       fr.Cfg.Name,
-	// })
-
 	if folderName == "" {
 		return 0, "", ErrFolderNameMissing
 	}
