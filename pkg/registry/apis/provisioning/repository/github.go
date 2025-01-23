@@ -470,7 +470,8 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionSync,
+			Repository: r.Config().GetName(),
+			Action:     provisioning.JobActionSync,
 		},
 	}, nil
 }
@@ -519,11 +520,12 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionPullRequest,
-			URL:    pr.GetHTMLURL(),
-			PR:     pr.GetNumber(),
-			Ref:    pr.GetHead().GetRef(),
-			Hash:   pr.GetHead().GetSHA(),
+			Repository: r.Config().GetName(),
+			Action:     provisioning.JobActionPullRequest,
+			URL:        pr.GetHTMLURL(),
+			PR:         pr.GetNumber(),
+			Ref:        pr.GetHead().GetRef(),
+			Hash:       pr.GetHead().GetSHA(),
 		},
 	}, nil
 }
