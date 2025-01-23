@@ -101,8 +101,8 @@ func NewAccessControlDashboardGuardianByDashboard(
 	}, nil
 }
 
-// NewAccessControlDashboardGuardianByFolderUID creates a folder guardian by the provided folderUID.
-func NewAccessControlDashboardGuardianByFolderUID(
+// NewAccessControlFolderGuardianByUID creates a folder guardian by the provided folderUID.
+func NewAccessControlFolderGuardianByUID(
 	ctx context.Context, cfg *setting.Cfg, folderUID string, user identity.Requester,
 	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, foldersService folder.Service,
 ) (DashboardGuardian, error) {
