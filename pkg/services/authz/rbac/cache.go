@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/cache"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 )
 
 func userIdentifierCacheKey(namespace, userUID string) string {
@@ -40,14 +40,14 @@ func folderCacheKey(namespace string) string {
 }
 
 type cacheWrap[T any] struct {
-	cache  remotecache.CacheStorage
+	cache  cache.Cache
 	logger log.Logger
 	ttl    time.Duration
 }
 
 // cacheWrap is a wrapper around remotecache.CacheStorage that provides typed Get and Set methods
 // it handles encoding/decoding for a specific type.
-func newCacheWrap[T any](cache remotecache.CacheStorage, logger log.Logger, ttl time.Duration) *cacheWrap[T] {
+func newCacheWrap[T any](cache cache.Cache, logger log.Logger, ttl time.Duration) *cacheWrap[T] {
 	return &cacheWrap[T]{cache: cache, logger: logger, ttl: ttl}
 }
 
