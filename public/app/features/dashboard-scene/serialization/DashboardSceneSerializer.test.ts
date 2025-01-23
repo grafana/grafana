@@ -682,7 +682,6 @@ function setupV2(spec?: Partial<DashboardV2Spec>) {
     spec: {
       ...defaultDashboardV2Spec(),
       title: 'hello',
-      schemaVersion: 30,
       timeSettings: {
         ...defaultTimeSettingsSpec(),
         autoRefresh: '10s',

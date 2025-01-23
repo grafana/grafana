@@ -241,14 +241,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     validateVizPanel(vizPanel, dash);
 
     // Library Panel
-    const libraryPanel = getLibraryPanelElement(dash, 'library-panel-1')!;
-    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.uid}`);
+    const libraryPanel = getLibraryPanelElement(dash, 'panel-2')!;
+    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.id}`);
     const libraryGridLayoutItemSpec = dash.layout.spec.items[1].spec as GridLayoutItemSpec;
     expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[1].state.y).toBe(libraryGridLayoutItemSpec.y);
-    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'library-panel-1')!;
+    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'panel-2')!;
     validateVizPanel(vizLibraryPanel, dash);
 
     expect((layout.state.grid.state.children[2] as SceneGridRow).state.isCollapsed).toBe(true);

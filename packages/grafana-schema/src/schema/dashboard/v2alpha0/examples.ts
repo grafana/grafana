@@ -8,7 +8,6 @@ export const handyTestingSchema: DashboardV2Spec = {
   liveNow: false,
   preload: false,
   editable: true,
-  schemaVersion: 40,
   tags: ['tag1', 'tag2'],
   timeSettings: {
     autoRefresh: '5s',
@@ -182,14 +181,18 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
-    'library-panel-1': {
+    'panel-2': {
       kind: 'LibraryPanel',
       spec: {
-        uid: 'library-panel-1',
-        name: 'Library Panel',
+        id: 2,
+        title: 'Test Library Panel',
+        libraryPanel: {
+          uid: 'uid-for-library-panel',
+          name: 'Library Panel',
+        },
       },
     },
-    'panel-2': {
+    'panel-3': {
       kind: 'Panel',
       spec: {
         data: {
@@ -271,7 +274,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           spec: {
             element: {
               kind: 'ElementReference',
-              name: 'library-panel-1',
+              name: 'panel-2',
             },
             height: 100,
             width: 200,
@@ -292,7 +295,7 @@ export const handyTestingSchema: DashboardV2Spec = {
                 spec: {
                   element: {
                     kind: 'ElementReference',
-                    name: 'panel-2',
+                    name: 'panel-3',
                   },
                   height: 10,
                   width: 10,
