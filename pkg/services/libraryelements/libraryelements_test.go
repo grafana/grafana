@@ -305,7 +305,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 	_, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{UID: folderUID, SignedInUser: &user, Title: folderUID + "-title"})
 	require.NoError(t, err)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
