@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
@@ -80,16 +79,16 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	return nil, nil, "", ErrUnableToReadResourceBytes
 }
 
-func LoadYAMLOrJSON(input io.Reader) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
-	decoder := yamlutil.NewYAMLOrJSONDecoder(input, 1024)
-	var rawObj runtime.RawExtension
-	err := decoder.Decode(&rawObj)
+// DecodeYAMLObject reads the input as YAML and outputs its Kubernetes resource, if it is one.
+// Note that all JSON is also valid YAML, so this can also be used for JSON data.
+func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
+	data, err := io.ReadAll(input)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).
-		Decode(rawObj.Raw, nil, nil)
+		Decode(data, nil, nil)
 	if err != nil {
 		return nil, gvk, err
 	}

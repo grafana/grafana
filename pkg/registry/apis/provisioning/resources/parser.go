@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -120,26 +119,17 @@ func (r *Parser) Client() *DynamicClient {
 	return r.client
 }
 
-func (r *Parser) ShouldIgnore(p string) bool {
-	ext := filepath.Ext(p)
-	if ext == ".yaml" || ext == ".json" {
-		return false
-	}
-
-	return true
-}
-
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
 	logger := logging.FromContext(ctx).With("path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
 	}
 
-	if r.ShouldIgnore(info.Path) {
+	if ShouldIgnorePath(info.Path) {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 
-	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
+	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if err != nil {
 		logger.Debug("failed to find GVK of the input data", "error", err)
 		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, info)
@@ -291,4 +281,15 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		wrap.Errors = append(wrap.Errors, err.Error())
 	}
 	return wrap
+}
+
+// ShouldIgnorePath determines if the path given is worth looking at.
+// If this returns true, skip processing it.
+// JSON and YAML files are valid paths. Anything else isn't.
+func ShouldIgnorePath(p string) bool {
+	ext := path.Ext(p)
+	// .yaml is the official extension per the spec, but .yml is widespread, too. (even this repo uses the unofficial one a lot!)
+	return ext != ".yml" && ext != ".yaml" &&
+		// We only support YAML, but JSON is sometimes generated from other tools, and is a valid subset of YAML.
+		ext != ".json"
 }

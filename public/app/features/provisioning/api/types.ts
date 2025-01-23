@@ -30,7 +30,6 @@ export type RepositorySpec = {
   s3?: S3RepositoryConfig;
   type: 'github' | 'local' | 's3';
   editing: EditingOptions;
-  preferYaml?: boolean;
   linting?: boolean;
 };
 
