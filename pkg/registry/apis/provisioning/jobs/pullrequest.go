@@ -138,7 +138,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	previews := make([]resourcePreview, 0, len(files))
 
 	for _, f := range files {
-		if c.parser.ShouldIgnore(f.Path) {
+		if resources.ShouldIgnorePath(f.Path) {
 			continue
 		}
 

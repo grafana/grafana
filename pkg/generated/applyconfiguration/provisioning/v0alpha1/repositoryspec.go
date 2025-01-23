@@ -14,7 +14,6 @@ type RepositorySpecApplyConfiguration struct {
 	Title       *string                                   `json:"title,omitempty"`
 	Description *string                                   `json:"description,omitempty"`
 	Folder      *string                                   `json:"folder,omitempty"`
-	PreferYAML  *bool                                     `json:"preferYaml,omitempty"`
 	Editing     *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
 	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
 	Linting     *bool                                     `json:"linting,omitempty"`
@@ -50,14 +49,6 @@ func (b *RepositorySpecApplyConfiguration) WithDescription(value string) *Reposi
 // If called multiple times, the Folder field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithFolder(value string) *RepositorySpecApplyConfiguration {
 	b.Folder = &value
-	return b
-}
-
-// WithPreferYAML sets the PreferYAML field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PreferYAML field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithPreferYAML(value bool) *RepositorySpecApplyConfiguration {
-	b.PreferYAML = &value
 	return b
 }
 
