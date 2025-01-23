@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -35,7 +35,7 @@ type secureValueStorage struct {
 }
 
 func (s *secureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	authInfo, ok := claims.From(ctx)
+	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
@@ -95,7 +95,7 @@ func (s *secureValueStorage) Read(ctx context.Context, nn xkube.NameNamespace) (
 }
 
 func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	authInfo, ok := claims.From(ctx)
+	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
@@ -153,7 +153,7 @@ func (s *secureValueStorage) Update(ctx context.Context, newSecureValue *secretv
 }
 
 func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
-	_, ok := claims.From(ctx)
+	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
 	}
@@ -179,7 +179,7 @@ func (s *secureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace)
 }
 
 func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	_, ok := claims.From(ctx)
+	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
@@ -223,7 +223,7 @@ func (s *secureValueStorage) List(ctx context.Context, namespace xkube.Namespace
 }
 
 func (s *secureValueStorage) readInternal(ctx context.Context, nn xkube.NameNamespace) (*secureValueDB, error) {
-	_, ok := claims.From(ctx)
+	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}

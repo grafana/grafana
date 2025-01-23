@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -31,7 +31,7 @@ type keeperStorage struct {
 }
 
 func (s *keeperStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
-	authInfo, ok := claims.From(ctx)
+	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
@@ -65,7 +65,7 @@ func (s *keeperStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keepe
 }
 
 func (s *keeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.Keeper, error) {
-	_, ok := claims.From(ctx)
+	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
@@ -96,7 +96,7 @@ func (s *keeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secr
 }
 
 func (s *keeperStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
-	authInfo, ok := claims.From(ctx)
+	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
@@ -147,7 +147,7 @@ func (s *keeperStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Ke
 }
 
 func (s *keeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
-	_, ok := claims.From(ctx)
+	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return fmt.Errorf("missing auth info in context")
 	}
@@ -168,7 +168,7 @@ func (s *keeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) erro
 }
 
 func (s *keeperStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
-	_, ok := claims.From(ctx)
+	_, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
