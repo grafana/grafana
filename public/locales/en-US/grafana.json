@@ -37,7 +37,7 @@
   "actions-editor": {
     "inline": {
       "add-button": "Add action",
-      "one-click-link": "One-click link"
+      "one-click-action": "One-click action"
     }
   },
   "admin": {
@@ -1391,10 +1391,16 @@
     },
     "data-link-editor-modal": {
       "cancel": "Cancel",
+      "one-click-description": "Only one link can have one click enabled at a time",
       "save": "Save"
+    },
+    "data-link-inline-editor": {
+      "one-click": "One click"
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "one-click": "One click",
+      "one-click-enabled": "One click enabled",
       "one-click-link": "One-click link"
     },
     "data-source-http-settings": {
@@ -1476,7 +1482,8 @@
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Add annotation"
+      "footer-add-annotation": "Add annotation",
+      "footer-click-to-navigate": "Click to open {{linkTitle}}"
     }
   },
   "graph": {

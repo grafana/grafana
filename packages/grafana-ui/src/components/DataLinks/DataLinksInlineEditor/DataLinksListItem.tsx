@@ -5,6 +5,8 @@ import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { isCompactUrl } from '../../../utils';
+import { t } from '../../../utils/i18n';
+import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
 import { Tooltip } from '../../Tooltip/Tooltip';
@@ -22,7 +24,7 @@ export interface DataLinksListItemProps {
 
 export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: DataLinksListItemProps) => {
   const styles = useStyles2(getDataLinkListItemStyles);
-  const { title = '', url = '' } = link;
+  const { title = '', url = '', oneClick = false } = link;
 
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
@@ -52,6 +54,13 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
             </Tooltip>
           </div>
           <div className={styles.icons}>
+            {oneClick && (
+              <Badge
+                color="blue"
+                text={t('grafana-ui.data-links-inline-editor.one-click', 'One click')}
+                tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
+              />
+            )}
             <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />
             <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove data link" />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>

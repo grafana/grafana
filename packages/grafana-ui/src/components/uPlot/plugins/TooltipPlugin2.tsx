@@ -27,7 +27,7 @@ export const enum TooltipHoverMode {
   xyOne,
 }
 
-type GeDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
@@ -42,7 +42,7 @@ interface TooltipPlugin2Props {
   clientZoom?: boolean;
 
   onSelectRange?: OnSelectRangeCallback;
-  getDataLinks?: GeDataLinksCallback;
+  getDataLinks?: GetDataLinksCallback;
 
   render: (
     u: uPlot,
@@ -106,7 +106,7 @@ const MIN_ZOOM_DIST = 5;
 
 const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
 
-const getDataLinksFallback: GeDataLinksCallback = () => [];
+const getDataLinksFallback: GetDataLinksCallback = () => [];
 
 /**
  * @alpha
@@ -194,10 +194,15 @@ export const TooltipPlugin2 = ({
     let offsetY = 0;
 
     let selectedRange: TimeRange2 | null = null;
-    let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
+    let seriesIdxs: Array<number | null> = [];
     let closestSeriesIdx: number | null = null;
     let viaSync = false;
     let dataLinks: LinkModel[] = [];
+
+    // for onceClick link rendering during mousemoves we use these pre-generated first links or actions
+    // these will be wrong if the titles have interpolation using the hovered *value*
+    // but this should be quite rare. we'll fix it if someone actually encounters this
+    let persistentLinks: LinkModel[][] = [];
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -261,13 +266,16 @@ export const TooltipPlugin2 = ({
                 dismiss,
                 selectedRange,
                 viaSync,
-                dataLinks
+                _isPinned ? dataLinks : closestSeriesIdx != null ? persistentLinks[closestSeriesIdx] : []
               )
             : null,
         dismiss,
       };
 
       setState(state);
+
+      // TODO: set u.over.style.cursor = 'pointer' if we hovered a oneClick point
+      // else revert to default...but only when the new pointer is different from prev
 
       selectedRange = null;
     };
@@ -313,7 +321,7 @@ export const TooltipPlugin2 = ({
         );
       }
 
-      // this handles pinning
+      // this handles pinning, 0-width range selection, and one-click
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
           if (e.ctrlKey || e.metaKey) {
@@ -333,14 +341,19 @@ export const TooltipPlugin2 = ({
 
             scheduleRender(false);
           }
-          // only pinnable tooltip is visible *and* is within proximity to series/point
-          else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
-            dataLinks = getLinksRef.current(closestSeriesIdx!, seriesIdxs[closestSeriesIdx!]!);
+          // if tooltip visible, not pinned, and within proximity to a series/point
+          else if (_isHovering && !_isPinned && closestSeriesIdx != null) {
+            dataLinks = getLinksRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
+            const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
-            setTimeout(() => {
-              _isPinned = true;
-              scheduleRender(true);
-            }, 0);
+            if (oneClickLink != null) {
+              window.open(oneClickLink.href, oneClickLink.target ?? '_self');
+            } else {
+              setTimeout(() => {
+                _isPinned = true;
+                scheduleRender(true);
+              }, 0);
+            }
           }
         }
       });
@@ -510,6 +523,21 @@ export const TooltipPlugin2 = ({
     config.addHook('setLegend', (u) => {
       seriesIdxs = _plot?.cursor!.idxs!.slice()!;
       _someSeriesIdx = seriesIdxs.some((v, i) => i > 0 && v != null);
+
+      if (persistentLinks.length === 0) {
+        persistentLinks = seriesIdxs.map((v, seriesIdx) => {
+          if (seriesIdx > 0) {
+            const links = getDataLinks(seriesIdx, seriesIdxs[seriesIdx]!);
+            const oneClickLink = links.find((dataLink) => dataLink.oneClick === true);
+
+            if (oneClickLink) {
+              return [oneClickLink];
+            }
+          }
+
+          return [];
+        });
+      }
 
       viaSync = u.cursor.event == null;
       let prevIsHovering = _isHovering;
