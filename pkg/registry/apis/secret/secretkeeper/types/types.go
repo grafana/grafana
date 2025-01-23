@@ -17,9 +17,9 @@ const (
 )
 
 type Keeper interface {
-	Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, exposedValueOrRef string) (ExternalID, error)
-	Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, id ExternalID) (secretv0alpha1.ExposedSecureValue, error)
-	Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, id ExternalID) error
+	Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (ExternalID, error)
+	Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) (secretv0alpha1.ExposedSecureValue, error)
+	Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) error
 }
 
 // ExternalID represents either the secure value's GUID or ref (in case of external secret references).
