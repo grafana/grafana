@@ -142,18 +142,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputValue,
     selectedItem: null,
     stateReducer: (state, actionAndChanges) => {
-      if (state.isOpen === true && actionAndChanges.changes.isOpen === false) {
-        console.log('downshiftDebug', actionAndChanges.type, 'downshift wants to close the menu', {
-          state,
-          changes: actionAndChanges.changes,
-        });
-      }
-
       const { changes, type } = actionAndChanges;
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-          console.log('  downshiftDebug - ItemClick, keeping menu open');
           return {
             ...changes,
             isOpen: true,
