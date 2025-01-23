@@ -225,12 +225,6 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
-	// only set the package level restConfig once
-	if restConfig == nil {
-		restConfig = s
-		close(ready)
-	}
-
 	return s, nil
 }
 
@@ -254,6 +248,13 @@ func (s *service) Run(ctx context.Context) error {
 	if err := s.NamedService.AwaitRunning(ctx); err != nil {
 		return err
 	}
+
+	// only set the package level restConfig once
+	if restConfig == nil {
+		restConfig = s
+		close(ready)
+	}
+
 	return s.AwaitTerminated(ctx)
 }
 
