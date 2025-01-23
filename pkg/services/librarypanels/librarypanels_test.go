@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
@@ -732,11 +733,12 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	dashPermissionService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, acmock.NewMockedPermissionsService(), dashPermissionService, ac,
+		features, acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil, nil, nil, nil, quotaService, nil,
 	)
 	require.NoError(t, err)
+	service.RegisterDashboardPermissions(dashPermissionService)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
@@ -822,17 +824,19 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashStore := &dashboards.FakeDashboardStore{}
-		dashStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1}, nil)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashPermissionService := acmock.NewMockedPermissionsService()
+		folderSvc := foldertest.NewFakeService()
+		folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashStore, folderStore,
-			features, acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-			foldertest.NewFakeService(), folder.NewFakeStore(),
+			features, acmock.NewMockedPermissionsService(), ac,
+			folderSvc, folder.NewFakeStore(),
 			nil, nil, nil, nil, quotaService, nil,
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService)
+		dashService.RegisterDashboardPermissions(dashPermissionService)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
 
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)
