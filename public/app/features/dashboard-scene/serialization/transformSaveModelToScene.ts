@@ -278,8 +278,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     }),
   });
 
-  if (config.featureToggles.scopeFilters) {
-    dashboardScene.setState({ scopeMeta: oldModel.scopeMeta });
+  if (config.featureToggles.scopeFilters && oldModel.scopeMeta) {
+    dashboardScene.setState({
+      scopeMeta: {
+        trait: oldModel.scopeMeta.trait,
+        groups: oldModel.scopeMeta.groups,
+      },
+    });
   }
 
   return dashboardScene;
