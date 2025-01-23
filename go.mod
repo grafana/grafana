@@ -198,7 +198,7 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250121115006-c1eac9f9973f // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
