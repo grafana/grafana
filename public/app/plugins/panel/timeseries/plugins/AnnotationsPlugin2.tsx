@@ -180,13 +180,14 @@ export const AnnotationsPlugin2 = ({
             if (!vals.isRegion?.[i]) {
               renderLine(ctx, y0, y1, x0, color);
               // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
-            } else if (canvasRegionRendering) {
-              renderLine(ctx, y0, y1, x0, color);
+            }
+            renderLine(ctx, y0, y1, x0, color);
 
-              let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+            let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
 
-              renderLine(ctx, y0, y1, x1, color);
+            renderLine(ctx, y0, y1, x1, color);
 
+            if (canvasRegionRendering) {
               ctx.fillStyle = colorManipulator.alpha(color, 0.1);
               ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
             }
