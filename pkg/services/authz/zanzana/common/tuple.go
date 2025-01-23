@@ -113,7 +113,7 @@ var VerbMapping = map[string]string{
 	utils.VerbUpdate:           RelationUpdate,
 	utils.VerbPatch:            RelationUpdate,
 	utils.VerbDelete:           RelationDelete,
-	utils.VerbDeleteCollection: RelationDelete, // <<< IT MEANS you can delete *EVERYTHING*... i think we want it to be rare
+	utils.VerbDeleteCollection: RelationDelete,
 	utils.VerbGetPermissions:   RelationGet,
 	utils.VerbSetPermissions:   RelationDelete,
 }
