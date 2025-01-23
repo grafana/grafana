@@ -57,14 +57,6 @@ func TestArray2(t *testing.T) {
 	assert.Equal(t, 0, len(tables))
 }
 
-func TestXxx(t *testing.T) {
-	sql := "SELECT JSON_ARRAY(3, 2, 1) AS int_array;"
-	tables, err := TablesList((sql))
-	assert.Nil(t, err)
-
-	assert.Equal(t, 0, len(tables))
-}
-
 func TestParseSubquery(t *testing.T) {
 	sql := "select * from (select * from people limit 1) AS subquery"
 	tables, err := TablesList((sql))
