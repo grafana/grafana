@@ -10,7 +10,7 @@ import (
 )
 
 type Service interface {
-	Provide() (map[keepertypes.KeeperType]keepertypes.Keeper, error)
+	GetKeepers() (map[keepertypes.KeeperType]keepertypes.Keeper, error)
 }
 
 type OSSKeeperService struct {
@@ -25,8 +25,7 @@ func ProvideService(encryptionManager *manager.EncryptionManager, store secretst
 	}, nil
 }
 
-func (ks OSSKeeperService) Provide() (map[keepertypes.KeeperType]keepertypes.Keeper, error) {
-	// Default SQL keeper
+func (ks OSSKeeperService) GetKeepers() (map[keepertypes.KeeperType]keepertypes.Keeper, error) {
 	sqlKeeper, err := sqlkeeper.NewSQLKeeper(ks.encryptionManager, ks.store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sql keeper: %w", err)
