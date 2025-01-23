@@ -3,7 +3,9 @@ package legacy
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 
 	"google.golang.org/grpc/metadata"
 
@@ -164,6 +166,9 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 
 		err = stream.Send(req)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
 			return err
 		}
 	}
@@ -237,6 +242,9 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 
 		err = stream.Send(req)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
 			return err
 		}
 	}
@@ -282,6 +290,9 @@ func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opt
 
 		err = stream.Send(req)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+			}
 			return err
 		}
 	}

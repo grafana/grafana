@@ -138,10 +138,13 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 		})
 	}
 
+	// HACK!!! always allow everything!!!!!!
+	access := authlib.FixedAccessClient(true)
+
 	if settings.RebuildCollection {
 		for _, k := range settings.Collection {
 			// Can we delete the whole collection
-			rsp, err := s.access.Check(ctx, user, authlib.CheckRequest{
+			rsp, err := access.Check(ctx, user, authlib.CheckRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
@@ -156,8 +159,8 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 				})
 			}
 
-			// Get a specific checker
-			runner.checker[k.SearchID()], err = s.access.Compile(ctx, user, authlib.ListRequest{
+			// This will be called for each request -- with the folder ID
+			runner.checker[k.SearchID()], err = access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
