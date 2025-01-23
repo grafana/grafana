@@ -169,7 +169,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 			if err != nil {
 				return stream.SendAndClose(&BatchResponse{
 					Error: &ErrorResult{
-						Message: fmt.Sprintf("unable to compile create request"),
+						Message: "Unable to check `create` permission",
 						Code:    http.StatusForbidden,
 					},
 				})
