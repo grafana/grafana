@@ -99,7 +99,7 @@ func TestParseResponse_ErrorCases(t *testing.T) {
 			qd.log = log.New()
 			resp := qd.parseResponse(ctx, q, res)
 
-			assert.NotNil(t, resp.Error)
+			require.Error(t, resp.Error)
 			assert.Contains(t, resp.Error.Error(), "unexpected response")
 			assert.Equal(t, 1, len(resp.Frames))
 			assert.NoError(t, res.Body.Close())
