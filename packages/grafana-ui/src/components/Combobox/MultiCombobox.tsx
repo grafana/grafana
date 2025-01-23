@@ -18,7 +18,7 @@ import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, VIRTUAL_OVERSC
 import { NotFoundError } from './MessageRows';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
-import { fuzzyFind, itemToString } from './filter';
+import { itemFilter, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
@@ -66,13 +66,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [options, enableAllOption, allOptionItem, isAsync]);
 
   const items = useMemo(() => {
-    const slicedItems = baseItems.slice(enableAllOption ? 1 : 0);
-    let newItems = fuzzyFind(slicedItems, inputValue);
+    const newItems = baseItems.filter(itemFilter(inputValue));
 
-    if (enableAllOption && newItems.length === 0) {
+    if (enableAllOption && newItems.length === 1 && newItems[0] === allOptionItem) {
       return [];
-    } else if (enableAllOption) {
-      newItems.unshift(allOptionItem);
     }
 
     return newItems;
