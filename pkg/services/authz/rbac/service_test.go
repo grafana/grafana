@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authz/mappers"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
 
@@ -356,7 +355,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			s.permissionStore = store
 			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
 
-			perms, err := s.getUserPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
+			perms, err := s.getIdentityPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
 			for _, perm := range tc.permissions {
@@ -639,7 +638,7 @@ func setupService() *Service {
 	fStore := &fakeStore{}
 	return &Service{
 		logger:          logger,
-		actionMapper:    mappers.NewK8sRbacMapper(),
+		mapper:          newMapper(),
 		tracer:          tracing.NewNoopTracerService(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
