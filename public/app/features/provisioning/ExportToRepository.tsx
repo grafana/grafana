@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
-import { Button } from '@grafana/ui';
+import { Button, Field, Input, Legend, Switch } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { ScopedResourceClient } from '../apiserver/client';
 
 import { Repository, Job, useCreateRepositoryExportMutation, JobSpec, JobStatus } from './api';
+import { ExportOptions } from './api/types';
 
 interface Props {
   repo: Repository;
@@ -13,6 +16,20 @@ interface Props {
 export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
   const [job, setJob] = useState<Job>();
+
+  const onSubmit: SubmitHandler<ExportOptions> = (body) =>
+    exportRepo({
+      name: repo.metadata?.name!,
+      body, // << the form
+    });
+
+  const { register, control, formState, handleSubmit } = useForm<ExportOptions>({
+    defaultValues: {
+      branch: '*dummy*', // << triggers a fake exporter
+      history: true,
+      prefix: 'prefix/in/remote/tree',
+    },
+  });
 
   useEffect(() => {
     if (exportQuery.isSuccess) {
@@ -78,24 +95,40 @@ export function ExportToRepository({ repo }: Props) {
 
   return (
     <>
-      <Button
-        variant={'secondary'}
-        icon={exportQuery.isLoading ? 'spinner' : undefined}
-        disabled={exportQuery.isLoading}
-        onClick={() =>
-          exportRepo({
-            name: repo.metadata?.name!,
-            body: {
-              branch: '*dummy*', // << triggers a fake exporter
-              folder: 'some-folder',
-              history: true,
-              prefix: 'prefix/in/remote/tree',
-            },
-          })
-        }
-      >
-        Export
-      </Button>
+      <br />
+      <br />
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Legend>Export from grafana into repository</Legend>
+
+        <Field label={'Source folder'} description="Select where we should read data (or empty for everything)">
+          <Controller
+            control={control}
+            name={'folder'}
+            render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
+          />
+        </Field>
+
+        <Field label="Target Branch" description={'the target branch (use *dummy* to simulate long export)'}>
+          <Input placeholder="branch name" {...register('branch')} />
+        </Field>
+
+        <Field label="Prefix">
+          <Input placeholder="Prefix in the remote system" {...register('prefix')} />
+        </Field>
+
+        <Field label="History" description="Include commits for each historical value">
+          <Switch {...register('history')} />
+        </Field>
+
+        <Button
+          type="submit"
+          disabled={formState.isSubmitting}
+          variant={'secondary'}
+          icon={exportQuery.isLoading ? 'spinner' : undefined}
+        >
+          Export
+        </Button>
+      </form>
     </>
   );
 }

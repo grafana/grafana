@@ -197,3 +197,10 @@ export interface ListApiArg extends ListOptions {
   timeoutSeconds?: number;
   watch?: boolean;
 }
+
+export type ExportOptions = {
+  folder?: string;
+  branch?: string; // '*dummy*' will trigger fake export
+  prefix?: string;
+  history: boolean;
+};
