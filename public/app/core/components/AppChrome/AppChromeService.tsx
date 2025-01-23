@@ -12,6 +12,7 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
+import { needHackyFixes } from './History/utils';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -162,31 +163,8 @@ export class AppChromeService {
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
 
-    const getEntryPath = (entry: HistoryEntry) =>
-      entry.url.substring(0, entry.url.indexOf('?') !== -1 ? entry.url.indexOf('?') : undefined);
-    const getEntryQueryParams = (entry: HistoryEntry) =>
-      entry.url.indexOf('?') !== -1 ? entry.url.substring(entry.url.indexOf('?')) : undefined;
-
-    const newEntryPath = getEntryPath(newEntry);
-    const newEntryQueryParams = getEntryQueryParams(newEntry);
-    const lastEntryPath = lastEntry && getEntryPath(lastEntry);
-    const lastEntryQueryParams = lastEntry && getEntryQueryParams(lastEntry);
-    const isSamePath = newEntryPath === lastEntryPath;
-    const isSameQueryParams = newEntryQueryParams === lastEntryQueryParams;
-    // const isSameURL = isSamePath && isSameQueryParams;
-    console.log('params', newEntryQueryParams);
-    console.log('test', (newEntry.url.includes('\/explore') || newEntry.url.includes('\/d\/')) && isSameQueryParams);
-    if (isSamePath) {
-      if ((newEntry.url.includes('\/explore?') || newEntry.url.includes('\/d\/')) && isSameQueryParams) {
-        entries[0] = newEntry;
-      } else if (lastEntry.url.includes('\/d\/') && !lastEntryQueryParams) {
-        entries[0] = newEntry;
-      } else {
-        entries = [newEntry, ...entries];
-      }
-      // }
-      // else if (isSameURL) {
-      //     entries[0] = newEntry;
+    if (needHackyFixes(newEntry, lastEntry)) {
+      entries[0] = newEntry;
     } else {
       entries = [newEntry, ...entries];
     }
