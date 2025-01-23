@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	authnlib "github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -133,11 +133,11 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
-	if identity.IsGrafanaIdentity(ctx) {
+	if identity.IsServiceIdentity(ctx) {
 		return "", nil
 	}
 
-	authInfo, ok := claims.AuthInfoFrom(ctx)
+	authInfo, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
 	}
@@ -147,7 +147,7 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	// Future proofing: if we ever stop signing ID token for services
-	if !claims.IsIdentityType(authInfo.GetIdentityType(), claims.TypeAccessPolicy) {
+	if !types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy) {
 		return "", fmt.Errorf("no id-token found")
 	}
 
