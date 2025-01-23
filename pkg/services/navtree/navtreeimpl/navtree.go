@@ -70,6 +70,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		apiKeyService:        apiKeyService,
 		license:              license,
 	}
+
 	service.readNavigationSettings()
 
 	return service

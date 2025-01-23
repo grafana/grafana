@@ -363,6 +363,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 			cfg:      setting.NewCfg(),
 			features: featuremgmt.WithFeatures(),
 		}
+
 		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
 		service.readNavigationSettings()
 
