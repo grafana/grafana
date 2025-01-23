@@ -351,7 +351,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 
 // Renderer is granted permissions to read all dashboards and folders, and no other permissions
 func (s *Service) getRendererPermissions(ctx context.Context, action string) (map[string]bool, error) {
-	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
+	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
 	defer span.End()
 
 	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" {
