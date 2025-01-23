@@ -161,32 +161,36 @@ export class AppChromeService {
 
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
-    const newEntryPath = newEntry.url.substring(0, newEntry.url.indexOf('?'));
-    const lastEntryPath = lastEntry?.url.substring(0, lastEntry.url.indexOf('?'));
-    const isSamePath = lastEntry && newEntryPath.includes(lastEntryPath);
 
-    // We should manage duplicated entries
-    // --- HACKY USE CASES ---
-    // 1. The explore page, it loads a first entry just with 'Explore' title and '/explore' path with no query params
-    if (newEntry.url === '/explore' && newEntry.name === 'Explore') {
-      entries[0] = newEntry;
-    }
-    // 2. The dashboard page (not browse dashboards), it loads a first entry with the dashboard title and '/d/' path
-    else if (newEntry.name === 'Dashboards' && newEntry.url.includes('\/d\/')) {
-      entries = entries;
-    }
-    // 3. The frontend page redirects itself and creates a duplicate entry, the first one finishing in an anchor '>'
-    else if (newEntry.name === 'Frontend' && !newEntry.url.includes('\/apps')) {
-      entries[0] = newEntry;
-    }
-    /// --- END OF HACKY USE CASES ---
+    const getEntryPath = (entry: HistoryEntry) =>
+      entry.url.substring(0, entry.url.indexOf('?') !== -1 ? entry.url.indexOf('?') : undefined);
+    const getEntryQueryParams = (entry: HistoryEntry) =>
+      entry.url.indexOf('?') !== -1 ? entry.url.substring(entry.url.indexOf('?')) : undefined;
 
-    // 4. Avoid duplicated paths
-    else if (isSamePath) {
-      entries[0] = newEntry;
+    const newEntryPath = getEntryPath(newEntry);
+    const newEntryQueryParams = getEntryQueryParams(newEntry);
+    const lastEntryPath = lastEntry && getEntryPath(lastEntry);
+    const lastEntryQueryParams = lastEntry && getEntryQueryParams(lastEntry);
+    const isSamePath = newEntryPath === lastEntryPath;
+    const isSameQueryParams = newEntryQueryParams === lastEntryQueryParams;
+    // const isSameURL = isSamePath && isSameQueryParams;
+    console.log('params', newEntryQueryParams);
+    console.log('test', (newEntry.url.includes('\/explore') || newEntry.url.includes('\/d\/')) && isSameQueryParams);
+    if (isSamePath) {
+      if ((newEntry.url.includes('\/explore?') || newEntry.url.includes('\/d\/')) && isSameQueryParams) {
+        entries[0] = newEntry;
+      } else if (lastEntry.url.includes('\/d\/') && !lastEntryQueryParams) {
+        entries[0] = newEntry;
+      } else {
+        entries = [newEntry, ...entries];
+      }
+      // }
+      // else if (isSameURL) {
+      //     entries[0] = newEntry;
     } else {
       entries = [newEntry, ...entries];
     }
+
     return entries;
   }
 
