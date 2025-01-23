@@ -61,6 +61,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		dbProvider:        opts.DBProvider,
 		pollingInterval:   pollingInterval,
 		skipDataMigration: opts.SkipDataMigration,
+		batchLock:         &batchLock{running: make(map[string]bool)},
 	}, nil
 }
 
@@ -80,6 +81,7 @@ type backend struct {
 	db                db.DB
 	dialect           sqltemplate.Dialect
 	skipDataMigration bool
+	batchLock         *batchLock
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -712,13 +714,18 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 	t := time.NewTicker(b.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
+	isSQLite := b.dialect.DialectName() == "sqlite"
 
 	for {
 		select {
 		case <-b.done:
 			return
 		case <-t.C:
-			fmt.Printf("POLLER... get latest rv...\n")
+			// Block polling duffing import to avoid database locked issues
+			if isSQLite && b.batchLock.Active() {
+				continue
+			}
+
 			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs
 			grv, err := b.listLatestRVs(ctx)

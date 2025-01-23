@@ -245,7 +245,9 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				return
 			}
 			query := r.URL.Query()
-			rsp, err := b.legacy.Access.Migrate(r.Context(), legacy.MigrateOptions{
+
+			ctx := context.WithoutCancel(r.Context())
+			rsp, err := b.legacy.Access.Migrate(ctx, legacy.MigrateOptions{
 				Namespace:    "default", // get from namespace
 				SendHistory:  query.Get("history") == "true",
 				Resources:    query["resource"],

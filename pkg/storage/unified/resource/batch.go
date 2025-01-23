@@ -33,7 +33,7 @@ type BatchRequestIterator interface {
 }
 
 type BatchProcessingBackend interface {
-	ProcessBatch(ctx context.Context, setting BatchSettings, iter BatchRequestIterator) (*BatchResponse, error)
+	ProcessBatch(ctx context.Context, setting BatchSettings, iter BatchRequestIterator) *BatchResponse
 }
 
 type BatchSettings struct {
@@ -182,38 +182,36 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 	}
 
 	// BatchProcess requests
-	rsp, err := backend.ProcessBatch(ctx, settings, runner)
+	rsp := backend.ProcessBatch(ctx, settings, runner)
 	if rsp == nil {
-		rsp = &BatchResponse{}
-	}
-	if err == nil {
-		err = runner.err
-	}
-
-	if err == nil {
-		// Rebuild any changed indexes
-		for _, summary := range rsp.Summary {
-			started := time.Now()
-			idx, rv, err := s.search.build(ctx, NamespacedResource{
-				Namespace: summary.Namespace,
-				Group:     summary.Group,
-				Resource:  summary.Resource,
-			}, summary.Count, summary.ResourceVersion)
-			if err != nil {
-				return err // should not happen
-			}
-			count, err := idx.DocCount(ctx, "")
-			if err != nil {
-				return err // should not happen
-			}
-			elapsed := time.Since(started)
-			fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", summary.Resource, count, rv, elapsed.String())
+		rsp = &BatchResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: "Nothing returned from process batch",
+			},
 		}
-	} else {
-		rsp.Error = AsErrorResult(err)
 	}
 
-	fmt.Printf("Finished (core)\n")
+	// Rebuild any changed indexes
+	for _, summary := range rsp.Summary {
+		started := time.Now()
+		idx, rv, err := s.search.build(ctx, NamespacedResource{
+			Namespace: summary.Namespace,
+			Group:     summary.Group,
+			Resource:  summary.Resource,
+		}, summary.Count, summary.ResourceVersion)
+		if err != nil {
+			return err // should not happen
+		}
+		count, err := idx.DocCount(ctx, "")
+		if err != nil {
+			return err // should not happen
+		}
+		elapsed := time.Since(started)
+		fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", summary.Resource, count, rv, elapsed.String())
+	}
+
+	fmt.Printf("Finished (SQL batch loop)\n")
 	return stream.SendAndClose(rsp)
 }
 

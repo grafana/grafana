@@ -3,9 +3,14 @@ package sql
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -17,9 +22,64 @@ var (
 	_ resource.BatchProcessingBackend = (*backend)(nil)
 )
 
-func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) (*resource.BatchResponse, error) {
+type batchLock struct {
+	running map[string]bool
+	mu      sync.Mutex
+}
+
+func (x *batchLock) Start(keys []*resource.ResourceKey) error {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+
+	// First verify that it is not already running
+	ids := make([]string, len(keys))
+	for i, k := range keys {
+		id := toBatchKey(k)
+		if x.running[id] {
+			return &apierrors.StatusError{ErrStatus: v1.Status{
+				Code:   http.StatusPreconditionFailed,
+				Status: "batch export is already runnning",
+			}}
+		}
+		ids[i] = id
+	}
+
+	// Then add the keys to the lock
+	for _, k := range ids {
+		x.running[k] = true
+	}
+	return nil
+}
+
+func (x *batchLock) Finish(keys []*resource.ResourceKey) {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	for _, k := range keys {
+		delete(x.running, toBatchKey(k))
+	}
+	return
+}
+
+func (x *batchLock) Active() bool {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	return len(x.running) > 0
+}
+
+func toBatchKey(key *resource.ResourceKey) string {
+	return fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
+}
+
+func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
 	rsp := &resource.BatchResponse{}
-	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	err := b.batchLock.Start(setting.Collection)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+	defer b.batchLock.Finish(setting.Collection)
+
+	err = b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		rollbackWithError := func(err error) error {
 			txerr := tx.Rollback()
 			if txerr != nil {
@@ -48,8 +108,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 				if err != nil {
 					return rollbackWithError(err)
 				}
-				k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
-				summaries[k] = summary
+				summaries[toBatchKey(key)] = summary
 				rsp.Summary = append(rsp.Summary, summary)
 
 				// get the RV for this resource
@@ -99,7 +158,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 				return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
 			}
 
-			fmt.Printf("WROTE %d/%s\n", rv, req.Key.Name)
+			fmt.Printf("WROTE %4d/%d/%s\n", rsp.Processed, rv, req.Key.Name)
 		}
 
 		// Now update the resource table from history
@@ -127,7 +186,10 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 		fmt.Printf("DONE (SQL)\n")
 		return nil
 	})
-	return rsp, err
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+	}
+	return rsp
 }
 
 type batchWroker struct {
