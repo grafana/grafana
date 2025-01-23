@@ -1,4 +1,4 @@
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -14,12 +14,6 @@ export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
   const exportName = exportQuery.data?.metadata?.name;
 
-  const onSubmit: SubmitHandler<ExportOptions> = (body) =>
-    exportRepo({
-      name: repo.metadata?.name ?? '',
-      body, // << the form
-    });
-
   const { register, control, formState, handleSubmit } = useForm<ExportOptions>({
     defaultValues: {
       branch: '*dummy*', // << triggers a fake exporter
@@ -27,6 +21,12 @@ export function ExportToRepository({ repo }: Props) {
       prefix: 'prefix/in/remote/tree',
     },
   });
+
+  const onSubmit = (body: ExportOptions) =>
+    exportRepo({
+      name: repo.metadata?.name ?? '',
+      body, // << the form
+    });
 
   if (exportName) {
     return <ExportJobStatus name={exportName} />;
