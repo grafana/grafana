@@ -2,8 +2,6 @@ package authz
 
 import (
 	"context"
-	"errors"
-
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
@@ -44,11 +42,6 @@ func ProvideAuthZClient(
 		return nil, err
 	}
 
-	isRemoteServer := authCfg.mode == ModeCloud || authCfg.mode == ModeGRPC
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && isRemoteServer {
-		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
-	}
-
 	switch authCfg.mode {
 	case ModeGRPC:
 		return newGrpcLegacyClient(authCfg, tracer)
@@ -75,12 +68,8 @@ func ProvideAuthZClient(
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
 // You need to provide a remote address in the configuration
 func ProvideStandaloneAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+	cfg *setting.Cfg, tracer tracing.Tracer,
 ) (authlib.AccessClient, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
-	}
-
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
 		return nil, err

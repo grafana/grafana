@@ -2,16 +2,6 @@
 
 This package contains the authorization server implementation.
 
-## Feature toggles
-
-The following feature toggles need to be activated:
-
-```ini
-[feature_toggles]
-authZGRPCServer = true
-grpcServer = true
-```
-
 ## Configuration
 
 To configure the authorization server and client, use the "authorization" section of the configuration ini file.

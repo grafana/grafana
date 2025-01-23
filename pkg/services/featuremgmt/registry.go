@@ -1301,14 +1301,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:              "authZGRPCServer",
-			Description:       "Enables the gRPC server for authorization",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
-		{
 			Name:        "openSearchBackendFlowEnabled",
 			Description: "Enables the backend query flow for Open Search datasource plugin",
 			Stage:       FeatureStageGeneralAvailability,
