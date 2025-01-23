@@ -11,17 +11,6 @@ menuTitle: Settings
 title: Reporting settings
 description: Manage organizational Reporting settings
 weight: 700
-refs:
-  grafana-enterprise:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
-  configuration:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
 ---
 
 # Reporting settings
@@ -40,7 +29,7 @@ The options in this section control the branding and theming of the report attac
 
 ### Embedded Image
 
-- **Theme** - Theme of the dashboard image embedded in the email. Defaults to **Dark**.
+- **Theme** - Theme of the dashboard image embedded in the email. Defaults to **Dark**. If **Current** is selected, the image in the report will be in the instance theme of the Admin.
 
 <!-- vale Grafana.WordList = NO -->
 
