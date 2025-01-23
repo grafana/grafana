@@ -121,8 +121,10 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 			return nil, toFolderError(err)
 		}
 	case q.Title != nil:
-		// not implemented
-		return nil, folder.ErrBadRequest.Errorf("not implemented")
+		dashFolder, err = s.getFolderByTitleFromApiServer(ctx, q.OrgID, *q.Title, q.ParentUID)
+		if err != nil {
+			return nil, toFolderError(err)
+		}
 	default:
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
@@ -193,6 +195,70 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 			},
 		},
 		Limit: 100000}
+
+	client := s.k8sclient.getSearcher(ctx)
+
+	res, err := client.Search(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	hits, err := dashboardsearch.ParseResults(res, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(hits.Hits) == 0 {
+		return nil, dashboards.ErrFolderNotFound
+	}
+
+	uid := hits.Hits[0].Name
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
+	if title == "" {
+		return nil, dashboards.ErrFolderTitleEmpty
+	}
+
+	folderkey := &resource.ResourceKey{
+		Namespace: s.k8sclient.getNamespace(orgID),
+		Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+
+	request := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Key: folderkey,
+			Fields: []*resource.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_TITLE,
+					Operator: string(selection.In),
+					Values:   []string{title},
+				},
+			},
+			Labels: []*resource.Requirement{},
+		},
+		Limit: 100000}
+
+	if parentUID != nil {
+		req := []*resource.Requirement{{
+			Key:      resource.SEARCH_FIELD_FOLDER,
+			Operator: string(selection.In),
+			Values:   []string{*parentUID},
+		}}
+		request.Options.Fields = append(request.Options.Fields, req...)
+	}
 
 	client := s.k8sclient.getSearcher(ctx)
 
