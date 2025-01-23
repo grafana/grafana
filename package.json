@@ -175,7 +175,7 @@
     "eslint": "9.18.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-jest": "28.10.0",
+    "eslint-plugin-jest": "28.11.0",
     "eslint-plugin-jest-dom": "^5.4.0",
     "eslint-plugin-jsdoc": "50.6.2",
     "eslint-plugin-jsx-a11y": "6.10.2",
