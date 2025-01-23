@@ -73,6 +73,10 @@ type schedule struct {
 	// message from stopApplied is handled.
 	stopAppliedFunc func(ngmodels.AlertRuleKey)
 
+	// shouldResetAlertStateOnStopFunc allows to call a function before stopping the alert rule,
+	// that can control if the state of the rule should be reset or not.
+	shouldResetAlertStateOnStopFunc ShouldResetAlertStateOnStopFn
+
 	log log.Logger
 
 	evaluatorFactory eval.EvaluatorFactory
@@ -104,22 +108,25 @@ type schedule struct {
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	MaxAttempts          int64
-	BaseInterval         time.Duration
-	C                    clock.Clock
-	MinRuleInterval      time.Duration
-	DisableGrafanaFolder bool
-	RecordingRulesCfg    setting.RecordingRuleSettings
-	AppURL               *url.URL
-	JitterEvaluations    JitterStrategy
-	EvaluatorFactory     eval.EvaluatorFactory
-	RuleStore            RulesStore
-	Metrics              *metrics.Scheduler
-	AlertSender          AlertsSender
-	Tracer               tracing.Tracer
-	Log                  log.Logger
-	RecordingWriter      RecordingWriter
+	MaxAttempts                     int64
+	BaseInterval                    time.Duration
+	C                               clock.Clock
+	MinRuleInterval                 time.Duration
+	DisableGrafanaFolder            bool
+	RecordingRulesCfg               setting.RecordingRuleSettings
+	AppURL                          *url.URL
+	JitterEvaluations               JitterStrategy
+	EvaluatorFactory                eval.EvaluatorFactory
+	RuleStore                       RulesStore
+	Metrics                         *metrics.Scheduler
+	AlertSender                     AlertsSender
+	Tracer                          tracing.Tracer
+	Log                             log.Logger
+	RecordingWriter                 RecordingWriter
+	ShouldResetAlertStateOnStopFunc ShouldResetAlertStateOnStopFn
 }
+
+type ShouldResetAlertStateOnStopFn func(ctx context.Context, logger log.Logger, key ngmodels.AlertRuleKeyWithGroup) (bool, error)
 
 // NewScheduler returns a new scheduler.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
@@ -130,24 +137,25 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	}
 
 	sch := schedule{
-		registry:              newRuleRegistry(),
-		maxAttempts:           cfg.MaxAttempts,
-		clock:                 cfg.C,
-		baseInterval:          cfg.BaseInterval,
-		log:                   cfg.Log,
-		evaluatorFactory:      cfg.EvaluatorFactory,
-		ruleStore:             cfg.RuleStore,
-		metrics:               cfg.Metrics,
-		appURL:                cfg.AppURL,
-		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
-		jitterEvaluations:     cfg.JitterEvaluations,
-		rrCfg:                 cfg.RecordingRulesCfg,
-		stateManager:          stateManager,
-		minRuleInterval:       cfg.MinRuleInterval,
-		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
-		alertsSender:          cfg.AlertSender,
-		tracer:                cfg.Tracer,
-		recordingWriter:       cfg.RecordingWriter,
+		registry:                        newRuleRegistry(),
+		maxAttempts:                     cfg.MaxAttempts,
+		clock:                           cfg.C,
+		baseInterval:                    cfg.BaseInterval,
+		log:                             cfg.Log,
+		evaluatorFactory:                cfg.EvaluatorFactory,
+		ruleStore:                       cfg.RuleStore,
+		metrics:                         cfg.Metrics,
+		appURL:                          cfg.AppURL,
+		disableGrafanaFolder:            cfg.DisableGrafanaFolder,
+		jitterEvaluations:               cfg.JitterEvaluations,
+		rrCfg:                           cfg.RecordingRulesCfg,
+		stateManager:                    stateManager,
+		minRuleInterval:                 cfg.MinRuleInterval,
+		schedulableAlertRules:           alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
+		alertsSender:                    cfg.AlertSender,
+		tracer:                          cfg.Tracer,
+		recordingWriter:                 cfg.RecordingWriter,
+		shouldResetAlertStateOnStopFunc: cfg.ShouldResetAlertStateOnStopFunc,
 	}
 
 	return &sch
@@ -276,6 +284,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
+		sch.shouldResetAlertStateOnStopFunc,
 	)
 	for _, item := range alertRules {
 		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)

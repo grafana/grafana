@@ -270,7 +270,7 @@ func TestAlertRule(t *testing.T) {
 }
 
 func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *alertRule {
-	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
+	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -278,12 +278,13 @@ func TestRuleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *SyncAlertsSenderMock,
+		shouldResetStateOnStopFunc ShouldResetAlertStateOnStopFn,
 	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := newFakeRulesStore()
 		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
-		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
+		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil, shouldResetStateOnStopFunc)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}
@@ -298,7 +299,7 @@ func TestRuleRoutine(t *testing.T) {
 		// TODO rewrite when we are able to mock/fake state manager
 		t.Run(fmt.Sprintf("when rule evaluation happens (evaluation state %s)", evalState), func(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
-			sch, ruleStore, instanceStore, reg := createSchedule(evalAppliedChan, nil)
+			sch, ruleStore, instanceStore, reg := createSchedule(evalAppliedChan, nil, nil)
 
 			rule := gen.With(withQueryForState(t, evalState)).GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
@@ -471,7 +472,7 @@ func TestRuleRoutine(t *testing.T) {
 	t.Run("should exit", func(t *testing.T) {
 		t.Run("and not clear the state if parent context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+			sch, _, _, _ := createSchedule(make(chan time.Time), nil, nil)
 
 			rule := gen.GenerateRef()
 			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
@@ -491,9 +492,47 @@ func TestRuleRoutine(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, len(expectedStates), len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)))
 		})
+
+		t.Run("and not clear the state if shouldResetState func returns false", func(t *testing.T) {
+			stoppedChan := make(chan error)
+
+			shouldResetStateOnStopFunc := func(
+				ctx context.Context,
+				logger log.Logger,
+				key models.AlertRuleKeyWithGroup,
+			) (bool, error) {
+				return false, nil
+			}
+
+			// Create a rule in Alerting state, to check that the sender will not be called
+			// because we are not resetting the state.
+			rule := gen.With(withQueryForState(t, eval.Alerting)).GenerateRef()
+			sender := NewSyncAlertsSenderMock()
+			sch, _, _, _ := createSchedule(make(chan time.Time), sender, shouldResetStateOnStopFunc)
+
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
+			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			require.NotEmpty(t, expectedStates)
+
+			factory := ruleFactoryFromScheduler(sch)
+			ruleInfo := factory.new(context.Background(), rule)
+			go func() {
+				err := ruleInfo.Run()
+				stoppedChan <- err
+			}()
+
+			ruleInfo.Stop(errRuleDeleted)
+			err := waitForErrChannel(t, stoppedChan)
+			require.NoError(t, err)
+
+			require.Equal(t, len(expectedStates), len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)))
+
+			sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
+		})
+
 		t.Run("and clean up the state if delete is cancellation reason for inner context", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+			sch, _, _, _ := createSchedule(make(chan time.Time), nil, nil)
 
 			rule := gen.GenerateRef()
 			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
@@ -524,7 +563,7 @@ func TestRuleRoutine(t *testing.T) {
 		sender := NewSyncAlertsSenderMock()
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, nil)
 		ruleStore.PutRule(context.Background(), rule)
 		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
 		factory := ruleFactoryFromScheduler(sch)
@@ -606,7 +645,7 @@ func TestRuleRoutine(t *testing.T) {
 		sender := NewSyncAlertsSenderMock()
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
+		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender, nil)
 		sch.maxAttempts = 3
 		ruleStore.PutRule(context.Background(), rule)
 		factory := ruleFactoryFromScheduler(sch)
@@ -735,7 +774,7 @@ func TestRuleRoutine(t *testing.T) {
 			sender := NewSyncAlertsSenderMock()
 			sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, nil)
 			ruleStore.PutRule(context.Background(), rule)
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
@@ -769,7 +808,7 @@ func TestRuleRoutine(t *testing.T) {
 		sender := NewSyncAlertsSenderMock()
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, nil)
 		ruleStore.PutRule(context.Background(), rule)
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -800,7 +839,7 @@ func TestRuleRoutine(t *testing.T) {
 		sender := NewSyncAlertsSenderMock()
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, nil)
 		sch.stateManager.ResolvedRetention = 4 * time.Second
 		sch.stateManager.ResendDelay = 2 * time.Second
 		sch.stateManager.Put([]*state.State{
@@ -850,7 +889,24 @@ func TestRuleRoutine(t *testing.T) {
 }
 
 func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
-	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.rrCfg, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
+	return newRuleFactory(
+		sch.appURL,
+		sch.disableGrafanaFolder,
+		sch.maxAttempts,
+		sch.alertsSender,
+		sch.stateManager,
+		sch.evaluatorFactory,
+		&sch.schedulableAlertRules,
+		sch.clock,
+		sch.rrCfg,
+		sch.metrics,
+		sch.log,
+		sch.tracer,
+		sch.recordingWriter,
+		sch.evalAppliedFunc,
+		sch.stopAppliedFunc,
+		sch.shouldResetAlertStateOnStopFunc,
+	)
 }
 
 func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {

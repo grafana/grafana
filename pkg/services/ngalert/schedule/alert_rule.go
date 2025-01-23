@@ -66,6 +66,7 @@ func newRuleFactory(
 	recordingWriter RecordingWriter,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
+	shoudResetAlertStateOnStop ShouldResetAlertStateOnStopFn,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
 		if rule.Type() == ngmodels.RuleTypeRecording {
@@ -100,6 +101,7 @@ func newRuleFactory(
 			tracer,
 			evalAppliedHook,
 			stopAppliedHook,
+			shoudResetAlertStateOnStop,
 		)
 	}
 }
@@ -114,10 +116,11 @@ type ruleProvider interface {
 type alertRule struct {
 	key ngmodels.AlertRuleKeyWithGroup
 
-	evalCh   chan *Evaluation
-	updateCh chan RuleVersionAndPauseStatus
-	ctx      context.Context
-	stopFn   util.CancelCauseFunc
+	evalCh                        chan *Evaluation
+	updateCh                      chan RuleVersionAndPauseStatus
+	ctx                           context.Context
+	stopFn                        util.CancelCauseFunc
+	shouldResetAlertStateOnStopFn ShouldResetAlertStateOnStopFn
 
 	appURL               *url.URL
 	disableGrafanaFolder bool
@@ -154,27 +157,29 @@ func newAlertRule(
 	tracer tracing.Tracer,
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
+	shouldResetAlertStateOnStopFn ShouldResetAlertStateOnStopFn,
 ) *alertRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	return &alertRule{
-		key:                  key,
-		evalCh:               make(chan *Evaluation),
-		updateCh:             make(chan RuleVersionAndPauseStatus),
-		ctx:                  ctx,
-		stopFn:               stop,
-		appURL:               appURL,
-		disableGrafanaFolder: disableGrafanaFolder,
-		maxAttempts:          maxAttempts,
-		clock:                clock,
-		sender:               sender,
-		stateManager:         stateManager,
-		evalFactory:          evalFactory,
-		ruleProvider:         ruleProvider,
-		evalAppliedHook:      evalAppliedHook,
-		stopAppliedHook:      stopAppliedHook,
-		metrics:              met,
-		logger:               logger.FromContext(ctx),
-		tracer:               tracer,
+		key:                           key,
+		evalCh:                        make(chan *Evaluation),
+		updateCh:                      make(chan RuleVersionAndPauseStatus),
+		ctx:                           ctx,
+		stopFn:                        stop,
+		appURL:                        appURL,
+		disableGrafanaFolder:          disableGrafanaFolder,
+		maxAttempts:                   maxAttempts,
+		clock:                         clock,
+		sender:                        sender,
+		stateManager:                  stateManager,
+		evalFactory:                   evalFactory,
+		ruleProvider:                  ruleProvider,
+		evalAppliedHook:               evalAppliedHook,
+		stopAppliedHook:               stopAppliedHook,
+		metrics:                       met,
+		logger:                        logger.FromContext(ctx),
+		tracer:                        tracer,
+		shouldResetAlertStateOnStopFn: shouldResetAlertStateOnStopFn,
 	}
 }
 
@@ -345,17 +350,7 @@ func (a *alertRule) Run() error {
 			}()
 
 		case <-grafanaCtx.Done():
-			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
-			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				// We do not want a context to be unbounded which could potentially cause a go routine running
-				// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
-				// cases.
-				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
-				defer cancelFunc()
-				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, states)
-			}
-			a.logger.Debug("Stopping alert rule routine")
+			a.stop(grafanaCtx)
 			return nil
 		}
 	}
@@ -456,6 +451,31 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	return nil
+}
+
+func (a *alertRule) stop(ctx context.Context) {
+	shouldResetState := true
+	var err error
+	if a.shouldResetAlertStateOnStopFn != nil {
+		shouldResetState, err = a.shouldResetAlertStateOnStopFn(ctx, a.logger, a.key)
+		if err != nil {
+			a.logger.Warn("Failed to check if the alert rule state should be reset", "error", err)
+		}
+	}
+
+	// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
+	// and the shouldReset function returned true.
+	if errors.Is(ctx.Err(), errRuleDeleted) && shouldResetState {
+		// We do not want a context to be unbounded which could potentially cause a go routine running
+		// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
+		// cases.
+		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
+		defer cancelFunc()
+		states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
+		a.expireAndSend(ctx, states)
+	}
+
+	a.logger.Debug("Stopping alert rule routine")
 }
 
 // send sends alerts for the given state transitions.

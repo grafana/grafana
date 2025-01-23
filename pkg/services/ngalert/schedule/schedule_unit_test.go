@@ -558,7 +558,7 @@ func TestProcessTicks(t *testing.T) {
 func TestSchedule_updateRulesMetrics(t *testing.T) {
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
 	ctx := context.Background()
 	const firstOrgID int64 = 1
 
@@ -919,7 +919,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 func TestSchedule_deleteAlertRule(t *testing.T) {
 	t.Run("when rule exists", func(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
-			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			sch := setupScheduler(t, nil, nil, nil, nil, nil, nil)
 			ruleFactory := ruleFactoryFromScheduler(sch)
 			rule := models.RuleGen.GenerateRef()
 			key := rule.GetKey()
@@ -931,14 +931,14 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 	})
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
-			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			sch := setupScheduler(t, nil, nil, nil, nil, nil, nil)
 			key := models.GenerateRuleKey(rand.Int63())
 			sch.deleteAlertRule(key)
 		})
 	})
 }
 
-func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory, shouldResetAlertStateOnStopFunc ShouldResetAlertStateOnStopFn) *schedule {
 	t.Helper()
 	testTracer := tracing.InitializeTracerForTest()
 
@@ -983,18 +983,19 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	fakeRecordingWriter := writer.FakeWriter{}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:      cfg.BaseInterval,
-		MaxAttempts:       cfg.MaxAttempts,
-		C:                 mockedClock,
-		AppURL:            appUrl,
-		EvaluatorFactory:  evaluator,
-		RuleStore:         rs,
-		RecordingRulesCfg: cfg.RecordingRules,
-		Metrics:           m.GetSchedulerMetrics(),
-		AlertSender:       senderMock,
-		Tracer:            testTracer,
-		Log:               log.New("ngalert.scheduler"),
-		RecordingWriter:   fakeRecordingWriter,
+		BaseInterval:                    cfg.BaseInterval,
+		MaxAttempts:                     cfg.MaxAttempts,
+		C:                               mockedClock,
+		AppURL:                          appUrl,
+		EvaluatorFactory:                evaluator,
+		RuleStore:                       rs,
+		RecordingRulesCfg:               cfg.RecordingRules,
+		Metrics:                         m.GetSchedulerMetrics(),
+		AlertSender:                     senderMock,
+		Tracer:                          testTracer,
+		Log:                             log.New("ngalert.scheduler"),
+		RecordingWriter:                 fakeRecordingWriter,
+		ShouldResetAlertStateOnStopFunc: shouldResetAlertStateOnStopFunc,
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),
