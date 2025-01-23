@@ -113,7 +113,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     top: 0,
     zIndex: 1,
     display: 'flex',
-    width: width ? theme.spacing(width) : '100%', // Not used in Input, as this causes performance issues with auto sizing
     alignItems: 'center',
     justifyContent: 'center',
     flexGrow: 0,
@@ -131,6 +130,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css({
         label: 'input-wrapper',
         display: 'flex',
+        width: width ? theme.spacing(width) : '100%', // Not used in Input, as this causes performance issues with auto sizing
         height: theme.spacing(theme.components.height.md),
         borderRadius: theme.shape.radius.default,
         '&:hover': {
