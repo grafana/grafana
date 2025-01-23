@@ -200,7 +200,6 @@ describe('PanelEditor', () => {
 
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
-        title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
         _loadedPanel: libraryPanelModel,
@@ -239,7 +238,7 @@ describe('PanelEditor', () => {
       // Wait for mock api to return and update the library panel
       expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
       expect(libPanelBehavior.state.name).toBe('changed name');
-      expect(libPanelBehavior.state.title).toBe('changed title');
+      expect(panel.state.title).toBe('changed title');
       expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
 
@@ -258,7 +257,6 @@ describe('PanelEditor', () => {
 
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
-        title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
         _loadedPanel: libraryPanelModel,
