@@ -494,6 +494,7 @@ export type S3RepositoryConfig = {
 export type RepositorySpec = {
   description?: string;
   editing: EditingOptions;
+  unsyncMode: 'keepAll' | 'removeAll' | 'clearFolder';
   folder?: string;
   github?: GitHubRepositoryConfig;
   linting?: boolean;

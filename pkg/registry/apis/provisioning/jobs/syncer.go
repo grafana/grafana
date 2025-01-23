@@ -21,10 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-type UnsyncOptions struct {
-	KeepDashboards bool
-}
-
 type Syncer struct {
 	client     *resources.DynamicClient
 	parser     *resources.Parser
@@ -101,11 +97,11 @@ func (r *Syncer) Sync(ctx context.Context) (string, error) {
 	return latest, nil
 }
 
-func (r *Syncer) Unsync(ctx context.Context, opts UnsyncOptions) error {
+func (r *Syncer) Unsync(ctx context.Context) error {
 	cfg := r.repository.Config()
 
 	logger := logging.FromContext(ctx)
-	logger = logger.With("repository", cfg.Name, "namespace", cfg.GetNamespace(), "folder", cfg.Spec.Folder)
+	logger = logger.With("repository", cfg.Name, "namespace", cfg.GetNamespace(), "folder", cfg.Spec.Folder, "mode", cfg.Spec.UnsyncMode)
 	logger.Info("start repository unsync")
 	defer logger.Info("end repository unsync")
 
@@ -129,6 +125,17 @@ func (r *Syncer) Unsync(ctx context.Context, opts UnsyncOptions) error {
 		logger.Info("removed repo info from folder", "object", obj)
 	} else {
 		logger.Info("skip repo info removal as it's root folder")
+	}
+
+	switch cfg.Spec.UnsyncMode {
+	case provisioning.UnsyncModeKeepAll:
+		logger.Info("keep all resources")
+	case provisioning.UnsyncModeRemoveAll:
+		return errors.New("remove all mode not implemented")
+	case provisioning.UnsyncModeEmptyFolder:
+		return errors.New("empty folder mode not implemented")
+	default:
+		return fmt.Errorf("invalid unsync mode: %s", cfg.Spec.UnsyncMode)
 	}
 
 	return nil

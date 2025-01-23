@@ -322,6 +322,10 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		return fmt.Errorf("expected repository configuration")
 	}
 
+	if r.Spec.UnsyncMode == "" {
+		r.Spec.UnsyncMode = provisioning.UnsyncModeRemoveAll
+	}
+
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")

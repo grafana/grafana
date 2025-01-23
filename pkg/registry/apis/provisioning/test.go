@@ -173,6 +173,12 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
 	}
 
+	switch cfg.Spec.UnsyncMode {
+	case provisioning.UnsyncModeKeepAll, provisioning.UnsyncModeRemoveAll, provisioning.UnsyncModeEmptyFolder:
+	default:
+		list = append(list, field.Invalid(field.NewPath("spec", "unsyncMode"), cfg.Spec.UnsyncMode, "Invalid unsync mode"))
+	}
+
 	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
 			cfg.Spec.GitHub, "Github config only valid when type is github"))

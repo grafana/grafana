@@ -190,6 +190,8 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	item.attempts++
 	logger = logger.With("error", err, "attempts", item.attempts)
+	logger.Error("RepositoryController failed to process key")
+
 	if item.attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
 		rc.queue.Forget(item)
@@ -251,7 +253,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("error creating replicator")
 		}
 
-		if err := replicator.Unsync(ctx, jobs.UnsyncOptions{}); err != nil {
+		if err := replicator.Unsync(ctx); err != nil {
 			return fmt.Errorf("unsync repository: %w", err)
 		}
 

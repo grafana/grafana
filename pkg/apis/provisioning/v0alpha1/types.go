@@ -89,6 +89,9 @@ type RepositorySpec struct {
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 
+	// UnsyncMode options within the repository
+	UnsyncMode UnsyncMode `json:"unsyncMode"`
+
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
@@ -108,6 +111,17 @@ type RepositorySpec struct {
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
+
+type UnsyncMode string
+
+const (
+	// UnsyncModeKeepAll will keep the folder and resources within it
+	UnsyncModeKeepAll UnsyncMode = "keepAll"
+	// UnsyncModeRemoveAll will delete the folder and all its contents
+	UnsyncModeRemoveAll UnsyncMode = "removeAll"
+	// UnsyncModeEmptyFolder will delete all the contents of the folder
+	UnsyncModeEmptyFolder UnsyncMode = "emptyFolder"
+)
 
 type EditingOptions struct {
 	// End users can create new files in the remote file system
