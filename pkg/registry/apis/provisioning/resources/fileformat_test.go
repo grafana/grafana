@@ -99,7 +99,6 @@ spec:
 		require.NoError(t, err)
 
 		parser := &Parser{
-			mapper: NamesFromHashedRepoPath,
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",

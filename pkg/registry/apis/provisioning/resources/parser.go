@@ -41,7 +41,6 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 		repo:   config,
 		client: client,
 		kinds:  kinds,
-		mapper: NamesFromHashedRepoPath,
 	}
 	if repo.Config().Spec.Linting {
 		linterFactory := lint.NewDashboardLinterFactory()
@@ -71,8 +70,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 
 type Parser struct {
 	// The target repository
-	repo   *provisioning.Repository
-	mapper NameMapper
+	repo *provisioning.Repository
 
 	// client helper (for this namespace?)
 	client *DynamicClient
@@ -169,7 +167,7 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
 
-	objName, folderName := r.mapper(cfg.Name, info.Path, obj)
+	objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
 	obj.SetName(objName)
 	parsed.Meta.SetFolder(folderName)
 
