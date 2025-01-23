@@ -1483,16 +1483,16 @@
     {
       "metadata": {
         "name": "exploreMetrics",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1737658563230",
         "creationTimestamp": "2024-04-09T18:15:18Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-23 18:56:03.23086 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the new Explore Metrics core app",
         "stage": "GA",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/observability-metrics",
         "frontend": true,
         "expression": "true"
       }
@@ -1514,10 +1514,10 @@
     {
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
-        "resourceVersion": "1737647267630",
+        "resourceVersion": "1737658550603",
         "creationTimestamp": "2025-01-21T23:24:50Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-01-23 15:47:47.630056 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-01-23 18:55:50.603804 +0000 UTC"
         }
       },
       "spec": {

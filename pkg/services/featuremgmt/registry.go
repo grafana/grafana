@@ -919,7 +919,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1756,13 +1756,12 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:            "exploreMetricsUseExternalAppPlugin",
-			Description:     "Use the externalized Explore Metrics app plugin",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaObservabilityMetricsSquad,
-			FrontendOnly:    true,
-			HideFromDocs:    true,
-			RequiresRestart: false,
+			Name:         "exploreMetricsUseExternalAppPlugin",
+			Description:  "Use the externalized Explore Metrics app plugin",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
