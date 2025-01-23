@@ -11,11 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
+
+	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -313,10 +314,6 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
 		f.FullpathUIDs = f.UID // set full path to the folder UID
-	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		f, err = s.setFullpath(ctx, f, q.SignedInUser, true)
 	}
 
 	return f, err
@@ -784,13 +781,6 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 		f.ParentUID = nestedFolder.ParentUID
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		f, err = s.setFullpath(ctx, f, user, true)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return f, nil
 }
 
@@ -990,6 +980,12 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 			if alertRulesInFolder > 0 {
 				return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 			}
+		}
+
+		err = s.store.Delete(ctx, []string{cmd.UID}, cmd.OrgID)
+		if err != nil {
+			s.log.InfoContext(ctx, "failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
+			return err
 		}
 
 		if err = s.legacyDelete(ctx, cmd, folders); err != nil {
@@ -1240,11 +1236,11 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	for _, f := range descendants {
 		descendantUIDs = append(descendantUIDs, f.UID)
 	}
-	s.log.InfoContext(ctx, "deleting folder and its descendants", "org_id", cmd.OrgID, "uid", cmd.UID)
-	toDelete := append(descendantUIDs, cmd.UID)
-	err = s.store.Delete(ctx, toDelete, cmd.OrgID)
+	s.log.InfoContext(ctx, "deleting folder descendants", "org_id", cmd.OrgID, "uid", cmd.UID)
+
+	err = s.store.Delete(ctx, descendantUIDs, cmd.OrgID)
 	if err != nil {
-		s.log.InfoContext(ctx, "failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
+		s.log.InfoContext(ctx, "failed deleting descendants", "org_id", cmd.OrgID, "parent_uid", cmd.UID, "err", err)
 		return descendantUIDs, err
 	}
 	return descendantUIDs, nil
