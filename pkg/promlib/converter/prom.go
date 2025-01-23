@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -23,7 +24,7 @@ type Options struct {
 }
 
 func rspErr(e error) backend.DataResponse {
-	return backend.DataResponse{Error: e}
+	return backend.DataResponse{Error: e, ErrorSource: status.SourceDownstream}
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -39,7 +40,7 @@ func ReadPrometheusStyleResult(jIter *jsoniter.Iterator, opt Options) backend.Da
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
-			return rspErr(err)
+			return rspErr(fmt.Errorf("response from prometheus couldn't be parsed. it is non-json: %w", err))
 		}
 		switch l1Field {
 		case "status":
