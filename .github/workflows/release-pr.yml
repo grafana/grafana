@@ -124,7 +124,7 @@ jobs:
           rm -f CHANGELOG.part changelog_items.md
 
           git diff CHANGELOG.md
-          
+
       - name: "Prettify CHANGELOG.md"
         run: npx prettier --write CHANGELOG.md
       - name: Commit CHANGELOG.md changes
@@ -137,7 +137,7 @@ jobs:
 
       - name: Add package.json changes
         run: |
-          git add package.json lerna.json yarn.lock packages public
+          git add package.json yarn.lock packages public
           git commit -m "Update version to ${{ inputs.version }}"
 
       - name: Git push

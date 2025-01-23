@@ -39,7 +39,7 @@
     "uuid": "11.0.5"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "11.5.0-pre",
+    "@grafana/plugin-configs": "workspace:*",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.1.0",
