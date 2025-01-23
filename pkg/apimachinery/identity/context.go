@@ -42,7 +42,7 @@ func WithServiceIdentitiy(ctx context.Context, orgID int64) (context.Context, Re
 		AuthID:         "service",
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
-			orgID: grafanaIdentityPermissions,
+			orgID: serviceIdentityPermissions,
 		},
 	}
 
@@ -57,9 +57,9 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 	return permissions
 }
 
-// grafanaIdentityPermissions is a list of wildcard permissions for provided actions.
+// serviceIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
-var grafanaIdentityPermissions = getWildcardPermissions(
+var serviceIdentityPermissions = getWildcardPermissions(
 	"folders:read",
 	"folders:write",
 	"folders:create",
