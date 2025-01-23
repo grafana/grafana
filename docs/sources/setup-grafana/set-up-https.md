@@ -209,7 +209,7 @@ To adjust permissions, perform the following steps:
    $ sudo chgrp -R grafana /etc/letsencrypt/*
    $ sudo chmod -R g+rx /etc/letsencrypt/*
    $ sudo chgrp -R grafana /etc/grafana/grafana.crt /etc/grafana/grafana.key
-   $ sudo chmod 400 /etc/grafana/grafana.crt /etc/grafana/grafana.key
+   $ sudo chmod 440 /etc/grafana/grafana.crt /etc/grafana/grafana.key
    ```
 
 1. Run the following command to verify that the `grafana` group can read the symlinks:
