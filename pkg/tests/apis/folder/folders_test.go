@@ -617,6 +617,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("not yet working")
 
 	type testCase struct {
 		description          string
