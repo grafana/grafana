@@ -86,10 +86,12 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { GRID_ROW_HEIGHT } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -99,7 +101,6 @@ import {
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
-import { GRID_ROW_HEIGHT } from './const';
 
 const DEFAULT_DATASOURCE = 'default';
 
@@ -296,6 +297,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         isCollapsed: element.spec.collapsed,
         title: element.spec.title,
         $behaviors: behaviors,
+        actions: new RowActions({}),
         children,
       });
     } else {
@@ -323,17 +325,12 @@ function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
   titleItems.push(new PanelNotices());
 
   const vizPanelState: VizPanelState = {
-    key: getVizPanelKeyForPanelId(panel.spec.id),
+    key: panel.spec.uid,
     titleItems,
-    $behaviors: [
-      new LibraryPanelBehavior({
-        uid: panel.spec.libraryPanel.uid,
-        name: panel.spec.libraryPanel.name,
-      }),
-    ],
+    $behaviors: [new LibraryPanelBehavior({ uid: panel.spec.uid, name: panel.spec.name })],
     extendPanelContext: setDashboardPanelContext,
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
-    title: panel.spec.title,
+    title: '',
     options: {},
     fieldConfig: {
       defaults: {},
