@@ -70,7 +70,7 @@ func folderTreeCollector(folderService folder.Service) legacyTupleCollector {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
 		defer span.End()
 
-		ctx, ident := identity.WithGrafanaIdentity(ctx, orgID)
+		ctx, ident := identity.WithServiceIdentitiy(ctx, orgID)
 
 		q := folder.GetFoldersQuery{
 			OrgID:        orgID,

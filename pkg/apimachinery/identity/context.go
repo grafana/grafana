@@ -30,16 +30,16 @@ func checkNilRequester(r Requester) bool {
 	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
 }
 
-// WithGrafanaIdentity sets creates an identity representing grafana in provided org and store it in context.
+// WithServiceIdentitiy sets creates an identity representing the service itself in provided org and store it in context.
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
-func WithGrafanaIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
+func WithServiceIdentitiy(ctx context.Context, orgID int64) (context.Context, Requester) {
 	r := &StaticRequester{
 		Type:           types.TypeAccessPolicy,
-		UserUID:        "grafana",
+		UserUID:        "service",
 		OrgRole:        RoleAdmin,
 		IsGrafanaAdmin: true,
-		AuthID:         "grafana",
+		AuthID:         "service",
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
 			orgID: grafanaIdentityPermissions,
@@ -69,7 +69,7 @@ var grafanaIdentityPermissions = getWildcardPermissions(
 	"datasources:read",
 )
 
-func IsGrafanaIdentity(ctx context.Context) bool {
+func IsServiceIdentity(ctx context.Context) bool {
 	ident, err := GetRequester(ctx)
 	if err != nil {
 		return false
