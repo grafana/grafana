@@ -5,13 +5,11 @@ import { guessMetricType, isLLMPluginEnabled } from './helpers';
 
 // Mock the grafana llms module
 jest.mock('@grafana/llm', () => ({
-  llms: {
-    openai: {
-      health: jest.fn(),
-    },
-    vector: {
-      health: jest.fn(),
-    },
+  openai: {
+    health: jest.fn(),
+  },
+  vector: {
+    health: jest.fn(),
   },
 }));
 
