@@ -29,16 +29,6 @@ export interface SaveDashboardAsOptions {
   description?: string;
 }
 
-export interface SaveDashboardCommandV2 {
-  dashboard: DashboardV2Spec;
-  message?: string;
-  folderUid?: string;
-  overwrite?: boolean;
-  showErrorAlert?: boolean;
-
-  // When loading dashboards from k8s, we need to have access to the metadata wrapper
-  k8s?: Partial<ObjectMeta>;
-}
 export interface SaveDashboardCommand<T> {
   dashboard: T;
   message?: string;

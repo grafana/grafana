@@ -117,7 +117,7 @@ export class K8sDashboardV2API
 
     return {
       uid: v.metadata.name,
-      version: v.spec.version ?? 0, // FIXME: what is version?
+      version: v.metadata.generation ?? 0,
       id: v.spec.id ?? 0,
       status: 'success',
       url,

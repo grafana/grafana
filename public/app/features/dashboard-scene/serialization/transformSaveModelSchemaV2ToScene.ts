@@ -152,6 +152,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
     isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
+
+    k8s: metadata,
   };
 
   // Ref: DashboardModel.initMeta
