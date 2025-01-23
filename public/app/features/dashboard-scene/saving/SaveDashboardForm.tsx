@@ -33,7 +33,6 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     // we need to set the uid here in order to save the dashboard
     // in schema v2 we don't have the uid in the spec
     k8s: {
-      name: dashboard.state.uid,
       ...dashboard.state.meta.k8s,
     },
   });
