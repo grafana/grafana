@@ -14,11 +14,11 @@ exclude k8s.io/client-go v12.0.0+incompatible
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335
-	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20240821161612-71f0dae39e9d
+	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
+	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250121113133-e747350fee2d
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
@@ -170,8 +170,8 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250115195200-209e052dba64 // indirect
-	github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884 // indirect
+	github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4 // indirect
+	github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
