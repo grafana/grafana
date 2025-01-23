@@ -64,6 +64,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 
   const theme = useTheme2();
 
+  // Don't pass the width prop, as this causes an unnecessary amount of Emotion calls when auto sizing
   const styles = getInputStyles({ theme, invalid: !!invalid });
 
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
@@ -71,7 +72,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   return (
     <div
       className={cx(styles.wrapper, className)}
-      style={{ width: finalWidth ? theme.spacing(finalWidth) : '100%' }}
+      style={{ width: finalWidth ? theme.spacing(finalWidth) : '100%' }} // Override emotion styles for the width prop
       data-testid="input-wrapper"
     >
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
@@ -105,13 +106,14 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 
 Input.displayName = 'Input';
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
+export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css({
     position: 'absolute',
     top: 0,
     zIndex: 1,
     display: 'flex',
+    width: width ? theme.spacing(width) : '100%', // Not used in Input, as this causes performance issues with auto sizing
     alignItems: 'center',
     justifyContent: 'center',
     flexGrow: 0,
