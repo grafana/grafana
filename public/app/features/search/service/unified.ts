@@ -28,6 +28,8 @@ type SearchHit = {
   folder: string;
   tags: string[];
 
+  field: object; // extra fields from the backend - sort fields included here as well
+
   // calculated in the frontend
   url: string;
 };
@@ -110,7 +112,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const uri = await this.newRequest(query);
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
 
-    const first = toDashboardResults(rsp);
+    const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
     }
@@ -279,7 +281,7 @@ function getSortFieldDisplayName(name: string) {
   return name;
 }
 
-function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
+function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
   const hits = rsp.hits;
   if (hits.length < 1) {
     return { fields: [], length: 0 };
@@ -288,6 +290,14 @@ function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
     let location = hit.folder;
     if (hit.resource === 'dashboards' && isEmpty(location)) {
       location = 'general';
+    }
+
+    // display null field values as "-"
+    if (hit.field) {
+      const newField = Object.fromEntries(
+          Object.entries(hit.field).map(([key, value]) => [key, value == null ? "-" : value])
+        );
+      hit.field = newField;
     }
 
     return {
@@ -299,6 +309,7 @@ function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
+      ...hit.field,
     };
   });
   const frame = toDataFrame(dashboardHits);
@@ -308,6 +319,14 @@ function toDashboardResults(rsp: SearchAPIResponse): DataFrame {
       max_score: 1,
     },
   };
+  if (sort && frame.meta.custom) {
+    // trim the "-" from sort if it exists
+    if (sort.startsWith('-')) {
+      sort = sort.substring(1);
+    }
+    frame.meta.custom.sortBy = sort;
+  }
+
   for (const field of frame.fields) {
     field.display = getDisplayProcessor({ field, theme: config.theme2 });
   }
