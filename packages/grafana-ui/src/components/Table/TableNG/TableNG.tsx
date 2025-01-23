@@ -44,6 +44,7 @@ interface HeaderCellProps {
   onSort: (columnKey: string, direction: SortDirection, isMultiSort: boolean) => void;
   direction: SortDirection | undefined;
   justifyContent?: Property.JustifyContent;
+  filter: any;
 }
 
 export type FilterType = {
@@ -94,6 +95,9 @@ export function TableNG(props: TableNGProps) {
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>({});
+
+  const crossFilterOrder = useRef<string[]>([]);
+  const crossFilterRows = useRef<{ [key: string]: TableRow[] }>({});
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [, setReadyForRowHeightCalc] = useState(false);
@@ -157,7 +161,8 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
-  const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent }) => {
+  // TODO: move this component to a separate file
+  const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent, filter }) => {
     const headerRef = useRef<HTMLDivElement>(null);
 
     let isColumnFilterable = filterable;
@@ -178,6 +183,7 @@ export function TableNG(props: TableNGProps) {
       onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
     };
 
+    // collecting header cell refs to handle manual column resize
     useLayoutEffect(() => {
       if (headerRef.current) {
         headerCellRefs.current[column.key] = headerRef.current;
@@ -225,7 +231,15 @@ export function TableNG(props: TableNGProps) {
         </button>
 
         {isColumnFilterable && (
-          <Filter name={column.key} rows={rows} filter={filter} setFilter={setFilter} field={field} />
+          <Filter
+            name={column.key}
+            rows={rows}
+            filter={filter}
+            setFilter={setFilter}
+            field={field}
+            crossFilterOrder={crossFilterOrder.current}
+            crossFilterRows={crossFilterRows.current}
+          />
         )}
       </div>
     );
@@ -341,6 +355,7 @@ export function TableNG(props: TableNGProps) {
             onSort={handleSort}
             direction={sortDirection}
             justifyContent={justifyColumnContent}
+            filter={filter}
           />
         ),
         // TODO these anys are making me sad
@@ -393,20 +408,42 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, sortColumns, columnTypes]);
 
+  const getDisplayedValue = (row: TableRow, key: string) => {
+    const field = props.data.fields.find((field) => field.name === key)!;
+    const displayedValue = formattedValueToString(field.display!(row[key]));
+    return displayedValue;
+  };
+
   // Filter rows
   const filteredRows = useMemo(() => {
     const filterValues = Object.entries(filter);
-
     if (filterValues.length === 0) {
       return sortedRows;
     }
 
+    // Update crossFilterOrder
+    const filterKeys = new Set(filterValues.map(([key]) => key));
+    filterKeys.forEach((key) => {
+      if (!crossFilterOrder.current.includes(key)) {
+        // Each time a filter is added or removed, it is always a single filter.
+        // When adding a new filter, it is always appended to the end, maintaining the order.
+        crossFilterOrder.current.push(key);
+      }
+    });
+    // Remove keys from crossFilterOrder that are no longer present in the current filter values
+    crossFilterOrder.current = crossFilterOrder.current.filter((key) => filterKeys.has(key));
+
     return sortedRows.filter((row) => {
       for (const [key, value] of filterValues) {
-        const field = props.data.fields.find((field) => field.name === key)!;
-        const displayedValue = formattedValueToString(field.display!(row[key]));
+        const displayedValue = getDisplayedValue(row, key);
         if (!value.filteredSet.has(displayedValue)) {
           return false;
+        }
+        // collect rows for crossFilter
+        if (!crossFilterRows.current[key]) {
+          crossFilterRows.current[key] = [row];
+        } else {
+          crossFilterRows.current[key].push(row);
         }
       }
       return true;
