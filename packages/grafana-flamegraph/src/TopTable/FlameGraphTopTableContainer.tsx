@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { FieldTextAlignment } from '@grafana/schema';
 
 import {
   applyFieldOverrides,
@@ -12,6 +11,7 @@ import {
   GrafanaTheme2,
   MappingType,
 } from '@grafana/data';
+import { FieldTextAlignment } from '@grafana/schema';
 import {
   IconButton,
   Table,
