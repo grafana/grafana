@@ -259,7 +259,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         const libraryPanel = buildLibraryPanel(panel);
 
         return new DashboardGridItem({
-          key: `grid-item-${panel.spec.uid}`,
+          key: `grid-item-${panel.spec.id}`,
           x: element.spec.x,
           y: element.spec.y,
           width: element.spec.width,
@@ -293,12 +293,17 @@ function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
   titleItems.push(new PanelNotices());
 
   const vizPanelState: VizPanelState = {
-    key: panel.spec.uid,
+    key: getVizPanelKeyForPanelId(panel.spec.id),
     titleItems,
-    $behaviors: [new LibraryPanelBehavior({ uid: panel.spec.uid, name: panel.spec.name })],
+    $behaviors: [
+      new LibraryPanelBehavior({
+        uid: panel.spec.libraryPanel.uid,
+        name: panel.spec.libraryPanel.name,
+      }),
+    ],
     extendPanelContext: setDashboardPanelContext,
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
-    title: '',
+    title: panel.spec.title,
     options: {},
     fieldConfig: {
       defaults: {},
