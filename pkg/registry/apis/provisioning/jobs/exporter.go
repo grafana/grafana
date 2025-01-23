@@ -63,14 +63,28 @@ func (r *exporter) Export(ctx context.Context,
 		Resource: "dashboards",
 	})
 
+	err := progress(provisioning.JobStatus{
+		State:   provisioning.JobStateWorking,
+		Message: "getting folder tree...",
+	})
+	if err != nil {
+		return nil, err
+	}
 	// TODO: handle pagination
 	folders, err := r.fetchRepoFolderTree(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
 
+	err = progress(provisioning.JobStatus{
+		State:   provisioning.JobStateWorking,
+		Message: "writing dashboards...",
+	})
+	if err != nil {
+		return nil, err
+	}
 	// TODO: handle pagination
-	dashboardList, err := dashboardIface.List(ctx, metav1.ListOptions{})
+	dashboardList, err := dashboardIface.List(ctx, metav1.ListOptions{Limit: 1000})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list dashboards: %w", err)
 	}

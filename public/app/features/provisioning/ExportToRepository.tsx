@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
-import { Button } from '@grafana/ui';
+import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { ScopedResourceClient } from '../apiserver/client';
-
-import { Repository, Job, useCreateRepositoryExportMutation, JobSpec, JobStatus } from './api';
+import ProgressBar from './ProgressBar';
+import { Repository, useCreateRepositoryExportMutation, useListJobQuery, ExportOptions } from './api';
 
 interface Props {
   repo: Repository;
@@ -12,90 +12,85 @@ interface Props {
 
 export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
-  const [job, setJob] = useState<Job>();
+  const exportName = exportQuery.data?.metadata?.name;
 
-  useEffect(() => {
-    if (exportQuery.isSuccess) {
-      setJob(exportQuery.data);
+  const { register, control, formState, handleSubmit } = useForm<ExportOptions>({
+    defaultValues: {
+      branch: '*dummy*', // << triggers a fake exporter
+      history: true,
+      prefix: 'prefix/in/remote/tree',
+    },
+  });
 
-      const name = exportQuery.data.metadata?.name!;
-      console.log('Start watching: ', name);
-      const client = new ScopedResourceClient<JobSpec, JobStatus>({
-        group: 'provisioning.grafana.app',
-        version: 'v0alpha1',
-        resource: 'jobs',
-      });
-      client.watch({ name }).subscribe((v) => {
-        const state = v.object.status?.state;
-        console.log('GOT: ', state, v);
-        if (v.object) {
-          setJob(v.object as Job);
-        }
-        if (state === 'success' || state === 'error') {
-          console.warn('TODO, unsubscribe job:', name);
-        }
-      });
-    }
-  }, [exportQuery.isSuccess, exportQuery.data]);
+  const onSubmit = (body: ExportOptions) =>
+    exportRepo({
+      name: repo.metadata?.name ?? '',
+      body, // << the form
+    });
 
-  if (job) {
-    return (
-      <div>
-        {/** https://codepen.io/tmac/pen/QgVRKb  ??? */}
-        {job.status && (
-          <div>
-            <div>
-              {job.status.message} // {job.status.state}
-              {job.status.progress && (
-                <div
-                  style={{
-                    background: '#999',
-                    width: '400px',
-                    height: '10px',
-                  }}
-                >
-                  <div
-                    style={{
-                      background: 'green',
-                      width: `${job.status.progress}%`,
-                      height: '10px',
-                    }}
-                  >
-                    &nbsp;
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <br />
-        <br />
-        <pre>{JSON.stringify(job, null, '  ')}</pre>
-      </div>
-    );
+  if (exportName) {
+    return <ExportJobStatus name={exportName} />;
   }
 
   return (
-    <>
-      <Button
-        variant={'secondary'}
-        icon={exportQuery.isLoading ? 'spinner' : undefined}
-        disabled={exportQuery.isLoading}
-        onClick={() =>
-          exportRepo({
-            name: repo.metadata?.name!,
-            body: {
-              branch: '*dummy*', // << triggers a fake exporter
-              folder: 'some-folder',
-              history: true,
-              prefix: 'prefix/in/remote/tree',
-            },
-          })
-        }
-      >
-        Export
-      </Button>
-    </>
+    <Box paddingTop={2}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <FieldSet label="Export from grafana into repository">
+          <Field label={'Source folder'} description="Select where we should read data (or empty for everything)">
+            <Controller
+              control={control}
+              name={'folder'}
+              render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
+            />
+          </Field>
+
+          <Field label="Target Branch" description={'the target branch (use *dummy* to simulate long export)'}>
+            <Input placeholder="branch name" {...register('branch')} />
+          </Field>
+
+          <Field label="Prefix">
+            <Input placeholder="Prefix in the remote system" {...register('prefix')} />
+          </Field>
+
+          <Field label="History" description="Include commits for each historical value">
+            <Switch {...register('history')} />
+          </Field>
+
+          <Button
+            type="submit"
+            disabled={formState.isSubmitting}
+            variant={'secondary'}
+            icon={exportQuery.isLoading ? 'spinner' : undefined}
+          >
+            Export
+          </Button>
+        </FieldSet>
+      </form>
+    </Box>
+  );
+}
+
+function ExportJobStatus({ name }: { name: string }) {
+  const jobQuery = useListJobQuery({ watch: true, fieldSelector: `metadata.name=${name}` });
+  const job = jobQuery.data?.items?.[0];
+
+  if (!job) {
+    return null;
+  }
+
+  return (
+    <Box paddingTop={2}>
+      <Stack direction={'column'} gap={2}>
+        {job.status && (
+          <Stack direction="column" gap={2}>
+            <Text element="p">
+              {job.status.message} // {job.status.state}
+            </Text>
+            <ProgressBar progress={job.status.progress} />
+          </Stack>
+        )}
+        <pre>{JSON.stringify(job, null, ' ')}</pre>
+      </Stack>
+    </Box>
   );
 }
