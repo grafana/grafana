@@ -66,7 +66,7 @@ func NewAccessControlDashboardGuardian(
 }
 
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
-// This constructor should be preferred over the other two if the dashboard in available
+// This constructor should be preferred over the other two if the dashboard is available
 // since it avoids querying the database for fetching the dashboard.
 func NewAccessControlDashboardGuardianByDashboard(
 	ctx context.Context, cfg *setting.Cfg, dashboard *dashboards.Dashboard, user identity.Requester,
