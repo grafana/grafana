@@ -314,6 +314,7 @@ describe('ResponseTransformers', () => {
           {
             id: 2,
             type: 'table',
+            title: 'Just a shared table',
             libraryPanel: {
               uid: 'library-panel-table',
               name: 'Table Panel as Library Panel',
@@ -458,18 +459,22 @@ describe('ResponseTransformers', () => {
       expect(spec.layout.spec.items[1].spec).toEqual({
         element: {
           kind: 'ElementReference',
-          name: 'library-panel-table',
+          name: '2',
         },
         x: 0,
         y: 8,
         width: 12,
         height: 8,
       });
-      expect(spec.elements['library-panel-table']).toEqual({
+      expect(spec.elements['2']).toEqual({
         kind: 'LibraryPanel',
         spec: {
-          uid: 'library-panel-table',
-          name: 'Table Panel as Library Panel',
+          libraryPanel: {
+            uid: 'library-panel-table',
+            name: 'Table Panel as Library Panel',
+          },
+          id: 2,
+          title: 'Just a shared table',
         },
       });
 
@@ -633,7 +638,10 @@ describe('ResponseTransformers', () => {
       expect(panelV2.kind).toBe('Panel');
       validatePanel(dashboard.panels![0], panelV2, dashboardV2.spec.layout, panelKey);
       // library panel
-      expect(dashboard.panels![1].libraryPanel).toEqual(dashboardV2.spec.elements['library-panel-1'].spec);
+      expect(dashboard.panels![1].libraryPanel).toEqual({
+        uid: 'uid-for-library-panel',
+        name: 'Library Panel',
+      });
     });
 
     describe('getPanelQueries', () => {

@@ -70,13 +70,30 @@ export const defaultLibraryPanelKind = (): LibraryPanelKind => ({
 });
 
 export interface LibraryPanelSpec {
-	// Library panel name
-	name: string;
-	// Library panel UID
-	uid: string;
+	// Panel ID for the library panel in the dashboard
+	id: number;
+	// Title for the library panel in the dashboard
+	title: string;
+	libraryPanel: LibraryPanelRef;
 }
 
 export const defaultLibraryPanelSpec = (): LibraryPanelSpec => ({
+	id: 0,
+	title: "",
+	libraryPanel: defaultLibraryPanelRef(),
+});
+
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
+export interface LibraryPanelRef {
+	// Library panel name
+	name: string;
+	// Library panel uid
+	uid: string;
+}
+
+export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	name: "",
 	uid: "",
 });
