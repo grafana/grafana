@@ -281,7 +281,7 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 	}
 }
 
-func (s *ServiceImpl) readNavigationSettings(c *contextmodel.ReqContext) {
+func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
 		"grafana-dbo11y-app":               {SectionID: navtree.NavIDInfrastructure, SortWeight: 2, Text: "Databases"},
@@ -309,7 +309,7 @@ func (s *ServiceImpl) readNavigationSettings(c *contextmodel.ReqContext) {
 		"grafana-csp-app":                  {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCloudServiceProviders, Icon: "cloud"},
 	}
 
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
 		s.navigationAppConfig["grafana-exploremetrics-app"] = NavigationAppConfig{SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Metrics"}
 		s.navigationAppConfig["grafana-lokiexplore-app"] = NavigationAppConfig{SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Logs"}
 		s.navigationAppConfig["grafana-exploretraces-app"] = NavigationAppConfig{SectionID: navtree.NavIDExplore, SortWeight: 3, Text: "Traces"}
