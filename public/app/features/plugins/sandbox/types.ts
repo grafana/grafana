@@ -11,4 +11,4 @@ export type SandboxedPluginObject = {
 
 export type SandboxEnvironment = ReturnType<typeof createVirtualEnvironment>;
 
-export type SandboxPluginMeta = Pick<PluginMeta, 'id' | 'type' | 'module'>;
+export type SandboxPluginMeta = Pick<PluginMeta, 'id' | 'type' | 'module' | 'moduleHash'>;

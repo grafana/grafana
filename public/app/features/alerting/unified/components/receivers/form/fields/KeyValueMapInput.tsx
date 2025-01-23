@@ -47,7 +47,7 @@ export const KeyValueMapInput = ({ value, onChange, readOnly = false }: Props) =
             <tr>
               <th>Name</th>
               <th>Value</th>
-              {!readOnly && <th></th>}
+              {!readOnly && <th />}
             </tr>
           </thead>
           <tbody>

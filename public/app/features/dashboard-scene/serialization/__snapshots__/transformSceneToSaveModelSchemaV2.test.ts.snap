@@ -12,7 +12,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "-- Grafana --",
         },
         "enable": true,
-        "filter": undefined,
         "hide": false,
         "iconColor": "red",
         "name": "query1",
@@ -27,7 +26,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "abcdef",
         },
         "enable": true,
-        "filter": undefined,
         "hide": true,
         "iconColor": "blue",
         "name": "query2",
@@ -42,7 +40,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "uid": "Loki",
         },
         "enable": true,
-        "filter": undefined,
         "hide": true,
         "iconColor": "green",
         "name": "query3",
@@ -129,7 +126,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
   ],
   "liveNow": true,
   "preload": true,
-  "schemaVersion": 40,
   "tags": [
     "tag1",
     "tag2",
@@ -212,7 +208,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "DatasourceVariable",
       "spec": {
-        "allValue": undefined,
         "current": {
           "text": "text1",
           "value": "value1",
@@ -309,7 +304,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
         "description": "A group by variable",
         "hide": "dontHide",
-        "includeAll": false,
         "label": "Group By Variable",
         "multi": false,
         "name": "groupByVar",

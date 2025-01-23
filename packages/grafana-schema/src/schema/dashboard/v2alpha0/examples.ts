@@ -1,4 +1,4 @@
-import { DashboardV2Spec } from './dashboard.gen';
+import { DashboardV2Spec } from './types.gen';
 
 export const handyTestingSchema: DashboardV2Spec = {
   id: 1,
@@ -8,7 +8,6 @@ export const handyTestingSchema: DashboardV2Spec = {
   liveNow: false,
   preload: false,
   editable: true,
-  schemaVersion: 40,
   tags: ['tag1', 'tag2'],
   timeSettings: {
     autoRefresh: '5s',
@@ -37,7 +36,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'prometheus',
           uid: 'uid',
         },
-        filter: { ids: [] },
+        filter: { ids: [1] },
         enable: true,
         hide: false,
         iconColor: 'rgba(0, 211, 255, 1)',
@@ -63,7 +62,6 @@ export const handyTestingSchema: DashboardV2Spec = {
             scenarioId: 'annotations',
           },
         },
-        filter: { ids: [] },
         hide: true,
       },
     },
@@ -75,7 +73,6 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: false,
         iconColor: 'yellow',
         name: 'Disabled',
@@ -94,7 +91,6 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: true,
         hide: true,
         iconColor: 'dark-purple',
@@ -185,6 +181,17 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
+    'panel-2': {
+      kind: 'LibraryPanel',
+      spec: {
+        id: 2,
+        title: 'Test Library Panel',
+        libraryPanel: {
+          uid: 'uid-for-library-panel',
+          name: 'Library Panel',
+        },
+      },
+    },
   },
   layout: {
     kind: 'GridLayout',
@@ -201,6 +208,24 @@ export const handyTestingSchema: DashboardV2Spec = {
             width: 200,
             x: 0,
             y: 0,
+            repeat: {
+              mode: 'variable',
+              value: 'customVar',
+              maxPerRow: 3,
+            },
+          },
+        },
+        {
+          kind: 'GridLayoutItem',
+          spec: {
+            element: {
+              kind: 'ElementReference',
+              name: 'panel-2',
+            },
+            height: 100,
+            width: 200,
+            x: 0,
+            y: 2,
           },
         },
       ],
@@ -282,7 +307,6 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'DatasourceVariable',
       spec: {
-        allValue: undefined,
         current: {
           text: 'text1',
           value: 'value1',
@@ -379,7 +403,6 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
         description: 'A group by variable',
         hide: 'dontHide',
-        includeAll: false,
         label: 'Group By Variable',
         multi: false,
         name: 'groupByVar',

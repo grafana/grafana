@@ -3,7 +3,6 @@ package folders
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,6 +51,11 @@ func LegacyUpdateCommandToUnstructured(obj *unstructured.Unstructured, cmd *fold
 	if cmd.NewDescription != nil {
 		spec["description"] = cmd.NewDescription
 	}
+	if cmd.NewParentUID != nil {
+		if err := setParentUID(obj, *cmd.NewParentUID); err != nil {
+			return &unstructured.Unstructured{}, err
+		}
+	}
 
 	return obj, nil
 }
@@ -75,10 +79,7 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 		return nil, ""
 	}
 
-	id, err := getLegacyID(meta)
-	if err != nil {
-		return nil, ""
-	}
+	id := meta.GetDeprecatedInternalID() // nolint:staticcheck
 
 	created, err := getCreated(meta)
 	if err != nil {
@@ -156,11 +157,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 
 	meta.SetUpdatedTimestamp(&v.Updated)
 	if v.ID > 0 { // nolint:staticcheck
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name:      "SQL",
-			Path:      fmt.Sprintf("%d", v.ID), // nolint:staticcheck
-			Timestamp: &v.Created,
-		})
+		meta.SetDeprecatedInternalID(v.ID) // nolint:staticcheck
 	}
 	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
@@ -194,23 +191,6 @@ func setParentUID(u *unstructured.Unstructured, parentUid string) error {
 	}
 	meta.SetFolder(parentUid)
 	return nil
-}
-
-func getLegacyID(meta utils.GrafanaMetaAccessor) (int64, error) {
-	var i int64
-
-	repo, err := meta.GetRepositoryInfo()
-	if err != nil {
-		return i, err
-	}
-
-	if repo != nil && repo.Name == "SQL" {
-		i, err = strconv.ParseInt(repo.Path, 10, 64)
-		if err != nil {
-			return i, err
-		}
-	}
-	return i, nil
 }
 
 func getURL(meta utils.GrafanaMetaAccessor, title string) string {

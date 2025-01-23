@@ -477,11 +477,15 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	_, span := b.tracer.Start(ctx, tracePrefix+"List")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return 0, fmt.Errorf("missing group or resource")
+	}
+
+	if req.Source != resource.ListRequest_STORE {
+		return b.getHistory(ctx, req, cb)
 	}
 
 	// TODO: think about how to handler VersionMatch. We should be able to use latest for the first page (only).
@@ -634,6 +638,48 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 			defer func() {
 				if err := rows.Close(); err != nil {
 					b.log.Warn("listAtRevision error closing rows", "error", err)
+				}
+			}()
+		}
+		if err != nil {
+			return err
+		}
+
+		iter.rows = rows
+		return cb(iter)
+	})
+	return iter.listRV, err
+}
+
+// listLatest fetches the resources from the resource table.
+func (b *backend) getHistory(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	listReq := sqlGetHistoryRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Key:         req.Options.Key,
+		Trash:       req.Source == resource.ListRequest_TRASH,
+	}
+
+	iter := &listIter{}
+	if req.NextPageToken != "" {
+		continueToken, err := GetContinueToken(req.NextPageToken)
+		if err != nil {
+			return 0, fmt.Errorf("get continue token: %w", err)
+		}
+		listReq.StartRV = continueToken.ResourceVersion
+	}
+
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		var err error
+		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		if err != nil {
+			return err
+		}
+
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceHistoryGet, listReq)
+		if rows != nil {
+			defer func() {
+				if err := rows.Close(); err != nil {
+					b.log.Warn("listLatest error closing rows", "error", err)
 				}
 			}()
 		}
