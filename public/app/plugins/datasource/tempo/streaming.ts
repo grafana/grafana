@@ -1,5 +1,5 @@
 import { capitalize } from 'lodash';
-import { map, Observable, takeWhile } from 'rxjs';
+import { map, Observable, scan, takeWhile } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -8,19 +8,24 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  Field,
   FieldType,
   LiveChannelScope,
   LoadingState,
   MutableDataFrame,
+  sortDataFrame,
   ThresholdsConfig,
   ThresholdsMode,
+  TimeRange,
 } from '@grafana/data';
+import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 import { SearchStreamingState } from './dataquery.gen';
 import { DEFAULT_SPSS, TempoDatasource } from './datasource';
 import { formatTraceQLResponse } from './resultTransformer';
 import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
+import { stepToNanos } from './utils';
 
 function getLiveStreamKey(): string {
   return uuidv4();
@@ -107,17 +112,19 @@ export function doTempoMetricsStreaming(
   options: DataQueryRequest<TempoQuery>
 ): Observable<DataQueryResponse> {
   const range = options.range;
+  const key = getLiveStreamKey();
 
-  let frames: DataFrame[] = [];
   let state: LoadingState = LoadingState.NotStarted;
+  const step = stepToNanos(query.step);
 
   return getGrafanaLiveSrv()
     .getStream<MutableDataFrame>({
       scope: LiveChannelScope.DataSource,
       namespace: ds.uid,
-      path: `metrics/${getLiveStreamKey()}`,
+      path: `metrics/${key}`,
       data: {
         ...query,
+        step,
         timeRange: {
           from: range.from.toISOString(),
           to: range.to.toISOString(),
@@ -133,13 +140,12 @@ export function doTempoMetricsStreaming(
           }
         }
         return true;
-      }, true)
-    )
-    .pipe(
+      }, true),
       map((evt) => {
+        let newResult: DataQueryResponse = { data: [], state: LoadingState.NotStarted };
         if ('message' in evt && evt?.message) {
-          // Schema should be [traces, metrics, state, error]
-          const traces = evt.message.data.values[0][0];
+          // Schema should be [data, metrics, state, error]
+          const data = evt.message.data.values[0][0];
           const frameState: SearchStreamingState = evt.message.data.values[2][0];
           const error = evt.message.data.values[3][0];
 
@@ -154,51 +160,74 @@ export function doTempoMetricsStreaming(
               throw new Error(error);
           }
 
-          mergeFrames(frames, traces?.map(dataFrameFromJSON));
+          newResult = {
+            data: data?.map(dataFrameFromJSON) ?? [],
+            state,
+          };
         }
-        return {
-          data: frames,
-          state,
-        };
+
+        return newResult;
+      }),
+      // Merge results on acc
+      scan((acc, curr) => {
+        if (!curr) {
+          return acc;
+        }
+        if (!acc) {
+          return cloneQueryResponse(curr);
+        }
+        return mergeFrames(acc, curr, range);
       })
     );
 }
 
-function mergeFrames(acc: DataFrame[], frames?: DataFrame[]): DataFrame[] {
-  frames?.forEach((frame) => {
-    const accFrame = acc.find((f) => f.name === frame.name);
-    if (accFrame) {
-      frame.fields.forEach((field) => {
-        const accField = accFrame.fields.find((f) => f.name === field.name);
-        if (accField) {
-          accField.values = accField.values.concat(field.values);
-        } else {
-          accFrame.fields.push(field);
-        }
-      });
-      const timeField = accFrame.fields.find((f) => f.type === FieldType.time);
-      if (timeField) {
-        const duplicatesMap = timeField.values.reduce((acc: Record<number, number[]>, value, index) => {
-          if (acc[value]) {
-            acc[value].push(index);
-          } else {
-            acc[value] = [index];
-          }
-          return acc;
-        }, {});
+function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse, range: TimeRange): DataQueryResponse {
+  const result = combineResponses(cloneQueryResponse(acc), newResult);
 
-        const indexesToRemove = Object.values(duplicatesMap)
-          .filter((indexes) => indexes.length > 1)
-          .map((indexes) => indexes[0]);
-        accFrame.fields.forEach((field) => {
-          field.values = field.values.filter((_, index) => !indexesToRemove.includes(index));
-        });
-      }
-    } else {
-      acc.push(frame);
+  // Remove duplicate time field values for all frames
+  result.data.forEach((frame: DataFrame) => {
+    const timeFieldIndex = frame.fields.findIndex((f) => f.type === FieldType.time);
+    if (timeFieldIndex >= 0) {
+      const timeField = frame.fields[timeFieldIndex];
+      removeDuplicateTimeFieldValues(frame, timeField);
+      removeValuesOutsideOfRange(frame, timeField, range);
+      sortDataFrame(frame, timeFieldIndex);
     }
   });
-  return acc;
+
+  result.state = newResult.state;
+  return result;
+}
+
+function removeValuesOutsideOfRange(accFrame: DataFrame, timeField: Field, range: TimeRange) {
+  const outsideOfRange = timeField.values.reduce((acc: number[], value, index) => {
+    if (value > range.to.valueOf() || value < range.from.valueOf()) {
+      acc.push(index);
+    }
+    return acc;
+  }, []);
+
+  accFrame.fields.forEach((field) => {
+    field.values = field.values.filter((_, index) => !outsideOfRange.includes(index));
+  });
+}
+
+function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeField: Field) {
+  const duplicatesMap = timeField.values.reduce((acc: Record<number, number[]>, value, index) => {
+    if (acc[value]) {
+      acc[value].push(index);
+    } else {
+      acc[value] = [index];
+    }
+    return acc;
+  }, {});
+
+  const indexesToRemove = Object.values(duplicatesMap)
+    .filter((indexes) => indexes.length > 1)
+    .map((indexes) => indexes[1]);
+  accFrame.fields.forEach((field) => {
+    field.values = field.values.filter((_, index) => !indexesToRemove.includes(index));
+  });
 }
 
 function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState, elapsedTime: number) {

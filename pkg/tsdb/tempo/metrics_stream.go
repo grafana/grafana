@@ -48,7 +48,6 @@ func (s *Service) runMetricsStream(ctx context.Context, req *backend.RunStreamRe
 		return fmt.Errorf("query is empty")
 	}
 
-	qrr.Step = uint64(60000000000)
 	qrr.Start = uint64(backendQuery.TimeRange.From.UnixNano())
 	qrr.End = uint64(backendQuery.TimeRange.To.UnixNano())
 

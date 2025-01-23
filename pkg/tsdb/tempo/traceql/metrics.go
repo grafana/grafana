@@ -3,6 +3,7 @@ package traceql
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -36,6 +37,7 @@ func TransformMetricsResponse(query string, resp tempopb.QueryRangeResponse) []*
 			},
 			Meta: &data.FrameMeta{
 				PreferredVisualization: data.VisTypeGraph,
+				Type:                   data.FrameTypeTimeSeriesMulti,
 			},
 		}
 
@@ -87,10 +89,18 @@ func transformLabelsAndGetName(seriesLabels []v1.KeyValue) (string, data.Labels)
 		if len(seriesLabels) == 1 {
 			_, name = metricsValueToString(seriesLabels[0].GetValue())
 		} else {
-			var labelStrings []string
-			for key, val := range labels {
-				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", key, val))
+			keys := make([]string, 0, len(labels))
+
+			for k := range labels {
+				keys = append(keys, k)
 			}
+			sort.Strings(keys)
+
+			var labelStrings []string
+			for _, key := range keys {
+				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", key, labels[key]))
+			}
+
 			name = fmt.Sprintf("{%s}", strings.Join(labelStrings, ", "))
 		}
 	}
