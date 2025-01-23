@@ -70,7 +70,7 @@ func TestAddMetadataToMultiFrame(t *testing.T) {
 	})
 }
 
-// Helper function to create mock HTTP response
+// Helper function to create mock HTTP response.
 func createMockResponse(statusCode int, body string) *http.Response {
 	return &http.Response{
 		StatusCode: statusCode,
