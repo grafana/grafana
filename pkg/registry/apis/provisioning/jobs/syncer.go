@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -116,7 +115,7 @@ func (r *Syncer) Unsync(ctx context.Context, opts UnsyncOptions) error {
 			return fmt.Errorf("get folder to unsync: %w", err)
 		}
 
-		meta, err := apiutils.MetaAccessor(obj)
+		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return fmt.Errorf("create meta accessor from folder object: %w", err)
 		}
@@ -201,7 +200,7 @@ func (r *Syncer) replicateFile(ctx context.Context, fileInfo *repository.FileInf
 			return fmt.Errorf("failed to create object: %w", err)
 		}
 	} else if file.Action == provisioning.ResourceActionUpdate {
-		existingMeta, err := apiutils.MetaAccessor(file.Existing)
+		existingMeta, err := utils.MetaAccessor(file.Existing)
 		if err != nil {
 			return fmt.Errorf("failed to create meta accessor for the existing object: %w", err)
 		}
@@ -275,7 +274,7 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 			},
 		}
 
-		meta, err := apiutils.MetaAccessor(obj)
+		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return "", fmt.Errorf("create meta accessor for the object: %w", err)
 		}
