@@ -39,5 +39,4 @@ func (s *Service) Checks() []checks.Check {
 			s.pluginClient,
 		),
 	}
-
 }
