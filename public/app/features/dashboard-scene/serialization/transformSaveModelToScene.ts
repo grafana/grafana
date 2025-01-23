@@ -248,7 +248,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     title: oldModel.title,
     uid: oldModel.uid,
     version: oldModel.version,
-    scopeMeta: oldModel.scopesMeta,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
@@ -278,6 +277,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       hideTimeControls: oldModel.timepicker.hidden,
     }),
   });
+
+  if (config.featureToggles.scopeFilters) {
+    dashboardScene.setState({ scopeMeta: oldModel.scopeMeta });
+  }
 
   return dashboardScene;
 }
