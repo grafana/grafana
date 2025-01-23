@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
@@ -132,23 +133,28 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 	}, nil
 }
 
+var authLogger = slog.Default().With("logger", "resource-client-auth-interceptor")
+
 func idTokenExtractor(ctx context.Context) (string, error) {
 	if identity.IsServiceIdentity(ctx) {
 		return "", nil
 	}
 
-	authInfo, ok := types.AuthInfoFrom(ctx)
+	info, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
 	}
 
-	if token := authInfo.GetIDToken(); len(token) != 0 {
+	if token := info.GetIDToken(); len(token) != 0 {
 		return token, nil
 	}
 
-	// Future proofing: if we ever stop signing ID token for services
-	if !types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy) {
-		return "", fmt.Errorf("no id-token found")
+	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+		authLogger.Warn(
+			"calling resource store as the service without id token or marking it as the service identity",
+			"subject", info.GetSubject(),
+			"uid", info.GetUID(),
+		)
 	}
 
 	return "", nil
