@@ -1251,6 +1251,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	err = s.store.Delete(ctx, descendantUIDs, cmd.OrgID)
 	if err != nil {
 		s.log.InfoContext(ctx, "failed deleting descendants", "org_id", cmd.OrgID, "parent_uid", cmd.UID, "err", err)
+		return descendantUIDs, err
 	}
 	return descendantUIDs, nil
 }
