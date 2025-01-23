@@ -25,30 +25,19 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
   const filterValue = filter[name]?.filtered;
 
   // get rows for cross filtering
-  const nameIndex = crossFilterOrder.indexOf(name);
-  let newRows: TableRow[];
-  if (nameIndex > 0) {
+  const filterIndex = crossFilterOrder.indexOf(name);
+  let filteredRows: TableRow[];
+  if (filterIndex > 0) {
     // current filter list should be based on the previous filter list
-    const prevName = crossFilterOrder[nameIndex - 1];
-    newRows = crossFilterRows[prevName];
-  } else if (nameIndex === -1 && crossFilterOrder.length > 0) {
+    const previousFilterName = crossFilterOrder[filterIndex - 1];
+    filteredRows = crossFilterRows[previousFilterName];
+  } else if (filterIndex === -1 && crossFilterOrder.length > 0) {
     // current filter list should be based on the last filter list
-    const prevName = crossFilterOrder[crossFilterOrder.length - 1];
-    newRows = crossFilterRows[prevName];
+    const previousFilterName = crossFilterOrder[crossFilterOrder.length - 1];
+    filteredRows = crossFilterRows[previousFilterName];
   } else {
-    newRows = rows;
+    filteredRows = rows;
   }
-
-  // const filterIndex = crossFilterOrder.indexOf(name);
-  // const previousFilterName = filterIndex > 0
-  //   ? crossFilterOrder[filterIndex - 1]
-  //   : crossFilterOrder[crossFilterOrder.length - 1];
-
-  // // if filter is not applied or no cross filters are applied, return all rows
-  // // else return rows based on previous (cross) filter
-  // const filteredRows = filterIndex !== -1 || crossFilterOrder.length === 0
-  //   ? rows
-  //   : crossFilterRows[previousFilterName];
 
   const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
@@ -72,8 +61,7 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
           content={
             <FilterPopup
               name={name}
-              rows={newRows}
-              // rows={filteredRows}
+              rows={filteredRows}
               filterValue={filterValue}
               setFilter={setFilter}
               field={field}
