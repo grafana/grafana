@@ -11,11 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
+
+	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -313,10 +314,6 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
 		f.FullpathUIDs = f.UID // set full path to the folder UID
-	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		f, err = s.setFullpath(ctx, f, q.SignedInUser, true)
 	}
 
 	return f, err
@@ -782,13 +779,6 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 	f = dashboards.FromDashboard(dash)
 	if nestedFolder != nil && nestedFolder.ParentUID != "" {
 		f.ParentUID = nestedFolder.ParentUID
-	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		f, err = s.setFullpath(ctx, f, user, true)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return f, nil
