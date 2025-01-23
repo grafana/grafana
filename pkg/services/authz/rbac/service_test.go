@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authz/mappers"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
 
@@ -150,7 +149,11 @@ func TestService_checkPermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &Service{logger: log.New("test"), actionMapper: mappers.NewK8sRbacMapper(), tracer: tracing.NewNoopTracerService()}
+			s := &Service{
+				logger: log.NewNopLogger(),
+				tracer: tracing.NewNoopTracerService(),
+				mapper: newMapper(),
+			}
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
@@ -366,9 +369,9 @@ func TestService_getUserPermissions(t *testing.T) {
 				store:           store,
 				permissionStore: store,
 				identityStore:   &fakeIdentityStore{teams: []int64{1, 2}},
-				actionMapper:    mappers.NewK8sRbacMapper(),
-				logger:          log.New("test"),
+				logger:          log.NewNopLogger(),
 				tracer:          tracing.NewNoopTracerService(),
+				mapper:          newMapper(),
 				idCache:         localcache.New(longCacheTTL, longCleanupInterval),
 				permCache:       cacheService,
 				sf:              new(singleflight.Group),
@@ -649,10 +652,10 @@ func TestService_listPermission(t *testing.T) {
 				folderCache.Set(folderCacheKey("default"), tc.folderTree, 0)
 			}
 			s := &Service{
-				logger:       log.New("test"),
-				actionMapper: mappers.NewK8sRbacMapper(),
-				folderCache:  folderCache,
-				tracer:       tracing.NewNoopTracerService(),
+				logger:      log.New("test"),
+				folderCache: folderCache,
+				mapper:      newMapper(),
+				tracer:      tracing.NewNoopTracerService(),
 			}
 			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
