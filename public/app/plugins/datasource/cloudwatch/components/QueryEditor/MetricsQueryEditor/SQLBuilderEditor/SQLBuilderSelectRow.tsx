@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
