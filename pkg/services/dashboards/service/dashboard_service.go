@@ -52,18 +52,6 @@ import (
 )
 
 var (
-<<<<<<< HEAD
-
-=======
-	provisionerPermissions = []accesscontrol.Permission{
-		{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
-		{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-		{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
-		{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
-	}
->>>>>>> main
 	// DashboardServiceImpl implements the DashboardService interface
 	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
 	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
