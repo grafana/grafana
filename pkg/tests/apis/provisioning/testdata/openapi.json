@@ -4040,10 +4040,6 @@
               }
             ]
           },
-          "preferYaml": {
-            "description": "Should we prefer emitting YAML for this repository, e.g. upon export? Editing existing dashboards will continue to emit the file format used in the repository. (TODO: implement this) If you delete and then recreate a dashboard, it will switch to the preferred format.",
-            "type": "boolean"
-          },
           "s3": {
             "description": "The repository in an S3 bucket. Mutually exclusive with local and github.",
             "allOf": [
