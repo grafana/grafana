@@ -9,7 +9,6 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     title: data.title || '',
     editing: data.editing,
     linting: data.linting,
-    preferYaml: data.preferYaml,
   };
   switch (data.type) {
     case 'github':

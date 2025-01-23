@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -111,11 +110,11 @@ func (r *exporter) Export(ctx context.Context,
 		}
 
 		delete(item.Object, "metadata")
-		marshalledBody, baseFileName, err := r.marshalPreferredFormat(item.Object, name, r.repository)
+		marshalledBody, err := yaml.Marshal(item.Object)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
 		}
-		fileName := filepath.Join(folders.DirPath(folder), baseFileName)
+		fileName := filepath.Join(folders.DirPath(folder), name+".yaml")
 		logger = logger.With("file", fileName)
 
 		var ref string
@@ -143,16 +142,6 @@ func (r *exporter) Export(ctx context.Context,
 	return &provisioning.JobStatus{
 		State: provisioning.JobStateSuccess,
 	}, nil
-}
-
-func (r *exporter) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
-	if repo.Config().Spec.PreferYAML {
-		body, err = yaml.Marshal(obj)
-		return body, name + ".yaml", err
-	} else {
-		body, err := json.MarshalIndent(obj, "", "    ")
-		return body, name + ".json", err
-	}
 }
 
 func (r *exporter) fetchRepoFolderTree(ctx context.Context) (*folderTree, error) {

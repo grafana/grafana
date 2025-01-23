@@ -19,7 +19,7 @@ import (
 
 func TestUtils(t *testing.T) {
 	t.Run("load playlist json", func(t *testing.T) {
-		obj, gvk, err := LoadYAMLOrJSON(bytes.NewReader([]byte(`{
+		obj, gvk, err := DecodeYAMLObject(bytes.NewReader([]byte(`{
 			"kind": "Playlist",
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"metadata": {
@@ -40,7 +40,7 @@ func TestUtils(t *testing.T) {
 	})
 
 	t.Run("YAML Parsing", func(t *testing.T) {
-		obj, gvk, err := LoadYAMLOrJSON(bytes.NewReader([]byte("kind: xyz\npi: 3.1415")))
+		obj, gvk, err := DecodeYAMLObject(bytes.NewReader([]byte("kind: xyz\npi: 3.1415")))
 		require.NoError(t, err)
 		require.NotNil(t, gvk)
 		require.Equal(t, "xyz", obj.Object["kind"])
@@ -52,7 +52,7 @@ func TestUtils(t *testing.T) {
 	})
 
 	t.Run("load playlist yaml", func(t *testing.T) {
-		obj, gvk, err := LoadYAMLOrJSON(bytes.NewReader([]byte(`
+		obj, gvk, err := DecodeYAMLObject(bytes.NewReader([]byte(`
 apiVersion: playlist.grafana.app/v0alpha1
 kind: Playlist
 metadata:
@@ -99,7 +99,6 @@ spec:
 		require.NoError(t, err)
 
 		parser := &Parser{
-			mapper: NamesFromHashedRepoPath,
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",

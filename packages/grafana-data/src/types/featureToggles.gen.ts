@@ -218,6 +218,7 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
+  unifiedStorageSearchPermissionFiltering?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
@@ -254,4 +255,5 @@ export interface FeatureToggles {
   queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  datasourceConnectionsTab?: boolean;
 }

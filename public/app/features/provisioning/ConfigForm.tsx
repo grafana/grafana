@@ -214,9 +214,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
       <Field label={'Linting'}>
         <Switch {...register('linting')} id={'linting'} />
       </Field>
-      <Field label={'Prefer YAML'}>
-        <Switch {...register('preferYaml')} id={'preferYaml'} />
-      </Field>
       <Field label={'Unsync mode'}>
         <Controller
           name={'unsyncMode'}

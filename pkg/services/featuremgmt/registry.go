@@ -1508,6 +1508,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedStorageSearchPermissionFiltering",
+			Description:       "Enable permission filtering on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
@@ -1758,6 +1766,14 @@ var (
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "datasourceConnectionsTab",
+			Description:     "Shows defined connections for a data source in the plugins detail page",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresDevMode: false,
+			FrontendOnly:    true,
 		},
 	}
 )

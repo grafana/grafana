@@ -226,7 +226,7 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 			continue
 		}
 
-		if r.parser.ShouldIgnore(entry.Path) {
+		if resources.ShouldIgnorePath(entry.Path) {
 			logger.Debug("ignoring file")
 			continue
 		}
@@ -381,7 +381,7 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 
 func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	for _, change := range changes {
-		if r.parser.ShouldIgnore(change.Path) {
+		if resources.ShouldIgnorePath(change.Path) {
 			continue
 		}
 

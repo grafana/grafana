@@ -14,7 +14,7 @@ require (
 	github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana-plugin-sdk-go v0.262.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
@@ -116,7 +116,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250115195200-209e052dba64 // indirect
+	github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect

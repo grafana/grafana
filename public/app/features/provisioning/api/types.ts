@@ -31,7 +31,6 @@ export type RepositorySpec = {
   type: 'github' | 'local' | 's3';
   unsyncMode: 'keepAll' | 'removeAll' | 'clearFolder';
   editing: EditingOptions;
-  preferYaml?: boolean;
   linting?: boolean;
 };
 

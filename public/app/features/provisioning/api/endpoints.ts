@@ -499,7 +499,6 @@ export type RepositorySpec = {
   github?: GitHubRepositoryConfig;
   linting?: boolean;
   local?: LocalRepositoryConfig;
-  preferYaml?: boolean;
   s3?: S3RepositoryConfig;
   title: string;
   type: 'github' | 'local' | 's3';

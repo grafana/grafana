@@ -2540,6 +2540,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": "The data source connections below are all {{pluginName}}. You can find all of your data source connections of all types in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+      },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
