@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
