@@ -65,9 +65,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
 	if !featuremgmt.AnyEnabled(features,
-		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagKubernetesFoldersServiceV2,
-		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagProvisioning) {
 		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
