@@ -127,7 +127,7 @@ func SetAcceptListForTest(list map[string]struct{}) func() {
 	}
 }
 
-func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []any) {
+func UserRolesFilterInner(orgID, userID int64, teamIDs []int64, roles []string) (string, []any) {
 	var params []any
 	builder := strings.Builder{}
 
@@ -175,7 +175,12 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 		params = append(params, orgID, GlobalOrgID)
 	}
 
-	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
+	return builder.String(), params
+}
+
+func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []any) {
+	str, params := UserRolesFilterInner(orgID, userID, teamIDs, roles)
+	return "INNER JOIN (" + str + ") as all_role ON role.id = all_role.role_id", params
 }
 
 func RolePrefixesFilter(rolePrefixes []string) (string, []any) {

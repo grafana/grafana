@@ -124,6 +124,13 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 			},
 		}
+	} else if features.IsEnabledGlobally(featuremgmt.FlagPermissionsFilterRefactoredQuery) {
+		f = &accessControlDashboardRefactoredPermissionFilter{
+			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{
+				user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
+				features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+			},
+		}
 	} else {
 		f = &accessControlDashboardPermissionFilter{user: user, folderAction: folderAction, folderActionSets: folderActionSets, dashboardAction: dashboardAction, dashboardActionSets: dashboardActionSets,
 			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,

@@ -56,13 +56,13 @@ import (
 )
 
 const (
-	LEVEL0_FOLDER_NUM    = 300
-	LEVEL1_FOLDER_NUM    = 30
+	LEVEL0_FOLDER_NUM    = 100
+	LEVEL1_FOLDER_NUM    = 10
 	LEVEL2_FOLDER_NUM    = 5
-	LEVEL0_DASHBOARD_NUM = 300
-	LEVEL1_DASHBOARD_NUM = 30
+	LEVEL0_DASHBOARD_NUM = 100
+	LEVEL1_DASHBOARD_NUM = 10
 	LEVEL2_DASHBOARD_NUM = 5
-	TEAM_NUM             = 50
+	TEAM_NUM             = 30
 	TEAM_MEMBER_NUM      = 5
 
 	MAXIMUM_INT_POSTGRES = 2147483647
@@ -120,6 +120,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
+			desc:        "impl=permissionsFilterRefactoredQuery nested_folders=on list all inherited dashboards",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(all),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery),
+		},
+		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on list all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
@@ -132,6 +138,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
+			desc:        "impl=permissionsFilterRefactoredQuery nested_folders=on search for pattern",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery),
+		},
+		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
@@ -142,6 +154,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "impl=permissionsFilterRefactoredQuery nested_folders=on search for specific dashboard",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRefactoredQuery),
 		},
 		{
 			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for specific dashboard",
@@ -311,18 +329,24 @@ func setupDB(b testing.TB) benchScenario {
 
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
-			RoleID:  roleID,
-			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-			Updated: now,
-			Created: now,
+			RoleID:     roleID,
+			Action:     dashboards.ActionFoldersRead,
+			Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Kind:       dashboards.ScopeFoldersRoot,
+			Attribute:  "uid",
+			Identifier: f0.UID,
+			Updated:    now,
+			Created:    now,
 		},
 			accesscontrol.Permission{
-				RoleID:  roleID,
-				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-				Updated: now,
-				Created: now,
+				RoleID:     roleID,
+				Action:     dashboards.ActionDashboardsRead,
+				Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Kind:       dashboards.ScopeFoldersRoot,
+				Attribute:  "uid",
+				Identifier: f0.UID,
+				Updated:    now,
+				Created:    now,
 			},
 		)
 		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
@@ -492,6 +516,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
+		tracer:           tracing.InitializeTracerForTest(),
 	}
 
 	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
