@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	clientrest "k8s.io/client-go/rest"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -202,18 +204,21 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	featuresArr := []any{
 		featuremgmt.FlagKubernetesFoldersServiceV2}
 	features := featuremgmt.WithFeatures(featuresArr...)
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	folderService := &Service{
-		log:          slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
-		unifiedStore: unifiedStore,
-		features:     features,
-		bus:          bus.ProvideBus(tracing.InitializeTracerForTest()),
-		// db:            db,
-		accessControl: acimpl.ProvideAccessControl(features),
-		registry:      make(map[string]folder.RegistryService),
-		metrics:       newFoldersMetrics(nil),
-		tracer:        tracing.InitializeTracerForTest(),
-		k8sclient:     k8sHandler,
+		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		unifiedStore:           unifiedStore,
+		features:               features,
+		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
+		accessControl:          acimpl.ProvideAccessControl(features),
+		registry:               make(map[string]folder.RegistryService),
+		metrics:                newFoldersMetrics(nil),
+		tracer:                 tracing.InitializeTracerForTest(),
+		k8sclient:              k8sHandler,
+		dashboardStore:         dashboardStore,
+		publicDashboardService: publicDashboardService,
 	}
 
 	require.NoError(t, folderService.RegisterService(alertingStore))
@@ -345,6 +350,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil)
+				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
 					UID:              "deletefolder",
 					OrgID:            orgID,

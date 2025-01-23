@@ -1604,7 +1604,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(fStore, ac, inProcBus, dashboardStore, folderStore, sqlStore,
-		features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1

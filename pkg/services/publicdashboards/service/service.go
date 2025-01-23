@@ -459,37 +459,6 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 	return pd.serviceWrapper.Delete(ctx, uid)
 }
 
-func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
-	ctx, span := tracer.Start(ctx, "publicdashboards.DeleteByDashboard")
-	defer span.End()
-	if dashboard.IsFolder {
-		// get all pubdashes for the folder
-		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
-		if err != nil {
-			return err
-		}
-		// delete each pubdash
-		for _, pubdash := range pubdashes {
-			err = pd.serviceWrapper.Delete(ctx, pubdash.Uid)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	pubdash, err := pd.store.FindByDashboardUid(ctx, dashboard.OrgID, dashboard.UID)
-	if err != nil {
-		return ErrInternalServerError.Errorf("DeleteByDashboard: error finding a public dashboard by dashboard orgId: %d and Uid: %s %w", dashboard.OrgID, dashboard.UID, err)
-	}
-	if pubdash == nil {
-		return nil
-	}
-
-	return pd.serviceWrapper.Delete(ctx, pubdash.Uid)
-}
-
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
 // we are doing the same for public dashboards but because this access would be public, we need a way to keep this
 // values inside reasonable bounds to avoid an attack that could hit data sources with a small interval and a big

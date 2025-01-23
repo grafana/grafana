@@ -115,6 +115,7 @@ func TestValidateDashboardExists(t *testing.T) {
 		nil,
 		quotatest.New(false, nil),
 		nil,
+		nil,
 	)
 	require.NoError(t, err)
 	s := ProvideService(dsStore, secretsService, dashSvc)
