@@ -514,6 +514,12 @@
       "paused": "Paused",
       "recording-rule": "Recording rule"
     },
+    "rule-view": {
+      "query": {
+        "datasources-na": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
+        "error": "Error loading query results"
+      }
+    },
     "rule-viewer": {
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
