@@ -12,8 +12,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -40,12 +43,14 @@ type k8sHandler struct {
 	searcher           resource.ResourceIndexClient
 }
 
-func NewK8sHandler(namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient) K8sHandler {
+func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient, dashStore dashboards.Store, softDelete bool) K8sHandler {
+	legacyDashboardAccess := legacy.NewDashboardAccess(nil, namespacer, dashStore, nil, softDelete)
+	searchClient := legacy.NewSearchClient(cfg, searcher, legacyDashboardAccess)
 	return &k8sHandler{
 		namespacer:         namespacer,
 		gvr:                gvr,
 		restConfigProvider: restConfigProvider,
-		searcher:           searcher,
+		searcher:           searchClient,
 	}
 }
 

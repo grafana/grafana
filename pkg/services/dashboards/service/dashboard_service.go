@@ -97,7 +97,8 @@ func ProvideDashboardServiceImpl(
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
 	quotaService quota.Service, orgService org.Service,
 ) (*DashboardServiceImpl, error) {
-	k8sHandler := client.NewK8sHandler(request.GetNamespaceMapper(cfg), v0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified)
+	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
+	k8sHandler := client.NewK8sHandler(cfg, request.GetNamespaceMapper(cfg), v0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified, dashboardStore, softDelete)
 
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
@@ -1794,7 +1795,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	out.PluginID = GetPluginIDFromMeta(obj)
+	out.PluginID = dr.dashboardStore.GetPluginIDFromMeta(obj)
 
 	creator, err := dr.getUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
@@ -1885,13 +1886,6 @@ func provisionedFileNameWithPrefix(name string) string {
 
 func getProvisionedFileNameFromMeta(obj utils.GrafanaMetaAccessor) (string, bool) {
 	return strings.CutPrefix(obj.GetRepositoryName(), fileProvisionedRepoPrefix)
-}
-
-func GetPluginIDFromMeta(obj utils.GrafanaMetaAccessor) string {
-	if obj.GetRepositoryName() == pluginIDRepoName {
-		return obj.GetRepositoryPath()
-	}
-	return ""
 }
 
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (unstructured.Unstructured, error) {

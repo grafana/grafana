@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -101,4 +102,5 @@ type Store interface {
 	SoftDeleteDashboardsInFolders(ctx context.Context, orgID int64, folderUids []string) error
 	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string, folder *folder.Folder) error
 	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
+	GetPluginIDFromMeta(obj utils.GrafanaMetaAccessor) string
 }
