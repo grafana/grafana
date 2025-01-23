@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time" // LOGZ.IO GRAFANA CHANGE :: DEV-47397 - Append timeframe for panel/dashboard URL
 
 	"github.com/go-openapi/strfmt"
 	alertingModels "github.com/grafana/alerting/models"
@@ -125,8 +126,11 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 			Results: []alertingNotify.TestTemplatesResult{{
 				Name: "slack.title",
 				// LOGZ.IO GRAFANA CHANGE :: DEV-45707: remove org id query param from notification urls
-				Text: fmt.Sprintf("http://localhost:9093/d/%s",
-					DefaultAnnotations[alertingModels.DashboardUIDAnnotation]),
+				// LOGZ.IO GRAFANA CHANGE :: DEV-47397 - Append timeframe for panel/dashboard URL
+				Text: fmt.Sprintf("http://localhost:9093/d/%s?from=%d&to=%d",
+					DefaultAnnotations[alertingModels.DashboardUIDAnnotation],
+					time.Time(simpleAlert.StartsAt).Add(-5*time.Minute).UnixMilli(),
+					time.Time(simpleAlert.EndsAt).UnixMilli()),
 				// LOGZ.IO GRAFANA CHANGE :: End
 			}},
 			Errors: nil,
@@ -142,9 +146,12 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 			Results: []alertingNotify.TestTemplatesResult{{
 				Name: "slack.title",
 				// LOGZ.IO GRAFANA CHANGE :: DEV-45707: remove org id query param from notification urls
-				Text: fmt.Sprintf("http://localhost:9093/d/%s?viewPanel=%s",
+				// LOGZ.IO GRAFANA CHANGE :: DEV-47397 - Append timeframe for panel/dashboard URL
+				Text: fmt.Sprintf("http://localhost:9093/d/%s?viewPanel=%s&from=%d&to=%d",
 					DefaultAnnotations[alertingModels.DashboardUIDAnnotation],
-					DefaultAnnotations[alertingModels.PanelIDAnnotation]),
+					DefaultAnnotations[alertingModels.PanelIDAnnotation],
+					time.Time(simpleAlert.StartsAt).Add(-5*time.Minute).UnixMilli(),
+					time.Time(simpleAlert.EndsAt).UnixMilli()),
 				// LOGZ.IO GRAFANA CHANGE :: End
 			}},
 			Errors: nil,
