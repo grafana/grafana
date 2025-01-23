@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,11 +61,16 @@ func TestSetStatusAnnotation(t *testing.T) {
 func TestProcessCheck(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{})
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
 	ctx := context.TODO()
 	check := &mockCheck{}
 
-	err := processCheck(ctx, client, obj, check)
+	err = processCheck(ctx, client, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[statusAnnotation])
 }
@@ -83,6 +89,11 @@ func TestProcessCheck_AlreadyProcessed(t *testing.T) {
 func TestProcessCheck_RunError(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{})
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
 	ctx := context.TODO()
 
@@ -90,7 +101,7 @@ func TestProcessCheck_RunError(t *testing.T) {
 		err: errors.New("run error"),
 	}
 
-	err := processCheck(ctx, client, obj, check)
+	err = processCheck(ctx, client, obj, check)
 	assert.Error(t, err)
 	assert.Equal(t, "error", obj.GetAnnotations()[statusAnnotation])
 }

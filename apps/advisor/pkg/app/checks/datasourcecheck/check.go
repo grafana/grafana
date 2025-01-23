@@ -7,12 +7,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"k8s.io/klog/v2"
 )
@@ -64,8 +62,6 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 		}
 
 		// Health check execution
-		id := &user.SignedInUser{OrgID: int64(1), Login: "admin"}
-		ctx = identity.WithRequester(ctx, id)
 		pCtx, err := c.PluginContextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
 			Type:       ds.Type,
 			UID:        ds.UID,

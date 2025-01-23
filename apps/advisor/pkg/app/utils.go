@@ -5,9 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func getCheck(obj resource.Object, checks map[string]checks.Check) (checks.Check, error) {
@@ -54,6 +58,21 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	if !ok {
 		return fmt.Errorf("invalid object type")
 	}
+	// Populate ctx with the user that created the check
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+	createdBy := meta.GetCreatedBy()
+	typ, uid, err := claims.ParseTypeID(createdBy)
+	if err != nil {
+		return err
+	}
+	ctx = identity.WithRequester(ctx, &user.SignedInUser{
+		UserUID:      uid,
+		FallbackType: typ,
+	})
+	// Run the checks
 	report, err := check.Run(ctx, &c.Spec)
 	if err != nil {
 		setErr := setStatusAnnotation(ctx, client, obj, "error")
