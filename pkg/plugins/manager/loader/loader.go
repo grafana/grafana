@@ -5,7 +5,6 @@ import (
 	"errors"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -101,8 +100,6 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		limitSize = 1
 	}
 	limit := make(chan struct{}, limitSize)
-	var validateWg sync.WaitGroup
-	validateWg.Add(len(bootstrappedPlugins))
 	for _, bootstrappedPlugin := range bootstrappedPlugins {
 		bootstrappedPlugin := bootstrappedPlugin
 		limit <- struct{}{}
@@ -112,13 +109,11 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 				bootstrappedPlugin: bootstrappedPlugin,
 				err:                err,
 			}
-			validateWg.Done()
 			<-limit
 		}()
 	}
-	validateWg.Wait()
-	close(validateResults)
-	for r := range validateResults {
+	for i := 0; i < len(bootstrappedPlugins); i++ {
+		r := <-validateResults
 		if r.err != nil {
 			l.recordError(ctx, r.bootstrappedPlugin, r.err)
 			continue
