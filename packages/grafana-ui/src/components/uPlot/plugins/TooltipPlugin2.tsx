@@ -321,7 +321,7 @@ export const TooltipPlugin2 = ({
         );
       }
 
-      // this handles pinning
+      // this handles pinning, 0-width range selection, and one-click
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
           if (e.ctrlKey || e.metaKey) {
@@ -341,17 +341,14 @@ export const TooltipPlugin2 = ({
 
             scheduleRender(false);
           }
-          // when within proximity to a series/point
-          else if (closestSeriesIdx != null) {
+          // if tooltip visible, not pinned, and within proximity to a series/point
+          else if (_isHovering && !_isPinned && closestSeriesIdx != null) {
             dataLinks = getLinksRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
             const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
             if (oneClickLink != null) {
               window.open(oneClickLink.href, oneClickLink.target ?? '_self');
-            }
-
-            // only pinnable tooltip is visible
-            else if (_isHovering && !_isPinned) {
+            } else {
               setTimeout(() => {
                 _isPinned = true;
                 scheduleRender(true);
