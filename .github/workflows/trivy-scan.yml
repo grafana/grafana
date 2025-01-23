@@ -27,11 +27,14 @@ jobs:
         trivy fs --no-progress --download-db-only --db-repository public.ecr.aws/aquasecurity/trivy-db
     - name: Run Trivy vulnerability scanner (table output)
       # Use the trivy binary rather than the aquasecurity/trivy-action action
-      # to avoid a few bugs
-      # scan the filesystem, rather than building a Docker image prior - the
-      # downside is we won't catch dependencies that are only installed in the
-      # image, but the upside is we'll only catch vulnerabilities that are
-      # explicitly in the our dependencies
+      # to avoid a few bugs.
+      #
+      # We scan the file system rather than building the Docker image to only scan
+      # our direct dependencies. The Docker images are still scanned by
+      # Vulnerability Observability:
+      #   - OSS: https://ops.grafana-ops.net/a/grafana-vulnerabilityobs-app/projects/sources/1
+      #   - Enterprise: https://ops.grafana-ops.net/a/grafana-vulnerabilityobs-app/projects/sources/12
+      #   (If these links are outdated, just go to the list and find the images manually.)
       run: |
         trivy fs \
           --scanners vuln \
