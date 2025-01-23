@@ -586,6 +586,26 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		if alertRulesInFolder > 0 {
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 		}
+
+		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+			// We need a list of dashboard uids inside the folder to delete related public dashboards
+			dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folders, OrgId: cmd.OrgID})
+			if err != nil {
+				return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+			}
+
+			dashboardUIDs := make([]string, 0, len(dashes))
+			for _, dashboard := range dashes {
+				dashboardUIDs = append(dashboardUIDs, dashboard.UID)
+			}
+
+			// Delete all public dashboards in the folders
+			err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+			if err != nil {
+				return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
+			}
+		}
 	}
 
 	err = s.unifiedStore.Delete(ctx, folders, cmd.OrgID)

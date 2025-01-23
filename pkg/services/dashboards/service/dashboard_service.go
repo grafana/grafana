@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -71,19 +72,20 @@ var (
 )
 
 type DashboardServiceImpl struct {
-	cfg                  *setting.Cfg
-	log                  log.Logger
-	dashboardStore       dashboards.Store
-	folderStore          folder.FolderStore
-	folderService        folder.Service
-	userService          user.Service
-	orgService           org.Service
-	features             featuremgmt.FeatureToggles
-	folderPermissions    accesscontrol.FolderPermissionsService
-	dashboardPermissions accesscontrol.DashboardPermissionsService
-	ac                   accesscontrol.AccessControl
-	k8sclient            client.K8sHandler
-	metrics              *dashboardsMetrics
+	cfg                    *setting.Cfg
+	log                    log.Logger
+	dashboardStore         dashboards.Store
+	folderStore            folder.FolderStore
+	folderService          folder.Service
+	userService            user.Service
+	orgService             org.Service
+	features               featuremgmt.FeatureToggles
+	folderPermissions      accesscontrol.FolderPermissionsService
+	dashboardPermissions   accesscontrol.DashboardPermissionsService
+	ac                     accesscontrol.AccessControl
+	k8sclient              client.K8sHandler
+	metrics                *dashboardsMetrics
+	publicDashboardService publicdashboards.ServiceWrapper
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -96,7 +98,7 @@ func ProvideDashboardServiceImpl(
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient,
-	quotaService quota.Service, orgService org.Service,
+	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
 ) (*DashboardServiceImpl, error) {
 	k8sHandler := client.NewK8sHandler(request.GetNamespaceMapper(cfg), v0alpha1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider, unified)
 
@@ -114,6 +116,7 @@ func ProvideDashboardServiceImpl(
 		k8sclient:                 k8sHandler,
 		metrics:                   newDashboardsMetrics(r),
 		dashboardPermissionsReady: make(chan struct{}),
+		publicDashboardService:    publicDashboardService,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -879,7 +882,13 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		if err != nil {
 			return err
 		}
+
 		// cleanup things related to dashboards that are not stored in unistore yet
+		err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
+		if err != nil {
+			return err
+		}
+
 		return dr.dashboardStore.CleanupAfterDelete(ctx, cmd)
 	}
 
@@ -892,6 +901,12 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 		if provisionedData != nil {
 			return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
 		}
+	}
+
+	// deletes all related public dashboard entities
+	err := dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgId, []string{dashboardUID})
+	if err != nil {
+		return err
 	}
 
 	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
@@ -1387,6 +1402,22 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 		return dr.dashboardStore.SoftDeleteDashboardsInFolders(ctx, orgID, folderUIDs)
+	}
+
+	// We need a list of dashboard uids inside the folder to delete related public dashboards
+	dashes, err := dr.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: u, FolderUIDs: folderUIDs, OrgId: orgID})
+	if err != nil {
+		return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+	}
+
+	dashboardUIDs := make([]string, 0, len(dashes))
+	for _, dashboard := range dashes {
+		dashboardUIDs = append(dashboardUIDs, dashboard.UID)
+	}
+
+	err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgID, dashboardUIDs)
+	if err != nil {
+		return err
 	}
 
 	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})

@@ -500,12 +500,6 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 			"error", err)
 	}
 
-	// deletes all related public dashboard entities
-	err = hs.PublicDashboardsApi.PublicDashboardService.DeleteByDashboard(c.Req.Context(), dash)
-	if err != nil {
-		hs.log.Error("Failed to delete public dashboard")
-	}
-
 	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.SignedInUser.GetOrgID())
 	if err != nil {
 		var dashboardErr dashboards.DashboardErr

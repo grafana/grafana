@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -878,8 +879,9 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		tracer := tracing.InitializeTracerForTest()
+		publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		folderStore2 := folderimpl.ProvideStore(sqlStore)
-		folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracer)
+		folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDashboardFakeService, cfg, nil, tracer)
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardService, err := ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
@@ -893,6 +895,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			nil,
 			nil,
 			quotaService,
+			nil,
 			nil,
 		)
 		dashboardService.RegisterDashboardPermissions(dashboardPermissions)
@@ -950,8 +953,9 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	tracer := tracing.InitializeTracerForTest()
+	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	folderStore2 := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracer)
+	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDashboardFakeService, cfg, nil, tracer)
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
@@ -966,6 +970,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		nil,
 		nil,
 		quotaService,
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
@@ -985,8 +990,9 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	tracer := tracing.InitializeTracerForTest()
+	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	folderStore2 := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracer)
+	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDashboardFakeService, cfg, nil, tracer)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(),
@@ -999,6 +1005,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		nil,
 		nil,
 		quotaService,
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1037,8 +1044,9 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	tracer := tracing.InitializeTracerForTest()
+	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	folderStore2 := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracer)
+	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDashboardFakeService, cfg, nil, tracer)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features,
@@ -1051,6 +1059,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		nil,
 		nil,
 		quotaService,
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1095,8 +1104,9 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	tracer := tracing.InitializeTracerForTest()
+	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	folderStore2 := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracer)
+	folderService := folderimpl.ProvideService(folderStore2, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDashboardFakeService, cfg, nil, tracer)
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
@@ -1110,6 +1120,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		nil,
 		nil,
 		quotaService,
+		nil,
 		nil,
 	)
 	require.NoError(t, err)
