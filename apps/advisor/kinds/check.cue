@@ -10,6 +10,12 @@ check: {
 				frontend: false
 				backend:  true
 			}
+			validation: {
+				operations: [
+					"CREATE",
+					"UPDATE",
+				]
+			}
 			schema: {
 				spec: {
 					// Generic data input that a check can receive
