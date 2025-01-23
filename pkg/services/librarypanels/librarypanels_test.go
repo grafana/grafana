@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
@@ -835,7 +836,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		)
 		require.NoError(t, err)
 		dashService.RegisterDashboardPermissions(dashPermissionService)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
 
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 		require.NoError(t, err)

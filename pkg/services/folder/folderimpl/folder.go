@@ -1433,7 +1433,10 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 		}
 		return guard, nil
 	}
-	guard, err := guardian.NewByDashboard(ctx, d, d.OrgID, user)
+	guard, err := guardian.NewByFolder(ctx, &folder.Folder{
+		UID:   d.UID,
+		OrgID: d.OrgID,
+	}, d.OrgID, user)
 	if err != nil {
 		return nil, err
 	}

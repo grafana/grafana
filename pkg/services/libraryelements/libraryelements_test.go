@@ -413,7 +413,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	)
 	require.NoError(t, svcErr)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
-	guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderSvc)
+	guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderSvc, log.NewNopLogger())
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		// nolint:staticcheck
@@ -479,7 +479,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		)
 		require.NoError(t, dashSvcErr)
 		dashService.RegisterDashboardPermissions(dashboardPermissions)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
 		service := LibraryElementService{
 			Cfg:           cfg,
 			features:      featuremgmt.WithFeatures(),

@@ -18,7 +18,7 @@ var _ DashboardGuardian = new(accessControlDashboardGuardian)
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, cfg *setting.Cfg, dashboardId int64, user identity.Requester,
 	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
-	foldersService folder.Service,
+	foldersService folder.Service, logger log.Logger,
 ) (DashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardId != 0 {
@@ -38,6 +38,7 @@ func NewAccessControlDashboardGuardian(
 	}
 
 	if dashboard != nil && dashboard.IsFolder {
+		logger.Info("using dashboard guardian for folder", "folder", dashboard.UID)
 		return &accessControlFolderGuardian{
 			accessControlBaseGuardian: accessControlBaseGuardian{
 				ctx:              ctx,
@@ -71,8 +72,10 @@ func NewAccessControlDashboardGuardian(
 func NewAccessControlDashboardGuardianByDashboard(
 	ctx context.Context, cfg *setting.Cfg, dashboard *dashboards.Dashboard, user identity.Requester,
 	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, folderService folder.Service,
+	logger log.Logger,
 ) (DashboardGuardian, error) {
 	if dashboard != nil && dashboard.IsFolder {
+		logger.Info("using by dashboard guardian for folder", "folder", dashboard.UID)
 		return &accessControlFolderGuardian{
 			accessControlBaseGuardian: accessControlBaseGuardian{
 				ctx:              ctx,
