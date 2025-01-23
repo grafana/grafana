@@ -3,6 +3,7 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,10 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 			Text  string `json:"text"`
 		} `json:"timeSeriesList"`
 	}{}
+
+	if len(req.Queries) != 1 {
+		return nil, errors.New("multiple queries received in annotation-request")
+	}
 
 	// It's okay to use the first query for annotations as there should only be one
 	firstQuery := req.Queries[0]
