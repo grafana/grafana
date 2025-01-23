@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -136,9 +135,6 @@ func toUserItem(u *user.User, ns string) iamv0.User {
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(u.ID, 10),
-	})
+	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
 }

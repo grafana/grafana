@@ -324,10 +324,11 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	dashPermissionService := acmock.NewMockedPermissionsService()
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore,
-		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
+		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(), nil, nil, nil, nil, quotatest.New(false, nil), nil,
 	)
 	require.NoError(t, err)
+	dashService.RegisterDashboardPermissions(dashPermissionService)
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", FeaturePublicDashboardsEmailSharing).Return(false)

@@ -218,7 +218,7 @@ export function limitOtelMatchTerms(
 
 /**
  * This updates the OTel join query variable that is interpolated into all queries.
- * When a user is in the breakdown or overview tab, they may want to breakdown a metric by a resource attribute.
+ * When a user is in the breakdown tab, they may want to breakdown a metric by a resource attribute.
  * The only way to do this is by enriching the metric with the target_info resource.
  * This is done by joining on a unique identifier for the resource, job and instance.
  * The we can get the resource attributes for the metric, enrich the metric with the join query and

@@ -3,7 +3,6 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -109,10 +108,7 @@ func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
 	}
 	obj, _ := utils.MetaAccessor(&item)
 	obj.SetUpdatedTimestamp(&sa.Updated)
-	obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(sa.ID, 10),
-	})
+	obj.SetDeprecatedInternalID(sa.ID) // nolint:staticcheck
 	return item
 }
 
