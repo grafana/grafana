@@ -64,12 +64,16 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 
   const theme = useTheme2();
 
-  const styles = getInputStyles({ theme, invalid: !!invalid, width: finalWidth });
+  const styles = getInputStyles({ theme, invalid: !!invalid });
 
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
   return (
-    <div className={cx(styles.wrapper, className)} data-testid="input-wrapper">
+    <div
+      className={cx(styles.wrapper, className)}
+      style={{ width: finalWidth ? theme.spacing(finalWidth) : '100%' }}
+      data-testid="input-wrapper"
+    >
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
       <div className={styles.inputWrapper}>
         {prefix && (
@@ -101,7 +105,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 
 Input.displayName = 'Input';
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
+export const getInputStyles = stylesFactory(({ theme, invalid = false }: StyleDeps) => {
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css({
     position: 'absolute',
@@ -125,7 +129,6 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css({
         label: 'input-wrapper',
         display: 'flex',
-        width: width ? theme.spacing(width) : '100%',
         height: theme.spacing(theme.components.height.md),
         borderRadius: theme.shape.radius.default,
         '&:hover': {
