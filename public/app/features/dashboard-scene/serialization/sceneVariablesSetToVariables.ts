@@ -175,8 +175,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
     } else if (sceneUtils.isAdHocVariable(variable)) {
       variables.push({
         ...commonProperties,
-        name: variable.state.name,
-        type: 'adhoc',
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
@@ -407,7 +405,6 @@ export function sceneVariablesSetToSchemaV2Variables(
             })) || [],
           current: currentVariableOption,
           multi: variable.state.isMulti || false,
-          includeAll: variable.state.includeAll || false,
         },
       };
       variables.push(groupVariable);

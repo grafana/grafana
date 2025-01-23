@@ -957,6 +957,7 @@
       "settings": "Dashboard settings",
       "share": "Share dashboard",
       "share-button": "Share",
+      "show-hidden-elements": "Show hidden",
       "unmark-favorite": "Unmark as favorite"
     },
     "validation": {
@@ -1323,10 +1324,9 @@
       "sortBy": "Sort by"
     },
     "related-logs": {
-      "docsLink": "Loki Recording Rule",
+      "LrrDocsLink": "Loki Recording Rule",
       "openExploreLogs": "Open Explore Logs",
-      "relatedLogsUnavailableAfterDocsLink": ", or check back later as we expand the various methods for establishing connections between metrics and logs.",
-      "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
+      "relatedLogsUnavailable": "No related logs found. To see related logs, you can either:<1><0>adjust the label filter to find logs with the same labels as the currently-selected metric</0><1>select a metric created by a <2><0>Loki Recording Rule</0></2></1></1>",
       "warnExperimentalFeature": "Related logs is an experimental feature."
     },
     "viewBy": "View by"
@@ -2049,6 +2049,12 @@
       "title": "Why host with Grafana?"
     }
   },
+  "multicombobox": {
+    "all": {
+      "title": "All",
+      "title-filtered": "All (filtered)"
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
@@ -2534,6 +2540,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": "The data source connections below are all {{pluginName}}. You can find all of your data source connections of all types in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+      },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
@@ -2880,6 +2889,10 @@
     "title": "Unable to find application file"
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "The message is {{messageLength}} characters, which exceeds the maximum length of 500 characters. Please shorten it before saving.",
+      "title": "Message too long"
+    },
     "name-exists": {
       "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",
       "message-suggestion": "Please choose a different name or folder.",
@@ -3333,15 +3346,6 @@
       "lets-start": "Let's start!",
       "start-your-metrics-exploration": "Start your metrics exploration!",
       "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
-    },
-    "metric-overview": {
-      "description-label": "Description",
-      "labels": "Labels",
-      "metric-attributes": "Attributes",
-      "no-description": "No description available",
-      "type-label": "Type",
-      "unit-label": "Unit",
-      "unknown-type": "Unknown"
     },
     "metric-select": {
       "filter-by": "Filter by",

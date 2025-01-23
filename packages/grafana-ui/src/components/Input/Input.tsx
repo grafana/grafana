@@ -64,12 +64,17 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 
   const theme = useTheme2();
 
-  const styles = getInputStyles({ theme, invalid: !!invalid, width: finalWidth });
+  // Don't pass the width prop, as this causes an unnecessary amount of Emotion calls when auto sizing
+  const styles = getInputStyles({ theme, invalid: !!invalid });
 
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
   return (
-    <div className={cx(styles.wrapper, className)} data-testid="input-wrapper">
+    <div
+      className={cx(styles.wrapper, className)}
+      style={{ width: finalWidth ? theme.spacing(finalWidth) : '100%' }} // Override emotion styles for the width prop
+      data-testid="input-wrapper"
+    >
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
       <div className={styles.inputWrapper}>
         {prefix && (
@@ -125,7 +130,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css({
         label: 'input-wrapper',
         display: 'flex',
-        width: width ? theme.spacing(width) : '100%',
+        width: width ? theme.spacing(width) : '100%', // Not used in Input, as this causes performance issues with auto sizing
         height: theme.spacing(theme.components.height.md),
         borderRadius: theme.shape.radius.default,
         '&:hover': {

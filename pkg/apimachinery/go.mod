@@ -3,8 +3,8 @@ module github.com/grafana/grafana/pkg/apimachinery
 go 1.23.1
 
 require (
-	github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884 // @grafana/identity-access-team
-	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20250123104008-e99947858901 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c // @grafana/identity-access-team
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.32.0
 	k8s.io/apiserver v0.32.0
@@ -42,7 +42,7 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
-	google.golang.org/grpc v1.69.2 // indirect
+	google.golang.org/grpc v1.69.4 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

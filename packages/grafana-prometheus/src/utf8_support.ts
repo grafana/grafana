@@ -79,3 +79,35 @@ const isValidCodePoint = (codePoint: number): boolean => {
   // Validate the code point for UTF-8 compliance if needed.
   return codePoint >= 0 && codePoint <= 0x10ffff;
 };
+
+export const wrapUtf8Filters = (filterStr: string): string => {
+  const resultArray: string[] = [];
+  let currentKey = '';
+  let currentValue = '';
+  let inQuotes = false;
+  let temp = '';
+
+  for (const char of filterStr) {
+    if (char === '"' && temp[temp.length - 1] !== '\\') {
+      // Toggle inQuotes when an unescaped quote is found
+      inQuotes = !inQuotes;
+      temp += char;
+    } else if (char === ',' && !inQuotes) {
+      // When outside quotes and encountering ',', finalize the current pair
+      [currentKey, currentValue] = temp.split('=');
+      resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1)}"`);
+      temp = ''; // Reset for the next pair
+    } else {
+      // Collect characters
+      temp += char;
+    }
+  }
+
+  // Handle the last key-value pair
+  if (temp) {
+    [currentKey, currentValue] = temp.split('=');
+    resultArray.push(`${utf8Support(currentKey.trim())}="${currentValue.slice(1, -1)}"`);
+  }
+
+  return resultArray.join(',');
+};

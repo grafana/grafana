@@ -26,11 +26,16 @@ var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
 
+type OpenFGAServer interface {
+	openfgav1.OpenFGAServiceServer
+	IsReady(ctx context.Context) (bool, error)
+}
+
 type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openfga       openfgav1.OpenFGAServiceServer
+	openfga       OpenFGAServer
 	openfgaClient openfgav1.OpenFGAServiceClient
 
 	cfg      setting.ZanzanaServerSettings
@@ -45,7 +50,7 @@ type storeInfo struct {
 	ModelID string
 }
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga openfgav1.OpenFGAServiceServer, logger log.Logger) (*Server, error) {
+func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -61,6 +66,10 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga openfgav1.OpenFGAServi
 	}
 
 	return s, nil
+}
+
+func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
+	return s.openfga.IsReady(ctx)
 }
 
 func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1.ContextualTupleKeys, error) {
