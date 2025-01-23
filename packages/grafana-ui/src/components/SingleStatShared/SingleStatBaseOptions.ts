@@ -1,4 +1,4 @@
-import { cloneDeep, identity, isNumber, omit, pickBy } from 'lodash';
+import {cloneDeep, identity, isNumber, omit, pickBy} from 'lodash';
 
 import {
   convertOldAngularValueMappings,
@@ -16,7 +16,7 @@ import {
   ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting } from '@grafana/schema';
+import {LegendDisplayMode, LegendPlacement, OptionsWithLegend, OptionsWithTextFormatting} from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
@@ -68,7 +68,7 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,
-      placement: 'bottom',
+      placement: LegendPlacement.Bottom,
       calcs: [],
     },
   };
@@ -97,7 +97,7 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
       }
 
       if (legendConfig.rightSide) {
-        options.legend.placement = 'right';
+        options.legend.placement = LegendPlacement.Right;
       }
 
       if (legendConfig.values) {

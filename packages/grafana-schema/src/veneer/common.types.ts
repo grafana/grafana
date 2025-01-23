@@ -39,7 +39,7 @@ export * from '../common/common.gen';
 
 // TODO remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 export const defaultTableFieldOptions: raw.TableFieldOptions = {
-  align: 'auto',
+  align: raw.FieldTextAlignment.Auto,
   inspect: false,
   cellOptions: {
     type: raw.TableCellDisplayMode.Auto,

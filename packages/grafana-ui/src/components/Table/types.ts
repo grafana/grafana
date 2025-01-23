@@ -26,6 +26,7 @@ export {
   type TableColorTextCellOptions,
   type TableImageCellOptions,
   type TableJsonViewCellOptions,
+  type TableCellDisplayMode,
 } from '@grafana/schema';
 
 export interface TableRow {
