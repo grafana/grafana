@@ -1,4 +1,5 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
+import { LiteralStyle } from 'ol/style/literal';
 import tinycolor from 'tinycolor2';
 
 import { Registry, RegistryItem, textUtil } from '@grafana/data';
@@ -317,6 +318,20 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean, we
         ? (cfg: StyleConfigValues) => {
             const radius = cfg.size ?? DEFAULT_SIZE;
             const rotation = cfg.rotation ?? 0;
+            if (webGL) {
+              const symbolStyle = {
+                symbol: {
+                  symbolType: 'image',
+                  size: ['get', 'size', 'number'],
+                  color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
+                  offset: ['array', ['get', 'offsetX'], ['get', 'offsetY']],
+                  rotation: ['get', 'rotation', 'number'],
+                  opacity: ['get', 'opacity', 'number'],
+                  src,
+                },
+              };
+              return symbolStyle;
+            }
             return [
               new Style({
                 image: new Icon({

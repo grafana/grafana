@@ -3,6 +3,7 @@ import { Point } from 'ol/geom';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
+import { LiteralStyle } from 'ol/style/literal';
 import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
@@ -15,14 +16,13 @@ import {
   FrameGeometrySourceMode,
   EventBus,
 } from '@grafana/data';
-import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { prepareSVG, textMarker } from '../../style/markers';
+import { textMarker } from '../../style/markers';
 import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig } from '../../style/types';
 import { getDisplacement, getRGBValues, getStyleConfigState, styleUsesText } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
@@ -76,24 +76,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     };
 
     const style = await getStyleConfigState(config.style, true);
-    //TODO make this more robust and handle webgl supported shapes: circle, square, triangle, RegularShape
-    const src = await prepareSVG(getPublicOrAbsoluteUrl(style.config.symbol?.fixed ?? ''));
 
-    const symbolStyle = {
-      symbol: {
-        symbolType: 'image',
-        size: ['get', 'size', 'number'],
-        color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
-        offset: ['array', ['get', 'offsetX'], ['get', 'offsetY']],
-        rotation: ['get', 'rotation', 'number'],
-        opacity: ['get', 'opacity', 'number'],
-        src,
-      },
-    };
+    const symbolStyle = style.maker(style.base);
     const hasText = styleUsesText(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
-    const symbolLayer = new WebGLPointsLayer({ source, style: symbolStyle });
+    const symbolLayer = new WebGLPointsLayer({ source, style: symbolStyle as LiteralStyle });
     const textLayer = new VectorLayer({ source });
     const layers = new LayerGroup({
       layers: hasText ? [symbolLayer, textLayer] : [symbolLayer],
