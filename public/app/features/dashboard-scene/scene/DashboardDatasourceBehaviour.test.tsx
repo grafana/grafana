@@ -392,7 +392,6 @@ describe('DashboardDatasourceBehaviour', () => {
     it('should re-run queries when library panel re-runs query', async () => {
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: false,
-        title: 'Panel title',
         uid: 'fdcvggvfy2qdca',
         name: 'My Library Panel',
         _loadedPanel: undefined,
@@ -452,7 +451,6 @@ describe('DashboardDatasourceBehaviour', () => {
     it('should wait for library panel to load before running queries', async () => {
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: false,
-        title: 'Panel title',
         uid: 'fdcvggvfy2qdca',
         name: 'My Library Panel',
         _loadedPanel: undefined,
@@ -502,7 +500,6 @@ describe('DashboardDatasourceBehaviour', () => {
       // Simulate library panel being loaded
       libPanelBehavior.setState({
         isLoaded: true,
-        title: 'Panel title',
         uid: 'fdcvggvfy2qdca',
         name: 'My Library Panel',
         _loadedPanel: undefined,
