@@ -4,7 +4,10 @@ import "strconv"
 
 type SchemaVersionMigrationFunc func(map[string]interface{}) error
 
-const LATEST_VERSION = 40
+const (
+	MINIUM_VERSION = 39
+	LATEST_VERSION = 40
+)
 
 var Migrations = map[int]SchemaVersionMigrationFunc{
 	40: V40,

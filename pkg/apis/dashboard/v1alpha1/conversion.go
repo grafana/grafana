@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"errors"
+
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	klog "k8s.io/klog/v2"
 
@@ -12,7 +14,12 @@ import (
 func Convert_v0alpha1_Unstructured_To_v1alpha1_DashboardSpec(in *common.Unstructured, out *DashboardSpec, s conversion.Scope) error {
 	err := migration.Migrate(in.Object, schemaversion.LATEST_VERSION)
 	if err != nil {
-		return err
+		minErr := &schemaversion.MinimumVersionError{}
+		if errors.As(err, &minErr) {
+			in.Object["__migrationError"] = err.Error()
+		} else {
+			return err
+		}
 	}
 
 	out.Unstructured = *in
