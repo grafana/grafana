@@ -61,9 +61,10 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 // We should add every action required "internally" here.
 var grafanaIdentityPermissions = getWildcardPermissions(
 	"folders:read",
-	"folders:create",
 	"folders:write",
+	"folders:create",
 	"dashboards:read",
+	"dashboards:write",
 	"dashboards:create",
 	"datasources:read",
 )
