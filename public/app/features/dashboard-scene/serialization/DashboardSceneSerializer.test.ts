@@ -787,7 +787,7 @@ describe('DashboardSceneSerializer', () => {
   describe('onSaveComplete', () => {
     it('should set the initialSaveModel correctly', () => {
       const serializer = new V2DashboardSerializer();
-      const saveModel = { title: 'Test' } as DashboardV2Spec;
+      const saveModel = defaultDashboardV2Spec();
       const response = {
         id: 1,
         uid: 'aa',
