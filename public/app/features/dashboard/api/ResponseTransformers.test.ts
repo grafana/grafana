@@ -1,5 +1,10 @@
 import { DataQuery, VariableModel, VariableRefresh } from '@grafana/schema';
-import { DashboardV2Spec, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  DashboardV2Spec,
+  GridLayoutItemSpec,
+  GridLayoutRowSpec,
+  VariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -314,6 +319,69 @@ describe('ResponseTransformers', () => {
             },
             gridPos: { x: 0, y: 8, w: 12, h: 8 },
           },
+          {
+            id: 3,
+            type: 'row',
+            title: 'Row test title',
+            gridPos: { x: 0, y: 16, w: 12, h: 1 },
+            panels: [],
+            collapsed: false,
+          },
+          {
+            id: 4,
+            type: 'timeseries',
+            title: 'Panel in row',
+            gridPos: { x: 0, y: 17, w: 16, h: 8 },
+            targets: [
+              {
+                refId: 'A',
+                datasource: 'datasource1',
+                expr: 'test-query',
+                hide: false,
+              },
+            ],
+            datasource: {
+              type: 'prometheus',
+              uid: 'datasource1',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            options: {},
+            transparent: false,
+            links: [],
+            transformations: [],
+          },
+          {
+            id: 5,
+            type: 'row',
+            title: 'Collapsed row title',
+            gridPos: { x: 0, y: 25, w: 12, h: 1 },
+            panels: [
+              {
+                id: 5,
+                type: 'timeseries',
+                title: 'Panel in collapsed row',
+                gridPos: { x: 0, y: 26, w: 16, h: 8 },
+                targets: [
+                  {
+                    refId: 'A',
+                    datasource: 'datasource1',
+                    expr: 'test-query',
+                    hide: false,
+                  },
+                ],
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+                transparent: false,
+                links: [],
+                transformations: [],
+              },
+            ],
+            collapsed: true,
+          },
         ],
       };
 
@@ -387,7 +455,7 @@ describe('ResponseTransformers', () => {
       expect(spec.annotations).toEqual([]);
 
       // Panel
-      expect(spec.layout.spec.items).toHaveLength(2);
+      expect(spec.layout.spec.items).toHaveLength(4);
       expect(spec.layout.spec.items[0].spec).toEqual({
         element: {
           kind: 'ElementReference',
@@ -466,6 +534,43 @@ describe('ResponseTransformers', () => {
           uid: 'library-panel-table',
           name: 'Table Panel as Library Panel',
         },
+      });
+
+      const rowSpec = spec.layout.spec.items[2].spec as GridLayoutRowSpec;
+
+      expect(rowSpec.collapsed).toBe(false);
+      expect(rowSpec.title).toBe('Row test title');
+      expect(rowSpec.repeat).toBeUndefined();
+
+      const panelInRow = rowSpec.elements[0].spec as GridLayoutItemSpec;
+
+      expect(panelInRow).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: '4',
+        },
+        x: 0,
+        y: 0,
+        width: 16,
+        height: 8,
+      });
+
+      const collapsedRowSpec = spec.layout.spec.items[3].spec as GridLayoutRowSpec;
+      expect(collapsedRowSpec.collapsed).toBe(true);
+      expect(collapsedRowSpec.title).toBe('Collapsed row title');
+      expect(collapsedRowSpec.repeat).toBeUndefined();
+
+      const panelInCollapsedRow = collapsedRowSpec.elements[0].spec as GridLayoutItemSpec;
+
+      expect(panelInCollapsedRow).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: '5',
+        },
+        x: 0,
+        y: 0,
+        width: 16,
+        height: 8,
       });
 
       // Variables

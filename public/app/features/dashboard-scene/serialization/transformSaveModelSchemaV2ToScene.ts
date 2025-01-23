@@ -99,6 +99,7 @@ import {
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
+import { GRID_ROW_HEIGHT } from './const';
 
 const DEFAULT_DATASOURCE = 'default';
 
@@ -280,7 +281,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       const children = element.spec.elements.map((gridElement) => {
         const panel = dashboard.elements[gridElement.spec.element.name];
         if (panel.kind === 'Panel') {
-          return buildGridItem(gridElement.spec, panel, element.spec.y + 1 + gridElement.spec.y);
+          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
         } else {
           throw new Error(`Unknown element kind: ${gridElement.kind}`);
         }

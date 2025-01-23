@@ -4,6 +4,8 @@ import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
 
+export const GRID_ROW_HEIGHT = 1;
+
 export function getDashboardsApiVersion() {
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 

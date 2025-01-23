@@ -60,6 +60,7 @@ import {
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { GRID_ROW_HEIGHT } from './const';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -261,7 +262,7 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
     if (!(child instanceof DashboardGridItem)) {
       throw new Error('Unsupported row child type');
     }
-    const y = (child.state.y ?? 0) - (row.state.y ?? 0) - 1;
+    const y = (child.state.y ?? 0) - (row.state.y ?? 0) - GRID_ROW_HEIGHT;
     return gridItemToGridLayoutItemKind(child, isSnapshot, y);
   });
 
