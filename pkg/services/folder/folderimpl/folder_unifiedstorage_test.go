@@ -200,7 +200,6 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	featuresArr := []any{
-		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagKubernetesFoldersServiceV2}
 	features := featuremgmt.WithFeatures(featuresArr...)
 
