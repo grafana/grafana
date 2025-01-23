@@ -194,7 +194,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 
 type batchWroker struct {
 	ctx     context.Context
-	tx      db.Tx
+	tx      db.ContextExecer
 	dialect sqltemplate.Dialect
 }
 
