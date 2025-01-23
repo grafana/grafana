@@ -501,6 +501,7 @@ export const getLinksSupplier =
             });
           },
           origin: field,
+          oneClick: link.oneClick ?? false,
         };
       } else {
         linkModel = {
@@ -508,6 +509,7 @@ export const getLinksSupplier =
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           origin: field,
+          oneClick: link.oneClick ?? false,
         };
       }
 
