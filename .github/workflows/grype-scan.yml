@@ -1,0 +1,31 @@
+name: Grype Scan
+on:
+  pull_request:
+    # only run on PRs where go.mod/go.sum/etc have been updated
+    paths:
+      - go.*
+      - .github/workflows/grype-scan.yml
+  push:
+    branches:
+      - main
+    paths:
+      - go.*
+      - .github/workflows/grype-scan.yml
+
+jobs:
+  grype-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan with Grype
+        id: scan # for reference in next step
+        uses: anchore/scan-action@v6
+        with:
+          path: .
+          severity-cutoff: high
+          by-cve: true
+      - name: Upload Grype scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+        if: always() && github.repository == 'grafana/grafana'
