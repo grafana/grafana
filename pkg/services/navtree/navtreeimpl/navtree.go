@@ -71,13 +71,13 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		license:              license,
 	}
 
-	service.readNavigationSettings()
-
 	return service
 }
 
 //nolint:gocyclo
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
+	s.readNavigationSettings(c)
+
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 

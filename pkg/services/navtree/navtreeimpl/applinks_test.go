@@ -363,9 +363,8 @@ func TestReadingNavigationSettings(t *testing.T) {
 			cfg:      setting.NewCfg(),
 			features: featuremgmt.WithFeatures(),
 		}
-
 		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
-		service.readNavigationSettings()
+		service.readNavigationSettings(&contextmodel.ReqContext{})
 
 		require.Equal(t, "infrastructure", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 	})
@@ -382,7 +381,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		_, _ = appSections.NewKey("other-app", "admin 12")
 		_, _ = appStandalonePages.NewKey("/a/grafana-k8s-app/foo", "admin 30")
 
-		service.readNavigationSettings()
+		service.readNavigationSettings(&contextmodel.ReqContext{})
 
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
