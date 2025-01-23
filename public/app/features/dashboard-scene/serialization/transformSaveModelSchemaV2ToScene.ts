@@ -299,7 +299,6 @@ function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
       new LibraryPanelBehavior({
         uid: panel.spec.libraryPanel.uid,
         name: panel.spec.libraryPanel.name,
-        title: panel.spec.title,
       }),
     ],
     extendPanelContext: setDashboardPanelContext,
