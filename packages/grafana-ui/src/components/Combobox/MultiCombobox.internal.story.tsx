@@ -1,7 +1,8 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { useCallback } from 'react';
+
+import { Field } from '../Forms/Field';
 
 import { MultiCombobox } from './MultiCombobox';
 import { generateOptions, fakeSearchAPI } from './storyUtils';
@@ -11,6 +12,9 @@ const meta: Meta<typeof MultiCombobox> = {
   title: 'Forms/MultiCombobox',
   component: MultiCombobox,
 };
+
+const loadOptionsAction = action('options called');
+const onChangeAction = action('onChange called');
 
 const commonArgs = {
   options: [
@@ -41,7 +45,7 @@ export const Basic: Story = {
         {...args}
         value={value}
         onChange={(val) => {
-          action('onChange')(val);
+          onChangeAction(val);
           setArgs({ value: val });
         }}
       />
@@ -91,7 +95,7 @@ const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...
       value={value}
       onChange={(opts) => {
         setValue(opts || []);
-        action('onChange')(opts);
+        onChangeAction(opts);
       }}
     />
   );
@@ -106,35 +110,70 @@ export const ManyOptions: StoryObj<ManyOptionsArgs> = {
   render: ManyOptionsStory,
 };
 
-const loadOptionsAction = action('loadOptions called');
-const AsyncStory: StoryFn = (args) => {
-  // Combobox
-  const [selectedOption, setSelectedOption] = useState<Array<ComboboxOption<string>> | undefined>([]);
+function loadOptionsWithLabels(inputValue: string) {
+  loadOptionsAction(inputValue);
+  return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`);
+}
 
-  // This simulates a kind of search API call
-  const loadOptionsWithLabels = useCallback((inputValue: string) => {
-    loadOptionsAction(inputValue);
-    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
-  }, []);
+export const AsyncOptionsWithLabels: Story = {
+  name: 'Async - options returns labels',
+  args: {
+    options: loadOptionsWithLabels,
+    value: [{ label: 'Option 69', value: '69' }],
+    placeholder: 'Select an option',
+  },
+  render: (args) => {
+    const [dynamicArgs, setArgs] = useArgs();
 
-  const { onChange, ...rest } = args;
-
-  return (
-    <MultiCombobox
-      {...rest}
-      id="test-combobox-one"
-      placeholder="Select an option"
-      options={loadOptionsWithLabels}
-      value={selectedOption}
-      onChange={(val: any[] | undefined) => {
-        action('onChange')(val);
-        setSelectedOption(val);
-      }}
-      createCustomValue={args.createCustomValue}
-    />
-  );
+    return (
+      <Field
+        label='Asynbc options fn returns objects like { label: "Option 69", value: "69" }'
+        description="Search for 'break' to see an error"
+      >
+        <MultiCombobox
+          {...args}
+          {...dynamicArgs}
+          onChange={(val) => {
+            onChangeAction(val);
+            setArgs({ value: val });
+          }}
+        />
+      </Field>
+    );
+  },
 };
 
-export const Async: StoryObj = {
-  render: AsyncStory,
+function loadOptionsOnlyValues(inputValue: string) {
+  loadOptionsAction(inputValue);
+  return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`).then((options) =>
+    options.map((opt) => ({ value: opt.label! }))
+  );
+}
+
+export const AsyncOptionsWithOnlyValues: Story = {
+  name: 'Async - options returns only values',
+  args: {
+    options: loadOptionsOnlyValues,
+    value: [{ value: 'Option 69' }],
+    placeholder: 'Select an option',
+  },
+  render: (args) => {
+    const [dynamicArgs, setArgs] = useArgs();
+
+    return (
+      <Field
+        label='Async options fn returns objects like { value: "69" }'
+        description="Search for 'break' to see an error"
+      >
+        <MultiCombobox
+          {...args}
+          {...dynamicArgs}
+          onChange={(val) => {
+            onChangeAction(val);
+            setArgs({ value: val });
+          }}
+        />
+      </Field>
+    );
+  },
 };

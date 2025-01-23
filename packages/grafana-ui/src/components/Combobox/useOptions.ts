@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 
-import { ComboboxOption } from './Combobox';
 import { itemFilter } from './filter';
+import { ComboboxOption } from './types';
 
 type AsyncOptions<T extends string | number> =
   | Array<ComboboxOption<T>>
