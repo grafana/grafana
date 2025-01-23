@@ -18,6 +18,7 @@ var _ DashboardGuardian = new(accessControlDashboardGuardian)
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, cfg *setting.Cfg, dashboardId int64, user identity.Requester,
 	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+	foldersService folder.Service, logger log.Logger,
 ) (DashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardId != 0 {
@@ -37,6 +38,7 @@ func NewAccessControlDashboardGuardian(
 	}
 
 	if dashboard != nil && dashboard.IsFolder {
+		logger.Info("using dashboard guardian for folder", "folder", dashboard.UID)
 		return &accessControlFolderGuardian{
 			accessControlBaseGuardian: accessControlBaseGuardian{
 				ctx:              ctx,
@@ -58,68 +60,22 @@ func NewAccessControlDashboardGuardian(
 			user:             user,
 			ac:               ac,
 			dashboardService: dashboardService,
-		},
-		dashboard: dashboard,
-	}, nil
-}
-
-// NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboardUID.
-func NewAccessControlDashboardGuardianByUID(
-	ctx context.Context, cfg *setting.Cfg, dashboardUID string, user identity.Requester,
-	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
-) (DashboardGuardian, error) {
-	var dashboard *dashboards.Dashboard
-	if dashboardUID != "" {
-		q := &dashboards.GetDashboardQuery{
-			UID:   dashboardUID,
-			OrgID: user.GetOrgID(),
-		}
-
-		qResult, err := dashboardService.GetDashboard(ctx, q)
-		if err != nil {
-			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
-			}
-			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
-		}
-		dashboard = qResult
-	}
-
-	if dashboard != nil && dashboard.IsFolder {
-		return &accessControlFolderGuardian{
-			accessControlBaseGuardian: accessControlBaseGuardian{
-				ctx:              ctx,
-				cfg:              cfg,
-				log:              log.New("folder.permissions"),
-				user:             user,
-				ac:               ac,
-				dashboardService: dashboardService,
-			},
-			folder: dashboards.FromDashboard(dashboard),
-		}, nil
-	}
-
-	return &accessControlDashboardGuardian{
-		accessControlBaseGuardian: accessControlBaseGuardian{
-			cfg:              cfg,
-			ctx:              ctx,
-			log:              log.New("dashboard.permissions"),
-			user:             user,
-			ac:               ac,
-			dashboardService: dashboardService,
+			folderService:    foldersService,
 		},
 		dashboard: dashboard,
 	}, nil
 }
 
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
-// This constructor should be preferred over the other two if the dashboard in available
+// This constructor should be preferred over the other two if the dashboard is available
 // since it avoids querying the database for fetching the dashboard.
 func NewAccessControlDashboardGuardianByDashboard(
 	ctx context.Context, cfg *setting.Cfg, dashboard *dashboards.Dashboard, user identity.Requester,
-	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, folderService folder.Service,
+	logger log.Logger,
 ) (DashboardGuardian, error) {
 	if dashboard != nil && dashboard.IsFolder {
+		logger.Info("using by dashboard guardian for folder", "folder", dashboard.UID)
 		return &accessControlFolderGuardian{
 			accessControlBaseGuardian: accessControlBaseGuardian{
 				ctx:              ctx,
@@ -128,6 +84,7 @@ func NewAccessControlDashboardGuardianByDashboard(
 				user:             user,
 				ac:               ac,
 				dashboardService: dashboardService,
+				folderService:    folderService,
 			},
 			folder: dashboards.FromDashboard(dashboard),
 		}, nil
@@ -141,16 +98,35 @@ func NewAccessControlDashboardGuardianByDashboard(
 			user:             user,
 			ac:               ac,
 			dashboardService: dashboardService,
+			folderService:    folderService,
 		},
 		dashboard: dashboard,
 	}, nil
 }
 
-// NewAccessControlFolderGuardian creates a folder guardian by the provided folder.
-func NewAccessControlFolderGuardian(
-	ctx context.Context, cfg *setting.Cfg, f *folder.Folder, user identity.Requester,
-	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+// NewAccessControlFolderGuardianByUID creates a folder guardian by the provided folderUID.
+func NewAccessControlFolderGuardianByUID(
+	ctx context.Context, cfg *setting.Cfg, folderUID string, user identity.Requester,
+	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, foldersService folder.Service,
 ) (DashboardGuardian, error) {
+	var f *folder.Folder
+	if folderUID != "" {
+		q := &folder.GetFolderQuery{
+			UID:          &folderUID,
+			OrgID:        user.GetOrgID(),
+			SignedInUser: user,
+		}
+
+		qResult, err := foldersService.Get(ctx, q)
+		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", err)
+			}
+			return nil, ErrGuardianGetFolderFailure.Errorf("failed to get folder by UID: %w", err)
+		}
+		f = qResult
+	}
+
 	return &accessControlFolderGuardian{
 		accessControlBaseGuardian: accessControlBaseGuardian{
 			ctx:              ctx,
@@ -159,6 +135,44 @@ func NewAccessControlFolderGuardian(
 			user:             user,
 			ac:               ac,
 			dashboardService: dashboardService,
+			folderService:    foldersService,
+		},
+		folder: f,
+	}, nil
+}
+
+// NewAccessControlFolderGuardian creates a folder guardian by the provided folder.
+func NewAccessControlFolderGuardian(
+	ctx context.Context, cfg *setting.Cfg, f *folder.Folder, user identity.Requester,
+	ac accesscontrol.AccessControl, orgID int64, dashboardService dashboards.DashboardService,
+	folderService folder.Service,
+) (DashboardGuardian, error) {
+	if f.UID == "" { // nolint:staticcheck
+		query := &folder.GetFolderQuery{
+			ID:           &f.ID, // nolint:staticcheck
+			OrgID:        orgID,
+			SignedInUser: user,
+		}
+
+		folder, err := folderService.Get(ctx, query)
+		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder: %w", err)
+			}
+			return nil, ErrGuardianGetFolderFailure.Errorf("failed to get folder: %w", err)
+		}
+		f = folder
+	}
+
+	return &accessControlFolderGuardian{
+		accessControlBaseGuardian: accessControlBaseGuardian{
+			ctx:              ctx,
+			cfg:              cfg,
+			log:              log.New("folder.permissions"),
+			user:             user,
+			ac:               ac,
+			dashboardService: dashboardService,
+			folderService:    folderService,
 		},
 		folder: f,
 	}, nil
@@ -171,6 +185,7 @@ type accessControlBaseGuardian struct {
 	user             identity.Requester
 	ac               accesscontrol.AccessControl
 	dashboardService dashboards.DashboardService
+	folderService    folder.Service
 }
 
 type accessControlDashboardGuardian struct {
@@ -353,24 +368,24 @@ func (a *accessControlFolderGuardian) evaluate(evaluator accesscontrol.Evaluator
 	return ok, err
 }
 
-func (a *accessControlDashboardGuardian) loadParentFolder(folderID int64) (*dashboards.Dashboard, error) {
+func (a *accessControlDashboardGuardian) loadParentFolder(folderID int64) (*folder.Folder, error) {
 	if folderID == 0 {
-		return &dashboards.Dashboard{UID: accesscontrol.GeneralFolderUID}, nil
+		return &folder.Folder{UID: accesscontrol.GeneralFolderUID, OrgID: a.user.GetOrgID()}, nil
 	}
-	folderQuery := &dashboards.GetDashboardQuery{ID: folderID, OrgID: a.user.GetOrgID()}
-	folderQueryResult, err := a.dashboardService.GetDashboard(a.ctx, folderQuery)
+	folderQuery := &folder.GetFolderQuery{ID: &folderID, OrgID: a.user.GetOrgID(), SignedInUser: a.user}
+	folderQueryResult, err := a.folderService.Get(a.ctx, folderQuery)
 	if err != nil {
 		return nil, err
 	}
 	return folderQueryResult, nil
 }
 
-func (a *accessControlFolderGuardian) loadParentFolder(folderID int64) (*dashboards.Dashboard, error) {
+func (a *accessControlFolderGuardian) loadParentFolder(folderID int64) (*folder.Folder, error) {
 	if folderID == 0 {
-		return &dashboards.Dashboard{UID: accesscontrol.GeneralFolderUID}, nil
+		return &folder.Folder{UID: accesscontrol.GeneralFolderUID, OrgID: a.user.GetOrgID()}, nil
 	}
-	folderQuery := &dashboards.GetDashboardQuery{ID: folderID, OrgID: a.user.GetOrgID()}
-	folderQueryResult, err := a.dashboardService.GetDashboard(a.ctx, folderQuery)
+	folderQuery := &folder.GetFolderQuery{ID: &folderID, OrgID: a.user.GetOrgID(), SignedInUser: a.user}
+	folderQueryResult, err := a.folderService.Get(a.ctx, folderQuery)
 	if err != nil {
 		return nil, err
 	}
