@@ -546,6 +546,11 @@ export class LokiDatasource
     if (!res.data && res.values) {
       return res.values ?? [];
     }
+
+    // detected_fields has a different return structure then other metadata responses
+    if (!res.data && res.fields) {
+      return res.fields ?? [];
+    }
     return res.data ?? [];
   }
 
