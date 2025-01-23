@@ -248,8 +248,12 @@ function getElements(state: DashboardSceneState) {
       const elementSpec: LibraryPanelKind = {
         kind: 'LibraryPanel',
         spec: {
-          name: behavior.state.name,
-          uid: behavior.state.uid,
+          id: getPanelIdForVizPanel(vizPanel),
+          title: vizPanel.state.title,
+          libraryPanel: {
+            uid: behavior.state.uid,
+            name: behavior.state.name,
+          },
         },
       };
       return elementSpec;
@@ -432,14 +436,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 }
 
 function createElements(panels: Element[]): Record<string, Element> {
-  const elements: Record<string, Element> = {};
-
-  for (const panel of panels) {
-    const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
-    elements[key] = panel;
-  }
-
-  return elements;
+  return panels.reduce<Record<string, Element>>((elements, panel) => {
+    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    return elements;
+  }, {});
 }
 
 function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {
