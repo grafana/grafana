@@ -178,10 +178,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             }),
             new SceneGridRow({
               title: 'Test Row',
-              y: 11,
+              y: 10,
               $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
               children: [
                 new DashboardGridItem({
+                  y: 11,
                   body: new VizPanel({
                     key: 'panel-2',
                     pluginId: 'graph',

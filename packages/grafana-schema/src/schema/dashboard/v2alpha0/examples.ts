@@ -276,7 +276,7 @@ export const handyTestingSchema: DashboardV2Spec = {
               kind: 'ElementReference',
               name: 'panel-2',
             },
-            height: 100,
+            height: 10,
             width: 200,
             x: 0,
             y: 2,
@@ -285,8 +285,8 @@ export const handyTestingSchema: DashboardV2Spec = {
         {
           kind: 'GridLayoutRow',
           spec: {
-            y: 10,
-            collapsed: true,
+            y: 20,
+            collapsed: false,
             title: 'Row 1',
             repeat: 'customVar',
             elements: [
