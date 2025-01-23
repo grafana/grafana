@@ -256,14 +256,24 @@ The system creates a session when a user signs in to Grafana from a new device, 
 
 When a user reaches the session limit, the fourth connection succeeds and the longest inactive session is signed out.
 
-### Request usage billing
-
-You can request Grafana Labs to activate usage billing which allows an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits or display warning banners. Instead, you are charged for active users that exceed the limit, according to your customer contract.
-
-Usage billing involves a contractual agreement between you and Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license token]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license" >}}).
-
 ### Request a change to your license
 
 To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana.
 
 For instructions about how to activate your license after it is updated, refer to [Activate an Enterprise license]({{< relref "#activate-an-enterprise-license" >}}).
+
+## Usage billing
+
+Standard Grafana Enterprise licenses include a certain number of seats that can be used, and prevent more users logging into Grafana than have been licensed. This makes sense if you prefer a predictable bill. It can however be a problem if you anticipate uneven usage patterns over time or when it's critical that no user ever be prevented from logging into Grafana due to capacity constraints.
+
+For those use-cases we support usage-based billing, where your license includes a certain number of included users and you are billed on a monthly basis for any excess active users during the month.
+
+Usage billing involves a contractual agreement between you and Grafana Labs and an update to your license, and it is only available if Grafana Enterprise version 10.0.0 or higher is configured to [automatically refresh its license token]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license" >}}).
+
+### User deduplication
+
+If your organization has multiple Grafana Enterprise instances with usage billing enabled, then each active user counts only once toward your license, regardless of how many instances that user signs into. Each Grafana Enterprise instance submits a hashed list of users to Grafana Labs via API every day. Each user email address or anonymous device ID is hashed using a one-way sha256 algorithm, and submitted to Grafana where the hashed users are deduplicated across instances.
+
+### Request usage billing
+
+To request usage billing, contact your Grafana Labs account team or [submit a support ticket](https://grafana.com/profile/org#support).
