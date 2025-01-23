@@ -11,6 +11,9 @@ export function getPublicOrAbsoluteUrl(v: string): string {
   if (!v) {
     return '';
   }
+  if (v.startsWith('data:image/')) {
+    return v;
+  }
   return v.indexOf(':/') > 0 ? v : window.__grafana_public_path__ + v;
 }
 
