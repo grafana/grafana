@@ -21,6 +21,7 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: advisorv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     advisorapp.GetKinds(),
+		Authorizer:       advisorapp.GetAuthorizer(),
 		CustomConfig:     any(checkRegistry),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, advisorapp.New)

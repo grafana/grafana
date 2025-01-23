@@ -1532,8 +1532,8 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.262.0 h1:R2DV6lwBQE5zaogxX3PorD9Seo8CXA8YuStf84oqwkk=
 github.com/grafana/grafana-plugin-sdk-go v0.262.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
-github.com/grafana/grafana/apps/advisor v0.0.0-20250121115006-c1eac9f9973f h1:c8IkbxPvM6+lscVOLgtbt8Gnro4Liltd+E2eqkoAeZA=
-github.com/grafana/grafana/apps/advisor v0.0.0-20250121115006-c1eac9f9973f/go.mod h1:goSDiy3jtC2cp8wjpPZdUHRENcoSUHae1/Px/MDfddA=
+github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173 h1:uOM89HiWVVOTls0LrD4coHTckb2lA4U0sIJwCYdbhbw=
+github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173/go.mod h1:goSDiy3jtC2cp8wjpPZdUHRENcoSUHae1/Px/MDfddA=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d h1:NRVOtiG1aUwOazBj9KM7X2o2shsM6TchqisezzoH1gw=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d/go.mod h1:AvleS6icyPmcBjihtx5jYEvdzLmHGBp66NuE0AMR57A=
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d h1:oNc/aDfDucQxLbRZK25yz3Cwc+dGo1C0Xmm2LaliWUQ=
