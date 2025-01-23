@@ -4,20 +4,25 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
 	GROUP      = "dashboard.grafana.app"
 	VERSION    = runtime.APIVersionInternal
 	APIVERSION = GROUP + "/" + VERSION
+
+	// Resource constants
+	DASHBOARD_RESOURCE     = "dashboards"
+	LIBRARY_PANEL_RESOURCE = "librarypanels"
 )
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"dashboards", "dashboard", "Dashboard",
+	DASHBOARD_RESOURCE, "dashboard", "Dashboard",
 	func() runtime.Object { return &Dashboard{} },
 	func() runtime.Object { return &DashboardList{} },
 	utils.TableColumns{
@@ -43,7 +48,7 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 )
 
 var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"librarypanels", "librarypanel", "LibraryPanel",
+	LIBRARY_PANEL_RESOURCE, "librarypanel", "LibraryPanel",
 	func() runtime.Object { return &LibraryPanel{} },
 	func() runtime.Object { return &LibraryPanelList{} },
 	utils.TableColumns{
