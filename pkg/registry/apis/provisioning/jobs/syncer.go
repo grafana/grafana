@@ -122,6 +122,8 @@ func (r *Syncer) Sync(ctx context.Context, force bool) (string, error) {
 
 func (r *Syncer) cleanUnnecessaryResources(ctx context.Context, tree []repository.FileTreeEntry) error {
 	paths := make(map[string]bool)
+	// Add root path
+	paths[""] = true
 	for _, entry := range tree {
 		paths[entry.Path] = true
 	}
@@ -137,14 +139,16 @@ func (r *Syncer) cleanUnnecessaryResources(ctx context.Context, tree []repositor
 
 	var count int
 	for _, i := range list.Items {
-		if _, ok := paths[i.Path]; !ok {
-			count++
-			if err := r.deleteListResource(ctx, i); err != nil {
-				return fmt.Errorf("delete list resource: %w", err)
-			}
-
-			logger.Info("deleted resource not present in repository", "resource", i)
+		if _, ok := paths[i.Path]; ok {
+			continue
 		}
+
+		if err := r.deleteListResource(ctx, i); err != nil {
+			return fmt.Errorf("delete list resource: %w", err)
+		}
+
+		count++
+		logger.Info("deleted resource not present in repository", "resource", i)
 	}
 
 	if count == 0 {
