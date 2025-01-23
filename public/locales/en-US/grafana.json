@@ -516,8 +516,14 @@
     },
     "rule-view": {
       "query": {
-        "datasources-na": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
-        "error": "Error loading query results"
+        "datasources-na": {
+          "description": "Cannot display the query preview. Some of the data sources used in the queries are not available.",
+          "title": "Query not available"
+        },
+        "error": {
+          "description": "Error loading query results",
+          "title": "Error"
+        }
       }
     },
     "rule-viewer": {

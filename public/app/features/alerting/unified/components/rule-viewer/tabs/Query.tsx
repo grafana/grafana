@@ -4,7 +4,7 @@ import { useObservable } from 'react-use';
 import { LoadingState, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
@@ -50,8 +50,8 @@ const QueryResults = ({ rule }: Props) => {
 
   if (isError(data)) {
     return (
-      <Alert title="Error" severity="error">
-        <Trans i18nKey="alerting.rule-view.query.error">Error loading query results</Trans>
+      <Alert title={t('alerting.rule-view.query.error.title', 'Error')} severity="error">
+        <Trans i18nKey="alerting.rule-view.query.error.description">Error loading query results</Trans>
       </Alert>
     );
   }
@@ -89,8 +89,8 @@ const QueryResults = ({ rule }: Props) => {
             </Stack>
           )}
           {!isFederatedRule && !allDataSourcesAvailable && (
-            <Alert title="Query not available" severity="warning">
-              <Trans i18nKey="alerting.rule-view.query.datasources-na">
+            <Alert title={t('alerting.rule-view.query.datasources-na.title', 'Query not available')} severity="warning">
+              <Trans i18nKey="alerting.rule-view.query.datasources-na.description">
                 Cannot display the query preview. Some of the data sources used in the queries are not available.
               </Trans>
             </Alert>
