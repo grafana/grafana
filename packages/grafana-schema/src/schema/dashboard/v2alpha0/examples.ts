@@ -231,8 +231,8 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
         description: 'Test Description',
         links: [],
-        title: 'Test Panel 2',
-        id: 2,
+        title: 'Test Panel 3',
+        id: 3,
         vizConfig: {
           kind: 'timeseries',
           spec: {
