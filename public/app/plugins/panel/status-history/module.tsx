@@ -1,5 +1,5 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
@@ -42,6 +42,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         });
 
       commonOptionsBuilder.addHideFrom(builder);
+      commonOptionsBuilder.addAxisPlacement(
+        builder,
+        (placement) => placement === AxisPlacement.Auto || placement === AxisPlacement.Hidden
+      );
+      commonOptionsBuilder.addAxisWidth(builder);
     },
   })
   .setPanelOptions((builder) => {
