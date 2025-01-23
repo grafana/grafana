@@ -42,7 +42,7 @@ export const HistoryHeader = () => {
   };
   return (
     <>
-      <Text element="h6">{t('nav.history-container.drawer-tittle', 'History')}</Text>
+      <Text element="h5">{t('nav.history-container.drawer-tittle', 'History')}</Text>
       <Box justifyContent={'center'} display={'flex'}>
         <IconButton
           id={DOCK_HISTORY_BUTTON_ID}
@@ -101,13 +101,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       justifyContent: 'space-between',
-      paddingBottom: theme.spacing(2),
-      height: TOP_BAR_LEVEL_HEIGHT,
-      minHeight: TOP_BAR_LEVEL_HEIGHT,
-      padding: theme.spacing(0, 2),
+      padding: theme.spacing(2, 2, 1, 2),
     }),
     historyDrawerContent: css({
-      padding: theme.spacing(2),
+      //padding: theme.spacing(2),
     }),
     dockedHistoryButton: css({
       display: 'none',

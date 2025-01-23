@@ -34,34 +34,38 @@ export function HistoryWrapper() {
     acc[key] = [...(acc[key] || []), entry];
     return acc;
   }, {});
-
+  const styles = useStyles2(getStyles);
   return (
     <Stack direction="column" alignItems="flex-start">
       <Box width="100%">
         {Object.keys(hist).map((entries, date) => {
           return (
             <Stack key={date} direction="column" gap={1}>
-              <Text color="secondary" variant="bodySmall">
-                {entries}
-              </Text>
-              {hist[entries].map((entry, index) => {
-                return (
-                  <HistoryEntryAppView
-                    key={index}
-                    entry={entry}
-                    isSelected={entry.time === selectedTime}
-                    onClick={() => !state.historyDocked && chrome.setHistoryOpen(false)}
-                  />
-                );
-              })}
+              <span className={styles.paddingLeft}>
+                <Text color="secondary">{entries}</Text>
+              </span>
+              <span key={date} className={styles.borderLeft}>
+                {hist[entries].map((entry, index) => {
+                  return (
+                    <HistoryEntryAppView
+                      key={index}
+                      entry={entry}
+                      isSelected={entry.time === selectedTime}
+                      onClick={() => !state.historyDocked && chrome.setHistoryOpen(false)}
+                    />
+                  );
+                })}
+              </span>
             </Stack>
           );
         })}
       </Box>
       {history.length > numItemsToShow && (
-        <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
-          {t('nav.history-wrapper.show-more', 'Show more')}
-        </Button>
+        <span className={styles.paddingLeft}>
+          <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
+            {t('nav.history-wrapper.show-more', 'Show more')}
+          </Button>
+        </span>
       )}
     </Stack>
   );
@@ -80,7 +84,9 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
   const expandedLabel = isExpanded
     ? t('nav.history-wrapper.collapse', 'Collapse')
     : t('nav.history-wrapper.expand', 'Expand');
-
+  const entryIconLabel = isExpanded
+    ? t('nav.history-wrapper.icon-selected', 'Selected Entry')
+    : t('nav.history-wrapper.icon-unselected', 'Normal Entry');
   const selectedViewTime =
     isSelected &&
     entry.views.find((entry) => {
@@ -89,18 +95,26 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Stack>
-        {views.length > 0 ? (
+      <Stack alignItems={'baseline'}>
+        <Stack direction="row">
+          {views.length > 0 ? (
+            <IconButton
+              name={isExpanded ? 'angle-down' : 'angle-right'}
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-label={expandedLabel}
+              className={styles.iconButton}
+            />
+          ) : (
+            <Space h={2} />
+          )}
           <IconButton
-            name={isExpanded ? 'angle-down' : 'angle-right'}
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={expandedLabel}
-            className={styles.iconButton}
+            size="sm"
+            name={isSelected ? 'circle-mono' : 'circle'}
+            onClick={() => {}}
+            aria-label={entryIconLabel}
+            className={styles.iconButtonCircle}
           />
-        ) : (
-          <Space h={2} />
-        )}
-
+        </Stack>
         <Card
           onClick={() => {
             store.setObject('CLICKING_HISTORY', true);
@@ -118,7 +132,9 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
                 </Text>
               ))}
             </div>
-            <Text color="secondary">{moment(time).format('h:mm A')}</Text>
+            <Text color="secondary" variant="bodySmall">
+              {moment(time).format('h:mm A')}
+            </Text>
             {sparklineData && (
               <Sparkline
                 theme={theme}
@@ -184,23 +200,51 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'none',
     }),
     iconButton: css({
-      margin: 0,
+      margin: theme.spacing(1, 0, 0, 0),
+    }),
+    iconButtonCircle: css({
+      margin: theme.spacing(1, 0, 0, 0),
+      color: theme.colors.primary.main,
     }),
     expanded: css({
       display: 'flex',
       flexDirection: 'column',
-      marginLeft: theme.spacing(5),
+      marginLeft: theme.spacing(6),
       gap: theme.spacing(1),
       position: 'relative',
       '&:before': {
         content: '""',
         position: 'absolute',
-        left: theme.spacing(-2),
+        left: 0,
         top: 0,
         height: '100%',
         width: '1px',
         background: theme.colors.border.weak,
       },
+    }),
+    borderLeft: css({
+      position: 'relative',
+      height: '100%',
+      width: '100%',
+      padding: theme.spacing(0, 2),
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        left: theme.spacing(6),
+        top: 0,
+        height: '100%',
+        width: '1px',
+        background: `repeating-linear-gradient(
+          to bottom,
+          ${theme.colors.border.strong},
+          ${theme.colors.border.strong} 2px,
+          transparent 2px,
+          transparent 4px
+        )`,
+      },
+    }),
+    paddingLeft: css({
+      paddingLeft: theme.spacing(2),
     }),
   };
 };
