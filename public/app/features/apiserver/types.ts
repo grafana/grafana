@@ -58,7 +58,7 @@ export const AnnoKeyDashboardIsNew = 'grafana.app/dashboard-is-new';
 export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 
 // labels
-export const DeprecatedInternaId = 'grafana.app/deprecatedInternalID';
+export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
 
 // Annotations provided by the API
 type GrafanaAnnotations = {
@@ -95,7 +95,7 @@ type GrafanaClientAnnotations = {
 
 // Labels
 type GrafanaLabels = {
-  [DeprecatedInternaId]?: number;
+  [DeprecatedInternalId]?: number;
 };
 
 export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {

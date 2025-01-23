@@ -9,7 +9,7 @@ import {
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
-  DeprecatedInternaId,
+  DeprecatedInternalId,
   Resource,
   ResourceClient,
   ResourceForCreate,
@@ -119,7 +119,7 @@ export class K8sDashboardV2API
     return {
       uid: v.metadata.name,
       version: parseInt(v.metadata.resourceVersion, 10) ?? 0,
-      id: v.metadata.labels?.[DeprecatedInternaId] ?? 0,
+      id: v.metadata.labels?.[DeprecatedInternalId] ?? 0,
       status: 'success',
       url,
       slug: '',
