@@ -480,6 +480,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
+				b.lister,
 				b.parsers,
 				b.identities,
 				b.tester,

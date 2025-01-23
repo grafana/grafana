@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,6 +17,9 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardsv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -24,24 +28,27 @@ import (
 type Syncer struct {
 	client     *resources.DynamicClient
 	parser     *resources.Parser
+	lister     resources.ResourceLister
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
 
 func NewSyncer(
 	repo repository.Repository,
+	lister resources.ResourceLister,
 	parser *resources.Parser,
 ) (*Syncer, error) {
 	dynamicClient := parser.Client()
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
 	})
 
 	return &Syncer{
 		parser:     parser,
 		client:     dynamicClient,
+		lister:     lister,
 		folders:    folders,
 		repository: repo,
 	}, nil
@@ -131,11 +138,75 @@ func (r *Syncer) Unsync(ctx context.Context) error {
 	case provisioning.UnsyncModeKeepAll:
 		logger.Info("keep all resources")
 	case provisioning.UnsyncModeRemoveAll:
-		return errors.New("remove all mode not implemented")
+		logger.Info("remove all resources")
+		if err := r.deleteAllResources(ctx); err != nil {
+			return fmt.Errorf("delete all resources: %w", err)
+		}
+
+		if cfg.Spec.Folder != "" {
+			if err := r.folders.Delete(ctx, cfg.Spec.Folder, metav1.DeleteOptions{}); err != nil {
+				return fmt.Errorf("delete configured folder: %w", err)
+			}
+			logger.Info("configured folder deleted", "folder", cfg.Spec.Folder)
+		}
 	case provisioning.UnsyncModeEmptyFolder:
-		return errors.New("empty folder mode not implemented")
+		logger.Info("empty folder")
+		return r.deleteAllResources(ctx)
 	default:
 		return fmt.Errorf("invalid unsync mode: %s", cfg.Spec.UnsyncMode)
+	}
+
+	return nil
+}
+
+func (r *Syncer) deleteAllResources(ctx context.Context) error {
+	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
+	if err != nil {
+		return fmt.Errorf("list resources to delete: %w", err)
+	}
+
+	// FIXME: this code should be simplified once unified storage folders support recursive deletion
+	// Sort by the following logic:
+	// - Put folders at the end so that we empty them first.
+	// - Sort folders by depth so that we remove the deepest first
+	sort.Slice(list.Items, func(i, j int) bool {
+		switch {
+		case list.Items[i].Group != folders.RESOURCE:
+			return true
+		case list.Items[j].Group != folders.RESOURCE:
+			return false
+		default:
+			return len(strings.Split(list.Items[i].Path, "/")) > len(strings.Split(list.Items[j].Path, "/"))
+		}
+	})
+
+	logger := logging.FromContext(ctx)
+	logger.Info("deleting resources", "count", len(list.Items))
+	for _, item := range list.Items {
+		// HACK: until we know how to get the version
+		var version string
+		switch item.Resource {
+		case folders.RESOURCE:
+			version = folders.VERSION
+		case dashboards.DASHBOARD_RESOURCE:
+			version = dashboardsv2alpha1.VERSION
+		default:
+			return fmt.Errorf("unknown resource api version: %s", item.Resource)
+		}
+
+		client := r.client.Resource(schema.GroupVersionResource{
+			Group:    item.Group,
+			Version:  version,
+			Resource: item.Resource,
+		})
+
+		logger := logger.With("group", item.Group, "resource", item.Resource, "name", item.Name, "version", version)
+		if err := client.Delete(ctx, item.Name, metav1.DeleteOptions{}); err != nil {
+			logger.Error("failed to delete resource", "error", err)
+			return fmt.Errorf("delete resource: %w", err)
+		}
+
+		logger.Info("resource deleted")
 	}
 
 	return nil
