@@ -1,12 +1,11 @@
-import { StandardEditorProps, OneClickMode, Action, VariableSuggestionsScope } from '@grafana/data';
+import { StandardEditorProps, Action, VariableSuggestionsScope } from '@grafana/data';
+import { ActionsInlineEditor } from 'app/features/actions/ActionsInlineEditor';
 import { CanvasElementOptions } from 'app/features/canvas/element';
-
-import { ActionsInlineEditor } from '../../../../../features/actions/ActionsInlineEditor';
 
 type Props = StandardEditorProps<Action[], CanvasElementOptions>;
 
 export function ActionsEditor({ value, onChange, item, context }: Props) {
-  const oneClickMode = item.settings?.oneClickMode;
+  const dataLinks = item.settings?.links || [];
 
   return (
     <ActionsInlineEditor
@@ -14,7 +13,7 @@ export function ActionsEditor({ value, onChange, item, context }: Props) {
       onChange={onChange}
       getSuggestions={() => (context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [])}
       data={[]}
-      showOneClick={oneClickMode === OneClickMode.Action}
+      dataLinks={dataLinks}
     />
   );
 }

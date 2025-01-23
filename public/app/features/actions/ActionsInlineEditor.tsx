@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { Action, DataFrame, GrafanaTheme2, defaultActionConfig, VariableSuggestion } from '@grafana/data';
+import { Action, DataFrame, GrafanaTheme2, defaultActionConfig, VariableSuggestion, DataLink } from '@grafana/data';
 import { Button } from '@grafana/ui/src/components/Button';
 import { Modal } from '@grafana/ui/src/components/Modal/Modal';
 import { useStyles2 } from '@grafana/ui/src/themes';
@@ -17,7 +17,7 @@ interface ActionsInlineEditorProps {
   onChange: (actions: Action[]) => void;
   data: DataFrame[];
   getSuggestions: () => VariableSuggestion[];
-  showOneClick?: boolean;
+  dataLinks?: DataLink[];
 }
 
 export const ActionsInlineEditor = ({
@@ -25,7 +25,7 @@ export const ActionsInlineEditor = ({
   onChange,
   data,
   getSuggestions,
-  showOneClick = false,
+  dataLinks,
 }: ActionsInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -50,6 +50,21 @@ export const ActionsInlineEditor = ({
         setIsNew(false);
       }
     }
+
+    if (action.oneClick === true) {
+      actionsSafe.forEach((action) => {
+        if (action.oneClick) {
+          action.oneClick = false;
+        }
+      });
+
+      dataLinks?.forEach((dataLink) => {
+        if (dataLink.oneClick) {
+          dataLink.oneClick = false;
+        }
+      });
+    }
+
     const update = cloneDeep(actionsSafe);
     update[index] = action;
     onChange(update);
@@ -93,24 +108,10 @@ export const ActionsInlineEditor = ({
 
   return (
     <div className={styles.container}>
-      {/* one-link placeholder */}
-      {showOneClick && actionsSafe.length > 0 && (
-        <div className={styles.oneClickOverlay}>
-          <span className={styles.oneClickSpan}>
-            <Trans i18nKey="actions-editor.inline.one-click-action">One-click action</Trans>
-          </span>
-        </div>
-      )}
-
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="sortable-actions" direction="vertical">
           {(provided) => (
-            <div
-              className={styles.wrapper}
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              style={{ paddingTop: showOneClick && actionsSafe.length > 0 ? '28px' : '0px' }}
-            >
+            <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
               {actionsSafe.map((action, idx) => {
                 const key = `${action.title}/${idx}`;
 

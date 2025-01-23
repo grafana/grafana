@@ -2,9 +2,11 @@ import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
 import { Action, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { Badge } from '@grafana/ui';
 import { Icon } from '@grafana/ui/src/components/Icon/Icon';
 import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
 import { useStyles2 } from '@grafana/ui/src/themes';
+import { t } from '@grafana/ui/src/utils/i18n';
 
 export interface ActionsListItemProps {
   index: number;
@@ -19,7 +21,7 @@ export interface ActionsListItemProps {
 
 export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: ActionsListItemProps) => {
   const styles = useStyles2(getActionListItemStyles);
-  const { title = '' } = action;
+  const { title = '', oneClick = false } = action;
 
   const hasTitle = title.trim() !== '';
 
@@ -38,6 +40,13 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
             </div>
           </div>
           <div className={styles.icons}>
+            {oneClick && (
+              <Badge
+                color="blue"
+                text={t('grafana-ui.data-links-inline-editor.one-click', 'One click')}
+                tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
+              />
+            )}
             <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action" />
             <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove action" />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>

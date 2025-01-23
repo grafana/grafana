@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { Action, DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Trans } from '../../../utils/i18n';
@@ -18,7 +18,7 @@ interface DataLinksInlineEditorProps {
   onChange: (links: DataLink[]) => void;
   getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
-  showOneClick?: boolean;
+  actions?: Action[];
 }
 
 export const DataLinksInlineEditor = ({
@@ -26,7 +26,7 @@ export const DataLinksInlineEditor = ({
   onChange,
   getSuggestions,
   data,
-  showOneClick = false,
+  actions,
 }: DataLinksInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -56,6 +56,12 @@ export const DataLinksInlineEditor = ({
       linksSafe.forEach((link) => {
         if (link.oneClick) {
           link.oneClick = false;
+        }
+      });
+
+      actions?.forEach((action) => {
+        if (action.oneClick) {
+          action.oneClick = false;
         }
       });
     }
@@ -102,24 +108,10 @@ export const DataLinksInlineEditor = ({
 
   return (
     <div className={styles.container}>
-      {/* one-link placeholder */}
-      {showOneClick && linksSafe.length > 0 && (
-        <div className={styles.oneClickOverlay}>
-          <span className={styles.oneClickSpan}>
-            <Trans i18nKey="grafana-ui.data-links-inline-editor.one-click-link">One-click link</Trans>
-          </span>
-        </div>
-      )}
-
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="sortable-links" direction="vertical">
           {(provided) => (
-            <div
-              className={styles.wrapper}
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              style={{ paddingTop: showOneClick && linksSafe.length > 0 ? '28px' : '0px' }}
-            >
+            <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
               {linksSafe.map((link, idx) => {
                 const key = `${link.title}/${idx}`;
                 return (
