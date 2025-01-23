@@ -190,8 +190,8 @@ function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse, range
     if (timeFieldIndex >= 0) {
       const timeField = frame.fields[timeFieldIndex];
       removeDuplicateTimeFieldValues(frame, timeField);
-      removeValuesOutsideOfRange(frame, timeField, range);
       sortDataFrame(frame, timeFieldIndex);
+      removeValuesOutsideOfRange(frame, timeField, range);
     }
   });
 
@@ -201,15 +201,22 @@ function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse, range
 
 function removeValuesOutsideOfRange(accFrame: DataFrame, timeField: Field, range: TimeRange) {
   const outsideOfRange = timeField.values.reduce((acc: number[], value, index) => {
-    if (value > range.to.valueOf() || value < range.from.valueOf()) {
+    if (value >= range.to.valueOf() || value <= range.from.valueOf()) {
       acc.push(index);
     }
     return acc;
   }, []);
 
-  accFrame.fields.forEach((field) => {
-    field.values = field.values.filter((_, index) => !outsideOfRange.includes(index));
-  });
+  if (outsideOfRange.length > 0) {
+    outsideOfRange
+      .sort()
+      .reverse()
+      .forEach((index) => {
+        accFrame.fields.forEach((field) => {
+          field.values.splice(index, 1);
+        });
+      });
+  }
 }
 
 function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeField: Field) {
