@@ -278,23 +278,23 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
 
   // iterate over panels
   for (const p of panels) {
-    let elementName;
+    const elementName = p.id!.toString();
 
     // LibraryPanelKind
     if (p.libraryPanel) {
-      elementName = p.libraryPanel.uid;
-
       elements[elementName] = {
         kind: 'LibraryPanel',
         spec: {
-          uid: p.libraryPanel.uid,
-          name: p.libraryPanel.name,
+          libraryPanel: {
+            uid: p.libraryPanel.uid,
+            name: p.libraryPanel.name,
+          },
+          id: p.id!,
+          title: p.title ?? '',
         },
       };
       // PanelKind
     } else {
-      elementName = p.id!.toString();
-
       // FIXME: for now we should skip row panels
       if (p.type === 'row') {
         continue;
@@ -826,12 +826,12 @@ function getPanelsV1(
     } else if (p.kind === 'LibraryPanel') {
       const panel = p.spec;
       return {
-        id: 0, //TODO: LibraryPanelSpec.id will be available after https://github.com/grafana/grafana/pull/99281/ is merged
-        title: panel.name,
+        id: panel.id,
+        title: panel.title,
         gridPos,
         libraryPanel: {
-          uid: panel.uid,
-          name: panel.name,
+          uid: panel.libraryPanel.uid,
+          name: panel.libraryPanel.name,
         },
       };
     } else {
