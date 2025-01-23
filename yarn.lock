@@ -3488,7 +3488,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:^0.12.0":
+"@grafana/llm@npm:0.12.0":
   version: 0.12.0
   resolution: "@grafana/llm@npm:0.12.0"
   dependencies:
@@ -3583,7 +3583,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.9.3, @grafana/plugin-ui@npm:^0.9.6":
+"@grafana/plugin-ui@npm:0.9.6, @grafana/plugin-ui@npm:^0.9.3, @grafana/plugin-ui@npm:^0.9.6":
   version: 0.9.6
   resolution: "@grafana/plugin-ui@npm:0.9.6"
   dependencies:
@@ -3623,8 +3623,8 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/faro-web-sdk": "npm:1.12.3"
-    "@grafana/llm": "npm:^0.12.0"
-    "@grafana/plugin-ui": "npm:^0.9.6"
+    "@grafana/llm": "npm:0.12.0"
+    "@grafana/plugin-ui": "npm:0.9.6"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
