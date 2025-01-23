@@ -75,6 +75,13 @@ type JobSpec struct {
 
 	// Required when the action is `export`
 	Export *ExportOptions `json:"export,omitempty"`
+	// Required when the action is `sync`
+	Sync *SyncOptions `json:"sync,omitempty"`
+}
+
+type SyncOptions struct {
+	// Force forces the sync to overwrite
+	Force bool `json:"force,omitempty"`
 }
 
 type ExportOptions struct {

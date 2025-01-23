@@ -201,6 +201,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/sync`,
           method: 'POST',
+          body: queryArg.body,
         }),
         invalidatesTags: ['Repository'],
       }),
@@ -362,6 +363,9 @@ export type ReplaceRepositoryStatusArg = {
 export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
   name: string;
+  body: {
+    force?: boolean;
+  };
 };
 export type CreateRepositoryTestResponse = TestResults;
 export type CreateRepositoryTestArg = {
@@ -435,9 +439,13 @@ export type ExportOptions = {
   history?: boolean;
   prefix?: string;
 };
+export type SyncOptions = {
+  force?: boolean;
+};
 export type JobSpec = {
   action: 'export' | 'pr' | 'sync';
   export?: ExportOptions;
+  sync?: SyncOptions;
   hash?: string;
   pr?: number;
   ref?: string;

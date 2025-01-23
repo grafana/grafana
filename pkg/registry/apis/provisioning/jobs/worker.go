@@ -108,8 +108,13 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			return nil, fmt.Errorf("error creating replicator")
 		}
 
+		var force bool
+		if job.Spec.Sync != nil && job.Spec.Sync.Force {
+			force = job.Spec.Sync.Force
+		}
+
 		// Sync the repository
-		ref, syncError := syncer.Sync(ctx)
+		ref, syncError := syncer.Sync(ctx, force)
 		status = &provisioning.SyncStatus{
 			State:    provisioning.JobStateSuccess,
 			JobID:    job.GetName(),

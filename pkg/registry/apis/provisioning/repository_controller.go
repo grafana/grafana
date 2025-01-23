@@ -362,6 +362,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		Spec: provisioning.JobSpec{
 			Repository: cachedRepo.GetName(),
 			Action:     provisioning.JobActionSync,
+			Sync: &provisioning.SyncOptions{
+				// We force on configuration changes
+				Force: true,
+			},
 		},
 	})
 	if err != nil {
