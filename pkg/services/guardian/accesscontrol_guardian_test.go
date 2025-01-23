@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -976,7 +977,7 @@ func setupAccessControlGuardianTest(
 		userPermissions[orgID][p.Action] = append(userPermissions[orgID][p.Action], p.Scope)
 	}
 
-	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, d, &user.SignedInUser{OrgID: orgID, Permissions: userPermissions}, ac, fakeDashboardService)
+	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, d, &user.SignedInUser{OrgID: orgID, Permissions: userPermissions}, ac, fakeDashboardService, folderSvc, log.NewNopLogger())
 	require.NoError(t, err)
 	return g
 }
