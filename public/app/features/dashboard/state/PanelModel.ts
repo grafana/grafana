@@ -467,11 +467,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       this.callPanelTypeChangeHandler(plugin, prevPluginId, oldOptions, wasAngular);
     }
 
-    if (plugin.onPanelMigration) {
-      if (version !== this.pluginVersion) {
+    if (version !== this.pluginVersion) {
+      this.pluginVersion = version;
+      
+      if (plugin.onPanelMigration) {
         const newPanelOptions = plugin.onPanelMigration(this);
         this.options = await newPanelOptions;
-        this.pluginVersion = version;
       }
     }
 
