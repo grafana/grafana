@@ -7,7 +7,7 @@
       "metadata": {
         "name": "ABTestFeatureToggleA",
         "resourceVersion": "1736782112674",
-        "creationTimestamp": "2025-01-13T15:28:32Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -21,7 +21,7 @@
       "metadata": {
         "name": "ABTestFeatureToggleB",
         "resourceVersion": "1736782112674",
-        "creationTimestamp": "2025-01-13T15:28:32Z"
+        "creationTimestamp": "2025-01-13T21:13:13Z"
       },
       "spec": {
         "description": "Test feature toggle to see how cohorts could be set up AB testing",
@@ -277,7 +277,7 @@
       "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1737362059637",
-        "creationTimestamp": "2024-11-06T09:35:49Z",
+        "creationTimestamp": "2024-11-22T11:07:45Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-20 08:34:19.63725 +0000 UTC"
         }
@@ -294,7 +294,7 @@
       "metadata": {
         "name": "alertingPrometheusRulesPrimary",
         "resourceVersion": "1727332930692",
-        "creationTimestamp": "2024-09-09T13:56:47Z",
+        "creationTimestamp": "2024-09-27T12:27:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-26 06:42:10.692959 +0000 UTC"
         }
@@ -371,7 +371,7 @@
       "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1731923458730",
-        "creationTimestamp": "2024-11-18T09:06:02Z",
+        "creationTimestamp": "2024-11-18T10:59:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-18 09:50:58.730825 +0000 UTC"
         }
@@ -458,7 +458,7 @@
         "name": "appPlatformAccessTokens",
         "resourceVersion": "1725549369316",
         "creationTimestamp": "2024-09-05T16:18:44Z",
-        "deletionTimestamp": "2024-10-14T13:14:46Z"
+        "deletionTimestamp": "2024-10-14T10:47:18Z"
       },
       "spec": {
         "description": "Enables the use of access tokens for the App Platform",
@@ -472,7 +472,7 @@
       "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1728662061076",
-        "creationTimestamp": "2024-10-11T15:54:21Z"
+        "creationTimestamp": "2024-10-14T10:47:18Z"
       },
       "spec": {
         "description": "Enables the gRPC client to authenticate with the App Platform by using ID \u0026 access tokens",
@@ -608,7 +608,7 @@
         "name": "autoMigrateXYChartPanel",
         "resourceVersion": "1722537244598",
         "creationTimestamp": "2024-03-22T15:44:37Z",
-        "deletionTimestamp": "2024-11-14T01:17:06Z",
+        "deletionTimestamp": "2024-11-14T16:36:18Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
         }
@@ -684,7 +684,7 @@
       "metadata": {
         "name": "azureMonitorDisableLogLimit",
         "resourceVersion": "1727698096407",
-        "creationTimestamp": "2024-09-30T11:51:51Z",
+        "creationTimestamp": "2024-10-24T13:32:09Z",
         "deletionTimestamp": "2024-10-22T09:44:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-30 12:08:16.407109 +0000 UTC"
@@ -701,7 +701,7 @@
       "metadata": {
         "name": "azureMonitorEnableUserAuth",
         "resourceVersion": "1732189410576",
-        "creationTimestamp": "2024-11-21T11:42:29Z",
+        "creationTimestamp": "2024-11-27T14:01:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-21 11:43:30.576196 +0000 UTC"
         }
@@ -902,7 +902,7 @@
         "name": "cloudwatchMetricInsightsCrossAccount",
         "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
-        "deletionTimestamp": "2025-01-10T15:06:19Z",
+        "deletionTimestamp": "2025-01-10T22:23:23Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }
@@ -950,7 +950,7 @@
       "metadata": {
         "name": "crashDetection",
         "resourceVersion": "1730381712885",
-        "creationTimestamp": "2024-10-31T13:35:12Z"
+        "creationTimestamp": "2024-11-12T15:07:27Z"
       },
       "spec": {
         "description": "Enables browser crash detection reporting to Faro.",
@@ -963,7 +963,7 @@
       "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1729671312626",
-        "creationTimestamp": "2024-10-16T08:44:05Z",
+        "creationTimestamp": "2024-10-23T08:55:45Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-23 08:15:12.626632 +0000 UTC"
         }
@@ -997,7 +997,7 @@
         "name": "dashboardRestoreUI",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-25T14:43:13Z",
-        "deletionTimestamp": "2024-10-08T14:24:51Z",
+        "deletionTimestamp": "2024-10-11T08:29:58Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1064,8 +1064,8 @@
       "metadata": {
         "name": "dashboardSchemaV2",
         "resourceVersion": "1730192092473",
-        "creationTimestamp": "2024-10-29T08:54:52Z",
-        "deletionTimestamp": "2024-12-19T12:03:44Z"
+        "creationTimestamp": "2024-10-29T10:35:18Z",
+        "deletionTimestamp": "2024-12-19T12:28:20Z"
       },
       "spec": {
         "description": "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
@@ -1159,7 +1159,7 @@
       "metadata": {
         "name": "datasourceConnectionsTab",
         "resourceVersion": "1737049826022",
-        "creationTimestamp": "2025-01-16T17:36:09Z",
+        "creationTimestamp": "2025-01-21T17:39:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-16 17:50:26.022636488 +0000 UTC"
         }
@@ -1331,7 +1331,7 @@
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1733848475752",
-        "creationTimestamp": "2024-12-09T13:53:38Z",
+        "creationTimestamp": "2024-12-12T22:20:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-10 16:34:35.752111 +0000 UTC"
         }
@@ -1346,7 +1346,7 @@
       "metadata": {
         "name": "elasticsearchImprovedParsing",
         "resourceVersion": "1736808262603",
-        "creationTimestamp": "2025-01-13T20:32:35Z",
+        "creationTimestamp": "2025-01-15T17:05:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-13 22:44:22.603729 +0000 UTC"
         }
@@ -1374,7 +1374,7 @@
       "metadata": {
         "name": "enableExtensionsAdminPage",
         "resourceVersion": "1730819353237",
-        "creationTimestamp": "2024-11-05T09:18:42Z",
+        "creationTimestamp": "2024-11-05T15:55:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-05 15:09:13.237578 +0000 UTC"
         }
@@ -1404,7 +1404,7 @@
       "metadata": {
         "name": "enableSCIM",
         "resourceVersion": "1730980484343",
-        "creationTimestamp": "2024-11-07T11:54:44Z"
+        "creationTimestamp": "2024-11-07T14:38:46Z"
       },
       "spec": {
         "description": "Enables SCIM support for user and group management",
@@ -1416,7 +1416,7 @@
       "metadata": {
         "name": "enableScopesInMetricsExplore",
         "resourceVersion": "1729765731452",
-        "creationTimestamp": "2024-10-24T10:28:51Z"
+        "creationTimestamp": "2024-11-06T13:11:33Z"
       },
       "spec": {
         "description": "Enables the scopes usage in Metrics Explore",
@@ -1501,7 +1501,7 @@
       "metadata": {
         "name": "exploreMetricsRelatedLogs",
         "resourceVersion": "1730125602673",
-        "creationTimestamp": "2024-10-28T14:26:42Z"
+        "creationTimestamp": "2024-11-05T16:28:43Z"
       },
       "spec": {
         "description": "Display Related Logs in Explore Metrics",
@@ -1635,7 +1635,7 @@
       "metadata": {
         "name": "feedbackButton",
         "resourceVersion": "1733158016122",
-        "creationTimestamp": "2024-12-02T16:46:56Z"
+        "creationTimestamp": "2024-12-02T17:08:15Z"
       },
       "spec": {
         "description": "Enables a button to send feedback from the Grafana UI",
@@ -1734,7 +1734,8 @@
       "metadata": {
         "name": "grafanaAPIServerTestingWithExperimentalAPIs",
         "resourceVersion": "1727945615419",
-        "creationTimestamp": "2024-10-03T08:53:35Z"
+        "creationTimestamp": "2024-10-03T10:11:40Z",
+        "deletionTimestamp": "2025-01-22T20:53:53Z"
       },
       "spec": {
         "description": "Facilitate integration testing of experimental APIs",
@@ -1763,7 +1764,7 @@
       "metadata": {
         "name": "grafanaAdvisor",
         "resourceVersion": "1737365459765",
-        "creationTimestamp": "2025-01-20T09:30:59Z"
+        "creationTimestamp": "2025-01-20T10:08:00Z"
       },
       "spec": {
         "description": "Enables Advisor app",
@@ -1897,7 +1898,7 @@
       "metadata": {
         "name": "improvedExternalSessionHandlingSAML",
         "resourceVersion": "1737370880023",
-        "creationTimestamp": "2025-01-09T16:33:07Z",
+        "creationTimestamp": "2025-01-09T17:02:49Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-20 11:01:20.02358 +0000 UTC"
         }
@@ -1973,7 +1974,7 @@
       "metadata": {
         "name": "investigationsBackend",
         "resourceVersion": "1734447689720",
-        "creationTimestamp": "2024-12-17T15:01:29Z"
+        "creationTimestamp": "2024-12-18T08:31:03Z"
       },
       "spec": {
         "description": "Enable the investigations backend API",
@@ -2000,7 +2001,7 @@
       "metadata": {
         "name": "jaegerBackendMigration",
         "resourceVersion": "1731599633815",
-        "creationTimestamp": "2024-11-14T15:53:53Z"
+        "creationTimestamp": "2024-11-15T14:40:20Z"
       },
       "spec": {
         "description": "Enables querying the Jaeger data source without the proxy",
@@ -2026,7 +2027,7 @@
       "metadata": {
         "name": "k8SFolderCounts",
         "resourceVersion": "1735294794086",
-        "creationTimestamp": "2024-12-27T10:19:54Z"
+        "creationTimestamp": "2024-12-27T17:10:44Z"
       },
       "spec": {
         "description": "Enable folder's api server counts",
@@ -2039,7 +2040,7 @@
       "metadata": {
         "name": "k8SFolderMove",
         "resourceVersion": "1735294794086",
-        "creationTimestamp": "2024-12-27T10:19:54Z"
+        "creationTimestamp": "2024-12-27T17:10:44Z"
       },
       "spec": {
         "description": "Enable folder's api server move",
@@ -2081,7 +2082,7 @@
       "metadata": {
         "name": "kubernetesCliDashboards",
         "resourceVersion": "1733520389522",
-        "creationTimestamp": "2024-12-06T21:26:29Z"
+        "creationTimestamp": "2024-12-13T22:55:43Z"
       },
       "spec": {
         "description": "Use the k8s client to retrieve dashboards internally",
@@ -2121,6 +2122,7 @@
         "name": "kubernetesFolders",
         "resourceVersion": "1725863636605",
         "creationTimestamp": "2024-09-10T09:22:08Z",
+        "deletionTimestamp": "2025-01-22T20:49:15Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-09 06:33:56.605329 +0000 UTC"
         }
@@ -2135,7 +2137,7 @@
       "metadata": {
         "name": "kubernetesFoldersServiceV2",
         "resourceVersion": "1735336477446",
-        "creationTimestamp": "2024-12-27T21:54:37Z"
+        "creationTimestamp": "2025-01-13T21:15:35Z"
       },
       "spec": {
         "description": "Use the Folders Service V2, and route Folder Service requests to k8s",
@@ -2165,7 +2167,7 @@
       "metadata": {
         "name": "kubernetesRestore",
         "resourceVersion": "1735880498698",
-        "creationTimestamp": "2025-01-03T05:01:38Z"
+        "creationTimestamp": "2025-01-03T14:48:47Z"
       },
       "spec": {
         "description": "Allow restoring objects in k8s",
@@ -2219,7 +2221,7 @@
       "metadata": {
         "name": "logQLScope",
         "resourceVersion": "1730842404843",
-        "creationTimestamp": "2024-11-05T21:33:24Z"
+        "creationTimestamp": "2024-11-11T11:53:24Z"
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into loki queries.",
@@ -2338,7 +2340,7 @@
       "metadata": {
         "name": "lokiLabelNamesQueryApi",
         "resourceVersion": "1734096677730",
-        "creationTimestamp": "2024-12-13T13:31:17Z"
+        "creationTimestamp": "2024-12-13T14:31:41Z"
       },
       "spec": {
         "description": "Defaults to using the Loki `/labels` API instead of `/series`",
@@ -2364,7 +2366,7 @@
         "name": "lokiMetricDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-04-13T13:07:08Z",
-        "deletionTimestamp": "2024-08-21T13:49:48Z",
+        "deletionTimestamp": "2024-11-26T16:32:17Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2469,7 +2471,7 @@
       "metadata": {
         "name": "lokiShardSplitting",
         "resourceVersion": "1729678036788",
-        "creationTimestamp": "2024-10-23T10:06:42Z",
+        "creationTimestamp": "2024-10-23T11:21:03Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-23 10:07:16.788828 +0000 UTC"
         }
@@ -2660,7 +2662,7 @@
         "name": "notificationBanner",
         "resourceVersion": "1727777007488",
         "creationTimestamp": "2024-05-13T09:32:34Z",
-        "deletionTimestamp": "2025-01-10T06:02:47Z",
+        "deletionTimestamp": "2025-01-10T10:18:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-10-01 10:03:27.48823 +0000 UTC"
         }
@@ -2706,8 +2708,8 @@
       "metadata": {
         "name": "onPremToCloudMigrationsAlerts",
         "resourceVersion": "1728048163201",
-        "creationTimestamp": "2024-10-04T13:22:43Z",
-        "deletionTimestamp": "2024-12-02T13:37:41Z"
+        "creationTimestamp": "2024-10-07T10:53:24Z",
+        "deletionTimestamp": "2024-12-17T11:56:18Z"
       },
       "spec": {
         "description": "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
@@ -2719,7 +2721,7 @@
       "metadata": {
         "name": "onPremToCloudMigrationsAuthApiMig",
         "resourceVersion": "1732033809064",
-        "creationTimestamp": "2024-11-19T16:30:09Z"
+        "creationTimestamp": "2024-11-21T18:46:06Z"
       },
       "spec": {
         "description": "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
@@ -2795,7 +2797,7 @@
         "name": "panelTitleSearchInV1",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-10-13T12:04:24Z",
-        "deletionTimestamp": "2025-01-20T20:07:05Z"
+        "deletionTimestamp": "2025-01-21T09:59:32Z"
       },
       "spec": {
         "description": "Enable searching for dashboards using panel title in search v1",
@@ -2809,7 +2811,7 @@
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
         "creationTimestamp": "2024-06-20T15:49:19Z",
-        "deletionTimestamp": "2024-10-14T10:53:41Z"
+        "deletionTimestamp": "2024-10-25T12:56:54Z"
       },
       "spec": {
         "description": "Enables the passing of scopes to dashboards fetching in Grafana",
@@ -2823,7 +2825,7 @@
       "metadata": {
         "name": "passwordlessMagicLinkAuthentication",
         "resourceVersion": "1730232874003",
-        "creationTimestamp": "2024-10-29T20:14:34Z"
+        "creationTimestamp": "2024-11-14T13:50:55Z"
       },
       "spec": {
         "description": "Enable passwordless login via magic link authentication",
@@ -2877,7 +2879,7 @@
       "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1734463170112",
-        "creationTimestamp": "2024-11-01T12:08:30Z",
+        "creationTimestamp": "2024-12-20T03:09:31Z",
         "deletionTimestamp": "2024-12-19T19:17:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-17 19:19:30.112629 +0000 UTC"
@@ -2966,7 +2968,7 @@
       "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1727785264632",
-        "creationTimestamp": "2024-10-01T12:21:04Z"
+        "creationTimestamp": "2024-10-04T12:55:09Z"
       },
       "spec": {
         "description": "Enables SRI checks for plugin assets",
@@ -2978,7 +2980,7 @@
       "metadata": {
         "name": "preinstallAutoUpdate",
         "resourceVersion": "1731581146864",
-        "creationTimestamp": "2024-11-06T14:45:43Z",
+        "creationTimestamp": "2024-11-07T12:14:25Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-14 10:45:46.864585 +0000 UTC"
         }
@@ -3058,7 +3060,7 @@
         "name": "prometheusConfigOverhaulAuth",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-07-26T16:09:53Z",
-        "deletionTimestamp": "2025-01-02T20:43:41Z",
+        "deletionTimestamp": "2025-01-02T21:19:11Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3107,7 +3109,7 @@
         "name": "prometheusMetricEncyclopedia",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-07T18:41:05Z",
-        "deletionTimestamp": "2024-12-30T14:42:45Z",
+        "deletionTimestamp": "2024-12-30T21:16:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3156,7 +3158,7 @@
       "metadata": {
         "name": "prometheusSpecialCharsInLabelValues",
         "resourceVersion": "1735845919509",
-        "creationTimestamp": "2024-12-12T23:52:48Z",
+        "creationTimestamp": "2024-12-18T21:31:08Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
         }
@@ -3172,7 +3174,7 @@
       "metadata": {
         "name": "prometheusUsesCombobox",
         "resourceVersion": "1735845919509",
-        "creationTimestamp": "2024-09-12T11:19:18Z",
+        "creationTimestamp": "2024-10-23T11:18:33Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-02 19:25:19.509884 +0000 UTC"
         }
@@ -3187,7 +3189,7 @@
       "metadata": {
         "name": "provisioning",
         "resourceVersion": "1732265054297",
-        "creationTimestamp": "2024-11-22T08:44:14Z"
+        "creationTimestamp": "2024-11-22T09:03:50Z"
       },
       "spec": {
         "description": "Next generation provisioning... and git",
@@ -3201,7 +3203,7 @@
         "name": "publicDashboards",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-04-07T18:30:19Z",
-        "deletionTimestamp": "2024-11-15T16:38:53Z",
+        "deletionTimestamp": "2024-11-20T14:36:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3265,7 +3267,7 @@
       "metadata": {
         "name": "queryLibraryDashboards",
         "resourceVersion": "1736850377404",
-        "creationTimestamp": "2025-01-14T10:24:54Z",
+        "creationTimestamp": "2025-01-14T11:01:15Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-14 10:26:17.404592 +0000 UTC"
         }
@@ -3394,7 +3396,7 @@
       "metadata": {
         "name": "reloadDashboardsOnParamsChange",
         "resourceVersion": "1728903221522",
-        "creationTimestamp": "2024-10-14T10:53:41Z"
+        "creationTimestamp": "2024-10-25T12:56:54Z"
       },
       "spec": {
         "description": "Enables reload of dashboards on scopes, time range and variables changes",
@@ -3434,7 +3436,7 @@
       "metadata": {
         "name": "reportingUseRawTimeRange",
         "resourceVersion": "1735810729877",
-        "creationTimestamp": "2024-11-13T15:48:28Z",
+        "creationTimestamp": "2024-11-14T20:08:03Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-02 09:38:49.877519888 +0000 UTC"
         }
@@ -3450,7 +3452,7 @@
       "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1727337187819",
-        "creationTimestamp": "2024-09-26T07:53:07Z"
+        "creationTimestamp": "2024-09-26T12:51:38Z"
       },
       "spec": {
         "description": "Enables the new role picker drawer design",
@@ -3476,7 +3478,7 @@
       "metadata": {
         "name": "scopeApi",
         "resourceVersion": "1732690644377",
-        "creationTimestamp": "2024-11-27T06:57:24Z"
+        "creationTimestamp": "2024-11-27T07:58:25Z"
       },
       "spec": {
         "description": "In-development feature flag for the scope api using the app platform.",
@@ -3517,7 +3519,7 @@
         "name": "singleTopNav",
         "resourceVersion": "1732104041490",
         "creationTimestamp": "2024-08-29T08:48:32Z",
-        "deletionTimestamp": "2024-12-13T11:25:25Z",
+        "deletionTimestamp": "2024-12-17T13:32:38Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-11-20 12:00:41.490792 +0000 UTC"
         }
@@ -3560,7 +3562,7 @@
       "metadata": {
         "name": "sqlQuerybuilderFunctionParameters",
         "resourceVersion": "1718487716739",
-        "creationTimestamp": "2024-06-15T21:41:56Z"
+        "creationTimestamp": "2024-11-04T16:13:35Z"
       },
       "spec": {
         "description": "Enables SQL query builder function parameters",
@@ -3676,7 +3678,7 @@
       "metadata": {
         "name": "teamHttpHeadersMimir",
         "resourceVersion": "1736763800062",
-        "creationTimestamp": "2025-01-13T10:23:20Z"
+        "creationTimestamp": "2025-01-13T10:42:47Z"
       },
       "spec": {
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
@@ -3688,7 +3690,7 @@
       "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1728565214224",
-        "creationTimestamp": "2024-10-10T13:00:14Z"
+        "creationTimestamp": "2024-10-22T10:52:33Z"
       },
       "spec": {
         "description": "Enables time pickers sync",
@@ -3717,7 +3719,7 @@
         "name": "topnav",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-06-20T14:25:43Z",
-        "deletionTimestamp": "2024-10-15T15:00:51Z",
+        "deletionTimestamp": "2024-10-17T09:18:30Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3785,7 +3787,7 @@
       "metadata": {
         "name": "unifiedHistory",
         "resourceVersion": "1734085219453",
-        "creationTimestamp": "2024-12-13T10:20:19Z"
+        "creationTimestamp": "2024-12-13T10:41:18Z"
       },
       "spec": {
         "description": "Displays the navigation history so the user can navigate back to previous pages",
@@ -3845,7 +3847,7 @@
       "metadata": {
         "name": "unifiedStorageBigObjectsSupport",
         "resourceVersion": "1728994158474",
-        "creationTimestamp": "2024-10-15T12:09:18Z"
+        "creationTimestamp": "2024-10-17T10:18:29Z"
       },
       "spec": {
         "description": "Enables to save big objects in blob storage",
@@ -3857,7 +3859,7 @@
       "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1726771421439",
-        "creationTimestamp": "2024-09-19T18:43:41Z"
+        "creationTimestamp": "2024-09-30T19:46:14Z"
       },
       "spec": {
         "description": "Enable unified storage search",
@@ -3871,7 +3873,7 @@
       "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1726771421439",
-        "creationTimestamp": "2024-09-19T18:43:41Z",
+        "creationTimestamp": "2024-09-30T19:46:14Z",
         "deletionTimestamp": "2024-10-11T14:56:04Z"
       },
       "spec": {
@@ -3886,7 +3888,7 @@
       "metadata": {
         "name": "unifiedStorageSearchPermissionFiltering",
         "resourceVersion": "1737489629408",
-        "creationTimestamp": "2025-01-21T20:00:29Z"
+        "creationTimestamp": "2025-01-22T11:38:37Z"
       },
       "spec": {
         "description": "Enable permission filtering on unified storage search",
@@ -3900,7 +3902,7 @@
       "metadata": {
         "name": "unifiedStorageSearchSprinkles",
         "resourceVersion": "1734563607668",
-        "creationTimestamp": "2024-12-18T23:13:27Z"
+        "creationTimestamp": "2024-12-18T17:00:54Z"
       },
       "spec": {
         "description": "Enable sprinkles on unified storage search",
@@ -3914,7 +3916,7 @@
       "metadata": {
         "name": "unifiedStorageSearchUI",
         "resourceVersion": "1734563607668",
-        "creationTimestamp": "2024-12-10T21:28:55Z",
+        "creationTimestamp": "2024-12-19T18:21:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-18 23:13:27.66802 +0000 UTC"
         }
@@ -3960,7 +3962,7 @@
       "metadata": {
         "name": "useV2DashboardsAPI",
         "resourceVersion": "1732535420861",
-        "creationTimestamp": "2024-11-25T11:50:20Z"
+        "creationTimestamp": "2024-12-17T21:17:09Z"
       },
       "spec": {
         "description": "Use the v2 kubernetes API in the frontend for dashboards",
@@ -3973,7 +3975,7 @@
       "metadata": {
         "name": "userStorageAPI",
         "resourceVersion": "1736438999910",
-        "creationTimestamp": "2024-10-29T12:18:41Z",
+        "creationTimestamp": "2024-11-12T11:56:41Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-01-09 16:09:59.910083 +0000 UTC"
         }
@@ -4004,7 +4006,7 @@
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-27T10:22:13Z",
-        "deletionTimestamp": "2024-10-30T14:21:33Z"
+        "deletionTimestamp": "2024-10-30T16:12:03Z"
       },
       "spec": {
         "description": "Split panels between visualizations and widgets",
@@ -4043,7 +4045,7 @@
       "metadata": {
         "name": "zipkinBackendMigration",
         "resourceVersion": "1733846643829",
-        "creationTimestamp": "2024-11-06T15:39:38Z",
+        "creationTimestamp": "2024-11-07T09:35:53Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-10 16:04:03.82919 +0000 UTC"
         }
