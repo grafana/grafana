@@ -136,9 +136,13 @@ export class V2DashboardSerializer
   }
 
   getSaveAsModel(s: DashboardScene, options: SaveDashboardAsOptions) {
-    throw new Error('Method not implemented.');
-    // eslint-disable-next-line
-    return {} as DashboardV2Spec;
+    const saveModel = this.getSaveModel(s);
+    return {
+      ...saveModel,
+      title: options.title || '',
+      description: options.description || '',
+      tags: options.isNew || options.copyTags ? saveModel.tags : [],
+    };
   }
 
   getDashboardChangesFromScene(
