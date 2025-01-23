@@ -367,7 +367,7 @@
     "react-draggable": "4.4.6",
     "react-dropzone": "^14.2.3",
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
-    "react-highlight-words": "0.20.0",
+    "react-highlight-words": "0.21.0",
     "react-hook-form": "^7.49.2",
     "react-i18next": "^15.0.0",
     "react-inlinesvg": "4.1.5",

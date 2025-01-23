@@ -3572,7 +3572,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-highlight-words: "npm:0.20.0"
+    react-highlight-words: "npm:0.21.0"
     react-select: "npm:5.9.0"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
@@ -3895,7 +3895,7 @@ __metadata:
     react-custom-scrollbars-2: "npm:4.5.0"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.5"
-    react-highlight-words: "npm:0.20.0"
+    react-highlight-words: "npm:0.21.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^15.0.0"
     react-inlinesvg: "npm:4.1.5"
@@ -17603,7 +17603,7 @@ __metadata:
     react-draggable: "npm:4.4.6"
     react-dropzone: "npm:^14.2.3"
     react-grid-layout: "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch"
-    react-highlight-words: "npm:0.20.0"
+    react-highlight-words: "npm:0.21.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^15.0.0"
     react-inlinesvg: "npm:4.1.5"
@@ -25281,16 +25281,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-highlight-words@npm:0.20.0":
-  version: 0.20.0
-  resolution: "react-highlight-words@npm:0.20.0"
+"react-highlight-words@npm:0.21.0":
+  version: 0.21.0
+  resolution: "react-highlight-words@npm:0.21.0"
   dependencies:
     highlight-words-core: "npm:^1.2.0"
     memoize-one: "npm:^4.0.0"
-    prop-types: "npm:^15.5.8"
   peerDependencies:
-    react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: 10/5adf2cfb1f325ae51ea4dd2cb7522eb433b25534355868d1a3f4556b2b9f7a774c2a1aaa143abebb63a1b3a5590e70ba3d765942a47ff754a1a513cdc5b2f58b
+    react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
+  checksum: 10/5054e1d3f536bf672047cc22d954837289061754cd342c5439b153069fca6997890f44af4cf9154149f70844dc9cdbc18d5fd82b7458b430fc42b7f1c11a6bf2
   languageName: node
   linkType: hard
 

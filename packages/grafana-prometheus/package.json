@@ -64,7 +64,7 @@
     "monaco-promql": "1.7.4",
     "pluralize": "8.0.0",
     "prismjs": "1.29.0",
-    "react-highlight-words": "0.20.0",
+    "react-highlight-words": "0.21.0",
     "react-select": "5.9.0",
     "react-use": "17.6.0",
     "react-window": "1.8.11",
