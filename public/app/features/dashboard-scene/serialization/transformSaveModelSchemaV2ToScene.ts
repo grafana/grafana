@@ -1,4 +1,4 @@
-import { uniqueId } from 'lodash';
+import { get, uniqueId } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -292,6 +292,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
         behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat.value })];
       }
       return new SceneGridRow({
+        key: getVizPanelKeyForPanelId(element.spec.id),
         y: element.spec.y,
         isCollapsed: element.spec.collapsed,
         title: element.spec.title,
