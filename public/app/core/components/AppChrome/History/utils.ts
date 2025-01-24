@@ -4,45 +4,19 @@ export const getEntryPath = (url: string) => url.substring(0, url.indexOf('?') !
 export const getEntryQueryParams = (url: string) =>
   url.indexOf('?') !== -1 ? url.substring(url.indexOf('?')) : undefined;
 
-export const needHackyFixes = (newEntry: HistoryEntry, existingEntry?: HistoryEntry) => {
-  let needHackyFixes = false;
+export const hackyFixes = (newEntry: HistoryEntry, entries: HistoryEntry[]): HistoryEntry[] => {
+  const existingEntry = entries[0];
   const existingUrlPath = existingEntry && getEntryPath(existingEntry.url);
   const existingUrlQueryParams = existingEntry && getEntryQueryParams(existingEntry.url);
   const newUrlPath = getEntryPath(newEntry.url);
   const newUrlQueryParams = getEntryQueryParams(newEntry.url);
   const newUrlTitle = newEntry.name;
 
-  // Explore cases
-  if (newUrlPath.includes('/explore') && !newUrlQueryParams) {
-    needHackyFixes = true;
-  } else if (
-    newEntry.url.includes('/explore?') &&
-    newUrlQueryParams &&
-    existingUrlQueryParams?.includes(newUrlQueryParams)
-  ) {
-    needHackyFixes = true;
+  // Explore page without query params should return the entries without the new entry
+  if (newUrlPath.endsWith('/explore') && !newUrlQueryParams) {
+    entries = entries;
+  } else {
+    entries = [newEntry, ...entries];
   }
-
-  // Dashboard cases
-  else if (newUrlPath === '/dashboards' && newUrlTitle === 'Dashboards') {
-    needHackyFixes = false;
-  } else if (
-    newUrlPath.includes('\/d\/') &&
-    existingUrlPath &&
-    newUrlPath.includes(existingUrlPath) &&
-    existingUrlPath !== '/dashboards'
-  ) {
-    needHackyFixes = true;
-  }
-  // Frontend cases
-  else if (newEntry.url === '/a/grafana-kowalski-app') {
-    needHackyFixes = true;
-  }
-
-  // Dumplicated URL
-  else if (existingEntry && newUrlPath === existingUrlPath && newUrlQueryParams === existingUrlQueryParams) {
-    needHackyFixes = true;
-  }
-
-  return needHackyFixes;
+  return entries;
 };

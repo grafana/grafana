@@ -13,7 +13,7 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
-import { needHackyFixes } from './History/utils';
+import { hackyFixes } from './History/utils';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
 import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -175,7 +175,7 @@ export class AppChromeService {
     if (lastEntry && lastEntry.url === newEntry.url) {
       entries[0] = newEntry;
     } else {
-      entries = [newEntry, ...entries];
+      entries = hackyFixes(newEntry, entries);
     }
 
     return entries;
