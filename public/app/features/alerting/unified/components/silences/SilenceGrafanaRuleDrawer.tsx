@@ -1,8 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { Drawer, Stack } from '@grafana/ui';
 import { SilencesEditor } from 'app/features/alerting/unified/components/silences/SilencesEditor';
-import { getDefaultSilenceFormValues } from 'app/features/alerting/unified/components/silences/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -20,8 +19,6 @@ const SilenceGrafanaRuleDrawer = React.memo(
   ({ rulerRule, onClose }: Props) => {
     const { uid } = rulerRule.grafana_alert;
 
-    const formValues = useMemo(() => getDefaultSilenceFormValues(), []);
-
     return (
       <Drawer
         title="Silence alert rule"
@@ -33,7 +30,6 @@ const SilenceGrafanaRuleDrawer = React.memo(
           <AlertmanagerProvider accessType="instance">
             <SilencesEditor
               ruleUid={uid}
-              formValues={formValues}
               alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
               onSilenceCreated={onClose}
               onCancel={onClose}
