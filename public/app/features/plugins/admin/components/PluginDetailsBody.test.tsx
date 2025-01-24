@@ -99,4 +99,22 @@ describe('PluginDetailsBody', () => {
       });
     });
   });
+
+  it('should render data source connections tab content for installed data source plugin', async () => {
+    const plugin = getCatalogPluginMock({ type: PluginType.datasource });
+    config.featureToggles.datasourceConnectionsTab = true;
+    await act(async () => {
+      renderWithStore(
+        <PluginDetailsBody
+          plugin={plugin}
+          info={[]}
+          queryParams={{}}
+          pageId={PluginTabIds.DATASOURCE_CONNECTIONS}
+          showDetails={false}
+        />
+      );
+    });
+
+    expect(screen.getByText('No data sources defined')).toBeVisible();
+  });
 });

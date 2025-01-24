@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -179,7 +179,7 @@ export class V2DashboardSerializer
 
     if (this.initialSaveModel) {
       return {
-        schemaVersion: this.initialSaveModel.schemaVersion,
+        schemaVersion: 40,
         uid: s.state.uid,
         title: this.initialSaveModel.title,
         panels_count: panelPluginIds.length || 0,

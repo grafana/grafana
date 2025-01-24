@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=alpine:3.20
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.23.1-alpine
+ARG GO_IMAGE=golang:1.23.5-alpine
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -16,7 +16,6 @@ WORKDIR /tmp/grafana
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
-COPY plugins-bundled plugins-bundled
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
@@ -68,6 +67,7 @@ COPY pkg/semconv/go.* pkg/semconv/
 COPY pkg/aggregator/go.* pkg/aggregator/
 COPY apps/playlist/go.* apps/playlist/
 COPY apps/investigation/go.* apps/investigation/
+COPY apps/advisor/go.* apps/advisor/
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications/go.* apps/alerting/notifications/

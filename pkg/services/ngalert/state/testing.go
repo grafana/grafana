@@ -59,6 +59,17 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 }
 
 func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.recordedOps = append(f.recordedOps, FakeInstanceStoreOp{
+		Name: "SaveAlertInstancesForRule", Args: []any{
+			ctx,
+			key,
+			instances,
+		},
+	})
+
 	return nil
 }
 

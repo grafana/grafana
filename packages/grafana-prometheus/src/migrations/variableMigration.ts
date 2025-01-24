@@ -4,8 +4,7 @@ import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { PromVariableQuery, PromVariableQueryType as QueryType } from '../types';
 
 export const PrometheusLabelNamesRegex = /^label_names\(\)\s*$/;
-// Note that this regex is different from the one in metric_find_query.ts because this is used pre-interpolation
-export const PrometheusLabelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_$][a-zA-Z0-9_]*)\)\s*$/;
+export const PrometheusLabelValuesRegex = /^label_values\((?:(.+),\s*)?(.+)\)\s*$/;
 export const PrometheusMetricNamesRegex = /^metrics\((.+)\)\s*$/;
 export const PrometheusQueryResultRegex = /^query_result\((.+)\)\s*$/;
 export const PrometheusLabelNamesRegexWithMatch = /^label_names\((.+)\)\s*$/;
@@ -97,7 +96,7 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
   return queryBase;
 }
 
-// migrate it back to a string with the correct varialbes in place
+// migrate it back to a string with the correct variables in place
 export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVariableQuery): string {
   switch (QueryVariable.qryType) {
     case QueryType.LabelNames:

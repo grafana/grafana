@@ -126,7 +126,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
   ],
   "liveNow": true,
   "preload": true,
-  "schemaVersion": 40,
   "tags": [
     "tag1",
     "tag2",
@@ -305,7 +304,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
         "description": "A group by variable",
         "hide": "dontHide",
-        "includeAll": false,
         "label": "Group By Variable",
         "multi": false,
         "name": "groupByVar",

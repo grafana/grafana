@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import * as schema from '@grafana/schema';
 
+import { TableCellInspectorMode } from './TableCellInspector';
 import { TableStyles } from './styles';
 
 export {
@@ -33,6 +34,8 @@ export interface TableRow {
   [x: string]: any;
 }
 
+export type InspectCell = { value: any; mode: TableCellInspectorMode };
+
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
@@ -40,6 +43,7 @@ export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilte
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+export type TableInspectCellCallback = (state: InspectCell) => void;
 
 export interface TableSortByFieldState {
   displayName: string;
@@ -54,6 +58,7 @@ export interface TableCellProps extends CellProps<any> {
   innerWidth: number;
   frame: DataFrame;
   actions?: ActionModel[];
+  setInspectCell?: TableInspectCellCallback;
 }
 
 export type CellComponent = FC<TableCellProps>;
