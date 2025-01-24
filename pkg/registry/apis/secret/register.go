@@ -13,20 +13,15 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/common"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	legacyEncryption "github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
-	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -46,11 +41,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
-	dataKeyStorage secretstorage.DataKeyStorage,
 	tracer tracing.Tracer,
-	kmsProvidersService kmsproviders.Service,
-	enc legacyEncryption.Internal,
-	usageStats usagestats.Service,
 	secureValueStorage contracts.SecureValueStorage,
 	keeperStorage contracts.KeeperStorage,
 ) (*SecretAPIBuilder, error) {
@@ -60,15 +51,9 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	// TODO need to actually do something with the encryption manager, for now just make one
-	_, err := manager.NewEncryptionManager(tracer, dataKeyStorage, kmsProvidersService, enc, cfg, usageStats)
-	if err != nil {
-		return nil, fmt.Errorf("initializing encryption manager: %w", err)
-	}
-
-	apiBuilder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
-	apiregistration.RegisterAPI(apiBuilder)
-	return apiBuilder, nil
+	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
+	apiregistration.RegisterAPI(builder)
+	return builder, nil
 }
 
 // GetGroupVersion returns the tuple of `group` and `version` for the API which uniquely identifies it.
