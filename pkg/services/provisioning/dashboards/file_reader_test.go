@@ -117,6 +117,8 @@ func TestDashboardFileReader(t *testing.T) {
 			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{ID: 1}, nil).Once()
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 2}, nil).Times(2)
 
+			// TODO: need a folder service here
+
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, nil)
 			reader.dashboardProvisioningService = fakeService
 			require.NoError(t, err)
