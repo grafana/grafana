@@ -735,7 +735,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 		cfg, dashboardStore, folderStore,
 		features, acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(), folder.NewFakeStore(),
-		nil, nil, nil, nil, quotaService, nil,
+		nil, nil, nil, nil, quotaService, nil, nil,
 	)
 	require.NoError(t, err)
 	service.RegisterDashboardPermissions(dashPermissionService)
@@ -756,7 +756,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
 	fStore := folderimpl.ProvideStore(sc.sqlStore)
 	s := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
-		features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := identity.WithRequester(context.Background(), sc.user)
@@ -832,7 +832,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			cfg, dashStore, folderStore,
 			features, acmock.NewMockedPermissionsService(), ac,
 			folderSvc, folder.NewFakeStore(),
-			nil, nil, nil, nil, quotaService, nil,
+			nil, nil, nil, nil, quotaService, nil, nil,
 		)
 		require.NoError(t, err)
 		dashService.RegisterDashboardPermissions(dashPermissionService)
@@ -843,7 +843,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		fStore := folderimpl.ProvideStore(sqlStore)
 
 		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
-			features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+			features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac)
 		service := LibraryPanelService{
