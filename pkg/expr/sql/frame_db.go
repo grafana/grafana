@@ -1,8 +1,6 @@
 package sql
 
 import (
-	"strings"
-
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -77,8 +75,11 @@ type FramesDB struct {
 }
 
 func (db *FramesDB) GetTableInsensitive(_ *mysql.Context, tblName string) (mysql.Table, bool, error) {
-	// TODO actual found vs not found handling
-	return db.frames[strings.ToLower(tblName)], true, nil
+	tbl, ok := mysql.GetTableInsensitive(tblName, db.frames)
+	if !ok {
+		return nil, false, nil
+	}
+	return tbl, ok, nil
 }
 
 func (db *FramesDB) GetTableNames(_ *mysql.Context) ([]string, error) {
