@@ -372,7 +372,6 @@ func PermissionsForActions(actions []string, scope string) []Permission {
 
 func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {
 	return &user.SignedInUser{
-		UserID:  1,
 		OrgID:   orgID,
 		OrgRole: role,
 		Login:   "grafana_" + name,

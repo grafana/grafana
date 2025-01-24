@@ -11,14 +11,12 @@ import (
 	"sync"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/util"
@@ -150,24 +148,7 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, usageTracker *usageTracker) error {
-
-	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		Type:   claims.TypeServiceAccount,
-		UserID: 1,
-		OrgID:  1,
-		Name:   "dashboard-background",
-		Login:  "dashboard-background",
-		Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
-				{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
-			}),
-		},
-	})
+	ctx, _ = identity.WithServiceIdentitiy(ctx, fr.Cfg.OrgID)
 
 	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
@@ -199,24 +180,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderName = filepath.Base(dashboardsFolder)
 		}
 
-		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-			Type:   claims.TypeServiceAccount,
-			UserID: 1,
-			OrgID:  1,
-			Name:   "dashboard-background",
-			Login:  "dashboard-background",
-			Permissions: map[int64]map[string][]string{
-				1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
-					{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
-					{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
-					{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
-				}),
-			},
-		})
-
+		ctx, _ = identity.WithServiceIdentitiy(ctx, fr.Cfg.OrgID)
 		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("%w with name %q from file system structure: %w", ErrGetOrCreateFolder, folderName, err)
@@ -430,6 +394,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return f.ID, f.UID, nil
 	}
 
+	//nolint:staticcheck
 	return result.ID, result.UID, nil
 }
 
