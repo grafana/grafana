@@ -16,6 +16,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   colWidth?: number;
   /**
+   * Enables pagination when > 0
+   */
+  perPage?: number;
+  /**
    * Set the height of the rows
    */
   rowHeight: number;
@@ -27,6 +31,7 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
 
 export const defaultOptions: Partial<Options> = {
   colWidth: 0.9,
+  perPage: 20,
   rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
 };
