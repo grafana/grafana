@@ -96,7 +96,9 @@ func (o *StorageOptions) Validate() []error {
 	if o.BlobStoreURL != "" && o.StorageType != StorageTypeUnified {
 		errs = append(errs, fmt.Errorf("blob storage is only valid with unified storage"))
 	}
-	if o.StorageType == StorageTypeUnifiedGrpc {
+
+	// Validate grpc client with auth
+	if o.StorageType == StorageTypeUnifiedGrpc && o.GrpcClientAuthenticationToken != "" {
 		if o.GrpcClientAuthenticationToken == "" {
 			errs = append(errs, fmt.Errorf("grpc client auth token is required for unified-grpc storage"))
 		}
