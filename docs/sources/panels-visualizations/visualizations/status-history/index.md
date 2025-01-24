@@ -111,7 +111,7 @@ Controls whether values are rendered inside the value boxes. Auto will render va
 
 Controls the height of boxes. 1 = maximum space and 0 = minimum space.
 
-#### Page size (enable pagination)
+### Page size (enable pagination)
 
 The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series.
 
