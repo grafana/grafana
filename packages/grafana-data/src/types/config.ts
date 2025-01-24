@@ -237,7 +237,7 @@ export interface GrafanaConfig {
   listScopesEndpoint?: string;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset?: string;
-  ExploreHideLogsDownload?: boolean;
+  exploreHideLogsDownload?: boolean;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

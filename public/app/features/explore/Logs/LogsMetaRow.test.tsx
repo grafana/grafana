@@ -38,7 +38,7 @@ const setup = (propOverrides?: object, disableDownload = false) => {
     ...defaultProps,
     ...propOverrides,
   };
-  config.ExploreHideLogsDownload = disableDownload;
+  config.exploreHideLogsDownload = disableDownload;
 
   return render(<LogsMetaRow {...props} />);
 };
