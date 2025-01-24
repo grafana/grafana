@@ -22,7 +22,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/claims"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -120,8 +120,7 @@ func RegisterAPIService(
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs)) {
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 
@@ -421,7 +420,7 @@ func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					u, ok := claims.From(r.Context())
+					u, ok := authlib.AuthInfoFrom(r.Context())
 					if !ok {
 						w.WriteHeader(400)
 						_, _ = w.Write([]byte("expected user"))

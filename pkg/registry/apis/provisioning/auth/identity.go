@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/authlib/claims"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -67,7 +67,7 @@ type backgroundIdentities struct {
 }
 
 func (o *backgroundIdentities) WorkerIdentity(ctx context.Context, namespace string) (identity.Requester, error) {
-	info, err := claims.ParseNamespace(namespace)
+	info, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (o *backgroundIdentities) makeAdminUser(ctx context.Context, orgId int64) (
 		UserID: found.ID,
 	})
 
-	return claims.NewTypeID(claims.TypeUser, found.UID), err
+	return authlib.NewTypeID(authlib.TypeUser, found.UID), err
 }
 
 func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId int64) (string, error) {
@@ -191,7 +191,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 		return "", err
 	}
 
-	return claims.NewTypeID(claims.TypeServiceAccount, fmt.Sprintf("%d", serviceAccount.Id)), nil
+	return authlib.NewTypeID(authlib.TypeServiceAccount, fmt.Sprintf("%d", serviceAccount.Id)), nil
 }
 
 func (o *backgroundIdentities) RestConfigForNamespace(ctx context.Context, namespace string) (*rest.Config, error) {
