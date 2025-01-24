@@ -14,7 +14,7 @@ import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, NotFoundError } from './MessageRows';
-import { itemFilter, itemToString } from './filter';
+import { fuzzyFind, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
@@ -158,6 +158,12 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     [createCustomValue, id, ariaLabelledBy]
   );
 
+  // Memoize for using in fuzzy search
+  const stringifiedItems = useMemo(
+    () => (isAsync ? [] : options.map((item) => itemToString(item))),
+    [options, isAsync]
+  );
+
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
       return null;
@@ -262,7 +268,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
 
       if (!isAsync) {
-        const filteredItems = options.filter(itemFilter(inputValue));
+        const filteredItems = fuzzyFind(options, stringifiedItems, inputValue);
         setItems(filteredItems, inputValue);
       } else {
         if (inputValue && createCustomValue) {
