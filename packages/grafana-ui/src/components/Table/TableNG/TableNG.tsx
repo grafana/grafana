@@ -27,7 +27,7 @@ import { TableCellNG } from './Cells/TableCellNG';
 import { Filter } from './Filter/Filter';
 import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
 
-const DEFAULT_CELL_PADDING = 8;
+const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
 
 type TableRow = Record<string, unknown>;
@@ -311,7 +311,6 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               height={defaultRowHeight}
-              defaultPadding={DEFAULT_CELL_PADDING}
               justifyContent={justifyColumnContent}
               rowIdx={rowIdx}
               shouldTextOverflow={() =>
@@ -560,10 +559,6 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     '--rdg-header-background-color': theme.colors.background.primary,
     '--rdg-border-color': theme.colors.border.medium,
     '--rdg-color': theme.colors.text.primary,
-
-    '.rdg-cell': {
-      padding: theme.spacing(0.5),
-    },
 
     '&:hover': {
       '--rdg-row-hover-background-color': theme.colors.action.hover,
