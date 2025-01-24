@@ -149,7 +149,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit unified storage search handler on mode 5", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &LegacyMockClient{}
+		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{

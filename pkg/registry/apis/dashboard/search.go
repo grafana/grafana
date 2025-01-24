@@ -20,7 +20,7 @@ import (
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -198,7 +198,6 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 
 const rootFolder = "general"
 
-// nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -336,13 +335,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
-
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	parsedResults, err := dashboardsvc.ParseResults(result, searchRequest.Offset)
+	parsedResults, err := dashboardsearch.ParseResults(result, searchRequest.Offset)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

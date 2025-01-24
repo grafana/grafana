@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,13 +25,10 @@ type searchClient struct {
 }
 
 func (d *searchClient) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
-	fmt.Println("yoyoyo hitting the thing alright")
 	switch d.mode {
 	case rest.Mode0, rest.Mode1, rest.Mode2:
-		fmt.Println("hitting legacy")
 		return d.legacyServer.Search(ctx, in)
 	default:
-		fmt.Println("hitting unified")
 		return d.unifiedClient.Search(ctx, in)
 	}
 }

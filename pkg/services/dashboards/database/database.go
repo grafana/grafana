@@ -11,7 +11,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -35,12 +34,11 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboard/database")
 
 type dashboardStore struct {
-	store            db.DB
-	cfg              *setting.Cfg
-	log              log.Logger
-	features         featuremgmt.FeatureToggles
-	tagService       tag.Service
-	pluginIDRepoName string
+	store      db.DB
+	cfg        *setting.Cfg
+	log        log.Logger
+	features   featuremgmt.FeatureToggles
+	tagService tag.Service
 }
 
 // SQL bean helper to save tags
@@ -54,10 +52,9 @@ type dashboardTag struct {
 
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
-var pluginIDRepoName = "plugin"
 
 func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) (dashboards.Store, error) {
-	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService, pluginIDRepoName: pluginIDRepoName}
+	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
 	// fill out dashboard_uid and org_id for dashboard_tags
 	// need to run this at startup in case any downgrade happened after the initial migration
@@ -1120,11 +1117,4 @@ func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, du
 		return nil, err
 	}
 	return dashboards, nil
-}
-
-func (d *dashboardStore) GetPluginIDFromMeta(obj utils.GrafanaMetaAccessor) string {
-	if obj.GetRepositoryName() == d.pluginIDRepoName {
-		return obj.GetRepositoryPath()
-	}
-	return ""
 }

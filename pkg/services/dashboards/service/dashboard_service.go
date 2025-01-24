@@ -1856,7 +1856,7 @@ func (dr *DashboardServiceImpl) UnstructuredToLegacyDashboard(ctx context.Contex
 		out.Deleted = obj.GetDeletionTimestamp().Time
 	}
 
-	out.PluginID = dr.dashboardStore.GetPluginIDFromMeta(obj)
+	out.PluginID = GetPluginIDFromMeta(obj)
 
 	creator, err := dr.getUserFromMeta(ctx, obj.GetCreatedBy())
 	if err != nil {
@@ -1947,6 +1947,13 @@ func provisionedFileNameWithPrefix(name string) string {
 
 func getProvisionedFileNameFromMeta(obj utils.GrafanaMetaAccessor) (string, bool) {
 	return strings.CutPrefix(obj.GetRepositoryName(), fileProvisionedRepoPrefix)
+}
+
+func GetPluginIDFromMeta(obj utils.GrafanaMetaAccessor) string {
+	if obj.GetRepositoryName() == pluginIDRepoName {
+		return obj.GetRepositoryPath()
+	}
+	return ""
 }
 
 func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, namespace string) (unstructured.Unstructured, error) {

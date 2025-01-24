@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -404,7 +405,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		PluginID:  a.dashStore.GetPluginIDFromMeta(meta),
+		PluginID:  service.GetPluginIDFromMeta(meta),
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
