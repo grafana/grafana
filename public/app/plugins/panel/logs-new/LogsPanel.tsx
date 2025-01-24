@@ -57,9 +57,12 @@ export const LogsPanel = ({
     }
   }, [data.request?.app, eventBus, isAscending, logs]);
 
+  if (!logs.length) {
+    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+  }
+
   return (
     <div className={style.container} ref={(element: HTMLDivElement) => setLogsContainer(element)}>
-      {!logs.length && <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />}
       {logs.length > 0 && logsContainer && (
         <LogList
           app={CoreApp.Dashboard}
