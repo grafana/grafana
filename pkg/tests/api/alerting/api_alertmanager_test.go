@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,25 +16,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-type Response struct {
-	Message string `json:"message"`
-	TraceID string `json:"traceID"`
-}
 
 func TestIntegrationAMConfigAccess(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
@@ -698,24 +685,4 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 			require.JSONEq(t, tc.expBody, string(b))
 		})
 	}
-}
-
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	t.Helper()
-
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
 }
