@@ -12,12 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func RegisterRBACAuthZService(
 	handler grpcserver.Provider,
 	db legacysql.LegacyDatabaseProvider,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 	cache cache.Cache) {
 	server := rbac.NewService(
 		db,
@@ -25,6 +27,7 @@ func RegisterRBACAuthZService(
 		store.NewSQLPermissionStore(db, tracer),
 		log.New("authz-grpc-server"),
 		tracer,
+		reg,
 		cache,
 	)
 

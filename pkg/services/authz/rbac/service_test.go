@@ -640,6 +640,7 @@ func setupService() *Service {
 		logger:          logger,
 		mapper:          newMapper(),
 		tracer:          tracing.NewNoopTracerService(),
+		metrics:         newMetrics(nil),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
 		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
