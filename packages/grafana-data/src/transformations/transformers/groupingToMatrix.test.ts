@@ -31,7 +31,7 @@ describe('Grouping to Matrix', () => {
       const expected: Field[] = [
         {
           name: 'Time\\Time',
-          type: FieldType.string,
+          type: FieldType.time,
           values: [1000, 1001, 1002],
           config: {},
         },
@@ -133,7 +133,7 @@ describe('Grouping to Matrix', () => {
       const expected: Field[] = [
         {
           name: 'Time\\Time',
-          type: FieldType.string,
+          type: FieldType.time,
           values: [1000, 1001],
           config: {},
         },
