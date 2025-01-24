@@ -109,22 +109,22 @@ func NewAccessControlFolderGuardianByUID(
 	ctx context.Context, cfg *setting.Cfg, folderUID string, user identity.Requester,
 	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, foldersService folder.Service,
 ) (DashboardGuardian, error) {
-	var f *folder.Folder
-	if folderUID != "" {
-		q := &folder.GetFolderQuery{
-			UID:          &folderUID,
-			OrgID:        user.GetOrgID(),
-			SignedInUser: user,
-		}
+	if folderUID == "" {
+		return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: folder UID is empty")
+	}
 
-		qResult, err := foldersService.Get(ctx, q)
-		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", err)
-			}
-			return nil, ErrGuardianGetFolderFailure.Errorf("failed to get folder by UID: %w", err)
+	q := &folder.GetFolderQuery{
+		UID:          &folderUID,
+		OrgID:        user.GetOrgID(),
+		SignedInUser: user,
+	}
+
+	f, err := foldersService.Get(ctx, q)
+	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return nil, ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", err)
 		}
-		f = qResult
+		return nil, ErrGuardianGetFolderFailure.Errorf("failed to get folder by UID: %w", err)
 	}
 
 	return &accessControlFolderGuardian{
