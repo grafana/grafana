@@ -84,7 +84,9 @@ export type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
+  AutoSizeConditionals &
+  ClearableConditionals<T>;
 
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
