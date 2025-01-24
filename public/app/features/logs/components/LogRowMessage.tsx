@@ -174,7 +174,7 @@ export const LogRowMessage = memo((props: Props) => {
       }
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
-          {/* This is tabbable, and selectable in safari, but doesn't open on enter anymore*/}
+          {/* This is tabbable, and selectable in safari, but doesn't open on enter without the onKeyDown handler. See https://github.com/grafana/grafana/issues/74135 for more info */}
           <a
             onKeyDown={onReturnKeyDown}
             tabIndex={0}
