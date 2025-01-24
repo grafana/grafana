@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/authlib/cache"
 	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -149,11 +150,7 @@ func TestService_checkPermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &Service{
-				logger: log.NewNopLogger(),
-				tracer: tracing.NewNoopTracerService(),
-				mapper: newMapper(),
-			}
+			s := setupService()
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
@@ -197,21 +194,16 @@ func TestService_getUserTeams(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			s := setupService()
+
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
 			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
+			s.identityStore = identityStore
 
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams, 0)
-			}
-
-			s := &Service{
-				teamCache:     cacheService,
-				identityStore: identityStore,
-				logger:        log.New("test"),
-				tracer:        tracing.NewNoopTracerService(),
+				s.teamCache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams)
 			}
 
 			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
@@ -279,22 +271,16 @@ func TestService_getUserBasicRole(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			s := setupService()
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
+			s.store = store
+			s.permissionStore = store
 
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), tc.expectedRole, 0)
-			}
-
-			s := &Service{
-				basicRoleCache:  cacheService,
-				store:           store,
-				permissionStore: store,
-				logger:          log.New("test"),
-				tracer:          tracing.NewNoopTracerService(),
+				s.basicRoleCache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), tc.expectedRole)
 			}
 
 			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
@@ -350,13 +336,14 @@ func TestService_getUserPermissions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			s := setupService()
+
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 			action := "dashboards:read"
 
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userPermCacheKey(ns.Value, userID.UID, action), tc.expectedPerms, 0)
+				s.permCache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), tc.expectedPerms)
 			}
 
 			store := &fakeStore{
@@ -364,20 +351,9 @@ func TestService_getUserPermissions(t *testing.T) {
 				basicRole:       &store.BasicRole{Role: "viewer", IsAdmin: false},
 				userPermissions: tc.permissions,
 			}
-
-			s := &Service{
-				store:           store,
-				permissionStore: store,
-				identityStore:   &fakeIdentityStore{teams: []int64{1, 2}},
-				logger:          log.NewNopLogger(),
-				tracer:          tracing.NewNoopTracerService(),
-				mapper:          newMapper(),
-				idCache:         localcache.New(longCacheTTL, longCleanupInterval),
-				permCache:       cacheService,
-				sf:              new(singleflight.Group),
-				basicRoleCache:  localcache.New(longCacheTTL, longCleanupInterval),
-				teamCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
-			}
+			s.store = store
+			s.permissionStore = store
+			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
 
 			perms, err := s.getIdentityPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
 			require.NoError(t, err)
@@ -412,8 +388,8 @@ func TestService_buildFolderTree(t *testing.T) {
 			},
 			cacheHit: true,
 			expectedTree: map[string]FolderNode{
-				"folder1": {uid: "folder1", childrenUIDs: []string{"folder2"}},
-				"folder2": {uid: "folder2", parentUID: strPtr("folder1")},
+				"folder1": {UID: "folder1", ChildrenUIDs: []string{"folder2"}},
+				"folder2": {UID: "folder2", ParentUID: strPtr("folder1")},
 			},
 		},
 		{
@@ -424,8 +400,8 @@ func TestService_buildFolderTree(t *testing.T) {
 			},
 			cacheHit: false,
 			expectedTree: map[string]FolderNode{
-				"folder1": {uid: "folder1", childrenUIDs: []string{"folder2"}},
-				"folder2": {uid: "folder2", parentUID: strPtr("folder1")},
+				"folder1": {UID: "folder1", ChildrenUIDs: []string{"folder2"}},
+				"folder2": {UID: "folder2", ParentUID: strPtr("folder1")},
 			},
 		},
 	}
@@ -433,23 +409,17 @@ func TestService_buildFolderTree(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			s := setupService()
+
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(folderCacheKey(ns.Value), tc.expectedTree, 0)
+				s.folderCache.Set(ctx, folderCacheKey(ns.Value), tc.expectedTree)
 			}
 
 			store := &fakeStore{folders: tc.folders}
-
-			s := &Service{
-				store:           store,
-				permissionStore: store,
-				folderCache:     cacheService,
-				logger:          log.New("test"),
-				sf:              new(singleflight.Group),
-				tracer:          tracing.NewNoopTracerService(),
-			}
+			s.store = store
+			s.permissionStore = store
 
 			tree, err := s.buildFolderTree(ctx, ns)
 
@@ -460,15 +430,15 @@ func TestService_buildFolderTree(t *testing.T) {
 				require.True(t, ok)
 				// Check parent
 				if folder.ParentUID != nil {
-					require.NotNil(t, node.parentUID)
-					require.Equal(t, *folder.ParentUID, *node.parentUID)
+					require.NotNil(t, node.ParentUID)
+					require.Equal(t, *folder.ParentUID, *node.ParentUID)
 				} else {
-					require.Nil(t, node.parentUID)
+					require.Nil(t, node.ParentUID)
 				}
 				// Check children
-				if len(node.childrenUIDs) > 0 {
-					epectedChildren := tc.expectedTree[folder.UID].childrenUIDs
-					require.ElementsMatch(t, node.childrenUIDs, epectedChildren)
+				if len(node.ChildrenUIDs) > 0 {
+					epectedChildren := tc.expectedTree[folder.UID].ChildrenUIDs
+					require.ElementsMatch(t, node.ChildrenUIDs, epectedChildren)
 				}
 			}
 			if tc.cacheHit {
@@ -534,8 +504,8 @@ func TestService_listPermission(t *testing.T) {
 				},
 			},
 			folderTree: map[string]FolderNode{
-				"some_folder_1": {uid: "some_folder_1"},
-				"some_folder_2": {uid: "some_folder_2"},
+				"some_folder_1": {UID: "some_folder_1"},
+				"some_folder_2": {UID: "some_folder_2"},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -557,12 +527,12 @@ func TestService_listPermission(t *testing.T) {
 				},
 			},
 			folderTree: map[string]FolderNode{
-				"some_folder_parent":      {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":       {uid: "some_folder_child", parentUID: strPtr("some_folder_parent"), childrenUIDs: []string{"some_folder_subchild1", "some_folder_subchild2"}},
-				"some_folder_subchild1":   {uid: "some_folder_subchild1", parentUID: strPtr("some_folder_child")},
-				"some_folder_subchild2":   {uid: "some_folder_subchild2", parentUID: strPtr("some_folder_child"), childrenUIDs: []string{"some_folder_subsubchild"}},
-				"some_folder_subsubchild": {uid: "some_folder_subsubchild", parentUID: strPtr("some_folder_subchild2")},
-				"some_folder_1":           {uid: "some_folder_1", parentUID: strPtr("some_other_folder")},
+				"some_folder_parent":      {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":       {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent"), ChildrenUIDs: []string{"some_folder_subchild1", "some_folder_subchild2"}},
+				"some_folder_subchild1":   {UID: "some_folder_subchild1", ParentUID: strPtr("some_folder_child")},
+				"some_folder_subchild2":   {UID: "some_folder_subchild2", ParentUID: strPtr("some_folder_child"), ChildrenUIDs: []string{"some_folder_subsubchild"}},
+				"some_folder_subsubchild": {UID: "some_folder_subsubchild", ParentUID: strPtr("some_folder_subchild2")},
+				"some_folder_1":           {UID: "some_folder_1", ParentUID: strPtr("some_other_folder")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -590,8 +560,8 @@ func TestService_listPermission(t *testing.T) {
 				},
 			},
 			folderTree: map[string]FolderNode{
-				"some_folder_parent": {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":  {uid: "some_folder_child", parentUID: strPtr("some_folder_parent")},
+				"some_folder_parent": {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":  {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -620,9 +590,9 @@ func TestService_listPermission(t *testing.T) {
 				},
 			},
 			folderTree: map[string]FolderNode{
-				"some_folder_parent":   {uid: "some_folder_parent", childrenUIDs: []string{"some_folder_child"}},
-				"some_folder_child":    {uid: "some_folder_child", parentUID: strPtr("some_folder_parent"), childrenUIDs: []string{"some_folder_subchild"}},
-				"some_folder_subchild": {uid: "some_folder_subchild", parentUID: strPtr("some_folder_child")},
+				"some_folder_parent":   {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":    {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent"), ChildrenUIDs: []string{"some_folder_subchild"}},
+				"some_folder_subchild": {UID: "some_folder_subchild", ParentUID: strPtr("some_folder_child")},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -635,7 +605,7 @@ func TestService_listPermission(t *testing.T) {
 			name:        "return no dashboards and folders if the user doesn't have access to any resources",
 			permissions: []accesscontrol.Permission{},
 			folderTree: map[string]FolderNode{
-				"some_folder_1": {uid: "some_folder_1"},
+				"some_folder_1": {UID: "some_folder_1"},
 			},
 			list: ListRequest{
 				Action:   "dashboards:read",
@@ -647,16 +617,11 @@ func TestService_listPermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			folderCache := localcache.New(shortCacheTTL, shortCleanupInterval)
+			s := setupService()
 			if tc.folderTree != nil {
-				folderCache.Set(folderCacheKey("default"), tc.folderTree, 0)
+				s.folderCache.Set(context.Background(), folderCacheKey("default"), tc.folderTree)
 			}
-			s := &Service{
-				logger:      log.New("test"),
-				folderCache: folderCache,
-				mapper:      newMapper(),
-				tracer:      tracing.NewNoopTracerService(),
-			}
+
 			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)
@@ -664,6 +629,26 @@ func TestService_listPermission(t *testing.T) {
 			assert.ElementsMatch(t, tc.expectedDashboards, got.Items)
 			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
 		})
+	}
+}
+
+func setupService() *Service {
+	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
+	logger := log.New("authz-rbac-service")
+	fStore := &fakeStore{}
+	return &Service{
+		logger:          logger,
+		mapper:          newMapper(),
+		tracer:          tracing.NewNoopTracerService(),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
+		folderCache:     newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
+		store:           fStore,
+		permissionStore: fStore,
+		identityStore:   &fakeIdentityStore{},
+		sf:              new(singleflight.Group),
 	}
 }
 
