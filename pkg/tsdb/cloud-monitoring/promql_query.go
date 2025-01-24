@@ -31,7 +31,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 		return dr, backend.DataResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, req, dsInfo, r, "")
+	span := traceReq(ctx, req, dsInfo, r, "", promQLQ.timeRange)
 	defer span.End()
 
 	requestBody := map[string]any{

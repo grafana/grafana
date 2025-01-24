@@ -56,6 +56,7 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       metricName: 'something',
       otherLabels: [],
+      betweenQuotes: false,
     });
 
     assertSituation('sum(something) by (^)', {
@@ -79,34 +80,157 @@ describe('situation', () => {
         { name: 'three', value: 'val3', op: '=~' },
         { name: 'four', value: 'val4', op: '!~' },
       ],
+      betweenQuotes: false,
     });
 
     assertSituation('{^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [],
+      betweenQuotes: false,
     });
 
     assertSituation('{one="val1",^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: 'val1', op: '=' }],
+      betweenQuotes: false,
     });
 
     // single-quoted label-values with escape
     assertSituation("{one='val\\'1',^}", {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: "val'1", op: '=' }],
+      betweenQuotes: false,
     });
 
     // double-quoted label-values with escape
     assertSituation('{one="val\\"1",^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: 'val"1', op: '=' }],
+      betweenQuotes: false,
     });
 
     // backticked label-values with escape (the escape should not be interpreted)
     assertSituation('{one=`val\\"1`,^}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [{ name: 'one', value: 'val\\"1', op: '=' }],
+      betweenQuotes: false,
+    });
+  });
+
+  describe('utf-8 metric name support', () => {
+    it('with utf8 metric name no label and no comma', () => {
+      assertSituation(`{"metric.name"^}`, null);
+    });
+
+    it('with utf8 metric name no label', () => {
+      assertSituation(`{"metric.name", ^}`, {
+        type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+        metricName: 'metric.name',
+        otherLabels: [],
+        betweenQuotes: false,
+      });
+    });
+
+    it('with utf8 metric name requesting utf8 labels in quotes', () => {
+      assertSituation(`{"metric.name", "^"}`, {
+        type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+        metricName: 'metric.name',
+        otherLabels: [],
+        betweenQuotes: true,
+      });
+    });
+
+    it('with utf8 metric name with a legacy label', () => {
+      assertSituation(`{"metric.name", label1="val", ^}`, {
+        type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+        metricName: 'metric.name',
+        otherLabels: [{ name: 'label1', value: 'val', op: '=' }],
+        betweenQuotes: false,
+      });
+    });
+
+    it('with utf8 metric name with a legacy label and no value', () => {
+      assertSituation(`{"metric.name", label1="^"}`, {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        metricName: 'metric.name',
+        labelName: 'label1',
+        betweenQuotes: true,
+        otherLabels: [],
+      });
+    });
+
+    it('with utf8 metric name with a utf8 label and no value', () => {
+      assertSituation(`{"metric.name", "utf8.label"="^"}`, {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        metricName: 'metric.name',
+        labelName: '"utf8.label"',
+        betweenQuotes: true,
+        otherLabels: [],
+      });
+    });
+
+    it('with utf8 metric name with a legacy label and utf8 label', () => {
+      assertSituation(`{"metric.name", label1="val", "utf8.label"="^"}`, {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        metricName: 'metric.name',
+        labelName: `"utf8.label"`,
+        betweenQuotes: true,
+        otherLabels: [{ name: 'label1', value: 'val', op: '=' }],
+      });
+    });
+
+    it('with utf8 metric name with a utf8 label and legacy label', () => {
+      assertSituation(`{"metric.name", "utf8.label"="val",  label1="^"}`, {
+        type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+        metricName: 'metric.name',
+        labelName: `label1`,
+        betweenQuotes: true,
+        otherLabels: [{ name: '"utf8.label"', value: 'val', op: '=' }],
+      });
+    });
+
+    it('with utf8 metric name with grouping', () => {
+      assertSituation(`sum by (^)(rate({"metric.name", label1="val"}[1m]))`, {
+        type: 'IN_GROUPING',
+        metricName: 'metric.name',
+        otherLabels: [],
+      });
+    });
+  });
+
+  it('utf-8 label support', () => {
+    assertSituation(`metric{"label": "^"}`, null);
+
+    assertSituation(`metric{"label with space": "^"}`, null);
+
+    assertSituation(`metric{"label_🤖": "^"}`, null);
+
+    assertSituation(`metric{"Spaß": "^"}`, null);
+
+    assertSituation(`{"metric", "Spaß": "^"}`, null);
+
+    assertSituation('something{"job"=^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      metricName: 'something',
+      labelName: '"job"',
+      betweenQuotes: false,
+      otherLabels: [],
+    });
+
+    assertSituation('something{"job📈"=^}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      metricName: 'something',
+      labelName: '"job📈"',
+      betweenQuotes: false,
+      otherLabels: [],
+    });
+
+    assertSituation('something{"job with space"=^,host="h1"}', {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      metricName: 'something',
+      labelName: '"job with space"',
+      betweenQuotes: false,
+      otherLabels: [{ name: 'host', value: 'h1', op: '=' }],
     });
   });
 
@@ -194,6 +318,7 @@ describe('situation', () => {
         { name: 'three', value: 'val3', op: '=~' },
         { name: 'four', value: 'val4', op: '!~' },
       ],
+      betweenQuotes: false,
     });
   });
 });

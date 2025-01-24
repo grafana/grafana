@@ -10,8 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -30,13 +29,13 @@ var (
 
 var resource = iamv0.TeamResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac authz.AccessClient) *LegacyStore {
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
 	return &LegacyStore{store, ac}
 }
 
 type LegacyStore struct {
 	store legacy.LegacyIdentityStore
-	ac    authz.AccessClient
+	ac    claims.AccessClient
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -136,10 +135,7 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0.Team {
 	}
 	meta, _ := utils.MetaAccessor(&obj)
 	meta.SetUpdatedTimestamp(&t.Updated)
-	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(t.ID, 10),
-	})
+	meta.SetDeprecatedInternalID(t.ID) // nolint:staticcheck
 
 	return obj
 }

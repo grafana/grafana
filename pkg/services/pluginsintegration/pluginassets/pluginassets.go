@@ -102,6 +102,7 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 }
 
 // moduleHash is the underlying function for ModuleHash. See its documentation for more information.
+// If the plugin is not a CDN plugin, the function will return an empty string.
 // It will read the module hash from the MANIFEST.txt in the [[plugins.FS]] of the provided plugin.
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
@@ -135,6 +136,14 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 			childFSBase = p.Base()
 		}
 		return s.moduleHash(ctx, parent, childFSBase)
+	}
+
+	// Only CDN plugins are supported for SRI checks.
+	// CDN plugins have the version as part of the URL, which acts as a cache-buster.
+	// Needed due to: https://github.com/grafana/plugin-tools/pull/1426
+	// FS plugins build before this change will have SRI mismatch issues.
+	if !s.cdnEnabled(p.ID, p.Class) {
+		return "", nil
 	}
 
 	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)

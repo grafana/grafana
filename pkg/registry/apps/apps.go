@@ -3,8 +3,10 @@ package appregistry
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/investigation"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -30,6 +32,7 @@ func ProvideRegistryServiceSink(
 	features featuremgmt.FeatureToggles,
 	playlistAppProvider *playlist.PlaylistAppProvider,
 	investigationAppProvider *investigation.InvestigationAppProvider,
+	advisorAppProvider *advisor.AdvisorAppProvider,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) *rest.Config {
 		cfg := restConfigProvider.GetRestConfig(ctx)
@@ -47,11 +50,14 @@ func ProvideRegistryServiceSink(
 
 	var apiGroupRunner *runner.APIGroupRunner
 	var err error
+	providers := []app.Provider{playlistAppProvider}
 	if features.IsEnabledGlobally(featuremgmt.FlagInvestigationsBackend) {
-		apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, playlistAppProvider, investigationAppProvider)
-	} else {
-		apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, playlistAppProvider)
+		providers = append(providers, investigationAppProvider)
 	}
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
+		providers = append(providers, advisorAppProvider)
+	}
+	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 
 	if err != nil {
 		return nil, err

@@ -18,6 +18,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -215,6 +216,26 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
+/**
+ * Recursivly check the scene graph up until it finds a read only clone.
+ * If the key contains clone-0 it is the reference object and can be edited
+ */
+export function isReadOnlyClone(sceneObject: SceneObject): boolean {
+  const key = sceneObject.state.key!;
+
+  // Regular expression to match 'clone-' followed by a number, but not 'clone-0' as the is the reference object
+  const pattern = /clone-(?!0)/;
+  if (pattern.test(key)) {
+    return true;
+  }
+
+  if (sceneObject.parent) {
+    return isReadOnlyClone(sceneObject.parent);
+  }
+
+  return false;
+}
+
 export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
@@ -248,6 +269,14 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
   }
 
   return undefined;
+}
+
+export function calculateGridItemDimensions(repeater: DashboardGridItem) {
+  const rowCount = Math.ceil(repeater.state.repeatedPanels!.length / repeater.getMaxPerRow());
+  const columnCount = Math.ceil(repeater.state.repeatedPanels!.length / rowCount);
+  const w = 24 / columnCount;
+  const h = repeater.state.itemHeight ?? 10;
+  return { h, w, columnCount };
 }
 
 /**
