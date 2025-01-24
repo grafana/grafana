@@ -98,12 +98,7 @@ refs:
 
 # Create and manage reports
 
-**Reporting** allows you to send automated and scheduled emails from any of your dashboards and have Grafana. You can configure several elements of these reports including generating PDF and CSV file attachments or including and embedded images. This feature is available in Grafana Cloud and in Grafana Enterprise.
-
-{{< admonition type="note" >}}
-If you have [Role-based access control](ref:rbac) enabled, for some actions you would need to have relevant permissions.
-Refer to specific guides to understand what permissions are required.
-{{< /admonition >}}
+**Reporting** allows you to send automated and scheduled emails from any of your dashboards. You can configure several elements of these reports and generate PDFs, CSV files, and embedded images.
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
 
@@ -111,6 +106,8 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP](ref:smtp) in [Configuration](ref:configuration) for more information.
 - The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.0+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
+
+<!-- are these requirements for Enterprise only? Can we clarify what the requirements are for Enterprise vs Cloud? -->
 
 ### Rendering configuration
 
@@ -131,6 +128,13 @@ These options are available in the [reporting configuration](ref:reporting-confi
 ## Access control
 
 When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions](ref:permission) to create and manage reports.
+
+{{< admonition type="note" >}}
+If you have [Role-based access control](ref:rbac) enabled, for some actions you would need to have relevant permissions.
+Refer to specific guides to understand what permissions are required.
+{{< /admonition >}}
+
+<!-- does this apply to Cloud as well? -->
 
 ## Create a report
 
@@ -332,3 +336,5 @@ To troubleshoot and get more log information, enable debug logging in the config
 [log]
 filters = report:debug
 ```
+
+<!-- is there a Cloud version of this? -->
