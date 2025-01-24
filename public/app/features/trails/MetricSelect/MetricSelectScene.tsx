@@ -45,7 +45,6 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
-// import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
