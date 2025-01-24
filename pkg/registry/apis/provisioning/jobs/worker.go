@@ -104,7 +104,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			return nil, fmt.Errorf("update repository status: %w", err)
 		}
 
-		syncer, err := NewSyncer(repo, parser)
+		syncer, err := NewSyncer(repo, g.lister, parser)
 		if err != nil {
 			return nil, fmt.Errorf("error creating replicator")
 		}

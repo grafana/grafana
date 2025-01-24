@@ -46,10 +46,11 @@ type queueItem struct {
 
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
-	client     client.ProvisioningV0alpha1Interface
-	repoLister listers.RepositoryLister
-	repoSynced cache.InformerSynced
-	parsers    *resources.ParserFactory
+	client         client.ProvisioningV0alpha1Interface
+	resourceLister resources.ResourceLister
+	repoLister     listers.RepositoryLister
+	repoSynced     cache.InformerSynced
+	parsers        *resources.ParserFactory
 
 	jobs jobs.JobQueue
 
@@ -71,15 +72,17 @@ func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	repoInformer informer.RepositoryInformer,
 	repoGetter RepoGetter,
+	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
 	identities auth.BackgroundIdentityService,
 	tester *RepositoryTester,
 	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
-		client:     provisioningClient,
-		repoLister: repoInformer.Lister(),
-		repoSynced: repoInformer.Informer().HasSynced,
+		client:         provisioningClient,
+		resourceLister: resourceLister,
+		repoLister:     repoInformer.Lister(),
+		repoSynced:     repoInformer.Informer().HasSynced,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*queueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*queueItem]{
@@ -190,6 +193,8 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	item.attempts++
 	logger = logger.With("error", err, "attempts", item.attempts)
+	logger.Error("RepositoryController failed to process key")
+
 	if item.attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
 		rc.queue.Forget(item)
@@ -246,12 +251,18 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
 		}
 
-		replicator, err := jobs.NewSyncer(repo, parser)
+		id, err := rc.identities.WorkerIdentity(ctx, namespace)
+		if err != nil {
+			return err
+		}
+		ctx = identity.WithRequester(ctx, id)
+
+		replicator, err := jobs.NewSyncer(repo, rc.resourceLister, parser)
 		if err != nil {
 			return fmt.Errorf("error creating replicator")
 		}
 
-		if err := replicator.Unsync(ctx, jobs.UnsyncOptions{}); err != nil {
+		if err := replicator.Unsync(ctx); err != nil {
 			return fmt.Errorf("unsync repository: %w", err)
 		}
 
