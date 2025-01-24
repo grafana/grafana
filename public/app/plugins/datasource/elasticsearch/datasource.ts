@@ -923,9 +923,9 @@ export class ElasticDatasource
 
         const buckets = res.responses[0].aggregations['1'].buckets;
         return _map(buckets, (bucket) => {
-          const keyString = bucket.key_as_string || String(bucket.key);
+          const keyString = String(bucket.key);
           return {
-            text: keyString,
+            text: bucket.key_as_string || keyString,
             value: isTagValueQuery ? keyString : bucket.key,
           };
         });

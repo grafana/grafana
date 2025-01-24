@@ -122,7 +122,7 @@ describe('ElasticDatasource', () => {
       expect(lte).toBe('1663999821000'); // 2022-09-24T06:10:21Z
     });
 
-    it('should return numbers as strings', async () => {
+    it('should return fields properly', async () => {
       const ds = createElasticDatasource({ jsonData: { timeField: '@timestamp' } });
       const getTagValuesData = {
         responses: [
@@ -132,11 +132,12 @@ describe('ElasticDatasource', () => {
                 buckets: [
                   {
                     doc_count: 10,
-                    key: 5,
+                    key: 'foo',
                   },
                   {
                     doc_count: 20,
                     key: 6,
+                    key_as_string: 'six',
                   },
                   {
                     doc_count: 30,
@@ -156,7 +157,7 @@ describe('ElasticDatasource', () => {
       expect(values[0].text).toBe('5');
       expect(values[0].value).toBe('5');
 
-      expect(values[1].text).toBe('6');
+      expect(values[1].text).toBe('six');
       expect(values[1].value).toBe('6');
 
       expect(values[2].text).toBe('7');
