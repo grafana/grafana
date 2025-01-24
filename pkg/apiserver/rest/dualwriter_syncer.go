@@ -16,7 +16,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -159,11 +158,8 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 		log.Info("starting legacyToUnifiedStorageDataSyncer")
 		startSync := time.Now()
 
-		// Add a claim to the context to allow the background job to use the underlying access_token permissions.
-		orgId := int64(1)
-
 		ctx = klog.NewContext(ctx, log)
-		ctx = identity.WithRequester(ctx, getSyncRequester(orgId))
+		ctx, _ = identity.WithServiceIdentitiy(ctx, 0)
 		ctx = request.WithNamespace(ctx, cfg.RequestInfo.Namespace)
 		ctx = request.WithRequestInfo(ctx, cfg.RequestInfo)
 
@@ -296,23 +292,6 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 	}
 
 	return everythingSynced, err
-}
-
-func getSyncRequester(orgId int64) *identity.StaticRequester {
-	return &identity.StaticRequester{
-		Type:           claims.TypeServiceAccount, // system:apiserver
-		UserID:         1,
-		OrgID:          orgId,
-		Name:           "admin",
-		Login:          "admin",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
-		Permissions: map[int64]map[string][]string{
-			orgId: {
-				"*": {"*"}, // all resources, all scopes
-			},
-		},
-	}
 }
 
 func getList(ctx context.Context, obj rest.Lister, listOptions *metainternalversion.ListOptions) ([]runtime.Object, error) {
