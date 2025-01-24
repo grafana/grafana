@@ -173,6 +173,12 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
 	}
 
+	switch cfg.Spec.DeletePolicy {
+	case provisioning.DeletePolityRetain, provisioning.DeletePolityClean:
+	default:
+		list = append(list, field.Invalid(field.NewPath("spec", "deletePolicy"), cfg.Spec.DeletePolicy, "Invalid unsync mode"))
+	}
+
 	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
 			cfg.Spec.GitHub, "Github config only valid when type is github"))

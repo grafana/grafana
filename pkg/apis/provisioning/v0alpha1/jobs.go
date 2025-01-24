@@ -63,6 +63,14 @@ type JobSpec struct {
 	// The the repository reference (for now also in labels)
 	Repository string `json:"repository"`
 
+	// Pull request options
+	PullRequest *PullRequestOptions `json:"pr,omitempty"`
+
+	// Required when the action is `export`
+	Export *ExportOptions `json:"export,omitempty"`
+}
+
+type PullRequestOptions struct {
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
@@ -72,9 +80,6 @@ type JobSpec struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
-
-	// Required when the action is `export`
-	Export *ExportOptions `json:"export,omitempty"`
 }
 
 type ExportOptions struct {
@@ -101,6 +106,25 @@ type JobStatus struct {
 
 	// Optional value 0-100 that can be set while running
 	Progress float64 `json:"progress,omitempty"`
+
+	// Summary of processed actions
+	Summary []JobResourceSummary `json:"summary,omitempty"`
+}
+
+type JobResourceSummary struct {
+	Group    string `json:"group,omitempty"`
+	Resource string `json:"resource,omitempty"`
+
+	Create int64 `json:"create,omitempty"`
+	Update int64 `json:"update,omitempty"`
+	Delete int64 `json:"delete,omitempty"`
+
+	// No action required (useful for sync)
+	Noop int64 `json:"noop,omitempty"`
+
+	// Report errors for this resource type
+	// This may not be an exhaustive list and recommend looking at the logs for more info
+	Errors []string `json:"errors,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

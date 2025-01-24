@@ -522,10 +522,12 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		Job: &provisioning.JobSpec{
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionPullRequest,
-			URL:        pr.GetHTMLURL(),
-			PR:         pr.GetNumber(),
-			Ref:        pr.GetHead().GetRef(),
-			Hash:       pr.GetHead().GetSHA(),
+			PullRequest: &provisioning.PullRequestOptions{
+				URL:  pr.GetHTMLURL(),
+				PR:   pr.GetNumber(),
+				Ref:  pr.GetHead().GetRef(),
+				Hash: pr.GetHead().GetSHA(),
+			},
 		},
 	}, nil
 }
