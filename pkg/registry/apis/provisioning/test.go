@@ -176,7 +176,7 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 	switch cfg.Spec.DeletePolicy {
 	case provisioning.DeletePolityRetain, provisioning.DeletePolityClean:
 	default:
-		list = append(list, field.Invalid(field.NewPath("spec", "unsyncMode"), cfg.Spec.DeletePolicy, "Invalid unsync mode"))
+		list = append(list, field.Invalid(field.NewPath("spec", "deletePolicy"), cfg.Spec.DeletePolicy, "Invalid unsync mode"))
 	}
 
 	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
