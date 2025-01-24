@@ -103,7 +103,7 @@ export const RuleListIcon = memo(function RuleListIcon({
       <div>
         <Text color={iconColor}>
           <div className={styles.iconsContainer}>
-            <Icon name={iconName} width={18} height={18} />
+            <Icon name={iconName} width={18} height={18} title={stateName} />
             {/* this loading spinner works by using an optical illusion;
               the actual icon is static and the "spinning" part is just a semi-transparent darker circle overlayed on top.
               This makes it look like there is a small bright colored spinner rotating.

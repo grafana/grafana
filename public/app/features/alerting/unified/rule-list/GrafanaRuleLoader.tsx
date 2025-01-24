@@ -9,6 +9,7 @@ import { createRelativeUrl } from '../utils/url';
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemLoader, RulerRuleLoadingError } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleOperation } from './components/RuleListIcon';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 
@@ -50,9 +51,16 @@ interface GrafanaRuleListItemProps {
   rulerRule: RulerGrafanaRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
+  operation?: RuleOperation;
 }
 
-export function GrafanaRuleListItem({ rule, rulerRule, groupIdentifier, namespaceName }: GrafanaRuleListItemProps) {
+export function GrafanaRuleListItem({
+  rule,
+  rulerRule,
+  groupIdentifier,
+  namespaceName,
+  operation,
+}: GrafanaRuleListItemProps) {
   const {
     grafana_alert: { uid, title, provenance, is_paused },
     annotations = {},
@@ -83,6 +91,7 @@ export function GrafanaRuleListItem({ rule, rulerRule, groupIdentifier, namespac
         summary={annotations.summary}
         state={promAlertingRule?.state}
         instancesCount={promAlertingRule?.alerts?.length}
+        operation={operation}
       />
     );
   }

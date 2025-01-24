@@ -38,10 +38,10 @@ export function GrafanaGroupLoader({
   });
 
   const { matches, promOnlyRules } = useMemo(() => {
-    if (!promResponse || !rulerResponse) {
-      return { matches: new Map(), promOnlyRules: [] };
-    }
-    return matchRules(promResponse.data.groups.at(0)?.rules ?? [], rulerResponse.rules);
+    const promRules = promResponse?.data.groups.at(0)?.rules ?? [];
+    const rulerRules = rulerResponse?.rules ?? [];
+
+    return matchRules(promRules, rulerRules);
   }, [promResponse, rulerResponse]);
 
   const isLoading = isPromResponseLoading || isRulerGroupLoading;
@@ -75,13 +75,12 @@ export function GrafanaGroupLoader({
 
         if (!promRule) {
           return (
-            <RuleOperationListItem
+            <GrafanaRuleListItem
               key={rulerRule.grafana_alert.uid}
-              name={rulerRule.grafana_alert.title}
-              namespace={namespaceName}
-              group={groupIdentifier.groupName}
-              rulesSource={GrafanaRulesSource}
-              application="grafana"
+              rule={promRule}
+              rulerRule={rulerRule}
+              groupIdentifier={groupIdentifier}
+              namespaceName={namespaceName}
               operation={RuleOperation.Creating}
             />
           );
