@@ -22,7 +22,7 @@ export const LogsPanel = ({
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
-  const logsContainerRef = useRef<HTMLDivElement>(null);
+  const [logsContainer, setLogsContainer] = useState<HTMLDivElement | null>(null);
   const [panelData, setPanelData] = useState(data);
   // Prevents the scroll position to change when new data from infinite scrolling is received
   const keepScrollPositionRef = useRef(false);
@@ -57,22 +57,21 @@ export const LogsPanel = ({
     }
   }, [data.request?.app, eventBus, isAscending, logs]);
 
-  if (!data || logs.length === 0) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
-  }
-
   return (
-    <div className={style.container} ref={logsContainerRef}>
-      <LogList
-        app={CoreApp.Dashboard}
-        containerElement={logsContainerRef.current}
-        eventBus={eventBus}
-        logs={logs}
-        showTime={showTime}
-        sortOrder={sortOrder}
-        timeZone={timeZone}
-        wrapLogMessage={wrapLogMessage}
-      />
+    <div className={style.container} ref={(element: HTMLDivElement) => setLogsContainer(element)}>
+      {!logs.length && <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />}
+      {logs.length > 0 && logsContainer && (
+        <LogList
+          app={CoreApp.Dashboard}
+          containerElement={logsContainer}
+          eventBus={eventBus}
+          logs={logs}
+          showTime={showTime}
+          sortOrder={sortOrder}
+          timeZone={timeZone}
+          wrapLogMessage={wrapLogMessage}
+        />
+      )}
     </div>
   );
 };
