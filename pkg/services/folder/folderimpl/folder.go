@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -46,15 +47,16 @@ import (
 const FULLPATH_SEPARATOR = "/"
 
 type Service struct {
-	store                folder.Store
-	unifiedStore         folder.Store
-	db                   db.DB
-	log                  *slog.Logger
-	dashboardStore       dashboards.Store
-	dashboardFolderStore folder.FolderStore
-	features             featuremgmt.FeatureToggles
-	accessControl        accesscontrol.AccessControl
-	k8sclient            folderK8sHandler
+	store                  folder.Store
+	unifiedStore           folder.Store
+	db                     db.DB
+	log                    *slog.Logger
+	dashboardStore         dashboards.Store
+	dashboardFolderStore   folder.FolderStore
+	features               featuremgmt.FeatureToggles
+	accessControl          accesscontrol.AccessControl
+	k8sclient              folderK8sHandler
+	publicDashboardService publicdashboards.ServiceWrapper
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
 	bus bus.Bus
@@ -74,22 +76,24 @@ func ProvideService(
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
+	publicDashboardService publicdashboards.ServiceWrapper,
 	cfg *setting.Cfg,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 ) *Service {
 	srv := &Service{
-		log:                  slog.Default().With("logger", "folder-service"),
-		dashboardStore:       dashboardStore,
-		dashboardFolderStore: folderStore,
-		store:                store,
-		features:             features,
-		accessControl:        ac,
-		bus:                  bus,
-		db:                   db,
-		registry:             make(map[string]folder.RegistryService),
-		metrics:              newFoldersMetrics(r),
-		tracer:               tracer,
+		log:                    slog.Default().With("logger", "folder-service"),
+		dashboardStore:         dashboardStore,
+		dashboardFolderStore:   folderStore,
+		store:                  store,
+		features:               features,
+		accessControl:          ac,
+		bus:                    bus,
+		db:                     db,
+		registry:               make(map[string]folder.RegistryService),
+		metrics:                newFoldersMetrics(r),
+		tracer:                 tracer,
+		publicDashboardService: publicDashboardService,
 	}
 	srv.DBMigration(db)
 
@@ -392,7 +396,7 @@ func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQu
 
 	// we only need to check access to the folder
 	// if the parent is accessible then the subfolders are accessible as well (due to inheritance)
-	g, err := guardian.NewByUID(ctx, q.UID, q.OrgID, q.SignedInUser)
+	g, err := guardian.NewByFolderUID(ctx, q.UID, q.OrgID, q.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
@@ -941,7 +945,7 @@ func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderComm
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	guard, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+	guard, err := guardian.NewByFolderUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
 		return err
 	}
@@ -1008,7 +1012,28 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
+	// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		// We need a list of dashboard uids inside the folder to delete related public dashboards
+		dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folderUIDs, OrgId: cmd.OrgID})
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
+
+		dashboardUIDs := make([]string, 0, len(dashes))
+		for _, dashboard := range dashes {
+			dashboardUIDs = append(dashboardUIDs, dashboard.UID)
+		}
+
+		// Delete all public dashboards in the folders
+		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
+		}
+	}
+
 	// TODO use bulk delete
+	// Delete all dashboards in the folders
 	for _, folderUID := range folderUIDs {
 		// nolint:staticcheck
 		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
@@ -1016,6 +1041,7 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 			return toFolderError(err)
 		}
 	}
+
 	return nil
 }
 
@@ -1414,13 +1440,19 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 		// if it's a new dashboard/folder check the parent folder permissions
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		// nolint:staticcheck
-		guard, err := guardian.New(ctx, d.FolderID, d.OrgID, user)
+		guard, err := guardian.NewByFolder(ctx, &folder.Folder{
+			ID:    d.FolderID, // nolint:staticcheck
+			OrgID: d.OrgID,
+		}, d.OrgID, user)
 		if err != nil {
 			return nil, err
 		}
 		return guard, nil
 	}
-	guard, err := guardian.NewByDashboard(ctx, d, d.OrgID, user)
+	guard, err := guardian.NewByFolder(ctx, &folder.Folder{
+		UID:   d.UID,
+		OrgID: d.OrgID,
+	}, d.OrgID, user)
 	if err != nil {
 		return nil, err
 	}
