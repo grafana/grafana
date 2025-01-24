@@ -62,7 +62,7 @@ You can specify these Azure Monitor data source queries in the Variable edit vie
 | **Custom Metric Names** | Returns a list of custom metric names for the specified resource.                                                  |
 
 {{< admonition type="note" >}}
-Custom metrics cannot be emitted against a subscription or resource group. Only select resources when attempting to retrieve custom metric namespaces or custom metric names for a resource.
+Custom metrics cannot be emitted against a subscription or resource group. Select resources only when you need to retrieve custom metric namespaces or custom metric names associated with a specific resource.
 {{< /admonition >}}
 
 Any Log Analytics Kusto Query Language (KQL) query that returns a single list of values can also be used in the Query field.
