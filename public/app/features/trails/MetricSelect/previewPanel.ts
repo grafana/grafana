@@ -19,9 +19,7 @@ export function getPreviewPanelFor(
   hideMenu?: boolean
 ) {
   const autoQuery = getAutoQueriesForMetric(metric, nativeHistogram);
-  let actions: Array<SelectMetricAction | NativeHistogramBadge> = [
-    new SelectMetricAction({ metric, title: 'Select' }),
-  ];
+  let actions: Array<SelectMetricAction | NativeHistogramBadge> = [new SelectMetricAction({ metric, title: 'Select' })];
 
   if (nativeHistogram) {
     actions.unshift(new NativeHistogramBadge({}));
@@ -33,7 +31,7 @@ export function getPreviewPanelFor(
     .setDescription(description)
     .setHeaderActions(actions)
     .setShowMenuAlways(true)
-    .setMenu(new PanelMenu({ labelName: metric }))
+    .setMenu(new PanelMenu({ labelName: metric }));
 
   if (!hideMenu) {
     vizPanelBuilder = vizPanelBuilder.setShowMenuAlways(true).setMenu(new PanelMenu({ labelName: metric }));
