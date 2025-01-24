@@ -12,7 +12,7 @@ Team members and their access to repositories is maintained through [GitHub team
 
 ## Proposing changes
 
-Examples of proposed changes are overarching architecture, component design, and specific code or graphical elements. Proposed changes SHOULD cover the big picture and intention, but individual parts SHOULD be split into the smallest possible changes. Changes SHOULD be based on and target the main branch. Depending on size of the proposed change, each change SHOULD be discussed, in increasing order of change size and complexity:
+Examples of proposed changes are overarching architecture, component design, and specific code or graphical elements. Proposed changes SHOULD cover the big picture and intention, but individual parts SHOULD be split into the smallest possible changes. Changes SHOULD be based on and target the main branch. Depending on the size of the proposed change, each change SHOULD be discussed, in increasing order of change size and complexity:
 
 - Directly in a PR (Pull Request) - this MAY be done, but SHOULD not be the common case.
 - Issue
@@ -56,22 +56,22 @@ In particular, we found that the following principles match how we work:
 
 - Main and release branches MUST always build without failure.
 - Branches SHOULD be merged often. Larger changes SHOULD be activated with feature flags until they are ready. Long-lived development branches SHOULD be avoided.
-- Changes MAY be enabled by default once they are in a complete state
+- Changes MAY be enabled by default once they are in a complete state.
 - Changes which span multiple PRs MUST be described in an overarching issue or Google Doc.
 
 ## Releases
 
 Releases MUST follow [Semantic Versioning](https://semver.org/) in naming and SHOULD follow Semantic Versioning as closely as reasonably possible for non-library software.
 
-Release branches MUST be split from the following branches.
+Release branches MUST be split from the following branches:
 
 - MAJOR release branches MUST be based on main.
 - MINOR release branches MUST be based on main.
-- PATCH release branches MUST be split from the relevant MINOR release branch’s most current PATCH
+- PATCH release branches MUST be split from the relevant MINOR release branch’s most current PATCH.
 
 Security releases follow the same process but MUST be prepared in secret. Security releases MUST NOT include changes which are not related to the security fix. Normal release processes MUST accommodate the security release process. SECURITY.md MUST be followed.
 
-Releases follow the following cadence
+Releases follow the following cadence:
 
 - MAJOR: Yearly
 - MINOR: Every 4-6 weeks
