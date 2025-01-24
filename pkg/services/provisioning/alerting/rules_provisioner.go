@@ -83,6 +83,7 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 	ctx context.Context,
 	user identity.Requester,
 	rule alert_models.AlertRule) error {
+	ctx, user = identity.WithServiceIdentitiy(ctx, rule.OrgID)
 	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
 	_, _, err := prov.ruleService.GetAlertRule(ctx, user, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
@@ -120,11 +121,13 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 	ctx context.Context, folderName string, orgID int64, parentUID *string) (string, error) {
+	ctx, user := identity.WithServiceIdentitiy(ctx, orgID)
+
 	cmd := &folder.GetFolderQuery{
 		Title:        &folderName,
 		ParentUID:    parentUID,
 		OrgID:        orgID,
-		SignedInUser: provisionerUser(orgID),
+		SignedInUser: user,
 	}
 
 	cmdResult, err := prov.folderService.Get(ctx, cmd)
