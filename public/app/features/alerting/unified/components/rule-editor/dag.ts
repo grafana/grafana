@@ -3,6 +3,7 @@ import memoizeOne from 'memoize-one';
 
 import { Edge, Graph, Node } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 // memoized version of _createDagFromQueries to prevent recreating the DAG if no sources or targets are modified
@@ -28,12 +29,9 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
       return;
     }
     const source = query.refId;
-    const isMathExpression = query.model.type === 'math';
 
     // some expressions have multiple targets (like the math expression)
-    const targets = isMathExpression
-      ? parseRefsFromMathExpression(query.model.expression ?? '')
-      : [query.model.expression];
+    const targets = getTargets(query.model);
 
     targets.forEach((target) => {
       const isSelf = source === target;
@@ -45,6 +43,19 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
   });
 
   return graph;
+}
+
+function getTargets(model: ExpressionQuery) {
+  const isMathExpression = model.type === 'math';
+  const isClassicCondition = model.type === 'classic_conditions';
+
+  if (isMathExpression) {
+    return parseRefsFromMathExpression(model.expression ?? '');
+  }
+  if (isClassicCondition) {
+    return model.conditions?.map((c) => c.query.params[0]) ?? [];
+  }
+  return [model.expression];
 }
 
 /**
