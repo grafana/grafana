@@ -37,7 +37,7 @@
   "actions-editor": {
     "inline": {
       "add-button": "Åđđ äčŧįőŉ",
-      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+      "one-click-action": "Øŉę-čľįčĸ äčŧįőŉ"
     }
   },
   "admin": {
@@ -1391,10 +1391,16 @@
     },
     "data-link-editor-modal": {
       "cancel": "Cäŉčęľ",
+      "one-click-description": "Øŉľy őŉę ľįŉĸ čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę",
       "save": "Ŝävę"
+    },
+    "data-link-inline-editor": {
+      "one-click": "Øŉę čľįčĸ"
     },
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
+      "one-click": "Øŉę čľįčĸ",
+      "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ",
       "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
     },
     "data-source-http-settings": {
@@ -1476,7 +1482,8 @@
       "right-axis-indicator": "(řįģĥŧ y-äχįş)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ"
+      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
   "graph": {
@@ -2540,6 +2547,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": "Ŧĥę đäŧä şőūřčę čőŉŉęčŧįőŉş þęľőŵ äřę äľľ {{pluginName}}. Ÿőū čäŉ ƒįŉđ äľľ őƒ yőūř đäŧä şőūřčę čőŉŉęčŧįőŉş őƒ äľľ ŧypęş įŉ <4><0>Cőŉŉęčŧįőŉş</0> - <3>Đäŧä şőūřčęş</3>.</4>"
+      },
       "labels": {
         "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
         "dependencies": "Đępęŉđęŉčįęş",
