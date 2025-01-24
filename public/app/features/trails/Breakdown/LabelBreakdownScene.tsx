@@ -32,8 +32,8 @@ import { Trans } from 'app/core/internationalization';
 
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { DataTrail } from '../DataTrail';
+import { PanelMenu } from '../Menu/PanelMenu';
 import { MetricScene } from '../MetricScene';
-import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { StatusWrapper } from '../StatusWrapper';
 import { getAutoQueriesForMetric } from '../autoQuery/getAutoQueriesForMetric';
 import { AutoQueryDef } from '../autoQuery/types';
@@ -478,10 +478,9 @@ export function buildAllLayout(
           ],
         })
       )
-      .setHeaderActions([
-        new SelectLabelAction({ labelName: String(option.value) }),
-        new AddToExplorationButton({ labelName: String(option.value) }),
-      ])
+      .setHeaderActions([new SelectLabelAction({ labelName: String(option.value) })])
+      .setShowMenuAlways(true)
+      .setMenu(new PanelMenu({ labelName: String(option.value) }))
       .setUnit(unit)
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
@@ -532,10 +531,9 @@ function buildNormalLayout(
       .setTitle(getLabelValue(frame))
       .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
       .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-      .setHeaderActions([
-        new AddToFiltersGraphAction({ frame }),
-        new AddToExplorationButton({ labelName: getLabelValue(frame) }),
-      ])
+      .setHeaderActions([new AddToFiltersGraphAction({ frame })])
+      .setShowMenuAlways(true)
+      .setMenu(new PanelMenu({ labelName: getLabelValue(frame) }))
       .setUnit(unit)
       .build();
 
