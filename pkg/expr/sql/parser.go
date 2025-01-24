@@ -3,7 +3,6 @@ package sql
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,8 +30,10 @@ func TablesList(rawSQL string) ([]string, error) {
 			case *sqlparser.TableName:
 				tables[v.Name.String()] = struct{}{}
 			case *sqlparser.FuncExpr:
-				if strings.ToLower(v.Name.String()) == "load_file" {
-					return false, fmt.Errorf("load_file is not supported in queries")
+				switch v.Name.Lowered() {
+				case "load_file", "sleep", "connection_id", "user":
+					return false, fmt.Errorf("blocked function %v - not supported in queries", v.Name.Lowered())
+				default:
 				}
 			}
 			return true, nil
