@@ -82,7 +82,9 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 
   const isRange =
     conditionInState.evaluator.type === EvalFunction.IsWithinRange ||
-    conditionInState.evaluator.type === EvalFunction.IsOutsideRange;
+    conditionInState.evaluator.type === EvalFunction.IsOutsideRange ||
+    conditionInState.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    conditionInState.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
   const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold) && useHysteresis;
 

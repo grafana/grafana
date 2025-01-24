@@ -32,11 +32,16 @@ type ThresholdCommand struct {
 type ThresholdType string
 
 const (
-	ThresholdIsAbove        ThresholdType = "gt"
-	ThresholdIsBelow        ThresholdType = "lt"
-	ThresholdIsEqual        ThresholdType = "eq"
-	ThresholdIsWithinRange  ThresholdType = "within_range"
-	ThresholdIsOutsideRange ThresholdType = "outside_range"
+	ThresholdIsAbove                = "gt"
+	ThresholdIsBelow                = "lt"
+	ThresholdIsEqual                = "eq"
+	ThresholdIsNotEqual             = "ne"
+	ThresholdIsGe                   = "ge"
+	ThresholdIsLe                   = "le"
+	ThresholdIsWithinRange          = "within_range"
+	ThresholdIsOutsideRange         = "outside_range"
+	ThresholdIsWithinRangeIncluded  = "within_range_included"
+	ThresholdIsOutsideRangeIncluded = "outside_range_included"
 )
 
 var (
@@ -44,8 +49,13 @@ var (
 		string(ThresholdIsAbove),
 		string(ThresholdIsBelow),
 		string(ThresholdIsEqual),
+		string(ThresholdIsNotEqual),
+		string(ThresholdIsGe),
+		string(ThresholdIsLe),
 		string(ThresholdIsWithinRange),
 		string(ThresholdIsOutsideRange),
+		string(ThresholdIsWithinRangeIncluded),
+		string(ThresholdIsOutsideRangeIncluded),
 	}
 )
 
@@ -62,6 +72,16 @@ func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
 		}
 		predicate = withinRangePredicate{left: conditions[0], right: conditions[1]}
+	case ThresholdIsWithinRangeIncluded:
+		if len(conditions) < 2 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
+		}
+		predicate = withinRangeIncludedPredicate{left: conditions[0], right: conditions[1]}
+	case ThresholdIsOutsideRangeIncluded:
+		if len(conditions) < 2 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 2", thresholdFunc, len(conditions))
+		}
+		predicate = outsideRangeIncludedPredicate{left: conditions[0], right: conditions[1]}
 	case ThresholdIsAbove:
 		if len(conditions) < 1 {
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
@@ -77,6 +97,21 @@ func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
 		}
 		predicate = equalPredicate{value: conditions[0]}
+	case ThresholdIsNotEqual:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = notEqualPredicate{value: conditions[0]}
+	case ThresholdIsGe:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = greaterThanEqualPredicate{value: conditions[0]}
+	case ThresholdIsLe:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = lessThanEqualPredicate{value: conditions[0]}
 	default:
 		return nil, fmt.Errorf("expected threshold function to be one of [%s], got %s", strings.Join(supportedThresholdFuncs, ", "), thresholdFunc)
 	}
@@ -286,6 +321,24 @@ func (r outsideRangePredicate) Eval(f float64) bool {
 	return f < r.left || f > r.right
 }
 
+type withinRangeIncludedPredicate struct {
+	left  float64
+	right float64
+}
+
+func (r withinRangeIncludedPredicate) Eval(f float64) bool {
+	return f >= r.left && f <= r.right
+}
+
+type outsideRangeIncludedPredicate struct {
+	left  float64
+	right float64
+}
+
+func (r outsideRangeIncludedPredicate) Eval(f float64) bool {
+	return f <= r.left || f >= r.right
+}
+
 type lessThanPredicate struct {
 	value float64
 }
@@ -308,4 +361,28 @@ type equalPredicate struct {
 
 func (r equalPredicate) Eval(f float64) bool {
 	return f == r.value
+}
+
+type notEqualPredicate struct {
+	value float64
+}
+
+func (r notEqualPredicate) Eval(f float64) bool {
+	return f != r.value
+}
+
+type greaterThanEqualPredicate struct {
+	value float64
+}
+
+func (r greaterThanEqualPredicate) Eval(f float64) bool {
+	return f >= r.value
+}
+
+type lessThanEqualPredicate struct {
+	value float64
+}
+
+func (r lessThanEqualPredicate) Eval(f float64) bool {
+	return f <= r.value
 }
