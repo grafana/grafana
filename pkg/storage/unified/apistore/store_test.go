@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -21,8 +20,8 @@ import (
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
 	"k8s.io/apiserver/pkg/storage"
 
-	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 )
 
@@ -33,12 +32,15 @@ func init() {
 
 	// Make sure there is a user in every context
 	storagetesting.NewContext = func() context.Context {
-		return claims.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-			Claims: jwt.Claims{
-				Subject: "testuser",
-			},
-			Rest: authn.AccessTokenClaims{},
-		}))
+		testUserA := &identity.StaticRequester{
+			Type:           claims.TypeUser,
+			Login:          "testuser",
+			UserID:         123,
+			UserUID:        "u123",
+			OrgRole:        identity.RoleAdmin,
+			IsGrafanaAdmin: true, // can do anything
+		}
+		return identity.WithRequester(context.Background(), testUserA)
 	}
 }
 
