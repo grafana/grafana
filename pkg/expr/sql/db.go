@@ -25,36 +25,42 @@ func (db *DB) RunCommands(commands []string) (string, error) {
 	return "", errors.New("not implemented")
 }
 
+// MySQLColToFieldType converts a MySQL column to a data.FieldType
+// Fow now that output is always a nullable type
+func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
+	var fT data.FieldType
+
+	switch col.Type {
+	case types.Int64:
+		fT = data.FieldTypeInt64
+	case types.Float64:
+		fT = data.FieldTypeFloat64
+	// StringType represents all string types, including VARCHAR and BLOB.
+	case types.Text, types.LongText:
+		fT = data.FieldTypeString
+	case types.Timestamp:
+		fT = data.FieldTypeTime
+	default:
+		return fT, fmt.Errorf("unsupported type for column %s of type %v", col.Name, col.Type)
+	}
+
+	// For now output is always nullable type
+	fT = fT.NullableType()
+
+	return fT, nil
+}
+
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
 func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, f *data.Frame) error {
 	// Create fields based on the schema
 	for _, col := range schema {
-		var field *data.Field
-		switch col.Type {
-		// NumberType represents all integer and floating point types
-		// TODO: branch between int and float
-		case types.Int64:
-			field = data.NewField(col.Name, nil, []*int64{})
-		case types.Float64:
-			field = data.NewField(col.Name, nil, []*float64{})
-		// StringType represents all string types, including VARCHAR and BLOB.
-		case types.Text, types.LongText:
-			field = data.NewField(col.Name, nil, []*string{})
-		case types.Timestamp:
-			field = data.NewField(col.Name, nil, []*time.Time{})
-		// TODO: Implement the following types
-		// DatetimeType represents DATE, DATETIME, and TIMESTAMP.
-		// YearType represents the YEAR type.
-		// SetType represents the SET type.
-		// EnumType represents the ENUM type.
-		// DecimalType represents the DECIMAL type.
-		// Also the NullType (and DeferredType) ?
-
-		// case int8:
-		// 	field = data.NewField(col.Name, nil, []int64{})
-		default:
-			return fmt.Errorf("unsupported type for column %s: %v", col.Name, col.Type)
+		fT, err := MySQLColToFieldType(col)
+		if err != nil {
+			return err
 		}
+
+		field := data.NewFieldFromFieldType(fT, 0)
+		field.Name = col.Name
 		f.Fields = append(f.Fields, field)
 	}
 
