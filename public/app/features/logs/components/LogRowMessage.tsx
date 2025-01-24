@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, ReactNode, SyntheticEvent, useMemo, useState } from 'react';
+import { memo, ReactNode, SyntheticEvent, useMemo, useState, KeyboardEvent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, GrafanaTheme2, LogRowContextOptions, LogRowModel } from '@grafana/data';
@@ -34,6 +34,7 @@ interface Props {
   mouseIsOver: boolean;
   onBlur: () => void;
   expanded?: boolean;
+  toggleExpanded: () => void;
   logRowMenuIconsBefore?: ReactNode[];
   logRowMenuIconsAfter?: ReactNode[];
 }
@@ -150,6 +151,7 @@ export const LogRowMessage = memo((props: Props) => {
     expanded,
     logRowMenuIconsBefore,
     logRowMenuIconsAfter,
+    toggleExpanded,
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(
@@ -157,6 +159,13 @@ export const LogRowMessage = memo((props: Props) => {
     [raw, prettifyLogMessage, wrapLogMessage, expanded]
   );
   const shouldShowMenu = mouseIsOver || pinned;
+
+  function onReturnKeyDown(e: KeyboardEvent<HTMLAnchorElement>) {
+    if (e.key === 'Enter') {
+      toggleExpanded();
+    }
+  }
+
   return (
     <>
       {
@@ -165,9 +174,15 @@ export const LogRowMessage = memo((props: Props) => {
       }
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
-          <button className={`${styles.logLine} ${styles.positionRelative}`}>
+          {/* This is tabbable, and selectable in safari, but doesn't open on enter anymore*/}
+          <a
+            onKeyDown={onReturnKeyDown}
+            tabIndex={0}
+            role="button"
+            className={`${styles.logLine} ${styles.positionRelative}`}
+          >
             <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
-          </button>
+          </a>
         </div>
       </td>
       <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
