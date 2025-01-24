@@ -5,13 +5,13 @@ import { ComponentProps } from 'react';
 
 import { FieldType, LogLevel, LogsDedupStrategy, standardTransformersRegistry, toDataFrame } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { config } from '@grafana/runtime';
 
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { logRowsToReadableJson } from '../../logs/utils';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsMetaRow } from './LogsMetaRow';
-import { config } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -38,7 +38,7 @@ const setup = (propOverrides?: object, disableDownload = false) => {
     ...defaultProps,
     ...propOverrides,
   };
-  config.exploreDisableLogsDownload = disableDownload;
+  config.ExploreHideLogsDownload = disableDownload;
 
   return render(<LogsMetaRow {...props} />);
 };

@@ -508,9 +508,9 @@ type Cfg struct {
 	AlertingMinInterval         int64
 
 	// Explore UI
-	ExploreEnabled             bool
-	ExploreDefaultTimeOffset   string
-	ExploreDisableLogsDownload bool
+	ExploreEnabled           bool
+	ExploreDefaultTimeOffset string
+	ExploreHideLogsDownload  bool
 
 	// Help UI
 	HelpEnabled bool
@@ -1211,7 +1211,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	} else {
 		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
 	}
-	cfg.ExploreDisableLogsDownload = explore.Key("disableLogsDownload").MustBool(false)
+	cfg.ExploreHideLogsDownload = explore.Key("hide_logs_download").MustBool(false)
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)
