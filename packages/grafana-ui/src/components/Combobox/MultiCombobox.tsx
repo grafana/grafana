@@ -23,6 +23,7 @@ import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION }
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
+import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 
 export const ALL_OPTION_VALUE = '__GRAFANA_INTERNAL_MULTICOMBOBOX_ALL_OPTION__';
 
@@ -215,10 +216,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   // Selected items that show up in the input field
   const visibleItems = isOpen ? selectedItems.slice(0, MAX_SHOWN_ITEMS) : selectedItems.slice(0, shownItems);
 
+  const inputRef = useMultiInputAutoSize();
   return (
     <div ref={containerRef}>
       <div
-        style={{ width: width === 'auto' ? undefined : width }}
+        style={{
+          width: width === 'auto' ? undefined : width,
+        }}
         className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })}
         ref={measureRef}
       >
@@ -260,6 +264,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: selectedItems.length > 0 ? undefined : placeholder,
+                ref: inputRef,
               })
             )}
           />
