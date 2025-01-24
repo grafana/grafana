@@ -61,7 +61,7 @@ func (ft *FrameTable) Schema() mysql.Schema {
 	if ft.schema == nil {
 		ft.schema = schemaFromFrame(ft.Frame)
 	}
-
+	return ft.schema
 }
 
 // Collation implements the mysql.Table interface
@@ -77,17 +77,42 @@ func (ft *FrameTable) Partitions(ctx *mysql.Context) (mysql.PartitionIter, error
 
 // PartitionRows implements the mysql.Table interface
 func (ft *FrameTable) PartitionRows(ctx *mysql.Context, _ mysql.Partition) (mysql.RowIter, error) {
-	// TODO
-	return nil, nil
+	return &rowIter{ft: ft, row: 0}, nil
 }
 
 type rowIter struct {
-	ft  FrameTable
+	ft  *FrameTable
 	row int
 }
 
-func (ri *rowIter) Next() (mysql.Row, error) {
+func (ri *rowIter) Next(*mysql.Context) (mysql.Row, error) {
+	// We assume each field in the Frame has the same number of rows.
+	numRows := 0
+	if len(ri.ft.Frame.Fields) > 0 {
+		numRows = ri.ft.Frame.Fields[0].Len()
+	}
 
+	// If we've already exhausted all rows, return EOF
+	if ri.row >= numRows {
+		return nil, io.EOF
+	}
+
+	// Construct a Row (which is []interface{} under the hood) by pulling
+	// the value from each column at the current row index.
+	row := make(mysql.Row, len(ri.ft.Frame.Fields))
+	for colIndex, field := range ri.ft.Frame.Fields {
+		// field.At(...) returns interface{} for the element at that row index.
+		row[colIndex] = field.At(ri.row)
+	}
+
+	ri.row++
+	return row, nil
+}
+
+// Close implements the mysql.RowIter interface.
+// In this no-op example, there isn't anything to do here.
+func (ri *rowIter) Close(*mysql.Context) error {
+	return nil
 }
 
 // #  NO-OP Partition iterator
