@@ -2,6 +2,7 @@ package authz
 
 import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	cache "github.com/grafana/authlib/cache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -13,13 +14,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-func RegisterRBACAuthZService(handler grpcserver.Provider, db legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) {
+func RegisterRBACAuthZService(
+	handler grpcserver.Provider,
+	db legacysql.LegacyDatabaseProvider,
+	tracer tracing.Tracer,
+	cache cache.Cache) {
 	server := rbac.NewService(
 		db,
 		legacy.NewLegacySQLStores(db),
 		store.NewSQLPermissionStore(db, tracer),
 		log.New("authz-grpc-server"),
 		tracer,
+		cache,
 	)
 
 	srv := handler.GetServer()
