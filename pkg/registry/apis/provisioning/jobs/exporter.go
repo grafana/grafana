@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
+	"path"
 
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -115,7 +115,7 @@ func (r *exporter) Export(ctx context.Context,
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
 		}
-		fileName := filepath.Join(fid.Path, name+".yaml")
+		fileName := path.Join(fid.Path, name+".yaml")
 		logger = logger.With("file", fileName)
 
 		var ref string
