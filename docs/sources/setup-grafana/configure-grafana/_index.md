@@ -1936,7 +1936,7 @@ This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1
 
 #### `disableLogsDownload`
 
-Enable or disable the download logs button in Explore. Default is `false`, so that the button will be visible.
+Enable or disable the button to download logs in Explore. Default is `false`, so that the button will be visible.
 
 ### `[help]`
 
