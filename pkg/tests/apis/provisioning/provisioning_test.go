@@ -43,7 +43,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagKubernetesFolders, // Required for tests that deal with folders.
+			featuremgmt.FlagKubernetesFoldersServiceV2, // Required for tests that deal with folders.
 			featuremgmt.FlagUnifiedStorageSearch,
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,

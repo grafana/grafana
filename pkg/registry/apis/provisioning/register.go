@@ -321,6 +321,10 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		return fmt.Errorf("expected repository configuration")
 	}
 
+	if r.Spec.DeletePolicy == "" {
+		r.Spec.DeletePolicy = provisioning.DeletePolityClean
+	}
+
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")
@@ -475,6 +479,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
+				b.lister,
 				b.parsers,
 				b.identities,
 				b.tester,

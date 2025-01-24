@@ -68,10 +68,12 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionPullRequest,
-				Ref:        "dashboard/1733653266690",
-				Hash:       "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
-				PR:         12,
-				URL:        "https://github.com/grafana/git-ui-sync-demo/pull/12",
+				PullRequest: &provisioning.PullRequestOptions{
+					Ref:  "dashboard/1733653266690",
+					Hash: "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
+					PR:   12,
+					URL:  "https://github.com/grafana/git-ui-sync-demo/pull/12",
+				},
 			},
 		}},
 		{"push", "different_branch", provisioning.WebhookResponse{
