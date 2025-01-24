@@ -396,8 +396,13 @@
                           "gt",
                           "lt",
                           "eq",
+                          "ne",
+                          "ge",
+                          "le",
                           "within_range",
-                          "outside_range"
+                          "outside_range",
+                          "within_range_included",
+                          "outside_range_included"
                         ],
                         "type": "string",
                         "x-enum-description": {}
@@ -429,8 +434,13 @@
                           "gt",
                           "lt",
                           "eq",
+                          "ne",
+                          "ge",
+                          "le",
                           "within_range",
-                          "outside_range"
+                          "outside_range",
+                          "within_range_included",
+                          "outside_range_included"
                         ],
                         "type": "string",
                         "x-enum-description": {}

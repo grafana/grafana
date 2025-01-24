@@ -44,12 +44,37 @@ func TestNewThresholdCommand(t *testing.T) {
 			shouldError: false,
 		},
 		{
+			fn:          "ne",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
+			fn:          "ge",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
+			fn:          "le",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
 			fn:          "within_range",
 			args:        []float64{0, 1},
 			shouldError: false,
 		},
 		{
 			fn:          "outside_range",
+			args:        []float64{0, 1},
+			shouldError: false,
+		},
+		{
+			fn:          "within_range_included",
+			args:        []float64{0, 1},
+			shouldError: false,
+		},
+		{
+			fn:          "outside_range_included",
 			args:        []float64{0, 1},
 			shouldError: false,
 		},
@@ -72,6 +97,24 @@ func TestNewThresholdCommand(t *testing.T) {
 			expectedError: "incorrect number of arguments",
 		},
 		{
+			fn:            "ne",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "ge",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "le",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
 			fn:            "within_range",
 			args:          []float64{0},
 			shouldError:   true,
@@ -79,6 +122,18 @@ func TestNewThresholdCommand(t *testing.T) {
 		},
 		{
 			fn:            "outside_range",
+			args:          []float64{0},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "within_range_included",
+			args:          []float64{0},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "outside_range_included",
 			args:          []float64{0},
 			shouldError:   true,
 			expectedError: "incorrect number of arguments",
@@ -265,11 +320,31 @@ func TestIsSupportedThresholdFunc(t *testing.T) {
 			supported: true,
 		},
 		{
+			function:  ThresholdIsNotEqual,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsGreaterOrEqual,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsLessOrEqual,
+			supported: true,
+		},
+		{
 			function:  ThresholdIsWithinRange,
 			supported: true,
 		},
 		{
 			function:  ThresholdIsOutsideRange,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsWithinRangeIncluded,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsOutsideRangeIncluded,
 			supported: true,
 		},
 		{

@@ -36,8 +36,8 @@ const (
 	ThresholdIsBelow                = "lt"
 	ThresholdIsEqual                = "eq"
 	ThresholdIsNotEqual             = "ne"
-	ThresholdIsGe                   = "ge"
-	ThresholdIsLe                   = "le"
+	ThresholdIsGreaterOrEqual       = "ge"
+	ThresholdIsLessOrEqual          = "le"
 	ThresholdIsWithinRange          = "within_range"
 	ThresholdIsOutsideRange         = "outside_range"
 	ThresholdIsWithinRangeIncluded  = "within_range_included"
@@ -50,8 +50,8 @@ var (
 		string(ThresholdIsBelow),
 		string(ThresholdIsEqual),
 		string(ThresholdIsNotEqual),
-		string(ThresholdIsGe),
-		string(ThresholdIsLe),
+		string(ThresholdIsGreaterOrEqual),
+		string(ThresholdIsLessOrEqual),
 		string(ThresholdIsWithinRange),
 		string(ThresholdIsOutsideRange),
 		string(ThresholdIsWithinRangeIncluded),
@@ -102,12 +102,12 @@ func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
 		}
 		predicate = notEqualPredicate{value: conditions[0]}
-	case ThresholdIsGe:
+	case ThresholdIsGreaterOrEqual:
 		if len(conditions) < 1 {
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
 		}
 		predicate = greaterThanEqualPredicate{value: conditions[0]}
-	case ThresholdIsLe:
+	case ThresholdIsLessOrEqual:
 		if len(conditions) < 1 {
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
 		}
