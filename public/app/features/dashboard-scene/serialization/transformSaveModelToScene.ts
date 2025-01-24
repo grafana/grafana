@@ -216,6 +216,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     });
   }
 
+  const scopeMeta =
+    config.featureToggles.scopeFilters && oldModel.scopeMeta
+      ? {
+          trait: oldModel.scopeMeta.trait,
+          groups: oldModel.scopeMeta.groups,
+        }
+      : undefined;
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
@@ -248,6 +256,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     title: oldModel.title,
     uid: oldModel.uid,
     version: oldModel.version,
+    scopeMeta,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
@@ -277,15 +286,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       hideTimeControls: oldModel.timepicker.hidden,
     }),
   });
-
-  if (config.featureToggles.scopeFilters && oldModel.scopeMeta) {
-    dashboardScene.setState({
-      scopeMeta: {
-        trait: oldModel.scopeMeta.trait,
-        groups: oldModel.scopeMeta.groups,
-      },
-    });
-  }
 
   return dashboardScene;
 }
