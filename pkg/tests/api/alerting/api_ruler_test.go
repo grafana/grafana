@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"path"
-	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -1146,6 +1145,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					}
 				}],
 				"updated": "2021-02-21T01:10:30Z",
+				"updated_by": {
+					"uid": "uid",
+					"name": "grafana"
+				},
 				"intervalSeconds": 60,
 				"is_paused": false,
 				"version": 1,
@@ -1185,6 +1188,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					}
 				}],
 				"updated": "2021-02-21T01:10:30Z",
+				"updated_by": {
+					"uid": "uid",
+					"name": "grafana"
+				},
 				"intervalSeconds": 60,
 				"is_paused": false,
 				"version": 1,
@@ -1236,6 +1243,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					}
 				}],
 				"updated": "2021-02-21T01:10:30Z",
+				"updated_by": {
+					"uid": "uid",
+					"name": "grafana"
+				},
 				"intervalSeconds": 60,
 				"is_paused": false,
 				"version": 1,
@@ -2521,6 +2532,10 @@ func TestIntegrationQuota(t *testing.T) {
 						     }
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
+		                  "updated_by": {
+							"uid": "uid",
+							"name": "grafana"
+						  },
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":2,
@@ -2593,13 +2608,8 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 200, resp.StatusCode)
-
-		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
-		b = re.ReplaceAll(b, []byte(`"uid":""`))
-		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
-		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
-
-		expectedGetRulesResponseBody := fmt.Sprintf(`{
+		body, _ := rulesNamespaceWithoutVariableValues(t, b)
+		expectedGetRulesResponseBody := `{
 				"default": [
 					{
 						"name": "arulegroup",
@@ -2636,12 +2646,16 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 											}
 										}
 									],
-									"updated": "2021-05-19T19:47:55Z",
+									"updated": "2021-02-21T01:10:30Z",
+                                    "updated_by" : {
+										"uid": "uid",
+										"name": "editor"			
+									},
 									"intervalSeconds": 60,
 									"is_paused": false,
 									"version": 1,
-									"uid": "",
-									"namespace_uid": %q,
+									"uid": "uid",
+									"namespace_uid": "nsuid",
 									"rule_group": "arulegroup",
 									"no_data_state": "NoData",
 									"exec_err_state": "Alerting",
@@ -2656,8 +2670,8 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 						]
 					}
 				]
-			}`, namespaceUID)
-		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+			}`
+		assert.JSONEq(t, expectedGetRulesResponseBody, body)
 	})
 	t.Run("editor can not delete the folder because it contains Grafana 8 alerts", func(t *testing.T) {
 		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
@@ -4372,6 +4386,7 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 				rule.GrafanaManagedAlert.UID = "uid"
 				rule.GrafanaManagedAlert.NamespaceUID = "nsuid"
 				rule.GrafanaManagedAlert.Updated = time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
+				rule.GrafanaManagedAlert.UpdatedBy.UID = "uid"
 			}
 		}
 	}
