@@ -154,7 +154,11 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
                 },
               },
             ],
-            "repeat": "customVar",
+            "id": 4,
+            "repeat": {
+              "mode": "variable",
+              "value": "customVar",
+            },
             "title": "Test Row",
             "y": 10,
           },

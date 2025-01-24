@@ -749,6 +749,8 @@ describe('ResponseTransformers', () => {
         uid: 'uid-for-library-panel',
         name: 'Library Panel',
       });
+      expect(dashboard.panels![2].type).toBe('row');
+      expect(dashboard.panels![3].type).toBe('timeseries');
     });
 
     describe('getPanelQueries', () => {

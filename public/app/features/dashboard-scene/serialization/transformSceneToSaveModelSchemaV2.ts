@@ -1,4 +1,4 @@
-import { get, omit } from 'lodash';
+import { omit } from 'lodash';
 
 import { AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -247,11 +247,11 @@ export function gridItemToGridLayoutItemKind(
   return elementGridItem;
 }
 
-function getRowRepeatVariable(row: SceneGridRow): string | undefined {
+function getRowRepeat(row: SceneGridRow): RepeatOptions | undefined {
   if (row.state.$behaviors) {
     for (const behavior of row.state.$behaviors) {
       if (behavior instanceof RowRepeaterBehavior) {
-        return behavior.state.variableName;
+        return { value: behavior.state.variableName, mode: 'variable' };
       }
     }
   }
@@ -270,11 +270,12 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
   return {
     kind: 'GridLayoutRow',
     spec: {
+      id: getPanelIdForVizPanel(row),
       title: row.state.title,
       y: row.state.y ?? 0,
       collapsed: Boolean(row.state.isCollapsed),
       elements: children,
-      repeat: getRowRepeatVariable(row),
+      repeat: getRowRepeat(row),
     },
   };
 }

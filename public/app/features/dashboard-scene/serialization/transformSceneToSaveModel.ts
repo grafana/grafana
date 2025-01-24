@@ -192,6 +192,7 @@ export function vizPanelToPanel(
         name: libPanel!.state.name,
         uid: libPanel!.state.uid,
       },
+      type: 'library-panel-ref',
     } as Panel;
 
     return panel;

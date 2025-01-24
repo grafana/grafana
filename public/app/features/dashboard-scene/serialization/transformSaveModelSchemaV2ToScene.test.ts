@@ -251,8 +251,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'panel-2')!;
     validateVizPanel(vizLibraryPanel, dash);
 
-    expect((layout.state.grid.state.children[2] as SceneGridRow).state.isCollapsed).toBe(true);
-    expect((layout.state.grid.state.children[2] as SceneGridRow).state.y).toBe(10);
+    expect((layout.state.grid.state.children[2] as SceneGridRow).state.isCollapsed).toBe(false);
+    expect((layout.state.grid.state.children[2] as SceneGridRow).state.y).toBe(20);
 
     // Transformations
     const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;

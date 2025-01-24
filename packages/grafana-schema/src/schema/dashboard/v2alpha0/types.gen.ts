@@ -703,6 +703,16 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 	value: "",
 });
 
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -742,14 +752,17 @@ export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
 });
 
 export interface GridLayoutRowSpec {
+	// This is only needed in order to cleanly transform between V2 and V1
+	id: number;
 	y: number;
 	collapsed: boolean;
 	title: string;
 	elements: GridLayoutItemKind[];
-	repeat?: string;
+	repeat?: RowRepeatOptions;
 }
 
 export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
+	id: 0,
 	y: 0,
 	collapsed: false,
 	title: "",

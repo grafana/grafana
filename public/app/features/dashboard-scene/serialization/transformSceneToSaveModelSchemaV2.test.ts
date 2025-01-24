@@ -177,6 +177,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // maxPerRow?: number,
             }),
             new SceneGridRow({
+              key: 'panel-4',
               title: 'Test Row',
               y: 10,
               $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],

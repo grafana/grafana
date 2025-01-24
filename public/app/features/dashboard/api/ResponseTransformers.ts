@@ -332,9 +332,10 @@ function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): GridLayoutRo
   return {
     kind: 'GridLayoutRow',
     spec: {
+      id: p.id,
       collapsed: p.collapsed,
       title: p.title ?? '',
-      repeat: p.repeat,
+      repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
       y: p.gridPos?.y ?? 0,
       elements,
     },
@@ -838,72 +839,115 @@ function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): Annotati
   });
 }
 
-interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos'> {}
+interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos' | 'type'> {}
 
 function getPanelsV1(
   panels: DashboardV2Spec['elements'],
   layout: DashboardV2Spec['layout']
 ): Array<Panel | LibraryPanelDTO> {
-  return Object.entries(panels).map(([key, p]) => {
-    const layoutElement = layout.spec.items.find(
-      (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === key
-    );
-    const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
-    const gridPos = { x, y, w: width, h: height };
-    if (p.kind === 'Panel') {
-      const panel = p.spec;
-      return {
-        id: panel.id,
-        type: panel.vizConfig.kind,
-        title: panel.title,
-        description: panel.description,
-        fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
-        options: panel.vizConfig.spec.options,
-        pluginVersion: panel.vizConfig.spec.pluginVersion,
-        links:
-          // @ts-expect-error - Panel link is wrongly typed as DashboardLink
-          panel.links?.map<DashboardLink>((l) => ({
-            title: l.title,
-            url: l.url,
-            ...(l.targetBlank && { targetBlank: l.targetBlank }),
-          })) || [],
-        targets: panel.data.spec.queries.map((q) => {
-          return {
-            refId: q.spec.refId,
-            hide: q.spec.hidden,
-            datasource: q.spec.datasource,
-            ...q.spec.query.spec,
-          };
-        }),
-        transformations: panel.data.spec.transformations.map((t) => t.spec),
-        gridPos,
-        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-        maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
-        interval: panel.data.spec.queryOptions.interval,
-        hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
-        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-        timeFrom: panel.data.spec.queryOptions.timeFrom,
-        timeShift: panel.data.spec.queryOptions.timeShift,
-        transparent: panel.transparent,
-        ...(repeat?.value && { repeat: repeat.value }),
-        ...(repeat?.direction && { repeatDirection: repeat.direction }),
-        ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
-      };
-    } else if (p.kind === 'LibraryPanel') {
-      const panel = p.spec;
-      return {
-        id: panel.id,
-        title: panel.title,
-        gridPos,
-        libraryPanel: {
-          uid: panel.libraryPanel.uid,
-          name: panel.libraryPanel.name,
+  const panelsV1: Array<Panel | LibraryPanelDTO | RowPanel> = [];
+
+  for (const item of layout.spec.items) {
+    if (item.kind === 'GridLayoutItem') {
+      const panel = panels[item.spec.element.name];
+      const v1Panel = transformV2PanelToV1Panel(panel, item);
+      panelsV1.push(v1Panel);
+    } else if (item.kind === 'GridLayoutRow') {
+      const row: RowPanel = {
+        id: item.spec.id,
+        type: 'row',
+        title: item.spec.title,
+        collapsed: item.spec.collapsed,
+        repeat: item.spec.repeat ? item.spec.repeat.value : undefined,
+        gridPos: {
+          x: 0,
+          y: item.spec.y,
+          w: 24,
+          h: GRID_ROW_HEIGHT,
         },
+        panels: [],
       };
-    } else {
-      throw new Error(`Unknown element kind: ${p}`);
+
+      const rowPanels = [];
+      for (const panel of item.spec.elements) {
+        const panelElement = panels[panel.spec.element.name];
+        const v1Panel = transformV2PanelToV1Panel(panelElement, panel, item.spec.y + GRID_ROW_HEIGHT + panel.spec.y);
+        rowPanels.push(v1Panel);
+      }
+      if (item.spec.collapsed) {
+        // When a row is collapsed, panels inside it are stored in the panels property.
+        row.panels = rowPanels;
+        panelsV1.push(row);
+      } else {
+        panelsV1.push(row);
+        panelsV1.push(...rowPanels);
+      }
     }
-  });
+  }
+  return panelsV1;
+}
+
+function transformV2PanelToV1Panel(
+  p: PanelKind | LibraryPanelKind,
+  layoutElement: GridLayoutItemKind,
+  yOverride?: number
+): Panel | LibraryPanelDTO {
+  const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
+  const gridPos = { x, y: yOverride ?? y, w: width, h: height };
+  if (p.kind === 'Panel') {
+    const panel = p.spec;
+    return {
+      id: panel.id,
+      type: panel.vizConfig.kind,
+      title: panel.title,
+      description: panel.description,
+      fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
+      options: panel.vizConfig.spec.options,
+      pluginVersion: panel.vizConfig.spec.pluginVersion,
+      links:
+        // @ts-expect-error - Panel link is wrongly typed as DashboardLink
+        panel.links?.map<DashboardLink>((l) => ({
+          title: l.title,
+          url: l.url,
+          ...(l.targetBlank && { targetBlank: l.targetBlank }),
+        })) || [],
+      targets: panel.data.spec.queries.map((q) => {
+        return {
+          refId: q.spec.refId,
+          hide: q.spec.hidden,
+          datasource: q.spec.datasource,
+          ...q.spec.query.spec,
+        };
+      }),
+      transformations: panel.data.spec.transformations.map((t) => t.spec),
+      gridPos,
+      cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+      maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
+      interval: panel.data.spec.queryOptions.interval,
+      hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
+      queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+      timeFrom: panel.data.spec.queryOptions.timeFrom,
+      timeShift: panel.data.spec.queryOptions.timeShift,
+      transparent: panel.transparent,
+      ...(repeat?.value && { repeat: repeat.value }),
+      ...(repeat?.direction && { repeatDirection: repeat.direction }),
+      ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
+    };
+  } else if (p.kind === 'LibraryPanel') {
+    const panel = p.spec;
+    return {
+      id: panel.id,
+      title: panel.title,
+      gridPos,
+      libraryPanel: {
+        uid: panel.libraryPanel.uid,
+        name: panel.libraryPanel.name,
+      },
+      type: 'library-panel-ref',
+    };
+  } else {
+    throw new Error(`Unknown element kind: ${p}`);
+  }
 }
 
 export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {

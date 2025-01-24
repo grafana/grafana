@@ -487,6 +487,11 @@ RepeatOptions: {
   maxPerRow?: int
 }
 
+RowRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
 GridLayoutItemSpec: {
   x: int
   y: int
@@ -507,11 +512,12 @@ GridLayoutRowKind: {
 }
 
 GridLayoutRowSpec: {
+  id: int // This is only needed in order to cleanly transform between V2 and V1
   y: int
   collapsed: bool
   title: string
   elements: [...GridLayoutItemKind]
-  repeat?: string
+  repeat?: RowRepeatOptions
 }
 
 GridLayoutSpec: {

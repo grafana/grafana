@@ -289,8 +289,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       });
       let behaviors: SceneObject[] | undefined;
       if (element.spec.repeat) {
-        // For repeated rows the children are stored in the behavior
-        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat })];
+        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat.value })];
       }
       return new SceneGridRow({
         y: element.spec.y,
