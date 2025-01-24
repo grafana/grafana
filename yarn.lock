@@ -2773,7 +2773,7 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:^0.9.6"
+    "@grafana/plugin-ui": "npm:0.9.6"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -2885,7 +2885,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:^0.9.6"
+    "@grafana/plugin-ui": "npm:0.9.6"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -2957,7 +2957,7 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:^0.9.6"
+    "@grafana/plugin-ui": "npm:0.9.6"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -3127,7 +3127,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:^0.9.6"
+    "@grafana/plugin-ui": "npm:0.9.6"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -3583,7 +3583,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.9.6, @grafana/plugin-ui@npm:^0.9.3, @grafana/plugin-ui@npm:^0.9.6":
+"@grafana/plugin-ui@npm:0.9.6, @grafana/plugin-ui@npm:^0.9.3":
   version: 0.9.6
   resolution: "@grafana/plugin-ui@npm:0.9.6"
   dependencies:
@@ -17770,7 +17770,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^1.11.0"
-    "@grafana/plugin-ui": "npm:^0.9.6"
+    "@grafana/plugin-ui": "npm:0.9.6"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
