@@ -58,7 +58,7 @@ You can specify these Azure Monitor data source queries in the Variable edit vie
 | **Metric Names**        | Returns a list of metric names for a resource.                                                                     |
 | **Workspaces**          | Returns a list of workspaces for the specified subscription.                                                       |
 | **Logs**                | Use a KQL query to return values.                                                                                  |
-| **Custom Namespaces**   | Return metric namespaces for the specified resource.                                                               |
+| **Custom Namespaces**   | Returns metric namespaces for the specified resource.                                                               |
 | **Custom Metric Names** | Returns a list of custom metric names for the specified resource.                                                  |
 
 {{< admonition type="note" >}}
