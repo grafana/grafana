@@ -116,6 +116,8 @@ func (r *Syncer) Unsync(ctx context.Context) error {
 	case provisioning.DeletePolityRetain:
 		logger.Info("keep all resources")
 
+		// TODO: remove repository info from all resources in the list
+
 		if r.repository.Config().Spec.Folder != "" {
 			obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
 			if err != nil {
