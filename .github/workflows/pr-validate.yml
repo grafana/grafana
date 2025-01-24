@@ -11,9 +11,6 @@ jobs:
    runs-on: ubuntu-latest
 
    steps:
-
-     - uses: actions/checkout@v4
-
      - name: validate-pr
 
        continue-on-error: true
