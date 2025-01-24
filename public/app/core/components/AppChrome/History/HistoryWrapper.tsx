@@ -9,18 +9,12 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { RecordHistoryEntryEvent } from 'app/types/events';
 
-import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
 export function HistoryWrapper() {
   const { chrome } = useGrafana();
-  const [history, setHistory] = useState<HistoryEntry[]>(
-    store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
-      return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
-    })
-  );
   const [numItemsToShow, setNumItemsToShow] = useState(5);
-  const state = chrome.useState();
+  const { history, historyDocked } = chrome.useState();
   const selectedTime = history.find((entry) => {
     return entry.url === window.location.href || entry.views.some((view) => view.url === window.location.href);
   })?.time;
@@ -46,7 +40,6 @@ export function HistoryWrapper() {
         store.setObject('CLICKING_HISTORY', false);
         return;
       }
-      const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
       let lastEntry = history[0];
       const newUrl = ev.payload.url;
       const lastUrl = lastEntry.views[0]?.url;
@@ -60,14 +53,13 @@ export function HistoryWrapper() {
           },
           ...lastEntry.views,
         ];
-        store.setObject(HISTORY_LOCAL_STORAGE_KEY, [...history]);
-        setHistory([...history]);
+        chrome.setHistory([...history]);
       }
-      return () => {
-        sub.unsubscribe();
-      };
     });
-  }, []);
+    return () => {
+      sub.unsubscribe();
+    };
+  }, [chrome, history]);
 
   const styles = useStyles2(getStyles);
   return (
@@ -86,7 +78,7 @@ export function HistoryWrapper() {
                       key={index}
                       entry={entry}
                       isSelected={entry.time === selectedTime}
-                      onClick={() => !state.historyDocked && chrome.setHistoryOpen(false)}
+                      onClick={() => !historyDocked && chrome.setHistoryOpen(false)}
                     />
                   );
                 })}
