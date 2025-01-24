@@ -11,6 +11,8 @@ import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { HistoryEntry } from '../types';
 
+import { historyFormated } from './utils';
+
 export function HistoryWrapper() {
   const { chrome } = useGrafana();
   const [numItemsToShow, setNumItemsToShow] = useState(5);
@@ -19,19 +21,7 @@ export function HistoryWrapper() {
     return entry.url === window.location.href || entry.views.some((view) => view.url === window.location.href);
   })?.time;
 
-  const hist = history.slice(0, numItemsToShow).reduce((acc: { [key: string]: HistoryEntry[] }, entry) => {
-    const date = moment(entry.time);
-    let key = '';
-    if (date.isSame(moment(), 'day')) {
-      key = t('nav.history-wrapper.today', 'Today');
-    } else if (date.isSame(moment().subtract(1, 'day'), 'day')) {
-      key = t('nav.history-wrapper.yesterday', 'Yesterday');
-    } else {
-      key = date.format('YYYY-MM-DD');
-    }
-    acc[key] = [...(acc[key] || []), entry];
-    return acc;
-  }, {});
+  const hist = historyFormated(history, numItemsToShow);
 
   useEffect(() => {
     const sub = appEvents.subscribe(RecordHistoryEntryEvent, (ev) => {
@@ -62,6 +52,7 @@ export function HistoryWrapper() {
   }, [chrome, history]);
 
   const styles = useStyles2(getStyles);
+
   return (
     <Stack direction="column" alignItems="flex-start">
       <Box width="100%">
@@ -120,6 +111,14 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
       return entry.url === window.location.href;
     })?.time;
 
+  const getBreadcrumbs = () => {
+    let text = '';
+    breadcrumbs.map((breadcrumb, index) => {
+      text += `${breadcrumb.text} ${index !== breadcrumbs.length - 1 ? '> ' : ''}`;
+    });
+    return text;
+  };
+
   return (
     <Stack direction="column" gap={1}>
       <Stack alignItems={'baseline'}>
@@ -152,13 +151,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           className={isSelected ? undefined : styles.card}
         >
           <Stack direction="column">
-            <div>
-              {breadcrumbs.map((breadcrumb, index) => (
-                <Text key={index}>
-                  {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
-                </Text>
-              ))}
-            </div>
+            <Text>{getBreadcrumbs()}</Text>
             <Text color="secondary" variant="bodySmall">
               {moment(time).format('h:mm A')}
             </Text>
