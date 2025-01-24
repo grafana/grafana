@@ -87,7 +87,7 @@ type PullRequestOptions struct {
 
 type SyncOptions struct {
 	// Complete forces the sync to overwrite
-	Complete bool `json:"force,omitempty"`
+	Complete bool `json:"complete,omitempty"`
 }
 
 type ExportOptions struct {
