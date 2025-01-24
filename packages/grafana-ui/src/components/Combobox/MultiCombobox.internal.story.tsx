@@ -72,17 +72,14 @@ export const AutoSize: Story = {
 };
 
 const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...args }) => {
-  const [value, setValue] = useState<string[]>([]);
+  const [dynamicArgs, setArgs] = useArgs();
+
   const [options, setOptions] = useState<ComboboxOption[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => {
-      generateOptions(numberOfOptions).then((options) => {
-        setIsLoading(false);
-        setOptions(options);
-        setValue([options[5].value]);
-      });
+    setTimeout(async () => {
+      const options = await generateOptions(numberOfOptions);
+      setOptions(options);
     }, 1000);
   }, [numberOfOptions]);
 
@@ -90,11 +87,10 @@ const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...
   return (
     <MultiCombobox
       {...rest}
-      loading={isLoading}
+      {...dynamicArgs}
       options={options}
-      value={value}
       onChange={(opts) => {
-        setValue(opts || []);
+        setArgs({ value: opts });
         onChangeAction(opts);
       }}
     />

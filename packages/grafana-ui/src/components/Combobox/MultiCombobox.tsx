@@ -29,7 +29,7 @@ import { useOptions } from './useOptions';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
-  onChange: (items?: T[]) => void;
+  onChange: (option: Array<ComboboxOption<T>>) => void;
   enableAllOption?: boolean;
 }
 
@@ -38,16 +38,6 @@ export type MultiComboboxProps<T extends string | number> = MultiComboboxBasePro
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const { placeholder, onChange, value, width, enableAllOption, invalid, loading, disabled, minWidth, maxWidth } =
     props;
-
-  const { options: newOptions, loadOptionsWhenUserTypes /*, asyncLoading, asyncError */ } = useOptions(props.options);
-
-  const selectedItems = useMemo(() => {
-    if (!value) {
-      return [];
-    }
-
-    return getSelectedItemsFromValue<T>(value, newOptions);
-  }, [value, newOptions]);
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
@@ -63,17 +53,21 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     } as ComboboxOption<T>;
   }, [inputValue]);
 
-  const baseItems = useMemo(() => {
-    return enableAllOption ? [allOptionItem, ...newOptions] : newOptions;
-  }, [newOptions, enableAllOption, allOptionItem]);
+  // Handle async options and the 'All' option
+  const { options: baseOptions, updateOptions } = useOptions(props.options);
+  const options = useMemo(() => {
+    // Only add the 'All' option if there's more than 1 option
+    const addAllOption = enableAllOption && baseOptions.length > 1;
+    return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
+  }, [baseOptions, enableAllOption, allOptionItem]);
 
-  const items = useMemo(() => {
-    if (enableAllOption && baseItems.length === 1 && baseItems[0] === allOptionItem) {
+  const selectedItems = useMemo(() => {
+    if (!value) {
       return [];
     }
 
-    return baseItems;
-  }, [baseItems, enableAllOption, allOptionItem]);
+    return getSelectedItemsFromValue<T>(value, baseOptions);
+  }, [value, baseOptions]);
 
   const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
@@ -86,48 +80,56 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     [selectedItems]
   );
 
-  const { getSelectedItemProps, getDropdownProps, removeSelectedItem } = useMultipleSelection({
-    selectedItems, //initally selected items,
-    onStateChange: ({ type, selectedItems: newSelectedItems }) => {
-      switch (type) {
-        case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
-        case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownDelete:
-        case useMultipleSelection.stateChangeTypes.DropdownKeyDownBackspace:
-        case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
-          if (newSelectedItems) {
-            onChange(getComboboxOptionsValues(newSelectedItems));
-          }
-          break;
+  const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem } =
+    useMultipleSelection({
+      selectedItems, // initally selected items,
+      onStateChange: ({ type, selectedItems: newSelectedItems }) => {
+        switch (type) {
+          case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
+          case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownDelete:
+          case useMultipleSelection.stateChangeTypes.DropdownKeyDownBackspace:
+          case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
+          case useMultipleSelection.stateChangeTypes.FunctionAddSelectedItem:
+          case useMultipleSelection.stateChangeTypes.FunctionSetSelectedItems:
+            console.log('useMultipleSelection has new items', newSelectedItems);
+            // TODO: i don't like multiple breaks
+            if (!newSelectedItems) {
+              console.warn('newSelectedItems is undefined, but should it ever be?');
+              break;
+            }
 
-        default:
-          break;
-      }
-    },
-    stateReducer: (state, actionAndChanges) => {
-      const { changes } = actionAndChanges;
-      return {
-        ...changes,
+            onChange(newSelectedItems);
+            break;
 
-        /**
-         * TODO: Fix Hack!
-         * This prevents the menu from closing when the user unselects an item in the dropdown at the expense
-         * of breaking keyboard navigation.
-         *
-         * Downshift isn't really designed to keep selected items in the dropdown menu, so when you unselect an item
-         * in a multiselect, the stateReducer tries to move focus onto another item which causes the menu to be closed.
-         * This only seems to happen when you deselect the last item in the selectedItems list.
-         *
-         * Check out:
-         *  - FunctionRemoveSelectedItem in the useMultipleSelection reducer https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/reducer.js#L75
-         *  - The activeIndex useEffect in useMultipleSelection https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/index.js#L68-L72
-         *
-         * Forcing the activeIndex to -999 both prevents the useEffect that changes the focus from triggering (value never changes)
-         * and prevents the if statement in useMultipleSelection from focusing anything.
-         */
-        activeIndex: -999,
-      };
-    },
-  });
+          default:
+            break;
+        }
+      },
+      stateReducer: (state, actionAndChanges) => {
+        const { changes } = actionAndChanges;
+        return {
+          ...changes,
+
+          /**
+           * TODO: Fix Hack!
+           * This prevents the menu from closing when the user unselects an item in the dropdown at the expense
+           * of breaking keyboard navigation.
+           *
+           * Downshift isn't really designed to keep selected items in the dropdown menu, so when you unselect an item
+           * in a multiselect, the stateReducer tries to move focus onto another item which causes the menu to be closed.
+           * This only seems to happen when you deselect the last item in the selectedItems list.
+           *
+           * Check out:
+           *  - FunctionRemoveSelectedItem in the useMultipleSelection reducer https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/reducer.js#L75
+           *  - The activeIndex useEffect in useMultipleSelection https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/index.js#L68-L72
+           *
+           * Forcing the activeIndex to -999 both prevents the useEffect that changes the focus from triggering (value never changes)
+           * and prevents the if statement in useMultipleSelection from focusing anything.
+           */
+          activeIndex: -999,
+        };
+      },
+    });
 
   const {
     getToggleButtonProps,
@@ -138,7 +140,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     getInputProps,
     getItemProps,
   } = useCombobox({
-    items,
+    items: options,
     itemToString,
     inputValue,
     selectedItem: null,
@@ -176,9 +178,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
 
     onIsOpenChange: ({ isOpen, inputValue }) => {
-      console.log('onIsOpenChange', { isOpen, inputValue });
       if (isOpen && inputValue === '') {
-        loadOptionsWhenUserTypes(inputValue);
+        updateOptions(inputValue);
       }
     },
 
@@ -187,36 +188,46 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
+          // TODO: i don't like multiple breaks
+          if (!newSelectedItem) {
+            break;
+          }
+
           // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
-            const allFilteredSelected = selectedItems.length === items.length - 1;
-            let newSelectedItems = allFilteredSelected && inputValue === '' ? [] : baseItems.slice(1);
+            // Get the 'real options', excluding the ALL_OPTION_VALUE
+            const realOptions = options.slice(1);
 
-            if (!allFilteredSelected && inputValue !== '') {
+            // TODO: fix bug where if the search filtered items list is the
+            // same length, but different, than the selected items (ask tobias)
+            const isAllFilteredSelected = selectedItems.length === options.length - 1;
+
+            // if every option is already selected, clear the selection.
+            // otherwise, select all the options (excluding the first ALL_OTION)
+            let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
+
+            if (!isAllFilteredSelected && inputValue !== '') {
               // Select all currently filtered items and deduplicate
-              newSelectedItems = [...new Set([...selectedItems, ...items.slice(1)])];
+              newSelectedItems = [...new Set([...selectedItems, ...realOptions])];
             }
 
-            if (allFilteredSelected && inputValue !== '') {
+            if (isAllFilteredSelected && inputValue !== '') {
               // Deselect all currently filtered items
-              const filteredSet = new Set(items.slice(1).map((item) => item.value));
+              const filteredSet = new Set(realOptions.map((item) => item.value));
               newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
             }
 
-            onChange(getComboboxOptionsValues(newSelectedItems));
-            break;
+            setSelectedItems(newSelectedItems);
+          } else if (isOptionSelected(newSelectedItem)) {
+            removeSelectedItem(newSelectedItem);
+          } else {
+            addSelectedItem(newSelectedItem);
           }
-          if (newSelectedItem) {
-            if (!isOptionSelected(newSelectedItem)) {
-              onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
-              break;
-            }
-            removeSelectedItem(newSelectedItem); // onChange is handled by multiselect here
-          }
+
           break;
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
-          loadOptionsWhenUserTypes(newInputValue ?? '');
+          updateOptions(newInputValue ?? '');
 
           break;
         default:
@@ -225,14 +236,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
   });
 
-  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
+  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
   const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width, minWidth, maxWidth);
 
   const virtualizerOptions = {
-    count: items.length,
+    count: options.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: (index: number) =>
-      'description' in items[index] ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
+      'description' in options[index] ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
@@ -305,13 +316,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                   const index = virtualRow.index;
-                  const item = items[index];
+                  const item = options[index];
                   const itemProps = getItemProps({ item, index });
                   const isSelected = isOptionSelected(item);
                   const id = 'multicombobox-option-' + item.value.toString();
                   const isAll = item.value === ALL_OPTION_VALUE;
+
+                  // TODO: fix bug where if the search filtered items list is the
+                  // same length, but different, than the selected items (ask tobias)
                   const allItemsSelected =
-                    items[0]?.value === ALL_OPTION_VALUE && selectedItems.length === items.length - 1;
+                    options[0]?.value === ALL_OPTION_VALUE && selectedItems.length === options.length - 1;
 
                   return (
                     <li
@@ -335,7 +349,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                           label={
                             isAll
                               ? (item.label ?? item.value.toString()) +
-                                (isAll && inputValue !== '' ? ` (${items.length - 1})` : '')
+                                (isAll && inputValue !== '' ? ` (${options.length - 1})` : '')
                               : (item.label ?? item.value.toString())
                           }
                           description={item?.description}
@@ -346,7 +360,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   );
                 })}
               </ul>
-              <div aria-live="polite">{items.length === 0 && <NotFoundError />}</div>
+              <div aria-live="polite">{options.length === 0 && <NotFoundError />}</div>
             </ScrollContainer>
           )}
         </div>
@@ -388,8 +402,4 @@ function isComboboxOptions<T extends string | number>(
   value: T[] | Array<ComboboxOption<T>>
 ): value is Array<ComboboxOption<T>> {
   return typeof value[0] === 'object';
-}
-
-function getComboboxOptionsValues<T extends string | number>(optionArray: Array<ComboboxOption<T>>) {
-  return optionArray.map((option) => option.value);
 }
