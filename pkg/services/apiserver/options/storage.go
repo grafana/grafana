@@ -5,11 +5,18 @@ import (
 	"net"
 
 	"github.com/spf13/pflag"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type StorageType string
@@ -28,8 +35,12 @@ type StorageOptions struct {
 	// The desired storage type
 	StorageType StorageType
 
-	// For unified-grpc, the address is required
-	Address string
+	// For unified-grpc
+	Address          string
+	GrpcToken        string
+	TokenExchangeURL string
+	TokenNamespace   string
+	AllowInsecure    bool
 
 	// For file storage, this is the requested path
 	DataPath string
@@ -47,8 +58,10 @@ type StorageOptions struct {
 
 func NewStorageOptions() *StorageOptions {
 	return &StorageOptions{
-		StorageType: StorageTypeUnified,
-		Address:     "localhost:10000",
+		StorageType:    StorageTypeUnified,
+		Address:        "localhost:10000",
+		TokenNamespace: "*",
+		AllowInsecure:  false,
 	}
 }
 
@@ -56,6 +69,10 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar((*string)(&o.StorageType), "grafana-apiserver-storage-type", string(o.StorageType), "Storage type")
 	fs.StringVar(&o.DataPath, "grafana-apiserver-storage-path", o.DataPath, "Storage path for file storage")
 	fs.StringVar(&o.Address, "grafana-apiserver-storage-address", o.Address, "Remote grpc address endpoint")
+	fs.StringVar(&o.GrpcToken, "grafana-apiserver-storage-token", o.GrpcToken, "Token for grpc client")
+	fs.StringVar(&o.TokenExchangeURL, "grafana-apiserver-storage-token-exchange-url", o.TokenExchangeURL, "Token exchange url for grpc client")
+	fs.StringVar(&o.TokenNamespace, "grafana-apiserver-storage-token-namespace", o.TokenNamespace, "Token namespace for grpc client")
+	fs.BoolVar(&o.AllowInsecure, "grafana-apiserver-storage-allow-insecure", o.AllowInsecure, "Allow insecure grpc connections")
 }
 
 func (o *StorageOptions) Validate() []error {
@@ -79,11 +96,47 @@ func (o *StorageOptions) Validate() []error {
 	if o.BlobStoreURL != "" && o.StorageType != StorageTypeUnified {
 		errs = append(errs, fmt.Errorf("blob storage is only valid with unified storage"))
 	}
+	if o.StorageType == StorageTypeUnifiedGrpc {
+		if o.GrpcToken == "" {
+			errs = append(errs, fmt.Errorf("grpc token is required for unified-grpc storage"))
+		}
+		if o.TokenExchangeURL == "" {
+			errs = append(errs, fmt.Errorf("grpc token exchange url is required for unified-grpc storage"))
+		}
+		if o.TokenNamespace == "" {
+			errs = append(errs, fmt.Errorf("grpc token namespace is required for unified-grpc storage"))
+		}
+	}
 	return errs
 }
 
-func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions) error {
-	// TODO: move storage setup here
+func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfig, etcdOptions *options.EtcdOptions, tracer tracing.Tracer) error {
+	if o.StorageType != StorageTypeUnifiedGrpc {
+		return nil
+	}
+	conn, err := grpc.NewClient(o.Address,
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return err
+	}
+	authCfg := authn.GrpcClientConfig{
+		TokenClientConfig: &authn.TokenExchangeConfig{
+			Token:            o.GrpcToken,
+			TokenExchangeURL: o.TokenExchangeURL,
+		},
+		TokenRequest: &authn.TokenExchangeRequest{
+			Audiences: []string{"resourceStore"},
+			Namespace: o.TokenNamespace,
+		},
+	}
+	unified, err := resource.NewCloudResourceClient(tracer, conn, authCfg, o.AllowInsecure)
+	if err != nil {
+		return err
+	}
+	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig)
+	serverConfig.RESTOptionsGetter = getter
 	return nil
 }
 
