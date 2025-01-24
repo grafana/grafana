@@ -198,6 +198,7 @@ type Cfg struct {
 	ForwardHostEnvVars               []string
 	PreinstallPlugins                []InstallPlugin
 	PreinstallPluginsAsync           bool
+	PluginLoaderConcurrencyLimit     int
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool

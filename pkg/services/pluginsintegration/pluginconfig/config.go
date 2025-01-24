@@ -41,6 +41,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComSSOAPIToken,
+		cfg.PluginLoaderConcurrencyLimit,
 	), nil
 }
 

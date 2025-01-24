@@ -95,7 +95,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	// Otherwise, validate plugins sequentially.
 	var limitSize int
 	if l.cfg.Features.PluginsCDNSyncLoaderEnabled && src.PluginClass(ctx) == plugins.ClassCDN {
-		limitSize = len(bootstrappedPlugins)
+		limitSize = min(len(bootstrappedPlugins), l.cfg.LoaderConcurrencyLimit)
 	} else {
 		limitSize = 1
 	}

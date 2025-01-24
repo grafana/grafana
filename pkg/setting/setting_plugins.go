@@ -92,5 +92,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
 
+	cfg.PluginLoaderConcurrencyLimit = pluginsSection.Key("loader_concurrency_limit").MustInt(32)
+
 	return nil
 }

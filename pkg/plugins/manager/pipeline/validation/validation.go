@@ -50,7 +50,7 @@ func (v *Validate) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	// Otherwise, run the validation steps sequentially.
 	var limitSize int
 	if v.cfg.Features.PluginsCDNSyncLoaderEnabled && ps.Class == plugins.ClassCDN {
-		limitSize = len(v.validateSteps)
+		limitSize = min(len(v.validateSteps), v.cfg.LoaderConcurrencyLimit)
 	} else {
 		limitSize = 1
 	}

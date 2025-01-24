@@ -27,6 +27,8 @@ type PluginManagementCfg struct {
 
 	AngularSupportEnabled  bool
 	HideAngularDeprecation []string
+
+	LoaderConcurrencyLimit int
 }
 
 // Features contains the feature toggles used for the plugin management system.
@@ -41,6 +43,7 @@ type Features struct {
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features, angularSupportEnabled bool,
 	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, grafanaComAPIToken string,
+	loaderConcurrencyLimit int,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
 		PluginsPath:            pluginsPath,
@@ -56,5 +59,6 @@ func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings set
 		HideAngularDeprecation: hideAngularDeprecation,
 		ForwardHostEnvVars:     forwardHostEnvVars,
 		GrafanaComAPIToken:     grafanaComAPIToken,
+		LoaderConcurrencyLimit: loaderConcurrencyLimit,
 	}
 }
