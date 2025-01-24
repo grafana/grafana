@@ -1500,8 +1500,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4 h1:616HUg7WVyLJLtVvk2pZ845M4Gk0fswgTwEZSuAZbJU=
 github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
-github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c h1:duHQ8Bih3nt9p68aQdp+22a6mFBLpK4IOURhEq+Cvk8=
-github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c/go.mod h1:/gYfphsNu9v1qYWXxpv1NSvMEMSwvdf8qb8YlgwIRl8=
+github.com/grafana/authlib v0.0.0-20250123104008-e99947858901 h1:nqV1YrtX+ZG+EYB5dcmFMWhg2Y038OMaAHAADbOC9RA=
+github.com/grafana/authlib v0.0.0-20250123104008-e99947858901/go.mod h1:/gYfphsNu9v1qYWXxpv1NSvMEMSwvdf8qb8YlgwIRl8=
 github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c h1:b0sPDtt33uFdmvUJjSCld3kwE2E49dUvevuUDSJsEuo=
 github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c/go.mod h1:qYjSd1tmJiuVoSICp7Py9/zD54O9uQQA3wuM6Gg4DFM=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
@@ -1532,8 +1532,8 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.262.0 h1:R2DV6lwBQE5zaogxX3PorD9Seo8CXA8YuStf84oqwkk=
 github.com/grafana/grafana-plugin-sdk-go v0.262.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
-github.com/grafana/grafana/apps/advisor v0.0.0-20250121115006-c1eac9f9973f h1:c8IkbxPvM6+lscVOLgtbt8Gnro4Liltd+E2eqkoAeZA=
-github.com/grafana/grafana/apps/advisor v0.0.0-20250121115006-c1eac9f9973f/go.mod h1:goSDiy3jtC2cp8wjpPZdUHRENcoSUHae1/Px/MDfddA=
+github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173 h1:uOM89HiWVVOTls0LrD4coHTckb2lA4U0sIJwCYdbhbw=
+github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173/go.mod h1:goSDiy3jtC2cp8wjpPZdUHRENcoSUHae1/Px/MDfddA=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d h1:NRVOtiG1aUwOazBj9KM7X2o2shsM6TchqisezzoH1gw=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d/go.mod h1:AvleS6icyPmcBjihtx5jYEvdzLmHGBp66NuE0AMR57A=
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d h1:oNc/aDfDucQxLbRZK25yz3Cwc+dGo1C0Xmm2LaliWUQ=
@@ -1546,8 +1546,8 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d/go.mod h1:PNmbi49lVrv2b2I8pdu46dTs2728lKEbnVuQD8I5MnM=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d h1:vVaLOibSj5lDwCb+pa0fly9uods8nTq1NJPYrTuPAGE=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d/go.mod h1:srJ6H0DL7c9Cz4CmK0h4AOlC1sm8UDwn9jBZ+RHxBt4=
-github.com/grafana/grafana/pkg/promlib v0.0.7 h1:BdpanKOKnID/l1BJZLhE7TRNtmq7aOVdou1LBFWaMmU=
-github.com/grafana/grafana/pkg/promlib v0.0.7/go.mod h1:rnwJXCA2xRwb7F27NB35iO/JsLL/H/+eVXECk/hrEhQ=
+github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
+github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d h1:cYBjuhb3m5oC6Z00Kw8DdySFaNhwb38SMxx0oXnz5vQ=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d h1:4w4x8g6xCSRj06er81atNSQVL0fTSwLekDYsRxpz+M0=
