@@ -4,45 +4,66 @@ import { ComboboxOption } from './Combobox';
 
 // https://catonmat.net/my-favorite-regex :)
 const REGEXP_NON_ASCII = /[^ -~]/m;
+// limit max terms in needle that qualify for re-ordering
+const outOfOrderLimit = 5;
+// beyond 25 chars fall back to substring search
+const maxNeedleLength = 25;
+// beyond 5 terms fall back to substring match
+const maxFuzzyTerms = 5;
+// when number of matches <= 1e4, do ranking + sorting by quality
+const rankThreshold = 1e4;
+
+// typo tolerance mode
+const uf = new uFuzzy({ intraMode: 1 });
 
 export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
-  if (!item) {
+  if (item == null) {
     return '';
   }
-  if (item.label?.includes('Custom value: ')) {
+  if (item.label?.startsWith('Custom value: ')) {
     return item.value.toString();
   }
   return item.label ?? item.value.toString();
 }
-
-const uf = new uFuzzy();
 
 export function fuzzyFind<T extends string | number>(
   options: Array<ComboboxOption<T>>,
   haystack: string[],
   needle: string
 ) {
-  if (needle === '') {
-    return options;
-  }
+  let matches: Array<ComboboxOption<T>> = [];
 
-  // Non-ascii support
-  if (REGEXP_NON_ASCII.test(needle)) {
-    const nonAsciiMatches = [];
+  if (needle === '') {
+    matches = options;
+  }
+  // fallback to substring matches to avoid badness
+  else if (
+    // contains non-ascii
+    REGEXP_NON_ASCII.test(needle) ||
+    // too long (often copy-paste from somewhere)
+    needle.length > maxNeedleLength ||
+    uf.split(needle).length > maxFuzzyTerms
+  ) {
     for (let i = 0; i < haystack.length; i++) {
-      const item = haystack[i];
+      let item = haystack[i];
+
       if (item.includes(needle)) {
-        nonAsciiMatches.push(options[i]);
+        matches.push(options[i]);
       }
     }
+  }
+  // fuzzy search
+  else {
+    const [idxs, info, order] = uf.search(haystack, needle, outOfOrderLimit, rankThreshold);
 
-    return nonAsciiMatches;
+    if (idxs?.length) {
+      if (info && order) {
+        matches = order.map((idx) => options[info.idx[idx]]);
+      } else {
+        matches = idxs.map((idx) => options[idx]);
+      }
+    }
   }
 
-  const [indices] = uf.search(haystack, needle);
-
-  if (!indices) {
-    return [];
-  }
-  return indices.map((index) => options[index]);
+  return matches;
 }
