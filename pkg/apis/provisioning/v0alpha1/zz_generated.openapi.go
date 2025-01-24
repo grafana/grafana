@@ -26,10 +26,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HistoryList":            schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Job":                    schema_pkg_apis_provisioning_v0alpha1_Job(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobList":                schema_pkg_apis_provisioning_v0alpha1_JobList(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary":     schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobSpec":                schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobStatus":              schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LintIssue":              schema_pkg_apis_provisioning_v0alpha1_LintIssue(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":  schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestOptions":     schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":             schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":         schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec":         schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
@@ -579,6 +581,70 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"create": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"update": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"delete": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"noop": {
+						SchemaProps: spec.SchemaProps{
+							Description: "No action required (useful for sync)",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -602,31 +668,10 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The branch of commit hash",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"pr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Pull request number (when appropriate)",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"hash": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"url": {
-						SchemaProps: spec.SchemaProps{
-							Description: "URL to the originator (eg, PR URL)",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "Pull request options",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestOptions"),
 						},
 					},
 					"export": {
@@ -640,7 +685,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestOptions"},
 	}
 }
 
@@ -698,9 +743,25 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"summary": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Summary of processed actions",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobResourceSummary"},
 	}
 }
 
@@ -750,6 +811,45 @@ func schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref common.Refe
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch of commit hash",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pull request number (when appropriate)",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "URL to the originator (eg, PR URL)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

@@ -435,13 +435,26 @@ export type ExportOptions = {
   history?: boolean;
   prefix?: string;
 };
-export type JobSpec = {
-  action: 'export' | 'pr' | 'sync';
-  export?: ExportOptions;
+export type PullRequestOptions = {
   hash?: string;
   pr?: number;
   ref?: string;
   url?: string;
+};
+export type JobSpec = {
+  action: 'export' | 'pr' | 'sync';
+  export?: ExportOptions;
+  pr?: PullRequestOptions;
+  repository: string;
+};
+export type JobResourceSummary = {
+  create?: number;
+  delete?: number;
+  errors?: string[];
+  group?: string;
+  noop?: number;
+  resource?: string;
+  update?: number;
 };
 export type JobStatus = {
   errors?: string[];
@@ -450,6 +463,7 @@ export type JobStatus = {
   progress?: number;
   started?: number;
   state?: 'error' | 'pending' | 'success' | 'working';
+  summary?: JobResourceSummary[];
 };
 export type Job = {
   apiVersion?: string;
