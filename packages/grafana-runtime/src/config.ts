@@ -202,6 +202,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   cloudMigrationPollIntervalMs = 2000;
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
+  exploreDisableLogsDownload: boolean | undefined;
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

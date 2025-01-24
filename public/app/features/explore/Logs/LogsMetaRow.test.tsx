@@ -11,6 +11,7 @@ import { logRowsToReadableJson } from '../../logs/utils';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsMetaRow } from './LogsMetaRow';
+import { config } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -32,11 +33,12 @@ const defaultProps: LogsMetaRowProps = {
   clearDetectedFields: jest.fn(),
 };
 
-const setup = (propOverrides?: object) => {
+const setup = (propOverrides?: object, disableDownload = false) => {
   const props = {
     ...defaultProps,
     ...propOverrides,
   };
+  config.exploreDisableLogsDownload = disableDownload;
 
   return render(<LogsMetaRow {...props} />);
 };
@@ -119,6 +121,11 @@ describe('LogsMetaRow', () => {
   it('renders a button to show the download menu', () => {
     setup();
     expect(screen.getByText('Download').closest('button')).toBeInTheDocument();
+  });
+
+  it('does not render a button to show the download menu if disabled', async () => {
+    setup({}, true);
+    expect(screen.queryByText('Download')).toBeNull();
   });
 
   it('renders a button to show the download menu', async () => {
