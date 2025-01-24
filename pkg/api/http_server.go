@@ -140,7 +140,7 @@ type HTTPServer struct {
 	License                      licensing.Licensing
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
-	PluginRequestValidator       validations.PluginRequestValidator
+	DataSourceRequestValidator   validations.DataSourceRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  pluginstore.Store
 	pluginInstaller              plugins.Installer
@@ -237,7 +237,7 @@ type ServerOptions struct {
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore db.DB,
-	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
+	dataSourceRequestValidator validations.DataSourceRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
@@ -284,7 +284,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		HooksService:                 hooksService,
 		CacheService:                 cacheService,
 		SQLStore:                     sqlStore,
-		PluginRequestValidator:       pluginRequestValidator,
+		DataSourceRequestValidator:   dataSourceRequestValidator,
 		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,

@@ -17,10 +17,7 @@ const custom_ini = `app_mode = development
 
 [feature_toggles]
 provisioning = true
-kubernetesFolders = true
 kubernetesDashboards = true
-grafanaAPIServerWithExperimentalAPIs = true
-unifiedStorageSearch = true
 unifiedStorageSearchUI = true
 kubernetesCliDashboards = true
 kubernetesFoldersServiceV2 = true

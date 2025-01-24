@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,36 +17,38 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardsv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-type UnsyncOptions struct {
-	KeepDashboards bool
-}
-
 type Syncer struct {
 	client     *resources.DynamicClient
 	parser     *resources.Parser
+	lister     resources.ResourceLister
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
 
 func NewSyncer(
 	repo repository.Repository,
+	lister resources.ResourceLister,
 	parser *resources.Parser,
 ) (*Syncer, error) {
 	dynamicClient := parser.Client()
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
 	})
 
 	return &Syncer{
 		parser:     parser,
 		client:     dynamicClient,
+		lister:     lister,
 		folders:    folders,
 		repository: repo,
 	}, nil
@@ -101,34 +104,101 @@ func (r *Syncer) Sync(ctx context.Context) (string, error) {
 	return latest, nil
 }
 
-func (r *Syncer) Unsync(ctx context.Context, opts UnsyncOptions) error {
+func (r *Syncer) Unsync(ctx context.Context) error {
 	cfg := r.repository.Config()
 
 	logger := logging.FromContext(ctx)
-	logger = logger.With("repository", cfg.Name, "namespace", cfg.GetNamespace(), "folder", cfg.Spec.Folder)
+	logger = logger.With("repository", cfg.Name, "namespace", cfg.GetNamespace(), "folder", cfg.Spec.Folder, "mode", cfg.Spec.DeletePolicy)
 	logger.Info("start repository unsync")
 	defer logger.Info("end repository unsync")
 
-	if r.repository.Config().Spec.Folder != "" {
-		obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("get folder to unsync: %w", err)
+	switch cfg.Spec.DeletePolicy {
+	case provisioning.DeletePolityRetain:
+		logger.Info("keep all resources")
+
+		// TODO: remove repository info from all resources in the list
+
+		if r.repository.Config().Spec.Folder != "" {
+			obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("get folder to unsync: %w", err)
+			}
+
+			meta, err := utils.MetaAccessor(obj)
+			if err != nil {
+				return fmt.Errorf("create meta accessor from folder object: %w", err)
+			}
+
+			meta.SetRepositoryInfo(nil)
+			obj, err = r.folders.Update(ctx, obj, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("remove repo info from folder: %w", err)
+			}
+
+			logger.Info("removed repo info from folder", "object", obj)
+		} else {
+			logger.Info("skip repo info removal as it's root folder")
+		}
+	case provisioning.DeletePolityClean:
+		logger.Info("remove all provisioned resources")
+		if err := r.deleteAllProvisionedResources(ctx); err != nil {
+			return fmt.Errorf("delete all resources: %w", err)
+		}
+	default:
+		return fmt.Errorf("invalid unsync mode: %s", cfg.Spec.DeletePolicy)
+	}
+
+	return nil
+}
+
+func (r *Syncer) deleteAllProvisionedResources(ctx context.Context) error {
+	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
+	if err != nil {
+		return fmt.Errorf("list resources to delete: %w", err)
+	}
+
+	// FIXME: this code should be simplified once unified storage folders support recursive deletion
+	// Sort by the following logic:
+	// - Put folders at the end so that we empty them first.
+	// - Sort folders by depth so that we remove the deepest first
+	sort.Slice(list.Items, func(i, j int) bool {
+		switch {
+		case list.Items[i].Group != folders.RESOURCE:
+			return true
+		case list.Items[j].Group != folders.RESOURCE:
+			return false
+		default:
+			return len(strings.Split(list.Items[i].Path, "/")) > len(strings.Split(list.Items[j].Path, "/"))
+		}
+	})
+
+	logger := logging.FromContext(ctx)
+	logger.Info("deleting resources", "count", len(list.Items))
+	for _, item := range list.Items {
+		// HACK: until we know how to get the version
+		var version string
+		switch item.Resource {
+		case folders.RESOURCE:
+			version = folders.VERSION
+		case dashboards.DASHBOARD_RESOURCE:
+			version = dashboardsv2alpha1.VERSION
+		default:
+			return fmt.Errorf("unknown resource api version: %s", item.Resource)
 		}
 
-		meta, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return fmt.Errorf("create meta accessor from folder object: %w", err)
+		client := r.client.Resource(schema.GroupVersionResource{
+			Group:    item.Group,
+			Version:  version,
+			Resource: item.Resource,
+		})
+
+		logger := logger.With("group", item.Group, "resource", item.Resource, "name", item.Name, "version", version)
+		if err := client.Delete(ctx, item.Name, metav1.DeleteOptions{}); err != nil {
+			logger.Error("failed to delete resource", "error", err)
+			return fmt.Errorf("delete resource: %w", err)
 		}
 
-		meta.SetRepositoryInfo(nil)
-		obj, err = r.folders.Update(ctx, obj, metav1.UpdateOptions{})
-		if err != nil {
-			return fmt.Errorf("remove repo info from folder: %w", err)
-		}
-
-		logger.Info("removed repo info from folder", "object", obj)
-	} else {
-		logger.Info("skip repo info removal as it's root folder")
+		logger.Info("resource deleted")
 	}
 
 	return nil

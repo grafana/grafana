@@ -84,6 +84,9 @@ type RepositorySpec struct {
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 
+	// DeletePolicy options within the repository
+	DeletePolicy DeletePolicy `json:"deletePolicy"`
+
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
@@ -103,6 +106,15 @@ type RepositorySpec struct {
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
+
+type DeletePolicy string
+
+const (
+	// DeletePolityRetain keep all provisioned resources on repository deletion
+	DeletePolityRetain DeletePolicy = "retain"
+	// DeletePolityClean delete all provisioned resources on repository deletion
+	DeletePolityClean DeletePolicy = "clean"
+)
 
 type EditingOptions struct {
 	// End users can create new files in the remote file system

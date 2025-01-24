@@ -57,15 +57,6 @@ const oldAnnoKeyOriginPath = "grafana.app/originPath"
 const oldAnnoKeyOriginHash = "grafana.app/originHash"
 const oldAnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
 
-// annoKeyFullPath encodes the full path in folder resources
-// revisit keeping these folder-specific annotations once we have complete support for mode 1
-// Deprecated: this goes away when folders have a better solution
-const annoKeyFullPath = "grafana.app/fullPath"
-
-// annoKeyFullPathUIDs encodes the full path in folder resources
-// Deprecated: this goes away when folders have a better solution
-const annoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
-
 // ResourceRepositoryInfo is encoded into kubernetes metadata annotations.
 // This value identifies indicates the state of the resource in its provisioning source when
 // the spec was last saved.  Currently this is derived from the dashboards provisioning table.
@@ -139,18 +130,6 @@ type GrafanaMetaAccessor interface {
 	// Used by the generic strategy to keep the status value unchanged on an update
 	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	GetFullPath() string
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	SetFullPath(path string)
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	GetFullPathUIDs() string
-
-	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
-	SetFullPathUIDs(path string)
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -704,26 +683,6 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 		err = fmt.Errorf("unable to read status")
 	}
 	return
-}
-
-func (m *grafanaMetaAccessor) GetFullPath() string {
-	// nolint:staticcheck
-	return m.get(annoKeyFullPath)
-}
-
-func (m *grafanaMetaAccessor) SetFullPath(path string) {
-	// nolint:staticcheck
-	m.SetAnnotation(annoKeyFullPath, path)
-}
-
-func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
-	// nolint:staticcheck
-	return m.get(annoKeyFullPathUIDs)
-}
-
-func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
-	// nolint:staticcheck
-	m.SetAnnotation(annoKeyFullPathUIDs, path)
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
