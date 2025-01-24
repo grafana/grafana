@@ -80,37 +80,49 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 				} else {
 					v, ok := val.(int64)
 					if !ok {
-						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
+						return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
 					}
 					f.Fields[i].Append(&v)
 				}
 			case types.Float64:
 				if val == nil {
 					f.Fields[i].Append((*float64)(nil))
-				} else {
-					v, ok := val.(float64)
-					if !ok {
-						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
-					}
-					f.Fields[i].Append(&v)
+					continue
 				}
+				vf, ok := val.(*float64)
+				if ok {
+					f.Fields[i].Append(vf)
+					continue
+				}
+				v, ok := val.(float64)
+				if ok {
+					f.Fields[i].Append(&v)
+					continue
+				}
+				return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
 			case types.Text, types.LongText:
 				if val == nil {
 					f.Fields[i].Append((*string)(nil))
-				} else {
-					v, ok := val.(string)
-					if !ok {
-						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
-					}
-					f.Fields[i].Append(&v)
+					continue
 				}
+				v, ok := val.(string)
+				if ok {
+					f.Fields[i].Append(&v)
+					continue
+				}
+				vf, ok := val.(*string)
+				if ok {
+					f.Fields[i].Append(vf)
+					continue
+				}
+				return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
 			case types.Timestamp:
 				if val == nil {
 					f.Fields[i].Append((*time.Time)(nil))
 				} else {
 					v, ok := val.(time.Time)
 					if !ok {
-						return fmt.Errorf("unexpected type for column %s: %T", schema[i].Name, val)
+						return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
 					}
 					f.Fields[i].Append(&v)
 				}

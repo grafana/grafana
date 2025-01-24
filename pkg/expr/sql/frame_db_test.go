@@ -14,7 +14,9 @@ func TestFrameDB(t *testing.T) {
 		RefID: "a",
 		Fields: []*data.Field{
 			data.NewField("animal", nil, []string{"cat", "dog", "cat", "dog"}),
+			data.NewField("nanimal", nil, []*string{p("cat"), p("dog"), p("cat"), p("dog")}),
 			data.NewField("count", nil, []float64{1, 3, 4, 7}),
+			data.NewField("ncount", nil, []*float64{p(2.0), p(6.0), p(8.0), p(14.0)}),
 		},
 	}
 
@@ -26,7 +28,13 @@ func TestFrameDB(t *testing.T) {
 
 	engine := sqle.NewDefault(provider)
 
-	schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count) FROM a GROUP BY animal")
+	schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
+	//schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count), sum(fCount) FROM a GROUP BY animal")
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 	if iter == nil {
 		t.Log("no iter, is nil")
 		t.FailNow()
@@ -38,4 +46,8 @@ func TestFrameDB(t *testing.T) {
 		t.FailNow()
 	}
 	t.Log(f.StringTable(-1, -1))
+}
+
+func p[T any](v T) *T {
+	return &v
 }
