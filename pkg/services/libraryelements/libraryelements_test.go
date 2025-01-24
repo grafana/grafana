@@ -485,7 +485,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Cfg:               cfg,
 			features:          featuremgmt.WithFeatures(),
 			SQLStore:          sqlStore,
-			folderService:     folderSrv,
+			folderService:     folderSvc,
 			dashboardsService: dashService,
 		}
 
