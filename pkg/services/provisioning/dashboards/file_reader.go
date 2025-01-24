@@ -199,6 +199,24 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderName = filepath.Base(dashboardsFolder)
 		}
 
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+			Type:   claims.TypeServiceAccount,
+			UserID: 1,
+			OrgID:  1,
+			Name:   "dashboard-background",
+			Login:  "dashboard-background",
+			Permissions: map[int64]map[string][]string{
+				1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+					{Action: dashboards.ActionFoldersCreate, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+					{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+					{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
+				}),
+			},
+		})
+
 		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("%w with name %q from file system structure: %w", ErrGetOrCreateFolder, folderName, err)
