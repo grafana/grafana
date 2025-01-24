@@ -1,20 +1,24 @@
 import { css } from '@emotion/css';
 import moment from 'moment';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
+import { RecordHistoryEntryEvent } from 'app/types/events';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
 export function HistoryWrapper() {
   const { chrome } = useGrafana();
-  const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
-    return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
-  });
+  const [history, setHistory] = useState<HistoryEntry[]>(
+    store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
+      return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
+    })
+  );
   const [numItemsToShow, setNumItemsToShow] = useState(5);
   const state = chrome.useState();
   const selectedTime = history.find((entry) => {
@@ -34,6 +38,37 @@ export function HistoryWrapper() {
     acc[key] = [...(acc[key] || []), entry];
     return acc;
   }, {});
+
+  useEffect(() => {
+    const sub = appEvents.subscribe(RecordHistoryEntryEvent, (ev) => {
+      const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
+      if (clickedHistory) {
+        store.setObject('CLICKING_HISTORY', false);
+        return;
+      }
+      const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+      let lastEntry = history[0];
+      const newUrl = ev.payload.url;
+      const lastUrl = lastEntry.views[0]?.url;
+      if (lastUrl !== newUrl) {
+        lastEntry.views = [
+          {
+            name: ev.payload.name,
+            description: ev.payload.description,
+            url: newUrl,
+            time: Date.now(),
+          },
+          ...lastEntry.views,
+        ];
+        store.setObject(HISTORY_LOCAL_STORAGE_KEY, [...history]);
+        setHistory([...history]);
+      }
+      return () => {
+        sub.unsubscribe();
+      };
+    });
+  }, []);
+
   const styles = useStyles2(getStyles);
   return (
     <Stack direction="column" alignItems="flex-start">
