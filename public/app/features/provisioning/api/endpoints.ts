@@ -494,7 +494,6 @@ export type S3RepositoryConfig = {
 export type RepositorySpec = {
   description?: string;
   editing: EditingOptions;
-  deletePolicy: 'clean' | 'retain';
   folder?: string;
   github?: GitHubRepositoryConfig;
   linting?: boolean;
