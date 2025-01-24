@@ -1,12 +1,12 @@
 import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
-import { RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { PromRuleType, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Annotation } from '../utils/constants';
 import { fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
-import { getRuleName, getRulePluginOrigin, isAlertingRule, isAlertingRulerRule, isRecordingRule } from '../utils/rules';
+import { getRuleName, getRulePluginOrigin, isAlertingRulerRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
-import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
+import { AlertRuleListItem, RecordingRuleListItem } from './components/AlertRuleListItem';
 
 export interface DataSourceRuleListItemProps {
   rule: Rule;
@@ -35,49 +35,31 @@ export function DataSourceRuleListItem({
   const ruleName = rulerRule ? getRuleName(rulerRule) : rule.name;
   const labels = rulerRule ? rulerRule.labels : rule.labels;
 
-  if (isAlertingRule(rule)) {
-    const annotations = (isAlertingRulerRule(rulerRule) ? rulerRule.annotations : rule.annotations) ?? {};
-    const summary = annotations[Annotation.summary];
+  const commonProps = {
+    name: ruleName,
+    rulesSource: rulesSource,
+    application: application,
+    group: groupName,
+    namespace: namespace.name,
+    href,
+    health: rule.health,
+    error: rule.lastError,
+    labels,
+    actions,
+    origin: originMeta,
+  };
 
-    return (
-      <AlertRuleListItem
-        name={ruleName}
-        rulesSource={rulesSource}
-        application={application}
-        group={groupName}
-        namespace={namespace.name}
-        href={href}
-        summary={summary}
-        state={rule.state}
-        health={rule.health}
-        error={rule.lastError}
-        labels={labels}
-        instancesCount={rule.alerts?.length}
-        actions={actions}
-        origin={originMeta}
-      />
-    );
+  switch (rule.type) {
+    case PromRuleType.Alerting:
+      const annotations = (isAlertingRulerRule(rulerRule) ? rulerRule.annotations : rule.annotations) ?? {};
+      const summary = annotations[Annotation.summary];
+
+      return (
+        <AlertRuleListItem {...commonProps} summary={summary} state={rule.state} instancesCount={rule.alerts?.length} />
+      );
+    case PromRuleType.Recording:
+      return <RecordingRuleListItem {...commonProps} />;
   }
-
-  if (isRecordingRule(rule)) {
-    return (
-      <RecordingRuleListItem
-        name={ruleName}
-        rulesSource={rulesSource}
-        application={application}
-        group={groupName}
-        namespace={namespace.name}
-        href={href}
-        health={rule.health}
-        error={rule.lastError}
-        labels={labels}
-        actions={actions}
-        origin={originMeta}
-      />
-    );
-  }
-
-  return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
 }
 
 export function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {

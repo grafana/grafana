@@ -3,6 +3,7 @@ import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GrafanaRulesSource } from '../utils/datasource';
+import { isGrafanaAlertingRule, isGrafanaRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
@@ -45,7 +46,7 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
 }
 
 interface GrafanaRuleListItemProps {
-  rule: GrafanaPromRuleDTO;
+  rule?: GrafanaPromRuleDTO;
   rulerRule: RulerGrafanaRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
@@ -53,7 +54,7 @@ interface GrafanaRuleListItemProps {
 
 export function GrafanaRuleListItem({ rule, rulerRule, groupIdentifier, namespaceName }: GrafanaRuleListItemProps) {
   const {
-    grafana_alert: { title, provenance, is_paused },
+    grafana_alert: { uid, title, provenance, is_paused },
     annotations = {},
     labels = {},
   } = rulerRule;
@@ -63,9 +64,9 @@ export function GrafanaRuleListItem({ rule, rulerRule, groupIdentifier, namespac
     rulesSource: GrafanaRulesSource,
     group: groupIdentifier.groupName,
     namespace: namespaceName,
-    href: createRelativeUrl(`/alerting/grafana/${rule.uid}/view`),
-    health: rule.health,
-    error: rule.lastError,
+    href: createRelativeUrl(`/alerting/grafana/${uid}/view`),
+    health: rule?.health,
+    error: rule?.lastError,
     labels: labels,
     isProvisioned: Boolean(provenance),
     isPaused: is_paused,
@@ -73,20 +74,22 @@ export function GrafanaRuleListItem({ rule, rulerRule, groupIdentifier, namespac
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
   };
 
-  if (rule.type === PromRuleType.Alerting) {
+  if (isGrafanaAlertingRule(rulerRule)) {
+    const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
+
     return (
       <AlertRuleListItem
         {...commonProps}
         summary={annotations.summary}
-        state={rule.state}
-        instancesCount={rule.alerts?.length}
+        state={promAlertingRule?.state}
+        instancesCount={promAlertingRule?.alerts?.length}
       />
     );
   }
 
-  if (rule.type === PromRuleType.Recording) {
+  if (isGrafanaRecordingRule(rulerRule)) {
     return <RecordingRuleListItem {...commonProps} />;
   }
 
-  return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
+  return <UnknownRuleListItem ruleName={title} groupIdentifier={groupIdentifier} ruleDefinition={rulerRule} />;
 }

@@ -62,19 +62,19 @@ export const grafanaRulerRule: RulerGrafanaRuleDTO = {
   },
 };
 
-export const grafanaRulerGroup: RulerRuleGroupDTO = {
+export const grafanaRulerGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
   name: grafanaRulerGroupName,
   interval: '1m',
   rules: [grafanaRulerRule],
 };
 
-export const grafanaRulerGroup2: RulerRuleGroupDTO = {
+export const grafanaRulerGroup2: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
   name: grafanaRulerGroupName2,
   interval: '1m',
   rules: [grafanaRulerRule],
 };
 
-export const grafanaRulerEmptyGroup: RulerRuleGroupDTO = {
+export const grafanaRulerEmptyGroup: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
   name: 'empty-group',
   interval: '1m',
   rules: [],

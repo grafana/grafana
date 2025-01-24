@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
-import { Labels, PromAlertingRuleState, RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
 import { MetaText } from '../../components/MetaText';
@@ -294,23 +294,24 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 }
 
 interface UnknownRuleListItemProps {
-  rule: Rule;
+  ruleName: string;
   groupIdentifier: RuleGroupIdentifierV2;
+  ruleDefinition: Rule | RulerRuleDTO;
 }
 
-export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListItemProps) => {
+export const UnknownRuleListItem = ({ ruleName, groupIdentifier, ruleDefinition }: UnknownRuleListItemProps) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const { namespace, groupName } = groupIdentifier;
     const ruleContext = {
-      name: rule.name,
+      name: ruleName,
       groupName,
       namespace: JSON.stringify(namespace),
       rulesSource: getGroupOriginName(groupIdentifier),
     };
     logError(new Error('unknown rule type'), ruleContext);
-  }, [rule, groupIdentifier]);
+  }, [ruleName, groupIdentifier]);
 
   return (
     <Alert title={'Unknown rule type'} className={styles.resetMargin}>
@@ -319,7 +320,7 @@ export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListIt
           <Trans i18nKey="alerting.alert-rules.rule-definition">Rule definition</Trans>
         </summary>
         <pre>
-          <code>{JSON.stringify(rule, null, 2)}</code>
+          <code>{JSON.stringify(ruleDefinition, null, 2)}</code>
         </pre>
       </details>
     </Alert>
