@@ -2,6 +2,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   findVizPanelByKey,
@@ -25,24 +26,24 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
   }
 
   private _activationHandler() {
-    const dashboardDsQueryRunner = this.parent;
+    const queryRunner = this.parent;
     let libraryPanelSub: Unsubscribable;
     let dashboard: DashboardScene;
-    if (!(dashboardDsQueryRunner instanceof SceneQueryRunner)) {
+    if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (dashboardDsQueryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+    if (!this.containsDashboardDSQueries(queryRunner)) {
       return;
     }
 
     try {
-      dashboard = getDashboardSceneFor(dashboardDsQueryRunner);
+      dashboard = getDashboardSceneFor(queryRunner);
     } catch {
       return;
     }
 
-    const dashboardQuery = dashboardDsQueryRunner.state.queries.find((query) => query.panelId !== undefined);
+    const dashboardQuery = queryRunner.state.queries.find((query) => query.panelId !== undefined);
 
     if (!dashboardQuery) {
       return;
@@ -61,7 +62,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
     if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
       libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
-        this.handleLibPanelStateUpdates(newLibPanel, dashboardDsQueryRunner, sourcePanel);
+        this.handleLibPanelStateUpdates(newLibPanel, queryRunner, sourcePanel);
       });
       return;
     }
@@ -73,7 +74,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     }
 
     if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-      dashboardDsQueryRunner.runQueries();
+      queryRunner.runQueries();
     }
 
     return () => {
@@ -82,6 +83,21 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         libraryPanelSub.unsubscribe();
       }
     };
+  }
+
+  private containsDashboardDSQueries(queryRunner: SceneQueryRunner): boolean {
+    if (queryRunner.state.datasource?.uid === SHARED_DASHBOARD_QUERY) {
+      return true;
+    }
+
+    if (
+      queryRunner.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+      queryRunner.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY)
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   private handleLibPanelStateUpdates(

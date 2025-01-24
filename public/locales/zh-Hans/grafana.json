@@ -2518,8 +2518,7 @@
         "reportAbuse": "",
         "signature": "",
         "status": "",
-        "updatedAt": "",
-        "version": ""
+        "updatedAt": ""
       }
     },
     "empty-state": {
@@ -3307,6 +3306,7 @@
     },
     "metric-select": {
       "filter-by": "",
+      "new-badge": "",
       "otel-switch": ""
     },
     "recent-metrics": {

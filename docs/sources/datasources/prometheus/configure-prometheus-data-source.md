@@ -31,6 +31,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
+  alerting-alert-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/
 ---
 
 # Configure Prometheus
@@ -115,11 +120,17 @@ Following are additional configuration options.
 
 ### Alerting
 
-- **Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
+- **Manage alerts via Alerting UI** - Toggle to enable [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed.
+
+{{% admonition type="note" %}}
+
+The **Manage alerts via Alerting UI** toggle is enabled by default. You can change this behavior by setting the [default_manage_alerts_ui_toggle]({{< relref "../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle" >}}) option in the Grafana configuration file.
+
+{{% /admonition %}}
 
 ### Interval behavior
 
-- **Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is `15s`.
+- **Scrape interval** - Set to the typical scrape and evaluation interval configured in Prometheus. The default is `15s`.
 
 - **Query timeout** - The default is `60s`.
 

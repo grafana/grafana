@@ -299,11 +299,13 @@
     },
     "/alertmanager/grafana/config/api/v1/alerts": {
       "get": {
-        "description": "gets an Alerting config",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "gets an Alerting config",
         "operationId": "RouteGetGrafanaAlertingConfig",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "GettableUserConfig",
@@ -320,11 +322,13 @@
         }
       },
       "post": {
-        "description": "sets an Alerting config",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "sets an Alerting config",
         "operationId": "RoutePostGrafanaAlertingConfig",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -350,11 +354,13 @@
         }
       },
       "delete": {
-        "description": "deletes the Alerting config for a tenant",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "deletes the Alerting config for a tenant",
         "operationId": "RouteDeleteGrafanaAlertingConfig",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "Ack",
@@ -496,11 +502,13 @@
     },
     "/alertmanager/grafana/config/history": {
       "get": {
-        "description": "gets Alerting configurations that were successfully applied in the past",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "gets Alerting configurations that were successfully applied in the past",
         "operationId": "RouteGetGrafanaAlertingConfigHistory",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -519,11 +527,13 @@
     },
     "/alertmanager/grafana/config/history/{id}/_activate": {
       "post": {
-        "description": "revert Alerting configuration to the historical configuration specified by the given id",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "revert Alerting configuration to the historical configuration specified by the given id",
         "operationId": "RoutePostGrafanaAlertingConfigHistoryActivate",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2089,11 +2099,13 @@
     },
     "/v1/notifications/receivers": {
       "get": {
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
         "summary": "Get all receivers.",
         "operationId": "RouteGetReceivers",
+        "deprecated": true,
         "parameters": [
           {
             "type": "array",
@@ -2136,11 +2148,13 @@
     },
     "/v1/notifications/receivers/{Name}": {
       "get": {
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
         "summary": "Get a receiver by name.",
         "operationId": "RouteGetReceiver",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2175,11 +2189,13 @@
     },
     "/v1/notifications/time-intervals": {
       "get": {
-        "description": "Get all the time intervals",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
+        "summary": "Get all the time intervals",
         "operationId": "RouteNotificationsGetTimeIntervals",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/GetAllIntervalsResponse"
@@ -2195,11 +2211,13 @@
     },
     "/v1/notifications/time-intervals/{name}": {
       "get": {
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
         "summary": "Get a time interval by name.",
         "operationId": "RouteNotificationsGetTimeInterval",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -3306,7 +3324,7 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Get all notification templates.",
+        "summary": "Get all notification template groups.",
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
@@ -3324,12 +3342,12 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Get a notification template.",
+        "summary": "Get a notification template group.",
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -3358,12 +3376,12 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Updates an existing notification template.",
+        "summary": "Updates an existing notification template group.",
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -3407,12 +3425,12 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Delete a template.",
+        "summary": "Delete a notification template group.",
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
             "type": "string",
-            "description": "Template name",
+            "description": "Template group name",
             "name": "name",
             "in": "path",
             "required": true
@@ -3797,6 +3815,9 @@
     "AlertRuleEditorSettings": {
       "type": "object",
       "properties": {
+        "simplified_notifications_section": {
+          "type": "boolean"
+        },
         "simplified_query_and_expressions_section": {
           "type": "boolean"
         }
@@ -4388,7 +4409,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -4533,23 +4554,23 @@
           "type": "string",
           "enum": [
             "alertmanager",
-            " dingding",
-            " discord",
-            " email",
-            " googlechat",
-            " kafka",
-            " line",
-            " opsgenie",
-            " pagerduty",
-            " pushover",
-            " sensugo",
-            " slack",
-            " teams",
-            " telegram",
-            " threema",
-            " victorops",
-            " webhook",
-            " wecom"
+            "dingding",
+            "discord",
+            "email",
+            "googlechat",
+            "kafka",
+            "line",
+            "opsgenie",
+            "pagerduty",
+            "pushover",
+            "sensugo",
+            "slack",
+            "teams",
+            "telegram",
+            "threema",
+            "victorops",
+            "webhook",
+            "wecom"
           ],
           "example": "webhook"
         },
@@ -4596,10 +4617,6 @@
           }
         }
       }
-    },
-    "ErrorSource": {
-      "description": "ErrorSource type defines the source of the error",
-      "type": "string"
     },
     "ErrorType": {
       "type": "string",
@@ -7243,6 +7260,9 @@
         "groups"
       ],
       "properties": {
+        "groupNextToken": {
+          "type": "string"
+        },
         "groups": {
           "type": "array",
           "items": {
@@ -7607,6 +7627,10 @@
     },
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
+    },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
     },
     "Span": {
       "type": "object",
@@ -8435,7 +8459,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -8560,7 +8583,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

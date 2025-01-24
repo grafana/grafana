@@ -18,7 +18,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
@@ -175,8 +175,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
     } else if (sceneUtils.isAdHocVariable(variable)) {
       variables.push({
         ...commonProperties,
-        name: variable.state.name,
-        type: 'adhoc',
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
@@ -407,7 +405,6 @@ export function sceneVariablesSetToSchemaV2Variables(
             })) || [],
           current: currentVariableOption,
           multi: variable.state.isMulti || false,
-          includeAll: variable.state.includeAll || false,
         },
       };
       variables.push(groupVariable);

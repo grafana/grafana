@@ -13,12 +13,10 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
-  VizPanelMenu,
 } from '@grafana/scenes';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
-import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -192,15 +190,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
           //disallow clones to be dragged around or out of the row
           if (itemClone instanceof DashboardGridItem) {
-            itemClone.setState({
-              isDraggable: false,
-            });
-
-            itemClone.state.body.setState({
-              menu: new VizPanelMenu({
-                $behaviors: [repeatPanelMenuBehavior],
-              }),
-            });
+            itemClone.setState({ isDraggable: false });
           }
         }
 

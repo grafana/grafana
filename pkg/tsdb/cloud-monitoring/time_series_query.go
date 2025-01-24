@@ -15,13 +15,13 @@ import (
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
 	// GraphPeriod needs to be explicitly disabled.
 	// If not set, the default behavior is to set an automatic value
-	if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod != "disabled" {
-		if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod == "auto" || *timeSeriesQuery.parameters.GraphPeriod == "" {
+	if timeSeriesQuery.parameters.GraphPeriod != "disabled" {
+		if timeSeriesQuery.parameters.GraphPeriod == "auto" || timeSeriesQuery.parameters.GraphPeriod == "" {
 			intervalCalculator := gcmTime.NewCalculator(gcmTime.CalculatorOptions{})
-			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
-			timeSeriesQuery.parameters.GraphPeriod = &interval.Text
+			interval := intervalCalculator.Calculate(timeSeriesQuery.timeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
+			timeSeriesQuery.parameters.GraphPeriod = interval.Text
 		}
-		return fmt.Sprintf(" | graph_period %s", *timeSeriesQuery.parameters.GraphPeriod)
+		return fmt.Sprintf(" | graph_period %s", timeSeriesQuery.parameters.GraphPeriod)
 	}
 	return ""
 }
@@ -29,14 +29,14 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *ba
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, logger log.Logger) (*backend.DataResponse, any, string, error) {
 	timeSeriesQuery.parameters.Query += timeSeriesQuery.appendGraphPeriod(req)
-	from := req.Queries[0].TimeRange.From
-	to := req.Queries[0].TimeRange.To
+	from := timeSeriesQuery.timeRange.From
+	to := timeSeriesQuery.timeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.parameters.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
 	requestBody := map[string]any{
 		"query": timeSeriesQuery.parameters.Query,
 	}
-	return runTimeSeriesRequest(ctx, req, s, dsInfo, timeSeriesQuery.parameters.ProjectName, nil, requestBody, logger)
+	return runTimeSeriesRequest(ctx, req, s, dsInfo, timeSeriesQuery.parameters.ProjectName, nil, requestBody, logger, timeSeriesQuery.timeRange)
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,

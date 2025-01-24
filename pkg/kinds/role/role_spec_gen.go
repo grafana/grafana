@@ -7,22 +7,24 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
 package role
 
-// Spec defines model for Spec.
 type Spec struct {
-	// Role description
-	Description *string `json:"description,omitempty"`
-
-	// Optional display
-	DisplayName *string `json:"displayName,omitempty"`
-
-	// Name of the team.
-	GroupName *string `json:"groupName,omitempty"`
-
-	// Do not show this role
-	Hidden bool `json:"hidden"`
-
 	// The role identifier `managed:builtins:editor:permissions`
 	Name string `json:"name"`
+	// Optional display
+	DisplayName *string `json:"displayName,omitempty"`
+	// Name of the team.
+	GroupName *string `json:"groupName,omitempty"`
+	// Role description
+	Description *string `json:"description,omitempty"`
+	// Do not show this role
+	Hidden bool `json:"hidden"`
+}
+
+// NewSpec creates a new Spec object.
+func NewSpec() *Spec {
+	return &Spec{}
 }
