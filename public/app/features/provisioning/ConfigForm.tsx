@@ -26,10 +26,9 @@ import { RepositoryFormData } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
-const unsyncModes: ComboboxOption[] = [
-  { label: 'Keep all', value: 'keepAll' },
-  { label: 'Remove all', value: 'removeAll' },
-  { label: 'Clear folder', value: 'clearFolder' },
+const deletePolicies: ComboboxOption[] = [
+  { label: 'Retain', value: 'retain' },
+  { label: 'Clean', value: 'clean' },
 ];
 
 const appEvents = getAppEvents();
@@ -43,7 +42,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       owner: '',
       repository: '',
       branch: '',
-      unsyncMode: 'removeAll',
+      deletePolicy: 'clean',
       linting: false,
       branchWorkflow: false,
       editing: {
@@ -214,16 +213,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
       <Field label={'Linting'}>
         <Switch {...register('linting')} id={'linting'} />
       </Field>
-      <Field label={'Unsync mode'}>
+      <Field label={'Delete Policy'}>
         <Controller
-          name={'unsyncMode'}
+          name={'deletePolicy'}
           control={control}
           render={({ field: { ref, onChange, ...field } }) => {
             return (
               <Combobox
-                options={unsyncModes}
+                options={deletePolicies}
                 onChange={(value) => onChange(value?.value)}
-                placeholder={'Select unsyncMode type'}
+                placeholder={'Select Delete Policy'}
                 {...field}
               />
             );
