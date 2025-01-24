@@ -48,7 +48,7 @@ func (rangedEvaluator) Kind() EvaluatorKind {
 // an AlertEvaluator depending on evaluation operator.
 func newAlertEvaluator(model ConditionEvalJSON) (evaluator, error) {
 	switch model.Type {
-	case "gt", "lt":
+	case "gt", "lt", "eq":
 		return newThresholdEvaluator(model)
 	case "within_range", "outside_range":
 		return newRangedEvaluator(model)
@@ -70,6 +70,8 @@ func (e *thresholdEvaluator) Eval(reducedValue mathexp.Number) bool {
 		return *fv > e.Threshold
 	case "lt":
 		return *fv < e.Threshold
+	case "eq":
+		return *fv == e.Threshold
 	}
 
 	return false

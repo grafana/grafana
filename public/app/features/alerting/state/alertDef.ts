@@ -32,6 +32,7 @@ const alertStateSortScore = {
 export enum EvalFunction {
   'IsAbove' = 'gt',
   'IsBelow' = 'lt',
+  'IsEqual' = 'eq',
   'IsOutsideRange' = 'outside_range',
   'IsWithinRange' = 'within_range',
   'HasNoValue' = 'no_value',
@@ -40,6 +41,7 @@ export enum EvalFunction {
 const evalFunctions = [
   { value: EvalFunction.IsAbove, text: 'IS ABOVE' },
   { value: EvalFunction.IsBelow, text: 'IS BELOW' },
+  { value: EvalFunction.IsEqual, text: 'IS EQUAL' },
   { value: EvalFunction.IsOutsideRange, text: 'IS OUTSIDE RANGE' },
   { value: EvalFunction.IsWithinRange, text: 'IS WITHIN RANGE' },
   { value: EvalFunction.HasNoValue, text: 'HAS NO VALUE' },

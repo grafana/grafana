@@ -40,6 +40,30 @@ func TestThresholdEvaluator(t *testing.T) {
 			inputNumber: newNumber(util.Pointer(1.0)),
 			expected:    true,
 		},
+		{
+			name:        "value 1 is eq 1: false",
+			evaluator:   &thresholdEvaluator{"eq", 1},
+			inputNumber: newNumber(util.Pointer(1.0)),
+			expected:    true,
+		},
+		{
+			name:        "value 0 is eq 0: false",
+			evaluator:   &thresholdEvaluator{"eq", 0},
+			inputNumber: newNumber(util.Pointer(0.0)),
+			expected:    true,
+		},
+		{
+			name:        "value 1 is eq 0: false",
+			evaluator:   &thresholdEvaluator{"eq", 0},
+			inputNumber: newNumber(util.Pointer(1.0)),
+			expected:    false,
+		},
+		{
+			name:        "value 0 is eq 1: false",
+			evaluator:   &thresholdEvaluator{"eq", 1},
+			inputNumber: newNumber(util.Pointer(0.0)),
+			expected:    false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

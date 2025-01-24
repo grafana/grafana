@@ -29,6 +29,11 @@ export class ThresholdMapper {
           thresholds.push({ value: value, op: 'lt', visible });
           break;
         }
+        case 'eq': {
+          const value = evaluator.params[0];
+          thresholds.push({ value: value, op: 'eq', visible });
+          break;
+        }
         case 'outside_range': {
           const value1 = evaluator.params[0];
           const value2 = evaluator.params[1];

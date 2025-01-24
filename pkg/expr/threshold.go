@@ -34,6 +34,7 @@ type ThresholdType string
 const (
 	ThresholdIsAbove        ThresholdType = "gt"
 	ThresholdIsBelow        ThresholdType = "lt"
+	ThresholdIsEqual        ThresholdType = "eq"
 	ThresholdIsWithinRange  ThresholdType = "within_range"
 	ThresholdIsOutsideRange ThresholdType = "outside_range"
 )
@@ -42,6 +43,7 @@ var (
 	supportedThresholdFuncs = []string{
 		string(ThresholdIsAbove),
 		string(ThresholdIsBelow),
+		string(ThresholdIsEqual),
 		string(ThresholdIsWithinRange),
 		string(ThresholdIsOutsideRange),
 	}
@@ -70,6 +72,11 @@ func NewThresholdCommand(refID, referenceVar string, thresholdFunc ThresholdType
 			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
 		}
 		predicate = lessThanPredicate{value: conditions[0]}
+	case ThresholdIsEqual:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments for threshold function '%s': got %d but need 1", thresholdFunc, len(conditions))
+		}
+		predicate = equalPredicate{value: conditions[0]}
 	default:
 		return nil, fmt.Errorf("expected threshold function to be one of [%s], got %s", strings.Join(supportedThresholdFuncs, ", "), thresholdFunc)
 	}
@@ -293,4 +300,12 @@ type greaterThanPredicate struct {
 
 func (r greaterThanPredicate) Eval(f float64) bool {
 	return f > r.value
+}
+
+type equalPredicate struct {
+	value float64
+}
+
+func (r equalPredicate) Eval(f float64) bool {
+	return f == r.value
 }

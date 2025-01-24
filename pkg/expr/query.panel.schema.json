@@ -712,6 +712,7 @@
                           "enum": [
                             "gt",
                             "lt",
+                            "eq",
                             "within_range",
                             "outside_range"
                           ],
@@ -744,6 +745,7 @@
                           "enum": [
                             "gt",
                             "lt",
+                            "eq",
                             "within_range",
                             "outside_range"
                           ],

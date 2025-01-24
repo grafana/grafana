@@ -39,6 +39,11 @@ func TestNewThresholdCommand(t *testing.T) {
 			shouldError: false,
 		},
 		{
+			fn:          "eq",
+			args:        []float64{0},
+			shouldError: false,
+		},
+		{
 			fn:          "within_range",
 			args:        []float64{0, 1},
 			shouldError: false,
@@ -56,6 +61,12 @@ func TestNewThresholdCommand(t *testing.T) {
 		},
 		{
 			fn:            "lt",
+			args:          []float64{},
+			shouldError:   true,
+			expectedError: "incorrect number of arguments",
+		},
+		{
+			fn:            "eq",
 			args:          []float64{},
 			shouldError:   true,
 			expectedError: "incorrect number of arguments",
@@ -247,6 +258,10 @@ func TestIsSupportedThresholdFunc(t *testing.T) {
 		},
 		{
 			function:  ThresholdIsBelow,
+			supported: true,
+		},
+		{
+			function:  ThresholdIsEqual,
 			supported: true,
 		},
 		{
