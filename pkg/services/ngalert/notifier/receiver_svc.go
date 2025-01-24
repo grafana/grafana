@@ -395,6 +395,14 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
+	// We re-encrypt the existing receiver to ensure any unencrypted secure fields that are correctly encrypted, note this should NOT re-encrypt secure fields that are already encrypted.
+	// This is rare, but can happen if a receiver is created with unencrypted secure fields and then the secure option is added later.
+	// Preferably, this would be handled by receiver config versions and migrations but for now this is a good safety net.
+	err = existing.Encrypt(rs.encryptor(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	// Check optimistic concurrency.
 	err = rs.checkOptimisticConcurrency(existing, r.Version)
 	if err != nil {
