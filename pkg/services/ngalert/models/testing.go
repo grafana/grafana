@@ -96,6 +96,11 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		ns = append(ns, NotificationSettingsGen()())
 	}
 
+	var updatedBy *UserUID
+	if rand.Int63()%2 == 0 {
+		updatedBy = util.Pointer(UserUID(util.GenerateShortUID()))
+	}
+
 	rule := AlertRule{
 		ID:                   0,
 		OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
@@ -103,6 +108,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		Condition:            "A",
 		Data:                 []AlertQuery{g.GenerateQuery()},
 		Updated:              time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
+		UpdatedBy:            updatedBy,
 		IntervalSeconds:      rand.Int63n(60) + 1,
 		Version:              rand.Int63n(1500), // Don't generate a rule ID too big for postgres
 		UID:                  util.GenerateShortUID(),
@@ -538,6 +544,12 @@ func (a *AlertRuleMutators) WithRecordFrom(from string) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithUpdatedBy(uid *UserUID) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.UpdatedBy = uid
+	}
+}
+
 func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.Labels {
 	count := max
 	if min > max {
@@ -618,6 +630,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		Title:           r.Title,
 		Condition:       r.Condition,
 		Updated:         r.Updated,
+		UpdatedBy:       r.UpdatedBy,
 		IntervalSeconds: r.IntervalSeconds,
 		Version:         r.Version,
 		UID:             r.UID,

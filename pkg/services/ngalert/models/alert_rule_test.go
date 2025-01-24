@@ -445,6 +445,11 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.Updated, diff[0].Right.Interface())
 			difCnt++
 		}
+		if rule1.UpdatedBy != rule2.UpdatedBy {
+			diff := diffs.GetDiffsForField("UpdatedBy")
+			assert.Len(t, diff, 1)
+			difCnt++
+		}
 		if rule1.IntervalSeconds != rule2.IntervalSeconds {
 			diff := diffs.GetDiffsForField("IntervalSeconds")
 			assert.Len(t, diff, 1)

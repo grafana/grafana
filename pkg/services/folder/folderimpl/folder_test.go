@@ -2581,7 +2581,7 @@ func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *
 		gen.WithNamespaceUID(folderUID),
 		gen.WithIntervalSeconds(10),
 	).Generate()
-	ids, err := store.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+	ids, err := store.InsertAlertRules(context.Background(), nil, []models.AlertRule{rule})
 	require.NoError(t, err)
 
 	result, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{OrgID: orgID, UID: ids[0].UID})

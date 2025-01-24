@@ -9,7 +9,7 @@ import (
 )
 
 // AlertRuleFieldsToIgnoreInDiff contains fields that are ignored when calculating the RuleDelta.Diff.
-var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated"}
+var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated", "UpdatedBy"}
 
 type RuleDelta struct {
 	Existing *models.AlertRule

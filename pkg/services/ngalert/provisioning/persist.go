@@ -33,8 +33,8 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	InsertAlertRules(ctx context.Context, rule []models.AlertRule) ([]models.AlertRuleKeyWithId, error)
-	UpdateAlertRules(ctx context.Context, rule []models.UpdateRule) error
+	InsertAlertRules(ctx context.Context, user *models.UserUID, rule []models.AlertRule) ([]models.AlertRuleKeyWithId, error)
+	UpdateAlertRules(ctx context.Context, user *models.UserUID, rule []models.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
 }
