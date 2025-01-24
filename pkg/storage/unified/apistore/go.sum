@@ -549,8 +549,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4 h1:616HUg7WVyLJLtVvk2pZ845M4Gk0fswgTwEZSuAZbJU=
 github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
-github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c h1:duHQ8Bih3nt9p68aQdp+22a6mFBLpK4IOURhEq+Cvk8=
-github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c/go.mod h1:/gYfphsNu9v1qYWXxpv1NSvMEMSwvdf8qb8YlgwIRl8=
+github.com/grafana/authlib v0.0.0-20250123104008-e99947858901 h1:nqV1YrtX+ZG+EYB5dcmFMWhg2Y038OMaAHAADbOC9RA=
+github.com/grafana/authlib v0.0.0-20250123104008-e99947858901/go.mod h1:/gYfphsNu9v1qYWXxpv1NSvMEMSwvdf8qb8YlgwIRl8=
 github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c h1:b0sPDtt33uFdmvUJjSCld3kwE2E49dUvevuUDSJsEuo=
 github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c/go.mod h1:qYjSd1tmJiuVoSICp7Py9/zD54O9uQQA3wuM6Gg4DFM=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
@@ -569,8 +569,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.262.0 h1:R2DV6lwBQE5zaogxX3PorD9Seo8
 github.com/grafana/grafana-plugin-sdk-go v0.262.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d h1:aBD5kzsIAh50vjNqUkWK9mNpLGIBYAnKkWtUepGNAiQ=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
-github.com/grafana/grafana/pkg/promlib v0.0.7 h1:BdpanKOKnID/l1BJZLhE7TRNtmq7aOVdou1LBFWaMmU=
-github.com/grafana/grafana/pkg/promlib v0.0.7/go.mod h1:rnwJXCA2xRwb7F27NB35iO/JsLL/H/+eVXECk/hrEhQ=
+github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
+github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d h1:cYBjuhb3m5oC6Z00Kw8DdySFaNhwb38SMxx0oXnz5vQ=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=

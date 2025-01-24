@@ -3,6 +3,7 @@ package authz
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -13,6 +14,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -67,6 +69,7 @@ func ProvideAuthZClient(
 			),
 			log.New("authz-grpc-server"),
 			tracer,
+			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 		)
 		return newInProcLegacyClient(server, tracer)
 	}
