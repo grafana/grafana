@@ -3782,10 +3782,47 @@
           }
         ]
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobResourceSummary": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "delete": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "errors": {
+            "description": "Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "group": {
+            "type": "string"
+          },
+          "noop": {
+            "description": "No action required (useful for sync)",
+            "type": "integer",
+            "format": "int64"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "update": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
         "required": [
-          "action"
+          "action",
+          "repository"
         ],
         "properties": {
           "action": {
@@ -3806,21 +3843,18 @@
               }
             ]
           },
-          "hash": {
-            "type": "string"
-          },
           "pr": {
-            "description": "Pull request number (when appropriate)",
-            "type": "integer",
-            "format": "int32"
+            "description": "Pull request options",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestOptions"
+              }
+            ]
           },
-          "ref": {
-            "description": "The branch of commit hash",
-            "type": "string"
-          },
-          "url": {
-            "description": "URL to the originator (eg, PR URL)",
-            "type": "string"
+          "repository": {
+            "description": "The the repository reference (for now also in labels)",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -3843,7 +3877,7 @@
             "type": "string"
           },
           "progress": {
-            "description": "Optional value 0-1 that can be set while running",
+            "description": "Optional value 0-100 that can be set while running",
             "type": "number",
             "format": "double"
           },
@@ -3860,6 +3894,18 @@
               "success",
               "working"
             ]
+          },
+          "summary": {
+            "description": "Summary of processed actions",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobResourceSummary"
+                }
+              ]
+            }
           }
         }
       },
@@ -3897,6 +3943,27 @@
         "type": "object",
         "properties": {
           "path": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestOptions": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string"
+          },
+          "pr": {
+            "description": "Pull request number (when appropriate)",
+            "type": "integer",
+            "format": "int32"
+          },
+          "ref": {
+            "description": "The branch of commit hash",
+            "type": "string"
+          },
+          "url": {
+            "description": "URL to the originator (eg, PR URL)",
             "type": "string"
           }
         }

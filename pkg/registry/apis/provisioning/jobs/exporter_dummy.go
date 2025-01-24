@@ -23,6 +23,11 @@ func (s *dummyExporter) Export(ctx context.Context,
 	logger.Info("start export", "folder", options.Folder)
 
 	size := 5 + rand.IntN(15)
+
+	dashboards := provisioning.JobResourceSummary{
+		Group:    "dashboard.grafana.app",
+		Resource: "dashboards",
+	}
 	status := provisioning.JobStatus{
 		State:    provisioning.JobStateWorking,
 		Message:  "exporting..." + repo.Config().Spec.Title,
@@ -39,6 +44,23 @@ func (s *dummyExporter) Export(ctx context.Context,
 		sleep := time.Duration(400+rand.IntN(800)) * time.Millisecond
 		status.Message, _ = util.GetRandomString(rand.IntN(10 + 15))
 		time.Sleep(sleep)
+
+		for j := 0; j < (4 + rand.IntN(10)); j++ {
+			switch rand.IntN(9) {
+			case 0, 1, 2:
+				dashboards.Create++
+			case 3, 4:
+				dashboards.Update++
+			case 5:
+				dashboards.Delete++
+			case 6, 7, 8:
+				dashboards.Noop++
+			}
+		}
+		status.Summary = []provisioning.JobResourceSummary{
+			dashboards,
+		}
+
 		err = progress(status)
 		if err != nil {
 			return nil, err
