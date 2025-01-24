@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -45,6 +46,11 @@ func ProvideAuthZClient(
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	isRemoteServer := authCfg.mode == ModeCloud || authCfg.mode == ModeGRPC
+	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && isRemoteServer {
+		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
 	switch authCfg.mode {
