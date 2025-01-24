@@ -4,7 +4,7 @@ import { memo, SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorHeader, EditorRows, FlexItem } from '@grafana/experimental';
+import { EditorHeader, EditorRows, FlexItem } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space } from '@grafana/ui';
 

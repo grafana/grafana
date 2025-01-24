@@ -13,7 +13,7 @@ import {
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
+import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Portal, useStyles2 } from '@grafana/ui';
 
 import { QueryBuilderOperation, QueryBuilderOperationDef } from './types';
