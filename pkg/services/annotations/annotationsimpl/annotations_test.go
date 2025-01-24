@@ -61,11 +61,11 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
 		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
-	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
+		supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(),
+		ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil, nil)
 	require.NoError(t, err)
-
+	dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc)
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
@@ -243,11 +243,11 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		fStore := folderimpl.ProvideStore(sql)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
-		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-			ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil)
+			folderStore, sql, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(),
+			ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil, nil)
 		require.NoError(t, err)
-
+		dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 		cfg.AnnotationMaximumTagsLength = 60
 
 		store := NewXormStore(cfg, log.New("annotation.test"), sql, tagService)

@@ -6,7 +6,7 @@ import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getSilencesScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `sum by (state) (grafanacloud_instance_alertmanager_silences{id="${INSTANCE_ID}"})`
+    ? `sum by (state) (grafanacloud_instance_alertmanager_silences{stack_id="${INSTANCE_ID}"})`
     : `sum by (state) (grafanacloud_instance_alertmanager_silences)`;
 
   const query = new SceneQueryRunner({

@@ -3,8 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/grafana/authlib/claims"
-
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -12,7 +11,7 @@ import (
 )
 
 type PermissionStore interface {
-	GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error)
+	GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error)
 }
 
 type PermissionsQuery struct {
@@ -63,7 +62,7 @@ func newGetPermissions(sql *legacysql.LegacyDatabaseHelper, q *PermissionsQuery)
 	}
 }
 
-func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
+func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.GetUserPermissions")
 	defer span.End()
 
@@ -111,7 +110,7 @@ type StaticPermissionStore struct {
 	ac accesscontrol.Service
 }
 
-func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
+func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
 	roles := []string{query.Role}
 	if query.IsServerAdmin {
 		roles = append(roles, "Grafana Admin")
@@ -146,7 +145,7 @@ type UnionPermissionStore struct {
 	stores []PermissionStore
 }
 
-func (u *UnionPermissionStore) GetUserPermissions(ctx context.Context, ns claims.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
+func (u *UnionPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query PermissionsQuery) ([]accesscontrol.Permission, error) {
 	var permissions []accesscontrol.Permission
 	for _, s := range u.stores {
 		result, err := s.GetUserPermissions(ctx, ns, query)

@@ -3,17 +3,20 @@ package authz
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authnlib "github.com/grafana/authlib/authn"
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -36,9 +39,10 @@ func ProvideAuthZClient(
 	features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
-) (authzlib.AccessClient, error) {
+) (authlib.AccessClient, error) {
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
 		return nil, err
@@ -67,6 +71,8 @@ func ProvideAuthZClient(
 			),
 			log.New("authz-grpc-server"),
 			tracer,
+			reg,
+			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 		)
 		return newInProcLegacyClient(server, tracer)
 	}
@@ -76,7 +82,7 @@ func ProvideAuthZClient(
 // You need to provide a remote address in the configuration
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-) (authzlib.AccessClient, error) {
+) (authlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}
@@ -92,10 +98,10 @@ func ProvideStandaloneAuthZClient(
 	return newCloudLegacyClient(authCfg, tracer)
 }
 
-func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzlib.AccessClient, error) {
+func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authlib.AccessClient, error) {
 	// For in-proc use-case authorize add fake service claims - it should be able to access every namespace, as there is only one
 	staticAuth := func(ctx context.Context) (context.Context, error) {
-		ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+		ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 			Rest: authnlib.AccessTokenClaims{
 				Namespace: "*",
 			},
@@ -121,7 +127,7 @@ func newInProcLegacyClient(server *rbac.Service, tracer tracing.Tracer) (authzli
 	)
 }
 
-func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessClient, error) {
+func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessClient, error) {
 	// This client interceptor is a noop, as we don't send an access token
 	clientConfig := authnlib.GrpcClientConfig{}
 	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
@@ -151,7 +157,7 @@ func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessCl
 	return client, nil
 }
 
-func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessClient, error) {
+func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authlib.AccessClient, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{
 		TokenClientConfig: &authnlib.TokenExchangeConfig{
 			Token:            authCfg.token,

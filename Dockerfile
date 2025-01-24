@@ -67,6 +67,7 @@ COPY pkg/semconv/go.* pkg/semconv/
 COPY pkg/aggregator/go.* pkg/aggregator/
 COPY apps/playlist/go.* apps/playlist/
 COPY apps/investigation/go.* apps/investigation/
+COPY apps/advisor/go.* apps/advisor/
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications/go.* apps/alerting/notifications/
