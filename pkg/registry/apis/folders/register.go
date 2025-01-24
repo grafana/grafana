@@ -53,7 +53,7 @@ type FolderAPIBuilder struct {
 	accessControl        accesscontrol.AccessControl
 	searcher             resource.ResourceIndexClient
 	cfg                  *setting.Cfg
-	ignoreLegacy         bool // TODO: find a better name
+	ignoreLegacy         bool // skip legacy storage and only use unified storage
 }
 
 func RegisterAPIService(cfg *setting.Cfg,

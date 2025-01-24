@@ -36,11 +36,11 @@ type StorageOptions struct {
 	StorageType StorageType
 
 	// For unified-grpc
-	Address          string
-	GrpcToken        string
-	TokenExchangeURL string
-	TokenNamespace   string
-	AllowInsecure    bool
+	Address                                  string
+	GrpcClientAuthenticationToken            string
+	GrpcClientAuthenticationTokenExchangeURL string
+	GrpcClientAuthenticationTokenNamespace   string
+	GrpcClientAuthenticationAllowInsecure    bool
 
 	// For file storage, this is the requested path
 	DataPath string
@@ -58,10 +58,10 @@ type StorageOptions struct {
 
 func NewStorageOptions() *StorageOptions {
 	return &StorageOptions{
-		StorageType:    StorageTypeUnified,
-		Address:        "localhost:10000",
-		TokenNamespace: "*",
-		AllowInsecure:  false,
+		StorageType:                            StorageTypeUnified,
+		Address:                                "localhost:10000",
+		GrpcClientAuthenticationTokenNamespace: "*",
+		GrpcClientAuthenticationAllowInsecure:  false,
 	}
 }
 
@@ -69,10 +69,10 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar((*string)(&o.StorageType), "grafana-apiserver-storage-type", string(o.StorageType), "Storage type")
 	fs.StringVar(&o.DataPath, "grafana-apiserver-storage-path", o.DataPath, "Storage path for file storage")
 	fs.StringVar(&o.Address, "grafana-apiserver-storage-address", o.Address, "Remote grpc address endpoint")
-	fs.StringVar(&o.GrpcToken, "grafana-apiserver-storage-token", o.GrpcToken, "Token for grpc client")
-	fs.StringVar(&o.TokenExchangeURL, "grafana-apiserver-storage-token-exchange-url", o.TokenExchangeURL, "Token exchange url for grpc client")
-	fs.StringVar(&o.TokenNamespace, "grafana-apiserver-storage-token-namespace", o.TokenNamespace, "Token namespace for grpc client")
-	fs.BoolVar(&o.AllowInsecure, "grafana-apiserver-storage-allow-insecure", o.AllowInsecure, "Allow insecure grpc connections")
+	fs.StringVar(&o.GrpcClientAuthenticationToken, "grpc-client-authentication-token", o.GrpcClientAuthenticationToken, "Token for grpc client authentication")
+	fs.StringVar(&o.GrpcClientAuthenticationTokenExchangeURL, "grpc-client-authentication-token-exchange-url", o.GrpcClientAuthenticationTokenExchangeURL, "Token exchange url for grpc client authentication")
+	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
+	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
 }
 
 func (o *StorageOptions) Validate() []error {
@@ -97,14 +97,14 @@ func (o *StorageOptions) Validate() []error {
 		errs = append(errs, fmt.Errorf("blob storage is only valid with unified storage"))
 	}
 	if o.StorageType == StorageTypeUnifiedGrpc {
-		if o.GrpcToken == "" {
-			errs = append(errs, fmt.Errorf("grpc token is required for unified-grpc storage"))
+		if o.GrpcClientAuthenticationToken == "" {
+			errs = append(errs, fmt.Errorf("grpc client auth token is required for unified-grpc storage"))
 		}
-		if o.TokenExchangeURL == "" {
-			errs = append(errs, fmt.Errorf("grpc token exchange url is required for unified-grpc storage"))
+		if o.GrpcClientAuthenticationTokenExchangeURL == "" {
+			errs = append(errs, fmt.Errorf("grpc client auth token exchange url is required for unified-grpc storage"))
 		}
-		if o.TokenNamespace == "" {
-			errs = append(errs, fmt.Errorf("grpc token namespace is required for unified-grpc storage"))
+		if o.GrpcClientAuthenticationTokenNamespace == "" {
+			errs = append(errs, fmt.Errorf("grpc client auth namespace is required for unified-grpc storage"))
 		}
 	}
 	return errs
@@ -123,15 +123,15 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	}
 	authCfg := authn.GrpcClientConfig{
 		TokenClientConfig: &authn.TokenExchangeConfig{
-			Token:            o.GrpcToken,
-			TokenExchangeURL: o.TokenExchangeURL,
+			Token:            o.GrpcClientAuthenticationToken,
+			TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
 		},
 		TokenRequest: &authn.TokenExchangeRequest{
 			Audiences: []string{"resourceStore"},
-			Namespace: o.TokenNamespace,
+			Namespace: o.GrpcClientAuthenticationTokenNamespace,
 		},
 	}
-	unified, err := resource.NewCloudResourceClient(tracer, conn, authCfg, o.AllowInsecure)
+	unified, err := resource.NewCloudResourceClient(tracer, conn, authCfg, o.GrpcClientAuthenticationAllowInsecure)
 	if err != nil {
 		return err
 	}
