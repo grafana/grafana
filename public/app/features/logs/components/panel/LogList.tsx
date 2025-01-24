@@ -18,7 +18,7 @@ import {
 interface Props {
   app?: CoreApp;
   logs: LogRowModel[];
-  containerElement: HTMLDivElement | null;
+  containerElement: HTMLDivElement;
   eventBus: EventBus;
   forceEscape?: boolean;
   showTime: boolean;

@@ -1068,17 +1068,19 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           {visualisationType === 'logs' && logsPanelV2 && (
             <>
               <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
-                <LogList
-                  app={CoreApp.Explore}
-                  containerElement={logsContainerRef.current}
-                  eventBus={eventBus}
-                  forceEscape={forceEscape}
-                  logs={dedupedRows}
-                  showTime={showTime}
-                  sortOrder={logsSortOrder}
-                  timeZone={timeZone}
-                  wrapLogMessage={wrapLogMessage}
-                />
+                {logsContainerRef.current && (
+                  <LogList
+                    app={CoreApp.Explore}
+                    containerElement={logsContainerRef.current}
+                    eventBus={eventBus}
+                    forceEscape={forceEscape}
+                    logs={dedupedRows}
+                    showTime={showTime}
+                    sortOrder={logsSortOrder}
+                    timeZone={timeZone}
+                    wrapLogMessage={wrapLogMessage}
+                  />
+                )}
               </div>
               <LogsNavigation
                 logsSortOrder={logsSortOrder}
