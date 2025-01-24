@@ -709,20 +709,8 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "kubernetesFolders",
-			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:        "kubernetesFoldersServiceV2",
 			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
-			Name:        "grafanaAPIServerTestingWithExperimentalAPIs",
-			Description: "Facilitate integration testing of experimental APIs",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 		},
@@ -1502,6 +1490,14 @@ var (
 		{
 			Name:              "unifiedStorageSearchSprinkles",
 			Description:       "Enable sprinkles on unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "unifiedStorageSearchPermissionFiltering",
+			Description:       "Enable permission filtering on unified storage search",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,

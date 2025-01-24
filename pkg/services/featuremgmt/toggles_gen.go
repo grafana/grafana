@@ -383,17 +383,9 @@ const (
 	// Allow restoring objects in k8s
 	FlagKubernetesRestore = "kubernetesRestore"
 
-	// FlagKubernetesFolders
-	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
-	FlagKubernetesFolders = "kubernetesFolders"
-
 	// FlagKubernetesFoldersServiceV2
 	// Use the Folders Service V2, and route Folder Service requests to k8s
 	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
-
-	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
-	// Facilitate integration testing of experimental APIs
-	FlagGrafanaAPIServerTestingWithExperimentalAPIs = "grafanaAPIServerTestingWithExperimentalAPIs"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -806,6 +798,10 @@ const (
 	// FlagUnifiedStorageSearchSprinkles
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
+
+	// FlagUnifiedStorageSearchPermissionFiltering
+	// Enable permission filtering on unified storage search
+	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
 
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets

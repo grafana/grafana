@@ -112,9 +112,7 @@ export interface FeatureToggles {
   kubernetesDashboards?: boolean;
   kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFolders?: boolean;
   kubernetesFoldersServiceV2?: boolean;
-  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -218,6 +216,7 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
+  unifiedStorageSearchPermissionFiltering?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
