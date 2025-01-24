@@ -24,7 +24,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -91,7 +91,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -335,7 +335,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder")
+			newFolder := createFolder(t, sc, "NewFolder", nil)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)

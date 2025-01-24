@@ -112,4 +112,24 @@ describe('addLabelToQuery()', () => {
   it('should not add ad-hoc filter bool operator', () => {
     expect(addLabelToQuery('ALERTS < bool 1', 'bar', 'baz')).toBe('ALERTS{bar="baz"} < bool 1');
   });
+
+  it('should add a utf8 label', () => {
+    expect(addLabelToQuery('{"metric.name"}', 'cenk.erdem', 'muhabbet')).toBe(
+      '{"metric.name", "cenk.erdem"="muhabbet"}'
+    );
+
+    expect(addLabelToQuery('metric{label="val"}', 'cenk.erdem', 'muhabbet')).toBe(
+      'metric{label="val", "cenk.erdem"="muhabbet"}'
+    );
+  });
+
+  it('should not add a utf8 label when it is already applied', () => {
+    expect(addLabelToQuery('{"metric.name", "cenk.erdem"="muhabbet"}', 'cenk.erdem', 'muhabbet')).toBe(
+      '{"metric.name", "cenk.erdem"="muhabbet"}'
+    );
+
+    expect(addLabelToQuery('metric{label="val", "cenk.erdem"="muhabbet"}', 'cenk.erdem', 'muhabbet')).toBe(
+      'metric{label="val", "cenk.erdem"="muhabbet"}'
+    );
+  });
 });

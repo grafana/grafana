@@ -61,6 +61,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
 		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod")
+		insertTestDashboard(t, dashboardStore, "test dash org2", 2, 0, "", false, "")
 		insertTestRule(t, sqlStore, savedFolder.OrgID, savedFolder.UID)
 	}
 
@@ -79,6 +80,17 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.True(t, savedFolder.IsFolder)
 		require.Empty(t, savedFolder.FolderUID)
 		require.Positive(t, len(savedFolder.UID))
+	})
+
+	t.Run("Should be able to get dashboard counts per org", func(t *testing.T) {
+		setup()
+		count, err := dashboardStore.CountInOrg(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, int64(3), count)
+
+		count, err = dashboardStore.CountInOrg(context.Background(), 2)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
 	})
 
 	t.Run("Should be able to get dashboard by id", func(t *testing.T) {
@@ -890,7 +902,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1009,7 +1021,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,

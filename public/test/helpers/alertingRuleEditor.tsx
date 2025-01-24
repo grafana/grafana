@@ -39,6 +39,7 @@ export const ui = {
     save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
+    preview: byRole('button', { name: /^Preview$/ }),
   },
 };
 export function renderRuleEditor(identifier?: string, recording?: 'recording' | 'grafana-recording') {
