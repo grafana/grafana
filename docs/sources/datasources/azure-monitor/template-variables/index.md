@@ -48,18 +48,18 @@ For an introduction to templating and template variables, refer to the [Templati
 
 You can specify these Azure Monitor data source queries in the Variable edit view's **Query Type** field.
 
-| Name                | Description                                                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Subscriptions**   | Returns subscriptions.                                                                                             |
-| **Resource Groups** | Returns resource groups for a specified. Supports multi-value. subscription.                                       |
-| **Namespaces**      | Returns metric namespaces for the specified subscription and resource group.                                       |
-| **Regions**         | Returns regions for the specified subscription                                                                     |
-| **Resource Names**  | Returns a list of resource names for a specified subscription, resource group and namespace. Supports multi-value. |
-| **Metric Names**    | Returns a list of metric names for a resource.                                                                     |
-| **Workspaces**      | Returns a list of workspaces for the specified subscription.                                                       |
-| **Logs**            | Use a KQL query to return values.                                                                                  |
-| **Custom Namespaces**  | Return metric namespaces for the specified resource.                                                                                  |
-| **Custom Metric Names**  | Returns a list of custom metric names for the specified resource.                                                                                  |
+| Name                    | Description                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Subscriptions**       | Returns subscriptions.                                                                                             |
+| **Resource Groups**     | Returns resource groups for a specified. Supports multi-value. subscription.                                       |
+| **Namespaces**          | Returns metric namespaces for the specified subscription and resource group.                                       |
+| **Regions**             | Returns regions for the specified subscription                                                                     |
+| **Resource Names**      | Returns a list of resource names for a specified subscription, resource group and namespace. Supports multi-value. |
+| **Metric Names**        | Returns a list of metric names for a resource.                                                                     |
+| **Workspaces**          | Returns a list of workspaces for the specified subscription.                                                       |
+| **Logs**                | Use a KQL query to return values.                                                                                  |
+| **Custom Namespaces**   | Return metric namespaces for the specified resource.                                                               |
+| **Custom Metric Names** | Returns a list of custom metric names for the specified resource.                                                  |
 
 {{< admonition type="note" >}}
 Custom metrics cannot be emitted against a subscription or resource group. Only select resources when attempting to retrieve custom metric namespaces or custom metric names for a resource.
