@@ -4,7 +4,7 @@ import { memo, useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Drawer } from '@grafana/ui';
 

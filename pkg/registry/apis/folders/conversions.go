@@ -2,7 +2,6 @@ package folders
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -114,16 +113,6 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*f
 		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
 		Updated: createdTime,
 		OrgID:   orgID,
-
-		// This will need to be restructured so the full path is looked up when saving
-		// it can't be saved in the resource metadata because then everything must cascade
-		// nolint:staticcheck
-		Fullpath: meta.GetFullPath(),
-
-		// This will need to be restructured so the full path is looked up when saving
-		// it can't be saved in the resource metadata because then everything must cascade
-		// nolint:staticcheck
-		FullpathUIDs: meta.GetFullPathUIDs(),
 	}
 	// CreatedBy needs to be returned separately because it's the user UID (string) but
 	// folder.Folder expects user ID (int64).
@@ -158,12 +147,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	meta.SetUpdatedTimestamp(&v.Updated)
 	if v.ID > 0 { // nolint:staticcheck
 		meta.SetDeprecatedInternalID(v.ID) // nolint:staticcheck
-
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name:      "SQL",
-			Path:      fmt.Sprintf("%d", v.ID), // nolint:staticcheck
-			Timestamp: &v.Created,
-		})
 	}
 	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
@@ -177,14 +160,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
-	}
-	if v.Fullpath != "" {
-		// nolint:staticcheck
-		meta.SetFullPath(v.Fullpath)
-	}
-	if v.FullpathUIDs != "" {
-		// nolint:staticcheck
-		meta.SetFullPathUIDs(v.FullpathUIDs)
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
@@ -208,23 +183,4 @@ func getURL(meta utils.GrafanaMetaAccessor, title string) string {
 func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
 	created := meta.GetCreationTimestamp().Time
 	return &created, nil
-}
-
-func GetParentTitles(fullPath string) ([]string, error) {
-	// Find all forward slashes which aren't escaped
-	r, err := regexp.Compile(`[^\\](/)`)
-	if err != nil {
-		return nil, err
-	}
-	indices := r.FindAllStringIndex(fullPath, -1)
-
-	var start int
-	titles := []string{}
-	for _, i := range indices {
-		titles = append(titles, fullPath[start:i[0]+1])
-		start = i[0] + 2
-	}
-
-	titles = append(titles, fullPath[start:])
-	return titles, nil
 }

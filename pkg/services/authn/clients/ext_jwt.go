@@ -7,8 +7,9 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+
 	authlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"

@@ -7,11 +7,13 @@ import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack, Badge } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createQueryText } from 'app/core/utils/richHistory';
-import { useAllQueryTemplatesQuery } from 'app/features/query-library';
+import { useListQueryTemplateQuery } from 'app/features/query-library';
 import { getUserInfo } from 'app/features/query-library/api/user';
 import { QueryTemplate } from 'app/features/query-library/types';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
+import { getK8sNamespace } from '../../query-library/api/query';
 
 import { QueryLibraryProps } from './QueryLibrary';
 import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
@@ -23,7 +25,14 @@ import { searchQueryLibrary } from './utils/search';
 interface QueryTemplatesListProps extends QueryLibraryProps {}
 
 export function QueryTemplatesList(props: QueryTemplatesListProps) {
-  const { data, isLoading, error } = useAllQueryTemplatesQuery();
+  const {
+    data: rawData,
+    isLoading,
+    error,
+  } = useListQueryTemplateQuery({
+    namespace: getK8sNamespace(),
+  });
+  const data = useMemo(() => (rawData ? convertDataQueryResponseToQueryTemplates(rawData) : undefined), [rawData]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [datasourceFilters, setDatasourceFilters] = useState<Array<SelectableValue<string>>>(

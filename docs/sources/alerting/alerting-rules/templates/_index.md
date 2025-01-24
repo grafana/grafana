@@ -218,3 +218,7 @@ For further details on how to template alert rules, refer to:
 
 - [Annotation and label template reference](ref:alert-rule-template-reference)
 - [Annotation and label examples](ref:alert-rule-template-examples)
+
+{{< admonition type="tip" >}}
+For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).
+{{< /admonition  >}}
