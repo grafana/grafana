@@ -13,6 +13,7 @@ import (
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -107,10 +108,26 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	if err != nil {
 		return nil, err
 	}
+	updated := obj.DeepCopy()
 
-	updated, err := internalfolders.LegacyUpdateCommandToUnstructured(obj, &cmd)
-	if err != nil {
-		return nil, err
+	if cmd.NewTitle != nil {
+		err = unstructured.SetNestedField(updated.Object, *cmd.NewTitle, "spec", "title")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cmd.NewDescription != nil {
+		err = unstructured.SetNestedField(updated.Object, *cmd.NewDescription, "spec", "description")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cmd.NewParentUID != nil {
+		meta, err := utils.MetaAccessor(updated)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetFolder(*cmd.NewParentUID)
 	}
 
 	out, err := client.Update(ctx, updated, v1.UpdateOptions{})
@@ -118,12 +135,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		return nil, err
 	}
 
-	folder, err := internalfolders.UnstructuredToLegacyFolder(out)
-	if err != nil {
-		return nil, err
-	}
-
-	return folder, err
+	return internalfolders.UnstructuredToLegacyFolder(out)
 }
 
 // If WithFullpath is true it computes also the full path of a folder.

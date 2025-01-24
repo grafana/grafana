@@ -26,43 +26,17 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 			},
 		},
 	}
-	// #TODO: let's see if we need to set the json field to "-"
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
+
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
 	}
-	obj.SetName(cmd.UID)
-
-	if err := setParentUID(obj, cmd.ParentUID); err != nil {
-		return &unstructured.Unstructured{}, err
-	}
-
-	return obj, nil
-}
-
-func LegacyUpdateCommandToUnstructured(obj *unstructured.Unstructured, cmd *folder.UpdateFolderCommand) (*unstructured.Unstructured, error) {
-	spec, ok := obj.Object["spec"].(map[string]any)
-	if !ok {
-		return &unstructured.Unstructured{}, fmt.Errorf("could not convert object to folder")
-	}
-	if cmd.NewTitle != nil {
-		spec["title"] = cmd.NewTitle
-	}
-	if cmd.NewDescription != nil {
-		spec["description"] = cmd.NewDescription
-	}
-	if cmd.NewParentUID != nil {
-		if err := setParentUID(obj, *cmd.NewParentUID); err != nil {
-			return &unstructured.Unstructured{}, err
-		}
-	}
-
-	return obj, nil
-}
-
-func LegacyMoveCommandToUnstructured(obj *unstructured.Unstructured, cmd folder.MoveFolderCommand) (*unstructured.Unstructured, error) {
-	if err := setParentUID(obj, cmd.NewParentUID); err != nil {
-		return &unstructured.Unstructured{}, err
-	}
+	meta.SetName(cmd.UID)
+	meta.SetFolder(cmd.ParentUID)
 
 	return obj, nil
 }
@@ -156,13 +130,4 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
-}
-
-func setParentUID(u *unstructured.Unstructured, parentUid string) error {
-	meta, err := utils.MetaAccessor(u)
-	if err != nil {
-		return err
-	}
-	meta.SetFolder(parentUid)
-	return nil
 }
