@@ -16,7 +16,7 @@ func TestFrameDB(t *testing.T) {
 			data.NewField("animal", nil, []string{"cat", "dog", "cat", "dog"}),
 			data.NewField("nanimal", nil, []*string{p("cat"), p("dog"), p("cat"), p("dog")}),
 			data.NewField("count", nil, []float64{1, 3, 4, 7}),
-			data.NewField("ncount", nil, []*float64{p(2.0), p(6.0), p(8.0), p(14.0)}),
+			data.NewField("ncount", nil, []*float64{p(2.0), nil, p(8.0), p(14.0)}),
 		},
 	}
 

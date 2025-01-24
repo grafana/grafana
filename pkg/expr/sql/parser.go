@@ -3,6 +3,7 @@ package sql
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,7 +21,7 @@ func TablesList(rawSQL string) ([]string, error) {
 
 	tables := make(map[string]struct{})
 
-	walkSubtree := func(node sqlparser.SQLNode) {
+	walkSubtree := func(node sqlparser.SQLNode) error {
 		err = sqlparser.Walk(func(node sqlparser.SQLNode) (kontinue bool, err error) {
 			switch v := node.(type) {
 			case *sqlparser.AliasedTableExpr:
@@ -29,16 +30,24 @@ func TablesList(rawSQL string) ([]string, error) {
 				}
 			case *sqlparser.TableName:
 				tables[v.Name.String()] = struct{}{}
+			case *sqlparser.FuncExpr:
+				if strings.ToLower(v.Name.String()) == "load_file" {
+					return false, fmt.Errorf("load_file is not supported in queries")
+				}
 			}
 			return true, nil
 		}, node)
 
 		if err != nil {
 			logger.Error("error walking sql", "error", err, "node", node)
+			return fmt.Errorf("failed to parse SQL expression: %w", err)
 		}
+		return nil
 	}
 
-	walkSubtree(stmt)
+	if err := walkSubtree(stmt); err != nil {
+		return nil, err
+	}
 
 	result := make([]string, 0, len(tables))
 	for table := range tables {
