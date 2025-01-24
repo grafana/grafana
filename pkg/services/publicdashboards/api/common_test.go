@@ -152,18 +152,18 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		setting.NewCfg(),
 		cs,
 		nil,
-		&fakePluginRequestValidator{},
+		&fakeDataSourceRequestValidator{},
 		fpc,
 		pCtxProvider,
 	)
 }
 
 // copied from pkg/api/metrics_test.go
-type fakePluginRequestValidator struct {
+type fakeDataSourceRequestValidator struct {
 	err error
 }
 
-func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
 
