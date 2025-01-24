@@ -1,5 +1,5 @@
 import { DataSourceSettings } from '@grafana/data';
-import { ConfigSubSection, Stack } from '@grafana/experimental';
+import { ConfigSubSection, Stack } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Label, Switch, Tooltip } from '@grafana/ui';
 
