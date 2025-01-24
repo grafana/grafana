@@ -3,8 +3,8 @@ import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
 
 import { ComboboxOption } from './Combobox';
-import { generateOptions } from './Combobox.story';
 import { MultiCombobox } from './MultiCombobox';
+import { generateOptions } from './storyUtils';
 
 const meta: Meta<typeof MultiCombobox> = {
   title: 'Forms/MultiCombobox',
