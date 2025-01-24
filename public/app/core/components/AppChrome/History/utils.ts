@@ -15,6 +15,11 @@ export const hackyFixes = (newEntry: HistoryEntry, entries: HistoryEntry[]): His
   // Explore page without query params should return the entries without the new entry
   if (newUrlPath.endsWith('/explore') && !newUrlQueryParams) {
     entries = entries;
+  } else if (newUrlPath.includes('\/d\/') && newUrlTitle === 'Dashboards') {
+    // Dashboard page called 'Dashboards' won't be added to the history as it is the Browse Dashboard page
+    entries = entries;
+  } else if (newUrlPath.includes('\/d\/') && existingEntry && existingUrlPath === newUrlPath) {
+    entries = entries;
   } else {
     entries = [newEntry, ...entries];
   }
