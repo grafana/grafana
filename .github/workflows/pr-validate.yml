@@ -1,0 +1,22 @@
+name: pr-validate
+
+on:
+
+ pull_request
+
+jobs:
+
+ validate-pr:
+
+   runs-on: ubuntu-latest
+
+   steps:
+
+     - uses: actions/checkout@v4
+
+     - name: validate-pr
+
+       continue-on-error: true
+
+       run: |
+         pwd
