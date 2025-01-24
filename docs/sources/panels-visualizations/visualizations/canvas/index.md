@@ -258,6 +258,12 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 
 {{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
 
+Use the following pointer and keyboard strokes:
+
+- **Focus/reset the pointer** - Double-click
+- **Vertical zoom** - Shift + right-click
+- **Step back** - Control + z
+
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
 
 ##### Infinite panning
