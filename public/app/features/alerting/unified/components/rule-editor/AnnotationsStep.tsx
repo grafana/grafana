@@ -205,11 +205,12 @@ const AnnotationsStep = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  // @TODO ideally full width but 100% doesn't work, need to investigate why
   annotationValueInput: css({
-    width: '394px',
+    width: 550,
   }),
   textarea: css({
-    height: '76px',
+    height: 76,
   }),
   addAnnotationsButtonContainer: css({
     marginTop: theme.spacing(1),

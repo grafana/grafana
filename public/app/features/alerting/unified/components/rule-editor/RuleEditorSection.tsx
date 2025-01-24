@@ -114,10 +114,10 @@ export const RuleEditorSubSection = ({
 
   return (
     <div className={styles.subSection}>
-      <Stack direction="column" gap={2}>
+      <Stack direction="column" gap={2} alignItems="flex-start">
         {showHeader && (
           <>
-            <Stack direction="column" alignItems="flex-start" gap={0}>
+            <Stack direction="column" gap={0}>
               <Stack direction="row" gap={0}>
                 {isFunction(onToggle) && (
                   <IconButton
@@ -157,6 +157,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   subSection: css({
     borderTop: `solid 1px ${theme.colors.border.weak}`,
     padding: theme.spacing(2),
+    background: theme.colors.background.primary,
     width: '100%',
   }),
   parent: css({

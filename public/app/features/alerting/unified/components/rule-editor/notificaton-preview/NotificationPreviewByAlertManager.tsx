@@ -39,6 +39,7 @@ function NotificationPreviewByAlertManager({
     );
   }
 
+  // @TODO better loading with skeleton loaders
   if (loading) {
     return <LoadingPlaceholder text="Loading routing preview..." />;
   }

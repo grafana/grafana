@@ -248,14 +248,16 @@ export function GrafanaEvaluationBehaviorStep({
       )
     : t('alerting.rule-form.evaluation-behaviour.description.text', 'Define how the alert rule is evaluated.');
 
-  const helpInfo = getHelpInfo(isGrafanaRecordingRule);
-
   const groupError = errors.group?.message;
 
   return (
     // TODO remove "and alert condition" for recording rules
-    <RuleEditorSection stepNo={step} title="Set evaluation behavior" description={description} helpInfo={helpInfo}>
-      <RuleEditorSubSection title="Evaluation group" description={evaluationGroupDescription}>
+    <RuleEditorSection stepNo={step} title="Set evaluation behavior" description={description}>
+      <RuleEditorSubSection
+        title="Evaluation group"
+        description={evaluationGroupDescription}
+        helpInfo={evaluationGroupHelpInfo}
+      >
         {/* folder selector */}
         <Field
           data-testid="group-picker"
@@ -269,34 +271,36 @@ export function GrafanaEvaluationBehaviorStep({
             render={({ field: { ref, ...field }, fieldState }) => (
               <Stack direction="column" gap={0.5}>
                 <Stack direction="row" alignItems="center">
-                  <AsyncSelect
-                    disabled={!folder || loading}
-                    inputId="group"
-                    key={uniqueId()}
-                    {...field}
-                    onChange={(group) => {
-                      field.onChange(group.label ?? '');
-                    }}
-                    isLoading={loading}
-                    invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
-                    loadOptions={debouncedSearch}
-                    cacheOptions
-                    loadingMessage={'Loading groups...'}
-                    defaultValue={defaultGroupValue}
-                    defaultOptions={groupOptions}
-                    getOptionLabel={(option: SelectableValue<string>) => (
-                      <div>
-                        <span>{option.label}</span>
-                        {option.isProvisioned && (
-                          <>
-                            {' '}
-                            <ProvisioningBadge />
-                          </>
-                        )}
-                      </div>
-                    )}
-                    placeholder="Select an evaluation group"
-                  />
+                  <div className={styles.groupSelection}>
+                    <AsyncSelect
+                      disabled={!folder || loading}
+                      inputId="group"
+                      key={uniqueId()}
+                      {...field}
+                      onChange={(group) => {
+                        field.onChange(group.label ?? '');
+                      }}
+                      isLoading={loading}
+                      invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
+                      loadOptions={debouncedSearch}
+                      cacheOptions
+                      loadingMessage={'Loading groups...'}
+                      defaultValue={defaultGroupValue}
+                      defaultOptions={groupOptions}
+                      getOptionLabel={(option: SelectableValue<string>) => (
+                        <div>
+                          <span>{option.label}</span>
+                          {option.isProvisioned && (
+                            <>
+                              {' '}
+                              <ProvisioningBadge />
+                            </>
+                          )}
+                        </div>
+                      )}
+                      placeholder="Select an evaluation group"
+                    />
+                  </div>
                   <Text color="secondary">or</Text>
                   <Button
                     onClick={onOpenEvaluationGroupCreationModal}
@@ -345,6 +349,7 @@ export function GrafanaEvaluationBehaviorStep({
         description={
           'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
         }
+        helpInfo={pendingPeriodHelpInfo}
       >
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
 
@@ -605,34 +610,40 @@ const needHelpInfoForConfigureNoDataError = {
   title: 'Configure no data and error handling',
 };
 
-function getHelpInfo(isGrafanaRecordingRule: boolean): ComponentPropsWithoutRef<typeof NeedHelpInfo> {
-  return {
-    title: 'Alert rule evaluation',
-    contentText: (
-      <>
-        <p>
-          <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description1">
-            Evaluation groups are containers for evaluating alert and recording rules.
-          </Trans>
-        </p>
-        <p>
-          <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description2">
-            An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the
-            same evaluation group are evaluated over the same evaluation interval.
-          </Trans>
-        </p>
-        <p>
-          <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description3">
-            Pending period specifies how long the threshold condition must be met before the alert starts firing. This
-            option helps prevent alerts from being triggered by temporary issues.
-          </Trans>
-        </p>
-      </>
-    ),
-    linkText: 'Read about evaluation and alert states',
-    externalLink: 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/',
-  };
-}
+const evaluationGroupHelpInfo: ComponentPropsWithoutRef<typeof NeedHelpInfo> = {
+  title: 'Alert rule evaluation',
+  contentText: (
+    <>
+      <p>
+        <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description1">
+          Evaluation groups are containers for evaluating alert and recording rules.
+        </Trans>
+      </p>
+      <p>
+        <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description2">
+          An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the
+          same evaluation group are evaluated over the same evaluation interval.
+        </Trans>
+      </p>
+    </>
+  ),
+  linkText: 'Read about evaluation and alert states',
+  externalLink: 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/',
+};
+
+const pendingPeriodHelpInfo: ComponentPropsWithoutRef<typeof NeedHelpInfo> = {
+  title: 'Alert rule evaluation',
+  contentText: (
+    <>
+      <Trans i18nKey="alerting.rule-form.evaluation-behaviour-description3">
+        Pending period specifies how long the threshold condition must be met before the alert starts firing. This
+        option helps prevent alerts from being triggered by temporary issues.
+      </Trans>
+    </>
+  ),
+  linkText: 'Read about evaluation and alert states',
+  externalLink: 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/#pending-period',
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   inlineField: css({
@@ -658,5 +669,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   modalTitle: css({
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing(2),
+  }),
+  groupSelection: css({
+    width: 420,
   }),
 });

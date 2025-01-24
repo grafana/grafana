@@ -30,7 +30,7 @@ export function determineAdvancedMode(simplifiedQueryEditor: boolean | undefined
 }
 
 /*
-  This hook is used mantain the state of the advanced mode, and the simple condition, 
+  This hook is used mantain the state of the advanced mode, and the simple condition,
   depending on the editor settings, the alert type, and the queries.
    */
 export const useAdvancedMode = (
@@ -51,5 +51,7 @@ export const useAdvancedMode = (
     }
   }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
 
-  return { simpleCondition, setSimpleCondition };
+  const simplifiedQueryStep = isGrafanaAlertingType ? simplifiedQueryEditor : false;
+
+  return { simpleCondition, setSimpleCondition, simplifiedQueryStep };
 };
