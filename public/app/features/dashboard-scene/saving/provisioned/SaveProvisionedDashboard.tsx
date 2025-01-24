@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -44,6 +44,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   const { saveProvisioned } = drawer.useState();
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const prURL = usePullRequestParam();
+  const [prOpened, setPrOpened] = useState(false);
   const {
     values: defaultValues,
     isNew,
@@ -74,6 +75,8 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       dashboard.setState({ isDirty: false });
       if (workflow === WorkflowOption.Direct) {
         dashboard.closeModal();
+      } else {
+        setPrOpened(true);
       }
     } else if (request.isError) {
       appEvents.publish({
@@ -109,7 +112,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {isGitHub && workflow === WorkflowOption.PullRequest && !isDirty && (
+        {prOpened && href && (
           <Alert
             severity="success"
             title="Branch successfully created"
