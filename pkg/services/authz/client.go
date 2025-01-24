@@ -3,16 +3,19 @@ package authz
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -36,6 +39,7 @@ func ProvideAuthZClient(
 	features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
 ) (authlib.AccessClient, error) {
@@ -67,6 +71,8 @@ func ProvideAuthZClient(
 			),
 			log.New("authz-grpc-server"),
 			tracer,
+			reg,
+			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 		)
 		return newInProcLegacyClient(server, tracer)
 	}
