@@ -16,7 +16,7 @@ import {
 } from './virtualization';
 
 interface Props {
-  app?: CoreApp;
+  app: CoreApp;
   logs: LogRowModel[];
   containerElement: HTMLDivElement;
   eventBus: EventBus;
@@ -40,11 +40,11 @@ export const LogList = ({
 }: Props) => {
   const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
   const [listHeight, setListHeight] = useState(
-    app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement?.clientHeight
+    app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
   );
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
-  const widthRef = useRef(containerElement?.clientWidth);
+  const widthRef = useRef(containerElement.clientWidth);
 
   useEffect(() => {
     initVirtualization(theme);
@@ -69,22 +69,22 @@ export const LogList = ({
 
   useEffect(() => {
     const handleResize = debounce(() => {
-      setListHeight(app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement?.clientHeight);
+      setListHeight(app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight);
     }, 50);
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [app, containerElement?.clientHeight]);
+  }, [app, containerElement.clientHeight]);
 
   useLayoutEffect(() => {
-    if (widthRef.current === containerElement?.clientWidth) {
+    if (widthRef.current === containerElement.clientWidth) {
       return;
     }
     resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-    widthRef.current = containerElement?.clientWidth;
+    widthRef.current = containerElement.clientWidth;
   });
 
   const handleOverflow = useCallback(
