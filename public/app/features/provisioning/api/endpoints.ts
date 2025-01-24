@@ -364,7 +364,7 @@ export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
   name: string;
   body: {
-    force?: boolean;
+    complete?: boolean;
   };
 };
 export type CreateRepositoryTestResponse = TestResults;
@@ -440,7 +440,7 @@ export type ExportOptions = {
   prefix?: string;
 };
 export type SyncOptions = {
-  force?: boolean;
+  complete?: boolean;
 };
 export type PullRequestOptions = {
   hash?: string;
@@ -516,7 +516,6 @@ export type S3RepositoryConfig = {
 export type RepositorySpec = {
   description?: string;
   editing: EditingOptions;
-  deletePolicy: 'clean' | 'retain';
   folder?: string;
   github?: GitHubRepositoryConfig;
   linting?: boolean;

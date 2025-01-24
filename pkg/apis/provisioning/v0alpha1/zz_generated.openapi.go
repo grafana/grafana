@@ -1523,7 +1523,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 				Properties: map[string]spec.Schema{
 					"force": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Force forces the sync to overwrite",
+							Description: "Complete forces the sync to overwrite",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

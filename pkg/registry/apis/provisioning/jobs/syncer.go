@@ -55,7 +55,7 @@ func NewSyncer(
 }
 
 // Sync replicates all files in the repository.
-func (r *Syncer) Sync(ctx context.Context, force bool) (string, error) {
+func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
 	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
 	lastCommit := cfg.Status.Sync.Hash
@@ -67,70 +67,47 @@ func (r *Syncer) Sync(ctx context.Context, force bool) (string, error) {
 
 	logger := logging.FromContext(ctx)
 
-	// FIXME: Add support for empty folders
-
-	var latest string
-	switch {
-	case !isVersioned:
+	if !isVersioned {
 		logger.Info("replicate tree unversioned repository")
 		if err := r.replicateTree(ctx, ""); err != nil {
 			return "", fmt.Errorf("replicate tree: %w", err)
 		}
-	case lastCommit == "":
-		var err error
-		latest, err = versionedRepo.LatestRef(ctx)
-		if err != nil {
-			return "", fmt.Errorf("latest ref: %w", err)
-		}
+		return "", nil
+	}
 
+	latest, err := versionedRepo.LatestRef(ctx)
+	if err != nil {
+		return "", fmt.Errorf("latest ref: %w", err)
+	}
+
+	if lastCommit == "" || complete {
 		if err := r.replicateTree(ctx, latest); err != nil {
 			return latest, fmt.Errorf("replicate tree: %w", err)
 		}
 		logger.Info("initial replication for versioned repository", "latest", latest)
-	default:
-		var err error
-		latest, err = versionedRepo.LatestRef(ctx)
-		if err != nil {
-			return "", fmt.Errorf("latest ref: %w", err)
-		}
 
-		if force {
-			logger.Info("force clean versioned repository", "last_commit", lastCommit, "latest", latest)
-			tree, err := r.repository.ReadTree(ctx, latest)
-			if err != nil {
-				return "", fmt.Errorf("read tree to force clean versioned repository: %w", err)
-			}
+		return latest, nil
+	}
 
-			if err := r.cleanUnnecessaryResources(ctx, tree); err != nil {
-				return latest, fmt.Errorf("clean up before replicating changes: %w", err)
-			}
-		}
+	logger.Info("replicate incremental changes for versioned repository", "last_commit", lastCommit, "latest", latest)
+	changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest)
+	if err != nil {
+		return latest, fmt.Errorf("compare files: %w", err)
+	}
 
-		logger.Info("replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
-		changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest)
-		if err != nil {
-			return latest, fmt.Errorf("compare files: %w", err)
-		}
-
-		if err := r.replicateChanges(ctx, changes); err != nil {
-			return latest, fmt.Errorf("replicate changes: %w", err)
-		}
+	if err := r.replicateChanges(ctx, changes); err != nil {
+		return latest, fmt.Errorf("replicate changes: %w", err)
 	}
 
 	return latest, nil
 }
 
-func (r *Syncer) cleanUnnecessaryResources(ctx context.Context, tree []repository.FileTreeEntry) error {
+func (r *Syncer) cleanUnnecessaryResources(ctx context.Context, tree []repository.FileTreeEntry, list *provisioning.ResourceList) error {
 	paths := make(map[string]bool)
 	// Add root path
 	paths[""] = true
 	for _, entry := range tree {
 		paths[entry.Path] = true
-	}
-
-	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
-	if err != nil {
-		return fmt.Errorf("list resources: %w", err)
 	}
 
 	sortResourceListForDeletion(list)
@@ -279,10 +256,21 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 		return fmt.Errorf("read tree: %w", err)
 	}
 
-	if err := r.cleanUnnecessaryResources(ctx, tree); err != nil {
+	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
+	if err != nil {
+		return fmt.Errorf("list resources: %w", err)
+	}
+
+	if err := r.cleanUnnecessaryResources(ctx, tree, list); err != nil {
 		return fmt.Errorf("clean up before replicating tree: %w", err)
 	}
 
+	hashes := make(map[string]string)
+	for _, item := range list.Items {
+		hashes[item.Path] = item.Hash
+	}
+
+	// FIXME: Add support for empty folders
 	for _, entry := range tree {
 		logger := logging.FromContext(ctx).With("file", entry.Path)
 		if !entry.Blob {
@@ -292,6 +280,11 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 
 		if resources.ShouldIgnorePath(entry.Path) {
 			logger.Debug("ignoring file")
+			continue
+		}
+
+		if hashes[entry.Path] == entry.Hash {
+			logger.Debug("file is up to date")
 			continue
 		}
 

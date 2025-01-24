@@ -39,7 +39,7 @@ export function SyncRepository({ repository }: Props) {
     if (!name) {
       return;
     }
-    syncResource({ name, body: { force: true } });
+    syncResource({ name, body: { complete: true } });
     setIsModalOpen(false);
   };
 

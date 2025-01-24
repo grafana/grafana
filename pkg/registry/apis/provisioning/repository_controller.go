@@ -364,7 +364,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			Action:     provisioning.JobActionSync,
 			Sync: &provisioning.SyncOptions{
 				// We force on configuration changes
-				Force: true,
+				Complete: true,
 			},
 		},
 	})

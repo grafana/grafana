@@ -29,7 +29,6 @@ export type RepositorySpec = {
   local?: LocalRepositoryConfig;
   s3?: S3RepositoryConfig;
   type: 'github' | 'local' | 's3';
-  deletePolicy: 'clean' | 'retain';
   editing: EditingOptions;
   linting?: boolean;
 };
