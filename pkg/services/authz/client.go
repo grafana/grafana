@@ -8,6 +8,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -38,6 +39,7 @@ func ProvideAuthZClient(
 	features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
 ) (authlib.AccessClient, error) {
@@ -69,6 +71,7 @@ func ProvideAuthZClient(
 			),
 			log.New("authz-grpc-server"),
 			tracer,
+			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 		)
 		return newInProcLegacyClient(server, tracer)
