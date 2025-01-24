@@ -21,6 +21,7 @@ export type DashboardPageRouteSearchParams = {
   scenes?: boolean;
   shareView?: string;
   isPreview?: boolean;
+  prLink?: string;
 };
 
 export type PublicDashboardPageRouteParams = {
