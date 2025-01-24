@@ -46,7 +46,7 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid resources.FolderID,
 	}
 
 	fid = t.folders[folder]
-	fid.Path = folder
+	fid.Path = fid.Title
 	ok = baseFolder == ""
 
 	parent := t.tree[folder]
@@ -55,7 +55,7 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid resources.FolderID,
 			ok = true
 			break
 		}
-		fid.Path = path.Join(parent, fid.Path)
+		fid.Path = path.Join(t.folders[parent].Title, fid.Path)
 		parent = t.tree[parent]
 	}
 	return fid, ok

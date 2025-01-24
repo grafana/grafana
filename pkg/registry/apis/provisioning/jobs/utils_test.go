@@ -41,7 +41,7 @@ func TestFolderTree(t *testing.T) {
 		if assert.True(t, ok, "x should have DirPath with empty base") {
 			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
 			assert.Equal(t, "X!", id.Title, "Title")
-			assert.Equal(t, "x", id.Path, "Path")
+			assert.Equal(t, "X!", id.Path, "Path")
 		}
 	})
 
@@ -64,7 +64,7 @@ func TestFolderTree(t *testing.T) {
 		if assert.True(t, ok, "x should have DirPath with empty base") {
 			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
 			assert.Equal(t, "X!", id.Title, "Title")
-			assert.Equal(t, "x", id.Path, "Path")
+			assert.Equal(t, "X!", id.Path, "Path")
 		}
 
 		id, ok = tree.DirPath("c", "c")
@@ -78,7 +78,7 @@ func TestFolderTree(t *testing.T) {
 		if assert.True(t, ok, "a should have DirPath with x as base") {
 			assert.Equal(t, "a", id.KubernetesName, "KubernetesName")
 			assert.Equal(t, "[€]@£a", id.Title, "Title")
-			assert.Equal(t, "c/b/a", id.Path, "Path")
+			assert.Equal(t, "C :)/!!B#!/[€]@£a", id.Path, "Path")
 		}
 		_, ok = tree.DirPath("x", "a")
 		assert.False(t, ok, "x should not have DirPath with a as base, because a is a subfolder of x")
