@@ -887,9 +887,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions"),
 						},
 					},
-					"unsyncMode": {
+					"deletePolicy": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UnsyncMode options within the repository",
+							Description: "DeletePolicy options within the repository",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -930,7 +930,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"title", "editing", "unsyncMode", "type"},
+				Required: []string{"title", "editing", "deletePolicy", "type"},
 			},
 		},
 		Dependencies: []string{

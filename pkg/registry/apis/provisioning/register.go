@@ -322,8 +322,8 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		return fmt.Errorf("expected repository configuration")
 	}
 
-	if r.Spec.UnsyncMode == "" {
-		r.Spec.UnsyncMode = provisioning.UnsyncModeRemoveAll
+	if r.Spec.DeletePolicy == "" {
+		r.Spec.DeletePolicy = provisioning.DeletePolityClean
 	}
 
 	if r.Spec.Type == provisioning.GitHubRepositoryType {

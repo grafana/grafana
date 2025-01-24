@@ -84,8 +84,8 @@ type RepositorySpec struct {
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 
-	// UnsyncMode options within the repository
-	UnsyncMode UnsyncMode `json:"unsyncMode"`
+	// DeletePolicy options within the repository
+	DeletePolicy DeletePolicy `json:"deletePolicy"`
 
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
@@ -107,15 +107,13 @@ type RepositorySpec struct {
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
 
-type UnsyncMode string
+type DeletePolicy string
 
 const (
-	// UnsyncModeKeepAll will keep the folder and resources within it
-	UnsyncModeKeepAll UnsyncMode = "keepAll"
-	// UnsyncModeRemoveAll will delete the folder and all its contents
-	UnsyncModeRemoveAll UnsyncMode = "removeAll"
-	// UnsyncModeEmptyFolder will delete all the contents of the folder
-	UnsyncModeEmptyFolder UnsyncMode = "emptyFolder"
+	// DeletePolityRetain keep all provisioned resources on repository deletion
+	DeletePolityRetain DeletePolicy = "retain"
+	// DeletePolityClean delete all provisioned resources on repository deletion
+	DeletePolityClean DeletePolicy = "clean"
 )
 
 type EditingOptions struct {
