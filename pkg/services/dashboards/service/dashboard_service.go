@@ -952,11 +952,26 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 
 func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *dashboards.GetDashboardsByPluginIDQuery) ([]*dashboards.Dashboard, error) {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-		return dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
+		dashs, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 			OrgId:           query.OrgID,
 			ProvisionedRepo: pluginIDRepoName,
 			ProvisionedPath: query.PluginID,
 		})
+		if err != nil {
+			return nil, err
+		}
+
+		// search only returns the metadata, need to get the dashboard.Data too
+		results := make([]*dashboards.Dashboard, len(dashs))
+		for i, d := range dashs {
+			dash, err := dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{OrgID: d.OrgID, UID: d.UID})
+			if err != nil {
+				return nil, err
+			}
+			results[i] = dash
+		}
+
+		return results, nil
 	}
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
 }
