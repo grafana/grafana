@@ -22,11 +22,11 @@ func TestParseFolderID(t *testing.T) {
 		Title       string
 		KubeName    string
 	}{
-		{"Short, simple path", "hello/world", "world", "helloworld-" + hash("hello/world")},
+		{"Short, simple path", "hello/world", "world", "world-" + hash("hello/world")},
 		{"Capital letters and punctuation", "Hello, World!", "Hello, World!", "hello-world-" + hash("Hello, World!")},
 		// With fish: echo (string repeat -n 200 -m (math 253-9) "helloworld")-(string repeat -n 200 "/hello/world" | sha256sum | awk '{print substr($1,0,8);}')
-		{"Very long name", strings.Repeat("/hello/world", 200), "world", strings.Repeat("helloworld", 200)[:253-9] + "-" + hash(strings.Repeat("hello/world/", 200))},
-		{"Leading, trailing, and unnecessary slashes", "/hello///world////", "world", "helloworld-" + hash("hello/world")},
+		{"Very long name", strings.Repeat("/hello/world", 200), "world", "world-" + hash(strings.Repeat("hello/world/", 200))},
+		{"Leading, trailing, and unnecessary slashes", "/hello///world////", "world", "world-" + hash("hello/world")},
 	}
 
 	for _, c := range cases {

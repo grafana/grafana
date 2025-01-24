@@ -43,6 +43,7 @@ func calculateKubernetesNameFromPath(cleanDirPath string) string {
 	cleanHash := sha256.Sum256([]byte(cleanDirPath))
 
 	kubernetesName := strings.ToLower(cleanDirPath)
+	kubernetesName = stringAfterLastSep(kubernetesName, "/")
 	kubernetesName = strings.ReplaceAll(kubernetesName, "_", "-")
 	kubernetesName = strings.ReplaceAll(kubernetesName, " ", "-")
 	kubernetesName = disallowedKubernetesCharacters.ReplaceAllString(kubernetesName, "")
@@ -64,4 +65,12 @@ func calculateKubernetesNameFromPath(cleanDirPath string) string {
 	kubernetesName = kubernetesName + "-" + kubeSuffix
 
 	return kubernetesName
+}
+
+func stringAfterLastSep(s, sep string) string {
+	idx := strings.LastIndex(s, sep)
+	if idx == -1 {
+		return s
+	}
+	return s[idx+1:]
 }
