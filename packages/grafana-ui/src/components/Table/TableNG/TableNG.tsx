@@ -27,7 +27,7 @@ import { TableCellNG } from './Cells/TableCellNG';
 import { Filter } from './Filter/Filter';
 import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
 
-const DEFAULT_CELL_PADDING = 6;
+const DEFAULT_CELL_PADDING = 8;
 const COLUMN_MIN_WIDTH = 150;
 
 type TableRow = Record<string, unknown>;
@@ -311,6 +311,7 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               height={defaultRowHeight}
+              defaultPadding={DEFAULT_CELL_PADDING}
               justifyContent={justifyColumnContent}
               rowIdx={rowIdx}
               shouldTextOverflow={() =>
@@ -455,6 +456,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid
+        className={styles.dataGrid}
         key={`DataGrid${revId}`}
         rows={filteredRows}
         columns={columns}
@@ -553,6 +555,20 @@ function getComparator(sortColumnType: string): Comparator {
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
+  dataGrid: css({
+    '--rdg-background-color': theme.colors.background.primary,
+    '--rdg-header-background-color': theme.colors.background.primary,
+    '--rdg-border-color': theme.colors.border.medium,
+    '--rdg-color': theme.colors.text.primary,
+
+    '.rdg-cell': {
+      padding: theme.spacing(0.5),
+    },
+
+    '&:hover': {
+      '--rdg-row-hover-background-color': theme.colors.action.hover,
+    },
+  }),
   menuItem: css({
     maxWidth: '200px',
   }),
@@ -582,6 +598,11 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+
+    '&:hover': {
+      border: `1px solid ${theme.colors.text.link}`,
+      backgroundColor: theme.colors.background.primary,
+    },
   }),
 });
 
