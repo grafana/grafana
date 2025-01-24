@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field } from '../../types/dataFrame';
 import {
   SpecialValue,
   DataTransformerInfo,
@@ -106,7 +106,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           {
             name: rowColumnField,
             values: rowValues,
-            type: FieldType.string,
+            type: keyRowField.type,
             config: {},
           },
         ];
@@ -145,12 +145,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 };
 
 function uniqueValues<T>(values: T[]): T[] {
-  const unique = new Set<T>();
-
-  for (let index = 0; index < values.length; index++) {
-    unique.add(values[index]);
-  }
-
+  const unique = new Set<T>(values);
   return Array.from(unique);
 }
 
