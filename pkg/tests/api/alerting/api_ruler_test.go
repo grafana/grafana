@@ -121,6 +121,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			pathsToIgnore := []string{
 				"GrafanaManagedAlert.Updated",
+				"GrafanaManagedAlert.UpdatedBy",
 				"GrafanaManagedAlert.UID",
 				"GrafanaManagedAlert.ID",
 				"GrafanaManagedAlert.Data.Model",
@@ -422,6 +423,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 			pathsToIgnore := []string{
 				"GrafanaManagedAlert.Updated",
+				"GrafanaManagedAlert.UpdatedBy",
 				"GrafanaManagedAlert.UID",
 				"GrafanaManagedAlert.ID",
 				"GrafanaManagedAlert.Data.Model",
@@ -1498,8 +1500,9 @@ func TestIntegrationRuleCreate(t *testing.T) {
 	client.CreateFolder(t, namespaceUID, namespaceUID)
 
 	cases := []struct {
-		name   string
-		config apimodels.PostableRuleGroupConfig
+		name     string
+		config   apimodels.PostableRuleGroupConfig
+		expected apimodels.GettableRuleGroupConfig
 	}{{
 		name: "can create a rule with UTF-8",
 		config: apimodels.PostableRuleGroupConfig{
@@ -1536,6 +1539,53 @@ func TestIntegrationRuleCreate(t *testing.T) {
 				},
 			},
 		},
+		expected: apimodels.GettableRuleGroupConfig{
+			Name:     "test1",
+			Interval: model.Duration(time.Minute),
+			Rules: []apimodels.GettableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: util.Pointer(model.Duration(2 * time.Minute)),
+						Labels: map[string]string{
+							"foo🙂":  "bar",
+							"_bar1": "baz🙂",
+						},
+						Annotations: map[string]string{
+							"Προμηθέας": "prom",      // Prometheus in Greek
+							"犬":        "Shiba Inu", // Dog in Japanese
+						},
+					},
+					GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
+						OrgID:     1,
+						Title:     "test1 rule1",
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(0),
+									To:   apimodels.Duration(15 * time.Minute),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"type":"math"}`),
+							},
+						},
+						UpdatedBy: &apimodels.UserInfo{
+							Name: "admin",
+						},
+						IntervalSeconds: 60,
+						Version:         1,
+						NamespaceUID:    namespaceUID,
+						RuleGroup:       "test1",
+						NoDataState:     "NoData",
+						ExecErrState:    "Alerting",
+						Provenance:      "",
+						IsPaused:        false,
+						Metadata:        &apimodels.AlertRuleMetadata{},
+					},
+				},
+			},
+		},
 	}}
 
 	for _, tc := range cases {
@@ -1545,6 +1595,27 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			require.Len(t, resp.Created, 1)
 			require.Len(t, resp.Updated, 0)
 			require.Len(t, resp.Deleted, 0)
+			got, _, _ := client.GetRulesGroupWithStatus(t, namespaceUID, tc.config.Name)
+
+			pathsToIgnore := []string{
+				"GrafanaManagedAlert.Updated",
+				"GrafanaManagedAlert.UpdatedBy.UID",
+				"GrafanaManagedAlert.UID",
+				"GrafanaManagedAlert.ID",
+				"GrafanaManagedAlert.NamespaceID",
+			}
+
+			// compare expected and actual and ignore the dynamic fields
+			diff := cmp.Diff(tc.expected, got.GettableRuleGroupConfig, cmp.FilterPath(func(path cmp.Path) bool {
+				for _, s := range pathsToIgnore {
+					if strings.HasSuffix(path.String(), s) {
+						return true
+					}
+				}
+				return false
+			}, cmp.Ignore()))
+
+			require.Empty(t, diff)
 		})
 	}
 }
@@ -1695,6 +1766,18 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			status, body := client.DeleteRulesGroup(t, folderUID, groupName)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
 		})
+	})
+	t.Run("should set updated_by", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expected := model.Duration(10 * time.Second)
+		group.Rules[0].ApiRuleNode.For = &expected
+
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folderUID, group.Name)
+		require.NotNil(t, getGroup.Rules[0].GrafanaManagedAlert.UpdatedBy)
+		assert.NotEmpty(t, getGroup.Rules[0].GrafanaManagedAlert.UpdatedBy.UID)
+		assert.Equal(t, "grafana", getGroup.Rules[0].GrafanaManagedAlert.UpdatedBy.Name)
 	})
 }
 
