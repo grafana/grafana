@@ -36,8 +36,7 @@
   },
   "actions-editor": {
     "inline": {
-      "add-button": "Åđđ äčŧįőŉ",
-      "one-click-action": "Øŉę-čľįčĸ äčŧįőŉ"
+      "add-button": "Åđđ äčŧįőŉ"
     }
   },
   "admin": {
@@ -1375,6 +1374,11 @@
     "send-custom-feedback": "Ŝęŉđ"
   },
   "grafana-ui": {
+    "action-editor-modal": {
+      "one-click-description": "Øŉľy őŉę ľįŉĸ {{ action }} čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę",
+      "title": "Ŧįŧľę",
+      "title-placeholder": "Åčŧįőŉ ŧįŧľę"
+    },
     "auto-save-field": {
       "saved": "Ŝävęđ!",
       "saving": "Ŝävįŉģ <1></1>"
@@ -1400,8 +1404,7 @@
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
       "one-click": "Øŉę čľįčĸ",
-      "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ",
-      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+      "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ"
     },
     "data-source-http-settings": {
       "access-help": "Ħęľp <1></1>",

@@ -150,6 +150,7 @@ export const ActionsInlineEditor = ({
             onSave={onActionChange}
             onCancel={onActionCancel}
             getSuggestions={getSuggestions}
+            showOneClick={!!dataLinks}
           />
         </Modal>
       )}

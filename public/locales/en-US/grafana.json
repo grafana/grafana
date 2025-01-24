@@ -36,8 +36,7 @@
   },
   "actions-editor": {
     "inline": {
-      "add-button": "Add action",
-      "one-click-action": "One-click action"
+      "add-button": "Add action"
     }
   },
   "admin": {
@@ -1375,6 +1374,11 @@
     "send-custom-feedback": "Send"
   },
   "grafana-ui": {
+    "action-editor-modal": {
+      "one-click-description": "Only one link {{ action }} can have one click enabled at a time",
+      "title": "Title",
+      "title-placeholder": "Action title"
+    },
     "auto-save-field": {
       "saved": "Saved!",
       "saving": "Saving <1></1>"
@@ -1400,8 +1404,7 @@
     "data-links-inline-editor": {
       "add-link": "Add link",
       "one-click": "One click",
-      "one-click-enabled": "One click enabled",
-      "one-click-link": "One-click link"
+      "one-click-enabled": "One click enabled"
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",

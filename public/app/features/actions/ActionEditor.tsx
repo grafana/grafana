@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Switch } from '@grafana/ui/';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { InlineField } from '@grafana/ui/src/components/Forms/InlineField';
@@ -20,11 +21,12 @@ interface ActionEditorProps {
   value: Action;
   onChange: (index: number, action: Action) => void;
   suggestions: VariableSuggestion[];
+  showOneClick?: boolean;
 }
 
 const LABEL_WIDTH = 13;
 
-export const ActionEditor = memo(({ index, value, onChange, suggestions }: ActionEditorProps) => {
+export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
 
   const onTitleChange = (title: string) => {
@@ -102,27 +104,32 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     value.fetch.method !== HttpRequestMethod.GET &&
     value.fetch.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
 
+  const action = config.featureToggles.vizActions ? 'or action' : '';
+
   return (
     <div className={styles.listItem}>
-      <Field label="Title">
+      <Field label={t('grafana-ui.action-editor-modal.title', 'Title')}>
         <SuggestionsInput
           value={value.title}
           onChange={onTitleChange}
           suggestions={suggestions}
           autoFocus={value.title === ''}
-          placeholder="Action title"
+          placeholder={t('grafana-ui.action-editor-modal.title-placeholder', 'Action title')}
         />
       </Field>
 
-      <Field
-        label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
-        description={t(
-          'grafana-ui.data-link-editor-modal.one-click-description',
-          'Only one link can have one click enabled at a time'
-        )}
-      >
-        <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
-      </Field>
+      {showOneClick && (
+        <Field
+          label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
+          description={t(
+            'grafana-ui.action-editor-modal.one-click-description',
+            'Only one link {{ action }} can have one click enabled at a time',
+            { action }
+          )}
+        >
+          <Switch value={value.oneClick || false} onChange={onOneClickChanged} />
+        </Field>
+      )}
 
       <InlineFieldRow>
         <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
