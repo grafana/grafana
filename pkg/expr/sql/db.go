@@ -192,18 +192,22 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 }
 
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
-	pro := memory.NewDBProvider(db.inMemoryDb)
-	session := memory.NewSession(mysql.NewBaseSession(), pro)
+	// pro := memory.NewDBProvider(db.inMemoryDb)
+	// session := memory.NewSession(mysql.NewBaseSession(), pro)
+	// ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
+
+	pro := NewFramesDBProvider(frames)
+	session := mysql.NewBaseSession()
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
 
-	for _, frame := range frames {
-		// We have both `frame` and `f` in this function. Consider renaming one or both.
-		// Potentially `f` to `outputFrame`
-		err := db.writeDataframeToDb(ctx, tableName, frame)
-		if err != nil {
-			return err
-		}
-	}
+	// for _, frame := range frames {
+	// 	// We have both `frame` and `f` in this function. Consider renaming one or both.
+	// 	// Potentially `f` to `outputFrame`
+	// 	err := db.writeDataframeToDb(ctx, tableName, frame)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// Select the database in the context
 	ctx.SetCurrentDatabase(dbName)

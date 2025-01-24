@@ -10,7 +10,7 @@ import (
 )
 
 func TestFrameDB(t *testing.T) {
-	frameA := data.Frame{
+	frameA := &data.Frame{
 		RefID: "a",
 		Fields: []*data.Field{
 			data.NewField("animal", nil, []string{"cat", "dog", "cat", "dog"}),
@@ -18,7 +18,7 @@ func TestFrameDB(t *testing.T) {
 		},
 	}
 
-	provider := NewFramesDBProvider([]data.Frame{frameA})
+	provider := NewFramesDBProvider([]*data.Frame{frameA})
 
 	session := mysql.NewBaseSession()
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
@@ -26,7 +26,7 @@ func TestFrameDB(t *testing.T) {
 
 	engine := sqle.NewDefault(provider)
 
-	schema, iter, _, err := engine.Query(ctx, "SELECT animal,sum(Count) FROM a GROUP BY animal")
+	schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count) FROM a GROUP BY animal")
 	if iter == nil {
 		t.Log("no iter, is nil")
 		t.FailNow()

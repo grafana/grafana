@@ -27,7 +27,7 @@ type Table interface {
 */
 
 type FrameTable struct {
-	Frame  data.Frame
+	Frame  *data.Frame
 	schema mysql.Schema
 }
 
@@ -42,7 +42,7 @@ func (ft *FrameTable) String() string {
 	return ft.Name()
 }
 
-func schemaFromFrame(frame data.Frame) mysql.Schema {
+func schemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
 	for i, field := range frame.Fields {
 		schema[i] = &mysql.Column{

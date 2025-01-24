@@ -60,7 +60,7 @@ func (p *FramesDBProvider) AllDatabases(_ *mysql.Context) []mysql.Database {
 	return []mysql.Database{p.db}
 }
 
-func NewFramesDBProvider(frames []data.Frame) mysql.DatabaseProvider {
+func NewFramesDBProvider(frames data.Frames) mysql.DatabaseProvider {
 	fMap := make(map[string]mysql.Table, len(frames))
 	for _, frame := range frames {
 		fMap[frame.RefID] = &FrameTable{Frame: frame}
