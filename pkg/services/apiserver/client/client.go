@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -43,9 +43,9 @@ type k8sHandler struct {
 	searcher           resource.ResourceIndexClient
 }
 
-func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient, dashStore dashboards.Store, softDelete bool) K8sHandler {
-	legacyDashboardAccess := legacy.NewDashboardAccess(nil, namespacer, dashStore, nil, softDelete)
-	searchClient := legacy.NewSearchClient(cfg, searcher, legacyDashboardAccess)
+func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient, dashStore dashboards.Store) K8sHandler {
+	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
+	searchClient := resource.NewSearchClient(cfg, searcher, legacySearcher)
 	return &k8sHandler{
 		namespacer:         namespacer,
 		gvr:                gvr,

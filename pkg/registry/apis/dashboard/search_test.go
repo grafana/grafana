@@ -7,11 +7,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -21,7 +19,7 @@ import (
 func TestSearchFallback(t *testing.T) {
 	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &LegacyMockClient{}
+		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -47,7 +45,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit legacy search handler on mode 1", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &LegacyMockClient{}
+		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -73,7 +71,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit legacy search handler on mode 2", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &LegacyMockClient{}
+		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -99,7 +97,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit unified storage search handler on mode 3", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &LegacyMockClient{}
+		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -125,7 +123,7 @@ func TestSearchFallback(t *testing.T) {
 
 	t.Run("should hit unified storage search handler on mode 4", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &LegacyMockClient{}
+		mockLegacyClient := &MockClient{}
 
 		cfg := &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -185,7 +183,6 @@ func TestSearchHandlerFields(t *testing.T) {
 		log:    log.New("test", "test"),
 		client: mockClient,
 		tracer: tracing.NewNoopTracerService(),
-		cfg:    setting.UnifiedStorageConfig{DualWriterMode: rest.Mode5},
 	}
 
 	t.Run("Multiple comma separated fields will be appended to default dashboard search fields", func(t *testing.T) {
@@ -255,59 +252,5 @@ func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequ
 }
 
 func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
-	return nil, nil
-}
-
-// LegacyMockClient implements the ResourceIndexClient interface for testing
-type LegacyMockClient struct {
-	resource.ResourceIndexClient
-
-	// Capture the last SearchRequest for assertions
-	LastSearchRequest *resource.ResourceSearchRequest
-}
-
-func (m *LegacyMockClient) Search(ctx context.Context, in *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	m.LastSearchRequest = in
-
-	return &resource.ResourceSearchResponse{}, nil
-}
-
-func (m *LegacyMockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	return nil, nil
-}
-
-func (m *LegacyMockClient) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboard.Dashboard, bool, error) {
-	return nil, false, nil
-}
-
-func (m *LegacyMockClient) GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboard.Dashboard, int64, error) {
-	return nil, 0, nil
-}
-
-func (m *LegacyMockClient) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
-	return nil, false, nil
-}
-
-func (m *LegacyMockClient) GetLibraryPanels(ctx context.Context, query legacy.LibraryPanelQuery) (*dashboard.LibraryPanelList, error) {
-	return nil, nil
-}
-
-func (m *LegacyMockClient) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
-	return 0, nil
-}
-
-func (m *LegacyMockClient) ReadResource(context.Context, *resource.ReadRequest) *resource.BackendReadResponse {
-	return nil
-}
-
-func (m *LegacyMockClient) ListIterator(context.Context, *resource.ListRequest, func(resource.ListIterator) error) (int64, error) {
-	return 0, nil
-}
-
-func (m *LegacyMockClient) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	return nil, nil
-}
-
-func (m *LegacyMockClient) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return nil, nil
 }

@@ -1,15 +1,15 @@
-package legacy
+package resource
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	grpc "google.golang.org/grpc"
 )
 
-func NewSearchClient(cfg *setting.Cfg, newClient resource.ResourceIndexClient, legacyServer resource.ResourceIndexServer) resource.ResourceIndexClient {
+func NewSearchClient(cfg *setting.Cfg, newClient ResourceIndexClient, legacyServer ResourceIndexClient) ResourceIndexClient {
 	clientWrapper := &searchClient{
 		mode:          cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode,
 		unifiedClient: newClient,
@@ -21,20 +21,23 @@ func NewSearchClient(cfg *setting.Cfg, newClient resource.ResourceIndexClient, l
 
 type searchClient struct {
 	mode          rest.DualWriterMode
-	unifiedClient resource.ResourceIndexClient
-	legacyServer  resource.ResourceIndexServer
+	unifiedClient ResourceIndexClient
+	legacyServer  ResourceIndexClient
 }
 
-func (d *searchClient) Search(ctx context.Context, in *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
+func (d *searchClient) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
+	fmt.Println("yoyoyo hitting the thing alright")
 	switch d.mode {
 	case rest.Mode0, rest.Mode1, rest.Mode2:
+		fmt.Println("hitting legacy")
 		return d.legacyServer.Search(ctx, in)
 	default:
+		fmt.Println("hitting unified")
 		return d.unifiedClient.Search(ctx, in)
 	}
 }
 
-func (d *searchClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
+func (d *searchClient) GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error) {
 	switch d.mode {
 	case rest.Mode0, rest.Mode1, rest.Mode2:
 		return d.legacyServer.GetStats(ctx, in)

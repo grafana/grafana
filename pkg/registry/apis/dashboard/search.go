@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,16 +31,14 @@ type SearchHandler struct {
 	log    log.Logger
 	client resource.ResourceIndexClient
 	tracer trace.Tracer
-	cfg    setting.UnifiedStorageConfig
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardAccess legacy.DashboardAccess) *SearchHandler {
-	searchClient := legacy.NewSearchClient(cfg, client, legacyDashboardAccess)
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
+	searchClient := resource.NewSearchClient(cfg, client, legacyDashboardSearcher)
 	return &SearchHandler{
 		client: searchClient,
 		log:    log.New("grafana-apiserver.dashboards.search"),
 		tracer: tracer,
-		cfg:    cfg.UnifiedStorage["dashboards.dashboard.grafana.app"],
 	}
 }
 
