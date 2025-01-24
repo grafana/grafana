@@ -154,8 +154,8 @@ describe('ElasticDatasource', () => {
       expect(postResource).toHaveBeenCalledTimes(1);
 
       expect(values.length).toBe(3);
-      expect(values[0].text).toBe('5');
-      expect(values[0].value).toBe('5');
+      expect(values[0].text).toBe('foo');
+      expect(values[0].value).toBe('foo');
 
       expect(values[1].text).toBe('six');
       expect(values[1].value).toBe('6');
