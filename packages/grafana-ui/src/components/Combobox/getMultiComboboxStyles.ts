@@ -9,7 +9,8 @@ export const getMultiComboboxStyles = (
   theme: GrafanaTheme2,
   isOpen: boolean,
   invalid?: boolean,
-  disabled?: boolean
+  disabled?: boolean,
+  isAutoWidth?: boolean
 ) => {
   const inputStyles = getInputStyles({ theme, invalid });
   const focusStyles = getFocusStyles(theme);
@@ -18,7 +19,8 @@ export const getMultiComboboxStyles = (
     wrapper: cx(
       inputStyles.input,
       css({
-        display: 'flex',
+        display: isAutoWidth ? 'inline-flex' : 'flex',
+        width: isAutoWidth ? 'auto' : '100%',
         gap: theme.spacing(0.5),
         padding: theme.spacing(0.5),
         '&:focus-within': {
@@ -31,7 +33,7 @@ export const getMultiComboboxStyles = (
       outline: 'none',
       background: 'transparent',
       flexGrow: 1,
-      minWidth: '0',
+      minWidth: '50px',
       '&::placeholder': {
         color: theme.colors.text.disabled,
       },

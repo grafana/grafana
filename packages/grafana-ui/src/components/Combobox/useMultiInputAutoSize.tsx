@@ -1,37 +1,28 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { measureText } from '../../utils';
 
-export function useMultiInputAutoSize() {
+export function useMultiInputAutoSize(inputValue: string) {
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Add onKeyDup event listener
+  const [inputWidth, setInputWidth] = useState<string>('');
 
   useLayoutEffect(() => {
-    const effectRef = inputRef.current;
+    if (!inputRef.current || inputValue == null) {
+      setInputWidth('');
+      return;
+    }
 
-    const keyDownHandler = (e: KeyboardEvent) => {
-      if (!effectRef) {
-        return;
-      }
-      const fontSize = window.getComputedStyle(effectRef).fontSize;
-      const textWidth = measureText(effectRef.value || '', parseInt(fontSize, 10)).width;
-      const measureInputWidth = effectRef.getBoundingClientRect().width || 0;
+    const fontSize = window.getComputedStyle(inputRef.current).fontSize;
+    const textWidth = measureText(inputRef.current.value || '', parseInt(fontSize, 10)).width;
+    const measureInputWidth = inputRef.current.getBoundingClientRect().width || 0;
 
-      if (textWidth > measureInputWidth) {
-        effectRef.style.width = `${textWidth}px`;
-      } else if (textWidth < measureInputWidth) {
-        // Let input fill all space before resizing
-        effectRef.style.width = '';
-      }
-    };
+    if (textWidth >= measureInputWidth) {
+      setInputWidth(`${textWidth}px`);
+    } else if (textWidth < measureInputWidth) {
+      // Let input fill all space before resizing
+      setInputWidth('');
+    }
+  }, [inputValue]);
 
-    effectRef?.addEventListener('keydown', keyDownHandler);
-
-    return () => {
-      effectRef?.removeEventListener('keydown', keyDownHandler);
-    };
-  });
-
-  return inputRef;
+  return { inputRef, inputWidth };
 }

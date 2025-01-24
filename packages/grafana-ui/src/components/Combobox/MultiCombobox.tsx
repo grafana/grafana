@@ -17,6 +17,7 @@ import { Tooltip } from '../Tooltip';
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, VIRTUAL_OVERSCAN_ITEMS } from './Combobox';
 import { NotFoundError } from './MessageRows';
 import { OptionListItem } from './OptionListItem';
+import { SuffixIcon } from './SuffixIcon';
 import { ValuePill } from './ValuePill';
 import { itemFilter, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
@@ -201,7 +202,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled);
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width === 'auto');
 
   const virtualizerOptions = {
     count: items.length,
@@ -216,7 +217,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   // Selected items that show up in the input field
   const visibleItems = isOpen ? selectedItems.slice(0, MAX_SHOWN_ITEMS) : selectedItems.slice(0, shownItems);
 
-  const inputRef = useMultiInputAutoSize();
+  const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
   return (
     <div ref={containerRef}>
       <div
@@ -265,14 +266,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 preventKeyAction: isOpen,
                 placeholder: selectedItems.length > 0 ? undefined : placeholder,
                 ref: inputRef,
+                style: { width: inputWidth },
               })
             )}
           />
-          {loading && (
-            <div className={multiStyles.suffix} ref={suffixMeasureRef}>
-              <Spinner inline={true} />
-            </div>
-          )}
+
+          <div className={multiStyles.suffix} ref={suffixMeasureRef}>
+            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+          </div>
         </span>
       </div>
       <Portal>
