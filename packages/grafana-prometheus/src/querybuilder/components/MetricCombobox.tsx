@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
