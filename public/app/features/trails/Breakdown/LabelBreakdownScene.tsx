@@ -480,7 +480,7 @@ export function buildAllLayout(
       )
       .setHeaderActions([new SelectLabelAction({ labelName: String(option.value) })])
       .setShowMenuAlways(true)
-      .setMenu(new PanelMenu({}))
+      .setMenu(new PanelMenu({ labelName: String(option.value) }))
       .setUnit(unit)
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
