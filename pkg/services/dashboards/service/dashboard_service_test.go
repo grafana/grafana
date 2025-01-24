@@ -1020,6 +1020,15 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		PluginID: "testing",
 		OrgID:    1,
 	}
+	uidUnstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid1",
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 1",
+		},
+	}}
+
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("GetDashboardsByPluginID", mock.Anything, mock.Anything).Return([]*dashboards.Dashboard{}, nil).Once()
@@ -1030,6 +1039,7 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything).Return(uidUnstructured, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
 			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == "plugin" &&
 				req.Options.Fields[1].Key == "repo.path" && req.Options.Fields[1].Values[0] == "testing"
@@ -1431,14 +1441,32 @@ func TestGetDashboards(t *testing.T) {
 			Slug:  "dashboard-1",
 			OrgID: 1,
 			Title: "Dashboard 1",
+			Data:  simplejson.NewFromAny(map[string]any{"title": "Dashboard 1", "uid": "uid1"}),
 		},
 		{
 			UID:   "uid2",
 			Slug:  "dashboard-2",
 			OrgID: 1,
 			Title: "Dashboard 2",
+			Data:  simplejson.NewFromAny(map[string]any{"title": "Dashboard 2", "uid": "uid2"}),
 		},
 	}
+	uid1Unstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid1",
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 1",
+		},
+	}}
+	uid2Unstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid2",
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 2",
+		},
+	}}
 	queryByIDs := &dashboards.GetDashboardsQuery{
 		DashboardIDs: []int64{1, 2},
 		OrgID:        1,
@@ -1467,6 +1495,8 @@ func TestGetDashboards(t *testing.T) {
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, "uid1", mock.Anything, mock.Anything).Return(uid1Unstructured, nil)
+		k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything).Return(uid2Unstructured, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resource.ResourceSearchResponse{
 			Results: &resource.ResourceTable{
 				Columns: []*resource.ResourceTableColumnDefinition{

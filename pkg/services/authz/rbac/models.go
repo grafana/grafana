@@ -25,7 +25,7 @@ type ListRequest struct {
 }
 
 type FolderNode struct {
-	uid          string
-	parentUID    *string
-	childrenUIDs []string
+	UID          string
+	ParentUID    *string
+	ChildrenUIDs []string
 }
