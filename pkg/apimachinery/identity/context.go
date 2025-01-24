@@ -41,6 +41,7 @@ func WithServiceIdentitiy(ctx context.Context, orgID int64) (context.Context, Re
 		Name:           serviceName,
 		UserUID:        serviceName,
 		AuthID:         serviceName,
+		Login:          serviceName,
 		OrgRole:        RoleAdmin,
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
