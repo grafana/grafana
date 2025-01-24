@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { useObservable } from 'react-use';
 import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 
@@ -31,6 +32,7 @@ export interface AppChromeState {
   };
   historyOpen: boolean;
   historyDocked: boolean;
+  history: HistoryEntry[];
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -70,6 +72,9 @@ export class AppChromeService {
     returnToPrevious: this.returnToPreviousData,
     historyOpen: this.historyDocked && store.getBool(OPEN_HISTORY_LOCAL_STORAGE_KEY, true),
     historyDocked: this.historyDocked,
+    history: store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []).filter((entry) => {
+      return moment(entry.time).isAfter(moment().subtract(2, 'day').startOf('day'));
+    }),
   });
 
   public headerHeightObservable = this.state
@@ -116,8 +121,12 @@ export class AppChromeService {
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
-      config.featureToggles.unifiedHistory &&
-        store.setObject(HISTORY_LOCAL_STORAGE_KEY, this.getUpdatedHistory(newState));
+      if (config.featureToggles.unifiedHistory) {
+        const newHistory = this.getUpdatedHistory(newState);
+        // can't use setHistory directly here as the other state updates will be ignored
+        newState.history = newHistory;
+        store.setObject(HISTORY_LOCAL_STORAGE_KEY, newHistory);
+      }
       this.state.next(newState);
     }
   }
@@ -150,7 +159,7 @@ export class AppChromeService {
     const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
     const newPageNav = newState.pageNav || newState.sectionNav.node;
 
-    let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+    let entries = newState.history;
     const clickedHistory = store.getObject<boolean>('CLICKING_HISTORY');
     if (clickedHistory) {
       store.setObject('CLICKING_HISTORY', false);
@@ -228,6 +237,15 @@ export class AppChromeService {
     this.update({
       historyOpen: newOpenState,
     });
+  };
+
+  public setHistory = (newHistory: HistoryEntry[]) => {
+    const currentState = this.state.getValue();
+    this.state.next({
+      ...currentState,
+      history: newHistory,
+    });
+    store.setObject(HISTORY_LOCAL_STORAGE_KEY, newHistory);
   };
 
   public setHistoryDocked = (newDockedState: boolean, updatePersistedState = true) => {
