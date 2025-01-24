@@ -101,7 +101,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       justifyContent: 'space-between',
-      padding: theme.spacing(2, 2, 1, 2),
+      padding: theme.spacing(2, 2, 3, 2),
     }),
     historyDrawerContent: css({
       //padding: theme.spacing(2),
