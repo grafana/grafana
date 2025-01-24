@@ -15,6 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+type PullRequestWorker interface {
+	ProcessPullRequest(ctx context.Context,
+		repo repository.Repository,
+		options provisioning.PullRequestOptions,
+		progress func(provisioning.JobStatus) error,
+	) (*provisioning.JobStatus, error)
+}
+
 // resourcePreview represents a resource that has changed in a pull request.
 type resourcePreview struct {
 	Filename             string
@@ -65,7 +73,7 @@ type PreviewRenderer interface {
 	RenderDashboardPreview(ctx context.Context, path string, ref string) (string, error)
 }
 
-type PullRequestCommenter struct {
+type pullRequestCommenter struct {
 	repo         PullRequestRepo
 	parser       *resources.Parser
 	lintTemplate *template.Template
@@ -79,7 +87,7 @@ func NewPullRequestCommenter(
 	parser *resources.Parser,
 	renderer PreviewRenderer,
 	baseURL *url.URL,
-) (*PullRequestCommenter, error) {
+) (PullRequestWorker, error) {
 	lintTemplate, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("parse lint comment template: %w", err)
@@ -89,7 +97,7 @@ func NewPullRequestCommenter(
 		return nil, fmt.Errorf("parse previews comment template: %w", err)
 	}
 
-	return &PullRequestCommenter{
+	return &pullRequestCommenter{
 		repo:         repo,
 		parser:       parser,
 		lintTemplate: lintTemplate,
@@ -99,40 +107,51 @@ func NewPullRequestCommenter(
 	}, nil
 }
 
-func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job) error {
-	if job.Spec.Action != provisioning.JobActionPullRequest {
-		return errors.New("job is not a pull request")
-	}
+func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
+	repo repository.Repository,
+	options provisioning.PullRequestOptions,
+	progress func(provisioning.JobStatus) error,
+) (*provisioning.JobStatus, error) {
 	cfg := c.repo.Config().Spec
 
 	// TODO: clean specification to have better options
 	if !(cfg.Linting && cfg.GitHub.PullRequestLinter) &&
 		!cfg.GitHub.GenerateDashboardPreviews {
-		return nil
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateSuccess,
+			Message: "linting and previews are not required",
+		}, nil
 	}
 
-	logger := logging.FromContext(ctx).With("pr", job.Spec.PR)
+	logger := logging.FromContext(ctx).With("pr", options.PR)
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
 
-	spec := job.Spec
 	base := cfg.GitHub.Branch
-	ref := spec.Hash
+	ref := options.Hash
 
 	// list pull requests changes files
 	files, err := c.repo.CompareFiles(ctx, base, ref)
 	if err != nil {
-		return fmt.Errorf("failed to list pull request files: %w", err)
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateError,
+			Message: fmt.Sprintf("failed to list pull request files: %s", err.Error()),
+		}, nil
 	}
 
 	// clear all previous comments
-	if err := c.repo.ClearAllPullRequestFileComments(ctx, spec.PR); err != nil {
-		return fmt.Errorf("failed to clear pull request comments: %w", err)
+	if err := c.repo.ClearAllPullRequestFileComments(ctx, options.PR); err != nil {
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateError,
+			Message: fmt.Sprintf("failed to clear pull request comments: %+v", err),
+		}, nil
 	}
 
 	if len(files) == 0 {
-		logger.Info("no files to process")
-		return nil
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateSuccess,
+			Message: "no files to process",
+		}, nil
 	}
 
 	previews := make([]resourcePreview, 0, len(files))
@@ -145,7 +164,10 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		logger := logger.With("file", f.Path)
 		fileInfo, err := c.repo.Read(ctx, f.Path, ref)
 		if err != nil {
-			return fmt.Errorf("failed to read file %s: %w", f.Path, err)
+			return &provisioning.JobStatus{
+				State:   provisioning.JobStateError,
+				Message: fmt.Sprintf("failed to read file %s: %+v", f.Path, err),
+			}, nil
 		}
 
 		parsed, err := c.parser.Parse(ctx, fileInfo, true)
@@ -161,11 +183,11 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		if cfg.Linting && cfg.GitHub.PullRequestLinter && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
 			var buf bytes.Buffer
 			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
-				return fmt.Errorf("execute lint comment template: %w", err)
+				return nil, fmt.Errorf("execute lint comment template: %w", err)
 			}
 
-			if err := c.repo.CommentPullRequestFile(ctx, spec.PR, f.Path, ref, buf.String()); err != nil {
-				return fmt.Errorf("comment pull request file %s: %w", f.Path, err)
+			if err := c.repo.CommentPullRequestFile(ctx, options.PR, f.Path, ref, buf.String()); err != nil {
+				return nil, fmt.Errorf("comment pull request file %s: %w", f.Path, err)
 			}
 
 			logger.Info("lint comment added")
@@ -180,23 +202,23 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 
 		switch f.Action {
 		case repository.FileActionCreated:
-			preview.PreviewURL = c.previewURL(ref, f.Path, spec.URL)
+			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
 		case repository.FileActionUpdated:
-			preview.OriginalURL = c.previewURL(base, f.Path, spec.URL)
-			preview.PreviewURL = c.previewURL(ref, f.Path, spec.URL)
+			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
+			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
 		case repository.FileActionRenamed:
-			preview.OriginalURL = c.previewURL(base, f.PreviousPath, spec.URL)
-			preview.PreviewURL = c.previewURL(ref, f.Path, spec.URL)
+			preview.OriginalURL = c.previewURL(base, f.PreviousPath, options.URL)
+			preview.PreviewURL = c.previewURL(ref, f.Path, options.URL)
 		case repository.FileActionDeleted:
-			preview.OriginalURL = c.previewURL(base, f.Path, spec.URL)
+			preview.OriginalURL = c.previewURL(base, f.Path, options.URL)
 		default:
-			return fmt.Errorf("unknown file action: %s", f.Action)
+			return nil, fmt.Errorf("unknown file action: %s", f.Action)
 		}
 
 		if cfg.GitHub.GenerateDashboardPreviews && f.Action != repository.FileActionDeleted {
 			screenshotURL, err := c.renderer.RenderDashboardPreview(ctx, f.Path, ref)
 			if err != nil {
-				return fmt.Errorf("render dashboard preview: %w", err)
+				return nil, fmt.Errorf("render dashboard preview: %w", err)
 			}
 			preview.PreviewScreenshotURL = screenshotURL
 
@@ -209,21 +231,24 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	if len(previews) > 0 && cfg.GitHub.GenerateDashboardPreviews {
 		var buf bytes.Buffer
 		if err := c.prevTemplate.Execute(&buf, previews); err != nil {
-			return fmt.Errorf("execute previews comment template: %w", err)
+			return nil, fmt.Errorf("execute previews comment template: %w", err)
 		}
 
-		if err := c.repo.CommentPullRequest(ctx, spec.PR, buf.String()); err != nil {
-			return fmt.Errorf("comment pull request: %w", err)
+		if err := c.repo.CommentPullRequest(ctx, options.PR, buf.String()); err != nil {
+			return nil, fmt.Errorf("comment pull request: %w", err)
 		}
 
 		logger.Info("previews comment added", "number", len(previews))
 	}
 
-	return nil
+	return &provisioning.JobStatus{
+		State:   provisioning.JobStateSuccess,
+		Message: "finished", // can update with useful feedback
+	}, nil
 }
 
 // previewURL returns the URL to preview the file in Grafana
-func (c *PullRequestCommenter) previewURL(ref, filePath, pullRequestURL string) string {
+func (c *pullRequestCommenter) previewURL(ref, filePath, pullRequestURL string) string {
 	// Copy the baseURL to modify path and query
 	baseURL := *c.baseURL
 	baseURL = *baseURL.JoinPath("/admin/provisioning", c.repo.Config().GetName(), "dashboard/preview", filePath)

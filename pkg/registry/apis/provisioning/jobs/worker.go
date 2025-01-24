@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -159,14 +160,17 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			id:        id,
 		}
 
+		options := job.Spec.PullRequest
+		if options == nil {
+			return nil, apierrors.NewBadRequest("missing spec.pr")
+		}
+
 		commenter, err := NewPullRequestCommenter(prRepo, parser, renderer, baseURL)
 		if err != nil {
 			return nil, fmt.Errorf("error creating pull request commenter: %w", err)
 		}
+		return commenter.ProcessPullRequest(ctx, repo, *options, progress)
 
-		if err := commenter.Process(ctx, job); err != nil {
-			return nil, fmt.Errorf("error processing pull request: %w", err)
-		}
 	case provisioning.JobActionExport:
 		if job.Spec.Export == nil {
 			return &provisioning.JobStatus{
