@@ -19,21 +19,11 @@ title: Create and manage reports
 description: Generate and share PDF reports from your Grafana dashboards
 weight: 600
 refs:
-  configuration:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
-  http-apis:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
   image-rendering:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
@@ -54,16 +44,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
-  rendering-configuration:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/report-settings/#rendering-configuration
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/report-settings/#rendering-configuration
-  repeat-panels-or-rows:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-panels
   reporting-configuration:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#reporting
@@ -104,7 +84,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-- SMTP must be configured for reports to be sent. Refer to [SMTP](ref:smtp) in [Configuration](ref:configuration) for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP configuration documentation](ref:smtp) for more information.
 - The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.0+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
 
 <!-- are these requirements for Enterprise only? Can we clarify what the requirements are for Enterprise vs Cloud? -->
@@ -117,7 +97,7 @@ To make a panel more legible, you can set a scale factor for the rendered images
 
 You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
-By default, attachments (PDFs, CSV files, and embedded images) larger than 10Mb are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:rendering-configuration).
+By default, attachments (PDFs, CSV files, and embedded images) larger than 10Mb are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 
@@ -127,18 +107,18 @@ These options are available in the [reporting configuration](ref:reporting-confi
 
 ## Access control
 
-When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions](ref:permission) to create and manage reports.
+Only organization administrators can create reports by default. You can customize who can create reports with [role-based access control (RBAC)](ref:rbac).
+
+When [RBAC](ref:rbac) is enabled, you need to have the relevant [permissions](ref:permission) to create and manage reports.
 
 {{< admonition type="note" >}}
-If you have [Role-based access control](ref:rbac) enabled, for some actions you would need to have relevant permissions.
+If you have role-based access control enabled, for some actions you would need to have relevant permissions.
 Refer to specific guides to understand what permissions are required.
 {{< /admonition >}}
 
 <!-- does this apply to Cloud as well? -->
 
 ## Create a report
-
-Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control](ref:rbac).
 
 The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
 
@@ -178,7 +158,7 @@ At this step, select the dashboard or dashboards on which the report is based, a
 
 This option is only displayed if the dashboard has variables.
 
-You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard. For detailed information about using template variables, refer to the [Templates and variables](ref:templates-and-variables) section.
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard. For detailed information about using template variables, refer to [Variables](ref:templates-and-variables).
 
 The query variables saved with a report might become out of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the **All** value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
 
@@ -198,7 +178,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ### 2. Format report
 
-At this step, select at least one or more report formatting option. You can select multiple options, but you must select at least one:
+At this step, select one or more report formatting options. You can select multiple options, but you must select _at least one_:
 
 - [Attach the report as a PDF](#attach-the-report-as-a-pdf)
 - [Include table data as PDF appendix](#table-data-in-pdf) (Public preview only)
@@ -214,8 +194,12 @@ If you selected the PDF format option, under the **Style the PDF** section, you 
 - **Configure report header** - Click the **Show template variables** checkbox to show dashboard variables.
 - **Orientation** - Set the report orientation in **Portrait** or **Landscape**. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
 - **Layout** - Select one of the following:
-  - **Simple** - Renders each panel as full-width across the PDF. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
-  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
+
+  - **Simple** - Renders each panel as full-width across the PDF.
+  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard.
+
+    Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
+
 - **Zoom** - Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
 
 Click **Preview PDF** in the top-right corner of the screen to view a rendered PDF with the options you selected.
@@ -246,15 +230,13 @@ Click **Download CSV** in the top-right corner of the screen to see the file to 
 #### Table data in PDF
 
 {{% admonition type="note" %}}
-Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, as well as [Grafana Cloud](/docs/grafana-cloud/).
+Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, as well as in [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
 
 - **Include table data as PDF appendix** - Adds an appendix to the dashboard PDF.
 - **Attach a separate PDF of table data** - Generates a separate PDF file.
-
-This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
 ### 3. Schedule
 
@@ -300,7 +282,7 @@ You can also save the report as a draft or discard it. Discarding the report is 
 
 ## Send a report using the API
 
-You can send reports programmatically with the [send report](ref:send-report) endpoint in the [HTTP APIs](ref:http-apis).
+You can send reports programmatically with the [send report](ref:send-report) endpoint using the HTTP API.
 
 ## Manage reports
 
@@ -330,7 +312,7 @@ You can pause and resume sending reports from the report list view. To do this, 
 
 ## Troubleshoot Reporting
 
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to the [log filter configuration documentation](ref:log-filters) for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to the [log filters configuration documentation](ref:log-filters) for more information.
 
 ```bash
 [log]
