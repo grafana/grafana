@@ -23,13 +23,12 @@ func TestSearchFallback(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &LegacyMockClient{}
 
-		searchHandler := SearchHandler{
-			log:                   log.New("test", "test"),
-			client:                mockClient,
-			legacyDashboardAccess: mockLegacyClient,
-			tracer:                tracing.NewNoopTracerService(),
-			cfg:                   setting.UnifiedStorageConfig{DualWriterMode: rest.Mode0},
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
+			},
 		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -50,13 +49,12 @@ func TestSearchFallback(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &LegacyMockClient{}
 
-		searchHandler := SearchHandler{
-			log:                   log.New("test", "test"),
-			client:                mockClient,
-			legacyDashboardAccess: mockLegacyClient,
-			tracer:                tracing.NewNoopTracerService(),
-			cfg:                   setting.UnifiedStorageConfig{DualWriterMode: rest.Mode1},
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
+			},
 		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -77,13 +75,12 @@ func TestSearchFallback(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &LegacyMockClient{}
 
-		searchHandler := SearchHandler{
-			log:                   log.New("test", "test"),
-			client:                mockClient,
-			legacyDashboardAccess: mockLegacyClient,
-			tracer:                tracing.NewNoopTracerService(),
-			cfg:                   setting.UnifiedStorageConfig{DualWriterMode: rest.Mode2},
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
+			},
 		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -104,13 +101,12 @@ func TestSearchFallback(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &LegacyMockClient{}
 
-		searchHandler := SearchHandler{
-			log:                   log.New("test", "test"),
-			client:                mockClient,
-			legacyDashboardAccess: mockLegacyClient,
-			tracer:                tracing.NewNoopTracerService(),
-			cfg:                   setting.UnifiedStorageConfig{DualWriterMode: rest.Mode3},
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
+			},
 		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -131,13 +127,12 @@ func TestSearchFallback(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &LegacyMockClient{}
 
-		searchHandler := SearchHandler{
-			log:                   log.New("test", "test"),
-			client:                mockClient,
-			legacyDashboardAccess: mockLegacyClient,
-			tracer:                tracing.NewNoopTracerService(),
-			cfg:                   setting.UnifiedStorageConfig{DualWriterMode: rest.Mode4},
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
+			},
 		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -158,13 +153,12 @@ func TestSearchFallback(t *testing.T) {
 		mockClient := &MockClient{}
 		mockLegacyClient := &LegacyMockClient{}
 
-		searchHandler := SearchHandler{
-			log:                   log.New("test", "test"),
-			client:                mockClient,
-			legacyDashboardAccess: mockLegacyClient,
-			tracer:                tracing.NewNoopTracerService(),
-			cfg:                   setting.UnifiedStorageConfig{DualWriterMode: rest.Mode5},
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			},
 		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
