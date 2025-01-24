@@ -2,9 +2,11 @@ package kerberos
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -35,7 +37,24 @@ func GetKerberosSettings(settings backend.DataSourceInstanceSettings) (kerberosA
 		UDPConnectionLimit:        1,
 		EnableDNSLookupKDC:        "",
 	}
+
 	err = json.Unmarshal(settings.JSONData, &kerberosAuth)
+	var unmarshalErr *json.UnmarshalTypeError
+	if err != nil && errors.As(err, &unmarshalErr) {
+		stringMap := map[string]any{}
+		err = json.Unmarshal(settings.JSONData, &stringMap)
+		if err != nil {
+			return kerberosAuth, err
+		}
+
+		if stringMap["UDPConnectionLimit"] != "" {
+			udpConnLimit, err := strconv.Atoi(stringMap["UDPConnectionLimit"].(string))
+			if err != nil {
+				return kerberosAuth, err
+			}
+			kerberosAuth.UDPConnectionLimit = udpConnLimit
+		}
+	}
 	return kerberosAuth, err
 }
 
