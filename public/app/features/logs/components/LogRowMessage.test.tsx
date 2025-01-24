@@ -21,6 +21,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, ro
     styles,
     mouseIsOver: true,
     onBlur: jest.fn(),
+    toggleExpanded: jest.fn(),
     ...(propOverrides || {}),
   };
 
