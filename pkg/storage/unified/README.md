@@ -269,6 +269,23 @@ You can then list the previously-created playlists with:
 kubectl --kubeconfig=./grafana.kubeconfig get playlist
 ```
 
+### Everything together: run a separate database and a GRPC server
+
+This is the current default when running unified storage.
+Apart of making sure your configs match what is present in sections "Use a separate database" and "Start GRPC storage-server", to start the server you can run
+
+```sh
+GO_BUILD_DEV=1 make build-go && export GF_DEFAULT_TARGET=storage-server export GF_SERVER_HTTP_PORT=3000 && ./bin/grafana server target -profile
+```
+(The port needs to be specified because otherwise it will clash with the port run by Grafana)
+
+
+In a different tab you can run
+
+```sh
+make run
+```
+
 ## Changing protobuf interface
 
 - install [protoc](https://grpc.io/docs/protoc-installation/)
