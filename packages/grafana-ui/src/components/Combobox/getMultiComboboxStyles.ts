@@ -33,6 +33,7 @@ export const getMultiComboboxStyles = (
       outline: 'none',
       background: 'transparent',
       flexGrow: 1,
+      maxWidth: '100%',
       minWidth: 50,
       '&::placeholder': {
         color: theme.colors.text.disabled,
