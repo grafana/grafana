@@ -32,17 +32,6 @@ func (c *check) Type() string {
 	return "plugin"
 }
 
-func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool {
-	// If both versions are semver-valid, compare them
-	v1, err1 := semver.NewVersion(current.Info.Version)
-	v2, err2 := semver.NewVersion(latest.Version)
-	if err1 == nil && err2 == nil {
-		return v1.LessThan(v2)
-	}
-	// In other case, assume that a different latest version will always be newer
-	return current.Info.Version != latest.Version
-}
-
 func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0alpha1StatusReport, error) {
 	ps := c.PluginStore.Plugins(ctx)
 
@@ -80,4 +69,15 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 		Count:  int64(len(ps)),
 		Errors: errs,
 	}, nil
+}
+
+func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool {
+	// If both versions are semver-valid, compare them
+	v1, err1 := semver.NewVersion(current.Info.Version)
+	v2, err2 := semver.NewVersion(latest.Version)
+	if err1 == nil && err2 == nil {
+		return v1.LessThan(v2)
+	}
+	// In other case, assume that a different latest version will always be newer
+	return current.Info.Version != latest.Version
 }
