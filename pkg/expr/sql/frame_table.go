@@ -85,7 +85,7 @@ type rowIter struct {
 	row int
 }
 
-func (ri *rowIter) Next(*mysql.Context) (mysql.Row, error) {
+func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 	// We assume each field in the Frame has the same number of rows.
 	numRows := 0
 	if len(ri.ft.Frame.Fields) > 0 {
