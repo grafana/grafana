@@ -2,7 +2,6 @@ package authz
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
