@@ -74,11 +74,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
     return newItems;
   }, [baseItems, inputValue, enableAllOption, allOptionItem]);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
-
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled);
 
   const { measureRef, counterMeasureRef, suffixMeasureRef, shownItems } = useMeasureMulti(
     selectedItems,
@@ -108,17 +103,41 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           break;
       }
     },
+    stateReducer: (state, actionAndChanges) => {
+      const { changes } = actionAndChanges;
+      return {
+        ...changes,
+
+        /**
+         * TODO: Fix Hack!
+         * This prevents the menu from closing when the user unselects an item in the dropdown at the expense
+         * of breaking keyboard navigation.
+         *
+         * Downshift isn't really designed to keep selected items in the dropdown menu, so when you unselect an item
+         * in a multiselect, the stateReducer tries to move focus onto another item which causes the menu to be closed.
+         * This only seems to happen when you deselect the last item in the selectedItems list.
+         *
+         * Check out:
+         *  - FunctionRemoveSelectedItem in the useMultipleSelection reducer https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/reducer.js#L75
+         *  - The activeIndex useEffect in useMultipleSelection https://github.com/downshift-js/downshift/blob/master/src/hooks/useMultipleSelection/index.js#L68-L72
+         *
+         * Forcing the activeIndex to -999 both prevents the useEffect that changes the focus from triggering (value never changes)
+         * and prevents the if statement in useMultipleSelection from focusing anything.
+         */
+        activeIndex: -999,
+      };
+    },
   });
 
   const {
     //getToggleButtonProps,
     //getLabelProps,
+    isOpen,
+    highlightedIndex,
     getMenuProps,
     getInputProps,
-    highlightedIndex,
     getItemProps,
   } = useCombobox({
-    isOpen,
     items,
     itemToString,
     inputValue,
@@ -135,7 +154,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           };
         case useCombobox.stateChangeTypes.InputBlur:
           setInputValue('');
-          setIsOpen(false);
         default:
           return changes;
       }
@@ -175,13 +193,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
           break;
-        case useCombobox.stateChangeTypes.InputClick:
-          setIsOpen(true);
         default:
           break;
       }
     },
   });
+
+  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled);
 
   const virtualizerOptions = {
     count: items.length,
@@ -241,7 +260,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 disabled,
                 preventKeyAction: isOpen,
                 placeholder: selectedItems.length > 0 ? undefined : placeholder,
-                onFocus: () => !disabled && setIsOpen(true),
               })
             )}
           />
