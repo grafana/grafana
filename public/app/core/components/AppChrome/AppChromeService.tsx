@@ -172,7 +172,7 @@ export class AppChromeService {
     const lastEntry = entries[0];
     const newEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
 
-    if (needHackyFixes(newEntry, lastEntry)) {
+    if (lastEntry && lastEntry.url === newEntry.url) {
       entries[0] = newEntry;
     } else {
       entries = [newEntry, ...entries];
