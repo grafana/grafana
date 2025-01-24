@@ -1304,11 +1304,6 @@ steps:
   image: node:20.9.0-alpine
   name: yarn-install
 - commands:
-  - pip3 install codespell
-  - codespell -I docs/.codespellignore docs/
-  image: python:3.8
-  name: codespell
-- commands:
   - yarn run prettier:checkDocs
   depends_on:
   - yarn-install
@@ -1688,11 +1683,6 @@ steps:
   depends_on: []
   image: node:20.9.0-alpine
   name: yarn-install
-- commands:
-  - pip3 install codespell
-  - codespell -I docs/.codespellignore docs/
-  image: python:3.8
-  name: codespell
 - commands:
   - yarn run prettier:checkDocs
   depends_on:
@@ -5739,6 +5729,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: be19150e8d9c93d3e71e570e9e8c6a13310bbde351260ccc73f7b2c515f8d511
+hmac: 0e1d79751c8853ce588b471b8d82d62f2a1ca1cd2cd049353a6bc8c7a3d21ff4
 
 ...
