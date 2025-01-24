@@ -95,4 +95,4 @@ To set up LBAC for data sources for a data source, refer to [Configure LBAC for 
 
 ## Provisioning of LBAC rules
 
-We recommend using our Terraform provider to set up provisioning for [Resource data source config LBAC rules] (https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source_config_lbac_rules). Refer to our provider documentation to learn how to configure rules for a data source.
+We recommend using our Terraform provider to set up provisioning for [Resource data source config LBAC rules](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source_config_lbac_rules). Refer to our provider documentation to learn how to configure rules for a data source.
