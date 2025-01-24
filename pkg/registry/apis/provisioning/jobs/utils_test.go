@@ -3,33 +3,91 @@ package jobs
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFolderTree(t *testing.T) {
+	newFid := func(kube, title string) resources.FolderID {
+		return resources.FolderID{KubernetesName: kube, Title: title}
+	}
+
 	t.Run("empty tree", func(t *testing.T) {
 		tree := &folderTree{
-			tree:       map[string]string{"x": ""},
-			repoFolder: "x",
+			tree:    make(map[string]string),
+			folders: make(map[string]resources.FolderID),
 		}
 
-		assert.True(t, tree.In("x"))
-		assert.False(t, tree.In("z"))
-		assert.Empty(t, tree.DirPath("x"))
-		assert.PanicsWithValue(t, "undefined behaviour", func() { tree.DirPath("z") }, "unknown folders cannot have a DirPath result")
+		assert.False(t, tree.In("x"), "x should not be in tree")
+		assert.False(t, tree.In("z"), "z should not be in tree")
+		_, ok := tree.DirPath("x", "")
+		assert.False(t, ok, "x should not have a DirPath")
 	})
 
-	t.Run("simple tree", func(t *testing.T) {
+	t.Run("single directory in tree", func(t *testing.T) {
 		tree := &folderTree{
-			tree:       map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},
-			repoFolder: "x",
+			tree:    map[string]string{"x": ""},
+			folders: map[string]resources.FolderID{"x": newFid("x", "X!")},
 		}
 
-		assert.True(t, tree.In("x"))
-		assert.True(t, tree.In("a"))
-		assert.False(t, tree.In("z"))
-		assert.Empty(t, tree.DirPath("x"))
-		assert.Equal(t, "c", tree.DirPath("c"))
-		assert.Equal(t, "c/b/a", tree.DirPath("a"))
+		assert.True(t, tree.In("x"), "x should be in tree")
+		id, ok := tree.DirPath("x", "x")
+		if assert.True(t, ok, "x should have DirPath with itself as base") {
+			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "X!", id.Title, "Title")
+			assert.Equal(t, "", id.Path, "Path")
+		}
+		id, ok = tree.DirPath("x", "")
+		if assert.True(t, ok, "x should have DirPath with empty base") {
+			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "X!", id.Title, "Title")
+			assert.Equal(t, "x", id.Path, "Path")
+		}
+	})
+
+	t.Run("simple nesting tree", func(t *testing.T) {
+		tree := &folderTree{
+			tree: map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},
+			folders: map[string]resources.FolderID{
+				"x": newFid("x", "X!"),
+				"c": newFid("c", "C :)"),
+				"b": newFid("b", "!!B#!"),
+				"a": newFid("a", "[€]@£a"),
+			},
+		}
+
+		assert.True(t, tree.In("x"), "x should be in tree")
+		assert.True(t, tree.In("a"), "a should be in tree")
+		assert.False(t, tree.In("z"), "z should not be in tree, for it is undeclared")
+
+		id, ok := tree.DirPath("x", "")
+		if assert.True(t, ok, "x should have DirPath with empty base") {
+			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "X!", id.Title, "Title")
+			assert.Equal(t, "x", id.Path, "Path")
+		}
+
+		id, ok = tree.DirPath("c", "c")
+		if assert.True(t, ok, "c should have DirPath with itself as base") {
+			assert.Equal(t, "c", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "C :)", id.Title, "Title")
+			assert.Equal(t, "", id.Path, "Path")
+		}
+
+		id, ok = tree.DirPath("a", "x")
+		if assert.True(t, ok, "a should have DirPath with x as base") {
+			assert.Equal(t, "a", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "[€]@£a", id.Title, "Title")
+			assert.Equal(t, "c/b/a", id.Path, "Path")
+		}
+		_, ok = tree.DirPath("x", "a")
+		assert.False(t, ok, "x should not have DirPath with a as base, because a is a subfolder of x")
+
+		id, ok = tree.DirPath("", "")
+		if assert.True(t, ok, "the root folder should have a path to itself") {
+			assert.Empty(t, id.KubernetesName)
+			assert.Empty(t, id.Path)
+			assert.Empty(t, id.Title)
+		}
 	})
 }

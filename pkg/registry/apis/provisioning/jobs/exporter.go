@@ -69,8 +69,8 @@ func (r *exporter) Export(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	// TODO: handle pagination
-	folders, err := r.fetchRepoFolderTree(ctx)
+
+	folders, err := fetchRepoFolderTree(ctx, r.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
@@ -104,7 +104,8 @@ func (r *exporter) Export(ctx context.Context,
 
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 		logger = logger.With("folder", folder)
-		if !folders.In(folder) {
+		fid, ok := folders.DirPath(folder, r.repository.Config().Spec.Folder)
+		if !ok {
 			logger.Debug("folder of item was not in tree of repository")
 			continue
 		}
@@ -114,7 +115,7 @@ func (r *exporter) Export(ctx context.Context,
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
 		}
-		fileName := filepath.Join(folders.DirPath(folder), name+".yaml")
+		fileName := filepath.Join(fid.Path, name+".yaml")
 		logger = logger.With("file", fileName)
 
 		var ref string
@@ -141,56 +142,5 @@ func (r *exporter) Export(ctx context.Context,
 
 	return &provisioning.JobStatus{
 		State: provisioning.JobStateSuccess,
-	}, nil
-}
-
-func (r *exporter) fetchRepoFolderTree(ctx context.Context) (*folderTree, error) {
-	iface := r.client.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
-
-	// TODO: handle pagination
-	rawFolders, err := iface.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	folders := make(map[string]string, len(rawFolders.Items))
-	for _, rf := range rawFolders.Items {
-		name := rf.GetName()
-		// TODO: Can I use MetaAccessor here?
-		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
-		folders[name] = parent
-	}
-
-	// folders now includes a map[folder name]parent name
-	// The top-most folder has a parent of "". Any folders below have parent refs.
-	// We want to find only folders which are or start in repoFolder.
-	repoFolder := r.repository.Config().Spec.Folder
-	for folder, parent := range folders {
-		if folder == repoFolder {
-			continue
-		}
-
-		hasRepoRoot := false
-		for parent != "" {
-			if parent == repoFolder {
-				hasRepoRoot = true
-				break
-			}
-			parent = folders[parent]
-		}
-		if !hasRepoRoot {
-			delete(folders, folder)
-		}
-	}
-
-	// folders now only includes the tree of the repoFolder.
-
-	return &folderTree{
-		tree:       folders,
-		repoFolder: repoFolder,
 	}, nil
 }
