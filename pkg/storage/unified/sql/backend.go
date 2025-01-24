@@ -34,10 +34,9 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider        db.DBProvider
-	Tracer            trace.Tracer
-	PollingInterval   time.Duration
-	SkipDataMigration bool
+	DBProvider      db.DBProvider
+	Tracer          trace.Tracer
+	PollingInterval time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -54,14 +53,13 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		pollingInterval = defaultPollingInterval
 	}
 	return &backend{
-		done:              ctx.Done(),
-		cancel:            cancel,
-		log:               log.New("sql-resource-server"),
-		tracer:            opts.Tracer,
-		dbProvider:        opts.DBProvider,
-		pollingInterval:   pollingInterval,
-		skipDataMigration: opts.SkipDataMigration,
-		batchLock:         &batchLock{running: make(map[string]bool)},
+		done:            ctx.Done(),
+		cancel:          cancel,
+		log:             log.New("sql-resource-server"),
+		tracer:          opts.Tracer,
+		dbProvider:      opts.DBProvider,
+		pollingInterval: pollingInterval,
+		batchLock:       &batchLock{running: make(map[string]bool)},
 	}, nil
 }
 
@@ -77,11 +75,10 @@ type backend struct {
 	tracer trace.Tracer
 
 	// database
-	dbProvider        db.DBProvider
-	db                db.DB
-	dialect           sqltemplate.Dialect
-	skipDataMigration bool
-	batchLock         *batchLock
+	dbProvider db.DBProvider
+	db         db.DB
+	dialect    sqltemplate.Dialect
+	batchLock  *batchLock
 
 	// watch streaming
 	//stream chan *resource.WatchEvent

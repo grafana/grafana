@@ -98,7 +98,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
-	permissions, err := s.getUserPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
+	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return deny, err
@@ -124,7 +124,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	}
 	ctx = request.WithNamespace(ctx, req.GetNamespace())
 
-	permissions, err := s.getUserPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
+	permissions, err := s.getIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
 		return nil, err
@@ -226,8 +226,8 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 	if err != nil {
 		return "", "", err
 	}
-	// Permission check currently only checks user, anonymous user and service account permissions
-	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount || identityType == claims.TypeAnonymous) {
+	// Permission check currently only checks user, anonymous user, service account and renderer permissions
+	if !(identityType == claims.TypeUser || identityType == claims.TypeServiceAccount || identityType == claims.TypeAnonymous || identityType == claims.TypeRenderService) {
 		ctxLogger.Error("unsupported identity type", "type", identityType)
 		return "", "", status.Error(codes.PermissionDenied, "unsupported identity type")
 	}
@@ -252,8 +252,8 @@ func (s *Service) validateAction(ctx context.Context, group, resource, verb stri
 	return action, nil
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, idType claims.IdentityType, userID, action string) (map[string]bool, error) {
-	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
+func (s *Service) getIdentityPermissions(ctx context.Context, ns claims.NamespaceInfo, idType claims.IdentityType, userID, action string) (map[string]bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getIdentityPermissions")
 	defer span.End()
 
 	// When checking folder creation permissions, also check edit and admin action sets for folder, as the scoped folder create actions aren't stored in the DB separately
@@ -263,9 +263,21 @@ func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInf
 		actionSets = append(actionSets, "folders:admin")
 	}
 
-	if idType == claims.TypeAnonymous {
+	switch idType {
+	case claims.TypeAnonymous:
 		return s.getAnonymousPermissions(ctx, ns, action, actionSets)
+	case claims.TypeRenderService:
+		return s.getRendererPermissions(ctx, action)
+	case claims.TypeUser, claims.TypeServiceAccount:
+		return s.getUserPermissions(ctx, ns, userID, action, actionSets)
+	default:
+		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}
+}
+
+func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, userID, action string, actionSets []string) (map[string]bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
+	defer span.End()
 
 	userIdentifiers, err := s.GetUserIdentifiers(ctx, ns, userID)
 	if err != nil {
@@ -340,6 +352,17 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns claims.Namespa
 	}
 
 	return res.(map[string]bool), nil
+}
+
+// Renderer is granted permissions to read all dashboards and folders, and no other permissions
+func (s *Service) getRendererPermissions(ctx context.Context, action string) (map[string]bool, error) {
+	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
+	defer span.End()
+
+	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" {
+		return map[string]bool{"*": true}, nil
+	}
+	return map[string]bool{}, nil
 }
 
 func (s *Service) GetUserIdentifiers(ctx context.Context, ns claims.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
