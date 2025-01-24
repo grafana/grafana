@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
@@ -44,6 +44,7 @@ interface AlertRuleListItemProps {
   contactPoint?: string;
   actions?: ReactNode;
   origin?: RulePluginOrigin;
+  operation?: RuleOperation;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -67,7 +68,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     labels,
     origin,
     actions = null,
+    operation,
   } = props;
+
+  const listItemAriaId = useId();
 
   const metadata: ReactNode[] = [];
   if (namespace && group) {
@@ -124,9 +128,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
 
   return (
     <ListItem
+      aria-labelledby={listItemAriaId}
       title={
         <Stack direction="row" alignItems="center">
-          <TextLink href={href} inline={false}>
+          <TextLink href={href} inline={false} id={listItemAriaId}>
             {name}
           </TextLink>
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
@@ -137,7 +142,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         </Stack>
       }
       description={<Summary content={summary} error={error} />}
-      icon={<RuleListIcon state={state} health={health} isPaused={isPaused} />}
+      icon={<RuleListIcon state={state} health={health} isPaused={isPaused} operation={operation} />}
       actions={actions}
       meta={metadata}
     />
@@ -208,6 +213,8 @@ export function RuleOperationListItem({
   application,
   operation,
 }: RuleOperationListItemProps) {
+  const listItemAriaId = useId();
+
   const metadata: ReactNode[] = [];
   if (namespace && group) {
     metadata.push(
@@ -219,9 +226,10 @@ export function RuleOperationListItem({
 
   return (
     <ListItem
+      aria-labelledby={listItemAriaId}
       title={
         <Stack direction="row" alignItems="center">
-          <Text>{name}</Text>
+          <Text id={listItemAriaId}>{name}</Text>
         </Stack>
       }
       icon={<RuleListIcon operation={operation} />}
