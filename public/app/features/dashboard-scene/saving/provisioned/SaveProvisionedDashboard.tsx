@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, locationService } from '@grafana/runtime';
 import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName } from 'app/features/apiserver/types';
@@ -75,6 +75,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       dashboard.setState({ isDirty: false });
       if (workflow === WorkflowOption.Direct) {
         dashboard.closeModal();
+        locationService.partial({ viewPanel: null, editPanel: null, isPreview: true });
       } else {
         setPrOpened(true);
       }
