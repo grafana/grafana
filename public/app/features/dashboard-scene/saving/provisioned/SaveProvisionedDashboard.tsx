@@ -72,14 +72,16 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
         payload: ['Dashboard saved'],
       });
       dashboard.setState({ isDirty: false });
-      dashboard.closeModal();
+      if (workflow === WorkflowOption.Direct) {
+        dashboard.closeModal();
+      }
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard]);
+  }, [request.isSuccess, request.isError, request.error, dashboard, workflow]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -119,6 +121,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
             }
             onRemove={() => {
               window.open(href, '_blank');
+              dashboard.closeModal();
             }}
           >
             You can now open a pull request in Github.
