@@ -299,11 +299,13 @@
     },
     "/alertmanager/grafana/config/api/v1/alerts": {
       "get": {
-        "description": "gets an Alerting config",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "gets an Alerting config",
         "operationId": "RouteGetGrafanaAlertingConfig",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "GettableUserConfig",
@@ -320,11 +322,13 @@
         }
       },
       "post": {
-        "description": "sets an Alerting config",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "sets an Alerting config",
         "operationId": "RoutePostGrafanaAlertingConfig",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -350,11 +354,13 @@
         }
       },
       "delete": {
-        "description": "deletes the Alerting config for a tenant",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "deletes the Alerting config for a tenant",
         "operationId": "RouteDeleteGrafanaAlertingConfig",
+        "deprecated": true,
         "responses": {
           "200": {
             "description": "Ack",
@@ -496,11 +502,13 @@
     },
     "/alertmanager/grafana/config/history": {
       "get": {
-        "description": "gets Alerting configurations that were successfully applied in the past",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "gets Alerting configurations that were successfully applied in the past",
         "operationId": "RouteGetGrafanaAlertingConfigHistory",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -519,11 +527,13 @@
     },
     "/alertmanager/grafana/config/history/{id}/_activate": {
       "post": {
-        "description": "revert Alerting configuration to the historical configuration specified by the given id",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "alertmanager"
         ],
+        "summary": "revert Alerting configuration to the historical configuration specified by the given id",
         "operationId": "RoutePostGrafanaAlertingConfigHistoryActivate",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2089,11 +2099,13 @@
     },
     "/v1/notifications/receivers": {
       "get": {
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
         "summary": "Get all receivers.",
         "operationId": "RouteGetReceivers",
+        "deprecated": true,
         "parameters": [
           {
             "type": "array",
@@ -2136,11 +2148,13 @@
     },
     "/v1/notifications/receivers/{Name}": {
       "get": {
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
         "summary": "Get a receiver by name.",
         "operationId": "RouteGetReceiver",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -2175,11 +2189,13 @@
     },
     "/v1/notifications/time-intervals": {
       "get": {
-        "description": "Get all the time intervals",
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
+        "summary": "Get all the time intervals",
         "operationId": "RouteNotificationsGetTimeIntervals",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/GetAllIntervalsResponse"
@@ -2195,11 +2211,13 @@
     },
     "/v1/notifications/time-intervals/{name}": {
       "get": {
+        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
         "tags": [
           "notifications"
         ],
         "summary": "Get a time interval by name.",
         "operationId": "RouteNotificationsGetTimeInterval",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",

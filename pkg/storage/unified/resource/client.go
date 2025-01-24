@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
@@ -101,6 +101,7 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}, nil
 }
@@ -125,12 +126,13 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}, nil
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
-	authInfo, ok := claims.From(ctx)
+	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
 	}

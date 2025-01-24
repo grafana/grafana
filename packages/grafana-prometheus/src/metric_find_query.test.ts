@@ -8,6 +8,7 @@ import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
+import { escapeForUtf8Support } from './utf8_support';
 
 const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> => {
   return of({} as unknown as FetchResponse);
@@ -413,5 +414,51 @@ describe('PrometheusMetricFindQuery', () => {
       });
     });
     // </ ModernPrometheus>
+    describe('utf8 metric and label support', () => {
+      it('utf8 label - label_values(a_utf8_http_requests_total,instance.test) should generate label values query', () => {
+        const metricName = 'a_utf8_http_requests_total';
+        const label = 'instance.test';
+        const query = `label_values(${metricName},${label})`;
+        const metricFindQuery = new PrometheusMetricFindQuery(prometheusDatasource, query);
+        metricFindQuery.process(raw);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith({
+          method: 'GET',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
+          hideFromInspector: true,
+          headers: {},
+        });
+      });
+
+      it('utf8 metric - label_values(utf8.http_requests_total,instance_test) should generate label values query', () => {
+        const metricName = 'utf8.http_requests_total';
+        const label = 'instance_test';
+        const query = `label_values(${metricName},${label})`;
+        const metricFindQuery = new PrometheusMetricFindQuery(prometheusDatasource, query);
+        metricFindQuery.process(raw);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith({
+          method: 'GET',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${label}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
+          hideFromInspector: true,
+          headers: {},
+        });
+      });
+
+      it('utf8 metric and label - label_values(utf8.http_requests_total,instance.test) should generate label values query', () => {
+        const metricName = 'utf8.http_requests_total';
+        const label = 'instance.test';
+        const query = `label_values(${metricName},${label})`;
+        const metricFindQuery = new PrometheusMetricFindQuery(prometheusDatasource, query);
+        metricFindQuery.process(raw);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith({
+          method: 'GET',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/${escapeForUtf8Support(label)}/values?match%5B%5D=${metricName}&start=1524650400&end=1524654000`,
+          hideFromInspector: true,
+          headers: {},
+        });
+      });
+    });
   });
 });

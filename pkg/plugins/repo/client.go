@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -24,16 +25,18 @@ type Client struct {
 	httpClientNoTimeout http.Client
 	retryCount          int
 	grafanaComAPIToken  string
+	grafanaComAPIURL    string
 
 	log log.PrettyLogger
 }
 
-func NewClient(skipTLSVerify bool, grafanaComAPIToken string, logger log.PrettyLogger) *Client {
+func NewClient(skipTLSVerify bool, grafanaComAPIToken, grafanaComAPIURL string, logger log.PrettyLogger) *Client {
 	return &Client{
 		httpClient:          MakeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: MakeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
 		grafanaComAPIToken:  grafanaComAPIToken,
+		grafanaComAPIURL:    grafanaComAPIURL,
 	}
 }
 
@@ -233,7 +236,7 @@ func (c *Client) createReq(ctx context.Context, url *url.URL, compatOpts CompatO
 		req.Header.Set("grafana-origin", orig.(string))
 	}
 
-	if c.grafanaComAPIToken != "" {
+	if strings.HasPrefix(url.String(), c.grafanaComAPIURL) && c.grafanaComAPIToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.grafanaComAPIToken)
 	}
 

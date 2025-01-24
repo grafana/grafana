@@ -12,7 +12,7 @@ import {
   defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
@@ -22,7 +22,7 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import { getPanelElement, transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
 jest.mock('@grafana/runtime', () => ({
@@ -488,7 +488,6 @@ describe('DashboardSceneSerializer', () => {
                     },
                   ],
                   multi: false,
-                  includeAll: false,
                   hide: 'dontHide',
                   skipUrlSync: false,
                 },
@@ -560,8 +559,9 @@ describe('DashboardSceneSerializer', () => {
         editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
         const result = dashboard.getDashboardChanges(false, true);
-        const panelSaveModel = (result.changedSaveModel as DashboardV2Spec).elements['panel-1'].spec;
-        expect(panelSaveModel.title).toBe('changed title');
+        const panelSaveModel = getPanelElement(result.changedSaveModel as DashboardV2Spec, 'panel-1')!;
+
+        expect(panelSaveModel.spec.title).toBe('changed title');
       });
     });
 
@@ -682,7 +682,6 @@ function setupV2(spec?: Partial<DashboardV2Spec>) {
     spec: {
       ...defaultDashboardV2Spec(),
       title: 'hello',
-      schemaVersion: 30,
       timeSettings: {
         ...defaultTimeSettingsSpec(),
         autoRefresh: '10s',

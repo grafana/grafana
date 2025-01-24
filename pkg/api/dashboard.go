@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -84,6 +85,8 @@ func dashboardGuardianResponse(err error) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
+//
+//nolint:gocyclo
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "api.GetDashboard")
 	defer span.End()
@@ -187,11 +190,23 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		PublicDashboardEnabled: publicDashboardEnabled,
 	}
 	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
-	// lookup folder title
-	// nolint:staticcheck
-	if dash.FolderID > 0 {
-		// nolint:staticcheck
-		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
+	// lookup folder title & url
+	if dash.FolderUID != "" && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		queryResult, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID:        c.SignedInUser.GetOrgID(),
+			UID:          &dash.FolderUID,
+			SignedInUser: c.SignedInUser,
+		})
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return response.Error(http.StatusNotFound, "Folder not found", err)
+		}
+		meta.FolderUid = queryResult.UID
+		meta.FolderTitle = queryResult.Title
+		meta.FolderId = queryResult.ID // nolint:staticcheck
+		queryResult = queryResult.WithURL()
+		meta.FolderUrl = queryResult.URL
+	} else if dash.FolderID > 0 { // nolint:staticcheck
+		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()} // nolint:staticcheck
 		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
 		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err != nil {
@@ -483,12 +498,6 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 			"dashboard", dash.ID,
 			"identity", c.GetID(),
 			"error", err)
-	}
-
-	// deletes all related public dashboard entities
-	err = hs.PublicDashboardsApi.PublicDashboardService.DeleteByDashboard(c.Req.Context(), dash)
-	if err != nil {
-		hs.log.Error("Failed to delete public dashboard")
 	}
 
 	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, dash.UID, c.SignedInUser.GetOrgID())

@@ -25,7 +25,7 @@ export const PromQueryBuilderExplained = memo<PromQueryBuilderExplainedProps>(({
     <Stack gap={0.5} direction="column">
       <OperationExplainedBox
         stepNumber={1}
-        title={<RawQuery query={`${visQuery.metric} ${promQueryModeller.renderLabels(visQuery.labels)}`} lang={lang} />}
+        title={<RawQuery query={`${promQueryModeller.renderQuery(visQuery)}`} lang={lang} />}
       >
         {EXPLAIN_LABEL_FILTER_CONTENT}
       </OperationExplainedBox>
