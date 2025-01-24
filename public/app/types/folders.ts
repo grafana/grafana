@@ -1,8 +1,11 @@
 import { WithAccessControlMetadata } from '@grafana/data';
 
+import { Repository } from '../features/provisioning/api';
+
 export interface FolderListItemDTO {
   uid: string;
   title: string;
+  repository?: Repository;
 }
 
 export type FolderParent = Pick<FolderDTO, 'title' | 'uid' | 'url'>;
@@ -17,6 +20,7 @@ export interface FolderDTO extends WithAccessControlMetadata {
   hasAcl: boolean;
   id: number;
   parentUid?: string;
+  repository?: Repository;
 
   // The API does actually return a full FolderDTO here, but we want to restrict it to just a few properties
   parents?: FolderParent[];

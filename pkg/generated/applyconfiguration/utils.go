@@ -34,6 +34,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.RepositorySpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("RepositoryStatus"):
 		return &provisioningv0alpha1.RepositoryStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ResourceCount"):
+		return &provisioningv0alpha1.ResourceCountApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("S3RepositoryConfig"):
 		return &provisioningv0alpha1.S3RepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncStatus"):

@@ -1,9 +1,6 @@
 import { ReactNode, useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
 import {
-  Badge,
-  BadgeColor,
   Card,
   EmptySearchResult,
   EmptyState,
@@ -17,8 +14,10 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
+import { SetupWarnings } from './SetupWarnings';
+import { StatusBadge } from './StatusBadge';
 import { SyncRepository } from './SyncRepository';
-import { Repository } from './api';
+import { Repository, ResourceCount } from './api';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
 
@@ -28,6 +27,7 @@ export default function RepositoryListPage() {
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
       <Page.Contents isLoading={isLoading}>
+        <SetupWarnings />
         <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>
@@ -64,7 +64,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
         {!!filteredItems.length ? (
           filteredItems.map((item) => {
             const name = item.metadata?.name ?? '';
-            const healthy = Boolean(item.status?.health.healthy);
+
             let icon: IconName = 'database'; // based on type
             let meta: ReactNode[] = [
               // TODO... add counts? and sync info
@@ -85,7 +85,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 );
 
                 if (item.status?.webhook?.id) {
-                  const hook = url + `/settings/hooks/${item.status?.webhook?.id}`;
+                  const hook = url + `settings/hooks/${item.status?.webhook?.id}`;
                   meta.push(
                     <TextLink key={'webhook'} style={{ color: 'inherit' }} href={hook}>
                       Webhook <Icon name={'check'} />
@@ -106,10 +106,21 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title} <StatusBadge repo={item} name={name} />
+                    {item.spec?.title} <StatusBadge state={item.status?.sync?.state} name={name} />
                   </Stack>
                 </Card.Heading>
-                <Card.Description>{item.spec?.description}</Card.Description>
+                <Card.Description>
+                  {item.spec?.description}
+                  {item.status?.stats?.length && (
+                    <Stack>
+                      {item.status.stats.map((v, index) => (
+                        <LinkButton key={index} fill="outline" size="md" href={getListURL(item, v)}>
+                          {v.count} {v.resource}
+                        </LinkButton>
+                      ))}
+                    </Stack>
+                  )}
+                </Card.Description>
                 <Card.Meta>{meta}</Card.Meta>
                 <Card.Actions>
                   <LinkButton href={`${PROVISIONING_URL}/${name}`} variant="secondary">
@@ -118,7 +129,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                   <LinkButton href={`${PROVISIONING_URL}/${name}/edit`} variant="secondary">
                     Edit
                   </LinkButton>
-                  {healthy && <SyncRepository repository={item} />}
+                  <SyncRepository repository={item} />
                 </Card.Actions>
                 <Card.SecondaryActions>
                   <DeleteRepositoryButton name={name} />
@@ -134,44 +145,13 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
   );
 }
 
-interface StatusBadgeProps {
-  repo: Repository;
-  name: string;
-}
-function StatusBadge({ repo, name }: StatusBadgeProps) {
-  const state = repo.status?.sync?.state;
-
-  if (!state) {
-    return null;
+// This should return a URL in the UI that will show the selected values
+function getListURL(repo: Repository, stats: ResourceCount): string {
+  if (stats.resource === 'playlists') {
+    return '/playlists';
   }
-
-  let color: BadgeColor = 'green';
-  let text = 'Synced';
-  let icon: IconName = 'check';
-  switch (state) {
-    case 'working':
-    case 'pending':
-      color = 'orange';
-      text = 'Syncing';
-      icon = 'spinner';
-      break;
-    case 'error':
-      color = 'red';
-      text = 'Error';
-      icon = 'exclamation-triangle';
-      break;
-    default:
-      break;
+  if (repo.spec?.folder) {
+    return `/dashboards/f/${repo.spec?.folder}`;
   }
-  return (
-    <Badge
-      color={color}
-      icon={icon}
-      text={text}
-      style={{ cursor: 'pointer' }}
-      onClick={() => {
-        locationService.push(`${PROVISIONING_URL}/${name}/?tab=health`);
-      }}
-    />
-  );
+  return '/dashboards';
 }

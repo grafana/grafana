@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/slogctx"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
@@ -32,6 +32,7 @@ type JobWorker struct {
 	parsers     *resources.ParserFactory
 	identities  auth.BackgroundIdentityService
 	render      rendering.Service
+	lister      resources.ResourceLister
 	blobstore   blob.PublicBlobStore
 	urlProvider func(namespace string) string
 }
@@ -42,6 +43,7 @@ func NewJobWorker(
 	client client.ProvisioningV0alpha1Interface,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	lister resources.ResourceLister,
 	blobstore blob.PublicBlobStore,
 	urlProvider func(namespace string) string,
 ) *JobWorker {
@@ -51,14 +53,15 @@ func NewJobWorker(
 		parsers:     parsers,
 		identities:  identities,
 		render:      render,
+		lister:      lister,
 		blobstore:   blobstore,
 		urlProvider: urlProvider,
 	}
 }
 
-func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisioning.JobStatus, error) {
-	logger := slogctx.From(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	ctx = slogctx.To(ctx, logger)
+func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress func(provisioning.JobStatus) error) (*provisioning.JobStatus, error) {
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	ctx = logging.Context(ctx, logger)
 
 	id, err := g.identities.WorkerIdentity(ctx, job.Name)
 	if err != nil {
@@ -66,12 +69,9 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	}
 
 	ctx = request.WithNamespace(identity.WithRequester(ctx, id), job.Namespace)
-	repoName, ok := job.Labels["repository"]
-	if !ok {
-		return nil, fmt.Errorf("missing repository name in label")
-	}
+	repoName := job.Spec.Repository
 	logger = logger.With("repository", repoName)
-	ctx = slogctx.To(ctx, logger)
+	ctx = logging.Context(ctx, logger)
 
 	repo, err := g.getter.GetRepository(ctx, repoName)
 	if err != nil {
@@ -84,11 +84,6 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 	parser, err := g.parsers.GetParser(ctx, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
-	}
-
-	replicator, err := resources.NewReplicator(repo, parser)
-	if err != nil {
-		return nil, fmt.Errorf("error creating replicator")
 	}
 
 	switch job.Spec.Action {
@@ -108,8 +103,13 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, fmt.Errorf("update repository status: %w", err)
 		}
 
+		syncer, err := NewSyncer(repo, parser)
+		if err != nil {
+			return nil, fmt.Errorf("error creating replicator")
+		}
+
 		// Sync the repository
-		ref, syncError := replicator.Sync(ctx)
+		ref, syncError := syncer.Sync(ctx)
 		status = &provisioning.SyncStatus{
 			State:    provisioning.JobStateSuccess,
 			JobID:    job.GetName(),
@@ -122,6 +122,14 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 		if syncError != nil {
 			status.State = provisioning.JobStateError
 			status.Message = append(status.Message, syncError.Error())
+		}
+
+		// Update the resource stats
+		stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
+		if err != nil {
+			logger.Warn("unable to read stats", "error", err)
+		} else if stats != nil {
+			cfg.Status.Stats = stats.Items
 		}
 
 		cfg.Status.Sync = *status
@@ -160,10 +168,26 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job) (*provisi
 			return nil, fmt.Errorf("error processing pull request: %w", err)
 		}
 	case provisioning.JobActionExport:
-		err := replicator.Export(ctx)
-		if err != nil {
-			return nil, err
+		if job.Spec.Export == nil {
+			return &provisioning.JobStatus{
+				State:  provisioning.JobStateError,
+				Errors: []string{"Export job missing export settings"},
+			}, nil
 		}
+
+		var exporter Exporter
+
+		// Test for now... so we have something with long spinners for UI testing!!!
+		if job.Spec.Export.Branch == "*dummy*" {
+			exporter = &dummyExporter{}
+		} else {
+			exporter, err = NewExporter(repo, parser)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return exporter.Export(ctx, repo, *job.Spec.Export, progress)
+
 	default:
 		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
 	}

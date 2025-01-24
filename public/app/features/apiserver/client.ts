@@ -1,6 +1,6 @@
-import { Observable, Subscriber, map, switchMap, from, filter, retry, catchError } from 'rxjs';
+import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import { config, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import {
@@ -13,6 +13,7 @@ import {
   ResourceList,
   ResourceClient,
   ObjectMeta,
+  WatchOptions,
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
   ResourceEvent,
@@ -37,105 +38,50 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(name?: string, resourceVersion?: string): Observable<ResourceEvent<T, S, K>> {
-    return this.createWatchRequest(name, resourceVersion).pipe(
-      switchMap((response) => this.handleWatchStream(response)),
-      retry({ count: 3, delay: 1000 }),
-      catchError((error) => {
-        console.error('Watch stream error:', error);
-        throw error;
-      })
-    );
-  }
-
-  private createWatchRequest(name?: string, resourceVersion?: string) {
-    return getBackendSrv().fetch<ReadableStream<Uint8Array>>({
-      url: name ? `${this.url}/${name}` : this.url,
-      params: {
-        watch: true,
-        resourceVersion,
-      },
-      responseType: 'stream',
-    });
-  }
-
-  private handleWatchStream(result: { data: ReadableStream<Uint8Array> }): Observable<ResourceEvent<T, S, K>> {
+  public watch(
+    params?: WatchOptions,
+    config?: Pick<BackendSrvRequest, 'data' | 'method'>
+  ): Observable<ResourceEvent<T, S, K>> {
     const decoder = new TextDecoder();
-    let buffer = '';
-
-    return fromReadableStream(result.data).pipe(
-      map((chunk) => decoder.decode(chunk, { stream: true })),
-      map((text) => {
-        buffer += text;
-        const events: Array<ResourceEvent<T, S, K>> = [];
-
-        // Find complete JSON objects in the buffer
-        let startIndex = buffer.indexOf('{');
-        while (startIndex !== -1) {
-          try {
-            const endIndex = this.findJsonEnd(buffer, startIndex);
-            if (endIndex === -1) {
-              break;
-            }
-
-            const jsonStr = buffer.substring(startIndex, endIndex + 1);
-            const event = JSON.parse(jsonStr) as ResourceEvent<T, S, K>;
-            events.push(event);
-
-            // Remove processed data from buffer
-            buffer = buffer.substring(endIndex + 1);
-            startIndex = buffer.indexOf('{');
-          } catch (e) {
-            // If JSON.parse fails, move to next potential object
-            buffer = buffer.substring(startIndex + 1);
-            startIndex = buffer.indexOf('{');
-          }
-        }
-
-        return events;
-      }),
-      filter((events) => events.length > 0),
-      switchMap((events) => from(events))
-    );
-  }
-
-  private findJsonEnd(str: string, startIndex: number): number {
-    let brackets = 0;
-    let inString = false;
-    let escapeNext = false;
-
-    for (let i = startIndex; i < str.length; i++) {
-      const char = str[i];
-
-      if (escapeNext) {
-        escapeNext = false;
-        continue;
-      }
-
-      if (char === '\\' && inString) {
-        escapeNext = true;
-        continue;
-      }
-
-      if (char === '"' && !escapeNext) {
-        inString = !inString;
-        continue;
-      }
-
-      if (!inString) {
-        if (char === '{') {
-          brackets++;
-        }
-        if (char === '}') {
-          brackets--;
-          if (brackets === 0) {
-            return i;
-          }
-        }
-      }
+    const { name, ...rest } = params ?? {}; // name needs to be added to fieldSelector
+    const requestParams = {
+      ...rest,
+      watch: true,
+      labelSelector: this.parseListOptionsSelector(params?.labelSelector),
+      fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
+    };
+    if (name) {
+      requestParams.fieldSelector = `metadata.name=${name}`;
     }
-
-    return -1;
+    return getBackendSrv()
+      .chunked({
+        url: this.url,
+        params: requestParams,
+        ...config,
+      })
+      .pipe(
+        filter((response) => response.ok && response.data instanceof Uint8Array),
+        map((response) => {
+          const text = decoder.decode(response.data);
+          return text.split('\n');
+        }),
+        mergeMap((text) => from(text)),
+        filter((line) => line.length > 0),
+        map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            console.warn('Invalid JSON in watch stream:', e);
+            return null;
+          }
+        }),
+        filter((event): event is ResourceEvent<T, S, K> => event !== null),
+        retry({ count: 3, delay: 1000 }),
+        catchError((error) => {
+          console.error('Watch stream error:', error);
+          throw error;
+        })
+      );
   }
 
   public async subresource<S>(name: string, path: string): Promise<S> {
@@ -242,48 +188,3 @@ export const parseListOptionsSelector = (selector: ListOptionsLabelSelector | Li
     .filter(Boolean)
     .join(',');
 };
-
-/**
- * Creates an Observable source from a ReadableStream source that will emit any
- * values emitted by the stream.
- *
- * https://github.com/rxjs-ninja/rxjs-ninja/blob/main/libs/rxjs/utility/src/lib/from-readable-stream.ts
- */
-function fromReadableStream<T extends unknown>(
-  stream: ReadableStream<T>,
-  signal?: AbortSignal,
-  queueStrategy?: QueuingStrategy,
-  throwEndAsError = false
-): Observable<T> {
-  function createStream(subscriber: Subscriber<T>) {
-    return new WritableStream<T>(
-      {
-        write: (value) => subscriber.next(value),
-        abort: (error) => {
-          if (throwEndAsError) {
-            subscriber.error(error);
-          } else if (!subscriber.closed) {
-            subscriber.complete();
-          }
-        },
-        close: () => {
-          if (!subscriber.closed) {
-            subscriber.complete();
-          }
-        },
-      },
-      queueStrategy
-    );
-  }
-
-  return new Observable<T>((subscriber) => {
-    stream
-      .pipeTo(createStream(subscriber), { signal })
-      .then(() => {
-        return !subscriber.closed && subscriber.complete();
-      })
-      .catch((error) => subscriber.error(error));
-
-    return () => !stream.locked && stream.cancel();
-  });
-}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -65,11 +66,12 @@ func TestParseWebhooks(t *testing.T) {
 		{"pull_request", "opened", provisioning.WebhookResponse{
 			Code: http.StatusAccepted, // 202
 			Job: &provisioning.JobSpec{
-				Action: provisioning.JobActionPullRequest,
-				Ref:    "dashboard/1733653266690",
-				Hash:   "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
-				PR:     12,
-				URL:    "https://github.com/grafana/git-ui-sync-demo/pull/12",
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionPullRequest,
+				Ref:        "dashboard/1733653266690",
+				Hash:       "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
+				PR:         12,
+				URL:        "https://github.com/grafana/git-ui-sync-demo/pull/12",
 			},
 		}},
 		{"push", "different_branch", provisioning.WebhookResponse{
@@ -78,13 +80,15 @@ func TestParseWebhooks(t *testing.T) {
 		{"push", "nothing_relevant", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
 			Job: &provisioning.JobSpec{ // we want to always push a sync job
-				Action: provisioning.JobActionSync,
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionSync,
 			},
 		}},
 		{"push", "nested", provisioning.WebhookResponse{
 			Code: http.StatusAccepted,
 			Job: &provisioning.JobSpec{
-				Action: provisioning.JobActionSync,
+				Repository: "unit-test-repo",
+				Action:     provisioning.JobActionSync,
 			},
 		}},
 		{"issue_comment", "created", provisioning.WebhookResponse{
@@ -94,6 +98,9 @@ func TestParseWebhooks(t *testing.T) {
 
 	gh := &githubRepository{
 		config: &provisioning.Repository{
+			ObjectMeta: v1.ObjectMeta{
+				Name: "unit-test-repo",
+			},
 			Spec: provisioning.RepositorySpec{
 				GitHub: &provisioning.GitHubRepositoryConfig{
 					Repository: "git-ui-sync-demo",

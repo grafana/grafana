@@ -8,6 +8,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { AnnoKeyRepoName } from '../../apiserver/types';
+import { Repository } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
@@ -17,7 +18,7 @@ interface SaveDashboardAsFormDTO {
   firstName?: string;
   title: string;
   description: string;
-  folder: { uid?: string; title?: string; repository?: string };
+  folder: { uid?: string; title?: string };
   copyTags: boolean;
 }
 
@@ -131,13 +132,14 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
       <Field label="Folder">
         <FolderPicker
-          onChange={(uid: string | undefined, title: string | undefined, repository?: string) => {
-            setValue('folder', { uid, title, repository });
+          onChange={(uid: string | undefined, title: string | undefined, repository?: Repository) => {
+            const name = repository?.metadata?.name;
+            setValue('folder', { uid, title });
             const folderUid = dashboard.state.meta.folderUid;
             setHasFolderChanged(uid !== folderUid);
             dashboard.setState({
               meta: {
-                k8s: { annotations: { [AnnoKeyRepoName]: repository } },
+                k8s: name ? { annotations: { [AnnoKeyRepoName]: name } } : undefined,
                 folderUid: uid,
               },
             });

@@ -30,7 +30,6 @@ export type RepositorySpec = {
   s3?: S3RepositoryConfig;
   type: 'github' | 'local' | 's3';
   editing: EditingOptions;
-  preferYaml?: boolean;
   linting?: boolean;
 };
 
@@ -197,3 +196,10 @@ export interface ListApiArg extends ListOptions {
   timeoutSeconds?: number;
   watch?: boolean;
 }
+
+export type ExportOptions = {
+  folder?: string;
+  branch?: string; // '*dummy*' will trigger fake export
+  prefix?: string;
+  history: boolean;
+};

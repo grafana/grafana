@@ -490,7 +490,7 @@ describe('Language completion provider', () => {
 
       const instance = new LanguageProvider(datasourceWithLabels);
       const labels = await instance.fetchLabels();
-      expect(labels).toEqual(['bar', 'foo']);
+      expect(labels).toEqual(['__name__', 'bar', 'foo']);
     });
   });
 });

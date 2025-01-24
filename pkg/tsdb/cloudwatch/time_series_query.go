@@ -102,18 +102,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 					return err
 				}
 
-				newLabelParsingEnabled := features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing)
-				requestQueries, err = e.getDimensionValuesForWildcards(ctx, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit, func(q *models.CloudWatchQuery) bool {
-					if q.MetricQueryType == models.MetricQueryTypeSearch && (q.MatchExact || newLabelParsingEnabled) {
-						return true
-					}
-
-					if q.MetricQueryType == models.MetricQueryTypeQuery && q.MetricEditorMode == models.MetricEditorModeRaw {
-						return true
-					}
-
-					return false
-				})
+				requestQueries, err = e.getDimensionValuesForWildcards(ctx, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit, shouldSkipFetchingWildcards)
 				if err != nil {
 					return err
 				}

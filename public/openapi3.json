@@ -2662,6 +2662,9 @@
       },
       "AlertRuleEditorSettings": {
         "properties": {
+          "simplified_notifications_section": {
+            "type": "boolean"
+          },
           "simplified_query_and_expressions_section": {
             "type": "boolean"
           }
@@ -3162,13 +3165,12 @@
           "ids": {
             "description": "Panel IDs that should be included or excluded",
             "items": {
-              "format": "int64",
+              "format": "uint8",
               "type": "integer"
             },
             "type": "array"
           }
         },
-        "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
         "type": "object"
       },
       "AnnotationPermission": {
@@ -3187,7 +3189,7 @@
         "properties": {
           "builtIn": {
             "description": "Set to 1 for the standard annotation query all dashboards have by default.",
-            "format": "float",
+            "format": "double",
             "type": "number"
           },
           "datasource": {
@@ -3949,20 +3951,10 @@
       },
       "CookiePreferences": {
         "properties": {
-          "analytics": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "functional": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "performance": {
-            "additionalProperties": {},
-            "type": "object"
-          }
+          "analytics": {},
+          "functional": {},
+          "performance": {}
         },
-        "title": "CookiePreferences defines model for CookiePreferences.",
         "type": "object"
       },
       "CookieType": {
@@ -5136,23 +5128,23 @@
           "type": {
             "enum": [
               "alertmanager",
-              " dingding",
-              " discord",
-              " email",
-              " googlechat",
-              " kafka",
-              " line",
-              " opsgenie",
-              " pagerduty",
-              " pushover",
-              " sensugo",
-              " slack",
-              " teams",
-              " telegram",
-              " threema",
-              " victorops",
-              " webhook",
-              " wecom"
+              "dingding",
+              "discord",
+              "email",
+              "googlechat",
+              "kafka",
+              "line",
+              "opsgenie",
+              "pagerduty",
+              "pushover",
+              "sensugo",
+              "slack",
+              "teams",
+              "telegram",
+              "threema",
+              "victorops",
+              "webhook",
+              "wecom"
             ],
             "example": "webhook",
             "type": "string"
@@ -5225,10 +5217,6 @@
           "message"
         ],
         "type": "object"
-      },
-      "ErrorSource": {
-        "description": "ErrorSource type defines the source of the error",
-        "type": "string"
       },
       "ErrorType": {
         "title": "ErrorType models the different API error types.",
@@ -6986,7 +6974,6 @@
             "type": "string"
           }
         },
-        "title": "LibraryElementDTOMetaUser defines model for LibraryElementDTOMetaUser.",
         "type": "object"
       },
       "LibraryElementResponse": {
@@ -7372,7 +7359,6 @@
             "type": "array"
           }
         },
-        "title": "NavbarPreference defines model for NavbarPreference.",
         "type": "object"
       },
       "NewApiKeyResult": {
@@ -8569,7 +8555,7 @@
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
           "theme": {
-            "description": "Theme light, dark, empty is default",
+            "description": "light, dark, empty is default",
             "type": "string"
           },
           "timezone": {
@@ -8577,7 +8563,7 @@
             "type": "string"
           },
           "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "description": "day of the week (sunday, monday, etc)",
             "type": "string"
           }
         },
@@ -9042,11 +9028,10 @@
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
-            "description": "HomeTab one of: '' | 'query' | 'starred';",
+            "description": "one of: '' | 'query' | 'starred';",
             "type": "string"
           }
         },
-        "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
         "type": "object"
       },
       "QueryHistoryResponse": {
@@ -9928,6 +9913,9 @@
       },
       "RuleDiscovery": {
         "properties": {
+          "groupNextToken": {
+            "type": "string"
+          },
           "groups": {
             "items": {
               "$ref": "#/components/schemas/RuleGroup"
@@ -12718,6 +12706,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -26239,7 +26228,7 @@
             "description": "NotificationTemplates"
           }
         },
-        "summary": "Get all notification templates.",
+        "summary": "Get all notification template groups.",
         "tags": [
           "provisioning"
         ]
@@ -26250,7 +26239,7 @@
         "operationId": "RouteDeleteTemplate",
         "parameters": [
           {
-            "description": "Template name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26282,7 +26271,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Delete a template.",
+        "summary": "Delete a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26291,7 +26280,7 @@
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26322,7 +26311,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Get a notification template.",
+        "summary": "Get a notification template group.",
         "tags": [
           "provisioning"
         ]
@@ -26331,7 +26320,7 @@
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
-            "description": "Template Name",
+            "description": "Template group name",
             "in": "path",
             "name": "name",
             "required": true,
@@ -26389,7 +26378,7 @@
             "description": "PublicError"
           }
         },
-        "summary": "Updates an existing notification template.",
+        "summary": "Updates an existing notification template group.",
         "tags": [
           "provisioning"
         ]

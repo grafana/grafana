@@ -81,11 +81,6 @@ type RepositorySpec struct {
 	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
 	Folder string `json:"folder,omitempty"`
 
-	// Should we prefer emitting YAML for this repository, e.g. upon export?
-	// Editing existing dashboards will continue to emit the file format used in the repository. (TODO: implement this)
-	// If you delete and then recreate a dashboard, it will switch to the preferred format.
-	PreferYAML bool `json:"preferYaml,omitempty"`
-
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 
@@ -130,6 +125,9 @@ type RepositoryStatus struct {
 
 	// Sync information with the last sync information
 	Sync SyncStatus `json:"sync"`
+
+	// The object count when sync last ran
+	Stats []ResourceCount `json:"stats,omitempty"`
 
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
@@ -282,9 +280,7 @@ type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
-	// kubernetes/kubernetes#126809
-	Items []FileItem `json:"files,omitempty"`
+	Items []FileItem `json:"items,omitempty"`
 }
 
 type FileItem struct {
@@ -293,6 +289,43 @@ type FileItem struct {
 	Hash     string `json:"hash,omitempty"`
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []ResourceListItem `json:"items,omitempty"`
+}
+
+type ResourceListItem struct {
+	Path     string `json:"path"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Name     string `json:"name"` // the k8s identifier
+	Hash     string `json:"hash"`
+	Time     int64  `json:"time,omitempty"`
+
+	Title  string `json:"title,omitempty"`
+	Folder string `json:"folder,omitempty"`
+}
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceStats struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []ResourceCount `json:"items,omitempty"`
+}
+
+type ResourceCount struct {
+	Repository string `json:"repository,omitempty"`
+	Group      string `json:"group"`
+	Resource   string `json:"resource"`
+	Count      int64  `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource

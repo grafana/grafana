@@ -9,8 +9,8 @@ import { createDashboardShareUrl, createShortLink, getShareUrlParams } from 'app
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
+import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState, ShareView } from './types';

@@ -206,9 +206,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
       <Field label={'Linting'}>
         <Switch {...register('linting')} id={'linting'} />
       </Field>
-      <Field label={'Prefer YAML'}>
-        <Switch {...register('preferYaml')} id={'preferYaml'} />
-      </Field>
       <FieldSet label={'Editing options'}>
         <Field label={'Create'} description={'Enable creating files on repository'}>
           <Switch {...register('editing.create')} id={'editing.create'} />

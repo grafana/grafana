@@ -13,6 +13,6 @@ export interface ProvisioningPreview {
 }
 
 export enum WorkflowOption {
-  Branch = 'branch',
+  Direct = 'direct',
   PullRequest = 'pr',
 }

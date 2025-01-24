@@ -55,12 +55,10 @@ func (c *syncConnector) Connect(
 		job, err := c.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: cfg.Namespace,
-				Labels: map[string]string{
-					"repository": cfg.Name,
-				},
 			},
 			Spec: provisioning.JobSpec{
-				Action: provisioning.JobActionSync,
+				Action:     provisioning.JobActionSync,
+				Repository: cfg.Name,
 			},
 		})
 		if err != nil {

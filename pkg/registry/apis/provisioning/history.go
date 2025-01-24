@@ -9,8 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type historySubresource struct {
@@ -49,11 +49,11 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 }
 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := slogctx.From(ctx).With("logger", "history-subresource")
-	ctx = slogctx.To(ctx, logger)
+	logger := logging.FromContext(ctx).With("logger", "history-subresource")
+	ctx = logging.Context(ctx, logger)
 	repo, err := h.repoGetter.GetRepository(ctx, name)
 	if err != nil {
-		logger.DebugContext(ctx, "failed to find repository", "error", err)
+		logger.Debug("failed to find repository", "error", err)
 		return nil, err
 	}
 
@@ -69,11 +69,11 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		}
 
 		logger := logger.With("ref", ref, "path", filePath)
-		ctx := slogctx.To(r.Context(), logger)
+		ctx := logging.Context(r.Context(), logger)
 
 		commits, err := repo.History(ctx, filePath, ref)
 		if err != nil {
-			logger.DebugContext(ctx, "failed to get history", "error", err)
+			logger.Debug("failed to get history", "error", err)
 			responder.Error(err)
 			return
 		}

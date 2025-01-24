@@ -14,10 +14,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type filesConnector struct {
@@ -31,14 +31,6 @@ func (*filesConnector) New() runtime.Object {
 }
 
 func (*filesConnector) Destroy() {}
-
-func (*filesConnector) NamespaceScoped() bool {
-	return true
-}
-
-func (*filesConnector) GetSingularName() string {
-	return "Resource"
-}
 
 func (*filesConnector) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
@@ -57,11 +49,11 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := slogctx.From(ctx).With("logger", "files-connector", "repository_name", name)
-	ctx = slogctx.To(ctx, logger)
+	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
+	ctx = logging.Context(ctx, logger)
 	repo, err := s.getter.GetRepository(ctx, name)
 	if err != nil {
-		logger.DebugContext(ctx, "failed to find repository", "error", err)
+		logger.Debug("failed to find repository", "error", err)
 		return nil, err
 	}
 
@@ -70,12 +62,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		ref := query.Get("ref")
 		message := query.Get("message")
 		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
-		ctx := slogctx.To(r.Context(), logger)
+		ctx := logging.Context(r.Context(), logger)
 
 		prefix := fmt.Sprintf("/%s/files", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
-			logger.DebugContext(r.Context(), "failed to find a file path in the URL")
+			logger.Debug("failed to find a file path in the URL")
 			responder.Error(apierrors.NewBadRequest("invalid request path"))
 			return
 		}
@@ -112,7 +104,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case ".json", ".yaml", ".yml":
 			// ok
 		default:
-			logger.DebugContext(ctx, "got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
+			logger.Debug("got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
 			responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
 			return
 		}
@@ -133,11 +125,17 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		if err != nil {
-			logger.DebugContext(ctx, "got an error after processing request", "error", err)
+			logger.Debug("got an error after processing request", "error", err)
 			responder.Error(err)
 			return
 		}
-		logger.DebugContext(ctx, "request resulted in valid object", "object", obj)
+
+		// something failed
+		if len(obj.Errors) > 0 {
+			code = http.StatusInternalServerError
+		}
+
+		logger.Debug("request resulted in valid object", "object", obj)
 		responder.Object(code, obj)
 	}), nil
 }
@@ -259,8 +257,8 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 		return nil, err
 	}
 
-	logger := slogctx.From(ctx).With("path", path)
-	logger.InfoContext(ctx, "TODO! trigger sync for this file we just deleted...")
+	logger := logging.FromContext(ctx).With("path", path)
+	logger.Info("TODO! trigger sync for this file we just deleted...")
 
 	return &provisioning.ResourceWrapper{
 		Path: path,
@@ -269,9 +267,7 @@ func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repositor
 }
 
 var (
-	_ rest.Storage              = (*filesConnector)(nil)
-	_ rest.Connecter            = (*filesConnector)(nil)
-	_ rest.Scoper               = (*filesConnector)(nil)
-	_ rest.SingularNameProvider = (*filesConnector)(nil)
-	_ rest.StorageMetadata      = (*filesConnector)(nil)
+	_ rest.Storage         = (*filesConnector)(nil)
+	_ rest.Connecter       = (*filesConnector)(nil)
+	_ rest.StorageMetadata = (*filesConnector)(nil)
 )

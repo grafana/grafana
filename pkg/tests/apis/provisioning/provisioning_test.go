@@ -44,6 +44,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagKubernetesFolders, // Required for tests that deal with folders.
+			featuremgmt.FlagUnifiedStorageSearch,
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
 	})
@@ -187,6 +188,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"singularName": "",
 					"namespaced": true,
 					"kind": "HistoryList",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "repositories/resources",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "ResourceList",
 					"verbs": [
 						"get"
 					]

@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 // resourcePreview represents a resource that has changed in a pull request.
@@ -111,9 +111,9 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		return nil
 	}
 
-	logger := slogctx.From(ctx).With("pr", job.Spec.PR)
-	logger.InfoContext(ctx, "process pull request")
-	defer logger.InfoContext(ctx, "pull request processed")
+	logger := logging.FromContext(ctx).With("pr", job.Spec.PR)
+	logger.Info("process pull request")
+	defer logger.Info("pull request processed")
 
 	spec := job.Spec
 	base := cfg.GitHub.Branch
@@ -131,14 +131,14 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 	}
 
 	if len(files) == 0 {
-		logger.InfoContext(ctx, "no files to process")
+		logger.Info("no files to process")
 		return nil
 	}
 
 	previews := make([]resourcePreview, 0, len(files))
 
 	for _, f := range files {
-		if c.parser.ShouldIgnore(f.Path) {
+		if resources.ShouldIgnorePath(f.Path) {
 			continue
 		}
 
@@ -151,9 +151,9 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 		parsed, err := c.parser.Parse(ctx, fileInfo, true)
 		if err != nil {
 			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-				logger.DebugContext(ctx, "file is not a resource", "path", f.Path)
+				logger.Debug("file is not a resource", "path", f.Path)
 			} else {
-				logger.ErrorContext(ctx, "failed to parse resource", "path", f.Path, "error", err)
+				logger.Error("failed to parse resource", "path", f.Path, "error", err)
 			}
 			continue
 		}
@@ -168,7 +168,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 				return fmt.Errorf("comment pull request file %s: %w", f.Path, err)
 			}
 
-			logger.InfoContext(ctx, "lint comment added")
+			logger.Info("lint comment added")
 		}
 
 		preview := resourcePreview{
@@ -200,7 +200,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 			}
 			preview.PreviewScreenshotURL = screenshotURL
 
-			logger.InfoContext(ctx, "dashboard preview added", "screenshotURL", screenshotURL)
+			logger.Info("dashboard preview added", "screenshotURL", screenshotURL)
 		}
 
 		previews = append(previews, preview)
@@ -216,7 +216,7 @@ func (c *PullRequestCommenter) Process(ctx context.Context, job provisioning.Job
 			return fmt.Errorf("comment pull request: %w", err)
 		}
 
-		logger.InfoContext(ctx, "previews comment added", "number", len(previews))
+		logger.Info("previews comment added", "number", len(previews))
 	}
 
 	return nil

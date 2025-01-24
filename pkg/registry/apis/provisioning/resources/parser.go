@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,12 +15,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
@@ -41,13 +40,12 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 		repo:   config,
 		client: client,
 		kinds:  kinds,
-		mapper: NamesFromHashedRepoPath,
 	}
 	if repo.Config().Spec.Linting {
 		linterFactory := lint.NewDashboardLinterFactory()
 		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
 
-		logger := slogctx.From(ctx)
+		logger := logging.FromContext(ctx)
 		var linter lint.Linter
 		switch {
 		case err == nil:
@@ -71,8 +69,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 
 type Parser struct {
 	// The target repository
-	repo   *provisioning.Repository
-	mapper NameMapper
+	repo *provisioning.Repository
 
 	// client helper (for this namespace?)
 	client *DynamicClient
@@ -120,31 +117,22 @@ func (r *Parser) Client() *DynamicClient {
 	return r.client
 }
 
-func (r *Parser) ShouldIgnore(p string) bool {
-	ext := filepath.Ext(p)
-	if ext == ".yaml" || ext == ".json" {
-		return false
-	}
-
-	return true
-}
-
 func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
-	logger := slogctx.From(ctx).With("path", info.Path, "validate", validate)
+	logger := logging.FromContext(ctx).With("path", info.Path, "validate", validate)
 	parsed = &ParsedResource{
 		Info: info,
 	}
 
-	if r.ShouldIgnore(info.Path) {
+	if ShouldIgnorePath(info.Path) {
 		return parsed, ErrUnableToReadResourceBytes
 	}
 
-	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
+	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
 	if err != nil {
-		logger.DebugContext(ctx, "failed to find GVK of the input data", "error", err)
+		logger.Debug("failed to find GVK of the input data", "error", err)
 		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil {
-			logger.DebugContext(ctx, "also failed to get GVK from fallback loader?", "error", err)
+			logger.Debug("also failed to get GVK from fallback loader?", "error", err)
 			return parsed, err
 		}
 	}
@@ -164,12 +152,12 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 	obj.SetNamespace(cfg.GetNamespace())
 	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 		Name:      cfg.Name,
-		Path:      joinPathWithRef(info.Path, info.Ref),
+		Path:      info.Path, // joinPathWithRef(info.Path, info.Ref),
 		Hash:      info.Hash,
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
 
-	objName, folderName := r.mapper(cfg.Name, info.Path, obj)
+	objName, folderName := NamesFromHashedRepoPath(cfg.Name, info.Path)
 	obj.SetName(objName)
 	parsed.Meta.SetFolder(folderName)
 
@@ -228,9 +216,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
-	// TODO... should use the validated one?
-	obj := f.Obj.Object
-	delete(obj, "metadata")
+	// TODO? should we use the dryRun (validated) version?
+	obj := make(map[string]any)
+	for k, v := range f.Obj.Object {
+		if k != "metadata" {
+			obj[k] = v
+		}
+	}
 
 	switch path.Ext(f.Info.Path) {
 	// JSON pretty print
@@ -289,11 +281,13 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 	return wrap
 }
 
-// Matches the frontend logic that pulls ref from the path
-// public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx#L32
-func joinPathWithRef(p, r string) string {
-	if r == "" {
-		return p
-	}
-	return fmt.Sprintf("%s#%s", p, r)
+// ShouldIgnorePath determines if the path given is worth looking at.
+// If this returns true, skip processing it.
+// JSON and YAML files are valid paths. Anything else isn't.
+func ShouldIgnorePath(p string) bool {
+	ext := path.Ext(p)
+	// .yaml is the official extension per the spec, but .yml is widespread, too. (even this repo uses the unofficial one a lot!)
+	return ext != ".yml" && ext != ".yaml" &&
+		// We only support YAML, but JSON is sometimes generated from other tools, and is a valid subset of YAML.
+		ext != ".json"
 }

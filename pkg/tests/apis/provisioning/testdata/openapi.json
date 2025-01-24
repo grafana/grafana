@@ -1243,8 +1243,41 @@
         "tags": [
           "Repository"
         ],
-        "description": "connect POST requests to export of Repository",
+        "description": "Export from grafana into the remote repository",
         "operationId": "createRepositoryExport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "description": "Target branch for export",
+                    "type": "string"
+                  },
+                  "folder": {
+                    "description": "The source folder (or empty) to export",
+                    "type": "string"
+                  },
+                  "history": {
+                    "description": "Preserve history (if possible)",
+                    "type": "boolean"
+                  },
+                  "prefix": {
+                    "description": "File prefix",
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "branch": "target-branch",
+                "folder": "grafan-folder-ref",
+                "history": true,
+                "prefix": "prefix/in/repo/tree"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -1331,8 +1364,7 @@
                       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
                       "type": "string"
                     },
-                    "files": {
-                      "description": "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
+                    "items": {
                       "type": "array",
                       "items": {
                         "default": {}
@@ -1865,6 +1897,55 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/resources": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "connect GET requests to resources of Repository",
+        "operationId": "getRepositoryResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "kind": "ResourceList",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/status": {
       "get": {
         "tags": [
@@ -2345,6 +2426,58 @@
           }
         }
       ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/stats": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Get resource stats for this namespace",
+        "operationId": "getResourceStats",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Information we can get just from the file listing",
+                  "type": "object",
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "default": {}
+                      }
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "default": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "/apis/provisioning.grafana.app/v0alpha1/repositories": {
       "get": {
@@ -3475,6 +3608,27 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "description": "Target branch for export",
+            "type": "string"
+          },
+          "folder": {
+            "description": "The source folder (or empty) to export",
+            "type": "string"
+          },
+          "history": {
+            "description": "Preserve history (if possible)",
+            "type": "boolean"
+          },
+          "prefix": {
+            "description": "File prefix",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig": {
         "type": "object",
         "properties": {
@@ -3644,6 +3798,14 @@
               "sync"
             ]
           },
+          "export": {
+            "description": "Required when the action is `export`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions"
+              }
+            ]
+          },
           "hash": {
             "type": "string"
           },
@@ -3679,6 +3841,11 @@
           },
           "message": {
             "type": "string"
+          },
+          "progress": {
+            "description": "Optional value 0-1 that can be set while running",
+            "type": "number",
+            "format": "double"
           },
           "started": {
             "type": "integer",
@@ -3873,10 +4040,6 @@
               }
             ]
           },
-          "preferYaml": {
-            "description": "Should we prefer emitting YAML for this repository, e.g. upon export? Editing existing dashboards will continue to emit the file format used in the repository. (TODO: implement this) If you delete and then recreate a dashboard, it will switch to the preferred format.",
-            "type": "boolean"
-          },
           "s3": {
             "description": "The repository in an S3 bucket. Mutually exclusive with local and github.",
             "allOf": [
@@ -3927,6 +4090,18 @@
             "format": "int64",
             "default": 0
           },
+          "stats": {
+            "description": "The object count when sync last ran",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount"
+                }
+              ]
+            }
+          },
           "sync": {
             "description": "Sync information with the last sync information",
             "default": {},
@@ -3943,6 +4118,120 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.WebhookStatus"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount": {
+        "type": "object",
+        "required": [
+          "group",
+          "resource",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "repository": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceList": {
+        "description": "Information we can get just from the file listing",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceListItem"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceList",
+            "version": "__internal"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceListItem": {
+        "type": "object",
+        "required": [
+          "path",
+          "group",
+          "resource",
+          "name",
+          "hash"
+        ],
+        "properties": {
+          "folder": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "hash": {
+            "description": "the k8s identifier",
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "path": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          },
+          "time": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
           }
         }
       },

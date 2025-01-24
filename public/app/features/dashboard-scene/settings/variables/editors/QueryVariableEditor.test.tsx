@@ -39,6 +39,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
         getType: () => VariableSupportType.Custom,
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+        getDefaultQuery: () => 'default-query',
       },
     }),
     getList: () => [defaultDatasource, promDatasource],
@@ -80,7 +81,7 @@ describe('QueryVariableEditor', () => {
 
     return {
       renderer: await act(() => {
-        return render(<QueryVariableEditor variable={variable} onRunQuery={onRunQueryMock} />);
+        return render(<QueryVariableEditor variable={variable} onRunQuery={onRunQueryMock} {...props} />);
       }),
       variable,
       user: userEvent.setup(),
@@ -141,6 +142,30 @@ describe('QueryVariableEditor', () => {
     expect(allValueInput).toHaveValue('custom all value');
   });
 
+  it('should update the variable with default query for the selected DS', async () => {
+    const onRunQueryMock = jest.fn();
+    const variable = new QueryVariable({ datasource: { uid: 'mock-ds-2', type: 'test' }, query: '' });
+
+    const {
+      renderer: { getByTestId },
+    } = await setup({
+      variable,
+      onRunQuery: onRunQueryMock,
+    });
+
+    const queryInput = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+    );
+
+    await waitFor(async () => {
+      expect(onRunQueryMock).toHaveBeenCalledTimes(1);
+      expect(queryInput).toHaveValue('default-query');
+
+      await lastValueFrom(variable.validateAndUpdate());
+      expect(variable.state.query).toBe('default-query');
+    });
+  });
+
   it('should update variable state when changing the datasource', async () => {
     const {
       variable,
@@ -158,8 +183,8 @@ describe('QueryVariableEditor', () => {
     });
 
     expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
-    expect(variable.state.query).toBe('');
-    expect(variable.state.definition).toBe('');
+    expect(variable.state.query).toBe('default-query');
+    expect(variable.state.definition).toBe('default-query');
   });
 
   it('should update the variable state when changing the query', async () => {

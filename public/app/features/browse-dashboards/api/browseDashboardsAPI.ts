@@ -2,13 +2,14 @@ import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { dispatch } from 'app/store/store';
 import {
   DashboardDTO,
   DescendantCount,
@@ -21,6 +22,7 @@ import {
 } from 'app/types';
 
 import { t } from '../../../core/internationalization';
+import { provisioningAPI, RepositoryList } from '../../provisioning/api';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -102,12 +104,14 @@ export const browseDashboardsAPI = createApi({
         url: '/folders',
         params: { parentUid, limit, page, permission },
       }),
+      transformResponse: addRepositoryData,
     }),
 
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+      transformResponse: addRepositoryData,
     }),
 
     // create a new folder
@@ -441,3 +445,28 @@ export const {
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';
+
+// Overloaded function signatures to handle different input types
+async function addRepositoryData(data: FolderListItemDTO[]): Promise<FolderListItemDTO[]>;
+async function addRepositoryData(data: FolderDTO): Promise<FolderDTO>;
+async function addRepositoryData(data: FolderListItemDTO[] | FolderDTO): Promise<FolderListItemDTO[] | FolderDTO> {
+  if (!config.featureToggles.provisioning) {
+    return data;
+  }
+
+  const repositories: RepositoryList = await dispatch(provisioningAPI.endpoints.listRepository.initiate({})).unwrap();
+
+  if (!repositories.items?.length) {
+    return data;
+  }
+
+  const enrichItem = <T extends FolderListItemDTO | FolderDTO>(item: T) => {
+    const repository = repositories.items?.find((repo) => repo.spec?.folder === item.uid);
+    return repository ? { ...item, repository } : item;
+  };
+
+  if (Array.isArray(data)) {
+    return data.map(enrichItem);
+  }
+  return enrichItem(data);
+}

@@ -15,9 +15,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 var subscribedEvents = []string{"push", "pull_request"}
@@ -194,7 +194,7 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 		}
 	}
 	if truncated {
-		logger.WarnContext(ctx, "tree from github was truncated")
+		logger.Warn("tree from github was truncated")
 	}
 
 	entries := make([]FileTreeEntry, 0, len(tree))
@@ -390,7 +390,7 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 	}
 
 	if ok {
-		slogctx.From(ctx).InfoContext(ctx, "branch already exists", "branch", branchName)
+		logging.FromContext(ctx).Info("branch already exists", "branch", branchName)
 
 		return nil
 	}
@@ -470,7 +470,8 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionSync,
+			Repository: r.Config().GetName(),
+			Action:     provisioning.JobActionSync,
 		},
 	}, nil
 }
@@ -519,11 +520,12 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionPullRequest,
-			URL:    pr.GetHTMLURL(),
-			PR:     pr.GetNumber(),
-			Ref:    pr.GetHead().GetRef(),
-			Hash:   pr.GetHead().GetSHA(),
+			Repository: r.Config().GetName(),
+			Action:     provisioning.JobActionPullRequest,
+			URL:        pr.GetHTMLURL(),
+			PR:         pr.GetNumber(),
+			Ref:        pr.GetHead().GetRef(),
+			Hash:       pr.GetHead().GetSHA(),
 		},
 	}, nil
 }
@@ -588,7 +590,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 		case "unchanged":
 			// do nothing
 		default:
-			logger.ErrorContext(ctx, "ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
+			logger.Error("ignore unhandled file", "file", f.GetFilename(), "status", f.GetStatus())
 		}
 	}
 
@@ -645,7 +647,7 @@ func (r *githubRepository) createWebhook(ctx context.Context) (pgh.WebhookConfig
 		return pgh.WebhookConfig{}, err
 	}
 
-	slogctx.From(ctx).InfoContext(ctx, "webhook created", "url", cfg.URL, "id", hook.ID)
+	logging.FromContext(ctx).Info("webhook created", "url", cfg.URL, "id", hook.ID)
 	return hook, nil
 }
 
@@ -725,7 +727,7 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	slogctx.From(ctx).InfoContext(ctx, "webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
+	logging.FromContext(ctx).Info("webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
 	return nil
 }
 
@@ -774,13 +776,13 @@ func (r *githubRepository) OnDelete(ctx context.Context) error {
 	return r.deleteWebhook(ctx)
 }
 
-func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, *slog.Logger) {
-	logger := slogctx.From(ctx)
+func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {
+	logger := logging.FromContext(ctx)
 
 	type containsGh int
 	var containsGhKey containsGh
 	if ctx.Value(containsGhKey) != nil {
-		return ctx, slogctx.From(ctx)
+		return ctx, logging.FromContext(ctx)
 	}
 
 	if ref == "" {
@@ -789,7 +791,7 @@ func (r *githubRepository) logger(ctx context.Context, ref string) (context.Cont
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 	logger = logger.With(slog.Group("github_repository", "owner", owner, "name", repo, "ref", ref))
-	ctx = slogctx.To(ctx, logger)
+	ctx = logging.Context(ctx, logger)
 	// We want to ensure we don't add multiple github_repository keys. With doesn't deduplicate the keys...
 	ctx = context.WithValue(ctx, containsGhKey, true)
 	return ctx, logger

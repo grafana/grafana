@@ -7,7 +7,14 @@ import { PROVISIONING_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
   if (!config.featureToggles.provisioning) {
-    return [];
+    return [
+      {
+        path: PROVISIONING_URL,
+        component: SafeDynamicImport(
+          () => import(/* webpackChunkName: "SetupWarningPage"*/ 'app/features/provisioning/SetupWarningPage')
+        ),
+      },
+    ];
   }
 
   return [

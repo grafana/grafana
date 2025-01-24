@@ -15,7 +15,7 @@ import { getDataSourceWithInspector } from 'app/features/dashboard/components/In
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { HelpWizard } from './HelpWizard/HelpWizard';

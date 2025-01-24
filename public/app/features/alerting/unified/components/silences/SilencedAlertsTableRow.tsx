@@ -40,7 +40,7 @@ export const SilencedAlertsTableRow = ({ alert, className }: Props) => {
       </tr>
       {!isCollapsed && (
         <tr className={className}>
-          <td></td>
+          <td />
           <td colSpan={5}>
             <AlertLabels labels={alert.labels} size="sm" />
           </td>

@@ -134,6 +134,7 @@ export const TrendPanel = ({
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
+                      hideZeros={options.tooltip.hideZeros}
                     />
                   );
                 }}

@@ -1,7 +1,5 @@
-import debounce from 'debounce-promise';
-import { ChangeEvent, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -11,7 +9,7 @@ import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
-import { RepositorySpec } from '../../provisioning/api';
+import { Repository, RepositorySpec } from '../../provisioning/api';
 import { useCreateOrUpdateRepositoryFile, useFolderRepository, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
@@ -22,23 +20,23 @@ import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
 import { DashboardChangeInfo } from './shared';
 
 type FormData = {
-  ref: string;
+  ref?: string;
   path: string;
   comment?: string;
   repo: string;
   workflow?: WorkflowOption;
   title: string;
   description: string;
-  folder: { uid?: string; title?: string; repository?: string };
+  folder: { uid?: string; title?: string };
 };
 
-function getDefaultValues(meta: DashboardMeta, repository = '') {
+function getDefaultValues(meta: DashboardMeta, repositoryName = '') {
   const anno = meta.k8s?.annotations;
   const timestamp = Date.now();
   const ref = `dashboard/${timestamp}`;
   const pathName = meta.slug || `new-dashboard-${timestamp}`;
   let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
-  const repo = anno?.[AnnoKeyRepoName] ?? repository;
+  const repo = anno?.[AnnoKeyRepoName] ?? repositoryName;
   const idx = path.indexOf('#');
   if (idx > 0) {
     path = path.substring(0, idx);
@@ -49,17 +47,17 @@ function getDefaultValues(meta: DashboardMeta, repository = '') {
     path,
     repo,
     comment: '',
-    folder: { uid: meta.folderUid, title: '', repository: '' },
+    folder: { uid: meta.folderUid, title: '' },
   };
 }
 
 const getDefaultWorkflow = (config?: RepositorySpec) => {
-  return config?.github?.branchWorkflow ? WorkflowOption.PullRequest : WorkflowOption.Branch;
+  return config?.github?.branchWorkflow ? WorkflowOption.PullRequest : WorkflowOption.Direct;
 };
 
 function getWorkflowOptions(branch = 'main') {
   return [
-    { label: `Commit to ${branch}`, value: WorkflowOption.Branch },
+    { label: `Commit to ${branch}`, value: WorkflowOption.Direct },
     { label: 'Create pull request', value: WorkflowOption.PullRequest },
   ];
 }
@@ -96,11 +94,10 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       workflow: WorkflowOption.PullRequest,
     },
   });
-  const [title, ref, workflow, path, comment] = watch(['title', 'ref', 'workflow', 'path', 'comment']);
+  const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
   const isGitHub = repositoryConfig?.type === 'github';
   const href = createPRLink(repositoryConfig, title, ref, comment);
   const { isDirty } = dashboard.state;
-  const navigate = useNavigate();
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -116,7 +113,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, path, saveProvisioned, navigate, repo, ref]);
+  }, [request.isSuccess, request.isError, request.error, dashboard]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -127,14 +124,15 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       return;
     }
 
+    // The dashboard spec
     const saveModel = dashboard.getSaveAsModel({
       isNew: isNew,
       title: title,
       description: description,
     });
 
-    if (workflow === WorkflowOption.Branch) {
-      ref = repositoryConfig?.github?.branch || 'main';
+    if (workflow === WorkflowOption.Direct) {
+      ref = undefined;
     }
 
     action({ ref, name: repo, path, message: comment, body: saveModel });
@@ -164,10 +162,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
           <>
             <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
               <Input
-                {...register('title', { required: 'Required', validate: validateDashboardName })}
-                onChange={debounce(async (e: ChangeEvent<HTMLInputElement>) => {
-                  setValue('title', e.target.value, { shouldValidate: true });
-                }, 400)}
+                {...register('title', { required: 'Dashboard title is required', validate: validateDashboardName })}
               />
             </Field>
             <Field label="Description" invalid={!!errors.description} error={errors.description?.message}>
@@ -181,13 +176,17 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 render={({ field: { ref, value, onChange, ...field } }) => {
                   return (
                     <FolderPicker
-                      onChange={(uid?: string, title?: string, repository?: string) => {
-                        onChange({ uid, title, repository });
-                        if (repository) {
-                          setValue('repo', repository);
+                      onChange={(uid?: string, title?: string, repository?: Repository) => {
+                        onChange({ uid, title });
+                        const name = repository?.metadata?.name;
+                        if (name) {
+                          setValue('repo', name);
                         }
                         dashboard.setState({
-                          meta: { k8s: { annotations: { [AnnoKeyRepoName]: repository } }, folderUid: uid },
+                          meta: {
+                            k8s: name ? { annotations: { [AnnoKeyRepoName]: name } } : undefined,
+                            folderUid: uid,
+                          },
                         });
                       }}
                       value={value.uid}

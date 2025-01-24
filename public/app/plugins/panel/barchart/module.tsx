@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { optsWithHideZeros } from '@grafana/ui/src/options/builder/tooltip';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
@@ -225,7 +226,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
     commonOptionsBuilder.addLegendOptions(builder);
     commonOptionsBuilder.addTextSizeOptions(builder, false);
   })

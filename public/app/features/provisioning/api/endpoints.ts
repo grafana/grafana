@@ -84,6 +84,7 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/export`,
           method: 'POST',
+          body: queryArg.body,
         }),
         invalidatesTags: ['Repository'],
       }),
@@ -167,6 +168,12 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
+      getRepositoryResources: build.query<GetRepositoryResourcesResponse, GetRepositoryResourcesArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/resources`,
+        }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryStatus: build.query<GetRepositoryStatusResponse, GetRepositoryStatusArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
@@ -218,6 +225,12 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
+      getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
+        query: (queryArg) => ({
+          url: `/stats`,
+        }),
+        providesTags: ['Repository'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -267,10 +280,16 @@ export type DeleteRepositoryArg = {
 export type CreateRepositoryExportResponse = Job;
 export type CreateRepositoryExportArg = {
   name: string;
+  body: {
+    branch?: string;
+    folder?: string;
+    history?: boolean;
+    prefix?: string;
+  };
 };
 export type GetRepositoryFilesResponse = {
   apiVersion?: string;
-  files?: any[];
+  items?: any[];
   kind?: string;
   metadata?: any;
 };
@@ -322,6 +341,10 @@ export type GetRepositoryHistoryWithPathArg = {
   path: string;
   ref?: string;
 };
+export type GetRepositoryResourcesResponse = ResourceList;
+export type GetRepositoryResourcesArg = {
+  name: string;
+};
 export type GetRepositoryStatusResponse = Repository;
 export type GetRepositoryStatusArg = {
   name: string;
@@ -359,6 +382,13 @@ export type CreateRepositoryWebhookResponse = WebhookResponse;
 export type CreateRepositoryWebhookArg = {
   name: string;
 };
+export type GetResourceStatsResponse = {
+  apiVersion?: string;
+  items?: any[];
+  kind?: string;
+  metadata?: any;
+};
+export type GetResourceStatsArg = {};
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {
@@ -399,8 +429,15 @@ export type ObjectMeta = {
   selfLink?: string;
   uid?: string;
 };
+export type ExportOptions = {
+  branch?: string;
+  folder?: string;
+  history?: boolean;
+  prefix?: string;
+};
 export type JobSpec = {
   action: 'export' | 'pr' | 'sync';
+  export?: ExportOptions;
   hash?: string;
   pr?: number;
   ref?: string;
@@ -410,6 +447,7 @@ export type JobStatus = {
   errors?: string[];
   finished?: number;
   message?: string;
+  progress?: number;
   started?: number;
   state?: 'error' | 'pending' | 'success' | 'working';
 };
@@ -460,7 +498,6 @@ export type RepositorySpec = {
   github?: GitHubRepositoryConfig;
   linting?: boolean;
   local?: LocalRepositoryConfig;
-  preferYaml?: boolean;
   s3?: S3RepositoryConfig;
   title: string;
   type: 'github' | 'local' | 's3';
@@ -469,6 +506,12 @@ export type HealthStatus = {
   checked?: number;
   healthy: boolean;
   message?: string[];
+};
+export type ResourceCount = {
+  count: number;
+  group: string;
+  repository?: string;
+  resource: string;
 };
 export type SyncStatus = {
   finished?: number;
@@ -488,6 +531,7 @@ export type WebhookStatus = {
 export type RepositoryStatus = {
   health: HealthStatus;
   observedGeneration: number;
+  stats?: ResourceCount[];
   sync: SyncStatus;
   webhook: WebhookStatus;
 };
@@ -574,6 +618,22 @@ export type ResourceWrapper = {
   resource: ResourceObjects;
   timestamp?: Time;
 };
+export type ResourceListItem = {
+  folder?: string;
+  group: string;
+  hash: string;
+  name: string;
+  path: string;
+  resource: string;
+  time?: number;
+  title?: string;
+};
+export type ResourceList = {
+  apiVersion?: string;
+  items?: ResourceListItem[];
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type TestResults = {
   apiVersion?: string;
   code: number;
@@ -605,10 +665,12 @@ export const {
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
+  useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
   useCreateRepositorySyncMutation,
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,
+  useGetResourceStatsQuery,
 } = injectedRtkApi;

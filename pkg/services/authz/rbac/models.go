@@ -1,6 +1,6 @@
 package rbac
 
-import "github.com/grafana/authlib/claims"
+import claims "github.com/grafana/authlib/types"
 
 type CheckRequest struct {
 	Namespace    claims.NamespaceInfo

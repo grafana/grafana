@@ -346,7 +346,8 @@ func (r *localRepository) Webhook(ctx context.Context, req *http.Request) (*prov
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
-			Action: provisioning.JobActionSync, // sync the latest changes
+			Repository: r.Config().GetName(),
+			Action:     provisioning.JobActionSync, // sync the latest changes
 		},
 	}, nil
 }

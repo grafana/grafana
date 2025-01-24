@@ -48,6 +48,36 @@ func (_m *FakeDashboardStore) Count(_a0 context.Context, _a1 *quota.ScopeParamet
 	return r0, r1
 }
 
+// CountInOrg provides a mock function with given fields: _a0, _a1
+func (_m *FakeDashboardStore) CountInOrg(_a0 context.Context, _a1 int64) (int64, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Count")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(int64)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CountDashboardsInFolders provides a mock function with given fields: ctx, request
 func (_m *FakeDashboardStore) CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error) {
 	ret := _m.Called(ctx, request)
@@ -82,6 +112,24 @@ func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDa
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteDashboard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *DeleteDashboardCommand) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CleanupAfterDelete provides a mock function with given fields: ctx, cmd
+func (_m *FakeDashboardStore) CleanupAfterDelete(ctx context.Context, cmd *DeleteDashboardCommand) error {
+	ret := _m.Called(ctx, cmd)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CleanupAfterDelete")
 	}
 
 	var r0 error
@@ -208,7 +256,6 @@ func (_m *FakeDashboardStore) GetAllDashboards(ctx context.Context) ([]*Dashboar
 	return r0, r1
 }
 
-
 // GetAllDashboardsByOrgId provides a mock function with given fields: ctx
 func (_m *FakeDashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error) {
 	ret := _m.Called(ctx, orgID)
@@ -238,7 +285,6 @@ func (_m *FakeDashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID
 
 	return r0, r1
 }
-
 
 // GetDashboard provides a mock function with given fields: ctx, query
 func (_m *FakeDashboardStore) GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error) {
@@ -588,34 +634,22 @@ func (_m *FakeDashboardStore) SaveDashboard(ctx context.Context, cmd SaveDashboa
 	return r0, r1
 }
 
-// SaveProvisionedDashboard provides a mock function with given fields: ctx, cmd, provisioning
-func (_m *FakeDashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error) {
-	ret := _m.Called(ctx, cmd, provisioning)
+// SaveProvisionedDashboard provides a mock function with given fields: ctx, dash, provisioning
+func (_m *FakeDashboardStore) SaveProvisionedDashboard(ctx context.Context, dash *Dashboard, provisioning *DashboardProvisioning) error {
+	ret := _m.Called(ctx, dash, provisioning)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveProvisionedDashboard")
 	}
 
-	var r0 *Dashboard
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, SaveDashboardCommand, *DashboardProvisioning) (*Dashboard, error)); ok {
-		return rf(ctx, cmd, provisioning)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, SaveDashboardCommand, *DashboardProvisioning) *Dashboard); ok {
-		r0 = rf(ctx, cmd, provisioning)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *Dashboard, *DashboardProvisioning) error); ok {
+		r0 = rf(ctx, dash, provisioning)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*Dashboard)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, SaveDashboardCommand, *DashboardProvisioning) error); ok {
-		r1 = rf(ctx, cmd, provisioning)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // SoftDeleteDashboard provides a mock function with given fields: ctx, orgID, dashboardUid

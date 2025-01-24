@@ -10,11 +10,11 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 // This only works for github right now
@@ -63,8 +63,8 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := slogctx.From(r.Context()).With("logger", "webhook-connector", "repo", name)
-		ctx := slogctx.To(r.Context(), logger)
+		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
+		ctx := logging.Context(r.Context(), logger)
 
 		rsp, err := repo.Webhook(ctx, r)
 		if err != nil {

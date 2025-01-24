@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -39,6 +41,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 const repoControllerWorkers = 1
@@ -64,6 +68,7 @@ type ProvisioningAPIBuilder struct {
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
+	lister            resources.ResourceLister
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -76,6 +81,7 @@ func NewProvisioningAPIBuilder(
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
+	index resource.RepositoryIndexClient,
 	blobstore blob.PublicBlobStore,
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
@@ -93,6 +99,7 @@ func NewProvisioningAPIBuilder(
 			Client: clientFactory,
 		},
 		render:    render,
+		lister:    resources.NewResourceLister(index),
 		blobstore: blobstore,
 		jobs:      jobs.NewJobQueue(50), // in memory for now
 	}
@@ -108,6 +115,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
 ) (*ProvisioningAPIBuilder, error) {
@@ -128,7 +136,7 @@ func RegisterAPIService(
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render, store, configProvider, ghFactory)
+	}, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -193,6 +201,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		getter:  b,
 		parsers: b.parsers,
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
+		getter: b,
+		lister: b.lister,
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
@@ -202,7 +214,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
 		repoGetter: b,
-		queue:      b.jobs,
+		jobs:       b.jobs,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
@@ -361,6 +373,73 @@ func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefini
 	return provisioning.GetOpenAPIDefinitions
 }
 
+func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+
+	statsResult := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats"].Schema
+
+	return &builder.APIRoutes{
+		Namespace: []builder.APIRouteHandler{
+			{
+				Path: "stats",
+				Spec: &spec3.PathProps{
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							OperationId: "getResourceStats", // used for RTK client
+							Tags:        []string{"Repository"},
+							Description: "Get resource stats for this namespace",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &statsResult,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					u, ok := claims.From(r.Context())
+					if !ok {
+						w.WriteHeader(400)
+						_, _ = w.Write([]byte("expected user"))
+						return
+					}
+					stats, err := b.lister.Stats(r.Context(), u.GetNamespace(), "")
+					if err != nil {
+						errhttp.Write(r.Context(), err, w)
+						return
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(stats)
+				},
+			},
+		},
+	}
+}
+
 func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
@@ -388,6 +467,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				c.ProvisioningV0alpha1(),
 				b.identities,
 				b.render,
+				b.lister,
 				b.blobstore,
 				b.urlProvider,
 			))
@@ -396,6 +476,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
+				b.parsers,
 				b.identities,
 				b.tester,
 				b.jobs,
@@ -420,25 +501,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	defsBase := "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1."
 
-	// TODO: we might want to register some extras for subresources here.
-	sub := oas.Paths.Paths[repoprefix+"/hello"]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Description = "Get a nice hello :)"
-		sub.Get.Parameters = []*spec3.Parameter{
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "whom",
-					In:          "query",
-					Example:     "World!",
-					Description: "Who should get the nice greeting?",
-					Schema:      spec.StringProperty(),
-					Required:    false,
-				},
-			},
-		}
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/test"]
+	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
 		repoSchema := defs[defsBase+"Repository"].Schema
 		sub.Post.Description = "Check if the configuration is valid"
@@ -610,6 +673,29 @@ spec:
 		}
 		// POST and put have the same request
 		sub.Put.RequestBody = sub.Post.RequestBody
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/export"]
+	if sub != nil {
+		optionsSchema := defs[defsBase+"ExportOptions"].Schema
+		sub.Post.Description = "Export from grafana into the remote repository"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &optionsSchema,
+							Example: &provisioning.ExportOptions{
+								Folder:  "grafan-folder-ref",
+								History: true,
+								Branch:  "target-branch",
+								Prefix:  "prefix/in/repo/tree",
+							},
+						},
+					},
+				},
+			},
+		}
 	}
 
 	// The root API discovery list

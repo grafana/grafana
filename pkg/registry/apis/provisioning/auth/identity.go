@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/slogctx"
 )
 
 type BackgroundIdentityService interface {
@@ -155,7 +155,7 @@ func (o *backgroundIdentities) makeAdminUser(ctx context.Context, orgId int64) (
 
 func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId int64) (string, error) {
 	serviceAccountName := fmt.Sprintf("%s-org-%d", o.serviceAccountNamePrefix, orgId)
-	logger := slogctx.From(ctx).With("account_name", serviceAccountName)
+	logger := logging.FromContext(ctx).With("account_name", serviceAccountName)
 	saForm := serviceaccounts.CreateServiceAccountForm{
 		Name: serviceAccountName,
 		Role: &o.role,
@@ -167,7 +167,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 		if accountAlreadyExists {
 			accountId, err := o.serviceAccounts.RetrieveServiceAccountIdByName(ctx, orgId, serviceAccountName)
 			if err != nil {
-				logger.ErrorContext(ctx, "Failed to retrieve service account", "err", err)
+				logger.Error("Failed to retrieve service account", "err", err)
 				return "", err
 			}
 			// update org_role to make sure everything works properly if someone has changed the role since SA's original creation
@@ -176,7 +176,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 				Role: &o.role,
 			})
 			if err != nil {
-				logger.ErrorContext(ctx, "Failed to update service account", "err", err)
+				logger.Error("Failed to update service account", "err", err)
 				return "", err
 			}
 
@@ -187,7 +187,7 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 		}
 	}
 	if serviceAccount == nil {
-		logger.ErrorContext(ctx, "Failed to retrieve service account", "err", err)
+		logger.Error("Failed to retrieve service account", "err", err)
 		return "", err
 	}
 
