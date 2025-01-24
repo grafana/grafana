@@ -153,7 +153,6 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;
