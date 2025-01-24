@@ -434,16 +434,18 @@ export const LogsPanel = ({
       )}
       {logsPanelV2 ? (
         <div className={style.containerVirtualized} ref={logsContainerRef}>
-          <LogList
-            app={CoreApp.Dashboard}
-            containerElement={logsContainerRef.current}
-            eventBus={eventBus}
-            logs={deduplicatedRows}
-            showTime={showTime}
-            sortOrder={sortOrder}
-            timeZone={timeZone}
-            wrapLogMessage={wrapLogMessage}
-          />
+          {logsContainerRef.current && (
+            <LogList
+              app={CoreApp.Dashboard}
+              containerElement={logsContainerRef.current}
+              eventBus={eventBus}
+              logs={deduplicatedRows}
+              showTime={showTime}
+              sortOrder={sortOrder}
+              timeZone={timeZone}
+              wrapLogMessage={wrapLogMessage}
+            />
+          )}
         </div>
       ) : (
         <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)}>
