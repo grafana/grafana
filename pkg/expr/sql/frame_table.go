@@ -102,7 +102,10 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 	row := make(mysql.Row, len(ri.ft.Frame.Fields))
 	for colIndex, field := range ri.ft.Frame.Fields {
 		// field.At(...) returns interface{} for the element at that row index.
-		row[colIndex] = field.At(ri.row)
+		if field.Nullable() && field.At(ri.row) == nil {
+			continue
+		}
+		row[colIndex], _ = field.ConcreteAt(ri.row)
 	}
 
 	ri.row++
