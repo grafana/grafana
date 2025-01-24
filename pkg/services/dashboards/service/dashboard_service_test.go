@@ -1020,6 +1020,15 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		PluginID: "testing",
 		OrgID:    1,
 	}
+	uidUnstructured := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{
+			"name": "uid1",
+		},
+		"spec": map[string]any{
+			"title": "Dashboard 1",
+		},
+	}}
+
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("GetDashboardsByPluginID", mock.Anything, mock.Anything).Return([]*dashboards.Dashboard{}, nil).Once()
@@ -1030,6 +1039,7 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 
 	t.Run("Should use Kubernetes client if feature flags are enabled", func(t *testing.T) {
 		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("Get", mock.Anything, "uid", mock.Anything, mock.Anything).Return(uidUnstructured, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resource.ResourceSearchRequest) bool {
 			return req.Options.Fields[0].Key == "repo.name" && req.Options.Fields[0].Values[0] == "plugin" &&
 				req.Options.Fields[1].Key == "repo.path" && req.Options.Fields[1].Values[0] == "testing"
