@@ -157,7 +157,7 @@ const VariableEditor = (props: Props) => {
   const resourceGroup = (typeof query === 'object' && query.resourceGroup) || '';
   // When resource group is set, retrieve metric namespaces (aka resource types for a custom metric and custom metric namespace query)
   useEffect(() => {
-    if (subscription) {
+    if (subscription && resourceGroup) {
       datasource.getMetricNamespaces(subscription, resourceGroup).then((rgs) => {
         setNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
       });
@@ -178,7 +178,7 @@ const VariableEditor = (props: Props) => {
   const namespace = (typeof query === 'object' && query.namespace) || '';
   // When subscription, resource group, and namespace are all set, retrieve resource names
   useEffect(() => {
-    if (subscription) {
+    if (subscription && resourceGroup && namespace) {
       datasource.getResourceNames(subscription, resourceGroup, namespace).then((rgs) => {
         setResources(rgs.map((s) => ({ label: s.text, value: s.value })));
       });
