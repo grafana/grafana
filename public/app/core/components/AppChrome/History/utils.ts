@@ -1,3 +1,7 @@
+import moment from 'moment';
+
+import { t } from 'app/core/internationalization';
+
 import { HistoryEntry } from '../types';
 
 export const getEntryPath = (url: string) => url.substring(0, url.indexOf('?') !== -1 ? url.indexOf('?') : undefined);
@@ -41,4 +45,20 @@ export const hackyFixes = (newEntry: HistoryEntry, entries: HistoryEntry[]): His
     entries = [newEntry, ...entries];
   }
   return entries;
+};
+
+export const historyFormated = (history: HistoryEntry[], numItemsToShow: number) => {
+  return history.slice(0, numItemsToShow).reduce((acc: { [key: string]: HistoryEntry[] }, entry) => {
+    const date = moment(entry.time);
+    let key = '';
+    if (date.isSame(moment(), 'day')) {
+      key = t('nav.history-wrapper.today', 'Today');
+    } else if (date.isSame(moment().subtract(1, 'day'), 'day')) {
+      key = t('nav.history-wrapper.yesterday', 'Yesterday');
+    } else {
+      key = date.format('YYYY-MM-DD');
+    }
+    acc[key] = [...(acc[key] || []), entry];
+    return acc;
+  }, {});
 };
