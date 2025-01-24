@@ -82,6 +82,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
           max: 1,
           step: 0.01,
         },
+      })
+      .addNumberInput({
+        path: 'perPage',
+        name: 'Page size (enable pagination)',
+        settings: {
+          min: 1,
+          step: 1,
+          integer: true,
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
