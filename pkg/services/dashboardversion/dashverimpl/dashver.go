@@ -74,7 +74,7 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 	// versions table, at time of this writing), so get the DashboardID if it
 	// was not populated.
 	if query.DashboardID == 0 {
-		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID)
+		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID, query.OrgID)
 		if err != nil {
 			return nil, err
 		}
@@ -142,7 +142,7 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 	// versions table, at time of this writing), so get the DashboardID if it
 	// was not populated.
 	if query.DashboardID == 0 {
-		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID)
+		id, err := s.getDashIDMaybeEmpty(ctx, query.DashboardUID, query.OrgID)
 		if err != nil {
 			return nil, err
 		}
@@ -199,8 +199,8 @@ func (s *Service) getDashUIDMaybeEmpty(ctx context.Context, id int64) (string, e
 
 // getDashIDMaybeEmpty is a helper function which takes a dashboardUID and
 // returns the ID. If the dashboard is not found, it will return -1.
-func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string) (int64, error) {
-	q := dashboards.GetDashboardQuery{UID: uid}
+func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string, orgID int64) (int64, error) {
+	q := dashboards.GetDashboardQuery{UID: uid, OrgID: orgID}
 	result, err := s.dashSvc.GetDashboard(ctx, &q)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {

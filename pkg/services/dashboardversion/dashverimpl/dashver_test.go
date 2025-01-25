@@ -7,12 +7,17 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,6 +37,44 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersion, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{})
 		require.NoError(t, err)
 		require.Equal(t, dashboard.ToDTO("uid"), dashboardVersion)
+	})
+
+	t.Run("Get dashboard version through k8s", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
+		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+
+		mockCli.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name":            "uid",
+					"resourceVersion": "12",
+					"labels": map[string]any{
+						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+					},
+				},
+				"spec": map[string]any{
+					"version": int64(10),
+				},
+			}}, nil).Once()
+		res, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
+			DashboardID: 42,
+			OrgID:       1,
+			Version:     10,
+		})
+		require.Nil(t, err)
+		require.Equal(t, res, &dashver.DashboardVersionDTO{
+			ID:            12, // RV should be used
+			Version:       10,
+			ParentVersion: 9,
+			DashboardID:   42,
+			DashboardUID:  "uid",
+			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10)}),
+		})
 	})
 }
 
@@ -144,6 +187,46 @@ func TestListDashboardVersions(t *testing.T) {
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, res)
 		require.ErrorIs(t, err, dashver.ErrDashboardVersionNotFound)
+	})
+
+	t.Run("List all versions for a given Dashboard ID through k8s", func(t *testing.T) {
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
+		mockCli := new(client.MockK8sHandler)
+		dashboardVersionService.k8sclient = mockCli
+		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
+
+		dashboardService.On("GetDashboardUIDByID", mock.Anything,
+			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
+			Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+
+		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
+		mockCli.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		mockCli.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{{Object: map[string]any{
+				"metadata": map[string]any{
+					"name":            "uid",
+					"resourceVersion": "12",
+					"labels": map[string]any{
+						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+					},
+				},
+				"spec": map[string]any{
+					"version": int64(5),
+				},
+			}}}}, nil).Once()
+		res, err := dashboardVersionService.List(context.Background(), &query)
+		require.Nil(t, err)
+		require.Equal(t, 1, len(res.Versions))
+		require.EqualValues(t, &dashver.DashboardVersionResponse{
+			Versions: []*dashver.DashboardVersionDTO{{
+				ID:            12, // should take rv
+				DashboardID:   42,
+				ParentVersion: 4,
+				Version:       5, // should take from spec
+				DashboardUID:  "uid",
+				Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(5)}),
+			}}}, res)
 	})
 }
 
