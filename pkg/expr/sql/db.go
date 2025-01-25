@@ -26,7 +26,6 @@ func (db *DB) RunCommands(commands []string) (string, error) {
 }
 
 // MySQLColToFieldType converts a MySQL column to a data.FieldType
-// Fow now that output is always a nullable type
 func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 	var fT data.FieldType
 
@@ -45,9 +44,94 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 	}
 
 	// For now output is always nullable type
-	fT = fT.NullableType()
+	if col.Nullable {
+		fT = fT.NullableType()
+	}
 
 	return fT, nil
+}
+
+func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{}, error) {
+	// the input val may be nil, it also may not be a pointer even if the fieldtype is a nullable pointer type
+	if val == nil {
+		return nil, nil
+	}
+	switch fieldType {
+	case data.FieldTypeInt64:
+		v, ok := val.(int64)
+		if !ok {
+			return nil, fmt.Errorf("unexpected value type for interface %v, expected int64", val)
+		}
+		return v, nil
+
+	case data.FieldTypeNullableInt64:
+		vP, ok := val.(*int64)
+		if ok {
+			return vP, nil
+		}
+		v, ok := val.(int64)
+		if ok {
+			return &v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type for interface %v, expected int64 or *int64", val)
+
+	case data.FieldTypeFloat64:
+		v, ok := val.(float64)
+		if !ok {
+			return nil, fmt.Errorf("unexpected value type for interface %v, expected float64", val)
+		}
+		return v, nil
+
+	case data.FieldTypeNullableFloat64:
+		vP, ok := val.(*float64)
+		if ok {
+			return vP, nil
+		}
+		v, ok := val.(float64)
+		if ok {
+			return &v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type for interface %v, expected float64 or *float64", val)
+
+	case data.FieldTypeTime:
+		v, ok := val.(time.Time)
+		if !ok {
+			return nil, fmt.Errorf("unexpected value type for interface %v, expected time.Time", val)
+		}
+		return v, nil
+
+	case data.FieldTypeNullableTime:
+		vP, ok := val.(*time.Time)
+		if ok {
+			return vP, nil
+		}
+		v, ok := val.(time.Time)
+		if ok {
+			return &v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type for interface %v, expected time.Time or *time.Time", val)
+
+	case data.FieldTypeString:
+		v, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("unexpected value type for interface %v, expected string", val)
+		}
+		return v, nil
+
+	case data.FieldTypeNullableString:
+		vP, ok := val.(*string)
+		if ok {
+			return vP, nil
+		}
+		v, ok := val.(string)
+		if ok {
+			return &v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type for interface %v, expected string or *string", val)
+
+	default:
+		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
+	}
 }
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
@@ -76,66 +160,11 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		}
 
 		for i, val := range row {
-			switch schema[i].Type {
-			// TODO: The types listed here should be the same as that
-			// used when creating the fields. Am I using the wrong fields
-			// from the schema instance?
-			case types.Int64:
-				if val == nil {
-					f.Fields[i].Append((*int64)(nil))
-				} else {
-					v, ok := val.(int64)
-					if !ok {
-						return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
-					}
-					f.Fields[i].Append(&v)
-				}
-			case types.Float64:
-				if val == nil {
-					f.Fields[i].Append((*float64)(nil))
-					continue
-				}
-				vf, ok := val.(*float64)
-				if ok {
-					f.Fields[i].Append(vf)
-					continue
-				}
-				v, ok := val.(float64)
-				if ok {
-					f.Fields[i].Append(&v)
-					continue
-				}
-				return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
-			case types.Text, types.LongText:
-				if val == nil {
-					f.Fields[i].Append((*string)(nil))
-					continue
-				}
-				v, ok := val.(string)
-				if ok {
-					f.Fields[i].Append(&v)
-					continue
-				}
-				vf, ok := val.(*string)
-				if ok {
-					f.Fields[i].Append(vf)
-					continue
-				}
-				return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
-			case types.Timestamp:
-				if val == nil {
-					f.Fields[i].Append((*time.Time)(nil))
-				} else {
-					v, ok := val.(time.Time)
-					if !ok {
-						return fmt.Errorf("unexpected type for column %s, column type %s, column nullable %v, val type: %T", schema[i].Name, schema[i].Type, schema[i].Nullable, val)
-					}
-					f.Fields[i].Append(&v)
-				}
-			// Add more types as needed
-			default:
-				return fmt.Errorf("unsupported type for column %s: %v", schema[i].Name, schema[i].Type)
+			v, err := fieldValFromRowVal(f.Fields[i].Type(), val)
+			if err != nil {
+				return fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
 			}
+			f.Fields[i].Append(v)
 		}
 	}
 

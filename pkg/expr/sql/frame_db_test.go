@@ -15,8 +15,10 @@ func TestFrameDB(t *testing.T) {
 		Fields: []*data.Field{
 			data.NewField("animal", nil, []string{"cat", "dog", "cat", "dog"}),
 			data.NewField("nanimal", nil, []*string{p("cat"), p("dog"), p("cat"), p("dog")}),
-			data.NewField("count", nil, []float64{1, 3, 4, 7}),
-			data.NewField("ncount", nil, []*float64{p(2.0), nil, p(8.0), p(14.0)}),
+			data.NewField("fcount", nil, []float64{1, 3, 4, 7}),
+			data.NewField("nfcount", nil, []*float64{p(2.0), nil, p(8.0), p(14.0)}),
+			data.NewField("i64count", nil, []int64{1, 3, 4, 7}),
+			data.NewField("ni64count", nil, []*int64{p(int64(2)), nil, p(int64(8)), p(int64(14))}),
 		},
 	}
 
@@ -28,8 +30,8 @@ func TestFrameDB(t *testing.T) {
 
 	engine := sqle.NewDefault(provider)
 
-	//schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
-	schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count), sum(ncount) FROM a GROUP BY animal")
+	schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
+	//schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count), sum(ncount) FROM a GROUP BY animal")
 
 	if err != nil {
 		t.Log(err)
