@@ -366,18 +366,17 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 	}
 
 	result, err := fr.folderService.Get(ctx, cmd)
-
 	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
 		return 0, "", err
 	}
 
+	// do not allow the creation of folder with uid "general"
+	if result != nil && result.UID == accesscontrol.GeneralFolderUID {
+		return 0, "", dashboards.ErrFolderInvalidUID
+	}
+
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		// set dashboard folderUid if given
-		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
-			return 0, "", dashboards.ErrFolderInvalidUID
-		}
-
 		createCmd := &folder.CreateFolderCommand{
 			OrgID:        cfg.OrgID,
 			UID:          cfg.FolderUID,
