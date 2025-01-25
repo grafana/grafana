@@ -39,6 +39,8 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeString
 	case types.Timestamp:
 		fT = data.FieldTypeTime
+	case types.Boolean:
+		fT = data.FieldTypeBool
 	default:
 		return fT, fmt.Errorf("unsupported type for column %s of type %v", col.Name, col.Type)
 	}
@@ -49,6 +51,27 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 	}
 
 	return fT, nil
+}
+
+// Helper function to convert data.FieldType to types.Type
+func convertDataType(fieldType data.FieldType) mysql.Type {
+	switch fieldType {
+	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64, data.FieldTypeNullableInt64:
+		return types.Int64
+	case data.FieldTypeUint8, data.FieldTypeUint16, data.FieldTypeUint32, data.FieldTypeUint64:
+		return types.Uint64
+	case data.FieldTypeFloat32, data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
+		return types.Float64
+	case data.FieldTypeString, data.FieldTypeNullableString:
+		return types.Text
+	case data.FieldTypeBool, data.FieldTypeNullableBool:
+		return types.Boolean
+	case data.FieldTypeTime, data.FieldTypeNullableTime:
+		return types.Timestamp
+	default:
+		fmt.Printf("------- Unsupported field type: %v", fieldType)
+		return types.JSON
+	}
 }
 
 func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{}, error) {
@@ -128,6 +151,24 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 			return &v, nil
 		}
 		return nil, fmt.Errorf("unexpected value type for interface %v, expected string or *string", val)
+
+	case data.FieldTypeBool:
+		v, ok := val.(bool)
+		if !ok {
+			return nil, fmt.Errorf("unexpected value type for interface %v, expected bool", val)
+		}
+		return v, nil
+
+	case data.FieldTypeNullableBool:
+		vP, ok := val.(*bool)
+		if ok {
+			return vP, nil
+		}
+		v, ok := val.(bool)
+		if ok {
+			return &v, nil
+		}
+		return nil, fmt.Errorf("unexpected value type for interface %v, expected bool or *bool", val)
 
 	default:
 		return nil, fmt.Errorf("unsupported field type %s for val %v", fieldType, val)
@@ -215,27 +256,6 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 	}
 
 	return nil
-}
-
-// Helper function to convert data.FieldType to types.Type
-func convertDataType(fieldType data.FieldType) mysql.Type {
-	switch fieldType {
-	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64, data.FieldTypeNullableInt64:
-		return types.Int64
-	case data.FieldTypeUint8, data.FieldTypeUint16, data.FieldTypeUint32, data.FieldTypeUint64:
-		return types.Uint64
-	case data.FieldTypeFloat32, data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
-		return types.Float64
-	case data.FieldTypeString, data.FieldTypeNullableString:
-		return types.Text
-	case data.FieldTypeBool:
-		return types.Boolean
-	case data.FieldTypeTime:
-		return types.Timestamp
-	default:
-		fmt.Printf("------- Unsupported field type: %v", fieldType)
-		return types.JSON
-	}
 }
 
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {

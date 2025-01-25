@@ -19,6 +19,8 @@ func TestFrameDB(t *testing.T) {
 			data.NewField("nfcount", nil, []*float64{p(2.0), nil, p(8.0), p(14.0)}),
 			data.NewField("i64count", nil, []int64{1, 3, 4, 7}),
 			data.NewField("ni64count", nil, []*int64{p(int64(2)), nil, p(int64(8)), p(int64(14))}),
+			data.NewField("bool", nil, []bool{true, false, true, false}),
+			data.NewField("nbool", nil, []*bool{p(true), p(false), p(true), p(false)}),
 		},
 	}
 
