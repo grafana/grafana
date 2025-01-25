@@ -41,6 +41,9 @@ type ListIterator interface {
 	// The token that can be used to start iterating *after* this item
 	ContinueToken() string
 
+	// The token that can be used to start iterating *before* this item
+	ContinueTokenWithCurrentRV() string
+
 	// ResourceVersion of the current item
 	ResourceVersion() int64
 
@@ -755,10 +758,17 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			pageBytes += len(item.Value)
 			rsp.Items = append(rsp.Items, item)
 			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
-				t := iter.ContinueToken()
 				if iter.Next() {
-					rsp.NextPageToken = t
+					if req.Source == ListRequest_HISTORY {
+						// history lists in desc order, so the continue token takes the
+						// final RV in the list, and then will start from there in the next page,
+						// rather than the lists first RV
+						rsp.NextPageToken = iter.ContinueTokenWithCurrentRV()
+					} else {
+						rsp.NextPageToken = iter.ContinueToken()
+					}
 				}
+
 				break
 			}
 		}

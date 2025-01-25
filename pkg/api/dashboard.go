@@ -829,21 +829,22 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	}
 
 	query := dashver.ListDashboardVersionsQuery{
-		OrgID:        c.SignedInUser.GetOrgID(),
-		DashboardID:  dash.ID,
-		DashboardUID: dash.UID,
-		Limit:        c.QueryInt("limit"),
-		Start:        c.QueryInt("start"),
+		OrgID:         c.SignedInUser.GetOrgID(),
+		DashboardID:   dash.ID,
+		DashboardUID:  dash.UID,
+		Limit:         c.QueryInt("limit"),
+		Start:         c.QueryInt("start"),
+		ContinueToken: c.Query("continueToken"),
 	}
 
-	versions, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
+	resp, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(http.StatusNotFound, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
 	}
 
-	loginMem := make(map[int64]string, len(versions))
-	res := make([]dashver.DashboardVersionMeta, 0, len(versions))
-	for _, version := range versions {
+	loginMem := make(map[int64]string, len(resp.Versions))
+	res := make([]dashver.DashboardVersionMeta, 0, len(resp.Versions))
+	for _, version := range resp.Versions {
 		msg := version.Message
 		if version.RestoredFrom == version.Version {
 			msg = "Initial save (created by migration)"
@@ -884,7 +885,10 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 		})
 	}
 
-	return response.JSON(http.StatusOK, res)
+	return response.JSON(http.StatusOK, dashver.DashboardVersionResponseMeta{
+		Versions:      res,
+		ContinueToken: resp.ContinueToken,
+	})
 }
 
 // swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByID
@@ -944,12 +948,15 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 		return dashboardGuardianResponse(err)
 	}
 
-	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
+	version, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Err(err)
+	}
 	query := dashver.GetDashboardVersionQuery{
 		OrgID:        c.SignedInUser.GetOrgID(),
 		DashboardID:  dash.ID,
 		DashboardUID: dash.UID,
-		Version:      int(version),
+		Version:      version,
 	}
 
 	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)

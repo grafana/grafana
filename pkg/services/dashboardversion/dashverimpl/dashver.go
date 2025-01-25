@@ -41,7 +41,6 @@ type Service struct {
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, features featuremgmt.FeatureToggles,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient) dashver.Service {
-
 	return &Service{
 		cfg: cfg,
 		store: &sqlStore{
@@ -83,7 +82,7 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
-		version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, int64(query.Version))
+		version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +128,7 @@ func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredV
 }
 
 // List all dashboard versions for the given dashboard ID.
-func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
+func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) (*dashver.DashboardVersionResponse, error) {
 	// Get the DashboardUID if not populated
 	if query.DashboardUID == "" {
 		u, err := s.getDashUIDMaybeEmpty(ctx, query.DashboardID)
@@ -159,6 +158,7 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 			query.OrgID,
 			query.DashboardUID,
 			int64(query.Limit),
+			query.ContinueToken,
 		)
 		if err != nil {
 			return nil, err
@@ -174,7 +174,9 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 	for i, v := range dvs {
 		dtos[i] = v.ToDTO(query.DashboardUID)
 	}
-	return dtos, nil
+	return &dashver.DashboardVersionResponse{
+		Versions: dtos,
+	}, nil
 }
 
 // getDashUIDMaybeEmpty is a helper function which takes a dashboardID and
@@ -219,7 +221,6 @@ func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboa
 	} else if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
-	fmt.Println(fmt.Sprintf("%+v", out))
 
 	dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, out, orgID)
 	if err != nil {
@@ -229,32 +230,31 @@ func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboa
 	return dash, nil
 }
 
-// TODO: need to get the "continue" token
-// TODO: make sure that things are working in the fallback mode too, and likely change legacy sql
-func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64) ([]*dashver.DashboardVersionDTO, error) {
+func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string) (*dashver.DashboardVersionResponse, error) {
 	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
-		LabelSelector:        utils.LabelKeyGetHistory + "=" + dashboardUID,
-		ResourceVersion:      "1", // everything
-		Limit:                limit,
-		ResourceVersionMatch: v1.ResourceVersionMatchNotOlderThan{}, // TODO: implement
+		LabelSelector: utils.LabelKeyGetHistory + "=" + dashboardUID,
+		Limit:         limit,
+		Continue:      continueToken,
 	})
 	if err != nil {
 		return nil, err
 	} else if out == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
-	fmt.Println(fmt.Sprintf("%+v", out))
 
-	dashboards := make([]*dashver.DashboardVersionDTO, 0)
-	for _, item := range out.Items {
+	dashboards := make([]*dashver.DashboardVersionDTO, len(out.Items))
+	for i, item := range out.Items {
 		dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, &item, orgID)
 		if err != nil {
 			return nil, err
 		}
-		dashboards = append(dashboards, dash)
+		dashboards[i] = dash
 	}
 
-	return dashboards, nil
+	return &dashver.DashboardVersionResponse{
+		ContinueToken: out.GetContinue(),
+		Versions:      dashboards,
+	}, nil
 }
 
 func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashver.DashboardVersionDTO, error) {
@@ -273,7 +273,7 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 	parentVersion := 0
 	if version, ok := spec["version"].(int64); ok {
 		dashVersion = int(version)
-		parentVersion = dashVersion - 1 // TODO: is this valid?
+		parentVersion = dashVersion - 1
 	}
 
 	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())

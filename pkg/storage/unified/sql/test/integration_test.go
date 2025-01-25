@@ -349,7 +349,7 @@ func TestIntegrationBackendList(t *testing.T) {
 		continueToken, err = sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv8, continueToken.ResourceVersion)
-		require.Equal(t, int64(4), continueToken.StartOffset)
+		require.Equal(t, int64(5), continueToken.StartOffset)
 	})
 }
 

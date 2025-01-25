@@ -68,7 +68,6 @@ type DashboardServiceImpl struct {
 	dashboardStore         dashboards.Store
 	folderStore            folder.FolderStore
 	folderService          folder.Service
-	userService            user.Service
 	orgService             org.Service
 	features               featuremgmt.FeatureToggles
 	folderPermissions      accesscontrol.FolderPermissionsService
@@ -103,7 +102,6 @@ func ProvideDashboardServiceImpl(
 		folderStore:               folderStore,
 		folderService:             folderSvc,
 		orgService:                orgService,
-		userService:               userService,
 		k8sclient:                 k8sHandler,
 		metrics:                   newDashboardsMetrics(r),
 		dashboardPermissionsReady: make(chan struct{}),

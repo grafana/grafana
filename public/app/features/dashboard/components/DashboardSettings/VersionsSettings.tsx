@@ -1,8 +1,7 @@
-import { config } from '@grafana/runtime';
-
 import { PureComponent } from 'react';
 import * as React from 'react';
 
+import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import {
@@ -40,11 +39,13 @@ export const VERSIONS_FETCH_LIMIT = 10;
 export class VersionsSettings extends PureComponent<Props, State> {
   limit: number;
   start: number;
+  continueToken: string;
 
   constructor(props: Props) {
     super(props);
     this.limit = VERSIONS_FETCH_LIMIT;
     this.start = 0;
+    this.continueToken = '';
     this.state = {
       isAppending: true,
       isLoading: true,
@@ -64,14 +65,20 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
   getVersions = (append = false) => {
     this.setState({ isAppending: append });
+    const requestOptions = this.continueToken
+      ? { limit: this.limit, start: this.start, continueToken: this.continueToken }
+      : { limit: this.limit, start: this.start };
+
     historySrv
-      .getHistoryList(this.props.dashboard.uid, { limit: this.limit, start: this.start })
+      .getHistoryList(this.props.dashboard.uid, requestOptions)
       .then((res) => {
         this.setState({
           isLoading: false,
-          versions: [...this.state.versions, ...this.decorateVersions(res)],
+          versions: [...(this.state.versions ?? []), ...this.decorateVersions(res.versions)],
         });
         this.start += this.limit;
+        // Update the continueToken for the next request, if available
+        this.continueToken = res.continueToken ?? '';
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
@@ -130,6 +137,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   };
 
   reset = () => {
+    this.continueToken = '';
     this.setState({
       baseInfo: undefined,
       diffData: {

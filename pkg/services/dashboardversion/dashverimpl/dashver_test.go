@@ -12,13 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestDashboardVersionService(t *testing.T) {
 	dashboardVersionStore := newDashboardVersionStoreFake()
 	dashboardService := dashboards.NewFakeDashboardService(t)
-	dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+	dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 
 	t.Run("Get dashboard version", func(t *testing.T) {
 		dashboard := &dashver.DashboardVersion{
@@ -42,7 +43,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 	dashboardVersionStore := newDashboardVersionStoreFake()
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	dashboardVersionService := Service{
-		cfg: cfg, store: dashboardVersionStore, dashSvc: dashboardService}
+		cfg: cfg, store: dashboardVersionStore, dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 
 	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
 		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
@@ -67,7 +68,7 @@ func TestListDashboardVersions(t *testing.T) {
 	t.Run("List all versions for a given Dashboard ID", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{
 			{ID: 1, DashboardID: 42},
 		}
@@ -78,15 +79,15 @@ func TestListDashboardVersions(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
-		require.Equal(t, 1, len(res))
+		require.Equal(t, 1, len(res.Versions))
 		// validate that the UID was populated
-		require.EqualValues(t, []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42, DashboardUID: "uid"}}, res)
+		require.EqualValues(t, &dashver.DashboardVersionResponse{Versions: []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42, DashboardUID: "uid"}}}, res)
 	})
 
 	t.Run("List all versions for a non-existent DashboardID", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger(), features: featuremgmt.WithFeatures()}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{
 			{ID: 1, DashboardID: 42},
 		}
@@ -96,15 +97,15 @@ func TestListDashboardVersions(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
-		require.Equal(t, 1, len(res))
+		require.Equal(t, 1, len(res.Versions))
 		// The DashboardID remains populated with the given value, even though the dash was not found
-		require.EqualValues(t, []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42}}, res)
+		require.EqualValues(t, &dashver.DashboardVersionResponse{Versions: []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42}}}, res)
 	})
 
 	t.Run("List all versions for a given DashboardUID", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger(), features: featuremgmt.WithFeatures()}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{DashboardID: 42, ID: 1}}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).
 			Return(&dashboards.Dashboard{ID: 42}, nil)
@@ -112,15 +113,15 @@ func TestListDashboardVersions(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{DashboardUID: "uid"}
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
-		require.Equal(t, 1, len(res))
+		require.Equal(t, 1, len(res.Versions))
 		// validate that the dashboardID was populated from the GetDashboard method call.
-		require.EqualValues(t, []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42, DashboardUID: "uid"}}, res)
+		require.EqualValues(t, &dashver.DashboardVersionResponse{Versions: []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42, DashboardUID: "uid"}}}, res)
 	})
 
 	t.Run("List all versions for a given non-existent DashboardUID", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger(), features: featuremgmt.WithFeatures()}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{DashboardID: 42, ID: 1}}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).
 			Return(nil, dashboards.ErrDashboardNotFound)
@@ -128,15 +129,15 @@ func TestListDashboardVersions(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{DashboardUID: "uid"}
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
-		require.Equal(t, 1, len(res))
+		require.Equal(t, 1, len(res.Versions))
 		// validate that the dashboardUID & ID are populated, even though the dash was not found
-		require.EqualValues(t, []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42, DashboardUID: "uid"}}, res)
+		require.EqualValues(t, &dashver.DashboardVersionResponse{Versions: []*dashver.DashboardVersionDTO{{ID: 1, DashboardID: 42, DashboardUID: "uid"}}}, res)
 	})
 
 	t.Run("List Dashboard versions - error from store", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger(), features: featuremgmt.WithFeatures()}
 		dashboardVersionStore.ExpectedError = dashver.ErrDashboardVersionNotFound
 
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42, DashboardUID: "42"}
