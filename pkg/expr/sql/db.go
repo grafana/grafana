@@ -12,6 +12,7 @@ import (
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/shopspring/decimal"
 )
 
 var dbName = "mydb"
@@ -41,7 +42,11 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 	case types.Boolean:
 		fT = data.FieldTypeBool
 	default:
-		return fT, fmt.Errorf("unsupported type for column %s of type %v", col.Name, col.Type)
+		if types.IsDecimal(col.Type) {
+			fT = data.FieldTypeFloat64
+		} else {
+			return fT, fmt.Errorf("unsupported type for column %s of type %v", col.Name, col.Type)
+		}
 	}
 
 	// For now output is always nullable type
@@ -99,10 +104,14 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 
 	case data.FieldTypeFloat64:
 		v, ok := val.(float64)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected float64", val)
+		if ok {
+			return v, nil
 		}
-		return v, nil
+		d, ok := val.(decimal.Decimal)
+		if ok {
+			return d.InexactFloat64(), nil
+		}
+		return nil, fmt.Errorf("unexpected value type for interface %v, expected float64", val)
 
 	case data.FieldTypeNullableFloat64:
 		vP, ok := val.(*float64)
