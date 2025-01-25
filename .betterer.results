@@ -7747,7 +7747,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "\'@grafana/data/src/transformations/matchers/compareValues\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/plugins/panel/geomap/utils/layers.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/panel/geomap/utils/tooltip.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
