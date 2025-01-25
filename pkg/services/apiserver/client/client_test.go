@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 )
 
 func TestGetUserFromMeta(t *testing.T) {
@@ -22,14 +21,14 @@ func TestGetUserFromMeta(t *testing.T) {
 	t.Run("returns user with valid UID", func(t *testing.T) {
 		result, err := client.GetUserFromMeta(context.Background(), "user:uid-value")
 		require.NoError(t, err)
-		assert.Equal(t, "uid-value", result.UID)
-		assert.Equal(t, int64(1), result.ID)
+		require.Equal(t, "uid-value", result.UID)
+		require.Equal(t, int64(1), result.ID)
 	})
 
 	t.Run("returns user when id is passed in", func(t *testing.T) {
 		result, err := client.GetUserFromMeta(context.Background(), "user:1")
 		require.NoError(t, err)
-		assert.Equal(t, "uid-value", result.UID)
-		assert.Equal(t, int64(1), result.ID)
+		require.Equal(t, "uid-value", result.UID)
+		require.Equal(t, int64(1), result.ID)
 	})
 }
