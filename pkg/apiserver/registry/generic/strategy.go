@@ -2,8 +2,8 @@ package generic
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
@@ -14,6 +14,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type genericStrategy struct {
@@ -73,6 +75,9 @@ func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime
 	if err != nil {
 		return
 	}
+
+	fmt.Printf("OLD: %+v\n", oldMeta.GetFinalizers())
+	fmt.Printf("NEW: %+v\n", oldMeta.GetFinalizers())
 
 	// update shouldn't change the status
 	status, err := oldMeta.GetStatus()

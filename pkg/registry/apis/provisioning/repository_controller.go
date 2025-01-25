@@ -8,6 +8,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -258,22 +259,35 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Delete
 	case obj.DeletionTimestamp != nil:
 		logger.Info("handle repository delete")
-		finalizers := obj.Finalizers
-		obj.Finalizers = nil
-		for _, finalizer := range finalizers {
-			switch finalizer {
-			case "cleanup":
-				logger.Info("handle cleanup")
-
-			default:
-				logger.Warn("unknown finalizer: " + finalizer)
-				obj.Finalizers = append(obj.Finalizers, finalizer)
+		if hooks != nil {
+			// FIXME... this should be converted to a "remove-webhook" finalizer
+			eee := hooks.OnDelete(ctx)
+			if eee != nil {
+				logger.Warn("Error running deletion hooks", "err", err)
 			}
 		}
 
-		if hooks != nil {
-			// FIXME... this should be converted to a "remove-webhook" finalizer
-			err = hooks.OnDelete(ctx)
+		// Process any finalizers
+		if len(obj.Finalizers) > 0 {
+			for _, finalizer := range obj.Finalizers {
+				switch finalizer {
+				case "cleanup":
+					logger.Info("handle cleanup")
+
+				default:
+					logger.Warn("unknown finalizer: " + finalizer)
+				}
+			}
+			// Remove finalizers
+			patched, err := rc.client.Repositories(obj.GetNamespace()).
+				Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
+					{ "op": "remove", "path": "/metadata/finalizers" }
+				]`), v1.PatchOptions{})
+			if err != nil {
+				return fmt.Errorf("error clearing finalizer: %w", err)
+			}
+			fmt.Printf("PATCHED: %+v", patched.Finalizers)
+			return nil // patched
 		}
 
 	// Create
