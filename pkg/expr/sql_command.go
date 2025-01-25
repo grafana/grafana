@@ -93,7 +93,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	rsp := mathexp.Results{}
 
-	db := sql.NewInMemoryDB()
+	db := sql.DB{}
 	var frame = &data.Frame{}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))

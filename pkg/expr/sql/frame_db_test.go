@@ -32,8 +32,9 @@ func TestFrameDB(t *testing.T) {
 
 	engine := sqle.NewDefault(provider)
 
-	schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
+	//schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
 	//schema, iter, _, err := engine.Query(ctx, "SELECT 2.3")
+	schema, iter, _, err := engine.Query(ctx, "SELECT 10")
 	//schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count), sum(ncount) FROM a GROUP BY animal")
 
 	if err != nil {
