@@ -8,7 +8,6 @@ import (
 	"time"
 
 	sqle "github.com/dolthub/go-mysql-server"
-	"github.com/dolthub/go-mysql-server/memory"
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -18,7 +17,6 @@ import (
 var dbName = "mydb"
 
 type DB struct {
-	inMemoryDb *memory.Database
 }
 
 func (db *DB) RunCommands(commands []string) (string, error) {
@@ -253,10 +251,4 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 	}
 
 	return nil
-}
-
-func NewInMemoryDB() *DB { // TODO - name the function. The InMemoryDB name is now used on line 13
-	return &DB{
-		inMemoryDb: memory.NewDatabase(dbName), // TODO - change the name of the database
-	}
 }

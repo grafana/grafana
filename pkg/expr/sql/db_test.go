@@ -8,7 +8,7 @@ import (
 )
 
 func TestQueryFramesInto(t *testing.T) {
-	db := NewInMemoryDB()
+	db := DB{}
 
 	tests := []struct {
 		name         string
