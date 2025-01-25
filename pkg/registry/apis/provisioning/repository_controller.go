@@ -51,6 +51,7 @@ type RepositoryController struct {
 	repoLister     listers.RepositoryLister
 	repoSynced     cache.InformerSynced
 	parsers        *resources.ParserFactory
+	logger         logging.Logger
 
 	jobs jobs.JobQueue
 
@@ -94,6 +95,7 @@ func NewRepositoryController(
 		identities: identities,
 		tester:     tester,
 		jobs:       jobs,
+		logger:     logging.DefaultLogger.With("logger", loggerName),
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -125,7 +127,7 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int) {
 	defer utilruntime.HandleCrash()
 	defer rc.queue.ShutDown()
 
-	logger := logging.FromContext(ctx).With("logger", loggerName)
+	logger := rc.logger
 	ctx = logging.Context(ctx, logger)
 	logger.Info("Starting RepositoryController")
 	defer logger.Info("Shutting down RepositoryController")
@@ -215,8 +217,166 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
-// process is the business logic of the controller.
 func (rc *RepositoryController) process(item *queueItem) error {
+	logger := rc.logger.With("key", item.key)
+
+	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
+	if err != nil {
+		return err
+	}
+
+	obj, err := rc.repoLister.Repositories(namespace).Get(name)
+	switch {
+	case apierrors.IsNotFound(err):
+		return errors.New("repository not found in cache")
+	case err != nil:
+		return err
+	}
+
+	healthAge := time.Since(time.UnixMilli(obj.Status.Health.Checked))
+	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
+	if !hasSpecChanged && obj.DeletionTimestamp == nil && (healthAge < time.Hour*4) {
+		logger.Info("repository spec unchanged")
+		return nil
+	}
+
+	ctx := context.Background()
+	logger = logger.WithContext(ctx)
+
+	repo, err := rc.repoGetter.AsRepository(ctx, obj)
+	if err != nil {
+		return fmt.Errorf("unable to create repository from configuration: %w", err)
+	}
+
+	// Safe to edit the repository from here
+	obj = obj.DeepCopy()
+	hooks, _ := repo.(repository.RepositoryHooks)
+	status := &obj.Status
+	var sync *provisioning.SyncOptions
+
+	switch {
+	// Delete
+	case obj.DeletionTimestamp != nil:
+		logger.Info("handle repository delete")
+		finalizers := obj.Finalizers
+		obj.Finalizers = nil
+		for _, finalizer := range finalizers {
+			switch finalizer {
+			case "cleanup":
+				logger.Info("handle cleanup")
+
+			default:
+				logger.Warn("unknown finalizer: " + finalizer)
+				obj.Finalizers = append(obj.Finalizers, finalizer)
+			}
+		}
+
+		if hooks != nil {
+			// FIXME... this should be converted to a "remove-webhook" finalizer
+			err = hooks.OnDelete(ctx)
+		}
+
+	// Create
+	case obj.Status.ObservedGeneration < 1:
+		logger.Info("handle repository create")
+		if hooks != nil {
+			status, err = hooks.OnCreate(ctx)
+		}
+		sync = &provisioning.SyncOptions{Complete: true}
+
+	// Update
+	default:
+		logger.Info("handle repository update")
+		if hooks != nil {
+			status, err = hooks.OnUpdate(ctx)
+		}
+		sync = &provisioning.SyncOptions{
+			Complete: hasSpecChanged,
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	healthAge = time.Since(time.UnixMilli(status.Health.Checked))
+	status.ObservedGeneration = obj.Generation
+	if obj.DeletionTimestamp == nil && healthAge > 200*time.Millisecond {
+		res, err := rc.tester.TestRepository(ctx, repo)
+		if err != nil {
+			res = &provisioning.TestResults{
+				Success: false,
+				Errors: []string{
+					"error running test repository",
+					err.Error(),
+				},
+			}
+		}
+
+		status.Health = provisioning.HealthStatus{
+			Healthy: res.Success,
+			Checked: time.Now().UnixMilli(),
+			Message: res.Errors,
+		}
+		if !res.Success {
+			logger.Error("repository is unhealthy", "errors", res.Errors)
+		}
+	}
+
+	// Queue a sync job
+	hash := status.Sync.Hash
+	if status.Sync.State == provisioning.JobStateWorking {
+		res := rc.jobs.Status(ctx, obj.Namespace, status.Sync.JobID)
+		if res == nil {
+			logger.Warn("error getting job status", "job", status.Sync.JobID)
+			res = &provisioning.JobStatus{
+				State:  provisioning.JobStateError,
+				Errors: []string{"unable to find status for job: " + status.Sync.JobID},
+			}
+		}
+		status.Sync = res.ToSyncStatus(status.Sync.JobID)
+	}
+
+	// Queue a new sync job
+	if sync != nil && status.Sync.State != provisioning.JobStateWorking {
+		job, err := rc.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: obj.Namespace,
+			},
+			Spec: provisioning.JobSpec{
+				Repository: obj.GetName(),
+				Action:     provisioning.JobActionSync,
+				Sync:       sync,
+			},
+		})
+		if err != nil {
+			logger.Error("error adding sync job", "error", err)
+			status.Sync = provisioning.SyncStatus{
+				State:   provisioning.JobStateError,
+				Started: time.Now().UnixMilli(),
+				Message: []string{
+					"Error starting sync job",
+					err.Error(),
+				},
+			}
+		} else {
+			status.Sync = job.Status.ToSyncStatus(job.Name)
+			logger.Info("sync job triggered", "job", job.Name)
+		}
+	}
+	status.Sync.Hash = hash
+	obj.Status = *status
+
+	// Write the updated status (careful not to trigger inf loop)
+	if _, err := rc.client.Repositories(obj.GetNamespace()).
+		UpdateStatus(ctx, obj, v1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update status: %w", err)
+	}
+
+	return nil
+}
+
+// process is the business logic of the controller.
+func (rc *RepositoryController) processXX(item *queueItem) error {
 	ctx := context.Background()
 
 	logger := logging.FromContext(ctx).With("logger", loggerName, "key", item.key)
@@ -229,6 +389,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// TODO?!!!
 	// look for deletionTimestamp with finalizer set???
+
+	fmt.Printf("PORCESS: %s / %+v /%+v\n", item.key, item.op, item.obj)
 
 	if item.op == operationDelete {
 		logger.Info("handle repository deletion")
@@ -291,6 +453,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	repo, err := rc.repoGetter.AsRepository(ctx, cachedRepo)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
+	}
+
+	if cachedRepo.DeletionTimestamp != nil && len(cachedRepo.Finalizers) > 0 {
+
 	}
 
 	hasSpecChanged := cachedRepo.Generation != cachedRepo.Status.ObservedGeneration

@@ -192,6 +192,19 @@ func (s *jobStore) Next(ctx context.Context) *provisioning.Job {
 	return nil
 }
 
+// Get the status for a job
+func (s *jobStore) Status(ctx context.Context, namespace string, name string) *provisioning.JobStatus {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	for _, job := range s.jobs {
+		if job.Name == name && job.Namespace == namespace {
+			return job.Status.DeepCopy()
+		}
+	}
+	return nil
+}
+
 // Complete implements JobQueue.
 func (s *jobStore) Update(ctx context.Context, namespace string, name string, status provisioning.JobStatus) error {
 	s.mutex.Lock()
