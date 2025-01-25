@@ -419,8 +419,10 @@ func (ng *AlertNG) init() error {
 	statePersister := state.NewSyncStatePersisiter(logger, cfg)
 
 	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		ng.Log.Info("Using rule state persister")
 		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)
 	} else if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+		ng.Log.Info("Using periodic state persister")
 		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
 		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
 	}

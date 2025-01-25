@@ -69,6 +69,7 @@ func ProvideDBStore(
 
 	var instanceStore AlertInstanceStore
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		logger.Info("Using protobuf-based alert instance store")
 		instanceStore = ProtoInstanceDBStore{
 			SQLStore:       sqlstore,
 			Logger:         logger,

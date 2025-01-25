@@ -622,6 +622,10 @@ func TestIntegrationFullSync(t *testing.T) {
 }
 
 func TestIntegration_ProtoInstanceDBStore_VerifyCompressedData(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(
 		t,
