@@ -142,10 +142,6 @@ func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: 1 * time.Second}
 
 	service := foldertest.NewFakeService()
-	instanceStore := InstanceDBStore{
-		SQLStore: db,
-		Logger:   &logtest.Fake{},
-	}
 
 	store := &DBstore{
 		SQLStore:      db,
@@ -153,7 +149,6 @@ func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 		FolderService: service,
 		Logger:        &logtest.Fake{},
 		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
-		InstanceStore: instanceStore,
 	}
 	return store
 }

@@ -94,34 +94,16 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	)
 	require.NoError(tb, err)
 
-	logger := log.New("ngalert-test")
-
-	var instanceStore store.AlertInstanceStore
-	if options.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
-		instanceStore = store.ProtoInstanceDBStore{
-			SQLStore:       ng.SQLStore,
-			Logger:         logger,
-			FeatureToggles: options.featureToggles,
-		}
-	} else {
-		instanceStore = store.InstanceDBStore{
-			SQLStore:       ng.SQLStore,
-			Logger:         logger,
-			FeatureToggles: options.featureToggles,
-		}
-	}
-
 	return ng, &store.DBstore{
 		FeatureToggles: options.featureToggles,
 		SQLStore:       ng.SQLStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: baseInterval * time.Second,
 		},
-		Logger:           logger,
+		Logger:           log.New("ngalert-test"),
 		DashboardService: dashboardService,
 		FolderService:    folderService,
 		Bus:              bus,
-		InstanceStore:    instanceStore,
 	}
 }
 

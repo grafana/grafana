@@ -24,7 +24,7 @@ func BenchmarkSaveAlertInstances(b *testing.B) {
 	}
 
 	benchmarkRun := func(b *testing.B, instanceCount, labelCount int) {
-		_, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds, opts...)
+		ng, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds, opts...)
 
 		const mainOrgID int64 = 1
 
@@ -60,21 +60,21 @@ func BenchmarkSaveAlertInstances(b *testing.B) {
 			var err error
 
 			if *saveStateCompressed {
-				err = dbstore.SaveAlertInstancesForRule(ctx, alertRule.GetKeyWithGroup(), instances)
+				err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, alertRule.GetKeyWithGroup(), instances)
 				if err != nil {
 					b.Fatalf("error: %s", err)
 				}
 
 				// Clean up instances.
 				b.StopTimer()
-				err = dbstore.DeleteAlertInstancesByRule(ctx, alertRule.GetKeyWithGroup())
+				err = ng.InstanceStore.DeleteAlertInstancesByRule(ctx, alertRule.GetKeyWithGroup())
 				if err != nil {
 					b.Fatalf("error: %s", err)
 				}
 				b.StartTimer()
 			} else {
 				for _, instance := range instances {
-					err = dbstore.SaveAlertInstance(ctx, instance)
+					err = ng.InstanceStore.SaveAlertInstance(ctx, instance)
 					if err != nil {
 						b.Fatalf("error: %s", err)
 					}
@@ -82,7 +82,7 @@ func BenchmarkSaveAlertInstances(b *testing.B) {
 
 				// Clean up instances.
 				b.StopTimer()
-				err = dbstore.DeleteAlertInstances(ctx, keys...)
+				err = ng.InstanceStore.DeleteAlertInstances(ctx, keys...)
 				if err != nil {
 					b.Fatalf("error: %s", err)
 				}
