@@ -68,6 +68,9 @@ import {
 import { isSplit } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
+const eventSourceOodleGrafana = 'oodle';
+const eventTypeUpdateThresholds = 'updateThresholds';
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     exploreMain: css({
@@ -112,6 +115,8 @@ export interface ExploreProps extends Themeable2 {
 
 interface ExploreState {
   contentOutlineVisible: boolean;
+  warnThreshold?: number;
+  criticalThreshold?: number;
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
@@ -148,11 +153,30 @@ export class Explore extends PureComponent<Props, ExploreState> {
 
   constructor(props: Props) {
     super(props);
-    this.state = {
-      contentOutlineVisible: store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true),
-    };
+
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
+
+
+    let warnThreshold = undefined;
+    let criticalThreshold = undefined;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const paramCriticalThresh = searchParams.get('criticalThreshold');
+    if (paramCriticalThresh) {
+      criticalThreshold = parseFloat(paramCriticalThresh);
+    }
+
+    const paramWarningThresh = searchParams.get('warningThreshold');
+    if (paramWarningThresh) {
+      warnThreshold = parseFloat(paramWarningThresh);
+    }
+
+    this.state = {
+      contentOutlineVisible: store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, true),
+      criticalThreshold: criticalThreshold,
+      warnThreshold: warnThreshold,
+    };
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -361,15 +385,74 @@ export class Explore extends PureComponent<Props, ExploreState> {
     });
   }
 
-  renderGraphPanel(width: number) {
-    const { graphResult, timeZone, queryResponse, showFlameGraph } = this.props;
+  processThresholdEvent = (event: MessageEvent<any>) => {
+    const { type, payload } = event.data;
+    if (type !== 'message') {
+      return
+    }
+    if (payload?.source !== eventSourceOodleGrafana) {
+      return
+    }
+    if (payload?.eventType !== eventTypeUpdateThresholds) {
+      return
+    }
+
+    const eventCriticalThresh  = payload?.criticalThreshold;
+    const eventWarningThresh = payload?.warningThreshold;
+    if (eventCriticalThresh || eventWarningThresh) {
+      if (eventWarningThresh) {
+        this.setState({warnThreshold: parseFloat(eventWarningThresh)});
+      }
+      if (eventCriticalThresh) {
+        this.setState({criticalThreshold: parseFloat(eventCriticalThresh)});
+      }
+    }
+  }
+
+  componentDidMount() {
+    // Add event listener when the component mounts
+    window.addEventListener('message', this.processThresholdEvent);
+  }
+
+  componentWillUnmount() {
+    // Remove event listener when the component unmounts
+    window.removeEventListener('message', this.processThresholdEvent);
+  }
+
+  renderGraphPanel(
+    width: number,
+  ) {
+    const { graphResult, timeZone, queryResponse, showFlameGraph, queryBuilderOnly } = this.props;
+
+    const { warnThreshold, criticalThreshold } = this.state;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    let panelHeight = showFlameGraph ? 180 : 400;
+    let panelWidth = width;
+    let panelTitle = "Graph";
+
+    const panelHeightParam = searchParams.get('panelHeight');
+    if (panelHeightParam) {
+      panelHeight = parseInt(panelHeightParam, 10);
+    }
+
+    const panelWidthParam = searchParams.get('panelWidth');
+    if (panelWidthParam) {
+      panelWidth = parseInt(panelWidthParam, 10);
+    }
+
+    const panelTitleParam = searchParams.get('panelTitle');
+    if (panelTitleParam) {
+      panelTitle = panelTitleParam;
+    }
 
     return (
-      <ContentOutlineItem panelId="Graph" title="Graph" icon="graph-bar">
+      <ContentOutlineItem panelId="Graph" title={panelTitle} icon="graph-bar">
         <GraphContainer
+          title={panelTitle}
           data={graphResult!}
-          height={showFlameGraph ? 180 : 400}
-          width={width}
+          height={panelHeight}
+          width={panelWidth}
           timeRange={queryResponse.timeRange}
           timeZone={timeZone}
           onChangeTime={this.onUpdateTimeRange}
@@ -377,6 +460,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
           eventBus={this.graphEventBus}
+          warnThreshold={warnThreshold}
+          criticalThreshold={criticalThreshold}
+          queryBuilderOnly={queryBuilderOnly}
         />
       </ContentOutlineItem>
     );
@@ -565,15 +651,18 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const hideQueryEditor = searchParams.has('hideQueryBuilder');
+
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
-        <ExploreToolbar
+        {!hideQueryEditor && <ExploreToolbar
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
           isContentOutlineOpen={contentOutlineVisible}
           queryBuilderOnly={queryBuilderOnly}
-        />
+        />}
         <div
           style={{
             position: 'relative',
@@ -593,7 +682,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
-                    <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
+                    {!hideQueryEditor && <ContentOutlineItem panelId="Queries" title="Queries" icon="arrow" mergeSingleChild={true}>
                       <PanelContainer className={styles.queryContainer}>
                         {correlationsBox}
                         <QueryRows exploreId={exploreId} queryBuilderOnly={queryBuilderOnly} />
@@ -612,7 +701,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         />}
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
-                    </ContentOutlineItem>
+                    </ContentOutlineItem>}
                     <AutoSizer onResize={this.onResize} disableHeight>
                       {({ width }) => {
                         if (width === 0) {
@@ -622,10 +711,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         return (
                           <main className={cx(styles.exploreMain)} style={{ width }}>
                             <ErrorBoundaryAlert>
-                              {!queryBuilderOnly && showPanels && (
+                              {showPanels && (
                                 <>
                                   {showMetrics && graphResult && (
-                                    <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                                    <ErrorBoundaryAlert>{this.renderGraphPanel(
+                                      width,
+                                    )}</ErrorBoundaryAlert>
                                   )}
                                   {showRawPrometheus && (
                                     <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>

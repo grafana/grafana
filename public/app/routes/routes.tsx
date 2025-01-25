@@ -166,6 +166,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() =>
           import(/* webpackChunkName: "explore" */ 'app/features/explore/PromqlEditorPage')
       ),
+      // Exiting kiosk mode is disabled in chromeless.
+      chromeless: true,
     },
     {
       path: '/apps',
