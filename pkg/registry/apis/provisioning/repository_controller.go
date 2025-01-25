@@ -278,15 +278,54 @@ func (rc *RepositoryController) process(item *queueItem) error {
 					logger.Warn("unknown finalizer: " + finalizer)
 				}
 			}
-			// Remove finalizers
+
+			// remove all finalizers
 			patched, err := rc.client.Repositories(obj.GetNamespace()).
 				Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
-					{ "op": "remove", "path": "/metadata/finalizers" }
-				]`), v1.PatchOptions{})
+						{ "op": "remove", "path": "/metadata/finalizers" }
+					]`), v1.PatchOptions{
+					FieldManager: "repository-controller",
+				})
 			if err != nil {
 				return fmt.Errorf("error clearing finalizer: %w", err)
 			}
-			fmt.Printf("PATCHED: %+v", patched.Finalizers)
+			fmt.Printf("PATCHED: %+v\n", patched.Finalizers)
+
+			// // if false { // apply vs path
+			// apply := applyconfiguration.Repository(obj.Name, obj.Namespace)
+			// apply.Finalizers = []string{}
+			// fmt.Printf("APPLY: %+v\n", apply.ObjectMetaApplyConfiguration)
+
+			// // Remove finalizers
+			// patched, err := rc.client.Repositories(obj.GetNamespace()).
+			// 	Apply(ctx, apply, v1.ApplyOptions{
+			// 		Force:        true, // remove the finalizer
+			// 		FieldManager: "repository-controller",
+			// 	})
+			// if err != nil {
+			// 	return fmt.Errorf("error clearing finalizer: %w", err)
+			// }
+			// fmt.Printf("APPLIED: %+v\n", patched.Finalizers)
+			// } else {
+			// 	patch, err := json.Marshal(map[string]any{
+			// 		"metadata": map[string]any{
+			// 			"finalizers": []string{},
+			// 		},
+			// 	})
+			// 	if err != nil {
+			// 		return err
+			// 	}
+			// 	fmt.Printf("PATCH: %s\n", string(patch))
+			// 	// Remove finalizers
+			// 	patched, err := rc.client.Repositories(obj.GetNamespace()).
+			// 		Patch(ctx, obj.Name, types.ApplyPatchType, patch, v1.PatchOptions{
+			// 			FieldManager: "repository-controller",
+			// 		})
+			// 	if err != nil {
+			// 		return fmt.Errorf("error clearing finalizer: %w", err)
+			// 	}
+			// 	fmt.Printf("PATCHED: %+v\n", patched.Finalizers)
+			// }
 			return nil // patched
 		}
 

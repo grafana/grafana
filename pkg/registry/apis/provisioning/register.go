@@ -322,7 +322,8 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 	}
 
 	// Should adding this be explicit from the UI? delete or delete + cleanup
-	if len(r.Finalizers) == 0 {
+	// Remember this is called on every update, so be careful to only add the finalizer for create
+	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
 		r.Finalizers = []string{jobs.CLEANUP_FINALIZER}
 	}
 
