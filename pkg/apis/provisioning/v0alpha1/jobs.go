@@ -68,6 +68,9 @@ type JobSpec struct {
 
 	// Required when the action is `export`
 	Export *ExportOptions `json:"export,omitempty"`
+
+	// Required when the action is `sync`
+	Sync *SyncOptions `json:"sync,omitempty"`
 }
 
 type PullRequestOptions struct {
@@ -80,6 +83,11 @@ type PullRequestOptions struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
+}
+
+type SyncOptions struct {
+	// Complete forces the sync to overwrite
+	Complete bool `json:"complete,omitempty"`
 }
 
 type ExportOptions struct {
