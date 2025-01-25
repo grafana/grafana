@@ -442,7 +442,7 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 
 	// TODO: Consider if this should be moved outside of this function
 	// or indeed into convertToDataFrame
-	f.Name = tableName
+	f.RefID = tableName
 	err = convertToDataFrame(ctx, iter, schema, f)
 	if err != nil {
 		return err

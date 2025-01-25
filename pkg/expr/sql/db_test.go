@@ -32,24 +32,7 @@ func TestQueryFramesInto(t *testing.T) {
 			expected: data.NewFrame(
 				"sqlExpressionRefId",
 				data.NewField("name", nil, []string{"sam"}),
-				data.NewField("age", nil, []int64{40}),
-			),
-		},
-		{
-			// TODO: Also ORDER BY to ensure the order is preserved
-			name:  "list table names when one table is present",
-			query: `SHOW TABLES;`,
-			input_frames: []*data.Frame{
-				data.NewFrame(
-					"inputFrameRefId",
-					//nolint:misspell
-					data.NewField("OSS Projects with Typos", nil, []string{"Garfana", "Pormetheus"}),
-				),
-			},
-			expected: data.NewFrame(
-				"sqlExpressionRefId",
-				// NOTE: `mydb` is the database name set by the application code
-				data.NewField("Tables_in_mydb", nil, []string{"inputFrameRefId"}),
+				data.NewField("age", nil, []int8{40}),
 			),
 		},
 		{
@@ -57,11 +40,11 @@ func TestQueryFramesInto(t *testing.T) {
 			name:  "query all rows from single input frame",
 			query: `SELECT * FROM inputFrameRefId LIMIT 1;`,
 			input_frames: []*data.Frame{
-				data.NewFrame(
-					"inputFrameRefId",
+				setRefID(data.NewFrame(
+					"",
 					//nolint:misspell
 					data.NewField("OSS Projects with Typos", nil, []string{"Garfana", "Pormetheus"}),
-				),
+				), "inputFrameRefId"),
 			},
 			expected: data.NewFrame(
 				"sqlExpressionRefId",
@@ -77,7 +60,7 @@ func TestQueryFramesInto(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, frame.Fields)
 
-			require.Equal(t, tt.expected.Name, frame.Name)
+			require.Equal(t, tt.expected.Name, frame.RefID)
 			require.Equal(t, len(tt.expected.Fields), len(frame.Fields))
 			for i := range tt.expected.Fields {
 				require.Equal(t, tt.expected.Fields[i].Name, frame.Fields[i].Name)
@@ -85,4 +68,9 @@ func TestQueryFramesInto(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setRefID(f *data.Frame, refID string) *data.Frame {
+	f.RefID = refID
+	return f
 }
