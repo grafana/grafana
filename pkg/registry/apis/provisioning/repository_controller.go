@@ -227,6 +227,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
+	// TODO?!!!
+	// look for deletionTimestamp with finalizer set???
+
 	if item.op == operationDelete {
 		logger.Info("handle repository deletion")
 		cfg, ok := item.obj.(*provisioning.Repository)
@@ -262,7 +265,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			return fmt.Errorf("error creating replicator")
 		}
 
-		if err := replicator.Unsync(ctx); err != nil {
+		if err := replicator.DeleteAllProvisionedResources(ctx); err != nil {
 			return fmt.Errorf("unsync repository: %w", err)
 		}
 

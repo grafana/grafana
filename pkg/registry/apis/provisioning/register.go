@@ -321,8 +321,9 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		return fmt.Errorf("expected repository configuration")
 	}
 
-	if r.Spec.DeletePolicy == "" {
-		r.Spec.DeletePolicy = provisioning.DeletePolityClean
+	// Should adding this be explicit from the UI? delete or delete + cleanup
+	if len(r.Finalizers) == 0 {
+		r.Finalizers = []string{jobs.CLEANUP_FINALIZER}
 	}
 
 	if r.Spec.Type == provisioning.GitHubRepositoryType {

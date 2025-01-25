@@ -11,16 +11,15 @@ import (
 // RepositorySpecApplyConfiguration represents a declarative configuration of the RepositorySpec type for use
 // with apply.
 type RepositorySpecApplyConfiguration struct {
-	Title        *string                                   `json:"title,omitempty"`
-	Description  *string                                   `json:"description,omitempty"`
-	Folder       *string                                   `json:"folder,omitempty"`
-	Editing      *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
-	DeletePolicy *provisioningv0alpha1.DeletePolicy        `json:"deletePolicy,omitempty"`
-	Type         *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
-	Linting      *bool                                     `json:"linting,omitempty"`
-	Local        *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
-	S3           *S3RepositoryConfigApplyConfiguration     `json:"s3,omitempty"`
-	GitHub       *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
+	Title       *string                                   `json:"title,omitempty"`
+	Description *string                                   `json:"description,omitempty"`
+	Folder      *string                                   `json:"folder,omitempty"`
+	Editing     *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
+	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
+	Linting     *bool                                     `json:"linting,omitempty"`
+	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
+	S3          *S3RepositoryConfigApplyConfiguration     `json:"s3,omitempty"`
+	GitHub      *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
 }
 
 // RepositorySpecApplyConfiguration constructs a declarative configuration of the RepositorySpec type for use with
@@ -58,14 +57,6 @@ func (b *RepositorySpecApplyConfiguration) WithFolder(value string) *RepositoryS
 // If called multiple times, the Editing field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithEditing(value *EditingOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Editing = value
-	return b
-}
-
-// WithDeletePolicy sets the DeletePolicy field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the DeletePolicy field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithDeletePolicy(value provisioningv0alpha1.DeletePolicy) *RepositorySpecApplyConfiguration {
-	b.DeletePolicy = &value
 	return b
 }
 

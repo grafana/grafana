@@ -84,9 +84,6 @@ type RepositorySpec struct {
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 
-	// DeletePolicy options within the repository
-	DeletePolicy DeletePolicy `json:"deletePolicy"`
-
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
