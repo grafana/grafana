@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	sqle "github.com/dolthub/go-mysql-server"
@@ -212,79 +211,16 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	return nil
 }
 
-// TODO: Check if it really makes sense to receive a shared context here, rather than creating a new one
-func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *data.Frame) error {
-	if frame == nil {
-		return fmt.Errorf("input frame is nil")
-	}
-	tableName = strings.ToLower(frame.RefID)
-
-	// Create schema based on frame fields
-	schema := make(mysql.Schema, len(frame.Fields))
-	for i, field := range frame.Fields {
-		schema[i] = &mysql.Column{
-			Name:     field.Name,
-			Type:     convertDataType(field.Type()),
-			Nullable: field.Type().Nullable(),
-			Source:   tableName,
-		}
-	}
-
-	// Create table with the dynamic schema
-	table := memory.NewTable(db.inMemoryDb, tableName, mysql.NewPrimaryKeySchema(schema), nil)
-	db.inMemoryDb.AddTable(tableName, table)
-
-	// Insert data from the frame
-	for i := 0; i < frame.Rows(); i++ {
-		row := make(mysql.Row, len(frame.Fields))
-		for j, field := range frame.Fields {
-			if schema[j].Nullable {
-				if field.At(i) == nil {
-					continue
-				}
-				v, _ := field.ConcreteAt(i)
-				row[j] = v
-				continue
-			}
-			row[j] = field.At(i)
-		}
-
-		err := table.Insert(ctx, row)
-		if err != nil {
-			return fmt.Errorf("error inserting row %d: %v", i, err)
-		}
-	}
-
-	return nil
-}
-
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
-	// pro := memory.NewDBProvider(db.inMemoryDb)
-	// session := memory.NewSession(mysql.NewBaseSession(), pro)
-	// ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
-
 	pro := NewFramesDBProvider(frames)
 	session := mysql.NewBaseSession()
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
-
-	// for _, frame := range frames {
-	// 	// We have both `frame` and `f` in this function. Consider renaming one or both.
-	// 	// Potentially `f` to `outputFrame`
-	// 	err := db.writeDataframeToDb(ctx, tableName, frame)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	// Select the database in the context
 	ctx.SetCurrentDatabase(dbName)
 
 	// TODO: Check if it's wise to reuse the existing provider, rather than creating a new one
 	engine := sqle.NewDefault(pro)
-	// engine := sqle.NewDefault(
-	// 	mysql.NewDatabaseProvider(
-	// 		db.inMemoryDb,
-	// 	))
 
 	schema, iter, _, err := engine.Query(ctx, query)
 	if err != nil {
