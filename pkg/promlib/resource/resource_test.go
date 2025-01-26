@@ -51,13 +51,6 @@ func TestResource_Execute(t *testing.T) {
 	assert.NotNil(t, resp)
 }
 
-// func TestGetSelectors(t *testing.T) {
-// 	expr := `http_requests_total{job="api-server"}`
-// 	selectors, err := resource.GetSelectors(expr)
-// 	require.NoError(t, err)
-// 	assert.Contains(t, selectors, "http_requests_total")
-// }
-
 func TestResource_GetSuggestions(t *testing.T) {
 	httpClient := &http.Client{}
 	settings := backend.DataSourceInstanceSettings{
