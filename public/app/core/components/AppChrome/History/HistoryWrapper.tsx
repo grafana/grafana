@@ -111,14 +111,6 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
       return entry.url === window.location.href;
     })?.time;
 
-  const getBreadcrumbs = () => {
-    let text = '';
-    breadcrumbs.map((breadcrumb, index) => {
-      text += `${breadcrumb.text} ${index !== breadcrumbs.length - 1 ? '> ' : ''}`;
-    });
-    return text;
-  };
-
   return (
     <Stack direction="column" gap={1}>
       <Stack alignItems={'baseline'}>
@@ -151,7 +143,13 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           className={isSelected ? undefined : styles.card}
         >
           <Stack direction="column">
-            <Text>{getBreadcrumbs()}</Text>
+            <div className={styles.breadcrumbs}>
+              {breadcrumbs.map((breadcrumb, index) => (
+                <Text key={index}>
+                  {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
+                </Text>
+              ))}
+            </div>
             <Text color="secondary" variant="bodySmall">
               {moment(time).format('h:mm A')}
             </Text>
@@ -265,6 +263,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     paddingLeft: css({
       paddingLeft: theme.spacing(2),
+    }),
+    breadcrumbs: css({
+      wordBreak: 'break-all',
     }),
   };
 };
