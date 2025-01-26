@@ -261,7 +261,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	var sync *provisioning.SyncOptions
 
 	switch {
-	// Delete
+	// Delete (note this switch does not fallthrough to the health check)
 	case obj.DeletionTimestamp != nil:
 		logger.Info("handle repository delete")
 		if hooks != nil {
@@ -303,8 +303,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 					]`), v1.PatchOptions{
 					FieldManager: "repository-controller",
 				})
-			return err // delete will be called again
 		}
+		return err // delete will be called again
 
 	// Create
 	case obj.Status.ObservedGeneration < 1:
@@ -328,7 +328,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return err
 	}
 
-	healthAge = time.Since(time.UnixMilli(status.Health.Checked))
 	status.ObservedGeneration = obj.Generation
 	if obj.DeletionTimestamp == nil && healthAge > 200*time.Millisecond {
 		res, err := rc.tester.TestRepository(ctx, repo)

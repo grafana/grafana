@@ -216,9 +216,12 @@ func (g *JobWorker) doSync(ctx context.Context,
 			"stats": stats.Items,
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	fmt.Printf("SEND PATCH (after): %s\n", (patch))
-	cfg, err = g.client.Repositories(cfg.Namespace).
+	_, err = g.client.Repositories(cfg.Namespace).
 		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
 	if err != nil {
 		logger.Warn("unable to update repo with job status", "err", err)
