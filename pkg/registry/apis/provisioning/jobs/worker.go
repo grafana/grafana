@@ -2,17 +2,19 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -89,63 +91,8 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 
 	switch job.Spec.Action {
 	case provisioning.JobActionSync:
-		started := time.Now()
+		return g.doSync(ctx, repo, job, parser, progress)
 
-		// Update the status to indicate that we are working on it
-		cfg := repo.Config().DeepCopy()
-		status := &provisioning.SyncStatus{
-			State:   provisioning.JobStateWorking,
-			JobID:   job.GetName(),
-			Started: started.UnixMilli(),
-		}
-		cfg.Status.Sync = *status
-		cfg, err := g.client.Repositories(cfg.GetNamespace()).UpdateStatus(ctx, cfg, v1.UpdateOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("update repository status: %w", err)
-		}
-
-		syncer, err := NewSyncer(repo, g.lister, parser)
-		if err != nil {
-			return nil, fmt.Errorf("error creating replicator")
-		}
-
-		var complete bool
-		if job.Spec.Sync != nil && job.Spec.Sync.Complete {
-			complete = job.Spec.Sync.Complete
-		}
-
-		// Sync the repository
-		ref, syncError := syncer.Sync(ctx, complete)
-		status = &provisioning.SyncStatus{
-			State:    provisioning.JobStateSuccess,
-			JobID:    job.GetName(),
-			Hash:     ref,
-			Started:  started.UnixMilli(),
-			Finished: time.Now().UnixMilli(),
-			Message:  []string{},
-		}
-
-		if syncError != nil {
-			status.State = provisioning.JobStateError
-			status.Message = append(status.Message, syncError.Error())
-		}
-
-		// Update the resource stats
-		stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
-		if err != nil {
-			logger.Warn("unable to read stats", "error", err)
-		} else if stats != nil {
-			cfg.Status.Stats = stats.Items
-		}
-
-		cfg.Status.Sync = *status
-		if _, err := g.client.Repositories(cfg.GetNamespace()).UpdateStatus(ctx, cfg, v1.UpdateOptions{}); err != nil {
-			return nil, fmt.Errorf("update repository status: %w", err)
-		}
-
-		if syncError != nil {
-			return nil, syncError
-		}
 	case provisioning.JobActionPullRequest:
 		prRepo, ok := repo.(PullRequestRepo)
 		if !ok {
@@ -199,6 +146,75 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 
 	default:
 		return nil, fmt.Errorf("unknown job action: %s", job.Spec.Action)
+	}
+}
+
+func (g *JobWorker) doSync(ctx context.Context,
+	repo repository.Repository,
+	job provisioning.Job,
+	parser *resources.Parser,
+	_ func(provisioning.JobStatus) error,
+) (*provisioning.JobStatus, error) {
+	var err error
+	cfg := repo.Config()
+
+	status := job.Status.ToSyncStatus(job.Name)
+	patch, err := json.Marshal(map[string]any{
+		"status": map[string]any{
+			"sync": status,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("SEND PATCH (starting): %s\n", (patch))
+	cfg, err = g.client.Repositories(cfg.Namespace).
+		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
+	if err != nil {
+		logger.Warn("unable to update repo with job status", "err", err)
+	}
+
+	syncer, err := NewSyncer(repo, g.lister, parser)
+	if err != nil {
+		return nil, fmt.Errorf("error creating replicator")
+	}
+
+	var complete bool
+	if job.Spec.Sync != nil && job.Spec.Sync.Complete {
+		complete = job.Spec.Sync.Complete
+	}
+
+	// Sync the repository
+	ref, syncError := syncer.Sync(ctx, complete)
+	status = job.Status.ToSyncStatus(job.Name)
+	status.Hash = ref
+
+	// Update the resource stats
+	stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
+	if err != nil {
+		logger.Warn("unable to read stats", "error", err)
+	}
+	if stats == nil {
+		stats = &provisioning.ResourceStats{}
+	}
+
+	patch, err = json.Marshal(map[string]any{
+		"status": map[string]any{
+			"sync":  status,
+			"stats": stats.Items,
+		},
+	})
+
+	fmt.Printf("SEND PATCH (after): %s\n", (patch))
+	cfg, err = g.client.Repositories(cfg.Namespace).
+		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
+	if err != nil {
+		logger.Warn("unable to update repo with job status", "err", err)
+	}
+
+	if syncError != nil {
+		return nil, syncError
 	}
 
 	return &provisioning.JobStatus{

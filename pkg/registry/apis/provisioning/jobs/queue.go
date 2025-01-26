@@ -149,7 +149,14 @@ func (s *jobStore) drainPending() {
 					State:  provisioning.JobStateError,
 					Errors: []string{err.Error()},
 				}
-			} else if status.State == "" {
+			}
+			if status == nil {
+				status = &provisioning.JobStatus{
+					State:  provisioning.JobStateError,
+					Errors: []string{"no status response from worker"},
+				}
+			}
+			if status.State == "" {
 				status.State = provisioning.JobStateSuccess
 			}
 			logger.Debug("job processing finished", "status", status.State)

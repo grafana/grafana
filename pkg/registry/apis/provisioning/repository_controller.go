@@ -242,6 +242,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	ctx := context.Background()
+	id, err := rc.identities.WorkerIdentity(ctx, namespace)
+	if err != nil {
+		return err
+	}
+	ctx = identity.WithRequester(ctx, id)
 	logger = logger.WithContext(ctx)
 
 	repo, err := rc.repoGetter.AsRepository(ctx, obj)
@@ -274,59 +279,31 @@ func (rc *RepositoryController) process(item *queueItem) error {
 				case "cleanup":
 					logger.Info("handle cleanup")
 
+					parser, err := rc.parsers.GetParser(ctx, repo)
+					if err != nil {
+						return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
+					}
+					replicator, err := jobs.NewSyncer(repo, rc.resourceLister, parser)
+					if err != nil {
+						return fmt.Errorf("error creating replicator")
+					}
+					if err := replicator.DeleteAllProvisionedResources(ctx); err != nil {
+						return fmt.Errorf("unsync repository: %w", err)
+					}
+
 				default:
 					logger.Warn("unknown finalizer: " + finalizer)
 				}
 			}
 
-			// remove all finalizers
-			patched, err := rc.client.Repositories(obj.GetNamespace()).
+			// remove the finalizers
+			_, err = rc.client.Repositories(obj.GetNamespace()).
 				Patch(ctx, obj.Name, types.JSONPatchType, []byte(`[
 						{ "op": "remove", "path": "/metadata/finalizers" }
 					]`), v1.PatchOptions{
 					FieldManager: "repository-controller",
 				})
-			if err != nil {
-				return fmt.Errorf("error clearing finalizer: %w", err)
-			}
-			fmt.Printf("PATCHED: %+v\n", patched.Finalizers)
-
-			// // if false { // apply vs path
-			// apply := applyconfiguration.Repository(obj.Name, obj.Namespace)
-			// apply.Finalizers = []string{}
-			// fmt.Printf("APPLY: %+v\n", apply.ObjectMetaApplyConfiguration)
-
-			// // Remove finalizers
-			// patched, err := rc.client.Repositories(obj.GetNamespace()).
-			// 	Apply(ctx, apply, v1.ApplyOptions{
-			// 		Force:        true, // remove the finalizer
-			// 		FieldManager: "repository-controller",
-			// 	})
-			// if err != nil {
-			// 	return fmt.Errorf("error clearing finalizer: %w", err)
-			// }
-			// fmt.Printf("APPLIED: %+v\n", patched.Finalizers)
-			// } else {
-			// 	patch, err := json.Marshal(map[string]any{
-			// 		"metadata": map[string]any{
-			// 			"finalizers": []string{},
-			// 		},
-			// 	})
-			// 	if err != nil {
-			// 		return err
-			// 	}
-			// 	fmt.Printf("PATCH: %s\n", string(patch))
-			// 	// Remove finalizers
-			// 	patched, err := rc.client.Repositories(obj.GetNamespace()).
-			// 		Patch(ctx, obj.Name, types.ApplyPatchType, patch, v1.PatchOptions{
-			// 			FieldManager: "repository-controller",
-			// 		})
-			// 	if err != nil {
-			// 		return fmt.Errorf("error clearing finalizer: %w", err)
-			// 	}
-			// 	fmt.Printf("PATCHED: %+v\n", patched.Finalizers)
-			// }
-			return nil // patched
+			return err // delete will be called again
 		}
 
 	// Create
@@ -389,8 +366,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		status.Sync = res.ToSyncStatus(status.Sync.JobID)
 	}
 
-	// Queue a new sync job
-	if sync != nil && status.Sync.State != provisioning.JobStateWorking {
+	// Maybe add a new sync job
+	if status.Health.Healthy && sync != nil && status.Sync.State != provisioning.JobStateWorking {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
