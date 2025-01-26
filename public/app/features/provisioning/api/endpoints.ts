@@ -439,21 +439,21 @@ export type ExportOptions = {
   history?: boolean;
   prefix?: string;
 };
-export type SyncOptions = {
-  complete?: boolean;
-};
 export type PullRequestOptions = {
   hash?: string;
   pr?: number;
   ref?: string;
   url?: string;
 };
+export type SyncOptions = {
+  complete?: boolean;
+};
 export type JobSpec = {
   action: 'export' | 'pr' | 'sync';
   export?: ExportOptions;
   pr?: PullRequestOptions;
-  sync?: SyncOptions;
   repository: string;
+  sync?: SyncOptions;
 };
 export type JobResourceSummary = {
   create?: number;

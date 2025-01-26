@@ -2231,8 +2231,26 @@
         "tags": [
           "Repository"
         ],
-        "description": "connect POST requests to sync of Repository",
+        "description": "Sync from repository into Grafana",
         "operationId": "createRepositorySync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "complete": {
+                    "description": "Complete forces the sync to overwrite",
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "complete": true
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -3855,6 +3873,14 @@
             "description": "The the repository reference (for now also in labels)",
             "type": "string",
             "default": ""
+          },
+          "sync": {
+            "description": "Required when the action is `sync`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions"
+              }
+            ]
           }
         }
       },
@@ -4465,6 +4491,15 @@
           },
           "region": {
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions": {
+        "type": "object",
+        "properties": {
+          "complete": {
+            "description": "Complete forces the sync to overwrite",
+            "type": "boolean"
           }
         }
       },
