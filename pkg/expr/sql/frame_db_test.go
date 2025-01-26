@@ -31,8 +31,13 @@ func TestFrameDB(t *testing.T) {
 	ctx.SetCurrentDatabase("frames")
 
 	engine := sqle.NewDefault(provider)
+	engine.Analyzer.Catalog.RegisterFunction(ctx, mysql.FunctionN{
+		Name: "sloth",
+		Fn:   NewSlothFunction(),
+	})
 
 	schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
+	//schema, iter, _, err := engine.Query(ctx, "SELECT sloth()")
 	//schema, iter, _, err := engine.Query(ctx, "SELECT SELECT 2.35, -128, -32768, -8388608, -2147483648, 255, 65535, 16777215, 4294967295")
 	//schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count), sum(ncount) FROM a GROUP BY animal")
 

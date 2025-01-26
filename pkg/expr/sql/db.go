@@ -426,6 +426,10 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 
 	// TODO: Check if it's wise to reuse the existing provider, rather than creating a new one
 	engine := sqle.NewDefault(pro)
+	engine.Analyzer.Catalog.RegisterFunction(ctx, mysql.FunctionN{
+		Name: "sloth",
+		Fn:   NewSlothFunction(),
+	})
 
 	schema, iter, _, err := engine.Query(ctx, query)
 	if err != nil {
