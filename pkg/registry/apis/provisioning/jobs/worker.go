@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -189,6 +190,16 @@ func (g *JobWorker) doSync(ctx context.Context,
 	ref, syncError := syncer.Sync(ctx, complete)
 	status = job.Status.ToSyncStatus(job.Name)
 	status.Hash = ref
+	status.Finished = time.Now().UnixMilli()
+	if syncError != nil {
+		status.State = provisioning.JobStateError
+		status.Message = []string{
+			"error running sync",
+			syncError.Error(),
+		}
+	} else {
+		status.State = provisioning.JobStateSuccess
+	}
 
 	// Update the resource stats
 	stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
