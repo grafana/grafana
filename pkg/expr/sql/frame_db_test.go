@@ -14,13 +14,14 @@ func TestFrameDB(t *testing.T) {
 		RefID: "a",
 		Fields: []*data.Field{
 			data.NewField("animal", nil, []string{"cat", "dog", "cat", "dog"}),
-			data.NewField("nanimal", nil, []*string{p("cat"), p("dog"), p("cat"), p("dog")}),
+			data.NewField("nanimal", nil, []*string{p("cat"), nil, p("cat"), p("dog")}),
 			data.NewField("fcount", nil, []float64{1, 3, 4, 7}),
 			data.NewField("nfcount", nil, []*float64{p(2.0), nil, p(8.0), p(14.0)}),
+			data.NewField("nfcountnn", nil, []*float64{p(2.0), p(4.0), p(8.0), p(14.0)}),
 			data.NewField("i64count", nil, []int64{1, 3, 4, 7}),
 			data.NewField("ni64count", nil, []*int64{p(int64(2)), nil, p(int64(8)), p(int64(14))}),
 			data.NewField("bool", nil, []bool{true, false, true, false}),
-			data.NewField("nbool", nil, []*bool{p(true), p(false), p(true), p(false)}),
+			data.NewField("nbool", nil, []*bool{p(true), nil, p(true), p(false)}),
 		},
 	}
 
@@ -38,8 +39,8 @@ func TestFrameDB(t *testing.T) {
 
 	schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
 	//schema, iter, _, err := engine.Query(ctx, "SELECT sloth()")
-	//schema, iter, _, err := engine.Query(ctx, "SELECT SELECT 2.35, -128, -32768, -8388608, -2147483648, 255, 65535, 16777215, 4294967295")
-	//schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(Count), sum(ncount) FROM a GROUP BY animal")
+	//schema, iter, _, err := engine.Query(ctx, "SELECT 2.35, -128, -32768, -8388608, -2147483648, 255, 65535, 16777215, 4294967295")
+	//schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(fcount), sum(nfcount), sum(nfcountnn) FROM a GROUP BY animal")
 
 	if err != nil {
 		t.Log(err)

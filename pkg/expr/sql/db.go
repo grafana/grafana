@@ -61,7 +61,6 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		}
 	}
 
-	// For now output is always nullable type
 	if col.Nullable {
 		fT = fT.NullableType()
 	}

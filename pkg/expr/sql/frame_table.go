@@ -3,6 +3,7 @@ package sql
 import (
 	"io"
 	"strings"
+	"time"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -101,8 +102,7 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 	// the value from each column at the current row index.
 	row := make(mysql.Row, len(ri.ft.Frame.Fields))
 	for colIndex, field := range ri.ft.Frame.Fields {
-		// field.At(...) returns interface{} for the element at that row index.
-		if field.Nullable() && field.At(ri.row) == nil {
+		if nilAt(*field, ri.row) {
 			continue
 		}
 		row[colIndex], _ = field.ConcreteAt(ri.row)
@@ -142,4 +142,66 @@ type partition []byte
 
 func (p partition) Key() []byte {
 	return p
+}
+
+// Is the field nilAt the index. Can panic if out of range.
+// TODO: Maybe this should be a method on data.Field?
+func nilAt(field data.Field, at int) bool {
+	if !field.Nullable() {
+		return false
+	}
+
+	switch field.Type() {
+	case data.FieldTypeNullableInt8:
+		v := field.At(at).(*int8)
+		return v == nil
+
+	case data.FieldTypeNullableUint8:
+		v := field.At(at).(*uint8)
+		return v == nil
+
+	case data.FieldTypeNullableInt16:
+		v := field.At(at).(*int16)
+		return v == nil
+
+	case data.FieldTypeNullableUint16:
+		v := field.At(at).(*uint16)
+		return v == nil
+
+	case data.FieldTypeNullableInt32:
+		v := field.At(at).(*int32)
+		return v == nil
+
+	case data.FieldTypeNullableUint32:
+		v := field.At(at).(*uint32)
+		return v == nil
+
+	case data.FieldTypeNullableInt64:
+		v := field.At(at).(*int64)
+		return v == nil
+
+	case data.FieldTypeNullableUint64:
+		v := field.At(at).(*uint64)
+		return v == nil
+
+	case data.FieldTypeNullableFloat64:
+		v := field.At(at).(*float64)
+		return v == nil
+
+	case data.FieldTypeNullableString:
+		v := field.At(at).(*string)
+		return v == nil
+
+	case data.FieldTypeNullableTime:
+		v := field.At(at).(*time.Time)
+		return v == nil
+
+	case data.FieldTypeNullableBool:
+		v := field.At(at).(*bool)
+		return v == nil
+
+	default:
+		// Either it's not a nullable type or it's unsupported
+		return false
+	}
 }
