@@ -104,12 +104,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			// 1) Transform the spec
 			transformed := ProcessOpenAPISpec(openAPISpec)
 
-			// 2) Reorder top-level keys so that "paths" comes before "components"
-			//    (and preserve "openapi", "info", etc. in a sensible sequence).
-			ordered := reorderTopLevelKeys(transformed)
-
-			// 3) Marshal with indentation
-			finalBytes, err := json.MarshalIndent(ordered, "", "  ")
+			// 2) Marshal with indentation
+			finalBytes, err := json.MarshalIndent(transformed, "", "  ")
 			require.NoError(t, err)
 			finalOutput := string(finalBytes)
 
@@ -225,34 +221,6 @@ func processPaths(paths map[string]interface{}) map[string]interface{} {
 		newPaths[newPathKey] = newPathItem
 	}
 	return newPaths
-}
-
-// reorderTopLevelKeys returns a new map with keys in a set order:
-// "openapi", "info", "paths", "components", then everything else.
-// This ensures "paths" appears before "components" in the JSON output.
-func reorderTopLevelKeys(m map[string]interface{}) map[string]interface{} {
-	ordered := make(map[string]interface{})
-
-	// Pick desired keys in order
-	order := []string{"openapi", "info", "paths", "components"}
-
-	// Copy known keys in sequence
-	for _, k := range order {
-		if v, ok := m[k]; ok {
-			ordered[k] = v
-		}
-	}
-
-	// Copy the rest in no particular order (if any).
-	for k, v := range m {
-		// If it's not one of the known keys, add it at the end
-		if k == "openapi" || k == "info" || k == "paths" || k == "components" {
-			continue
-		}
-		ordered[k] = v
-	}
-
-	return ordered
 }
 
 // updateRefs recursively finds $ref fields and updates them
