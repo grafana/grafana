@@ -42,6 +42,7 @@ var (
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
+	dashboard.DashboardsAPIBuilder
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
@@ -56,6 +57,7 @@ type DashboardsAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
+	provisioningDashboardService dashboards.DashboardProvisioningService,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
@@ -70,6 +72,9 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v2alpha1"),
 
+		DashboardsAPIBuilder: dashboard.DashboardsAPIBuilder{
+			ProvisioningDashboardService: provisioningDashboardService,
+		},
 		dashboardService: dashboardService,
 		features:         features,
 		accessControl:    accessControl,
@@ -138,13 +143,9 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
-	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
-		b.legacy.Server, // as client???
-		dashboardv2alpha1.DashboardResourceInfo.GroupResource(),
-	)
 
 	// Dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil && dualWriteBuilder != nil {
+	if dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, dash, optsGetter)
 		if err != nil {
 			return err

@@ -494,6 +494,8 @@ export function useCombinedRules(
   result?: CombinedRuleNamespace[];
   error?: unknown;
 } {
+  const isNewDashboard = !Boolean(dashboardUID);
+
   const {
     currentData: promRuleNs,
     isLoading: isLoadingPromRules,
@@ -505,8 +507,7 @@ export function useCombinedRules(
       panelId,
     },
     {
-      // "null" means the dashboard isn't saved yet, as opposed to "undefined" which means we don't want to filter by dashboard UID
-      skip: dashboardUID === null,
+      skip: isNewDashboard,
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
     }
   );
@@ -522,7 +523,7 @@ export function useCombinedRules(
     },
     {
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
-      skip: dashboardUID === null,
+      skip: isNewDashboard,
     }
   );
 

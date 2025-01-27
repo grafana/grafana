@@ -375,7 +375,7 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		dashUIDs[i] = pubdash.DashboardUid
 	}
 
-	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: query.OrgID, DashboardUIDs: dashUIDs, SignedInUser: query.User})
+	dashboardsFound, err := pd.dashboardService.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: query.OrgID, DashboardUIDs: dashUIDs, SignedInUser: query.User, Limit: int64(len(dashUIDs))})
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: GetDashboards: %w", err)
 	}
@@ -457,37 +457,6 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 		return ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard")
 	}
 	return pd.serviceWrapper.Delete(ctx, uid)
-}
-
-func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
-	ctx, span := tracer.Start(ctx, "publicdashboards.DeleteByDashboard")
-	defer span.End()
-	if dashboard.IsFolder {
-		// get all pubdashes for the folder
-		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
-		if err != nil {
-			return err
-		}
-		// delete each pubdash
-		for _, pubdash := range pubdashes {
-			err = pd.serviceWrapper.Delete(ctx, pubdash.Uid)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	pubdash, err := pd.store.FindByDashboardUid(ctx, dashboard.OrgID, dashboard.UID)
-	if err != nil {
-		return ErrInternalServerError.Errorf("DeleteByDashboard: error finding a public dashboard by dashboard orgId: %d and Uid: %s %w", dashboard.OrgID, dashboard.UID, err)
-	}
-	if pubdash == nil {
-		return nil
-	}
-
-	return pd.serviceWrapper.Delete(ctx, pubdash.Uid)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards

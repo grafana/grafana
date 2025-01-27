@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
@@ -17,6 +20,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
@@ -808,4 +812,69 @@ func createTestRequest(method string, url string, user string, body string) *htt
 		req.SetBasicAuth(user, user)
 	}
 	return req
+}
+
+func TestIntegrationExportFileProvision(t *testing.T) {
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	provisioningDir := filepath.Join(dir, "conf", "provisioning")
+	alertingDir := filepath.Join(provisioningDir, "alerting")
+	err := os.MkdirAll(alertingDir, 0750)
+	require.NoError(t, err)
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+		IsAdmin:        true,
+	})
+
+	apiClient.ReloadCachedPermissions(t)
+	t.Run("when provisioning alert rules from files", func(t *testing.T) {
+		// add file provisioned alert rules
+		fileProvisionedAlertRules, err := testData.ReadFile(path.Join("test-data", "provisioning-rules.yaml"))
+		require.NoError(t, err)
+
+		var expected definitions.AlertingFileExport
+		require.NoError(t, yaml.Unmarshal(fileProvisionedAlertRules, &expected))
+		expectedYaml, err := yaml.Marshal(expected)
+		require.NoError(t, err)
+
+		// create folder
+		folderUID := "my_first_folder_uid"
+		apiClient.CreateFolder(t, folderUID, "my_first_folder_with_$escaped_symbols")
+
+		err = os.WriteFile(filepath.Join(alertingDir, "provisioning-rules.yaml"), fileProvisionedAlertRules, 0750)
+		require.NoError(t, err)
+
+		apiClient.ReloadAlertingFileProvisioning(t)
+
+		data, status, _ := apiClient.GetAllRulesWithStatus(t)
+		require.Equal(t, http.StatusOK, status)
+		require.Greater(t, len(data), 0)
+
+		t.Run("exported alert rules should escape $ characters", func(t *testing.T) {
+			// call export endpoint
+			status, exportRaw := apiClient.ExportRulesWithStatus(t, &definitions.AlertRulesExportParameters{
+				ExportQueryParams: definitions.ExportQueryParams{Format: "yaml"},
+				FolderUID:         []string{folderUID},
+				GroupName:         "my_rule_group",
+			})
+			require.Equal(t, http.StatusOK, status)
+			var export definitions.AlertingFileExport
+			require.NoError(t, yaml.Unmarshal([]byte(exportRaw), &export))
+
+			// verify the file exported matches the file provisioned thing
+			require.Len(t, export.Groups, 1)
+			require.YAMLEq(t, string(expectedYaml), exportRaw)
+		})
+	})
 }

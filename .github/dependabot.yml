@@ -27,7 +27,7 @@ updates:
   - package-ecosystem: "docker"
     directories:
       - "/"
-      - "/packaging/custom"
+      - "/packaging/docker/custom"
       - "/scripts/verify-repo-update"
       - "/scripts/build/ci-deploy"
       - "/scripts/build/ci-windows-test"

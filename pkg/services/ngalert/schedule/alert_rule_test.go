@@ -220,6 +220,9 @@ func TestAlertRule(t *testing.T) {
 			}
 		}()
 
+		rule := gen.GenerateRef()
+		rule.UID = r.key.UID
+		rule.OrgID = r.key.OrgID
 		for i := 0; i < 10; i++ {
 			wg.Add(1)
 			go func() {
@@ -234,7 +237,7 @@ func TestAlertRule(t *testing.T) {
 					case 2:
 						r.Eval(&Evaluation{
 							scheduledAt: time.Now(),
-							rule:        gen.GenerateRef(),
+							rule:        rule,
 							folderTitle: util.GenerateShortUID(),
 						})
 					case 3:
@@ -280,7 +283,7 @@ func TestRuleRoutine(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
-		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
+		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil, nil)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}

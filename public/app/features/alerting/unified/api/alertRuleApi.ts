@@ -3,7 +3,12 @@ import { set } from 'lodash';
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import {
+  GrafanaRuleGroupIdentifier,
+  RuleIdentifier,
+  RuleNamespace,
+  RulerDataSourceConfig,
+} from 'app/types/unified-alerting';
 import {
   AlertQuery,
   Annotations,
@@ -23,6 +28,7 @@ import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isGrafanaRulerRule, isPrometheusRuleIdentifier } from '../utils/rules';
 
 import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
 import {
   FetchPromRulesFilter,
   getRulesFilterSearchParams,
@@ -257,12 +263,20 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           notificationOptions,
         };
       },
-      providesTags: (_result, _error, { namespace, group }) => [
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${group}`,
-        },
-        { type: 'RuleNamespace', id: namespace },
+      providesTags: (_result, _error, { namespace, group, rulerConfig }) => [
+        { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${group}` },
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+      ],
+    }),
+
+    getGrafanaRulerGroup: build.query<RulerRuleGroupDTO<RulerGrafanaRuleDTO>, GrafanaRuleGroupIdentifier>({
+      query: ({ namespace, groupName }) => {
+        const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespaceGroup(namespace.uid, groupName);
+        return { url: path, params };
+      },
+      providesTags: (_result, _error, { namespace, groupName }) => [
+        { type: 'RuleGroup', id: `grafana/${namespace.uid}/${groupName}` },
+        { type: 'RuleNamespace', id: `grafana/${namespace.uid}` },
       ],
     }),
 
@@ -284,12 +298,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           },
         };
       },
-      invalidatesTags: (_result, _error, { namespace, group }) => [
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${group}`,
-        },
-        { type: 'RuleNamespace', id: namespace },
+      invalidatesTags: (_result, _error, { namespace, group, rulerConfig }) => [
+        { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${group}` },
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
       ],
     }),
 
@@ -317,12 +328,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           },
         };
       },
-      invalidatesTags: (result, _error, { namespace, payload }) => [
-        { type: 'RuleNamespace', id: namespace },
-        {
-          type: 'RuleGroup',
-          id: `${namespace}/${payload.name}`,
-        },
+      invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => [
+        { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
+        { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${payload.name}` },
         ...payload.rules
           .filter((rule) => isGrafanaRulerRule(rule))
           .map((rule) => ({ type: 'GrafanaRulerRule', id: rule.grafana_alert.uid }) as const),

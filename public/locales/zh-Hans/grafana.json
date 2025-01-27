@@ -1771,6 +1771,22 @@
     "log-row-message": {
       "ellipsis": "",
       "more": ""
+    },
+    "log-rows": {
+      "disable-popover": {
+        "confirm": "",
+        "message": "",
+        "title": ""
+      },
+      "disable-popover-message": {
+        "shortcut": ""
+      }
+    },
+    "popover-menu": {
+      "copy": "",
+      "disable-menu": "",
+      "line-contains": "",
+      "line-contains-not": ""
     }
   },
   "migrate-to-cloud": {
@@ -2502,8 +2518,7 @@
         "reportAbuse": "",
         "signature": "",
         "status": "",
-        "updatedAt": "",
-        "version": ""
+        "updatedAt": ""
       }
     },
     "empty-state": {
@@ -3291,6 +3306,7 @@
     },
     "metric-select": {
       "filter-by": "",
+      "new-badge": "",
       "otel-switch": ""
     },
     "recent-metrics": {
