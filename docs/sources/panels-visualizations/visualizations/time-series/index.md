@@ -175,7 +175,8 @@ You can [link alert rules](ref:link-alert) to time series visualizations in the 
 Use the following pointer and keyboard shortcuts to pan and zoom in the time series visualization:
 
 - **Y-axis zoom** - Shift + left button drag
-- - **Reset** - Double-click
+- **Reset** - Double-click (if zoomed in)
+- **Zoom out to larger range and re-query** - Double-click or Control + z (if not zoomed in)
 
 ## Special overrides
 
