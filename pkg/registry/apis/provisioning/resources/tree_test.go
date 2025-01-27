@@ -1,21 +1,20 @@
-package jobs
+package resources
 
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFolderTree(t *testing.T) {
-	newFid := func(kube, title string) resources.Folder {
-		return resources.Folder{ID: kube, Title: title}
+	newFid := func(kube, title string) Folder {
+		return Folder{ID: kube, Title: title}
 	}
 
 	t.Run("empty tree", func(t *testing.T) {
-		tree := &folderTree{
+		tree := &FolderTree{
 			tree:    make(map[string]string),
-			folders: make(map[string]resources.Folder),
+			folders: make(map[string]Folder),
 		}
 
 		assert.False(t, tree.In("x"), "x should not be in tree")
@@ -25,9 +24,9 @@ func TestFolderTree(t *testing.T) {
 	})
 
 	t.Run("single directory in tree", func(t *testing.T) {
-		tree := &folderTree{
+		tree := &FolderTree{
 			tree:    map[string]string{"x": ""},
-			folders: map[string]resources.Folder{"x": newFid("x", "X!")},
+			folders: map[string]Folder{"x": newFid("x", "X!")},
 		}
 
 		assert.True(t, tree.In("x"), "x should be in tree")
@@ -46,9 +45,9 @@ func TestFolderTree(t *testing.T) {
 	})
 
 	t.Run("simple nesting tree", func(t *testing.T) {
-		tree := &folderTree{
+		tree := &FolderTree{
 			tree: map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},
-			folders: map[string]resources.Folder{
+			folders: map[string]Folder{
 				"x": newFid("x", "X!"),
 				"c": newFid("c", "C :)"),
 				"b": newFid("b", "!!B#!"),

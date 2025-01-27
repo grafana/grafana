@@ -1,11 +1,10 @@
-package jobs
+package resources
 
 import (
 	"context"
 	"path"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,14 +13,14 @@ import (
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
 // The folders are portrayed as a tree, where a folder has a parent, up until the root folder.
 // The root folder is special-cased as a folder that exists, but is not itself stored. It has no ID, no title, and no data, but will return `true` for OK bools.
-type folderTree struct {
+type FolderTree struct {
 	tree    map[string]string
-	folders map[string]resources.Folder
+	folders map[string]Folder
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
 // An empty folder string means the root folder, and is special-cased to always return true.
-func (t *folderTree) In(folder string) bool {
+func (t *FolderTree) In(folder string) bool {
 	_, ok := t.tree[folder]
 	return ok || folder == ""
 }
@@ -33,12 +32,12 @@ func (t *folderTree) In(folder string) bool {
 //
 // If In(folder) or In(baseFolder) is false, this will return ok=false, because it would be undefined behaviour.
 // If baseFolder is not a parent of folder, ok=false is returned.
-func (t *folderTree) DirPath(folder, baseFolder string) (fid resources.Folder, ok bool) {
+func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	if !t.In(folder) || !t.In(baseFolder) {
-		return resources.Folder{}, false
+		return Folder{}, false
 	}
 	if folder == "" && baseFolder != "" {
-		return resources.Folder{}, false
+		return Folder{}, false
 	} else if folder == baseFolder {
 		// Zero-value: we're fine with the zv if we're working with the root folder here.
 		// Any other folder ID will have the correct metadata and no path (which is correct).
@@ -61,7 +60,7 @@ func (t *folderTree) DirPath(folder, baseFolder string) (fid resources.Folder, o
 	return fid, ok
 }
 
-func fetchRepoFolderTree(ctx context.Context, client *resources.DynamicClient) (*folderTree, error) {
+func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTree, error) {
 	iface := client.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
 		Version:  "v0alpha1",
@@ -75,15 +74,14 @@ func fetchRepoFolderTree(ctx context.Context, client *resources.DynamicClient) (
 	}
 
 	tree := make(map[string]string, len(rawFolders.Items))
-	tree[""] = "" // the root has no further parents
-	folders := make(map[string]resources.Folder, len(rawFolders.Items))
+	folders := make(map[string]Folder, len(rawFolders.Items))
 	for _, rf := range rawFolders.Items {
 		name := rf.GetName()
 		// TODO: Can I use MetaAccessor here?
 		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
 		tree[name] = parent
 
-		id := resources.Folder{
+		id := Folder{
 			Title: name,
 			ID:    name,
 			Path:  "", // We'll set this later in the DirPath function :)
@@ -95,7 +93,7 @@ func fetchRepoFolderTree(ctx context.Context, client *resources.DynamicClient) (
 		folders[name] = id
 	}
 
-	return &folderTree{
+	return &FolderTree{
 		tree:    tree,
 		folders: folders,
 	}, nil

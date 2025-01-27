@@ -70,7 +70,7 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, err
 	}
 
-	folders, err := fetchRepoFolderTree(ctx, r.client)
+	folders, err := resources.FetchRepoFolderTree(ctx, r.client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
