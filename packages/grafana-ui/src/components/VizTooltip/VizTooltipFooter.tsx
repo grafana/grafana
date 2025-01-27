@@ -40,7 +40,22 @@ const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getSt
   );
 };
 
-const renderActions = (actions: ActionModel[]) => {
+const renderActions = (actions: ActionModel[], styles: ReturnType<typeof getStyles>) => {
+  const oneClickAction = actions.find((action) => action.oneClick === true);
+
+  if (oneClickAction != null) {
+    return (
+      <Stack direction="column" justifyContent="flex-start" gap={0.5}>
+        <span className={styles.oneClickWrapper}>
+          <Icon name="info-circle" size="lg" className={styles.infoIcon} />
+          <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-action">
+            Click to {{ actionTitle: oneClickAction.title }}
+          </Trans>
+        </span>
+      </Stack>
+    );
+  }
+
   return (
     <Stack direction="column" justifyContent="flex-start">
       {actions.map((action, i) => (
@@ -53,12 +68,17 @@ const renderActions = (actions: ActionModel[]) => {
 export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = dataLinks.some((link) => link.oneClick === true);
+  const hasOneClickAction = actions.some((action) => action.oneClick === true);
 
   return (
     <div className={styles.wrapper}>
-      {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
-      {!hasOneClickLink && actions.length > 0 && <div className={styles.dataLinks}>{renderActions(actions)}</div>}
-      {!hasOneClickLink && annotate != null && (
+      {!hasOneClickAction && dataLinks.length > 0 && (
+        <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>
+      )}
+      {!hasOneClickLink && actions.length > 0 && (
+        <div className={styles.dataLinks}>{renderActions(actions, styles)}</div>
+      )}
+      {!hasOneClickLink && !hasOneClickAction && annotate != null && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>

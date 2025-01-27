@@ -2,7 +2,7 @@ import * as React from 'react';
 import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ScopedVars, ValueLinkConfig } from '@grafana/data';
+import { FieldType, getLinksSupplier, LinkModel, ScopedVars, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -46,6 +46,9 @@ export class ElementState implements LayerElement {
 
   getLinks?: (config: ValueLinkConfig) => LinkModel[];
 
+  hasOneClickLink?: boolean;
+  hasOneClickAction?: boolean;
+
   constructor(
     public item: CanvasElementItem,
     public options: CanvasElementOptions,
@@ -63,7 +66,7 @@ export class ElementState implements LayerElement {
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0, rotation: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
     options.border = options.border ?? { color: { fixed: 'dark-green' } };
-    options.oneClickMode = options.oneClickMode ?? OneClickMode.Off;
+
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -587,20 +590,20 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
+    this.hasOneClickLink = this.options.links?.some((link) => link.oneClick === true);
+    this.hasOneClickAction = this.options.actions?.some((action) => action.oneClick === true);
 
-    const shouldHandleTooltip =
-      !scene?.isEditingEnabled && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off;
+    const shouldHandleTooltip = !scene?.isEditingEnabled && !scene?.tooltip?.isOpen;
     if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
     }
 
-    const shouldHandleOneClickLink =
-      this.options.oneClickMode === OneClickMode.Link && this.options.links && this.options.links.length > 0;
+    const shouldHandleOneClickLink = this.hasOneClickLink && this.options.links && this.options.links.length > 0;
 
     const shouldHandleOneClickAction =
-      this.options.oneClickMode === OneClickMode.Action && this.options.actions && this.options.actions.length > 0;
+      this.hasOneClickAction && this.options.actions && this.options.actions.length > 0;
 
     if (shouldHandleOneClickLink && this.div) {
       const primaryDataLink = this.getPrimaryDataLink();
@@ -620,7 +623,7 @@ export class ElementState implements LayerElement {
   getPrimaryDataLink = () => {
     if (this.getLinks) {
       const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
-      return links[0];
+      return links.find((link) => link.oneClick === true);
     }
 
     return undefined;
@@ -652,7 +655,7 @@ export class ElementState implements LayerElement {
         actionsDefaultFieldConfig.actions,
         config
       );
-      return actions[0];
+      return actions.find((action) => action.oneClick === true);
     }
 
     return undefined;
@@ -672,11 +675,11 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off) {
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
       scene.tooltipCallback(undefined);
     }
 
-    if (this.options.oneClickMode !== OneClickMode.Off && this.div) {
+    if ((this.hasOneClickLink || this.hasOneClickAction) && this.div) {
       this.div.style.cursor = 'auto';
       this.div.title = '';
     }
@@ -684,12 +687,12 @@ export class ElementState implements LayerElement {
 
   onElementClick = (event: React.MouseEvent) => {
     // If one-click access is enabled, open the primary link
-    if (this.options.oneClickMode === OneClickMode.Link) {
+    if (this.hasOneClickLink) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         window.open(primaryDataLink.href, primaryDataLink.target ?? '_self');
       }
-    } else if (this.options.oneClickMode === OneClickMode.Action) {
+    } else if (this.hasOneClickAction) {
       let primaryAction = this.getPrimaryAction();
       if (primaryAction && primaryAction.onClick) {
         primaryAction.onClick(event);
