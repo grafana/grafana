@@ -893,6 +893,9 @@
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
+    "errors": {
+      "failed-to-load": "Failed to load dashboard"
+    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Error",

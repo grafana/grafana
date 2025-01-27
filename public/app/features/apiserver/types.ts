@@ -82,7 +82,6 @@ type GrafanaClientAnnotations = {
   [AnnoKeyFolderId]?: number;
   [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
-  [AnnoKeyDashboardNotFound]?: boolean;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
 

@@ -47,9 +47,13 @@ const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
   getSnapshot: async (key: string) => {
-    const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
-    dto.meta.canShare = false;
-    return dto;
+    try {
+      const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
+      dto.meta.canShare = false;
+      return dto;
+    } catch (e) {
+      throw e;
+    }
   },
 };
 
