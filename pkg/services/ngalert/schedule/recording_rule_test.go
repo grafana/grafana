@@ -163,7 +163,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
-	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
 	writeTarget := writer.NewTestRemoteWriteTarget(t)
 	defer writeTarget.Close()
 	writerReg := prometheus.NewPedanticRegistry()
