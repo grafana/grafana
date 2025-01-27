@@ -53,6 +53,11 @@ type Folder struct {
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
+
+	// When the folder belongs to a repository
+	// NOTE: this is only populated when folders are managed by unified storage
+	// This is not ever used by xorm, but the translation functions flow through this type
+	Repository string `json:"repository,omitempty"`
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
