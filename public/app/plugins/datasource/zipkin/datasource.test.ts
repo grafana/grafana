@@ -7,12 +7,13 @@ import {
   DataSourcePluginMeta,
   FieldType,
 } from '@grafana/data';
+import { BackendSrv, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { addNodeGraphFramesToResponse, ZipkinDatasource } from './datasource';
 import mockJson from './mocks/mockJsonResponse.json';
 import { mockTraceDataFrame } from './mocks/mockTraceDataFrame';
 import { ZipkinQuery } from './types';
-import { BackendSrv, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
+
 const templateSrv: TemplateSrv = {
   replace: jest.fn().mockImplementation((value) => value),
   getVariables: jest.fn(),
