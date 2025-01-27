@@ -91,19 +91,19 @@ To modify an existing Pyroscope data source:
 
 #### Connection URL
 
-The datasource connection URL should point to a location of a running Pyroscope backend.
+The data source connection URL should point to a location of a running Pyroscope backend.
 
 **Grafana Cloud Profiles**
 
-A fully configured datasource is automatically provisioned in your Grafana Cloud instance.
+A fully configured data source is automatically provisioned in your Grafana Cloud instance.
 
-If you are running a self hosted Grafana instance, or need to configure an additional Pyroscope datasource pointing to Grafana Cloud Profiles, you can find the Pyroscope URL under the **Manage your stack** section for your organization.
+If you are running a self hosted Grafana instance, or need to configure an additional Pyroscope data source pointing to Grafana Cloud Profiles, you can find the Pyroscope URL under the **Manage your stack** section for your organization.
 
 **Self hosted Pyroscope backend**
 
-The connection URL for a self hosted Pyroscope backend depends on how Pyroscope is deployed. Refer to the steps under [Query profiles in Grafana](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/deploy-kubernetes/helm/#query-profiles-in-grafana) for more information on how to configure the datasource.
+The connection URL for a self hosted Pyroscope backend depends on how Pyroscope is deployed. Refer to the steps under [Query profiles in Grafana](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/deploy-kubernetes/helm/#query-profiles-in-grafana) for more information on how to configure the data source.
 
-If you plan to use the [Explore Profiles](ref:explore-profiles) application and you are running a self hosted Pyroscope backend in microservices mode, the datasource connection URL should point to a gateway or proxy that routes requests to the corresponding Pyroscope service. Refer to the [Helm ingress configuration](https://github.com/grafana/pyroscope/blob/main/operations/pyroscope/helm/pyroscope/templates/ingress.yaml) for specific routing requirements.
+If you plan to use the [Explore Profiles](ref:explore-profiles) application and you are running a self hosted Pyroscope backend in microservices mode, the data source connection URL should point to a gateway or proxy that routes requests to the corresponding Pyroscope service. Refer to the [Helm ingress configuration](https://github.com/grafana/pyroscope/blob/main/operations/pyroscope/helm/pyroscope/templates/ingress.yaml) for specific routing requirements.
 
 ## Authentication
 
