@@ -52,7 +52,7 @@ weight: -47
 
 Welcome to Grafana 11.5! Read on to learn about new sharing, reporting, and export options, cross-cluster search for Elasticsearch, PDC support for several new data sources, and more. The Grafana Cloud Migration Assistant is in public preview and now supports all plugins and Grafana Alerts, in addition to dashboards, folders, and data sources. We've also made it more secure to run third-party apps and data sources, and improved user session handling for OAuth and SAML.
 
-{{< youtube id="HJ6S8fSppWY" >}}
+{{< youtube id="RGiktzfhRd0" >}}
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.5, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.5/).
 
