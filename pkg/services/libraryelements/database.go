@@ -720,9 +720,6 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 					continue
 				}
 			}
-			if folderMap[element.FolderUID] == "" {
-				folderMap[element.FolderUID] = dashboards.RootFolderName
-			}
 			ds, err := l.dashboardsService.GetDashboardUIDByID(c, &dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID})
 			if err != nil {
 				return err
