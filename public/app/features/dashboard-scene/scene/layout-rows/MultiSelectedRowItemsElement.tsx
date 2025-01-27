@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { SceneObject, SceneObjectRef } from '@grafana/scenes';
+import { SceneObject } from '@grafana/scenes';
 import { Button, Stack, Switch, Text } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -12,17 +12,14 @@ import { RowItem } from './RowItem';
 export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashboardElement {
   public isMultiSelectedEditableDashboardElement: true = true;
 
-  private items?: Array<SceneObjectRef<RowItem>>;
+  private items?: RowItem[];
 
-  constructor(items: Map<string, SceneObjectRef<SceneObject>>) {
-    for (const item of items.values()) {
-      if (!this.items) {
-        this.items = [];
-      }
+  constructor(items: SceneObject[]) {
+    this.items = [];
 
-      const row = item.resolve();
-      if (row instanceof RowItem) {
-        this.items.push(row.getRef());
+    for (const item of items) {
+      if (item instanceof RowItem) {
+        this.items.push(item);
       }
     }
   }
@@ -52,7 +49,7 @@ export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashbo
 
   public onDelete = () => {
     for (const item of this.items || []) {
-      item.resolve().onDelete();
+      item.onDelete();
     }
   };
 
@@ -60,7 +57,7 @@ export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashbo
     return (
       <>
         <Stack direction={'column'}>
-          <Text>{`No. of panels selected: ${this.items?.length}`}</Text>
+          <Text>{`No. of rows selected: ${this.items?.length}`}</Text>
           <Stack direction={'row'}>
             <Button size="sm" variant="secondary" icon="copy" />
             <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
@@ -71,19 +68,18 @@ export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashbo
   }
 }
 
-export function RowHeaderSwitch({ rows }: { rows: Array<SceneObjectRef<RowItem>> | undefined }) {
+export function RowHeaderSwitch({ rows }: { rows: RowItem[] | undefined }) {
   if (!rows) {
     return null;
   }
 
-  const { isHeaderHidden = false } = rows[0].resolve().useState();
+  const { isHeaderHidden = false } = rows[0].useState();
 
   return (
     <Switch
       value={isHeaderHidden}
       onChange={() => {
-        for (const rowRef of rows) {
-          const row = rowRef.resolve();
+        for (const row of rows) {
           row.setState({
             isHeaderHidden: !row.state.isHeaderHidden,
           });

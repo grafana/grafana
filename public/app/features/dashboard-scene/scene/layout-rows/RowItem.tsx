@@ -3,21 +3,14 @@ import { useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneComponentProps,
-  sceneGraph,
-  SceneObjectRef,
-  SceneObject,
-} from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph, SceneObject } from '@grafana/scenes';
 import { Button, Icon, Input, RadioButtonGroup, Switch, useElementSelection, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
+import { BulkActionElement, DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
 
 import { MultiSelectedRowItemsElement } from './MultiSelectedRowItemsElement';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -30,7 +23,10 @@ export interface RowItemState extends SceneObjectState {
   height?: 'expand' | 'min';
 }
 
-export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
+export class RowItem
+  extends SceneObjectBase<RowItemState>
+  implements LayoutParent, BulkActionElement, EditableDashboardElement
+{
   public isEditableDashboardElement: true = true;
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -72,7 +68,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     return 'Row';
   }
 
-  public createMultiSelectedElement(items: Map<string, SceneObjectRef<SceneObject>>) {
+  public createMultiSelectedElement(items: SceneObject[]) {
     return new MultiSelectedRowItemsElement(items);
   }
 

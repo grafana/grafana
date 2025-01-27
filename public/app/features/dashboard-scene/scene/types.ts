@@ -1,5 +1,5 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
-import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -122,7 +122,14 @@ export class DashboardRepeatsProcessedEvent extends BusEventWithPayload<Dashboar
   public static type = 'dashboard-repeats-processed';
 }
 
-export interface EditableElement {
+/**
+ * Interface for elements that have options
+ */
+export interface EditableDashboardElement {
+  /**
+   * Marks this object as an element that can be selected and edited directly on the canvas
+   */
+  isEditableDashboardElement: true;
   /**
    * Hook that returns edit pane options
    */
@@ -135,32 +142,44 @@ export interface EditableElement {
    * Panel Actions
    **/
   renderActions?(): React.ReactNode;
-}
-/**
- * Interface for elements that have options
- */
-export interface EditableDashboardElement extends EditableElement {
   /**
-   * Marks this object as an element that can be selected and edited directly on the canvas
+   * creates a new multi-selection element from a list of selected items
    */
-  isEditableDashboardElement: true;
-  /**
-   * created a new multi-selection element from a list of selected items
-   */
-  createMultiSelectedElement?(items: Map<string, SceneObjectRef<SceneObject>>): MultiSelectedEditableDashboardElement;
+  createMultiSelectedElement?(items: SceneObject[]): MultiSelectedEditableDashboardElement;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
   return 'isEditableDashboardElement' in obj;
 }
 
-export interface MultiSelectedEditableDashboardElement extends EditableElement {
+export interface MultiSelectedEditableDashboardElement {
   /**
    * Marks this object as an element that can be selected and edited directly on the canvas
    */
   isMultiSelectedEditableDashboardElement: true;
+  /**
+   * Get the type name of the element
+   */
+  getTypeName(): string;
+  /**
+   * Hook that returns edit pane options
+   */
+  useEditPaneOptions?(): OptionsPaneCategoryDescriptor[];
+  /**
+   * Panel Actions
+   **/
+  renderActions?(): React.ReactNode;
 }
 
 export function isMultiSelectedEditableDashboardElement(obj: object): obj is MultiSelectedEditableDashboardElement {
   return 'isMultiSelectedEditableDashboardElement' in obj;
+}
+
+export interface BulkActionElement {
+  onDelete(): void;
+  onCopy?(): void;
+}
+
+export function isBulkActionElement(obj: object): obj is BulkActionElement {
+  return 'onDelete' in obj;
 }

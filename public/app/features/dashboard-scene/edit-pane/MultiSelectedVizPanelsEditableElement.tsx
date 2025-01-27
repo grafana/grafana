@@ -1,4 +1,4 @@
-import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 import { Button, Stack, Text } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
@@ -8,17 +8,14 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEditableDashboardElement {
   public isMultiSelectedEditableDashboardElement: true = true;
 
-  private items?: Array<SceneObjectRef<VizPanel>>;
+  private items?: VizPanel[];
 
-  constructor(items: Map<string, SceneObjectRef<SceneObject>>) {
-    for (const item of items.values()) {
-      if (!this.items) {
-        this.items = [];
-      }
+  constructor(items: SceneObject[]) {
+    this.items = [];
 
-      const panel = item.resolve();
-      if (panel instanceof VizPanel) {
-        this.items.push(panel.getRef());
+    for (const item of items) {
+      if (item instanceof VizPanel) {
+        this.items.push(item);
       }
     }
   }
@@ -28,8 +25,7 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
   }
 
   public onDelete = () => {
-    for (const item of this.items || []) {
-      const panel = item.resolve();
+    for (const panel of this.items || []) {
       const layout = dashboardSceneGraph.getLayoutManagerFor(panel);
       layout.removePanel(panel);
     }

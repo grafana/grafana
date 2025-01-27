@@ -11,7 +11,7 @@ export interface Props {
 }
 
 export function ElementEditPane({ element }: Props) {
-  const categories = element.useEditPaneOptions();
+  const categories = element.useEditPaneOptions ? element.useEditPaneOptions() : [];
   const styles = useStyles2(getStyles);
 
   return (

@@ -15,10 +15,11 @@ import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButto
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
+import { ElementSelectionAdapter } from './ElementSelectionAdapter';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
-  selectedObjects?: Map<string, SceneObjectRef<SceneObject>>;
+  selection?: ElementSelectionAdapter;
   selectionContext: ElementSelectionContextState;
 }
 
@@ -41,7 +42,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public disableSelection() {
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
-      selectedObjects: undefined,
+      selection: undefined,
     });
   }
 
@@ -53,7 +54,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    const prevItem = this.state.selectedObjects?.values().next().value?.resolve();
+    const prevItem = this.state.selection?.getFirstObject();
     if (prevItem === obj && !multi) {
       this.clearSelection();
       return;
@@ -61,15 +62,15 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const ref = obj.getRef();
     let selected = [{ id }];
-    let selectedObjects = new Map([[id, ref]]);
+    let selectionArray: Array<[string, SceneObjectRef<SceneObject>]> = [[id, ref]];
 
-    if (multi && prevItem?.constructor.name === obj.constructor.name) {
-      selectedObjects = new Map([[id, ref], ...(this.state.selectedObjects?.entries() ?? [])]);
+    if (multi) {
+      selectionArray = [[id, ref], ...(this.state.selection?.selectedObjects?.entries() ?? [])];
       selected = [{ id }, ...this.state.selectionContext.selected];
     }
 
     this.setState({
-      selectedObjects,
+      selection: new ElementSelectionAdapter(selectionArray),
       selectionContext: {
         ...this.state.selectionContext,
         selected,
@@ -80,7 +81,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public clearSelection() {
     const dashboard = getDashboardSceneFor(this);
     this.setState({
-      selectedObjects: new Map([[dashboard.state.uid!, dashboard.getRef()]]),
+      selection: new ElementSelectionAdapter([[dashboard.state.uid!, dashboard.getRef()]]),
       selectionContext: {
         ...this.state.selectionContext,
         selected: [],
@@ -101,10 +102,10 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse }: Props) {
   // Activate the edit pane
   useEffect(() => {
-    if (!editPane.state.selectedObjects) {
+    if (!editPane.state.selection) {
       const dashboard = getDashboardSceneFor(editPane);
       editPane.setState({
-        selectedObjects: new Map([[dashboard.state.uid!, dashboard.getRef()]]),
+        selection: new ElementSelectionAdapter([[dashboard.state.uid!, dashboard.getRef()]]),
       });
     }
 
@@ -115,10 +116,10 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     };
   }, [editPane]);
 
-  const { selectedObjects } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
-  const editableElement = useEditableElement(selectedObjects);
+  const editableElement = useEditableElement(selection);
 
   if (!editableElement) {
     return null;
