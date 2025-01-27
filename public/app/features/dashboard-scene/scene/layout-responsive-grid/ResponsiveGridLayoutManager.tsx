@@ -126,6 +126,7 @@ export class ResponsiveGridLayoutManager
   activateRepeaters?(): void {
     throw new Error('Method not implemented.');
   }
+
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return <model.state.layout.Component model={model.state.layout} />;
   };

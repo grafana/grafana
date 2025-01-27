@@ -1,5 +1,5 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
-import { SceneObject, VizPanel } from '@grafana/scenes';
+import { SceneObject, SceneVariable, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -10,50 +10,65 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 export interface DashboardLayoutManager extends SceneObject {
   /** Marks it as a DashboardLayoutManager */
   isDashboardLayoutManager: true;
+
   /**
    * Notify the layout manager that the edit mode has changed
    * @param isEditing
    */
   editModeChanged(isEditing: boolean): void;
+
   /**
    * Remove an element / panel
    * @param element
    */
   removePanel(panel: VizPanel): void;
+
   /**
    * Creates a copy of an existing element and adds it to the layout
    * @param element
    */
   duplicatePanel(panel: VizPanel): void;
+
   /**
    * Adds a new panel to the layout
    */
   addPanel(panel: VizPanel): void;
+
   /**
    * Add row
    */
   addNewRow(): void;
+
   /**
    * getVizPanels
    */
   getVizPanels(): VizPanel[];
+
   /**
    * Turn into a save model
    * @param saveModel
    */
   toSaveModel?(): any;
+
   /**
    * For dynamic panels that need to be viewed in isolation (SoloRoute)
    */
   activateRepeaters?(): void;
+
   /**
-   * Get's the layout descriptor (which has the name and id)
+   * Gets the layout descriptor (which has the name and id)
    */
   getDescriptor(): LayoutRegistryItem;
+
   /**
    * Renders options and layout actions
    */
   getOptions?(): OptionsPaneItemDescriptor[];
+
+  /**
+   * Method to be called by DashboardScene when a variable update has been completed
+   */
+  handleVariableUpdateCompleted?(variable: SceneVariable, hasChange: boolean): void;
 
   /**
    * Create a clone of the layout manager given an ancestor key

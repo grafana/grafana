@@ -9,6 +9,7 @@ import {
   sceneUtils,
   SceneComponentProps,
   SceneGridItemLike,
+  SceneVariable,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
@@ -129,7 +130,7 @@ export class DefaultGridLayoutManager
   /**
    * Removes a panel
    */
-  public removePanel(panel: VizPanel) {
+  public removePanel(panel: VizPanel): void {
     const gridItem = panel.parent!;
 
     if (!(gridItem instanceof DashboardGridItem)) {
@@ -276,7 +277,7 @@ export class DefaultGridLayoutManager
     return max + 1;
   }
 
-  public collapseAllRows() {
+  public collapseAllRows(): void {
     this.state.grid.state.children.forEach((child) => {
       if (!(child instanceof SceneGridRow)) {
         return;
@@ -287,7 +288,7 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public expandAllRows() {
+  public expandAllRows(): void {
     this.state.grid.state.children.forEach((child) => {
       if (!(child instanceof SceneGridRow)) {
         return;
@@ -298,7 +299,7 @@ export class DefaultGridLayoutManager
     });
   }
 
-  activateRepeaters(): void {
+  public activateRepeaters(): void {
     this.state.grid.forEachChild((child) => {
       if (child instanceof DashboardGridItem && !child.isActive) {
         child.activate();
@@ -484,6 +485,24 @@ export class DefaultGridLayoutManager
         isResizable,
       }),
     });
+  }
+
+  public handleVariableUpdateCompleted(variable: SceneVariable, hasChanged: boolean): void {
+    for (const child of this.state.grid.state.children) {
+      if (!(child instanceof SceneGridRow) || !child.state.$behaviors) {
+        continue;
+      }
+
+      for (const behavior of child.state.$behaviors) {
+        if (behavior instanceof RowRepeaterBehavior) {
+          if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
+            behavior.performRepeat(true);
+          } else if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
+            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
+          }
+        }
+      }
+    }
   }
 
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {

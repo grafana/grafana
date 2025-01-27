@@ -71,9 +71,6 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from './layout-default/RowRepeaterBehavior';
-import { RowItemRepeaterBehavior } from './layout-rows/RowItemRepeaterBehavior';
-import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
@@ -763,11 +760,8 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       }
     }
 
-    /**
-     * Propagate variable changes to repeat row behavior as it does not get it when it's nested under local value
-     * The first repeated row has the row repeater behavior but it also has a local SceneVariableSet with a local variable value
-     */
     const layout = this._dashboard.state.body;
+    layout.handleVariableUpdateCompleted?.(variable, hasChanged);
   }
 }
 
