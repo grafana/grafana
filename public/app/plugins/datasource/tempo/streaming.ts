@@ -16,7 +16,6 @@ import {
   sortDataFrame,
   ThresholdsConfig,
   ThresholdsMode,
-  TimeRange,
 } from '@grafana/data';
 import { cloneQueryResponse, combineResponses } from '@grafana/o11y-ds-frontend';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
@@ -176,12 +175,12 @@ export function doTempoMetricsStreaming(
         if (!acc) {
           return cloneQueryResponse(curr);
         }
-        return mergeFrames(acc, curr, range);
+        return mergeFrames(acc, curr);
       })
     );
 }
 
-function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse, range: TimeRange): DataQueryResponse {
+function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse): DataQueryResponse {
   const result = combineResponses(cloneQueryResponse(acc), newResult);
 
   // Remove duplicate time field values for all frames
@@ -191,32 +190,11 @@ function mergeFrames(acc: DataQueryResponse, newResult: DataQueryResponse, range
       const timeField = frame.fields[timeFieldIndex];
       removeDuplicateTimeFieldValues(frame, timeField);
       sortDataFrame(frame, timeFieldIndex);
-      removeValuesOutsideOfRange(frame, timeField, range);
     }
   });
 
   result.state = newResult.state;
   return result;
-}
-
-function removeValuesOutsideOfRange(accFrame: DataFrame, timeField: Field, range: TimeRange) {
-  const outsideOfRange = timeField.values.reduce((acc: number[], value, index) => {
-    if (value >= range.to.valueOf() || value <= range.from.valueOf()) {
-      acc.push(index);
-    }
-    return acc;
-  }, []);
-
-  if (outsideOfRange.length > 0) {
-    outsideOfRange
-      .sort()
-      .reverse()
-      .forEach((index) => {
-        accFrame.fields.forEach((field) => {
-          field.values.splice(index, 1);
-        });
-      });
-  }
 }
 
 function removeDuplicateTimeFieldValues(accFrame: DataFrame, timeField: Field) {
