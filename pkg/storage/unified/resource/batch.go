@@ -179,19 +179,14 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 		})
 	}
 
-	var backend BatchProcessingBackend
-	if true {
-		backend = &parquetSupport{} //
-	} else {
-		backend, ok = s.backend.(BatchProcessingBackend)
-		if !ok {
-			return stream.SendAndClose(&BatchResponse{
-				Error: &ErrorResult{
-					Message: "The server backend does not support batch processing",
-					Code:    http.StatusNotImplemented,
-				},
-			})
-		}
+	backend, ok := s.backend.(BatchProcessingBackend)
+	if !ok {
+		return stream.SendAndClose(&BatchResponse{
+			Error: &ErrorResult{
+				Message: "The server backend does not support batch processing",
+				Code:    http.StatusNotImplemented,
+			},
+		})
 	}
 
 	// BatchProcess requests

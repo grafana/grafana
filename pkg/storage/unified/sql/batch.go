@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -34,7 +34,7 @@ func (x *batchLock) Start(keys []*resource.ResourceKey) error {
 	// First verify that it is not already running
 	ids := make([]string, len(keys))
 	for i, k := range keys {
-		id := toBatchKey(k)
+		id := k.BatchID()
 		if x.running[id] {
 			return &apierrors.StatusError{ErrStatus: v1.Status{
 				Code:   http.StatusPreconditionFailed,
@@ -55,7 +55,7 @@ func (x *batchLock) Finish(keys []*resource.ResourceKey) {
 	x.mu.Lock()
 	defer x.mu.Unlock()
 	for _, k := range keys {
-		delete(x.running, toBatchKey(k))
+		delete(x.running, k.BatchID())
 	}
 }
 
@@ -65,20 +65,32 @@ func (x *batchLock) Active() bool {
 	return len(x.running) > 0
 }
 
-func toBatchKey(key *resource.ResourceKey) string {
-	return fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
-}
-
 func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
-	rsp := &resource.BatchResponse{}
 	err := b.batchLock.Start(setting.Collection)
 	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
-		return rsp
+		return &resource.BatchResponse{
+			Error: resource.AsErrorResult(err),
+		}
 	}
 	defer b.batchLock.Finish(setting.Collection)
 
-	err = b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+	// We may want to first write parquet, then read parquet
+	if b.dialect.DialectName() == "SQLite" {
+		writer := parquet.NewBatchWriter()
+		rsp := writer.ProcessBatch(ctx, setting, iter)
+		if rsp.Error != nil {
+			return rsp
+		}
+
+	}
+
+	return b.processBatch(ctx, setting, iter)
+}
+
+// internal batch process
+func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
+	rsp := &resource.BatchResponse{}
+	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		rollbackWithError := func(err error) error {
 			txerr := tx.Rollback()
 			if txerr != nil {
@@ -107,7 +119,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 				if err != nil {
 					return rollbackWithError(err)
 				}
-				summaries[toBatchKey(key)] = summary
+				summaries[key.BatchID()] = summary
 				rsp.Summary = append(rsp.Summary, summary)
 
 				// get the RV for this resource
