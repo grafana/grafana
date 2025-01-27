@@ -695,14 +695,15 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		}
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
-		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
+		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
-		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
 		}
+
+		// getting all folders a user can see
 		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
 		if err != nil {
 			return err
@@ -712,19 +713,23 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
 		}
-
+		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, connection := range libraryElementConnections {
 			if !signedInUser.HasRole(org.RoleAdmin) {
 				if !contains(folderUIDS, element.FolderUID) {
 					continue
 				}
 			}
+			ds, err := l.dashboardsService.GetDashboardUIDByID(c, &dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID})
+			if err != nil {
+				return err
+			}
 			connections = append(connections, model.LibraryElementConnectionDTO{
 				ID:            connection.ID,
 				Kind:          connection.Kind,
 				ElementID:     connection.ElementID,
 				ConnectionID:  connection.ConnectionID,
-				ConnectionUID: connection.ConnectionUID,
+				ConnectionUID: ds.UID,
 				Created:       connection.Created,
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        connection.CreatedBy,
