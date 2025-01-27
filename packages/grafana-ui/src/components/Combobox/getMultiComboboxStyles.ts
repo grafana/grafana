@@ -47,7 +47,7 @@ export const getMultiComboboxStyles = (
       background: 'transparent',
       flexGrow: 1,
       maxWidth: '100%',
-      minWidth: 50,
+      minWidth: 40, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
       '&::placeholder': {
         color: theme.colors.text.disabled,
       },
