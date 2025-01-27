@@ -15477,6 +15477,10 @@
             "$ref": "#/definitions/Folder"
           }
         },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -15507,6 +15511,10 @@
           "format": "int64"
         },
         "parentUid": {
+          "type": "string"
+        },
+        "repository": {
+          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
           "type": "string"
         },
         "title": {
