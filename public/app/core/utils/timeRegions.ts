@@ -1,6 +1,9 @@
 import { AbsoluteTimeRange, dateTime, TimeRange } from '@grafana/data';
 
+export type TimeRegionMode = 'simple' | 'cron';
 export interface TimeRegionConfig {
+  mode?: TimeRegionMode;
+
   from?: string;
   fromDayOfWeek?: number; // 1-7
 
@@ -8,6 +11,9 @@ export interface TimeRegionConfig {
   toDayOfWeek?: number; // 1-7
 
   timezone?: string;
+
+  cronExpr?: string; // 0 9 * * 1-5
+  duration?: string; // 8h
 }
 
 interface ParsedTime {
