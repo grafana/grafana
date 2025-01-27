@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 interface OpenAPISpec {
-  paths: Record<string, any>;
+  paths: Record<string, object>;
   components: {
-    schemas: Record<string, any>;
+    schemas: Record<string, object>;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
@@ -14,8 +14,8 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
   const newSpec = JSON.parse(JSON.stringify(spec));
 
   // Process 'paths' property
-  const newPaths: Record<string, any> = {};
-  for (const [path, pathItem] of Object.entries<Record<string, any>>(newSpec.paths)) {
+  const newPaths: Record<string, unknown> = {};
+  for (const [path, pathItem] of Object.entries<Record<string, unknown>>(newSpec.paths)) {
     // Remove 'watch' paths as they're deprecated
     if (path.includes('/watch/')) {
       continue;
@@ -24,11 +24,11 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
     const newPathKey = path.replace(/^\/apis\/[^\/]+\/[^\/]+\/namespaces\/\{namespace}/, '');
 
     // Process each method in the path (e.g., get, post)
-    const newPathItem: Record<string, any> = {};
+    const newPathItem: Record<string, unknown> = {};
     for (const method of Object.keys(pathItem)) {
       // Filter out the 'namespace' param
-      if (method === 'parameters') {
-        pathItem.parameters = pathItem.parameters?.filter((param: any) => param.name !== 'namespace');
+      if (method === 'parameters' && Array.isArray(pathItem.parameters)) {
+        pathItem.parameters = pathItem.parameters?.filter((param) => param.name !== 'namespace');
       }
 
       const operation = pathItem[method];
@@ -42,7 +42,7 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
   newSpec.paths = newPaths;
 
   // Process 'components.schemas', i.e., type definitions
-  const newSchemas: Record<string, any> = {};
+  const newSchemas: Record<string, unknown> = {};
   for (const schemaKey of Object.keys(newSpec.components.schemas)) {
     const newKey = simplifySchemaName(schemaKey);
 
@@ -59,13 +59,13 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
 /**
  * Recursively update all $ref fields to remove k8s metadata from names
  */
-function updateRefs(obj: any) {
+function updateRefs(obj: unknown) {
   if (Array.isArray(obj)) {
     for (const item of obj) {
       updateRefs(item);
     }
   } else if (typeof obj === 'object' && obj !== null) {
-    if (obj.$ref && typeof obj.$ref === 'string') {
+    if ('$ref' in obj && typeof obj.$ref === 'string') {
       const refParts = obj.$ref.split('/');
       const lastRefPart = refParts[refParts.length - 1];
       const newRefName = simplifySchemaName(lastRefPart);
@@ -73,7 +73,8 @@ function updateRefs(obj: any) {
     }
     for (const key in obj) {
       if (key !== '$ref') {
-        updateRefs(obj[key]);
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        updateRefs(obj[key as keyof typeof obj]);
       }
     }
   }
