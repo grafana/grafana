@@ -48,73 +48,51 @@ const QueryResults = ({ rule }: Props) => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
 
-  if (isError(data)) {
-    return (
-      <Alert title={t('alerting.rule-view.query.error.title', 'Error')} severity="error">
-        <Trans i18nKey="alerting.rule-view.query.error.description">Error loading query results</Trans>
-      </Alert>
-    );
+  if (loadingData) {
+    return <Trans i18nKey="alerting.common.loading">Loading...</Trans>;
   }
 
   return (
     <>
-      {loadingData ? (
-        <Trans i18nKey="alerting.common.loading">Loading...</Trans>
-      ) : (
-        <>
-          {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
-            <GrafanaRuleQueryViewer
-              rule={rule}
-              condition={rule.rulerRule.grafana_alert.condition}
-              queries={queries}
-              evalDataByQuery={data}
-            />
-          )}
+      {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
+        <GrafanaRuleQueryViewer
+          rule={rule}
+          condition={rule.rulerRule.grafana_alert.condition}
+          queries={queries}
+          evalDataByQuery={data}
+        />
+      )}
 
-          {!isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && data && Object.keys(data).length > 0 && (
-            <Stack direction="column" gap={1}>
-              {queries.map((query) => {
-                return (
-                  <QueryPreview
-                    key={query.refId}
-                    rule={rule}
-                    refId={query.refId}
-                    model={query.model}
-                    dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
-                    queryData={data[query.refId]}
-                    relativeTimeRange={query.relativeTimeRange}
-                  />
-                );
-              })}
-            </Stack>
-          )}
-          {!isFederatedRule && !allDataSourcesAvailable && (
-            <Alert title={t('alerting.rule-view.query.datasources-na.title', 'Query not available')} severity="warning">
-              <Trans i18nKey="alerting.rule-view.query.datasources-na.description">
-                Cannot display the query preview. Some of the data sources used in the queries are not available.
-              </Trans>
-            </Alert>
-          )}
-        </>
+      {!isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && data && Object.keys(data).length > 0 && (
+        <Stack direction="column" gap={1}>
+          {queries.map((query) => {
+            return (
+              <QueryPreview
+                key={query.refId}
+                rule={rule}
+                refId={query.refId}
+                model={query.model}
+                dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
+                queryData={data[query.refId]}
+                relativeTimeRange={query.relativeTimeRange}
+              />
+            );
+          })}
+        </Stack>
+      )}
+      {!isFederatedRule && !allDataSourcesAvailable && (
+        <Alert title={t('alerting.rule-view.query.datasources-na.title', 'Query not available')} severity="warning">
+          <Trans i18nKey="alerting.rule-view.query.datasources-na.description">
+            Cannot display the query preview. Some of the data sources used in the queries are not available.
+          </Trans>
+        </Alert>
       )}
     </>
   );
 };
 
 function isLoading(data?: Record<string, PanelData>): boolean {
-  if (!data) {
-    return true;
-  }
-
-  return !!Object.values(data).find((d) => d.state === LoadingState.Loading);
-}
-
-function isError(data?: Record<string, PanelData>): boolean {
-  if (!data) {
-    return false;
-  }
-
-  return !!Object.values(data).find((d) => d.state === LoadingState.Error);
+  return Object.values(data ?? {}).some((d) => d.state === LoadingState.Loading);
 }
 
 export { QueryResults };

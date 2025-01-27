@@ -1,4 +1,4 @@
-import { compact, memoize, uniq } from 'lodash';
+import { compact, isArray, memoize, uniq } from 'lodash';
 import memoizeOne from 'memoize-one';
 
 import { Edge, Graph, Node } from 'app/core/utils/dag';
@@ -20,6 +20,9 @@ export const createDagFromQueries = memoizeOne(
 export function _createDagFromQueries(queries: AlertQuery[]): Graph {
   const graph = new Graph();
 
+  // collect link errors in here so we can throw a single error with all nodes that failed to link
+  const linkErrors: LinkError[] = [];
+
   const nodes = queries.map((query) => query.refId);
   graph.createNodes(nodes);
 
@@ -39,12 +42,35 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
       const isSelf = source === target;
 
       if (source && target && !isSelf) {
-        graph.link(target, source);
+        try {
+          graph.link(target, source);
+        } catch (error) {
+          linkErrors.push({ source, target, error });
+        }
       }
     });
   });
 
+  if (linkErrors.length > 0) {
+    throw new Error('failed to create DAG from queries', { cause: linkErrors });
+  }
+
   return graph;
+}
+
+// determine if inpout error is a DAGError
+export function isDagError(error: unknown): error is DAGError {
+  return isArray((error as DAGError).cause) && (error as DAGError).cause.every((e) => 'source' in e && 'target' in e);
+}
+
+interface LinkError {
+  source: string;
+  target: string;
+  error: unknown;
+}
+
+interface DAGError extends Error {
+  cause: LinkError[];
 }
 
 /**

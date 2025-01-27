@@ -1,3 +1,4 @@
+import { produce } from 'immer';
 import { reject } from 'lodash';
 import { Observable, OperatorFunction, ReplaySubject, Unsubscribable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
@@ -16,13 +17,14 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { Graph } from 'app/core/utils/dag';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery } from 'app/features/expressions/types';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { createDagFromQueries, getDescendants } from '../components/rule-editor/dag';
+import { createDagFromQueries, getDescendants, isDagError } from '../components/rule-editor/dag';
+import { stringifyErrorLike } from '../utils/misc';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {
@@ -52,21 +54,21 @@ export class AlertingQueryRunner {
   }
 
   async run(queries: AlertQuery[], condition: string) {
-    const empty = initialState(queries, LoadingState.Done);
-    const error = initialState(queries, LoadingState.Error);
-    let queriesToRun: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [];
-    try {
-      queriesToRun = await this.prepareQueries(queries);
-    } catch {
-      this.subject.next(error);
+    const queriesToRun = await this.prepareQueries(queries);
+
+    // if we don't have any we just mark all of them as "done"
+    if (queriesToRun.length === 0) {
+      const emptyState = initialState(queries, LoadingState.Done);
+      this.subject.next(emptyState);
       return;
     }
 
-    if (queriesToRun.length === 0) {
-      return this.subject.next(empty);
-    }
+    // if the condition isn't part of the queries to run, try to run the alert rule without it.
+    // It indicates that the "condition" node points to a non-existent node. We still want to be able to evaluate the other nodes.
+    const isConditionAvailable = queriesToRun.some((query) => query.refId === condition);
+    const ruleCondition = isConditionAvailable ? condition : '';
 
-    this.subscription = runRequest(this.backendSrv, queriesToRun, condition).subscribe({
+    this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition).subscribe({
       next: (dataPerQuery) => {
         const nextResult = applyChange(dataPerQuery, (refId, data) => {
           const previous = this.lastResult[refId];
@@ -89,15 +91,26 @@ export class AlertingQueryRunner {
   // to do this we will convert the list of queries into a DAG and walk the invalid node's output edges recursively
   async prepareQueries(queries: AlertQuery[]) {
     const queriesToExclude: string[] = [];
+    let queriesGraph: Graph | undefined;
 
-    // convert our list of queries to a graph
-    const queriesGraph = createDagFromQueries(queries);
+    // exclude nodes that failed to link
+    try {
+      queriesGraph = createDagFromQueries(queries);
+    } catch (error) {
+      if (isDagError(error)) {
+        const nodesFailedToLink = error.cause?.map((linkError) => linkError.source);
+        queriesToExclude.push(...nodesFailedToLink);
+      } else {
+        throw error;
+      }
+    }
 
     // find all invalid nodes and omit those and their child nodes from the final queries array
     // ⚠️ also make sure all dependent nodes are omitted, otherwise we will be evaluating a broken graph with missing references
     for (const query of queries) {
       const refId = query.model.refId;
 
+      // expresson queries cannot be excluded / filtered out
       if (isExpressionQuery(query.model)) {
         continue;
       }
@@ -108,9 +121,16 @@ export class AlertingQueryRunner {
         dataSourceInstance.filterQuery &&
         !dataSourceInstance.filterQuery(query.model);
 
+      // if we need to skip the query, we'll try to find the descendant nodes and skip those too.
+      // if that fails we'll skip the nodes we failed to link too
       if (skipRunningQuery) {
-        const descendants = getDescendants(refId, queriesGraph);
-        queriesToExclude.push(refId, ...descendants);
+        if (queriesGraph) {
+          const descendants = getDescendants(refId, queriesGraph);
+          queriesToExclude.push(...descendants);
+        }
+
+        // if that fails just omit the query itself
+        queriesToExclude.push(refId);
       }
     }
 
@@ -186,6 +206,16 @@ const initialState = (queries: AlertQuery[], state: LoadingState): Record<string
   }, {});
 };
 
+const setQueryErrorState = (panelData: Record<string, PanelData>, refId: string, error: unknown) => {
+  return produce(panelData, (draft) => {
+    draft[refId].state = LoadingState.Error;
+
+    draft[refId].errors = (draft[refId].errors ?? []).concat({
+      message: stringifyErrorLike(error),
+    });
+  });
+};
+
 const getTimeRange = (query: AlertQuery, queries: AlertQuery[]): TimeRange => {
   if (isExpressionQuery(query.model)) {
     const relative = getTimeRangeForExpression(query.model, queries);
@@ -229,6 +259,10 @@ const mapErrorToPanelData = (lastResult: Record<string, PanelData>, error: Error
   const queryError = toDataQueryError(error);
 
   return applyChange(lastResult, (refId, data) => {
+    if (data.state === LoadingState.Error) {
+      return data;
+    }
+
     return {
       ...data,
       state: LoadingState.Error,
