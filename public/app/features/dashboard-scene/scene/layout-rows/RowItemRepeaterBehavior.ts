@@ -76,7 +76,7 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
     const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
 
     for (const row of allRows) {
-      const vizPanels = row.state.layout.getVizPanels();
+      const vizPanels = row.getLayout().getVizPanels();
 
       for (const vizPanel of vizPanels) {
         const queryRunner = getQueryRunnerFor(vizPanel);

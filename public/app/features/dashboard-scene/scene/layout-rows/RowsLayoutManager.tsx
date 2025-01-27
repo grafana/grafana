@@ -82,7 +82,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     const panels: VizPanel[] = [];
 
     for (const row of this.state.rows) {
-      const innerPanels = row.state.layout.getVizPanels();
+      const innerPanels = row.getLayout().getVizPanels();
       panels.push(...innerPanels);
     }
 
