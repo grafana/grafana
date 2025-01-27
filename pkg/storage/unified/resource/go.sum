@@ -1,5 +1,5 @@
-cel.dev/expr v0.18.0 h1:CJ6drgk+Hf96lkLikr4rFf19WrU0BOWEihyZnI2TAzo=
-cel.dev/expr v0.18.0/go.mod h1:MrpN08Q+lEBs+bGYdLxxHkZoUSsCp0nSKTs0nTymJgw=
+cel.dev/expr v0.19.0 h1:lXuo+nDhpyJSpWxpPVi5cPUwzKb+dsdOiw6IreM5yt0=
+cel.dev/expr v0.19.0/go.mod h1:MrpN08Q+lEBs+bGYdLxxHkZoUSsCp0nSKTs0nTymJgw=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.37.4/go.mod h1:NHPJ89PdicEuT9hdPXMROBD91xc5uRDxsMtSB16k7hw=
@@ -417,10 +417,10 @@ github.com/grafana/grafana-app-sdk/logging v0.29.0 h1:mgbXaAf33aFwqwGVeaX30l8rke
 github.com/grafana/grafana-app-sdk/logging v0.29.0/go.mod h1:xy6ZyVXl50Z3DBDLybvBPphbykPhuVNed/VNmen9DQM=
 github.com/grafana/grafana-aws-sdk v0.31.5 h1:4HpMQx7n4Qqoi7Bgu8KHQ2QKT9fYYdHilX/Gh3FZKBE=
 github.com/grafana/grafana-aws-sdk v0.31.5/go.mod h1:5p4Cjyr5ZiR6/RT2nFWkJ8XpIKgX4lAUmUMu70m2yCM=
-github.com/grafana/grafana-azure-sdk-go/v2 v2.1.5 h1:CaAVAEMeyDktBNCPBsDykf9kfcYuG3Q/f7pmk0KWt1w=
-github.com/grafana/grafana-azure-sdk-go/v2 v2.1.5/go.mod h1:i0uiuu9/sMFBJnpFbjvviH0KOZzdWkti9Q9Ck1HkFWM=
-github.com/grafana/grafana-plugin-sdk-go v0.262.0 h1:R2DV6lwBQE5zaogxX3PorD9Seo8CXA8YuStf84oqwkk=
-github.com/grafana/grafana-plugin-sdk-go v0.262.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
+github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
+github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
+github.com/grafana/grafana-plugin-sdk-go v0.263.0 h1:y8vo7hUm50Ei7rdeNNivgehHNsOmCjc8wRmBat5yA3w=
+github.com/grafana/grafana-plugin-sdk-go v0.263.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=
@@ -855,8 +855,8 @@ go.opentelemetry.io/otel/metric v1.33.0/go.mod h1:L9+Fyctbp6HFTddIxClbQkjtubW6O9
 go.opentelemetry.io/otel/sdk v1.21.0/go.mod h1:Nna6Yv7PWTdgJHVRD9hIYywQBRx7pbox6nwBnZIxl/E=
 go.opentelemetry.io/otel/sdk v1.33.0 h1:iax7M131HuAm9QkZotNHEfstof92xM+N8sr3uHXc2IM=
 go.opentelemetry.io/otel/sdk v1.33.0/go.mod h1:A1Q5oi7/9XaMlIWzPSxLRWOI8nG3FnzHJNbiENQuihM=
-go.opentelemetry.io/otel/sdk/metric v1.31.0 h1:i9hxxLJF/9kkvfHppyLL55aW7iIJz4JjxTeYusH7zMc=
-go.opentelemetry.io/otel/sdk/metric v1.31.0/go.mod h1:CRInTMVvNhUKgSAMbKyTMxqOBC0zgyxzW55lZzX43Y8=
+go.opentelemetry.io/otel/sdk/metric v1.32.0 h1:rZvFnvmvawYb0alrYkjraqJq0Z4ZUJAiyYCU9snn1CU=
+go.opentelemetry.io/otel/sdk/metric v1.32.0/go.mod h1:PWeZlq0zt9YkYAp3gjKZ0eicRYvOh1Gd+X99x6GHpCQ=
 go.opentelemetry.io/otel/trace v1.21.0/go.mod h1:LGbsEB0f9LGjN+OZaQQ26sohbOmiMR+BaslueVtS/qQ=
 go.opentelemetry.io/otel/trace v1.33.0 h1:cCJuF7LRjUFso9LPnEAHJDB2pqzp+hbO8eu1qqW2d/s=
 go.opentelemetry.io/otel/trace v1.33.0/go.mod h1:uIcdVUZMpTAmz0tI1z04GoVSezK37CbGV4fr1f2nBck=
@@ -1069,8 +1069,8 @@ google.golang.org/grpc v1.25.1/go.mod h1:c3i+UQWmh7LiEpx4sFZnkU36qjEYZ0imhYfXVyQ
 google.golang.org/grpc v1.27.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
 google.golang.org/grpc v1.33.2/go.mod h1:JMHMWHQWaTccqQQlmk3MJZS+GWXOdAesneDmEnv2fbc=
 google.golang.org/grpc v1.38.0/go.mod h1:NREThFqKR1f3iQ6oBuvc5LadQuXVGo9rkm5ZGrQdJfM=
-google.golang.org/grpc v1.69.4 h1:MF5TftSMkd8GLw/m0KM6V8CMOCY6NZ1NQDPGFgbTt4A=
-google.golang.org/grpc v1.69.4/go.mod h1:vyjdE6jLBI76dgpDojsFGNaHlxdjXN9ghpnd2o7JGZ4=
+google.golang.org/grpc v1.70.0 h1:pWFv03aZoHzlRKHWicjsZytKAiYCtNS0dHbXnIdq7jQ=
+google.golang.org/grpc v1.70.0/go.mod h1:ofIJqVKDXx/JiXrwr2IG4/zwdH9txy3IlF40RmcJSQw=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=
