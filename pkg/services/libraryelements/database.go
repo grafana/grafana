@@ -713,7 +713,6 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		folderMap := map[string]string{}
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
-			folderMap[f.UID] = f.Title
 		}
 		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, connection := range libraryElementConnections {
