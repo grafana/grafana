@@ -39,12 +39,12 @@ export class ThresholdMapper {
           thresholds.push({ value: value, op: 'ne', visible });
           break;
         }
-        case 'ge': {
+        case 'gte': {
           const value = evaluator.params[0];
           thresholds.push({ value: value, op: 'ge', visible });
           break;
         }
-        case 'le': {
+        case 'lte': {
           const value = evaluator.params[0];
           thresholds.push({ value: value, op: 'le', visible });
           break;

@@ -324,11 +324,11 @@ func TestIsSupportedThresholdFunc(t *testing.T) {
 			supported: true,
 		},
 		{
-			function:  ThresholdIsGreaterOrEqual,
+			function:  ThresholdIsGreaterThanEqual,
 			supported: true,
 		},
 		{
-			function:  ThresholdIsLessOrEqual,
+			function:  ThresholdIsLessThanEqual,
 			supported: true,
 		},
 		{

@@ -71,14 +71,14 @@ func TestThresholdEvaluator(t *testing.T) {
 			expected:    false,
 		},
 		{
-			name:        "value 3 is ge 3: false",
-			evaluator:   &thresholdEvaluator{"ge", 3},
+			name:        "value 3 is gte 3: false",
+			evaluator:   &thresholdEvaluator{"gte", 3},
 			inputNumber: newNumber(util.Pointer(3.0)),
 			expected:    true,
 		},
 		{
-			name:        "value 5 is le 4: false",
-			evaluator:   &thresholdEvaluator{"le", 4},
+			name:        "value 5 is lte 4: false",
+			evaluator:   &thresholdEvaluator{"lte", 4},
 			inputNumber: newNumber(util.Pointer(5.0)),
 			expected:    false,
 		},
