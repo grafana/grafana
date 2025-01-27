@@ -19,8 +19,6 @@ import {
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
 
-import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
-
 import { DashboardQuery } from './types';
 
 /**
@@ -87,7 +85,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             key: 'source-ds-provider',
           };
         }),
-        this.emitFirstLoadedDataIfMixedDS(options.requestId),
+        this.emitDebouncedLoadedData(),
         finalize(() => cleanUp?.())
       );
     });
@@ -112,42 +110,36 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
-  private emitFirstLoadedDataIfMixedDS(
-    requestId: string
-  ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
+  private emitDebouncedLoadedData(): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
     return (source: Observable<DataQueryResponse>) => {
-      if (requestId.includes(MIXED_REQUEST_PREFIX)) {
-        let count = 0;
+      let count = 0;
 
-        return source.pipe(
-          /*
-           * We can have the following piped values scenarios:
-           * Loading -> Done         - initial load
-           * Done -> Loading -> Done - refresh
-           * Done                    - adding another query in editor
-           *
-           * When we see Done as a first element this is because of ReplaySubject in SceneQueryRunner
-           *
-           * we use first(...) below to emit correct result which is last value with Done/Error states
-           *
-           * to avoid emitting first Done/Error (due to ReplaySubject) we selectively debounce only first value with such states
-           */
-          debounce((val) => {
-            if ([LoadingState.Done, LoadingState.Error].includes(val.state!) && count === 0) {
-              count++;
-              // in the refresh scenario we need to debounce first Done/Error until Loading arrives
-              //   400ms here is a magic number that was sufficient enough with the 20x cpu throttle
-              //   this still might affect slower machines but the issue affects only panel view/edit modes
-              return interval(400);
-            }
+      return source.pipe(
+        /*
+         * We can have the following piped values scenarios:
+         * Loading -> Done         - initial load
+         * Done -> Loading -> Done - refresh
+         * Done                    - adding another query in editor
+         *
+         * When we see Done as a first element this is because of ReplaySubject in SceneQueryRunner
+         *
+         * we use first(...) below to emit correct result which is last value with Done/Error states
+         *
+         * to avoid emitting first Done/Error (due to ReplaySubject) we selectively debounce only first value with such states
+         */
+        debounce((val) => {
+          if ([LoadingState.Done, LoadingState.Error].includes(val.state!) && count === 0) {
             count++;
-            return interval(0);
-          }),
-          first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
-        );
-      }
-
-      return source;
+            // in the refresh scenario we need to debounce first Done/Error until Loading arrives
+            //   400ms here is a magic number that was sufficient enough with the 20x cpu throttle
+            //   this still might affect slower machines but the issue affects only panel view/edit modes
+            return interval(400);
+          }
+          count++;
+          return interval(0);
+        }),
+        first((val) => val.state === LoadingState.Done || val.state === LoadingState.Error)
+      );
     };
   }
 

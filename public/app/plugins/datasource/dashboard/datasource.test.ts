@@ -66,11 +66,18 @@ describe('DashboardDatasource', () => {
   });
 
   it('Can subscribe to panel data + transforms', async () => {
+    // needed to fake time for rxjs debounce in dashboard ds
+    jest.useFakeTimers();
+
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     let rsp: DataQueryResponse | undefined;
 
-    observable.subscribe({ next: (data) => (rsp = data) });
+    observable.subscribe({
+      next: (data) => (rsp = data),
+    });
+    // using 400 because max debounce is 400
+    jest.advanceTimersByTime(400);
 
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
@@ -87,7 +94,7 @@ describe('DashboardDatasource', () => {
     expect(sourceData.isActive).toBe(false);
   });
 
-  it('Should emit only the first value and complete if used within MixedDS', async () => {
+  it('Should emit only the first value and complete if used', async () => {
     const { observable } = setup({ refId: 'A', panelId: 1 }, `${MIXED_REQUEST_PREFIX}1`);
 
     observable.subscribe({ next: () => {} });
@@ -95,12 +102,12 @@ describe('DashboardDatasource', () => {
     expect(first).toHaveBeenCalled();
   });
 
-  it('Should not get the first emission if requestId does not contain the MixedDS prefix', async () => {
-    const { observable } = setup({ refId: 'A', panelId: 1 });
+  it('Should emit only the first value and complete if used within MixedDS', async () => {
+    const { observable } = setup({ refId: 'A', panelId: 1 }, `${MIXED_REQUEST_PREFIX}1`);
 
     observable.subscribe({ next: () => {} });
 
-    expect(first).not.toHaveBeenCalled();
+    expect(first).toHaveBeenCalled();
   });
 });
 
