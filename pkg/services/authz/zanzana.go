@@ -6,17 +6,18 @@ import (
 	"fmt"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authnlib "github.com/grafana/authlib/authn"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/dskit/services"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 
+	authnlib "github.com/grafana/authlib/authn"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -95,7 +96,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		channel := &inprocgrpc.Channel{}
 		// Put * as a namespace so we can properly authorize request with in-proc mode
 		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
-			ctx = claims.WithClaims(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+			ctx = claims.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "*",
 				},
@@ -154,12 +155,12 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	openfga, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store, z.logger)
+	openfgaServer, err := zanzana.NewOpenFGAServer(z.cfg.ZanzanaServer, store, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	srv, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfga, z.logger)
+	zanzanaServer, err := zanzana.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -195,7 +196,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		if err != nil {
 			return nil, err
 		}
-		return claims.WithClaims(ctx, c), nil
+		return claims.WithAuthInfo(ctx, c), nil
 	})
 
 	z.handle, err = grpcserver.ProvideService(z.cfg, z.features, authfn, tracer, prometheus.DefaultRegisterer)
@@ -203,10 +204,14 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to create zanzana grpc server: %w", err)
 	}
 
-	s := z.handle.GetServer()
-	openfgav1.RegisterOpenFGAServiceServer(s, openfga)
-	authzv1.RegisterAuthzServiceServer(s, srv)
-	authzextv1.RegisterAuthzExtentionServiceServer(s, srv)
+	grpcServer := z.handle.GetServer()
+	openfgav1.RegisterOpenFGAServiceServer(grpcServer, openfgaServer)
+	authzv1.RegisterAuthzServiceServer(grpcServer, zanzanaServer)
+	authzextv1.RegisterAuthzExtentionServiceServer(grpcServer, zanzanaServer)
+
+	// register grpc health server
+	healthServer := zanzana.NewHealthServer(zanzanaServer)
+	healthv1pb.RegisterHealthServer(grpcServer, healthServer)
 
 	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)

@@ -216,6 +216,26 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
+/**
+ * Recursivly check the scene graph up until it finds a read only clone.
+ * If the key contains clone-0 it is the reference object and can be edited
+ */
+export function isReadOnlyClone(sceneObject: SceneObject): boolean {
+  const key = sceneObject.state.key!;
+
+  // Regular expression to match 'clone-' followed by a number, but not 'clone-0' as the is the reference object
+  const pattern = /clone-(?!0)/;
+  if (pattern.test(key)) {
+    return true;
+  }
+
+  if (sceneObject.parent) {
+    return isReadOnlyClone(sceneObject.parent);
+  }
+
+  return false;
+}
+
 export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',

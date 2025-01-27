@@ -93,9 +93,7 @@ kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
 kubernetesCliDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,false
 kubernetesRestore,experimental,@grafana/grafana-app-platform-squad,false,false,false
-kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
 kubernetesFoldersServiceV2,experimental,@grafana/search-and-storage,false,false,false
-grafanaAPIServerTestingWithExperimentalAPIs,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -105,7 +103,6 @@ recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-panelTitleSearchInV1,experimental,@grafana/search-and-storage,true,false,false
 managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/oss-big-tent,false,false,true
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
@@ -137,7 +134,6 @@ alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,preview,@grafana/grafana-operator-experience-squad,false,false,false
-onPremToCloudMigrationsAuthApiMig,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
@@ -194,12 +190,13 @@ homeSetupGuide,experimental,@grafana/growth-and-onboarding,false,false,true
 appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
 appSidecar,experimental,@grafana/grafana-frontend-platform,false,false,false
 groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
-alertingQueryAndExpressionsStepMode,experimental,@grafana/alerting-squad,false,false,true
+alertingQueryAndExpressionsStepMode,GA,@grafana/alerting-squad,false,false,true
 improvedExternalSessionHandling,preview,@grafana/identity-access-team,false,false,false
 useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 unifiedStorageSearchSprinkles,experimental,@grafana/search-and-storage,false,false,false
+unifiedStorageSearchPermissionFiltering,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -219,7 +216,7 @@ jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
 reportingUseRawTimeRange,GA,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
-alertingNotificationsStepMode,experimental,@grafana/alerting-squad,false,false,true
+alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
 useV2DashboardsAPI,experimental,@grafana/dashboards-squad,false,true,false
 feedbackButton,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 unifiedStorageSearchUI,experimental,@grafana/search-and-storage,false,false,false
@@ -234,4 +231,6 @@ teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,fals
 ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 queryLibraryDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
+grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
+datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true

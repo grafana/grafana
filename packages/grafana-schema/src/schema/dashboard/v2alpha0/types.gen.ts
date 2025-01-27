@@ -31,13 +31,9 @@ export interface DashboardV2Spec {
 	timeSettings: TimeSettingsSpec;
 	// Configured template variables.
 	variables: VariableKind[];
-	// |* more element types in the future
-	elements: Record<string, PanelKind>;
+	elements: Record<string, Element>;
 	annotations: AnnotationQueryKind[];
 	layout: GridLayoutKind;
-	// Version of the JSON schema, incremented each time a Grafana update brings
-	// changes to said schema.
-	schemaVersion: number;
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: number;
@@ -55,7 +51,51 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	elements: {},
 	annotations: [],
 	layout: defaultGridLayoutKind(),
-	schemaVersion: 39,
+});
+
+// Supported dashboard elements
+// |* more element types in the future
+export type Element = PanelKind | LibraryPanelKind;
+
+export const defaultElement = (): Element => (defaultPanelKind());
+
+export interface LibraryPanelKind {
+	kind: "LibraryPanel";
+	spec: LibraryPanelSpec;
+}
+
+export const defaultLibraryPanelKind = (): LibraryPanelKind => ({
+	kind: "LibraryPanel",
+	spec: defaultLibraryPanelSpec(),
+});
+
+export interface LibraryPanelSpec {
+	// Panel ID for the library panel in the dashboard
+	id: number;
+	// Title for the library panel in the dashboard
+	title: string;
+	libraryPanel: LibraryPanelRef;
+}
+
+export const defaultLibraryPanelSpec = (): LibraryPanelSpec => ({
+	id: 0,
+	title: "",
+	libraryPanel: defaultLibraryPanelRef(),
+});
+
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
+export interface LibraryPanelRef {
+	// Library panel name
+	name: string;
+	// Library panel uid
+	uid: string;
+}
+
+export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
+	name: "",
+	uid: "",
 });
 
 export interface AnnotationPanelFilter {
@@ -1109,8 +1149,6 @@ export interface GroupByVariableSpec {
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
-	includeAll: boolean;
-	allValue?: string;
 	label?: string;
 	hide: VariableHide;
 	skipUrlSync: boolean;
@@ -1122,7 +1160,6 @@ export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	current: { text: "", value: "", },
 	options: [],
 	multi: false,
-	includeAll: false,
 	hide: "dontHide",
 	skipUrlSync: false,
 });

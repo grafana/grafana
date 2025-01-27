@@ -168,6 +168,13 @@
       "format": "int64",
       "description": "Total number of views",
       "priority": 0
+    },
+    {
+      "name": "legacy_id",
+      "type": "number",
+      "format": "int64",
+      "description": "Deprecated legacy id of the dashboard",
+      "priority": 0
     }
   ],
   "rows": [
@@ -179,6 +186,7 @@
           "aa"
         ],
         "zzz",
+        null,
         null,
         null,
         null,
@@ -239,6 +247,7 @@
         100,
         null,
         null,
+        null,
         null
       ],
       "object": {
@@ -280,6 +289,7 @@
         null,
         null,
         50,
+        null,
         null,
         null,
         null
