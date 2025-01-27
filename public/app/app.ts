@@ -30,13 +30,9 @@ import {
   setQueryRunnerFactory,
   setRunRequest,
   setPluginImportUtils,
-  setPluginExtensionGetter,
   setEmbeddedDashboard,
   setAppEvents,
   setReturnToPreviousHook,
-  setPluginExtensionsHook,
-  setPluginComponentHook,
-  setPluginComponentsHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
   setPluginLinksHook,
@@ -85,15 +81,7 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
-import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
-import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
-import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
-import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
-import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -110,6 +98,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { initPlugins } from './setup';
 import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
@@ -217,19 +206,7 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      if (contextSrv.user.orgRole !== '') {
-        const appPluginsToAwait = getAppPluginsToAwait();
-        const appPluginsToPreload = getAppPluginsToPreload();
-
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
-      }
-
-      setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionRegistries));
-      setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionRegistries));
-      setPluginLinksHook(usePluginLinks);
-      setPluginComponentHook(usePluginComponent);
-      setPluginComponentsHook(usePluginComponents);
+      await initPlugins();
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

@@ -1,25 +1,5 @@
 import { PluginMeta, PluginType } from '@grafana/data';
-import { setPluginComponentsHook, setPluginExtensionsHook } from '@grafana/runtime';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-
-import { mockPluginLinkExtension } from '../mocks';
-
-export function setupPluginsExtensionsHook() {
-  setPluginExtensionsHook(() => ({
-    extensions: plugins.map((plugin) =>
-      mockPluginLinkExtension({
-        pluginId: plugin.id,
-        title: plugin.name,
-        path: `/a/${plugin.id}`,
-      })
-    ),
-    isLoading: false,
-  }));
-  setPluginComponentsHook(() => ({
-    components: [],
-    isLoading: false,
-  }));
-}
 
 export const plugins: PluginMeta[] = [
   {
