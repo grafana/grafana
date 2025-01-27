@@ -28,18 +28,10 @@ import (
 
 const loggerName = "provisioning-repository-controller"
 
-type operation int
-
-const (
-	operationCreate operation = iota
-	operationUpdate
-)
-
 const maxAttempts = 3
 
 type queueItem struct {
 	key      string
-	op       operation
 	obj      interface{}
 	attempts int
 }
@@ -62,7 +54,7 @@ type RepositoryController struct {
 
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
-	enqueueRepository func(op operation, obj any)
+	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
 	queue workqueue.TypedRateLimitingInterface[*queueItem]
@@ -99,8 +91,10 @@ func NewRepositoryController(
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    rc.addRepository,
-		UpdateFunc: rc.updateRepository,
+		AddFunc: rc.enqueue,
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			rc.enqueue(newObj)
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -150,23 +144,15 @@ func (rc *RepositoryController) runWorker(ctx context.Context) {
 	}
 }
 
-func (rc *RepositoryController) enqueue(op operation, obj interface{}) {
+func (rc *RepositoryController) enqueue(obj interface{}) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
 
-	item := queueItem{key: key, obj: obj, op: op}
+	item := queueItem{key: key, obj: obj}
 	rc.queue.Add(&item)
-}
-
-func (rc *RepositoryController) addRepository(obj interface{}) {
-	rc.enqueueRepository(operationCreate, obj)
-}
-
-func (rc *RepositoryController) updateRepository(oldObj, newObj interface{}) {
-	rc.enqueueRepository(operationUpdate, newObj)
 }
 
 // processNextWorkItem deals with one key off the queue.
