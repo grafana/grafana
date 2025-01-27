@@ -12,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -45,8 +46,8 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 			migrators = append(migrators, a.migrateFolders)
 			settings.Collection = append(settings.Collection, &resource.ResourceKey{
 				Namespace: opts.Namespace,
-				Group:     "folder.grafana.app",
-				Resource:  "folders",
+				Group:     folders.GROUP,
+				Resource:  folders.RESOURCE,
 			})
 
 		case "panels":

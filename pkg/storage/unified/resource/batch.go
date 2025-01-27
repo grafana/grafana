@@ -89,11 +89,6 @@ func NewBatchSettings(md metadata.MD) (BatchSettings, error) {
 // BatchWrite implements ResourceServer.
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
 func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
-	backend, ok := s.backend.(BatchProcessingBackend)
-	if !ok {
-		return fmt.Errorf("backend does not support batched requests")
-	}
-
 	ctx := stream.Context()
 	user, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -160,7 +155,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 			}
 
 			// This will be called for each request -- with the folder ID
-			runner.checker[k.SearchID()], err = access.Compile(ctx, user, authlib.ListRequest{
+			runner.checker[k.BatchID()], err = access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
@@ -184,6 +179,21 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 		})
 	}
 
+	var backend BatchProcessingBackend
+	if true {
+		backend = &parquetSupport{} //
+	} else {
+		backend, ok = s.backend.(BatchProcessingBackend)
+		if !ok {
+			return stream.SendAndClose(&BatchResponse{
+				Error: &ErrorResult{
+					Message: "The server backend does not support batch processing",
+					Code:    http.StatusNotImplemented,
+				},
+			})
+		}
+	}
+
 	// BatchProcess requests
 	rsp := backend.ProcessBatch(ctx, settings, runner)
 	if rsp == nil {
@@ -193,6 +203,9 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 				Message: "Nothing returned from process batch",
 			},
 		}
+	}
+	if runner.err != nil {
+		rsp.Error = AsErrorResult(runner.err)
 	}
 
 	// Rebuild any changed indexes
@@ -214,7 +227,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 		fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", summary.Resource, count, rv, elapsed.String())
 	}
 
-	fmt.Printf("Finished (SQL batch loop)\n")
+	fmt.Printf("backend finished, now SendAndClose\n")
 	return stream.SendAndClose(rsp)
 }
 
@@ -251,7 +264,7 @@ func (b *batchRunner) Next() bool {
 
 	if b.request != nil {
 		key := b.request.Key
-		k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
+		k := key.BatchID()
 		checker, ok := b.checker[k]
 		if !ok {
 			b.err = fmt.Errorf("missing access control for: %s", k)

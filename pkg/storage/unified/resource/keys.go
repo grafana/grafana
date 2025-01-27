@@ -73,3 +73,18 @@ func (x *ResourceKey) ReadSearchID(v string) error {
 	}
 	return nil
 }
+
+// The namespace/group/resource
+func (x *ResourceKey) BatchID() string {
+	var sb strings.Builder
+	if x.Namespace == "" {
+		sb.WriteString(clusterNamespace)
+	} else {
+		sb.WriteString(x.Namespace)
+	}
+	sb.WriteString("/")
+	sb.WriteString(x.Group)
+	sb.WriteString("/")
+	sb.WriteString(x.Resource)
+	return sb.String()
+}
