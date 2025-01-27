@@ -722,6 +722,9 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 			}
 			ds, err := l.dashboardsService.GetDashboardUIDByID(c, &dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID})
 			if err != nil {
+				if errors.Is(err, dashboards.ErrDashboardNotFound) {
+					continue
+				}
 				return err
 			}
 			connections = append(connections, model.LibraryElementConnectionDTO{
