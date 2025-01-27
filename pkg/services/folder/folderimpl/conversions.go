@@ -46,6 +46,16 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		updated = &tmp
 	}
 
+	creator, err := ss.getUserFromMeta(ctx, meta.GetCreatedBy())
+	if err != nil {
+		return nil, err
+	}
+
+	updater, err := ss.getUserFromMeta(ctx, meta.GetUpdatedBy())
+	if err != nil {
+		return nil, err
+	}
+
 	return &folder.Folder{
 		UID:         uid,
 		Title:       title,
@@ -55,10 +65,14 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		Version:     int(meta.GetGeneration()),
 		Repository:  meta.GetRepositoryName(),
 
-		URL:     url,
-		Created: created,
-		Updated: *updated,
-		OrgID:   info.OrgID,
+		URL:          url,
+		Created:      created,
+		Updated:      *updated,
+		OrgID:        info.OrgID,
+		CreatedBy:    creator.ID,
+		CreatedByUID: creator.UID,
+		UpdatedBy:    updater.ID,
+		UpdatedByUID: updater.UID,
 	}, nil
 }
 
