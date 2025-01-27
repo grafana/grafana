@@ -240,10 +240,6 @@ func TestInitInstanceStore(t *testing.T) {
 	}
 }
 
-type mockInstanceStore struct {
-	state.InstanceStore
-}
-
 func TestInitStatePersister(t *testing.T) {
 	ua := setting.UnifiedAlertingSettings{
 		StatePeriodicSaveInterval: 1 * time.Minute,
