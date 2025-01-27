@@ -698,7 +698,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r2"},
 			Query:            "Perf",
-			QueryType:        dataquery.AzureQueryTypeLogAnalytics,
+			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
 			AppInsightsQuery: true,
 			DashboardTime:    false,
 		})
