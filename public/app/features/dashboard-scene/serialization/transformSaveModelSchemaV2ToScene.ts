@@ -150,6 +150,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     hasUnsavedFolderChange: false,
     dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
+    k8s: metadata,
   };
 
   // Ref: DashboardModel.initMeta

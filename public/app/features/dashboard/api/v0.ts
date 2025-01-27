@@ -1,4 +1,5 @@
 import { locationUtil } from '@grafana/data';
+import { Dashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -17,7 +18,7 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 
-export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
+export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO>;
 
   constructor() {
@@ -28,7 +29,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
     });
   }
 
-  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
+  saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {

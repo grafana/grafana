@@ -1,5 +1,6 @@
 import { AppEvents, UrlQueryMap } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -9,10 +10,10 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI } from './types';
 
-export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO> {
+export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   constructor() {}
 
-  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
+  saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     dashboardWatcher.ignoreNextSave();
 
     return getBackendSrv().post<SaveDashboardResponseDTO>('/api/dashboards/db/', {
