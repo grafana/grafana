@@ -5551,6 +5551,10 @@
             },
             "type": "array"
           },
+          "repository": {
+            "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -5581,6 +5585,10 @@
             "type": "integer"
           },
           "parentUid": {
+            "type": "string"
+          },
+          "repository": {
+            "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
             "type": "string"
           },
           "title": {
