@@ -114,15 +114,6 @@ jobs:
           pr: ${{ steps.crowdin-download.outputs.pull_request_number }}
           token: ${{ steps.generate_token.outputs.token }}
 
-      - name: Enable automerge
-        if: steps.crowdin-download.outputs.pull_request_url
-        shell: bash
-        run: |
-          echo "Enabling automerge"
-          gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
       - name: Generate approver token
         if: steps.crowdin-download.outputs.pull_request_url
         id: generate_approver_token
@@ -131,7 +122,7 @@ jobs:
           app_id: ${{ secrets.GRAFANA_PR_APPROVER_APP_ID }}
           private_key: ${{ secrets.GRAFANA_PR_APPROVER_APP_PEM }}
 
-      - name: Approve PR
+      - name: Approve and automerge PR
         if: steps.crowdin-download.outputs.pull_request_url
         shell: bash
         # Only approve if:
@@ -150,6 +141,8 @@ jobs:
             exit 1
           fi
 
+          echo "Approving and enabling automerge"
           gh pr review ${{ steps.crowdin-download.outputs.pull_request_url }} --approve
+          gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_approver_token.outputs.token }}
