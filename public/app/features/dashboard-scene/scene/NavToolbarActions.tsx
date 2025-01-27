@@ -71,6 +71,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNotFound = Boolean(meta.dashboardNotFound);
+  const isNew = !Boolean(uid);
+
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
@@ -489,7 +491,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !meta.isNew && isShowingDashboard,
+    condition: isEditing && !isNew && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
@@ -583,7 +585,7 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
     render: () => {
       // if we  only can save
-      if (meta.isNew) {
+      if (isNew) {
         return (
           <Button
             onClick={() => {
