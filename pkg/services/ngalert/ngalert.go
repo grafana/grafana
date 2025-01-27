@@ -144,6 +144,7 @@ type AlertNG struct {
 	dashboardService    dashboards.DashboardService
 	Api                 *api.API
 	httpClientProvider  httpclient.Provider
+	InstanceStore       state.InstanceStore
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -398,11 +399,14 @@ func (ng *AlertNG) init() error {
 	if err != nil {
 		return err
 	}
-	cfg := state.ManagerCfg{
+
+	ng.InstanceStore = initInstanceStore(ng.store.SQLStore, ng.Log.New("ngalert.state.instancestore"), ng.FeatureToggles)
+
+	stateManagerCfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
 		ExternalURL:                    appUrl,
 		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
-		InstanceStore:                  ng.store,
+		InstanceStore:                  ng.InstanceStore,
 		Images:                         ng.ImageService,
 		Clock:                          clk,
 		Historian:                      history,
@@ -415,13 +419,8 @@ func (ng *AlertNG) init() error {
 		Log:                            log.New("ngalert.state.manager"),
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
-	logger := log.New("ngalert.state.manager.persist")
-	statePersister := state.NewSyncStatePersisiter(logger, cfg)
-	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
-		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
-	}
-	stateManager := state.NewManager(cfg, statePersister)
+	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
+	stateManager := state.NewManager(stateManagerCfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -515,6 +514,54 @@ func (ng *AlertNG) init() error {
 	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
+func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) state.InstanceStore {
+	var instanceStore state.InstanceStore
+
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		logger.Info("Using protobuf-based alert instance store")
+		instanceStore = store.ProtoInstanceDBStore{
+			SQLStore:       sqlStore,
+			Logger:         logger,
+			FeatureToggles: featureToggles,
+		}
+
+		// If FlagAlertingSaveStateCompressed is enabled, ProtoInstanceDBStore is used,
+		// which functions differently from InstanceDBStore. FlagAlertingSaveStatePeriodic is
+		// not applicable to ProtoInstanceDBStore, so a warning is logged if it is set.
+		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+			logger.Warn("alertingSaveStatePeriodic is not used when alertingSaveStateCompressed feature flag enabled")
+		}
+	} else {
+		logger.Info("Using simple database alert instance store")
+		instanceStore = store.InstanceDBStore{
+			SQLStore:       sqlStore,
+			Logger:         logger,
+			FeatureToggles: featureToggles,
+		}
+	}
+
+	return instanceStore
+}
+
+func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
+	logger := log.New("ngalert.state.manager.persist")
+	var statePersister state.StatePersister
+
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
+		logger.Info("Using rule state persister")
+		statePersister = state.NewSyncRuleStatePersisiter(logger, cfg)
+	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+		logger.Info("Using periodic state persister")
+		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)
+		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
+	} else {
+		logger.Info("Using sync state persister")
+		statePersister = state.NewSyncStatePersisiter(logger, cfg)
+	}
+
+	return statePersister
+}
+
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
 	// if full path to the folder is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
@@ -553,7 +600,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		// Also note that this runs synchronously to ensure state is loaded
 		// before rule evaluation begins, hence we use ctx and not subCtx.
 		//
-		ng.stateManager.Warm(ctx, ng.store, ng.store)
+		ng.stateManager.Warm(ctx, ng.store, ng.InstanceStore)
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
