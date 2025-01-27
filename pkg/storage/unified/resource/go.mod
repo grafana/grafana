@@ -27,7 +27,7 @@ require (
 	golang.org/x/sync v0.10.0
 	google.golang.org/grpc v1.69.4
 	google.golang.org/protobuf v1.36.1
-	k8s.io/apimachinery v0.32.0
+	k8s.io/apimachinery v0.32.1
 )
 
 require (
@@ -235,7 +235,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.32.0 // indirect
+	k8s.io/api v0.32.1 // indirect
 	k8s.io/apiserver v0.32.0 // indirect
 	k8s.io/component-base v0.32.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
