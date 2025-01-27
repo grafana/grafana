@@ -34,10 +34,9 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider        db.DBProvider
-	Tracer            trace.Tracer
-	PollingInterval   time.Duration
-	SkipDataMigration bool
+	DBProvider      db.DBProvider
+	Tracer          trace.Tracer
+	PollingInterval time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -54,13 +53,12 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		pollingInterval = defaultPollingInterval
 	}
 	return &backend{
-		done:              ctx.Done(),
-		cancel:            cancel,
-		log:               log.New("sql-resource-server"),
-		tracer:            opts.Tracer,
-		dbProvider:        opts.DBProvider,
-		pollingInterval:   pollingInterval,
-		skipDataMigration: opts.SkipDataMigration,
+		done:            ctx.Done(),
+		cancel:          cancel,
+		log:             log.New("sql-resource-server"),
+		tracer:          opts.Tracer,
+		dbProvider:      opts.DBProvider,
+		pollingInterval: pollingInterval,
 	}, nil
 }
 
@@ -76,10 +74,9 @@ type backend struct {
 	tracer trace.Tracer
 
 	// database
-	dbProvider        db.DBProvider
-	db                db.DB
-	dialect           sqltemplate.Dialect
-	skipDataMigration bool
+	dbProvider db.DBProvider
+	db         db.DB
+	dialect    sqltemplate.Dialect
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -104,12 +101,6 @@ func (b *backend) initLocked(ctx context.Context) error {
 	b.dialect = sqltemplate.DialectForDriver(driverName)
 	if b.dialect == nil {
 		return fmt.Errorf("no dialect for driver %q", driverName)
-	}
-
-	// Process any data manipulation migrations
-	err = b.runStartupDataMigrations(ctx)
-	if err != nil {
-		return err
 	}
 
 	return b.db.PingContext(ctx)
