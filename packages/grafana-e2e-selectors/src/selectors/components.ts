@@ -661,6 +661,9 @@ export const versionedComponents = {
     newEvaluationGroupCreate: {
       '11.1.0': 'data-testid alert-rule new-evaluation-group-create-button',
     },
+    step: {
+      '11.5.0': (stepNo: string) => `data-testid alert-rule step-no-${stepNo}`,
+    },
   },
   Alert: {
     alertV2: {

@@ -3,6 +3,7 @@ import * as React from 'react';
 import { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
 
 export interface RuleEditorSectionProps {
@@ -26,7 +27,7 @@ export const RuleEditorSection = ({
 }: React.PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.parent}>
+    <div className={styles.parent} data-testid={selectors.components.AlertRules.step(stepNo.toString())}>
       <FieldSet
         className={cx(fullWidth && styles.fullWidth)}
         label={
