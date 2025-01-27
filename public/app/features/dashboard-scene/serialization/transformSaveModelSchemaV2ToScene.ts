@@ -59,7 +59,6 @@ import {
   AnnoKeyFolder,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
-  AnnoKeyDashboardIsNew,
   AnnoKeyDashboardIsSnapshot,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -151,7 +150,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     hasUnsavedFolderChange: false,
     dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
-    isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
   };
 
   // Ref: DashboardModel.initMeta
