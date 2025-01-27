@@ -6,7 +6,6 @@ import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
-import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -74,9 +73,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
       />
       {deleteModal}
       {isGrafanaAlertingRule(rule) && showSilenceDrawer && (
-        <AlertmanagerProvider accessType="instance">
-          <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
-        </AlertmanagerProvider>
+        <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

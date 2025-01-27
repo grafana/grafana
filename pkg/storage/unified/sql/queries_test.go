@@ -385,35 +385,5 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlMigratorGetDeletionMarkers: {
-				{
-					Name: "list",
-					Data: &sqlMigrationQueryRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MarkerQuery: `{"kind":"DeletedMarker"%`,
-					},
-				},
-			},
-			sqlMigratorGetValueFromRV: {
-				{
-					Name: "get",
-					Data: &sqlMigrationQueryRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Group:       "ggg",
-						Resource:    "rrr",
-						RV:          1234,
-					},
-				},
-			},
-			sqlMigratorUpdateValueWithGUID: {
-				{
-					Name: "update",
-					Data: &sqlMigrationQueryRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						GUID:        "ggggg",
-						Value:       "{new value}",
-					},
-				},
-			},
 		}})
 }
