@@ -48,6 +48,24 @@ export const Basic: Story = {
   },
 };
 
+export const AutoSize: Story = {
+  args: { ...commonArgs, width: 'auto', minWidth: 20 },
+  render: (args) => {
+    const [{ value }, setArgs] = useArgs();
+
+    return (
+      <MultiCombobox
+        {...args}
+        value={value}
+        onChange={(val) => {
+          action('onChange')(val);
+          setArgs({ value: val });
+        }}
+      />
+    );
+  },
+};
+
 const ManyOptionsStory: StoryFn<ManyOptionsArgs> = ({ numberOfOptions = 1e4, ...args }) => {
   const [value, setValue] = useState<string[]>([]);
   const [options, setOptions] = useState<ComboboxOption[]>([]);

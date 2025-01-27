@@ -10,16 +10,23 @@ export const getMultiComboboxStyles = (
   isOpen: boolean,
   invalid?: boolean,
   disabled?: boolean,
-  width?: number | 'auto'
+  width?: number | 'auto',
+  minWidth?: number,
+  maxWidth?: number
 ) => {
   const inputStyles = getInputStyles({ theme, invalid });
   const focusStyles = getFocusStyles(theme);
 
   const wrapperWidth = width && width !== 'auto' ? theme.spacing(width) : '100%';
+  const wrapperMinWidth = minWidth ? theme.spacing(minWidth) : '';
+  const wrapperMaxWidth = maxWidth ? theme.spacing(maxWidth) : '';
 
   return {
     container: css({
       width: width === 'auto' ? 'auto' : wrapperWidth,
+      minWidth: wrapperMinWidth,
+      maxWidth: wrapperMaxWidth,
+      display: width === 'auto' ? 'inline-block' : 'block',
     }), // wraps everything
     wrapper: cx(
       inputStyles.input,

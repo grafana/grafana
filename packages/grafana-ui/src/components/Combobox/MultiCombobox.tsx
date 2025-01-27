@@ -36,7 +36,19 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value, width, enableAllOption, invalid, loading, disabled } = props;
+  const {
+    options,
+    placeholder,
+    onChange,
+    value,
+    width,
+    enableAllOption,
+    invalid,
+    loading,
+    disabled,
+    minWidth,
+    maxWidth,
+  } = props;
   const isAsync = typeof options === 'function';
 
   const selectedItems = useMemo(() => {
@@ -201,7 +213,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width);
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width, minWidth, maxWidth);
 
   const virtualizerOptions = {
     count: items.length,
