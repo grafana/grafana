@@ -270,23 +270,25 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 		hashes[item.Path] = item.Hash
 	}
 
+	// TODO: Does the file tree gives us folders?
+
 	for _, entry := range tree {
 		logger := logging.FromContext(ctx).With("file", entry.Path)
+		if hashes[entry.Path] == entry.Hash {
+			logger.Debug("file is up to date")
+			continue
+		}
+
+		if _, err := r.createFolderPath(ctx, entry.Path); err != nil {
+			return fmt.Errorf("create folder path: %w", err)
+		}
+
 		if !entry.Blob {
-			// Support folders without resources yet
-			if _, err := r.createFolderPath(ctx, entry.Path); err != nil {
-				return fmt.Errorf("create folder path: %w", err)
-			}
 			continue
 		}
 
 		if resources.ShouldIgnorePath(entry.Path) {
 			logger.Debug("ignoring file")
-			continue
-		}
-
-		if hashes[entry.Path] == entry.Hash {
-			logger.Debug("file is up to date")
 			continue
 		}
 
@@ -440,6 +442,12 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 
 func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	for _, change := range changes {
+		if change.Action != repository.FileActionDeleted {
+			if _, err := r.createFolderPath(ctx, change.Path); err != nil {
+				return fmt.Errorf("create folder path: %w", err)
+			}
+		}
+
 		if resources.ShouldIgnorePath(change.Path) {
 			continue
 		}

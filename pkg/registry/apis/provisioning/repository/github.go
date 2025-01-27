@@ -291,10 +291,14 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		return fmt.Errorf("create branch on delete: %w", err)
 	}
 
+	return r.deleteRecursively(ctx, path, ref, comment)
+}
+
+func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, comment string) error {
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
-	file, _, err := r.gh.GetContents(ctx, owner, repo, path, ref)
+	file, contents, err := r.gh.GetContents(ctx, owner, repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return &apierrors.StatusError{
@@ -307,7 +311,24 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		return fmt.Errorf("finding file to delete: %w", err)
 	}
 
-	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
+	if file != nil && !file.IsDirectory() {
+		return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
+	}
+
+	for _, c := range contents {
+		if c.IsDirectory() {
+			if err := r.deleteRecursively(ctx, c.GetPath(), ref, comment); err != nil {
+				return fmt.Errorf("delete file recursive: %w", err)
+			}
+			continue
+		}
+
+		if err := r.gh.DeleteFile(ctx, owner, repo, c.GetPath(), ref, comment, c.GetSHA()); err != nil {
+			return fmt.Errorf("delete file: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
@@ -485,6 +506,9 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 		Job: &provisioning.JobSpec{
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionSync,
+			Sync: &provisioning.SyncOptions{
+				Complete: false,
+			},
 		},
 	}, nil
 }
