@@ -12,9 +12,6 @@ import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
 
-import { AddToQueryLibraryModal } from '../../../features/explore/QueryLibrary/AddToQueryLibraryModal';
-import { QueryLibraryDrawer } from '../../../features/explore/QueryLibrary/QueryLibraryDrawer';
-
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
@@ -135,8 +132,6 @@ export function AppChrome({ children }: Props) {
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
-      <QueryLibraryDrawer />
-      <AddToQueryLibraryModal />
     </div>
   );
 }

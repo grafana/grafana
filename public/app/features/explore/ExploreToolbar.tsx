@@ -5,7 +5,7 @@ import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -29,7 +29,6 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
-import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -93,7 +92,6 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
-  const { queryLibraryAvailable } = useQueryLibraryContext();
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
@@ -208,7 +206,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
 
   const navBarActions = [<ShortLinkButtonMenu key="share" />];
 
-  if (queryLibraryAvailable) {
+  if (config.featureToggles.queryLibrary) {
     navBarActions.unshift(<QueriesDrawerDropdown key="queryLibrary" variant="full" />);
   } else {
     navBarActions.unshift(

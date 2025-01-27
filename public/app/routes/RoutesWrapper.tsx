@@ -18,7 +18,7 @@ import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
-import { QueryLibraryDrawerContextProvider } from '../features/explore/QueryLibrary/QueryLibraryContext';
+import { QueryLibraryContextProvider } from '../features/explore/QueryLibrary/QueryLibraryContext';
 
 type RouterWrapperProps = {
   routes?: JSX.Element | false;
@@ -31,7 +31,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
           <QueriesDrawerContextProvider>
-            <QueryLibraryDrawerContextProvider>
+            <QueryLibraryContextProvider>
               <ModalsContextProvider>
                 <AppChrome>
                   <AngularRoot />
@@ -48,7 +48,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
                 </AppChrome>
                 <ModalRoot />
               </ModalsContextProvider>
-            </QueryLibraryDrawerContextProvider>
+            </QueryLibraryContextProvider>
           </QueriesDrawerContextProvider>
         </CompatRouter>
       </LocationServiceProvider>

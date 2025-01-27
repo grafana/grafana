@@ -315,7 +315,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   }
 
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
-  const { queryLibraryAvailable, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
+  const { openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
 
   // Make the final query library action button by injecting actual addQuery functionality into the button.
   const addQueryActionButton = makeQueryActionButton((queries) => {
@@ -356,7 +356,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             >
               Add query
             </Button>
-            {queryLibraryAvailable && (
+            {config.featureToggles.queryLibrary && (
               <Button
                 icon="plus"
                 onClick={() => {

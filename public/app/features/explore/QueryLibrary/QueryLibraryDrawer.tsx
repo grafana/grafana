@@ -7,13 +7,18 @@ import { QUERY_LIBRARY_GET_LIMIT, queryLibraryApi } from '../../query-library/ap
 import { ExploreDrawer } from '../ExploreDrawer';
 
 import { QueryLibrary } from './QueryLibrary';
-import { useQueryLibraryContext } from './QueryLibraryContext';
+
+type Props = {
+  isOpen: boolean;
+  // List of datasource names to filter query templates by
+  activeDatasources: string[] | undefined;
+  close: () => void;
+};
 
 /**
  * Drawer with query library feature. Handles its own state and should be included in some top level component.
  */
-export function QueryLibraryDrawer() {
-  const { drawerOpened, activeDatasources, closeDrawer } = useQueryLibraryContext();
+export function QueryLibraryDrawer({ isOpen, activeDatasources, close }: Props) {
   const queryTemplatesCount = useSelector(queryLibraryApi.endpoints.allQueryTemplates.select()).data?.length || 0;
 
   // TODO: the tabbed container is here mainly for close button and some margins maybe make sense to use something
@@ -28,12 +33,12 @@ export function QueryLibraryDrawer() {
   ];
 
   return (
-    drawerOpened && (
+    isOpen && (
       <ExploreDrawer initialHeight={'75vh'}>
         <TabbedContainer
           tabs={tabs}
           onClose={() => {
-            closeDrawer();
+            close();
           }}
           defaultTab={'Query library'}
           closeIconTooltip={t('explore.rich-history.close-tooltip', 'Close query history')}

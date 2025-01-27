@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { ComponentProps, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 
@@ -33,10 +34,9 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
 
   const {
-    queryLibraryAvailable,
     openDrawer: openQueryLibraryDrawer,
     closeDrawer: closeQueryLibraryDrawer,
-    drawerOpened: queryLibraryDrawerOpened,
+    isDrawerOpen: isQueryLibraryDrawerOpen,
   } = useQueryLibraryContext();
 
   const [queryOption, setQueryOption] = useState<'library' | 'history'>('library');
@@ -46,7 +46,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   const styles = useStyles2(getStyles);
 
   // In case query library is not enabled we show only simple button for query history in the parent.
-  if (!queryLibraryAvailable) {
+  if (!config.featureToggles.queryLibrary) {
     return undefined;
   }
 
@@ -57,7 +57,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
 
   function toggleQueryLibrary() {
     setQueryOption('library');
-    if (queryLibraryDrawerOpened) {
+    if (isQueryLibraryDrawerOpen) {
       closeQueryLibraryDrawer();
     } else {
       // Prefill the query library filter with the dataSource.
@@ -71,7 +71,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
 
       openQueryLibraryDrawer(activeDatasources, ExploreRunQueryButtonWrapper);
     }
-    queryLibraryTrackToggle(!queryLibraryDrawerOpened);
+    queryLibraryTrackToggle(!isQueryLibraryDrawerOpen);
   }
 
   const menu = (
@@ -88,7 +88,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
     <ButtonGroup>
       <ToolbarButton
         icon="book"
-        variant={drawerOpened || queryLibraryDrawerOpened ? 'active' : 'canvas'}
+        variant={drawerOpened || isQueryLibraryDrawerOpen ? 'active' : 'canvas'}
         onClick={() => toggle()}
         aria-label={buttonLabel}
       >
@@ -97,7 +97,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
 
       {/* Show either a drops down button so that user can select QL or QH, or show a close button if one of them is
           already open.*/}
-      {drawerOpened || queryLibraryDrawerOpened ? (
+      {drawerOpened || isQueryLibraryDrawerOpen ? (
         <Button className={styles.close} variant="secondary" icon="times" onClick={() => toggle()}></Button>
       ) : (
         <Dropdown overlay={menu}>
