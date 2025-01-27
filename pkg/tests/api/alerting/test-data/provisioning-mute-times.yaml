@@ -1,0 +1,20 @@
+# config file version
+apiVersion: 1
+
+# ONLY THESE PATHS ARE NOT TEMPLATED and therefore don't need escaping:
+# Mute timings name: muteTimes[].name
+# Mute timings time intervals: muteTimes[].time_intervals[]
+muteTimes:
+  - orgId: 1
+    name: $mute_time_a
+    # <list> time intervals that should trigger the muting
+    #        refer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0
+    time_intervals:
+      - times:
+          - start_time: "06:00"
+            end_time: "23:59"
+        location: "UTC"
+        weekdays: ["monday:wednesday", "saturday", "sunday"]
+        months: ["1:3", "may:august", "december"]
+        years: ["2020:2022", "2030"]
+        days_of_month: ["1:5", "-3:-1"]

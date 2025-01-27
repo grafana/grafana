@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
+	alertmanager_config "github.com/prometheus/alertmanager/config"
 )
 
 const disableProvenanceHeaderName = "X-Disable-Provenance"
@@ -600,8 +602,65 @@ func escapeAlertingFileExport(body definitions.AlertingFileExport) definitions.A
 	for i, group := range body.Groups {
 		body.Groups[i] = escapeRuleGroup(group)
 	}
-	// TODO: implement escaping for the other export fields
+	for i, cp := range body.ContactPoints {
+		body.ContactPoints[i] = escapeContactPoint(cp)
+	}
+	for i, np := range body.Policies {
+		body.Policies[i] = escapeNotificationPolicy(np)
+	}
 	return body
+}
+
+func escapeRouteExport(r *definitions.RouteExport) {
+	r.Receiver = addEscapeCharactersToString(r.Receiver)
+	if r.GroupByStr != nil {
+		groupByStr := make([]string, len(*r.GroupByStr))
+		for i, groupBy := range *r.GroupByStr {
+			groupByStr[i] = addEscapeCharactersToString(groupBy)
+		}
+		r.GroupByStr = &groupByStr
+	}
+	for k, v := range r.Match {
+		r.Match[k] = addEscapeCharactersToString(v)
+	}
+	for k, v := range r.MatchRE {
+		// convert regex to string, escape then covert back to regex
+		stringRepr := addEscapeCharactersToString(v.String())
+		mutated := regexp.MustCompile(stringRepr)
+		r.MatchRE[k] = alertmanager_config.Regexp{Regexp: mutated}
+	}
+	if r.MuteTimeIntervals != nil {
+		muteTimeIntervals := make([]string, len(*r.MuteTimeIntervals))
+		for i, muteTimeInterval := range *r.MuteTimeIntervals {
+			muteTimeIntervals[i] = addEscapeCharactersToString(muteTimeInterval)
+		}
+		r.MuteTimeIntervals = &muteTimeIntervals
+	}
+	for i := range r.Routes {
+		escapeRouteExport(r.Routes[i])
+	}
+}
+
+func escapeNotificationPolicy(np definitions.NotificationPolicyExport) definitions.NotificationPolicyExport {
+	escapeRouteExport(np.RouteExport)
+	return np
+}
+
+func escapeContactPoint(cp definitions.ContactPointExport) definitions.ContactPointExport {
+	cp.Name = addEscapeCharactersToString(cp.Name)
+	for i, receiver := range cp.Receivers {
+		settingsJson, err := receiver.Settings.MarshalJSON()
+		if err != nil {
+			// This should never happen, as the settings are already marshaled to JSON in the API
+			panic(fmt.Errorf("failed to marshal settings to JSON: %w", err))
+		}
+		settingsEscaped := []byte(addEscapeCharactersToString(string(settingsJson)))
+		if err := cp.Receivers[i].Settings.UnmarshalJSON(settingsEscaped); err != nil {
+			// This should never happen, as the settings are already marshaled to JSON in the API
+			panic(fmt.Errorf("failed to unmarshal settings from JSON: %w", err))
+		}
+	}
+	return cp
 }
 
 // escape all strings except:
