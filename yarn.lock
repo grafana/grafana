@@ -18019,7 +18019,7 @@ __metadata:
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.1.1"
     rimraf: "npm:6.0.1"
-    rudder-sdk-js: "npm:2.48.43"
+    rudder-sdk-js: "npm:2.48.44"
     rxjs: "npm:7.8.1"
     sass: "npm:1.83.4"
     sass-loader: "npm:16.0.4"
@@ -27482,10 +27482,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rudder-sdk-js@npm:2.48.43":
-  version: 2.48.43
-  resolution: "rudder-sdk-js@npm:2.48.43"
-  checksum: 10/183888b1bd922d3e811fae5729b6a0ac93d5dbb44e8ee753ced80ae496d19c9127ef8de8908718d43ed4b33e4e9b738c3bbc562ea6cb02c050702f9b850ae2a5
+"rudder-sdk-js@npm:2.48.44":
+  version: 2.48.44
+  resolution: "rudder-sdk-js@npm:2.48.44"
+  checksum: 10/538bc405c0cb7faf33b910a39d51bd6df53fbdb176d4e83c33821e7a454178b65ced216ad0f055b6dffd201ccc45cead814138e20683e15424a02fb54b894e15
   languageName: node
   linkType: hard
 
