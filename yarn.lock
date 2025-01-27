@@ -3613,7 +3613,7 @@ __metadata:
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
     "@prometheus-io/lezer-promql": "npm:0.301.0"
-    "@reduxjs/toolkit": "npm:2.5.0"
+    "@reduxjs/toolkit": "npm:2.5.1"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:16.0.0"
     "@swc/core": "npm:1.10.9"
@@ -6719,9 +6719,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:2.5.0":
-  version: 2.5.0
-  resolution: "@reduxjs/toolkit@npm:2.5.0"
+"@reduxjs/toolkit@npm:2.5.1":
+  version: 2.5.1
+  resolution: "@reduxjs/toolkit@npm:2.5.1"
   dependencies:
     immer: "npm:^10.0.3"
     redux: "npm:^5.0.1"
@@ -6735,7 +6735,7 @@ __metadata:
       optional: true
     react-redux:
       optional: true
-  checksum: 10/b24ee7e89bd00c5f3ee5df12cbc1b6395784ff215b9bf75d2c1b211d8494af220057ced666f49c6e815b723252bc3eb704f7be4a3c261ab06ee7b776f4565d4b
+  checksum: 10/f291b560a16d66092086b222aa950fc19493d6775ce0359d263d99486302fbf013eec1989b1e87921b0d84e5008a8f1a029522999cfb3be485cfa3c015fef197
   languageName: node
   linkType: hard
 
@@ -17785,7 +17785,7 @@ __metadata:
     "@react-types/menu": "npm:3.9.14"
     "@react-types/overlays": "npm:3.8.12"
     "@react-types/shared": "npm:3.27.0"
-    "@reduxjs/toolkit": "npm:2.5.0"
+    "@reduxjs/toolkit": "npm:2.5.1"
     "@rsdoctor/webpack-plugin": "npm:^0.4.6"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
