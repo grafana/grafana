@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"path"
-	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -121,6 +120,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			pathsToIgnore := []string{
 				"GrafanaManagedAlert.Updated",
+				"GrafanaManagedAlert.UpdatedBy",
 				"GrafanaManagedAlert.UID",
 				"GrafanaManagedAlert.ID",
 				"GrafanaManagedAlert.Data.Model",
@@ -422,6 +422,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 			pathsToIgnore := []string{
 				"GrafanaManagedAlert.Updated",
+				"GrafanaManagedAlert.UpdatedBy",
 				"GrafanaManagedAlert.UID",
 				"GrafanaManagedAlert.ID",
 				"GrafanaManagedAlert.Data.Model",
@@ -1144,6 +1145,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					}
 				}],
 				"updated": "2021-02-21T01:10:30Z",
+				"updated_by": {
+					"uid": "uid",
+					"name": "grafana"
+				},
 				"intervalSeconds": 60,
 				"is_paused": false,
 				"version": 1,
@@ -1183,6 +1188,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					}
 				}],
 				"updated": "2021-02-21T01:10:30Z",
+				"updated_by": {
+					"uid": "uid",
+					"name": "grafana"
+				},
 				"intervalSeconds": 60,
 				"is_paused": false,
 				"version": 1,
@@ -1234,6 +1243,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					}
 				}],
 				"updated": "2021-02-21T01:10:30Z",
+				"updated_by": {
+					"uid": "uid",
+					"name": "grafana"
+				},
 				"intervalSeconds": 60,
 				"is_paused": false,
 				"version": 1,
@@ -1498,8 +1511,9 @@ func TestIntegrationRuleCreate(t *testing.T) {
 	client.CreateFolder(t, namespaceUID, namespaceUID)
 
 	cases := []struct {
-		name   string
-		config apimodels.PostableRuleGroupConfig
+		name     string
+		config   apimodels.PostableRuleGroupConfig
+		expected apimodels.GettableRuleGroupConfig
 	}{{
 		name: "can create a rule with UTF-8",
 		config: apimodels.PostableRuleGroupConfig{
@@ -1514,8 +1528,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 							"_bar1": "baz🙂",
 						},
 						Annotations: map[string]string{
-							"Προμηθέας": "prom",      // Prometheus in Greek
-							"犬":         "Shiba Inu", // Dog in Japanese
+							"Προμηθέας": "prom", // Prometheus in Greek
 						},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
@@ -1536,6 +1549,52 @@ func TestIntegrationRuleCreate(t *testing.T) {
 				},
 			},
 		},
+		expected: apimodels.GettableRuleGroupConfig{
+			Name:     "test1",
+			Interval: model.Duration(time.Minute),
+			Rules: []apimodels.GettableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: util.Pointer(model.Duration(2 * time.Minute)),
+						Labels: map[string]string{
+							"foo🙂":  "bar",
+							"_bar1": "baz🙂",
+						},
+						Annotations: map[string]string{
+							"Προμηθέας": "prom", // Prometheus in Greek
+						},
+					},
+					GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
+						OrgID:     1,
+						Title:     "test1 rule1",
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(0),
+									To:   apimodels.Duration(15 * time.Minute),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model:         json.RawMessage(`{"expression":"1","intervalMs":1000,"maxDataPoints":43200,"type":"math"}`),
+							},
+						},
+						UpdatedBy: &apimodels.UserInfo{
+							Name: "admin",
+						},
+						IntervalSeconds: 60,
+						Version:         1,
+						NamespaceUID:    namespaceUID,
+						RuleGroup:       "test1",
+						NoDataState:     "NoData",
+						ExecErrState:    "Alerting",
+						Provenance:      "",
+						IsPaused:        false,
+						Metadata:        &apimodels.AlertRuleMetadata{},
+					},
+				},
+			},
+		},
 	}}
 
 	for _, tc := range cases {
@@ -1545,6 +1604,27 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			require.Len(t, resp.Created, 1)
 			require.Len(t, resp.Updated, 0)
 			require.Len(t, resp.Deleted, 0)
+			got, _, _ := client.GetRulesGroupWithStatus(t, namespaceUID, tc.config.Name)
+
+			pathsToIgnore := []string{
+				"GrafanaManagedAlert.Updated",
+				"GrafanaManagedAlert.UpdatedBy.UID",
+				"GrafanaManagedAlert.UID",
+				"GrafanaManagedAlert.ID",
+				"GrafanaManagedAlert.NamespaceID",
+			}
+
+			// compare expected and actual and ignore the dynamic fields
+			diff := cmp.Diff(tc.expected, got.GettableRuleGroupConfig, cmp.FilterPath(func(path cmp.Path) bool {
+				for _, s := range pathsToIgnore {
+					if strings.HasSuffix(path.String(), s) {
+						return true
+					}
+				}
+				return false
+			}, cmp.Ignore()))
+
+			require.Empty(t, diff)
 		})
 	}
 }
@@ -1695,6 +1775,18 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			status, body := client.DeleteRulesGroup(t, folderUID, groupName)
 			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
 		})
+	})
+	t.Run("should set updated_by", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expected := model.Duration(10 * time.Second)
+		group.Rules[0].ApiRuleNode.For = &expected
+
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folderUID, group.Name)
+		require.NotNil(t, getGroup.Rules[0].GrafanaManagedAlert.UpdatedBy)
+		assert.NotEmpty(t, getGroup.Rules[0].GrafanaManagedAlert.UpdatedBy.UID)
+		assert.Equal(t, "grafana", getGroup.Rules[0].GrafanaManagedAlert.UpdatedBy.Name)
 	})
 }
 
@@ -2438,6 +2530,10 @@ func TestIntegrationQuota(t *testing.T) {
 						     }
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
+		                  "updated_by": {
+							"uid": "uid",
+							"name": "grafana"
+						  },
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":2,
@@ -2510,13 +2606,8 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 200, resp.StatusCode)
-
-		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
-		b = re.ReplaceAll(b, []byte(`"uid":""`))
-		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
-		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
-
-		expectedGetRulesResponseBody := fmt.Sprintf(`{
+		body, _ := rulesNamespaceWithoutVariableValues(t, b)
+		expectedGetRulesResponseBody := `{
 				"default": [
 					{
 						"name": "arulegroup",
@@ -2553,12 +2644,16 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 											}
 										}
 									],
-									"updated": "2021-05-19T19:47:55Z",
+									"updated": "2021-02-21T01:10:30Z",
+                                    "updated_by" : {
+										"uid": "uid",
+										"name": "editor"			
+									},
 									"intervalSeconds": 60,
 									"is_paused": false,
 									"version": 1,
-									"uid": "",
-									"namespace_uid": %q,
+									"uid": "uid",
+									"namespace_uid": "nsuid",
 									"rule_group": "arulegroup",
 									"no_data_state": "NoData",
 									"exec_err_state": "Alerting",
@@ -2573,8 +2668,8 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 						]
 					}
 				]
-			}`, namespaceUID)
-		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+			}`
+		assert.JSONEq(t, expectedGetRulesResponseBody, body)
 	})
 	t.Run("editor can not delete the folder because it contains Grafana 8 alerts", func(t *testing.T) {
 		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
@@ -3033,6 +3128,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 							 }
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
+						  "updated_by": {
+							"uid": "uid",	
+							"name": "grafana"
+						  },
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
@@ -3075,6 +3174,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 							 }
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
+						  "updated_by": {
+							"uid": "uid",	
+							"name": "grafana"
+						  },
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
@@ -3389,6 +3492,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                     }
 		                  ],
 		                  "updated":"2021-02-21T01:10:30Z",
+                          "updated_by": {
+							"uid": "uid",	
+							"name": "grafana"
+						  },
 		                  "intervalSeconds":60,
 		                  "is_paused": false,
 		                  "version":2,
@@ -3504,6 +3611,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					     }
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
+					  "updated_by": {
+						"uid": "uid",	
+						"name": "grafana"
+					  },
 					  "intervalSeconds":60,
 					  "is_paused":false,
 					  "version":3,
@@ -3598,6 +3709,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					     }
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
+                      "updated_by": {
+						"uid": "uid",	
+						"name": "grafana"
+                      },
 					  "intervalSeconds":60,
 					  "is_paused":false,
 					  "version":3,
@@ -4289,6 +4404,7 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 				rule.GrafanaManagedAlert.UID = "uid"
 				rule.GrafanaManagedAlert.NamespaceUID = "nsuid"
 				rule.GrafanaManagedAlert.Updated = time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
+				rule.GrafanaManagedAlert.UpdatedBy.UID = "uid"
 			}
 		}
 	}

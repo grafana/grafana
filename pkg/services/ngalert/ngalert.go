@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -78,6 +79,7 @@ func ProvideService(
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
+	userService user.Service,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -106,6 +108,7 @@ func ProvideService(
 		store:                ruleStore,
 		httpClientProvider:   httpClientProvider,
 		ResourcePermissions:  resourcePermissions,
+		userService:          userService,
 	}
 
 	if ng.IsDisabled() {
@@ -154,6 +157,7 @@ type AlertNG struct {
 	ResourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
+	userService          user.Service
 
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
@@ -496,6 +500,7 @@ func (ng *AlertNG) init() error {
 		Historian:            history,
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
+		UserService:          ng.userService,
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
