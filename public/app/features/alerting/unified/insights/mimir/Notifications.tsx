@@ -6,11 +6,11 @@ import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getNotificationsScene(datasource: DataSourceRef, panelTitle: string) {
   const exprA = INSTANCE_ID
-    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second{id="${INSTANCE_ID}"}) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{id="${INSTANCE_ID}"})`
+    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second{stack_id="${INSTANCE_ID}"}) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{stack_id="${INSTANCE_ID}"})`
     : `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)`;
 
   const exprB = INSTANCE_ID
-    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{id="${INSTANCE_ID}"})`
+    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{stack_id="${INSTANCE_ID}"})`
     : `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)`;
 
   const query = new SceneQueryRunner({
