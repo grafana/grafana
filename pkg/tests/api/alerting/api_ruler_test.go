@@ -3130,6 +3130,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 							 }
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
+						  "updated_by": {
+							"uid": "uid",	
+							"name": "grafana"
+						  },
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
@@ -3172,6 +3176,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 							 }
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
+						  "updated_by": {
+							"uid": "uid",	
+							"name": "grafana"
+						  },
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
@@ -3486,6 +3494,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                     }
 		                  ],
 		                  "updated":"2021-02-21T01:10:30Z",
+                          "updated_by": {
+							"uid": "uid",	
+							"name": "grafana"
+						  },
 		                  "intervalSeconds":60,
 		                  "is_paused": false,
 		                  "version":2,
@@ -3601,6 +3613,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					     }
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
+					  "updated_by": {
+						"uid": "uid",	
+						"name": "grafana"
+					  },
 					  "intervalSeconds":60,
 					  "is_paused":false,
 					  "version":3,
@@ -3695,6 +3711,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					     }
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
+                      "updated_by": {
+						"uid": "uid",	
+						"name": "grafana"
+                      },
 					  "intervalSeconds":60,
 					  "is_paused":false,
 					  "version":3,
