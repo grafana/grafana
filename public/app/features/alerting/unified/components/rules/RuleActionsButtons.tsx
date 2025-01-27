@@ -107,7 +107,8 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         groupIdentifier={groupId}
         handleDelete={() => {
           if (rule.rulerRule) {
-            showDeleteModal(rule.rulerRule, groupId);
+            const editableRuleIdentifier = ruleId.fromRulerRuleAndGroupIdentifierV2(groupId, rule.rulerRule);
+            showDeleteModal(editableRuleIdentifier, groupId);
           }
         }}
         handleSilence={() => setShowSilenceDrawer(true)}

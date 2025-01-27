@@ -9,7 +9,8 @@ import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/r
 import { createRelativeUrl } from '../utils/url';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
-import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
@@ -63,7 +64,7 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
   // 2.2 render provisioning badge and contact point metadata, etc.
   const actions = useMemo(() => {
     if (isLoading) {
-      return <ActionsLoader />;
+      return <RuleActionsSkeleton />;
     }
 
     if (rulerRule) {

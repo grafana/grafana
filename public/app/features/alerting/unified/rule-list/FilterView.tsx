@@ -1,6 +1,5 @@
 import { take, tap, withAbort } from 'ix/asynciterable/operators';
 import { useEffect, useRef, useState, useTransition } from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -13,9 +12,7 @@ import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { GrafanaRuleLoader } from './GrafanaRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
-import { ListItem } from './components/ListItem';
-import { ActionsLoader } from './components/RuleActionsButtons.V2';
-import { RuleListIcon } from './components/RuleListIcon';
+import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
 import {
   GrafanaRuleWithOrigin,
   PromRuleWithOrigin,
@@ -123,7 +120,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
                 <GrafanaRuleLoader
                   key={key}
                   rule={rule}
-                  groupName={groupIdentifier.groupName}
+                  groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
                 />
               );
@@ -149,20 +146,10 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           </Text>
         </Card>
       )}
-      {!doneSearching && <LoadMoreHelper handleLoad={loadResultPage} />}
+      {!doneSearching && !loading && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
   );
 }
-
-const AlertRuleListItemLoader = () => (
-  <ListItem
-    title={<Skeleton width={64} />}
-    icon={<RuleListIcon isPaused={false} />}
-    description={<Skeleton width={256} />}
-    actions={<ActionsLoader />}
-    data-testid="alert-rule-list-item-loader"
-  />
-);
 
 // simple helper function to detect the end of the source async iterable
 function onFinished<T>(fn: () => void) {

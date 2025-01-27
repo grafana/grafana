@@ -1,15 +1,15 @@
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
 import { isLoading } from '../hooks/useAsync';
 import { stringifyErrorLike } from '../utils/misc';
+import { isGrafanaRulerRulePaused } from '../utils/rules';
 
 interface Props {
-  rule: RulerRuleDTO;
+  rule: RulerGrafanaRuleDTO;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   /**
    * Method invoked after the request to change the paused state has completed
@@ -25,22 +25,16 @@ const MenuItemPauseRule = ({ rule, groupIdentifier, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
   const [pauseRule, updateState] = usePauseRuleInGroup();
 
-  const isPaused = isGrafanaRulerRule(rule) && isGrafanaRulerRulePaused(rule);
-  const icon = isPaused ? 'play' : 'pause';
-  const title = isPaused ? 'Resume evaluation' : 'Pause evaluation';
+  const [icon, title] = isGrafanaRulerRulePaused(rule)
+    ? ['play' as const, 'Resume evaluation']
+    : ['pause' as const, 'Pause evaluation'];
 
   /**
    * Triggers API call to update the current rule to the new `is_paused` state
    */
   const setRulePause = async (newIsPaused: boolean) => {
-    if (!isGrafanaRulerRule(rule)) {
-      return;
-    }
-
     try {
-      const ruleUID = rule.grafana_alert.uid;
-
-      await pauseRule.execute(groupIdentifier, ruleUID, newIsPaused);
+      await pauseRule.execute(groupIdentifier, rule.grafana_alert.uid, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
       return;
@@ -55,7 +49,7 @@ const MenuItemPauseRule = ({ rule, groupIdentifier, onPauseChange }: Props) => {
       icon={icon}
       disabled={isLoading(updateState)}
       onClick={() => {
-        setRulePause(!isPaused);
+        setRulePause(!rule.grafana_alert.is_paused);
       }}
     />
   );
