@@ -105,19 +105,6 @@ test.describe.only('edit panel plugin settings', () => {
     await expect(unitPicker).toHaveSelected('Pixels');
   });
 
-  // test('select color in color picker', async ({ panelEditPage }) => {
-  //   await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
-  //   const clockOptions = panelEditPage.getCustomOptions('Clock');
-  //   const backgroundColor = clockOptions.getColorPicker('Background color');
-
-  //   await backgroundColor.selectOption('#73bf69');
-  //   await expect(backgroundColor).toHaveColor('#73bf69');
-
-  //   // We want to check that the background color is properly set in the clock panel.
-  //   const panelContent = panelEdit.panel.locator.locator('div').last();
-  //   await expect(panelContent).toHaveCSS('background-color', 'rgb(115, 191, 105)');
-  // });
-
   test('enter value in number input', async ({ panelEditPage }) => {
     await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
     const axisOptions = panelEditPage.getCustomOptions('Axis');
@@ -147,25 +134,25 @@ test.describe.only('edit panel plugin settings', () => {
     await expect(colorSchemeSelect).toHaveSelected('Classic palette');
   });
 
-  // test('clear input', async ({ panelEditPage }) => {
-  //   await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
-  //   const panelOptions = panelEditPage.getPanelOptions();
-  //   const title = panelOptions.getTextInput('Title');
+  test('clear input', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const panelOptions = panelEditPage.getPanelOptions();
+    const title = panelOptions.getTextInput('Title');
 
-  //   await expect(title).toHaveValue('Panel Title');
-  //   await title.clear();
-  //   await expect(title).toHaveValue('');
-  // });
+    await expect(title).toHaveValue('Panel Title');
+    await title.clear();
+    await expect(title).toHaveValue('');
+  });
 
-  // test('enter value in input', async ({ panelEditPage }) => {
-  //   await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
-  //   const panelOptions = panelEditPage.getPanelOptions();
-  //   const description = panelOptions.getTextInput('Description');
+  test('enter value in input', async ({ panelEditPage }) => {
+    await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
+    const panelOptions = panelEditPage.getPanelOptions();
+    const description = panelOptions.getTextInput('Description');
 
-  //   await expect(description).toHaveValue('');
-  //   await description.fill('This is a panel');
-  //   await expect(description).toHaveValue('This is a panel');
-  // });
+    await expect(description).toHaveValue('');
+    await description.fill('This is a panel');
+    await expect(description).toHaveValue('This is a panel');
+  });
 
   test('unchecking switch', async ({ panelEditPage }) => {
     await panelEditPage.setVisualization(TIME_SERIES_VIZ_NAME);
