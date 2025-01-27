@@ -28,7 +28,7 @@ type SearchHit = {
   folder: string;
   tags: string[];
 
-  field: object; // extra fields from the backend - sort fields included here as well
+  field: Record<string, string|number>; // extra fields from the backend - sort fields included here as well
 
   // calculated in the frontend
   url: string;
@@ -147,7 +147,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
         }
         const nextPageUrl = `${uri}&offset=${offset}`;
         const resp = await getBackendSrv().get<SearchAPIResponse>(nextPageUrl);
-        const frame = toDashboardResults(resp);
+        const frame = toDashboardResults(resp, query.sort ?? '');
         if (!frame) {
           console.log('no results', frame);
           return;
