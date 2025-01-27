@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Alert rules"
-      }
+      },
+      "rulerrule-loading-error": "Failed to load the rule"
     },
     "rule-state": {
       "creating": "Creating",
