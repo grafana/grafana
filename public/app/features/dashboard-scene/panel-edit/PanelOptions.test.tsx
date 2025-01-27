@@ -177,6 +177,7 @@ describe('PanelOptions', () => {
 
     const libraryPanel = new LibraryPanelBehavior({
       isLoaded: true,
+      title: libraryPanelModel.title,
       uid: libraryPanelModel.uid,
       name: libraryPanelModel.name,
       _loadedPanel: libraryPanelModel,
