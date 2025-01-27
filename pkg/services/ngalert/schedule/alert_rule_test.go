@@ -283,7 +283,7 @@ func TestRuleRoutine(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
-		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
+		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil, nil)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}
