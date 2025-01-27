@@ -1,6 +1,10 @@
 package rbac
 
-import "github.com/grafana/grafana/pkg/services/authz/rbac/store"
+import (
+	"iter"
+
+	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+)
 
 func newFolderTree(folders []store.Folder) folderTree {
 	t := folderTree{
@@ -9,33 +13,36 @@ func newFolderTree(folders []store.Folder) folderTree {
 	}
 
 	for _, f := range folders {
-		t.insert(f.UID, f.ParentUID)
+		t.Insert(f.UID, f.ParentUID)
 	}
 
 	return t
 }
 
 type folderTree struct {
+	// All nodes for the folderTree.
 	Nodes []folderNode
+	// Index is a map of folderNode UID to its positons in Nodes.
 	Index map[string]int
 }
 
 type folderNode struct {
+	// UID is the uniqiue identifier for folderNode
 	UID string
-	// we store -1 for nodes that don't have Parent, otherwise this will be then index of then Parent node
+	// Parent is the postion into folderTree nodes for parent, we store -1 for nodes that don't have a parent.
 	Parent int
-	// indexes for all children of this node
+	// Children is positons into folderTree nodes for all children.
 	Children []int
 }
 
-func (t *folderTree) insert(uid string, parentUID *string) int {
+func (t *folderTree) Insert(uid string, parentUID *string) int {
 	parent := -1
 	if parentUID != nil {
 		// find parent
 		i, ok := t.Index[*parentUID]
 		if !ok {
 			// insert parent if it don't exists yet
-			i = t.insert(*parentUID, nil)
+			i = t.Insert(*parentUID, nil)
 		}
 		parent = i
 	}
@@ -65,43 +72,40 @@ func (t *folderTree) insert(uid string, parentUID *string) int {
 	return i
 }
 
-type direction int8
-
-const (
-	directionDescendants = iota
-	directionAncestors   = iota
-)
-
-// Walk calls fn for every node for choosen direction.
-// It will stop travesal of sub-tree if false is returned from fn.
-func (t *folderTree) Walk(uid string, direction direction, fn func(n folderNode) bool) {
-	start, ok := t.Index[uid]
+// Ancestors returns an iterator that yields ancestors for uid
+func (t *folderTree) Ancestors(uid string) iter.Seq[folderNode] {
+	current, ok := t.Index[uid]
 	if !ok {
-		return
+		return func(yield func(folderNode) bool) {}
 	}
 
-	if direction == directionDescendants {
-		t.walkDescendants(start, fn)
-	} else {
-		t.walkAncestors(start, fn)
-	}
-	return
-}
+	current = t.Nodes[current].Parent
+	return func(yield func(folderNode) bool) {
+		for {
+			if current == -1 || !yield(t.Nodes[current]) {
+				return
+			}
 
-func (t *folderTree) walkDescendants(i int, fn func(n folderNode) bool) {
-	if !fn(t.Nodes[i]) {
-		return
-	}
-
-	for _, ci := range t.Nodes[i].Children {
-		t.walkDescendants(ci, fn)
+			current = t.Nodes[current].Parent
+		}
 	}
 }
 
-func (t *folderTree) walkAncestors(i int, fn func(n folderNode) bool) {
-	if i == -1 || !fn(t.Nodes[i]) {
-		return
+// Children returns an iterator that yields all children for uid
+func (t *folderTree) Children(uid string) iter.Seq[folderNode] {
+	current, ok := t.Index[uid]
+	if !ok {
+		return func(yield func(folderNode) bool) {}
 	}
 
-	t.walkAncestors(t.Nodes[i].Parent, fn)
+	queue := t.Nodes[current].Children
+	return func(yield func(folderNode) bool) {
+		for len(queue) > 0 {
+			current, queue = queue[0], queue[1:]
+			if !yield(t.Nodes[current]) {
+				return
+			}
+			queue = append(queue, t.Nodes[current].Children...)
+		}
+	}
 }

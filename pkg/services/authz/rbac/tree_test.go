@@ -24,76 +24,84 @@ func Test_Tree(t *testing.T) {
 		{UID: "2"},
 	})
 
-	verify := func(expected []string, visited map[string]bool) {
+	verify := func(t *testing.T, expected []string, visited map[string]bool) {
 		assert.Len(t, visited, len(expected))
 		for _, e := range expected {
 			assert.True(t, visited[e], fmt.Sprintf("did not visit node: %s", e))
 		}
 	}
 
-	t.Run("should walk all descendants of folder 1", func(t *testing.T) {
+	t.Run("should iterate all children of folder 1", func(t *testing.T) {
 		visited := map[string]bool{}
-		tree.Walk("1", directionDescendants, func(n folderNode) bool {
+		for n := range tree.Children("1") {
 			visited[n.UID] = true
-			return true
-		})
+		}
 
-		expected := []string{"1", "11", "111", "1111", "12", "121"}
-		verify(expected, visited)
+		expected := []string{"11", "111", "1111", "12", "121"}
+		verify(t, expected, visited)
 	})
 
-	t.Run("should walk all descendants of folder 2", func(t *testing.T) {
+	t.Run("should iterate all children of folder 2", func(t *testing.T) {
 		visited := map[string]bool{}
-		tree.Walk("2", directionDescendants, func(n folderNode) bool {
-			visited[n.UID] = true
-			return true
-		})
 
-		expected := []string{"2", "21", "22", "222"}
-		verify(expected, visited)
+		for n := range tree.Children("2") {
+			visited[n.UID] = true
+		}
+
+		expected := []string{"21", "22", "222"}
+		verify(t, expected, visited)
 	})
 
-	t.Run("should walk all descendants of folder 111", func(t *testing.T) {
+	t.Run("should iterate all children of folder 111", func(t *testing.T) {
 		visited := map[string]bool{}
-		tree.Walk("111", directionDescendants, func(n folderNode) bool {
-			visited[n.UID] = true
-			return true
-		})
 
-		expected := []string{"111", "1111"}
-		verify(expected, visited)
+		for n := range tree.Children("111") {
+			visited[n.UID] = true
+		}
+
+		expected := []string{"1111"}
+		verify(t, expected, visited)
 	})
 
-	t.Run("should walk all acestors of folder 1111", func(t *testing.T) {
+	t.Run("should iterate all children of folder 1111", func(t *testing.T) {
 		visited := map[string]bool{}
-		tree.Walk("1111", directionAncestors, func(n folderNode) bool {
-			visited[n.UID] = true
-			return true
-		})
 
-		expected := []string{"1", "11", "111", "1111"}
-		verify(expected, visited)
+		for n := range tree.Children("1111") {
+			visited[n.UID] = true
+		}
+
+		expected := []string{}
+		verify(t, expected, visited)
 	})
 
-	t.Run("should walk all acestors of folder 11", func(t *testing.T) {
+	t.Run("should iterate all acestors of folder 1111", func(t *testing.T) {
 		visited := map[string]bool{}
-		tree.Walk("11", directionAncestors, func(n folderNode) bool {
-			visited[n.UID] = true
-			return true
-		})
 
-		expected := []string{"1", "11"}
-		verify(expected, visited)
+		for n := range tree.Ancestors("1111") {
+			visited[n.UID] = true
+		}
+
+		expected := []string{"1", "11", "111"}
+		verify(t, expected, visited)
 	})
 
-	t.Run("should walk all acestors of folder 222", func(t *testing.T) {
+	t.Run("should iterate all acestors of folder 11", func(t *testing.T) {
 		visited := map[string]bool{}
-		tree.Walk("222", directionAncestors, func(n folderNode) bool {
+		for n := range tree.Ancestors("11") {
 			visited[n.UID] = true
-			return true
-		})
+		}
 
-		expected := []string{"2", "22", "222"}
-		verify(expected, visited)
+		expected := []string{"1"}
+		verify(t, expected, visited)
+	})
+
+	t.Run("should iterate all acestors of folder 222", func(t *testing.T) {
+		visited := map[string]bool{}
+		for n := range tree.Ancestors("222") {
+			visited[n.UID] = true
+		}
+
+		expected := []string{"2", "22"}
+		verify(t, expected, visited)
 	})
 }

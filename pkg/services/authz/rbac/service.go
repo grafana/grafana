@@ -522,16 +522,17 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 		return false, err
 	}
 
-	var ok bool
-	tree.Walk(req.ParentFolder, directionAncestors, func(n folderNode) bool {
-		if scopeMap["folders:uid:"+n.UID] {
-			ok = true
-			return false
-		}
-		return true
-	})
+	if scopeMap["folders:uid:"+req.ParentFolder] {
+		return true, nil
+	}
 
-	return ok, nil
+	for n := range tree.Ancestors(req.ParentFolder) {
+		if scopeMap["folders:uid:"+n.UID] {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (s *Service) buildFolderTree(ctx context.Context, ns claims.NamespaceInfo) (folderTree, error) {
@@ -591,20 +592,22 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 
 	prefix := t.prefix()
 	itemSet := make(map[string]struct{}, len(scopeMap))
+
 	for scope := range scopeMap {
 		if strings.HasPrefix(scope, "folders:uid:") {
 			identifier := strings.TrimPrefix(scope, "folders:uid:")
 			if _, ok := folderSet[identifier]; ok {
 				continue
 			}
-			tree.Walk(identifier, directionDescendants, func(n folderNode) bool {
+
+			folderSet[identifier] = struct{}{}
+			for n := range tree.Children(identifier) {
 				if _, ok := folderSet[n.UID]; ok {
 					// we have already walked this part of the tree
-					return false
+					break
 				}
 				folderSet[n.UID] = struct{}{}
-				return true
-			})
+			}
 		} else {
 			identifier := strings.TrimPrefix(scope, prefix)
 			itemSet[identifier] = struct{}{}
