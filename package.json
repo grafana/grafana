@@ -387,7 +387,7 @@
     "react-virtual": "2.10.4",
     "react-virtualized-auto-sizer": "1.0.25",
     "react-window": "1.8.11",
-    "react-window-infinite-loader": "1.0.9",
+    "react-window-infinite-loader": "1.0.10",
     "react-zoom-pan-pinch": "^3.3.0",
     "reduce-reducers": "^1.0.4",
     "redux": "5.0.1",
