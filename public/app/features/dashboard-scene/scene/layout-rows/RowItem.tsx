@@ -21,6 +21,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
+import { getLastKeyFromClone, isClonedKey } from '../../utils/clone';
 import { getDashboardSceneFor, getDefaultVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -34,7 +35,6 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
-  isClone?: boolean;
   height?: 'expand' | 'min';
 }
 
@@ -126,7 +126,8 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   };
 
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key, isClone } = model.useState();
+    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
+    const isClone = useMemo(() => isClonedKey(getLastKeyFromClone(key!)), [key]);
     const dashboard = getDashboardSceneFor(model);
     const { isEditing, showHiddenElements } = dashboard.useState();
     const styles = useStyles2(getStyles);
