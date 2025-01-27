@@ -24,6 +24,7 @@ import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/u
 import { QuerySettings } from './QuerySettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { StreamingSection } from './StreamingSection';
+import { TagLimitSection } from './TagLimitSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
 export type ConfigEditorProps = DataSourcePluginOptionsEditorProps;
@@ -118,6 +119,8 @@ const ConfigEditor = ({ options, onOptionsChange }: ConfigEditorProps) => {
           </ConfigSubSection>
 
           <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+
+          <TagLimitSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
       </ConfigSection>
     </div>
