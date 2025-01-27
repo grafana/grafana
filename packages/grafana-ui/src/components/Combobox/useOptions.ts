@@ -1,4 +1,4 @@
-import debounce from 'debounce-promise';
+import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
 import { itemFilter } from './filter';
@@ -24,7 +24,29 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   const isAsync = typeof rawOptions === 'function';
 
   const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
-  const debouncedLoadOptions = useMemo(() => debounce(loadOptions, 200), [loadOptions]);
+
+  const debouncedLoadOptions = useMemo(
+    () =>
+      debounce((searchTerm: string) => {
+        return loadOptions(searchTerm)
+          .then((options) => {
+            setAsyncOptions(options);
+            setAsyncLoading(false);
+            setAsyncError(false);
+          })
+          .catch((error) => {
+            if (!(error instanceof StaleResultError)) {
+              setAsyncError(true);
+              setAsyncLoading(false);
+
+              if (error) {
+                console.error('Error loading async options for Combobox', error);
+              }
+            }
+          });
+      }, 200),
+    [loadOptions]
+  );
 
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
   const [asyncLoading, setAsyncLoading] = useState(false);
@@ -43,22 +65,7 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
 
       setAsyncLoading(true);
 
-      debouncedLoadOptions(inputValue)
-        .then((options) => {
-          setAsyncOptions(options);
-          setAsyncLoading(false);
-          setAsyncError(false);
-        })
-        .catch((error) => {
-          if (!(error instanceof StaleResultError)) {
-            setAsyncError(true);
-            setAsyncLoading(false);
-
-            if (error) {
-              console.error('Error loading async options for Combobox', error);
-            }
-          }
-        });
+      debouncedLoadOptions(inputValue);
     },
     [debouncedLoadOptions, isAsync]
   );
