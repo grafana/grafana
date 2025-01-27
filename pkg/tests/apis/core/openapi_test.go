@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/version"
 	apimachineryversion "k8s.io/apimachinery/pkg/version"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -99,9 +99,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
 			body, err := os.ReadFile(fpath)
 			if err == nil {
-				if diff := cmp.Diff(pretty, string(body)); diff != "" {
+				if !assert.JSONEq(t, string(body), pretty) {
 					t.Logf("openapi spec has changed: %s", path)
-					t.Logf("body mismatch (-want +got):\n%s\n", diff)
 					t.Fail()
 					write = true
 				}
