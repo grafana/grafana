@@ -250,7 +250,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		// convert item to legacy folder format
 		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
-			return nil, fmt.Errorf("unable covert unstructured item to legacy folder %w", err)
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 
 		// it we are at root level, skip subfolder
@@ -350,7 +350,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		// convert item to legacy folder format
 		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
-			return nil, fmt.Errorf("unable covert unstructured item to legacy folder %w", err)
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 
 		m[f.UID] = f
@@ -410,7 +410,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 		// convert item to legacy folder format
 		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
-			return nil, fmt.Errorf("unable covert unstructured item to legacy folder %w", err)
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 
 		nodes[f.UID] = f
