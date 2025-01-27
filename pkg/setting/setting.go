@@ -540,6 +540,8 @@ type Cfg struct {
 	HttpsSkipVerify             bool
 }
 
+const UnifiedStorageConfigKeyDashboard = "dashboards.dashboard.grafana.app"
+
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
