@@ -209,7 +209,6 @@ export interface DataSourceNamespaceIdentifier {
 }
 
 export interface GrafanaRuleGroupIdentifier {
-  rulesSource: GrafanaRulesSourceIdentifier;
   groupName: string;
   namespace: GrafanaNamespaceIdentifier;
   groupOrigin: 'grafana';
@@ -310,6 +309,7 @@ export interface StateHistoryItem {
 
 export interface RulerDataSourceConfig {
   dataSourceName: string;
+  dataSourceUid: string;
   apiVersion: 'legacy' | 'config';
 }
 
