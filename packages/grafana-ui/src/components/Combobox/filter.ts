@@ -1,7 +1,6 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { ComboboxOption } from './Combobox';
-import { ALL_OPTION_VALUE } from './MultiCombobox';
+import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 
 // https://catonmat.net/my-favorite-regex :)
 const REGEXP_NON_ASCII = /[^ -~]/m;

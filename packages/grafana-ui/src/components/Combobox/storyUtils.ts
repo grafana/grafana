@@ -1,4 +1,4 @@
-import { ComboboxOption } from './Combobox';
+import { ComboboxOption } from './types';
 
 let fakeApiOptions: Array<ComboboxOption<string>>;
 export async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<string>>> {

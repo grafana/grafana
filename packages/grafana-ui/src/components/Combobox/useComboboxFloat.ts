@@ -3,7 +3,6 @@ import { useMemo, useRef, useState } from 'react';
 
 import { measureText } from '../../utils';
 
-import { ComboboxOption } from './Combobox';
 import {
   MENU_ITEM_FONT_SIZE,
   MENU_ITEM_FONT_WEIGHT,
@@ -11,6 +10,7 @@ import {
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
+import { ComboboxOption } from './types';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;

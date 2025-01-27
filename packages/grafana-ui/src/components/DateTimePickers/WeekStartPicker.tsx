@@ -3,7 +3,8 @@ import { useCallback, useMemo } from 'react';
 import { BootData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Combobox, ComboboxOption } from '../Combobox/Combobox';
+import { Combobox } from '../Combobox/Combobox';
+import { ComboboxOption } from '../Combobox/types';
 
 export interface Props {
   onChange: (weekStart: string) => void;

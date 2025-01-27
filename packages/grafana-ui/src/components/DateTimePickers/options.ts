@@ -1,6 +1,6 @@
 import { TimeOption } from '@grafana/data';
 
-import { ComboboxOption } from '../Combobox/Combobox';
+import { ComboboxOption } from '../Combobox/types';
 
 export const quickOptions: TimeOption[] = [
   { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
