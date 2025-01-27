@@ -71,9 +71,6 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from './layout-default/RowRepeaterBehavior';
-import { RowItemRepeaterBehavior } from './layout-rows/RowItemRepeaterBehavior';
-import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { DashboardLayoutManager } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
