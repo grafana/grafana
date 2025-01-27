@@ -741,7 +741,7 @@ func (srv RulerSrv) resolveUserIdToNameFn(ctx context.Context) userIDToUserInfoF
 		})
 		var result string
 		if err != nil {
-			srv.log.FromContext(ctx).Warn("Failed to get user by uid. Use empty name", "uid", id, "error", err)
+			srv.log.FromContext(ctx).Warn("Failed to get user by uid. Defaulting to an empty name", "uid", id, "error", err)
 		}
 		if u != nil {
 			result = u.NameOrFallback()
