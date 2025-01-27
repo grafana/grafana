@@ -36,16 +36,6 @@ SELECT DISTINCT
 	, (SELECT COUNT(connection_id) FROM ` + model.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
 
-// redundant SELECT to trick mysql's optimizer
-const deleteInvalidConnections = `
-DELETE FROM library_element_connection
-WHERE connection_id IN (
-	SELECT connection_id FROM (
-		SELECT connection_id as id FROM library_element_connection
-		WHERE element_id=? AND connection_id NOT IN (SELECT id as connection_id from dashboard)
-	) as dummy
-)`
-
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
 	user := dialect.Quote("user")
 	userJoin := `
@@ -243,11 +233,37 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			}
 		}
 
-		// Delete any hanging/invalid connections
-		if _, err = session.Exec(deleteInvalidConnections, element.ID); err != nil {
+		dashboardIDs := []int64{}
+		// get all connections for this element
+		if err := session.SQL("SELECT connection_id FROM library_element_connection where element_id = ?", element.ID).Find(&dashboardIDs); err != nil {
 			return err
 		}
 
+		// then find the dashboards that were supposed to be connected to this element
+		_, requester := identity.WithServiceIdentitiy(c, signedInUser.GetOrgID())
+		dashs, err := l.dashboardsService.FindDashboards(c, &dashboards.FindPersistedDashboardsQuery{
+			OrgId:        signedInUser.GetOrgID(),
+			DashboardIds: dashboardIDs,
+			SignedInUser: requester, // a user may be able to delete a library element but not read all dashboards. We still need to run this check, so we don't allow deleting elements if dashboards are connected
+		})
+		if err != nil {
+			return err
+		}
+
+		foundDashes := make([]int64, len(dashs))
+		for i, d := range dashs {
+			foundDashes[i] = d.ID
+		}
+
+		// delete any connections that are orphaned for this element (i.e. the dashboard was deleted)
+		session.Table("library_element_connection")
+		session.Where("element_id = ?", element.ID)
+		session.NotIn("connection_id", foundDashes)
+		if _, err = session.Delete(model.LibraryElementConnectionWithMeta{}); err != nil {
+			return err
+		}
+
+		// now try to delete the element, but fail if it is connected to any dashboards
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
 		}
