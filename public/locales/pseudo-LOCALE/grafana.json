@@ -893,6 +893,9 @@
       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
     },
+    "errors": {
+      "failed-to-load": "Fäįľęđ ŧő ľőäđ đäşĥþőäřđ"
+    },
     "inspect": {
       "data-tab": "Đäŧä",
       "error-tab": "Ēřřőř",
