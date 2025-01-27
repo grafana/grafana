@@ -29,7 +29,7 @@ type folderTree struct {
 type folderNode struct {
 	// UID is the uniqiue identifier for folderNode
 	UID string
-	// Parent is the postion into folderTree nodes for parent, we store -1 for nodes that don't have a parent.
+	// Parent is the position into folderTree nodes for parent, we store -1 for nodes that don't have a parent.
 	Parent int
 	// Children is positons into folderTree nodes for all children.
 	Children []int
@@ -64,9 +64,8 @@ func (t *folderTree) Insert(uid string, parentUID *string) int {
 	}
 
 	if parent != -1 {
-		// update then parent no to include the index of new child node
-		pi := parent
-		t.Nodes[pi].Children = append(t.Nodes[pi].Children, i)
+		// update parent to include the index of new child node
+		t.Nodes[parent].Children = append(t.Nodes[parent].Children, i)
 	}
 
 	return i
