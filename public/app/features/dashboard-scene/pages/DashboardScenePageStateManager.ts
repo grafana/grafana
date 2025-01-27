@@ -4,7 +4,7 @@ import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { getMessageFromError } from 'app/core/utils/errors';
+import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
@@ -24,12 +24,18 @@ import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSession
 
 import { updateNavModel } from './utils';
 
+export interface LoadError {
+  status?: number;
+  messageId?: string;
+  message: string;
+}
+
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
   options?: LoadDashboardOptions;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
-  loadError?: string;
+  loadError?: LoadError;
 }
 
 export const DASHBOARD_CACHE_TTL = 500;
@@ -48,6 +54,7 @@ interface DashboardCacheEntry<T> {
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
+  type?: string;
   urlFolderUid?: string;
   params?: {
     version: number;
@@ -99,7 +106,18 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
-      this.setState({ isLoading: false, loadError: String(err) });
+      const status = getStatusFromError(err);
+      const message = getMessageFromError(err);
+      const messageId = getMessageIdFromError(err);
+
+      this.setState({
+        isLoading: false,
+        loadError: {
+          status,
+          message,
+          messageId,
+        },
+      });
     }
   }
 
@@ -128,8 +146,17 @@ abstract class DashboardScenePageStateManagerBase<T>
         });
       }
     } catch (err) {
-      const msg = getMessageFromError(err);
-      this.setState({ isLoading: false, loadError: msg });
+      const status = getStatusFromError(err);
+      const message = getMessageFromError(err);
+      const messageId = getMessageIdFromError(err);
+      this.setState({
+        isLoading: false,
+        loadError: {
+          status,
+          message,
+          messageId,
+        },
+      });
     }
   }
 
@@ -351,7 +378,13 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
 
       if (!rsp?.dashboard) {
-        this.setState({ isLoading: false, loadError: 'Dashboard not found' });
+        this.setState({
+          isLoading: false,
+          loadError: {
+            status: 404,
+            message: 'Dashboard not found',
+          },
+        });
         return;
       }
 
@@ -361,8 +394,15 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
       this.setState({ dashboard: scene, isLoading: false, options });
     } catch (err) {
-      const msg = getMessageFromError(err);
-      this.setState({ isLoading: false, loadError: msg });
+      const status = getStatusFromError(err);
+      const message = getMessageFromError(err);
+      this.setState({
+        isLoading: false,
+        loadError: {
+          message,
+          status,
+        },
+      });
     }
   }
 }
@@ -429,7 +469,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     urlFolderUid,
     params,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
-    // throw new Error('Method not implemented.');
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
     if (!params) {
       const cachedDashboard = this.getDashboardFromCache(cacheKey);

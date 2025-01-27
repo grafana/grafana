@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/query_hints.test.ts
 import { QueryHint } from '@grafana/data';
-import { QueryBuilderLabelFilter } from '@grafana/experimental';
+import { QueryBuilderLabelFilter } from '@grafana/plugin-ui';
 
 import { PrometheusDatasource } from './datasource';
 import {
