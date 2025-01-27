@@ -159,7 +159,10 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 		return nil, fmt.Errorf("get contents: %w", err)
 	}
 	if dirContent != nil {
-		return nil, fmt.Errorf("input path was a directory")
+		return &FileInfo{
+			Path: filePath,
+			Ref:  ref,
+		}, nil
 	}
 
 	data, err := content.GetFileContent()

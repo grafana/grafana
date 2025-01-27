@@ -60,6 +60,10 @@ func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	return fid, ok
 }
 
+func (t *FolderTree) AllFolders() map[string]Folder {
+	return t.folders
+}
+
 func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTree, error) {
 	iface := client.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",

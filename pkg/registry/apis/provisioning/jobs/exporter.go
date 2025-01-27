@@ -82,8 +82,13 @@ func (r *exporter) Export(ctx context.Context,
 	ns := r.repository.Config().GetNamespace()
 	logger = logger.With("ref", ref, "namespace", ns)
 
-	for _, folder := range folders.tree {
-		folderPath := folders.DirPath(folder)
+	err = progress(provisioning.JobStatus{
+		State:   provisioning.JobStateWorking,
+		Message: "exporting folders...",
+	})
+
+	for _, folder := range folders.AllFolders() {
+		folderPath := folder.Path
 		logger := logger.With("path", folderPath)
 		_, err = r.repository.Read(ctx, folderPath, ref)
 
