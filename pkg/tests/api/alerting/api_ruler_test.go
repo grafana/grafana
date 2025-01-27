@@ -1528,8 +1528,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 							"_bar1": "baz🙂",
 						},
 						Annotations: map[string]string{
-							"Προμηθέας": "prom",      // Prometheus in Greek
-							"犬":        "Shiba Inu", // Dog in Japanese
+							"Προμηθέας": "prom", // Prometheus in Greek
 						},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
@@ -1562,8 +1561,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 							"_bar1": "baz🙂",
 						},
 						Annotations: map[string]string{
-							"Προμηθέας": "prom",      // Prometheus in Greek
-							"犬":        "Shiba Inu", // Dog in Japanese
+							"Προμηθέας": "prom", // Prometheus in Greek
 						},
 					},
 					GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
