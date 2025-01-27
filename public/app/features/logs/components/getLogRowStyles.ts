@@ -314,9 +314,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       },
     }),
     logLine: css({
-      backgroundColor: 'transparent',
-      border: 'none',
-      diplay: 'inline',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       letterSpacing: theme.typography.bodySmall.letterSpacing,
