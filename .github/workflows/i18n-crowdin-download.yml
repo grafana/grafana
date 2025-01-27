@@ -117,12 +117,39 @@ jobs:
       - name: Enable automerge
         if: steps.crowdin-download.outputs.pull_request_url
         shell: bash
-        # Only automerge if there are no changes in the en-US folder
         run: |
-          if [ $(gh pr diff --name-only ${{ steps.crowdin-download.outputs.pull_request_url }} | grep "public/locales/en-US" | wc -l) -eq 0 ]
-            then
-            echo "Enabling automerge"
-            gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
-          fi
+          echo "Enabling automerge"
+          gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+      - name: Generate approver token
+        if: steps.crowdin-download.outputs.pull_request_url
+        id: generate_approver_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_PR_APPROVER_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_PR_APPROVER_APP_PEM }}
+
+      - name: Approve PR
+        if: steps.crowdin-download.outputs.pull_request_url
+        shell: bash
+        # Only approve if:
+        # - the PR does not modify files other than json files under the public/locales/ directory
+        # - the PR does not modify the en-US locale
+        run: |
+          local filesChanged=$(gh pr diff --name-only ${{ steps.crowdin-download.outputs.pull_request_url }})
+
+          if [[ $(echo $filesChanged | grep -v 'public/locales/[a-zA-Z\-]*/grafana.json' | wc -l) -ne 0 ]]; then
+            echo "Non-i18n changes detected, not approving"
+            exit 1
+          fi
+
+          if [[ $(echo $filesChanged | grep "public/locales/en-US" | wc -l) -ne 0 ]]; then
+            echo "public/locales/en-US changes detected, not approving"
+            exit 1
+          fi
+
+          gh pr review ${{ steps.crowdin-download.outputs.pull_request_url }} --approve
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_approver_token.outputs.token }}
