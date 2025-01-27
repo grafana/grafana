@@ -293,11 +293,11 @@ function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
     }
 
     // display null field values as "-"
+    let field = hit.field;
     if (hit.field) {
-      const newField = Object.fromEntries(
+      field = Object.fromEntries(
           Object.entries(hit.field).map(([key, value]) => [key, value == null ? "-" : value])
         );
-      hit.field = newField;
     }
 
     return {
@@ -309,7 +309,7 @@ function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
-      ...hit.field,
+      ...field,
     };
   });
   const frame = toDataFrame(dashboardHits);
