@@ -10,22 +10,30 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
+	pluginPreinstall plugininstaller.Preinstall,
+	managedPlugins managedplugins.Manager,
 ) checks.Check {
 	return &check{
-		PluginStore: pluginStore,
-		PluginRepo:  pluginRepo,
+		PluginStore:      pluginStore,
+		PluginRepo:       pluginRepo,
+		PluginPreinstall: pluginPreinstall,
+		ManagedPlugins:   managedPlugins,
 	}
 }
 
 type check struct {
-	PluginStore pluginstore.Store
-	PluginRepo  repo.Service
+	PluginStore      pluginstore.Store
+	PluginRepo       repo.Service
+	PluginPreinstall plugininstaller.Preinstall
+	ManagedPlugins   managedplugins.Manager
 }
 
 func (c *check) Type() string {
@@ -37,6 +45,11 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 
 	errs := []advisor.CheckV0alpha1StatusReportErrors{}
 	for _, p := range ps {
+		// Skip if it's a core plugin
+		if p.IsCorePlugin() {
+			continue
+		}
+
 		// Check if plugin is deprecated
 		i, err := c.PluginRepo.PluginInfo(ctx, p.ID)
 		if err != nil {
@@ -50,7 +63,10 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 			})
 		}
 
-		// Check if plugin has a newer version
+		// Check if plugin has a newer version, only if it's not managed or pinned
+		if c.isManaged(ctx, p.ID) || c.PluginPreinstall.IsPinned(p.ID) {
+			continue
+		}
 		compatOpts := repo.NewCompatOpts(services.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
 		info, err := c.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
 		if err != nil {
@@ -80,4 +96,13 @@ func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool 
 	}
 	// In other case, assume that a different latest version will always be newer
 	return current.Info.Version != latest.Version
+}
+
+func (c *check) isManaged(ctx context.Context, pluginID string) bool {
+	for _, managedPlugin := range c.ManagedPlugins.ManagedPlugins(ctx) {
+		if managedPlugin == pluginID {
+			return true
+		}
+	}
+	return false
 }

@@ -7,17 +7,21 @@ import (
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRun(t *testing.T) {
 	tests := []struct {
-		name           string
-		plugins        []pluginstore.Plugin
-		pluginInfo     map[string]*repo.PluginInfo
-		pluginArchives map[string]*repo.PluginArchiveInfo
-		expectedErrors []advisor.CheckV0alpha1StatusReportErrors
+		name               string
+		plugins            []pluginstore.Plugin
+		pluginInfo         map[string]*repo.PluginInfo
+		pluginArchives     map[string]*repo.PluginArchiveInfo
+		pluginPreinstalled []string
+		pluginManaged      []string
+		expectedErrors     []advisor.CheckV0alpha1StatusReportErrors
 	}{
 		{
 			name:           "No plugins",
@@ -81,6 +85,34 @@ func TestRun(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Plugin pinned",
+			plugins: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "plugin3", Info: plugins.Info{Version: "1.0.0"}}},
+			},
+			pluginInfo: map[string]*repo.PluginInfo{
+				"plugin3": {Status: "active"},
+			},
+			pluginArchives: map[string]*repo.PluginArchiveInfo{
+				"plugin3": {Version: "1.1.0"},
+			},
+			pluginPreinstalled: []string{"plugin3"},
+			expectedErrors:     []advisor.CheckV0alpha1StatusReportErrors{},
+		},
+		{
+			name: "Managed plugin",
+			plugins: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "plugin4", Info: plugins.Info{Version: "1.0.0"}}},
+			},
+			pluginInfo: map[string]*repo.PluginInfo{
+				"plugin4": {Status: "active"},
+			},
+			pluginArchives: map[string]*repo.PluginArchiveInfo{
+				"plugin4": {Version: "1.1.0"},
+			},
+			pluginManaged:  []string{"plugin4"},
+			expectedErrors: []advisor.CheckV0alpha1StatusReportErrors{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -90,7 +122,9 @@ func TestRun(t *testing.T) {
 				pluginInfo:        tt.pluginInfo,
 				pluginArchiveInfo: tt.pluginArchives,
 			}
-			check := New(pluginStore, pluginRepo)
+			pluginPreinstall := &mockPluginPreinstall{pinned: tt.pluginPreinstalled}
+			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
+			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins)
 
 			report, err := check.Run(context.Background(), nil)
 			assert.NoError(t, err)
@@ -121,4 +155,27 @@ func (m *mockPluginRepo) PluginInfo(ctx context.Context, id string) (*repo.Plugi
 
 func (m *mockPluginRepo) GetPluginArchiveInfo(ctx context.Context, id, version string, opts repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 	return m.pluginArchiveInfo[id], nil
+}
+
+type mockPluginPreinstall struct {
+	plugininstaller.Preinstall
+	pinned []string
+}
+
+func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
+	for _, p := range m.pinned {
+		if p == pluginID {
+			return true
+		}
+	}
+	return false
+}
+
+type mockManagedPlugins struct {
+	managedplugins.Manager
+	managed []string
+}
+
+func (m *mockManagedPlugins) ManagedPlugins(ctx context.Context) []string {
+	return m.managed
 }
