@@ -28,7 +28,7 @@ export type SearchHit = {
   folder: string;
   tags: string[];
 
-  field: object; // extra fields from the backend - sort fields included here as well
+  field: Record<string, string | number>; // extra fields from the backend - sort fields included here as well
 
   // calculated in the frontend
   url: string;
