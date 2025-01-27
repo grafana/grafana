@@ -382,15 +382,21 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, rqr any, eqr
 	}
 
 	rangeRes, err := toAPIResponse(rqr)
-	exemplarRes, err := toAPIResponse(eqr)
-	defer func() {
-		if err := rangeRes.Body.Close(); err != nil {
-			fmt.Println(fmt.Errorf("response body close error: %v", err))
-		}
-	}()
 	if err != nil {
 		return nil, err
 	}
+	exemplarRes, err := toAPIResponse(eqr)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rangeRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("rangeRes body close error: %v", err))
+		}
+		if err := exemplarRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("exemplarRes body close error: %v", err))
+		}
+	}()
 	tctx.httpProvider.setResponse(rangeRes, exemplarRes)
 
 	res, err := tctx.queryData.Execute(context.Background(), &req)
