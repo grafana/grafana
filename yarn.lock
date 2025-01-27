@@ -3649,7 +3649,7 @@ __metadata:
     eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.31.0"
     eslint-plugin-jest: "npm:28.11.0"
-    eslint-plugin-jsdoc: "npm:50.6.2"
+    eslint-plugin-jsdoc: "npm:50.6.3"
     eslint-plugin-jsx-a11y: "npm:6.10.2"
     eslint-plugin-lodash: "npm:8.0.0"
     eslint-plugin-react: "npm:7.37.4"
@@ -15944,9 +15944,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:50.6.2":
-  version: 50.6.2
-  resolution: "eslint-plugin-jsdoc@npm:50.6.2"
+"eslint-plugin-jsdoc@npm:50.6.3":
+  version: 50.6.3
+  resolution: "eslint-plugin-jsdoc@npm:50.6.3"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.49.0"
     are-docs-informative: "npm:^0.0.2"
@@ -15961,7 +15961,7 @@ __metadata:
     synckit: "npm:^0.9.1"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10/604e0ccaa4c43a9c95f072dca3833b2e7274ee89d481247d4beccffc7c6bbb4062169271cedc79e839ed3b770699bf20f13c4e92e006ae5d64f8012bfdfa1cb2
+  checksum: 10/2c8fa8f493730e326d53bfdaccdb4d8502ee836cd7893f56cf9b12d36831a0cd8c3e9740fe0a7fc67232d1fb6866c17385b2d89b7ce56543056403b982b5f1a6
   languageName: node
   linkType: hard
 
@@ -17901,7 +17901,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.31.0"
     eslint-plugin-jest: "npm:28.11.0"
     eslint-plugin-jest-dom: "npm:^5.4.0"
-    eslint-plugin-jsdoc: "npm:50.6.2"
+    eslint-plugin-jsdoc: "npm:50.6.3"
     eslint-plugin-jsx-a11y: "npm:6.10.2"
     eslint-plugin-lodash: "npm:8.0.0"
     eslint-plugin-no-barrel-files: "npm:^1.1.1"
