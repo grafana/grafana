@@ -55,7 +55,7 @@ func NewSyncer(
 }
 
 // Sync replicates all files in the repository.
-func (r *Syncer) Sync(ctx context.Context) (string, error) {
+func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
 	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
 	lastCommit := cfg.Status.Sync.Hash
@@ -66,42 +66,75 @@ func (r *Syncer) Sync(ctx context.Context) (string, error) {
 	}
 
 	logger := logging.FromContext(ctx)
-	var latest string
-	switch {
-	case !isVersioned:
+
+	if !isVersioned {
 		logger.Info("replicate tree unversioned repository")
 		if err := r.replicateTree(ctx, ""); err != nil {
 			return "", fmt.Errorf("replicate tree: %w", err)
 		}
-	case lastCommit == "":
-		var err error
-		latest, err = versionedRepo.LatestRef(ctx)
-		if err != nil {
-			return "", fmt.Errorf("latest ref: %w", err)
-		}
+		return "", nil
+	}
+
+	latest, err := versionedRepo.LatestRef(ctx)
+	if err != nil {
+		return "", fmt.Errorf("latest ref: %w", err)
+	}
+
+	if lastCommit == "" || complete {
 		if err := r.replicateTree(ctx, latest); err != nil {
 			return latest, fmt.Errorf("replicate tree: %w", err)
 		}
 		logger.Info("initial replication for versioned repository", "latest", latest)
-	default:
-		var err error
-		latest, err = versionedRepo.LatestRef(ctx)
-		if err != nil {
-			return "", fmt.Errorf("latest ref: %w", err)
-		}
 
-		logger.Info("replicate changes for versioned repository", "last_commit", lastCommit, "latest", latest)
-		changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest)
-		if err != nil {
-			return latest, fmt.Errorf("compare files: %w", err)
-		}
+		return latest, nil
+	}
 
-		if err := r.replicateChanges(ctx, changes); err != nil {
-			return latest, fmt.Errorf("replicate changes: %w", err)
-		}
+	logger.Info("replicate incremental changes for versioned repository", "last_commit", lastCommit, "latest", latest)
+	changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest)
+	if err != nil {
+		return latest, fmt.Errorf("compare files: %w", err)
+	}
+
+	if err := r.replicateChanges(ctx, changes); err != nil {
+		return latest, fmt.Errorf("replicate changes: %w", err)
 	}
 
 	return latest, nil
+}
+
+func (r *Syncer) cleanUnnecessaryResources(ctx context.Context, tree []repository.FileTreeEntry, list *provisioning.ResourceList) error {
+	paths := make(map[string]bool)
+	// Add root path
+	paths[""] = true
+	for _, entry := range tree {
+		paths[entry.Path] = true
+	}
+
+	sortResourceListForDeletion(list)
+
+	logger := logging.FromContext(ctx)
+
+	var count int
+	for _, i := range list.Items {
+		if _, ok := paths[i.Path]; ok {
+			continue
+		}
+
+		if err := r.deleteListResource(ctx, i); err != nil {
+			return fmt.Errorf("delete list resource: %w", err)
+		}
+
+		count++
+		logger.Info("deleted resource not present in repository", "resource", i)
+	}
+
+	if count == 0 {
+		logger.Info("resources are in sync with repository")
+	} else {
+		logger.Info("deleted resources not present in repository", "count", count)
+	}
+
+	return nil
 }
 
 func (r *Syncer) Unsync(ctx context.Context) error {
@@ -151,12 +184,7 @@ func (r *Syncer) Unsync(ctx context.Context) error {
 	return nil
 }
 
-func (r *Syncer) deleteAllProvisionedResources(ctx context.Context) error {
-	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
-	if err != nil {
-		return fmt.Errorf("list resources to delete: %w", err)
-	}
-
+func sortResourceListForDeletion(list *provisioning.ResourceList) {
 	// FIXME: this code should be simplified once unified storage folders support recursive deletion
 	// Sort by the following logic:
 	// - Put folders at the end so that we empty them first.
@@ -171,34 +199,51 @@ func (r *Syncer) deleteAllProvisionedResources(ctx context.Context) error {
 			return len(strings.Split(list.Items[i].Path, "/")) > len(strings.Split(list.Items[j].Path, "/"))
 		}
 	})
+}
+
+func (r *Syncer) deleteAllProvisionedResources(ctx context.Context) error {
+	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
+	if err != nil {
+		return fmt.Errorf("list resources to delete: %w", err)
+	}
+
+	sortResourceListForDeletion(list)
 
 	logger := logging.FromContext(ctx)
 	logger.Info("deleting resources", "count", len(list.Items))
 	for _, item := range list.Items {
-		// HACK: until we know how to get the version
-		var version string
-		switch item.Resource {
-		case folders.RESOURCE:
-			version = folders.VERSION
-		case dashboards.DASHBOARD_RESOURCE:
-			version = dashboardsv2alpha1.VERSION
-		default:
-			return fmt.Errorf("unknown resource api version: %s", item.Resource)
-		}
+		logger := logger.With("group", item.Group, "resource", item.Resource, "name", item.Name)
 
-		client := r.client.Resource(schema.GroupVersionResource{
-			Group:    item.Group,
-			Version:  version,
-			Resource: item.Resource,
-		})
-
-		logger := logger.With("group", item.Group, "resource", item.Resource, "name", item.Name, "version", version)
-		if err := client.Delete(ctx, item.Name, metav1.DeleteOptions{}); err != nil {
+		if err := r.deleteListResource(ctx, item); err != nil {
 			logger.Error("failed to delete resource", "error", err)
 			return fmt.Errorf("delete resource: %w", err)
 		}
-
 		logger.Info("resource deleted")
+	}
+
+	return nil
+}
+
+func (r *Syncer) deleteListResource(ctx context.Context, item provisioning.ResourceListItem) error {
+	// HACK: we need to find a better way to know the API version
+	var version string
+	switch item.Resource {
+	case folders.RESOURCE:
+		version = folders.VERSION
+	case dashboards.DASHBOARD_RESOURCE:
+		version = dashboardsv2alpha1.VERSION
+	default:
+		return fmt.Errorf("unknown resource api version: %s", item.Resource)
+	}
+
+	client := r.client.Resource(schema.GroupVersionResource{
+		Group:    item.Group,
+		Version:  version,
+		Resource: item.Resource,
+	})
+
+	if err := client.Delete(ctx, item.Name, metav1.DeleteOptions{}); err != nil {
+		return fmt.Errorf("delete resource: %w", err)
 	}
 
 	return nil
@@ -211,6 +256,21 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 		return fmt.Errorf("read tree: %w", err)
 	}
 
+	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
+	if err != nil {
+		return fmt.Errorf("list resources: %w", err)
+	}
+
+	if err := r.cleanUnnecessaryResources(ctx, tree, list); err != nil {
+		return fmt.Errorf("clean up before replicating tree: %w", err)
+	}
+
+	hashes := make(map[string]string)
+	for _, item := range list.Items {
+		hashes[item.Path] = item.Hash
+	}
+
+	// FIXME: Add support for empty folders
 	for _, entry := range tree {
 		logger := logging.FromContext(ctx).With("file", entry.Path)
 		if !entry.Blob {
@@ -220,6 +280,11 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 
 		if resources.ShouldIgnorePath(entry.Path) {
 			logger.Debug("ignoring file")
+			continue
+		}
+
+		if hashes[entry.Path] == entry.Hash {
+			logger.Debug("file is up to date")
 			continue
 		}
 
@@ -429,8 +494,6 @@ func (r *Syncer) deleteFile(ctx context.Context, fileInfo *repository.FileInfo) 
 	if err = file.Client.Delete(ctx, file.Obj.GetName(), metav1.DeleteOptions{}); err != nil {
 		return fmt.Errorf("failed to delete object: %w", err)
 	}
-
-	// TODO: delete folders if empty recursively
 
 	return nil
 }
