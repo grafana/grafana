@@ -1,11 +1,8 @@
 package sql
 
 import (
-	"context"
 	"testing"
 
-	sqle "github.com/dolthub/go-mysql-server"
-	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -25,37 +22,21 @@ func TestFrameDB(t *testing.T) {
 		},
 	}
 
-	provider := NewFramesDBProvider([]*data.Frame{frameA})
+	db := DB{}
+	qry := `SELECT * from A`
+	// qry := "SELECT load_file('/etc/passwd')"
+	// qry := "SELECT sloth()"
+	// qry := "SELECT 2.35, -128, -32768, -8388608, -2147483648, 255, 65535, 16777215, 4294967295"
+	// qry := "SELECT animal, sum(fcount), sum(nfcount), sum(nfcountnn) FROM a GROUP BY animal"
 
-	session := mysql.NewBaseSession()
-	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
-	ctx.SetCurrentDatabase("frames")
-
-	engine := sqle.NewDefault(provider)
-	engine.Analyzer.Catalog.RegisterFunction(ctx, mysql.FunctionN{
-		Name: "sloth",
-		Fn:   NewSlothFunction(),
-	})
-
-	schema, iter, _, err := engine.Query(ctx, "SELECT * from a")
-	//schema, iter, _, err := engine.Query(ctx, "SELECT sloth()")
-	//schema, iter, _, err := engine.Query(ctx, "SELECT 2.35, -128, -32768, -8388608, -2147483648, 255, 65535, 16777215, 4294967295")
-	//schema, iter, _, err := engine.Query(ctx, "SELECT animal, sum(fcount), sum(nfcount), sum(nfcountnn) FROM a GROUP BY animal")
-
-	if err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
-	if iter == nil {
-		t.Log("no iter, is nil")
-		t.FailNow()
-	}
 	f := data.NewFrame("")
-	err = convertToDataFrame(ctx, iter, schema, f)
+
+	err := db.QueryFramesInto("a", qry, []*data.Frame{frameA}, f)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
+
 	t.Log(f.StringTable(-1, -1))
 }
 

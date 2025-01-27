@@ -9,6 +9,8 @@ import (
 
 	sqle "github.com/dolthub/go-mysql-server"
 	mysql "github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/shopspring/decimal"
@@ -423,11 +425,19 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 	// Select the database in the context
 	ctx.SetCurrentDatabase(dbName)
 
+	// Empty dir does not disable secure_file_priv
+	//ctx.SetSessionVariable(ctx, "secure_file_priv", "")
+
 	// TODO: Check if it's wise to reuse the existing provider, rather than creating a new one
-	engine := sqle.NewDefault(pro)
-	engine.Analyzer.Catalog.RegisterFunction(ctx, mysql.FunctionN{
+	a := analyzer.NewDefault(pro)
+
+	a.Catalog.RegisterFunction(ctx, mysql.FunctionN{
 		Name: "sloth",
 		Fn:   NewSlothFunction(),
+	})
+
+	engine := sqle.New(a, &sqle.Config{
+		IsReadOnly: true,
 	})
 
 	schema, iter, _, err := engine.Query(ctx, query)
