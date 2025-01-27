@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
 
-import { FieldType, GrafanaTheme2, store } from '@grafana/data';
+import { FieldType, GrafanaTheme2, NavModelItem, store } from '@grafana/data';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -110,7 +110,11 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
     entry.views.find((entry) => {
       return entry.url === window.location.href;
     })?.time;
-
+  const breadcrumbsToString = (breadcrumbs: NavModelItem[]) => {
+    return breadcrumbs
+      .map((breadcrumb, index) => breadcrumb.text + (index !== breadcrumbs.length - 1 ? ' > ' : ''))
+      .join('');
+  };
   return (
     <Stack direction="column" gap={1}>
       <Stack alignItems={'baseline'}>
@@ -143,13 +147,7 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
           className={isSelected ? undefined : styles.card}
         >
           <Stack direction="column">
-            <div className={styles.breadcrumbs}>
-              {breadcrumbs.map((breadcrumb, index) => (
-                <Text key={index}>
-                  {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
-                </Text>
-              ))}
-            </div>
+            <div className={styles.breadcrumbs}>{breadcrumbsToString(breadcrumbs)}</div>
             <Text color="secondary" variant="bodySmall">
               {moment(time).format('h:mm A')}
             </Text>
@@ -265,7 +263,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingLeft: theme.spacing(2),
     }),
     breadcrumbs: css({
-      wordBreak: 'break-all',
+      wordBreak: 'break-word',
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: 'vertical',
+      display: '-webkit-box',
+      overflow: 'hidden',
     }),
   };
 };
