@@ -14,7 +14,6 @@ const initialize = (on, config) => {
 
   // process all emails
   mailServer.bind((addr, id, email) => {
-    console.log('received email');
     lastEmail[email.headers.to] = email;
   });
 
@@ -89,8 +88,8 @@ const initialize = (on, config) => {
       const inputDoc = await pdf(inputBuffer);
       const expectedDoc = await pdf(expectedPDFFilepath);
 
-      cleanUpPDFText(inputDoc);
-      cleanUpPDFText(expectedDoc);
+      removePDFGeneratedOnDate(inputDoc);
+      removePDFGeneratedOnDate(expectedDoc);
 
       return inputDoc.numpages === expectedDoc.numpages && inputDoc.text === expectedDoc.text;
     },
@@ -105,14 +104,13 @@ const toCSV = (buffer) => {
     .map((e) => e.split(',').map((e) => e.trim()));
 };
 
-const replacer = (match, p1, p2, p3) => {
-  return `${p1} ${p3}`;
-};
-
-// clean up the "generated on" timestamp in PDF as it's too complicated to set it to a fixed date
-const cleanUpPDFText = (pdfDoc) => {
+// remove the date part of the "Generated on <date>" header in PDFs as it's too complicated to set it to a fixed date
+const removePDFGeneratedOnDate = (pdfDoc) => {
   const regex = /(Generated on )(.*)(Data time range)/;
-  pdfDoc.text = pdfDoc.text.replace(regex, replacer);
+  // removes the text in the second set of parenthesis of the regex above
+  pdfDoc.text = pdfDoc.text.replace(regex, (match, p1, p2, p3) => {
+    return `${p1} ${p3}`;
+  });
 };
 
 exports.initialize = initialize;
