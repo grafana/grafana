@@ -47,11 +47,11 @@ composableKinds: DataQuery: {
 					// Resource group used in template variable queries
 					resourceGroup?: string
 					// Namespace used in template variable queries
-					namespace?:     string
+					namespace?: string
 					// Resource used in template variable queries
-					resource?:      string
+					resource?: string
 					// Region used in template variable queries
-					region?:        string
+					region?: string
 					// Custom namespace used in template variable queries
 					customNamespace?: string
 					// Azure Monitor query type.
