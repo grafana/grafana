@@ -43,21 +43,44 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: PanelKind // |* more element types in the future
+  elements: [ElementReference.name]: Element 
 
   annotations: [...AnnotationQueryKind]
 
   layout: GridLayoutKind
 
-  // Version of the JSON schema, incremented each time a Grafana update brings
-  // changes to said schema.
-  schemaVersion: uint16 | *39
 
   // Plugins only. The version of the dashboard installed together with the plugin.
   // This is used to determine if the dashboard should be updated when the plugin is updated.
   revision?: uint16
 }
 
+// Supported dashboard elements
+Element: PanelKind | LibraryPanelKind // |* more element types in the future
+
+LibraryPanelKind: {
+  kind: "LibraryPanel"
+  spec: LibraryPanelSpec
+}
+
+LibraryPanelSpec: {
+  // Panel ID for the library panel in the dashboard
+  id: number
+  // Title for the library panel in the dashboard
+  title: string
+  
+  libraryPanel: LibraryPanelRef
+}
+
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
+LibraryPanelRef: {
+  // Library panel name
+  name: string
+  // Library panel uid
+  uid: string
+}
 
 AnnotationPanelFilter: {
   // Should the specified panels be included or excluded
@@ -753,8 +776,6 @@ GroupByVariableSpec: {
   }
   options: [...VariableOption] | *[]
   multi: bool | *false
-  includeAll: bool | *false
-  allValue?: string
   label?: string
   hide: VariableHide
   skipUrlSync: bool | *false

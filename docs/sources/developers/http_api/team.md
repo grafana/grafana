@@ -179,7 +179,7 @@ Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Team created","teamId":2}
+{"message":"Team created","teamId":2,"uid":"ceaulqadfoav4e"}
 ```
 
 Status Codes:

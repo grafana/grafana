@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,6 +28,17 @@ import (
 
 const resourceStoreAudience = "resourceStore"
 
+var (
+	// internal provider of the package level resource client
+	pkgResourceClient resource.ResourceClient
+	ready             = make(chan struct{})
+)
+
+func GetResourceClient(ctx context.Context) resource.ResourceClient {
+	<-ready
+	return pkgResourceClient
+}
+
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(
 	cfg *setting.Cfg,
@@ -35,7 +46,7 @@ func ProvideUnifiedStorageClient(
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc authz.AccessClient,
+	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
@@ -53,6 +64,13 @@ func ProvideUnifiedStorageClient(
 			legacysql.NewDatabaseProvider(db),
 		)
 	}
+
+	// only set the package level restConfig once
+	if pkgResourceClient == nil {
+		pkgResourceClient = client
+		close(ready)
+	}
+
 	return client, err
 }
 
@@ -62,7 +80,7 @@ func newClient(opts options.StorageOptions,
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
-	authzc authz.AccessClient,
+	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()

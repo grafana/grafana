@@ -223,6 +223,11 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 
 	replaceMeta = append(replaceMeta, "creationTimestamp", "resourceVersion", "uid")
 	for _, key := range replaceMeta {
+		if key == "labels" {
+			delete(meta, key)
+			continue
+		}
+
 		old, ok := meta[key]
 		if ok {
 			require.NotEmpty(c.t, old)
@@ -442,14 +447,7 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 	users := OrgUsers{
-		Admin: c.CreateUser("admin", orgName, org.RoleAdmin, []resourcepermissions.SetResourcePermissionCommand{
-			{
-				Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
-				Resource:          "dashboards",
-				ResourceAttribute: "uid",
-				ResourceID:        "*",
-			},
-		}),
+		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
-import { Stack, Text, LinkButton, Box, TextLink } from '@grafana/ui';
+import { Stack, Text, LinkButton, Box, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -16,6 +16,7 @@ type Props = {
 
 export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const { pluginExtentionsInfo, plugin, width = '250px' } = props;
+  const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={width} data-testid="plugin-details-panel">
@@ -25,7 +26,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
             return (
               <Stack key={index} wrap direction="column" gap={0.5}>
                 <Text color="secondary">{infoItem.label + ':'}</Text>
-                <div>{infoItem.value}</div>
+                <div className={styles.pluginVersionDetails}>{infoItem.value}</div>
               </Stack>
             );
           })}
