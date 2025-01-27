@@ -662,7 +662,10 @@ export const versionedComponents = {
       '11.1.0': 'data-testid alert-rule new-evaluation-group-create-button',
     },
     step: {
-      '11.5.0': (stepNo: string) => `data-testid alert-rule step-no-${stepNo}`,
+      '11.5.0': (stepNo: string) => `data-testid alert-rule step-${stepNo}`,
+    },
+    stepAdvancedModeSwitch: {
+      '11.5.0': (stepNo: string) => `data-testid advanced-mode-switch step-${stepNo}`,
     },
   },
   Alert: {
