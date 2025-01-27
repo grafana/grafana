@@ -13,36 +13,35 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/common"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	secretstorage "github.com/grafana/grafana/pkg/storage/secret"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
 
 type SecretAPIBuilder struct {
+	tracer             tracing.Tracer
 	secureValueStorage contracts.SecureValueStorage
 	keeperStorage      contracts.KeeperStorage
 }
 
-func NewSecretAPIBuilder(secureValueStorage contracts.SecureValueStorage, keeperStorage contracts.KeeperStorage) *SecretAPIBuilder {
-	return &SecretAPIBuilder{secureValueStorage, keeperStorage}
+func NewSecretAPIBuilder(tracer tracing.Tracer, secureValueStorage contracts.SecureValueStorage, keeperStorage contracts.KeeperStorage) *SecretAPIBuilder {
+	return &SecretAPIBuilder{tracer, secureValueStorage, keeperStorage}
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
-	keeperService secretkeeper.Service,
-	encryptedValueStorage secretstorage.EncryptedValueStorage,
+	tracer tracing.Tracer,
 	secureValueStorage contracts.SecureValueStorage,
 	keeperStorage contracts.KeeperStorage,
 ) (*SecretAPIBuilder, error) {
@@ -52,7 +51,7 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	builder := NewSecretAPIBuilder(secureValueStorage, keeperStorage)
+	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
