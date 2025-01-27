@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -181,8 +182,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		recourceClientProvider: f,
 	}
 
-	// #TODO figure out what to do about passing in user service here
-	unifiedStore := ProvideUnifiedStore(k8sHandler, nil)
+	userService := &usertest.FakeUserService{
+		ExpectedUser: &user.User{},
+	}
+
+	unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{

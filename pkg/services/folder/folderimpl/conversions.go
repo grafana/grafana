@@ -88,9 +88,9 @@ func (ss *FolderUnifiedStoreImpl) getUserFromMeta(ctx context.Context, userMeta 
 }
 
 func (ss *FolderUnifiedStoreImpl) getUser(ctx context.Context, uid string) (*user.User, error) {
-	userId, err := strconv.ParseInt(uid, 10, 64)
+	userID, err := strconv.ParseInt(uid, 10, 64)
 	if err == nil {
-		return ss.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userId})
+		return ss.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	}
 	return ss.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
 }
