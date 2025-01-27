@@ -218,6 +218,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
+//nolint:gocyclo
 func (rc *RepositoryController) process(item *queueItem) error {
 	logger := rc.logger.With("key", item.key)
 
