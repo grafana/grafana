@@ -301,6 +301,8 @@ function initEchoSrv() {
     window.__grafanaEcho = echo;
     setEchoSrv(echo);
     registerEchoBackend(new DashboardBenchmarkBackend({}));
+  } else {
+    setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
   }
 
   window.addEventListener('load', (e) => {
