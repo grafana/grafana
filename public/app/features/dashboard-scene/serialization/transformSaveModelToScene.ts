@@ -217,6 +217,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     });
   }
 
+  const scopeMeta =
+    config.featureToggles.scopeFilters && oldModel.scopeMeta
+      ? {
+          trait: oldModel.scopeMeta.trait,
+          groups: oldModel.scopeMeta.groups,
+        }
+      : undefined;
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
@@ -249,6 +257,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     tags: oldModel.tags || [],
     title: oldModel.title,
     version: oldModel.version,
+    scopeMeta,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),

@@ -1,6 +1,12 @@
 import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AnnoKeyFolder, AnnoKeyFolderId, AnnoKeyFolderTitle, AnnoKeyFolderUrl } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyFolderId,
+  AnnoKeyFolderTitle,
+  AnnoKeyFolderUrl,
+  DeprecatedInternalId,
+} from 'app/features/apiserver/types';
 
 import { DashboardWithAccessInfo } from './types';
 import { K8sDashboardV2API } from './v2';
@@ -27,6 +33,20 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: () => mockDashboardDto,
+    put: jest.fn().mockImplementation((url, data) => {
+      return {
+        apiVersion: 'dashboard.grafana.app/v2alpha1',
+        kind: 'Dashboard',
+        metadata: {
+          name: data.metadata.name,
+          resourceVersion: '2',
+          creationTimestamp: new Date().toISOString(),
+          labels: data.metadata.labels,
+          annotations: data.metadata.annotations,
+        },
+        spec: data.spec,
+      };
+    }),
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -65,5 +85,60 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolderTitle]).toBe('New Folder');
     expect(result.metadata.annotations![AnnoKeyFolderUrl]).toBe('/folder/url');
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
+  });
+});
+
+describe('v2 dashboard API - Save', () => {
+  const defaultSaveCommand = {
+    dashboard: defaultDashboardV2Spec(),
+    message: 'test save',
+    folderUid: 'test-folder',
+    k8s: {
+      name: 'test-dash',
+      labels: {
+        [DeprecatedInternalId]: 123,
+      },
+
+      annotations: {
+        [AnnoKeyFolder]: 'new-folder',
+      },
+    },
+  };
+
+  it('should create new dashboard', async () => {
+    const api = new K8sDashboardV2API(false);
+    const result = await api.saveDashboard({
+      ...defaultSaveCommand,
+      dashboard: {
+        ...defaultSaveCommand.dashboard,
+        title: 'test-dashboard',
+      },
+    });
+
+    expect(result).toEqual({
+      id: 123,
+      uid: 'test-dash',
+      url: '/d/test-dash/testdashboard',
+      slug: '',
+      status: 'success',
+      version: 2,
+    });
+  });
+
+  it('should update existing dashboard', async () => {
+    const api = new K8sDashboardV2API(false);
+
+    const result = await api.saveDashboard({
+      ...defaultSaveCommand,
+      dashboard: {
+        ...defaultSaveCommand.dashboard,
+        title: 'chaing-title-dashboard',
+      },
+      k8s: {
+        ...defaultSaveCommand.k8s,
+        name: 'existing-dash',
+      },
+    });
+    expect(result.version).toBe(2);
   });
 });

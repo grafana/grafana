@@ -34,7 +34,7 @@ import store from 'app/core/store';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
@@ -99,6 +99,8 @@ export interface DashboardSceneState extends SceneObjectState {
   preload?: boolean;
   /** A uid when saved */
   uid?: string;
+  /** @experimental */
+  scopeMeta?: ScopeMeta;
   /** @deprecated */
   id?: number | null;
   /** Layout of panels */
