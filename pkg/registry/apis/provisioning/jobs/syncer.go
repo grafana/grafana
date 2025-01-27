@@ -442,7 +442,9 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 
 func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	for _, change := range changes {
+		// HACK: this will leave empty folder behind until the next sync
 		if change.Action != repository.FileActionDeleted {
+			// FIXME: we need to consolidate where we create the paths
 			if _, err := r.createFolderPath(ctx, change.Path); err != nil {
 				return fmt.Errorf("create folder path: %w", err)
 			}
