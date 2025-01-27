@@ -168,24 +168,41 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
   }
 
-  getMetricNamespaces(subscriptionId: string, resourceGroup?: string) {
+  getMetricNamespaces(subscriptionId: string, resourceGroup?: string, resourceUri?: string, custom?: boolean) {
     let url = `/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
       url += `/resourceGroups/${resourceGroup}`;
     }
-    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url }, true);
+    if (resourceUri) {
+      url = resourceUri;
+    }
+    return this.azureMonitorDatasource.getMetricNamespaces(
+      { resourceUri: url },
+      // If custom namespaces are being queried we do not issue the query against the global region
+      // as resources have a specific region
+      custom ? false : true,
+      undefined,
+      custom
+    );
   }
 
   getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, region?: string) {
     return this.azureMonitorDatasource.getResourceNames({ subscriptionId, resourceGroup, metricNamespace, region });
   }
 
-  getMetricNames(subscriptionId: string, resourceGroup: string, metricNamespace: string, resourceName: string) {
+  getMetricNames(
+    subscriptionId: string,
+    resourceGroup: string,
+    metricNamespace: string,
+    resourceName: string,
+    customNamespace?: string
+  ) {
     return this.azureMonitorDatasource.getMetricNames({
       subscription: subscriptionId,
       resourceGroup,
       metricNamespace,
       resourceName,
+      customNamespace,
     });
   }
 
