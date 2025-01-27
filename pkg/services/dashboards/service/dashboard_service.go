@@ -1074,7 +1074,9 @@ func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *
 			return nil, err
 		}
 
-		if len(result) != 1 {
+		if len(result) == 0 {
+			return nil, dashboards.ErrDashboardNotFound
+		} else if len(result) > 1 {
 			return nil, fmt.Errorf("unexpected number of dashboards found: %d. desired: 1", len(result))
 		}
 

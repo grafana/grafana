@@ -240,29 +240,26 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		}
 
 		// then find the dashboards that were supposed to be connected to this element
+		_, requester := identity.WithServiceIdentitiy(c, signedInUser.GetOrgID())
 		dashs, err := l.dashboardsService.FindDashboards(c, &dashboards.FindPersistedDashboardsQuery{
-			OrgId:                   signedInUser.GetOrgID(),
-			DashboardIds:            dashboardIDs,
-			SkipAccessControlFilter: true, // a user may be able to delete a library element but not read all dashboards. We still need to run this check, so we don't allow deleting elements if dashboards are connected
+			OrgId:        signedInUser.GetOrgID(),
+			DashboardIds: dashboardIDs,
+			SignedInUser: requester, // a user may be able to delete a library element but not read all dashboards. We still need to run this check, so we don't allow deleting elements if dashboards are connected
 		})
 		if err != nil {
 			return err
 		}
 
-		foundDashboardsClause := ""
-		if len(dashs) > 0 {
-			foundDashboardsClause = "AND connection_id NOT IN ("
-			for i, d := range dashs {
-				if i > 0 {
-					foundDashboardsClause += ","
-				}
-				foundDashboardsClause += fmt.Sprintf("%d", d.ID)
-			}
-			foundDashboardsClause += ")"
+		foundDashes := make([]int64, len(dashs))
+		for i, d := range dashs {
+			foundDashes[i] = d.ID
 		}
 
 		// delete any connections that are orphaned for this element (i.e. the dashboard was deleted)
-		if _, err = session.Exec(`DELETE FROM library_element_connection WHERE element_id = ? `+foundDashboardsClause, element.ID); err != nil {
+		session.Table("library_element_connection")
+		session.Where("element_id = ?", element.ID)
+		session.NotIn("connection_id", foundDashes)
+		if _, err = session.Delete(model.LibraryElementConnectionWithMeta{}); err != nil {
 			return err
 		}
 
