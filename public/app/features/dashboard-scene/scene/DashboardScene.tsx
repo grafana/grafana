@@ -25,7 +25,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -109,10 +109,12 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
+  /** Controls the visibility of hidden elements like row headers */
+  showHiddenElements?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
-  meta: DashboardMeta;
+  meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
   /** Panel to inspect */
@@ -200,6 +202,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
+    const isNew = locationService.getLocation().pathname === '/dashboard/new';
 
     window.__grafanaSceneContext = this;
 
@@ -210,7 +213,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._changeTracker.startTrackingChanges();
     }
 
-    if (this.state.meta.isNew) {
+    if (isNew) {
       this.onEnterEditMode();
       this.setState({ isDirty: true });
     }
@@ -257,7 +260,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true });
+    this.setState({ isEditing: true, showHiddenElements: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged(true);
@@ -284,7 +287,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         url: result.url,
         slug: result.slug,
         folderUid: folderUid,
-        isNew: false,
         version: result.version,
       },
     });
@@ -338,10 +340,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
+      this.setState({ ...this._initialState, isEditing: false, showHiddenElements: false });
     } else {
       // Do not restore
-      this.setState({ isEditing: false });
+      this.setState({ isEditing: false, showHiddenElements: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -358,6 +360,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public canDiscard() {
     return this._initialState !== undefined;
   }
+
+  public onToggleHiddenElements = () => this.setState({ showHiddenElements: !this.state.showHiddenElements });
 
   public pauseTrackingChanges() {
     this._changeTracker.stopTrackingChanges();
@@ -413,6 +417,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel, title, uid } = this.state;
+    const isNew = !Boolean(uid);
 
     if (meta.dashboardNotFound) {
       return { text: 'Not found' };
@@ -425,7 +430,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot,
+        isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
         isSnapshot: meta.isSnapshot,
       }),
     };

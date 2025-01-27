@@ -11,8 +11,10 @@ import {
   ButtonGroup,
   Dropdown,
   Icon,
+  InlineLabel,
   Menu,
   Stack,
+  Switch,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -54,7 +56,8 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const { isEditing, showHiddenElements, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } =
+    dashboard.useState();
 
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
@@ -68,6 +71,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNotFound = Boolean(meta.dashboardNotFound);
+  const isNew = !Boolean(uid);
+
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
@@ -213,6 +218,25 @@ export function ToolbarActions({ dashboard }: Props) {
         >
           Import
         </Button>
+      ),
+    });
+    leftActions.push({
+      group: 'hidden-elements',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <InlineLabel key="toggle-hidden-elements" transparent={true} className={styles.hiddenElementsContainer}>
+          <Switch
+            value={showHiddenElements}
+            onChange={(evt) => {
+              evt.stopPropagation();
+              dashboard.onToggleHiddenElements();
+            }}
+            data-testid={selectors.components.PageToolbar.itemButton('toggle_hidden_elements')}
+          />
+          <span>
+            <Trans i18nKey="dashboard.toolbar.show-hidden-elements">Show hidden</Trans>
+          </span>
+        </InlineLabel>
       ),
     });
   } else {
@@ -467,7 +491,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !meta.isNew && isShowingDashboard,
+    condition: isEditing && !isNew && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
@@ -561,7 +585,7 @@ export function ToolbarActions({ dashboard }: Props) {
     condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
     render: () => {
       // if we  only can save
-      if (meta.isNew) {
+      if (isNew) {
         return (
           <Button
             onClick={() => {
@@ -741,6 +765,12 @@ interface ToolbarAction {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    hiddenElementsContainer: css({
+      display: 'flex',
+      padding: 0,
+      gap: theme.spacing(1),
+      whiteSpace: 'nowrap',
+    }),
     buttonWithExtraMargin: css({
       margin: theme.spacing(0, 0.5),
     }),

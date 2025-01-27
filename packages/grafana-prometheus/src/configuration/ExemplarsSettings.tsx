@@ -2,7 +2,7 @@
 import { css } from '@emotion/css';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigSubSection } from '@grafana/plugin-ui';
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';

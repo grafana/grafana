@@ -112,7 +112,6 @@ let singletonInstance: CorrelationsService;
  * @internal
  */
 export function setCorrelationsService(instance: CorrelationsService) {
-  console.log('setCorrelationsService', instance);
   singletonInstance = instance;
 }
 

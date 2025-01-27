@@ -595,6 +595,10 @@ export class ElasticDatasource
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
     let isQuerySuitable = false;
 
+    if (query.hide) {
+      return undefined;
+    }
+
     switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query

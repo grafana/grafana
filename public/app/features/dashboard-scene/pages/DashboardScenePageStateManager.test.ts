@@ -1,10 +1,7 @@
 import { advanceBy } from 'jest-date-mock';
 
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
-import {
-  DashboardV2Spec,
-  defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import store from 'app/core/store';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -136,13 +133,12 @@ describe('DashboardScenePageStateManager v1', () => {
     });
 
     describe('New dashboards', () => {
-      it('Should have new empty model with meta.isNew and should not be cached', async () => {
+      it('Should have new empty model and should not be cached', async () => {
         const loader = new DashboardScenePageStateManager({});
 
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
         const dashboard = loader.state.dashboard!;
 
-        expect(dashboard.state.meta.isNew).toBe(true);
         expect(dashboard.state.isEditing).toBe(undefined);
         expect(dashboard.state.isDirty).toBe(false);
 
@@ -434,13 +430,12 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('New dashboards', () => {
-      it('Should have new empty model with meta.isNew and should not be cached', async () => {
+      it('Should have new empty model and should not be cached', async () => {
         const loader = new DashboardScenePageStateManagerV2({});
 
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
         const dashboard = loader.state.dashboard!;
 
-        expect(dashboard.state.meta.isNew).toBe(true);
         expect(dashboard.state.isEditing).toBe(undefined);
         expect(dashboard.state.isDirty).toBe(false);
 

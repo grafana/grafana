@@ -13,8 +13,6 @@ type Interactions = {
     cause: (
       // By clicking the "select" button on that label's breakdown panel
       | 'breakdown_panel'
-      // By clicking the label link on the overview
-      | 'overview_link'
       // By clicking on the label selector at the top of the breakdown
       | 'selector'
     );
@@ -131,7 +129,11 @@ type Interactions = {
   otel_experience_used: {},
   otel_experience_toggled: {
     value: ('on'| 'off')
-  }
+  },
+  native_histogram_examples_closed: {},
+  native_histogram_example_clicked: {
+    metric: string;
+  },
 };
 
 const PREFIX = 'grafana_explore_metrics_';
