@@ -418,6 +418,8 @@ export function TableNG(props: TableNGProps) {
   const filteredRows = useMemo(() => {
     const filterValues = Object.entries(filter);
     if (filterValues.length === 0) {
+      // reset cross filter order
+      crossFilterOrder.current = [];
       return sortedRows;
     }
 
