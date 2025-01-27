@@ -34,7 +34,7 @@ type SearchHandler struct {
 }
 
 func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
-	searchClient := resource.NewSearchClient(cfg.UnifiedStorage[setting.UnifiedStorageConfigKeyDashboard].DualWriterMode, client, legacyDashboardSearcher)
+	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, client, legacyDashboardSearcher)
 	return &SearchHandler{
 		client: searchClient,
 		log:    log.New("grafana-apiserver.dashboards.search"),

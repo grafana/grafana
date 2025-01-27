@@ -45,7 +45,7 @@ type k8sHandler struct {
 
 func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient, dashStore dashboards.Store) K8sHandler {
 	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
-	searchClient := resource.NewSearchClient(cfg.UnifiedStorage[setting.UnifiedStorageConfigKeyDashboard].DualWriterMode, searcher, legacySearcher)
+	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, searcher, legacySearcher)
 	return &k8sHandler{
 		namespacer:         namespacer,
 		gvr:                gvr,
