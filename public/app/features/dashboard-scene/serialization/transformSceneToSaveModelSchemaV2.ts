@@ -174,7 +174,7 @@ function getGridLayoutItems(
           elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
         }
       } else if (child instanceof SceneGridRow) {
-        if (isRepeatedSceneObject(child) && !isSnapshot) {
+        if (isClonedKey(getLastKeyFromClone(child.state.key!)) && !isSnapshot) {
           // Skip repeat rows
           continue;
         }
