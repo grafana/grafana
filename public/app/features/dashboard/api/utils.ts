@@ -1,6 +1,9 @@
 import { config, locationService } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
+
+import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardWithAccessInfo } from './types';
 
@@ -40,7 +43,7 @@ export function isDashboardResource(
   return isK8sDashboard;
 }
 
-export function isDashboardV2Spec(obj: DashboardDataDTO | DashboardV2Spec): obj is DashboardV2Spec {
+export function isDashboardV2Spec(obj: Dashboard | DashboardDataDTO | DashboardV2Spec): obj is DashboardV2Spec {
   return 'elements' in obj;
 }
 
@@ -52,4 +55,16 @@ export function isDashboardV2Resource(
   obj: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
 ): obj is DashboardWithAccessInfo<DashboardV2Spec> {
   return isDashboardResource(obj) && isDashboardV2Spec(obj.spec);
+}
+
+export function isV1DashboardCommand(
+  cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
+): cmd is SaveDashboardCommand<Dashboard> {
+  return !isDashboardV2Spec(cmd.dashboard);
+}
+
+export function isV2DashboardCommand(
+  cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
+): cmd is SaveDashboardCommand<DashboardV2Spec> {
+  return isDashboardV2Spec(cmd.dashboard);
 }
