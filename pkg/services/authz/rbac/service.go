@@ -524,7 +524,7 @@ func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[st
 
 	var ok bool
 	tree.Walk(req.ParentFolder, directionAncestors, func(n folderNode) bool {
-		if scopeMap["folders:uid:"+n.uid] {
+		if scopeMap["folders:uid:"+n.UID] {
 			ok = true
 			return false
 		}
@@ -598,11 +598,11 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 				continue
 			}
 			tree.Walk(identifier, directionDescendants, func(n folderNode) bool {
-				if _, ok := folderSet[n.uid]; ok {
+				if _, ok := folderSet[n.UID]; ok {
 					// we have already walked this part of the tree
 					return false
 				}
-				folderSet[n.uid] = struct{}{}
+				folderSet[n.UID] = struct{}{}
 				return true
 			})
 		} else {

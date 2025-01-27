@@ -34,7 +34,7 @@ func Test_Tree(t *testing.T) {
 	t.Run("should walk all descendants of folder 1", func(t *testing.T) {
 		visited := map[string]bool{}
 		tree.Walk("1", directionDescendants, func(n folderNode) bool {
-			visited[n.uid] = true
+			visited[n.UID] = true
 			return true
 		})
 
@@ -45,7 +45,7 @@ func Test_Tree(t *testing.T) {
 	t.Run("should walk all descendants of folder 2", func(t *testing.T) {
 		visited := map[string]bool{}
 		tree.Walk("2", directionDescendants, func(n folderNode) bool {
-			visited[n.uid] = true
+			visited[n.UID] = true
 			return true
 		})
 
@@ -56,7 +56,7 @@ func Test_Tree(t *testing.T) {
 	t.Run("should walk all descendants of folder 111", func(t *testing.T) {
 		visited := map[string]bool{}
 		tree.Walk("111", directionDescendants, func(n folderNode) bool {
-			visited[n.uid] = true
+			visited[n.UID] = true
 			return true
 		})
 
@@ -67,7 +67,7 @@ func Test_Tree(t *testing.T) {
 	t.Run("should walk all acestors of folder 1111", func(t *testing.T) {
 		visited := map[string]bool{}
 		tree.Walk("1111", directionAncestors, func(n folderNode) bool {
-			visited[n.uid] = true
+			visited[n.UID] = true
 			return true
 		})
 
@@ -78,7 +78,7 @@ func Test_Tree(t *testing.T) {
 	t.Run("should walk all acestors of folder 11", func(t *testing.T) {
 		visited := map[string]bool{}
 		tree.Walk("11", directionAncestors, func(n folderNode) bool {
-			visited[n.uid] = true
+			visited[n.UID] = true
 			return true
 		})
 
@@ -89,7 +89,7 @@ func Test_Tree(t *testing.T) {
 	t.Run("should walk all acestors of folder 222", func(t *testing.T) {
 		visited := map[string]bool{}
 		tree.Walk("222", directionAncestors, func(n folderNode) bool {
-			visited[n.uid] = true
+			visited[n.UID] = true
 			return true
 		})
 
