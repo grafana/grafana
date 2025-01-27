@@ -54,6 +54,13 @@ export interface DashboardLayoutManager extends SceneObject {
    * Renders options and layout actions
    */
   getOptions?(): OptionsPaneItemDescriptor[];
+
+  /**
+   * Create a clone of the layout manager given an ancestor key
+   * @param ancestorKey
+   * @param isSource
+   */
+  cloneLayout?(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
 }
 
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {

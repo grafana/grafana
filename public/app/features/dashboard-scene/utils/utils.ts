@@ -329,3 +329,7 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
 
   throw new Error('Could not find layout manager for scene object');
 }
+
+export function getGridItemKeyForPanelId(panelId: number): string {
+  return `grid-item-${panelId}`;
+}

@@ -12,8 +12,7 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { isClonedSceneObject } from '../../utils/clone';
-
+import { getLastKeyFromClone, isClonedKey } from '../../utils/clone';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -151,7 +150,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         }
 
         if (child instanceof SceneGridRow) {
-          if (!isClonedSceneObject(child)) {
+          if (!isClonedKey(getLastKeyFromClone(child.state.key!))) {
             const behaviour = child.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
 
             config.push({

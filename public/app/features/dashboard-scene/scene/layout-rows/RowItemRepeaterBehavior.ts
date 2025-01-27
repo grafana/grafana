@@ -10,13 +10,17 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
-  VizPanelMenu,
 } from '@grafana/scenes';
 
+import {
+  getAncestorsFromClone,
+  getCloneKey,
+  getLastKeyFromClone,
+  getOriginalKey,
+  isClonedKeyOf,
+  joinCloneKeys,
+} from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
-import { repeatPanelMenuBehavior } from '../PanelMenuBehavior';
-import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { getRepeatKeyForSceneObject, isRepeatedSceneObjectOf } from '../layouts-shared/repeatUtils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
 import { RowItem } from './RowItem';
@@ -46,21 +50,6 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
     this.addActivationHandler(() => this._activationHandler());
   }
 
-  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
-    const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
-
-    for (const row of allRows) {
-      const vizPanels = row.state.layout.getVizPanels();
-
-      for (const vizPanel of vizPanels) {
-        const queryRunner = getQueryRunnerFor(vizPanel);
-        if (queryRunner) {
-          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
-        }
-      }
-    }
-  }
-
   private _activationHandler() {
     this.performRepeat();
   }
@@ -83,56 +72,19 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
     return layout;
   }
 
-  private _getRowClone(
-    rowToRepeat: RowItem,
-    index: number,
-    value: VariableValueSingle,
-    text: VariableValueSingle,
-    variable: MultiValueVariable
-  ): RowItem {
-    const $variables = new SceneVariableSet({
-      variables: [
-        new LocalValueVariable({
-          name: this.state.variableName,
-          value,
-          text: String(text),
-          isMulti: variable.state.isMulti,
-          includeAll: variable.state.includeAll,
-        }),
-      ],
-    });
+  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
+    const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
 
-    const layout = rowToRepeat.getLayout().clone();
+    for (const row of allRows) {
+      const vizPanels = row.state.layout.getVizPanels();
 
-    if (layout instanceof DefaultGridLayoutManager) {
-      layout.state.grid.setState({
-        isDraggable: false,
-      });
-
-      layout.getVizPanels().forEach((panel) => {
-        panel.setState({
-          menu: new VizPanelMenu({
-            $behaviors: [repeatPanelMenuBehavior],
-          }),
-        });
-      });
+      for (const vizPanel of vizPanels) {
+        const queryRunner = getQueryRunnerFor(vizPanel);
+        if (queryRunner) {
+          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
+        }
+      }
     }
-
-    if (index === 0) {
-      rowToRepeat.setState({
-        $variables,
-        layout,
-      });
-      return rowToRepeat;
-    }
-
-    return rowToRepeat.clone({
-      key: getRepeatKeyForSceneObject(rowToRepeat, value),
-      $variables,
-      $behaviors: [],
-      layout,
-      isClone: true,
-    });
   }
 
   public performRepeat(force = false) {
@@ -167,6 +119,10 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
 
     this._clonedRows = [];
 
+    const originalRowKey = getOriginalKey(getLastKeyFromClone(rowToRepeat.state.key!));
+    const rowKeyAncestors = getAncestorsFromClone(rowToRepeat.state.key!);
+    const rowContent = rowToRepeat.getLayout();
+
     // when variable has no options (due to error or similar) it will not render any panels at all
     // adding a placeholder in this case so that there is at least empty panel that can display error
     const emptyVariablePlaceholderOption = {
@@ -178,13 +134,32 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
     const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
 
     // Loop through variable values and create repeats
-    for (let index = 0; index < variableValues.length; index++) {
-      this._clonedRows.push(
-        this._getRowClone(rowToRepeat, index, variableValues[index], variableTexts[index], variable)
-      );
+    for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
+      const isSourceRow = rowIndex === 0;
+      const rowClone = isSourceRow ? rowToRepeat : rowToRepeat.clone({ $behaviors: [] });
+
+      const rowCloneKey = joinCloneKeys(rowKeyAncestors, getCloneKey(originalRowKey, rowIndex));
+
+      rowClone.setState({
+        key: rowCloneKey,
+        $variables: new SceneVariableSet({
+          variables: [
+            new LocalValueVariable({
+              name: this.state.variableName,
+              value: variableValues[rowIndex],
+              text: String(variableTexts[rowIndex]),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
+            }),
+          ],
+        }),
+        layout: rowContent.cloneLayout?.(rowCloneKey, isSourceRow),
+      });
+
+      this._clonedRows.push(rowClone);
     }
 
-    updateLayout(layout, this._clonedRows, rowToRepeat);
+    updateLayout(layout, this._clonedRows, originalRowKey);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
@@ -193,7 +168,7 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
   public removeBehavior() {
     const row = this._getRow();
     const layout = this._getLayout();
-    const rows = getRowsFilterOutRepeatClones(layout, row);
+    const rows = getRowsFilterOutRepeatClones(layout, row.state.key!);
 
     layout.setState({ rows });
 
@@ -202,9 +177,9 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
   }
 }
 
-function updateLayout(layout: RowsLayoutManager, rows: RowItem[], rowToRepeat: RowItem) {
-  const allRows = getRowsFilterOutRepeatClones(layout, rowToRepeat);
-  const index = allRows.indexOf(rowToRepeat);
+function updateLayout(layout: RowsLayoutManager, rows: RowItem[], rowKey: string) {
+  const allRows = getRowsFilterOutRepeatClones(layout, rowKey);
+  const index = allRows.findIndex((row) => row.state.key!.includes(rowKey));
 
   if (index === -1) {
     throw new Error('RowItemRepeaterBehavior: Row not found in layout');
@@ -213,6 +188,6 @@ function updateLayout(layout: RowsLayoutManager, rows: RowItem[], rowToRepeat: R
   layout.setState({ rows: [...allRows.slice(0, index), ...rows, ...allRows.slice(index + 1)] });
 }
 
-function getRowsFilterOutRepeatClones(layout: RowsLayoutManager, rowToRepeat: RowItem) {
-  return layout.state.rows.filter((row) => !isRepeatedSceneObjectOf(row, rowToRepeat));
+function getRowsFilterOutRepeatClones(layout: RowsLayoutManager, rowKey: string) {
+  return layout.state.rows.filter((rows) => !isClonedKeyOf(getLastKeyFromClone(rows.state.key!), rowKey));
 }

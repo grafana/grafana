@@ -12,12 +12,14 @@ import {
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
+import { getLastKeyFromClone, isClonedKey, joinCloneKeys } from '../../utils/clone';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
+  getGridItemKeyForPanelId,
 } from '../../utils/utils';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
@@ -66,7 +68,7 @@ export class DefaultGridLayoutManager
       x: 0,
       y: 0,
       body: vizPanel,
-      key: `grid-item-${panelId}`,
+      key: getGridItemKeyForPanelId(panelId),
     });
 
     this.state.grid.setState({
@@ -75,7 +77,7 @@ export class DefaultGridLayoutManager
   }
 
   /**
-   * Adds a new emtpy row
+   * Adds a new empty row
    */
   public addNewRow(): SceneGridRow {
     const id = this.getNextPanelId();
@@ -323,6 +325,76 @@ export class DefaultGridLayoutManager
 
   public getDescriptor(): LayoutRegistryItem {
     return DefaultGridLayoutManager.getDescriptor();
+  }
+
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.clone({
+      grid: this.state.grid.clone({
+        isResizable: isSource && this.state.grid.state.isResizable,
+        isDraggable: isSource && this.state.grid.state.isDraggable,
+        children: this.state.grid.state.children.reduce<{ panelId: number; children: SceneGridItemLike[] }>(
+          (childrenAcc, child) => {
+            if (child instanceof DashboardGridItem) {
+              const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(childrenAcc.panelId));
+
+              const gridItem = child.clone({
+                key: gridItemKey,
+                body: child.state.body.clone({
+                  key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(childrenAcc.panelId++)),
+                }),
+                isDraggable: isSource && child.state.isDraggable,
+                isResizable: isSource && child.state.isResizable,
+              });
+
+              childrenAcc.children.push(gridItem);
+              return childrenAcc;
+            }
+
+            if (child instanceof SceneGridRow) {
+              const rowKey = joinCloneKeys(ancestorKey, getVizPanelKeyForPanelId(childrenAcc.panelId++));
+
+              const row = child.clone({
+                key: rowKey,
+                children: child.state.children.reduce<SceneGridItemLike[]>((rowAcc, rowChild) => {
+                  if (isClonedKey(getLastKeyFromClone(rowChild.state.key!))) {
+                    return rowAcc;
+                  }
+
+                  if (!(rowChild instanceof DashboardGridItem)) {
+                    rowAcc.push(rowChild.clone());
+                    return rowAcc;
+                  }
+
+                  const gridItemKey = joinCloneKeys(rowKey, getGridItemKeyForPanelId(childrenAcc.panelId));
+
+                  const gridItem = rowChild.clone({
+                    key: gridItemKey,
+                    isDraggable: isSource && rowChild.state.isDraggable,
+                    isResizable: isSource && rowChild.state.isResizable,
+                    body: rowChild.state.body.clone({
+                      key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(childrenAcc.panelId++)),
+                    }),
+                  });
+
+                  rowAcc.push(gridItem);
+                  return rowAcc;
+                }, []),
+                isDraggable: isSource && child.state.isDraggable,
+                isResizable: isSource && child.state.isResizable,
+              });
+
+              childrenAcc.children.push(row);
+
+              return childrenAcc;
+            }
+
+            childrenAcc.children.push(child.clone());
+            return childrenAcc;
+          },
+          { panelId: 0, children: [] }
+        ).children,
+      }),
+    });
   }
 
   public static getDescriptor(): LayoutRegistryItem {
