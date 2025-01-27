@@ -1,4 +1,4 @@
-import { get, uniqueId } from 'lodash';
+import { uniqueId } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
