@@ -125,8 +125,12 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   };
 
   try {
-    validateDashboardSchemaV2(dashboardSchemaV2);
-    return dashboardSchemaV2 as DashboardV2Spec;
+    // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
+    if (validateDashboardSchemaV2(dashboardSchemaV2)) {
+      return dashboardSchemaV2;
+    }
+    // should never reach this point, validation should throw an error
+    throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
   } catch (reason) {
     console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
     throw new Error('Error transforming dashboard to schema v2: ' + reason);

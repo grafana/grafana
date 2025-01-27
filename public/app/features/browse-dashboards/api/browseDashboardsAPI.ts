@@ -2,11 +2,13 @@ import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {
@@ -335,11 +337,20 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // save an existing dashboard
-    saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
+    saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand<Dashboard | DashboardV2Spec>>({
       queryFn: async (cmd) => {
         try {
-          const rsp = await getDashboardAPI().saveDashboard(cmd);
-          return { data: rsp };
+          // When we use the `useV2DashboardsAPI` flag, we can save 'v2' schema dashboards
+          if (config.featureToggles.useV2DashboardsAPI && isV2DashboardCommand(cmd)) {
+            const response = await getDashboardAPI('v2').saveDashboard(cmd);
+            return { data: response };
+          }
+
+          if (isV1DashboardCommand(cmd)) {
+            const rsp = await getDashboardAPI().saveDashboard(cmd);
+            return { data: rsp };
+          }
+          throw new Error('Invalid dashboard version');
         } catch (error) {
           return { error };
         }

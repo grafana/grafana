@@ -136,9 +136,13 @@ export class V2DashboardSerializer
   }
 
   getSaveAsModel(s: DashboardScene, options: SaveDashboardAsOptions) {
-    throw new Error('Method not implemented.');
-    // eslint-disable-next-line
-    return {} as DashboardV2Spec;
+    const saveModel = this.getSaveModel(s);
+    return {
+      ...saveModel,
+      title: options.title || '',
+      description: options.description || '',
+      tags: options.isNew || options.copyTags ? saveModel.tags : [],
+    };
   }
 
   getDashboardChangesFromScene(
@@ -166,7 +170,10 @@ export class V2DashboardSerializer
   }
 
   onSaveComplete(saveModel: DashboardV2Spec, result: SaveDashboardResponseDTO): void {
-    throw new Error('v2 schema: Method not implemented.');
+    this.initialSaveModel = {
+      ...saveModel,
+      id: result.id,
+    };
   }
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
