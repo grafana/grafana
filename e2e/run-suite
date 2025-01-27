@@ -27,7 +27,6 @@ declare -A env=(
 
 testFilesForSingleSuite="*.spec.ts"
 rootForEnterpriseSuite="./e2e/extensions-suite"
-rootForScenesBenchmarkSuite="./e2e/scenes/benchmarks"
 rootForOldArch="./e2e/old-arch"
 
 declare -A cypressConfig=(
@@ -103,11 +102,6 @@ case "$1" in
             "dev")
                 echo "Dev mode"
                 CMD="cypress open"
-                enterpriseSuite=$(basename "${args[2]}")
-                ;;
-         "benchmark")
-                echo "Benchmark"
-                cypressConfig[specPattern]=$rootForScenesBenchmarkSuite/$testFilesForSingleSuite
                 enterpriseSuite=$(basename "${args[2]}")
                 ;;
         esac

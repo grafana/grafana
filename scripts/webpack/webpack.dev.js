@@ -144,7 +144,7 @@ module.exports = (env = {}) => {
       new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
-          BENCHMARK: parseInt(env.benchmark, 10) === 1,
+          //BENCHMARK: parseInt(env.benchmark, 10) === 1,
         },
       }),
       new WebpackAssetsManifest({
