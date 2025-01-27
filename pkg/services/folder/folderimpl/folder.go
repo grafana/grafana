@@ -88,7 +88,7 @@ func ProvideService(
 		dashboardStore:         dashboardStore,
 		dashboardFolderStore:   folderStore,
 		store:                  store,
-		userService:            userService,
+		userService:            userService, // #TODO remove from the struct
 		features:               features,
 		accessControl:          ac,
 		bus:                    bus,
@@ -114,7 +114,7 @@ func ProvideService(
 			recourceClientProvider: unified.GetResourceClient,
 		}
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler)
+		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler

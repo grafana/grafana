@@ -181,7 +181,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		recourceClientProvider: f,
 	}
 
-	unifiedStore := ProvideUnifiedStore(k8sHandler)
+	// #TODO figure out what to do about passing in user service here
+	unifiedStore := ProvideUnifiedStore(k8sHandler, nil)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{

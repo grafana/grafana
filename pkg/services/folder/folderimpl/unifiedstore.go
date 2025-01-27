@@ -20,21 +20,24 @@ import (
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type FolderUnifiedStoreImpl struct {
-	log       log.Logger
-	k8sclient folderK8sHandler
+	log         log.Logger
+	k8sclient   folderK8sHandler
+	userService user.Service
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(k8sHandler *foldk8sHandler) *FolderUnifiedStoreImpl {
+func ProvideUnifiedStore(k8sHandler *foldk8sHandler, userService user.Service) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
-		k8sclient: k8sHandler,
-		log:       log.New("folder-store"),
+		k8sclient:   k8sHandler,
+		log:         log.New("folder-store"),
+		userService: userService,
 	}
 }
 
