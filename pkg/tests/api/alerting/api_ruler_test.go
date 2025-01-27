@@ -1529,7 +1529,7 @@ func TestIntegrationRuleCreate(t *testing.T) {
 						},
 						Annotations: map[string]string{
 							"Προμηθέας": "prom",      // Prometheus in Greek
-							"犬":         "Shiba Inu", // Dog in Japanese
+							"犬":        "Shiba Inu", // Dog in Japanese
 						},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
