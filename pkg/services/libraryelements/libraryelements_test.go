@@ -343,11 +343,11 @@ func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc fold
 		store := folderimpl.ProvideStore(sc.sqlStore)
 		folderSvc = folderimpl.ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
 			features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
-		t.Logf("Creating folder with title and UID %q", title)
+		t.Logf("Creating folder with title %q and UID uid_for_%s", title, title)
 	}
 	ctx := identity.WithRequester(context.Background(), &sc.user)
 	folder, err := folderSvc.Create(ctx, &folder.CreateFolderCommand{
-		OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: &sc.user,
+		OrgID: sc.user.OrgID, Title: title, UID: "uid_for_" + title, SignedInUser: &sc.user,
 	})
 	require.NoError(t, err)
 
