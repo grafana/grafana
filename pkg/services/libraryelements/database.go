@@ -79,15 +79,12 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 	return nil
 }
 
-func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (model.LibraryElementWithMeta, error) {
+func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUser identity.Requester, session *db.Session, uid string) (model.LibraryElementWithMeta, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
-		", coalesce(dashboard.title, 'General') AS folder_name" +
-		", coalesce(dashboard.uid, '') AS folder_uid" +
-		getFromLibraryElementDTOWithMeta(dialect) +
-		" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id" +
+		getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()) +
 		" WHERE le.uid=? AND le.org_id=?"
-	sess := session.SQL(sql, uid, orgID)
+	sess := session.SQL(sql, uid, signedInUser.GetOrgID())
 	err := sess.Find(&elements)
 	if err != nil {
 		return model.LibraryElementWithMeta{}, err
@@ -97,6 +94,19 @@ func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string
 	}
 	if len(elements) > 1 {
 		return model.LibraryElementWithMeta{}, fmt.Errorf("found %d elements, while expecting at most one", len(elements))
+	}
+
+	// get the folder title
+	f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+		OrgID:        elements[0].OrgID,
+		UID:          &elements[0].FolderUID,
+		SignedInUser: signedInUser,
+	})
+	if err == nil {
+		elements[0].FolderName = f.Title
+	} else {
+		// default to General if we cannot find the folder
+		elements[0].FolderName = "General"
 	}
 
 	return elements[0], nil
@@ -220,7 +230,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
 			return err
 		}
@@ -593,7 +603,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		return model.LibraryElementDTO{}, err
 	}
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		elementInDB, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		elementInDB, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
 			return err
 		}
@@ -610,7 +620,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				return model.ErrLibraryElementUIDTooLong
 			}
 
-			_, err := GetLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.GetOrgID())
+			_, err := l.GetLibraryElement(c, signedInUser, session, updateUID)
 			if !errors.Is(err, model.ErrLibraryElementNotFound) {
 				return model.ErrLibraryElementAlreadyExists
 			}
@@ -705,7 +715,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 	}
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
 			return err
 		}
@@ -832,7 +842,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			return err
 		}
 		for _, elementUID := range elementUIDs {
-			element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, elementUID, signedInUser.GetOrgID())
+			element, err := l.GetLibraryElement(c, signedInUser, session, elementUID)
 			if err != nil {
 				return err
 			}
