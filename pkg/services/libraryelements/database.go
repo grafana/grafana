@@ -710,7 +710,6 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		}
 		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
 		var folderUIDS = []string{"general", ""}
-		folderMap := map[string]string{}
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
 		}
