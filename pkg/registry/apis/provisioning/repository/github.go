@@ -223,6 +223,16 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
+	// Create .keep file if it is a directory
+	if strings.HasSuffix(path, "/") {
+		if data != nil {
+			return apierrors.NewBadRequest("data cannot be provided for a directory")
+		}
+
+		path = strings.TrimSuffix(path, "/") + "/.keep"
+		data = []byte{}
+	}
+
 	err := r.gh.CreateFile(ctx, owner, repo, path, ref, comment, data)
 	if errors.Is(err, pgh.ErrResourceAlreadyExists) {
 		return &apierrors.StatusError{
@@ -260,6 +270,9 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 		}
 
 		return fmt.Errorf("get content before file update: %w", err)
+	}
+	if file.IsDirectory() {
+		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
 	if err := r.gh.UpdateFile(ctx, owner, repo, path, ref, comment, file.GetSHA(), data); err != nil {

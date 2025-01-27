@@ -270,11 +270,13 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 		hashes[item.Path] = item.Hash
 	}
 
-	// FIXME: Add support for empty folders
 	for _, entry := range tree {
 		logger := logging.FromContext(ctx).With("file", entry.Path)
 		if !entry.Blob {
-			logger.Debug("ignoring non-blob entry")
+			// Support folders without resources yet
+			if _, err := r.createFolderPath(ctx, entry.Path); err != nil {
+				return fmt.Errorf("create folder path: %w", err)
+			}
 			continue
 		}
 

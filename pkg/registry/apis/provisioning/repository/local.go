@@ -201,6 +201,16 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 		return nil, err
 	}
 
+	path := strings.TrimPrefix(filePath, safepath.Clean(r.path))
+	if info.IsDir() {
+		return &FileInfo{
+			Path: path,
+			Modified: &metav1.Time{
+				Time: info.ModTime(),
+			},
+		}, nil
+	}
+
 	//nolint:gosec
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -213,7 +223,7 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 	}
 
 	return &FileInfo{
-		Path: strings.TrimPrefix(filePath, safepath.Clean(r.path)),
+		Path: path,
 		Data: data,
 		Hash: hash,
 		Modified: &metav1.Time{
@@ -296,8 +306,18 @@ func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref 
 		return apierrors.NewAlreadyExists(provisioning.RepositoryResourceInfo.GroupResource(), inputUnsafePath)
 	}
 
+	if strings.HasSuffix(sanitisedPath, "/") {
+		if data != nil {
+			return apierrors.NewBadRequest("data cannot be provided for a directory")
+		}
+
+		if err := os.MkdirAll(sanitisedPath, 0700); err != nil {
+			return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
+		}
+	}
+
 	if err := os.MkdirAll(path.Dir(sanitisedPath), 0700); err != nil {
-		return apierrors.NewInternalError(fmt.Errorf("failed to create file: %w", err))
+		return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
 	}
 
 	return os.WriteFile(sanitisedPath, data, 0600)
@@ -311,6 +331,10 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	path, err := safepath.Join(r.path, path)
 	if err != nil {
 		return err
+	}
+
+	if strings.HasSuffix(path, "/") {
+		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {

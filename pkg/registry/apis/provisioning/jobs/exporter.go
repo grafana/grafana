@@ -75,6 +75,34 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
 
+	var ref string
+	if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
+		ref = r.repository.Config().Spec.GitHub.Branch
+	}
+	ns := r.repository.Config().GetNamespace()
+	logger = logger.With("ref", ref, "namespace", ns)
+
+	for _, folder := range folders.tree {
+		folderPath := folders.DirPath(folder)
+		logger := logger.With("path", folderPath)
+		_, err = r.repository.Read(ctx, folderPath, ref)
+
+		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			logger.Error("failed to check if folder exists before writing", "error", err)
+			return nil, fmt.Errorf("failed to check if folder exists before writing: %w", err)
+		} else if err != nil { // ErrFileNotFound
+			err = r.repository.Create(ctx, folderPath, ref, nil, "export of folder `"+folderPath+"` in namespace "+ns)
+		} else {
+			logger.Info("folder already exists")
+		}
+
+		if err != nil {
+			logger.Error("failed to write a folder in repository", "error", err)
+			return nil, fmt.Errorf("failed to write folder in repo: %w", err)
+		}
+		logger.Debug("successfully exported folder")
+	}
+
 	err = progress(provisioning.JobStatus{
 		State:   provisioning.JobStateWorking,
 		Message: "writing dashboards...",
@@ -116,12 +144,6 @@ func (r *exporter) Export(ctx context.Context,
 		}
 		fileName := filepath.Join(folders.DirPath(folder), name+".yaml")
 		logger = logger.With("file", fileName)
-
-		var ref string
-		if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
-			ref = r.repository.Config().Spec.GitHub.Branch
-		}
-		logger = logger.With("ref", ref)
 
 		_, err = r.repository.Read(ctx, fileName, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
