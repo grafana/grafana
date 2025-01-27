@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/authlib/cache"
 	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -173,16 +174,10 @@ func TestService_checkPermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			folderCache := localcache.New(shortCacheTTL, shortCleanupInterval)
-			folderCache.Set(folderCacheKey("default"), newFolderTree(tc.folders), 0)
-			tc.check.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
+			s := setupService()
 
-			s := &Service{
-				logger:      log.NewNopLogger(),
-				tracer:      tracing.NewNoopTracerService(),
-				mapper:      newMapper(),
-				folderCache: folderCache,
-			}
+			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
+			tc.check.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.checkPermission(context.Background(), getScopeMap(tc.permissions), &tc.check)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
@@ -226,21 +221,16 @@ func TestService_getUserTeams(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			s := setupService()
+
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
 			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError}
+			s.identityStore = identityStore
 
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams, 0)
-			}
-
-			s := &Service{
-				teamCache:     cacheService,
-				identityStore: identityStore,
-				logger:        log.New("test"),
-				tracer:        tracing.NewNoopTracerService(),
+				s.teamCache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams)
 			}
 
 			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
@@ -308,22 +298,16 @@ func TestService_getUserBasicRole(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			s := setupService()
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid", ID: 1}
 			store := &fakeStore{basicRole: &tc.basicRole, err: tc.expectedError}
+			s.store = store
+			s.permissionStore = store
 
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), tc.expectedRole, 0)
-			}
-
-			s := &Service{
-				basicRoleCache:  cacheService,
-				store:           store,
-				permissionStore: store,
-				logger:          log.New("test"),
-				tracer:          tracing.NewNoopTracerService(),
+				s.basicRoleCache.Set(ctx, userBasicRoleCacheKey(ns.Value, userIdentifiers.UID), tc.expectedRole)
 			}
 
 			role, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
@@ -379,13 +363,14 @@ func TestService_getUserPermissions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
+			s := setupService()
+
 			userID := &store.UserIdentifiers{UID: "test-uid", ID: 112}
 			ns := claims.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 			action := "dashboards:read"
 
-			cacheService := localcache.New(shortCacheTTL, shortCleanupInterval)
 			if tc.cacheHit {
-				cacheService.Set(userPermCacheKey(ns.Value, userID.UID, action), tc.expectedPerms, 0)
+				s.permCache.Set(ctx, userPermCacheKey(ns.Value, userID.UID, action), tc.expectedPerms)
 			}
 
 			store := &fakeStore{
@@ -393,22 +378,11 @@ func TestService_getUserPermissions(t *testing.T) {
 				basicRole:       &store.BasicRole{Role: "viewer", IsAdmin: false},
 				userPermissions: tc.permissions,
 			}
+			s.store = store
+			s.permissionStore = store
+			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}}
 
-			s := &Service{
-				store:           store,
-				permissionStore: store,
-				identityStore:   &fakeIdentityStore{teams: []int64{1, 2}},
-				logger:          log.NewNopLogger(),
-				tracer:          tracing.NewNoopTracerService(),
-				mapper:          newMapper(),
-				idCache:         localcache.New(longCacheTTL, longCleanupInterval),
-				permCache:       cacheService,
-				sf:              new(singleflight.Group),
-				basicRoleCache:  localcache.New(longCacheTTL, longCleanupInterval),
-				teamCache:       localcache.New(shortCacheTTL, shortCleanupInterval),
-			}
-
-			perms, err := s.getUserPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
+			perms, err := s.getIdentityPermissions(ctx, ns, claims.TypeUser, userID.UID, action)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
 			for _, perm := range tc.permissions {
@@ -592,15 +566,11 @@ func TestService_listPermission(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			folderCache := localcache.New(shortCacheTTL, shortCleanupInterval)
-			folderCache.Set(folderCacheKey("default"), newFolderTree(tc.folders), 0)
-
-			s := &Service{
-				logger:      log.New("test"),
-				folderCache: folderCache,
-				mapper:      newMapper(),
-				tracer:      tracing.NewNoopTracerService(),
+			s := setupService()
+			if tc.folders != nil {
+				s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			}
+
 			tc.list.Namespace = claims.NamespaceInfo{Value: "default", OrgID: 1}
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)
@@ -608,6 +578,27 @@ func TestService_listPermission(t *testing.T) {
 			assert.ElementsMatch(t, tc.expectedDashboards, got.Items)
 			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
 		})
+	}
+}
+
+func setupService() *Service {
+	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
+	logger := log.New("authz-rbac-service")
+	fStore := &fakeStore{}
+	return &Service{
+		logger:          logger,
+		mapper:          newMapper(),
+		tracer:          tracing.NewNoopTracerService(),
+		metrics:         newMetrics(nil),
+		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, longCacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		store:           fStore,
+		permissionStore: fStore,
+		identityStore:   &fakeIdentityStore{},
+		sf:              new(singleflight.Group),
 	}
 }
 
