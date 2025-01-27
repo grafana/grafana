@@ -341,6 +341,21 @@
     },
     {
       "metadata": {
+        "name": "alertingSaveStateCompressed",
+        "resourceVersion": "1737472824047",
+        "creationTimestamp": "2025-01-17T18:17:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-21 15:20:24.047499 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the compressed protobuf-based alert state storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingSaveStatePeriodic",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-23T16:03:30Z"
@@ -2721,7 +2736,8 @@
       "metadata": {
         "name": "onPremToCloudMigrationsAuthApiMig",
         "resourceVersion": "1732033809064",
-        "creationTimestamp": "2024-11-21T18:46:06Z"
+        "creationTimestamp": "2024-11-21T18:46:06Z",
+        "deletionTimestamp": "2025-01-22T11:00:18Z"
       },
       "spec": {
         "description": "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",

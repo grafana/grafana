@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/state/helpers.ts
 import { AnyAction } from 'redux';
 
-import { llms } from '@grafana/experimental';
+import { openai, vector } from '@grafana/llm';
 import { reportInteraction } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../../../datasource';
@@ -31,11 +31,7 @@ interface TemplateSearchResult {
   promql: string | null;
 }
 
-export function getExplainMessage(
-  query: string,
-  metric: string,
-  datasource: PrometheusDatasource
-): llms.openai.Message[] {
+export function getExplainMessage(query: string, metric: string, datasource: PrometheusDatasource): openai.Message[] {
   let metricMetadata = '';
   let metricType = '';
 
@@ -84,7 +80,7 @@ function getSuggestMessages({
   metricType,
   labels,
   templates,
-}: SuggestUserPromptParams): llms.openai.Message[] {
+}: SuggestUserPromptParams): openai.Message[] {
   return [
     { role: 'system', content: SuggestSystemPrompt },
     { role: 'user', content: GetSuggestUserPrompt({ promql, question, metricType, labels, templates }) },
@@ -112,13 +108,13 @@ export async function promQailExplain(
   const promptMessages = getExplainMessage(suggestedQuery, query.metric, datasource);
   const interactionToUpdate = interaction;
 
-  return llms.openai
+  return openai
     .streamChatCompletions({
       model: OPENAI_MODEL_NAME,
       messages: promptMessages,
       temperature: 0,
     })
-    .pipe(llms.openai.accumulateContent())
+    .pipe(openai.accumulateContent())
     .subscribe((response) => {
       const updatedSuggestions = interactionToUpdate.suggestions.map((sg: QuerySuggestion, sidx: number) => {
         if (suggIdx === sidx) {
@@ -274,8 +270,8 @@ function guessMetricFamily(metric: string): string {
 export async function isLLMPluginEnabled(): Promise<boolean> {
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  const openaiEnabled = llms.openai.health().then((response) => response.ok);
-  const vectorEnabled = llms.vector.health().then((response) => response.ok);
+  const openaiEnabled = openai.health().then((response) => response.ok);
+  const vectorEnabled = vector.health().then((response) => response.ok);
   // combine 2 promises
   return Promise.all([openaiEnabled, vectorEnabled]).then((results) => {
     return results.every((result) => result);
@@ -392,13 +388,13 @@ export async function promQailSuggest(
       templates: resultsString,
     });
 
-    return llms.openai
+    return openai
       .streamChatCompletions({
         model: OPENAI_MODEL_NAME,
         messages: promptMessages,
         temperature: 0.5,
       })
-      .pipe(llms.openai.accumulateContent())
+      .pipe(openai.accumulateContent())
       .subscribe((response) => {
         const payload = {
           idx,
