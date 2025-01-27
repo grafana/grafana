@@ -63,7 +63,7 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 		return nil, err
 	}
 
-	folder, err := ss.UnstructuredToLegacyFolder(out)
+	folder, err := ss.UnstructuredToLegacyFolder(ctx, out)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		return nil, err
 	}
 
-	return ss.UnstructuredToLegacyFolder(out)
+	return ss.UnstructuredToLegacyFolder(ctx, out)
 }
 
 // If WithFullpath is true it computes also the full path of a folder.
@@ -181,7 +181,7 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 		return nil, dashboards.ErrFolderNotFound
 	}
 
-	return ss.UnstructuredToLegacyFolder(out)
+	return ss.UnstructuredToLegacyFolder(ctx, out)
 }
 
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -209,7 +209,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 			return nil, err
 		}
 
-		folder, err := ss.UnstructuredToLegacyFolder(out)
+		folder, err := ss.UnstructuredToLegacyFolder(ctx, out)
 		if err != nil {
 			return nil, err
 		}
@@ -248,7 +248,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	hits := make([]*folder.Folder, 0)
 	for _, item := range out.Items {
 		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(&item)
+		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
 			return nil, fmt.Errorf("unable covert unstructured item to legacy folder %w", err)
 		}
@@ -348,7 +348,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	m := map[string]*folder.Folder{}
 	for _, item := range out.Items {
 		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(&item)
+		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
 			return nil, fmt.Errorf("unable covert unstructured item to legacy folder %w", err)
 		}
@@ -408,7 +408,7 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 	nodes := map[string]*folder.Folder{}
 	for _, item := range out.Items {
 		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(&item)
+		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
 			return nil, fmt.Errorf("unable covert unstructured item to legacy folder %w", err)
 		}

@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.Folder, error) {
+func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		return nil, err
