@@ -33,7 +33,6 @@ type operation int
 const (
 	operationCreate operation = iota
 	operationUpdate
-	operationDelete
 )
 
 const maxAttempts = 3
@@ -102,7 +101,6 @@ func NewRepositoryController(
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    rc.addRepository,
 		UpdateFunc: rc.updateRepository,
-		DeleteFunc: rc.deleteRepository,
 	})
 	if err != nil {
 		return nil, err
@@ -169,10 +167,6 @@ func (rc *RepositoryController) addRepository(obj interface{}) {
 
 func (rc *RepositoryController) updateRepository(oldObj, newObj interface{}) {
 	rc.enqueueRepository(operationUpdate, newObj)
-}
-
-func (rc *RepositoryController) deleteRepository(obj interface{}) {
-	rc.enqueueRepository(operationDelete, obj)
 }
 
 // processNextWorkItem deals with one key off the queue.
