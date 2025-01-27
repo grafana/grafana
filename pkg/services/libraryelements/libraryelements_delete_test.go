@@ -72,9 +72,7 @@ func TestDeleteLibraryElement(t *testing.T) {
 			dash := dashboards.Dashboard{
 				Title: "Testing deleteHandler ",
 				Data:  simplejson.NewFromAny(dashJSON),
-				OrgID: sc.user.OrgID,
 			}
-
 			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
@@ -85,7 +83,7 @@ func TestDeleteLibraryElement(t *testing.T) {
 			require.Equal(t, 403, resp.Status())
 		})
 
-	scenarioWithPanel(t, "When an admin tries to delete a library panel that is connected to a non-existant dashboard, it should succeed",
+	scenarioWithPanel(t, "When an admin tries to delete a library panel that is connected to a non-existent dashboard, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 9999999)
 			require.NoError(t, err)
