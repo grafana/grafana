@@ -14,8 +14,17 @@ import {
   VariableValueSingle,
 } from '@grafana/scenes';
 
+import {
+  containsCloneKey,
+  getAncestorsFromCloneTree,
+  getCloneKey,
+  getLastKeyFromCloneTree,
+  getOriginalKey,
+  isClonedKey,
+  isClonedKeyOf,
+  joinCloneKeys,
+} from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { getRepeatKeyForSceneObject, isRepeatedSceneObjectOf } from '../layouts-shared/repeatUtils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -48,10 +57,14 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const layout = this._getLayout();
     const originalRow = this._getRow();
+    const originalRowKey = getOriginalKey(getLastKeyFromCloneTree(originalRow.state.key!));
+    const originalRowNonClonedPanels = originalRow.state.children.filter(
+      (child) => !isClonedKey(getLastKeyFromCloneTree(child.state.key!))
+    );
 
     const sub = layout.subscribeToState(() => {
-      const repeatedRows = layout.state.children.filter(
-        (child) => child instanceof SceneGridRow && isRepeatedSceneObjectOf(child, originalRow)
+      const repeatedRows = layout.state.children.filter((child) =>
+        isClonedKeyOf(getLastKeyFromCloneTree(child.state.key!), originalRowKey)
       );
 
       // go through cloned rows, search for panels that are not clones
@@ -60,24 +73,31 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           continue;
         }
 
+        const rowNonClonedPanels = row.state.children.filter(
+          (child) => !isClonedKey(getLastKeyFromCloneTree(child.state.key!))
+        );
+
         // if no differences in row children compared to original, then no new panel added to clone
-        if (row.state.children.length === originalRow.state.children.length) {
+        if (rowNonClonedPanels.length === originalRowNonClonedPanels.length) {
           continue;
         }
 
         // if there are differences, find the new panel, move it to the original and perform repeat
-        const gridItem = row.state.children.find((gridItem) => !gridItem.state.key?.includes('clone'));
+        const gridItem = rowNonClonedPanels.find((gridItem) => !containsCloneKey(gridItem.state.key!));
+
         if (gridItem) {
           const newGridItem = gridItem.clone();
+
           row.setState({ children: row.state.children.filter((item) => item !== gridItem) });
 
           // if we are moving a panel from the origin row to a clone row, we just return
-          // this means we are modifying the origin row, retriggering the repeat and losing that panel
+          // this means we are modifying the origin row, re-triggering the repeat and losing that panel
           if (originalRow.state.children.find((item) => item.state.key === newGridItem.state.key)) {
             return;
           }
 
           originalRow.setState({ children: [...originalRow.state.children, newGridItem] });
+
           this.performRepeat(true);
         }
       }
@@ -135,6 +155,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     this._prevRepeatValues = values;
 
     this._clonedRows = [];
+
+    const originalRowKey = getOriginalKey(getLastKeyFromCloneTree(rowToRepeat.state.key!));
+    const rowKeyAncestors = getAncestorsFromCloneTree(rowToRepeat.state.key!);
     const rowContent = rowToRepeat.state.children;
     const rowContentHeight = getRowContentHeight(rowContent);
 
@@ -150,108 +173,73 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
     const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
 
-    // Loop through variable values and create repeats
-    for (let index = 0; index < variableValues.length; index++) {
-      const children: SceneGridItemLike[] = [];
-      const localValue = variableValues[index];
+    for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
+      const isSourceRow = rowIndex === 0;
+      const rowClone = isSourceRow
+        ? rowToRepeat
+        : rowToRepeat.clone({
+            y: (rowToRepeat.state.y ?? 0) + rowContentHeight * rowIndex + rowIndex,
+            $behaviors: [],
+            actions: undefined,
+          });
 
-      // Loop through panels inside row
-      for (const source of rowContent) {
-        const sourceItemY = source.state.y ?? 0;
-        const itemY = sourceItemY + (rowContentHeight + 1) * index;
-        const itemKey = index > 0 ? getRepeatKeyForSceneObject(source, localValue) : source.state.key;
-        const itemClone = source.clone({ key: itemKey, y: itemY });
+      const rowCloneKey = joinCloneKeys(rowKeyAncestors, getCloneKey(originalRowKey, rowIndex));
 
-        // Make sure all the child scene objects have unique keys
-        // and add proper menu to the repeated panel
-        if (index > 0) {
-          ensureUniqueKeys(itemClone, localValue);
-
-          //disallow clones to be dragged around or out of the row
-          if (itemClone instanceof DashboardGridItem) {
-            itemClone.setState({ isDraggable: false });
-          }
-        }
-
-        children.push(itemClone);
-
-        if (maxYOfRows < itemY + itemClone.state.height!) {
-          maxYOfRows = itemY + itemClone.state.height!;
-        }
-      }
-
-      const rowClone = this.getRowClone(
-        rowToRepeat,
-        index,
-        localValue,
-        variableTexts[index],
-        rowContentHeight,
-        children,
-        variable
-      );
-      this._clonedRows.push(rowClone);
-    }
-
-    updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat);
-
-    // Used from dashboard url sync
-    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
-  }
-
-  getRowClone(
-    rowToRepeat: SceneGridRow,
-    index: number,
-    value: VariableValueSingle,
-    text: VariableValueSingle,
-    rowContentHeight: number,
-    children: SceneGridItemLike[],
-    variable: MultiValueVariable
-  ): SceneGridRow {
-    if (index === 0) {
-      rowToRepeat.setState({
-        // not activated
+      rowClone.setState({
+        key: rowCloneKey,
         $variables: new SceneVariableSet({
           variables: [
             new LocalValueVariable({
               name: this.state.variableName,
-              value,
-              text: String(text),
+              value: variableValues[rowIndex],
+              text: String(variableTexts[rowIndex]),
               isMulti: variable.state.isMulti,
               includeAll: variable.state.includeAll,
             }),
           ],
         }),
-        children,
+        children: [],
       });
-      return rowToRepeat;
+
+      const children: SceneGridItemLike[] = [];
+
+      for (const sourceItem of rowContent) {
+        const sourceItemKey = getLastKeyFromCloneTree(sourceItem.state.key!);
+        const sourceItemY = sourceItem.state.y ?? 0;
+
+        const cloneItemKey = joinCloneKeys(rowCloneKey, sourceItemKey);
+        const cloneItemY = sourceItemY + (rowContentHeight + 1) * rowIndex;
+
+        const cloneItem = sourceItem.clone({
+          key: cloneItemKey,
+          y: cloneItemY,
+          isDraggable: !isSourceRow && sourceItem instanceof DashboardGridItem ? false : sourceItem.state.isDraggable,
+        });
+
+        ensureUniqueKeys(cloneItem, cloneItemKey);
+
+        children.push(cloneItem);
+
+        if (maxYOfRows < cloneItemY + cloneItem.state.height!) {
+          maxYOfRows = cloneItemY + cloneItem.state.height!;
+        }
+      }
+
+      rowClone.setState({ children });
+
+      this._clonedRows.push(rowClone);
     }
 
-    const sourceRowY = rowToRepeat.state.y ?? 0;
+    updateLayout(layout, this._clonedRows, maxYOfRows, originalRowKey);
 
-    return rowToRepeat.clone({
-      key: getRepeatKeyForSceneObject(rowToRepeat, value),
-      $variables: new SceneVariableSet({
-        variables: [
-          new LocalValueVariable({
-            name: this.state.variableName,
-            value,
-            text: String(text),
-            isMulti: variable.state.isMulti,
-            includeAll: variable.state.includeAll,
-          }),
-        ],
-      }),
-      $behaviors: [],
-      children,
-      y: sourceRowY + rowContentHeight * index + index,
-      actions: undefined,
-    });
+    // Used from dashboard url sync
+    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   public removeBehavior() {
     const row = this._getRow();
     const layout = this._getLayout();
-    const children = getLayoutChildrenFilterOutRepeatClones(this._getLayout(), this._getRow());
+    const children = getLayoutChildrenFilterOutRepeatClones(layout, row.state.key!);
 
     layout.setState({ children: children });
 
@@ -280,9 +268,9 @@ function getRowContentHeight(panels: SceneGridItemLike[]): number {
   return maxY - minY;
 }
 
-function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows: number, rowToRepeat: SceneGridRow) {
-  const allChildren = getLayoutChildrenFilterOutRepeatClones(layout, rowToRepeat);
-  const index = allChildren.indexOf(rowToRepeat);
+function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows: number, rowKey: string) {
+  const allChildren = getLayoutChildrenFilterOutRepeatClones(layout, rowKey);
+  const index = allChildren.findIndex((child) => child.state.key!.includes(rowKey));
 
   if (index === -1) {
     throw new Error('RowRepeaterBehavior: Parent row not found in layout children');
@@ -310,13 +298,14 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
   layout.setState({ children: newChildren });
 }
 
-function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowToRepeat: SceneGridRow) {
-  return layout.state.children.filter((child) => !isRepeatedSceneObjectOf(child, rowToRepeat));
+function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowKey: string) {
+  return layout.state.children.filter((child) => !isClonedKeyOf(getLastKeyFromCloneTree(child.state.key!), rowKey));
 }
 
-function ensureUniqueKeys(item: SceneGridItemLike, localValue: VariableValueSingle) {
+function ensureUniqueKeys(item: SceneGridItemLike, ancestors: string) {
   item.forEachChild((child) => {
-    child.setState({ key: `${child.state.key}-clone-${localValue}` });
-    ensureUniqueKeys(child, localValue);
+    const key = joinCloneKeys(ancestors, child.state.key!);
+    child.setState({ key });
+    ensureUniqueKeys(child, key);
   });
 }

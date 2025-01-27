@@ -13,10 +13,9 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { CLONE_KEY, CLONE_SEPARATOR, isInClonedKeyTree } from '../../utils/clone';
 import { activateFullSceneTree } from '../../utils/test-utils';
-import { isReadOnlyClone } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { getRepeatKey } from '../layouts-shared/repeatUtils';
 
 import { RepeatDirection } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
@@ -55,24 +54,31 @@ describe('RowRepeaterBehavior', () => {
 
       // Verify that first row still has repeat behavior
       const row1 = grid.state.children[1] as SceneGridRow;
+      expect(row1.state.key).toBe(`row-1${CLONE_KEY}0`);
       expect(row1.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
       expect(row1.state.$variables!.state.variables[0].getValue()).toBe('A1');
       expect(row1.state.actions).toBeDefined();
 
+      const gridItemRow1 = row1.state.children[0] as SceneGridItem;
+      expect(gridItemRow1.state.key!).toBe(`${row1.state.key}${CLONE_SEPARATOR}griditem-1`);
+      expect(gridItemRow1.state.body?.state.key).toBe(`${gridItemRow1.state.key}${CLONE_SEPARATOR}canvas-1`);
+
       const row2 = grid.state.children[2] as SceneGridRow;
+      expect(row2.state.key).toBe(`row-1${CLONE_KEY}1`);
+      expect(row2.state.$behaviors).toEqual([]);
       expect(row2.state.$variables!.state.variables[0].getValueText?.()).toBe('B');
       expect(row2.state.actions).toBeUndefined();
 
-      // Should give repeated panels unique keys
-      const gridItem = row2.state.children[0] as SceneGridItem;
-      expect(gridItem.state.body?.state.key).toBe(getRepeatKey('canvas-1', 'B1'));
+      const gridItemRow2 = row2.state.children[0] as SceneGridItem;
+      expect(gridItemRow2.state.key!).toBe(`${row2.state.key}${CLONE_SEPARATOR}griditem-1`);
+      expect(gridItemRow2.state.body?.state.key).toBe(`${gridItemRow2.state.key}${CLONE_SEPARATOR}canvas-1`);
     });
 
     it('Repeated rows should be read only', () => {
       const row1 = grid.state.children[1] as SceneGridRow;
       const row2 = grid.state.children[2] as SceneGridRow;
-      expect(isReadOnlyClone(row1)).toBe(false);
-      expect(isReadOnlyClone(row2)).toBe(true);
+      expect(isInClonedKeyTree(row1.state.key!)).toBe(false);
+      expect(isInClonedKeyTree(row2.state.key!)).toBe(true);
     });
 
     it('Should update all rows when a panel is added to a clone', async () => {
@@ -210,6 +216,7 @@ function buildScene(
   const grid = new SceneGridLayout({
     children: [
       new SceneGridItem({
+        key: 'griditem-no-row',
         x: 0,
         y: 0,
         width: 24,
@@ -219,6 +226,7 @@ function buildScene(
         }),
       }),
       new SceneGridRow({
+        key: 'row-1',
         x: 0,
         y: 10,
         width: 24,
@@ -227,6 +235,7 @@ function buildScene(
         $behaviors: [repeatBehavior],
         children: [
           new SceneGridItem({
+            key: 'griditem-1',
             x: 0,
             y: 11,
             width: 24,
@@ -239,12 +248,12 @@ function buildScene(
         ],
       }),
       new SceneGridRow({
+        key: 'row-2',
         x: 0,
         y: 16,
         width: 24,
         height: 5,
         title: 'Row at the bottom',
-
         children: [
           new SceneGridItem({
             key: 'griditem-2',
