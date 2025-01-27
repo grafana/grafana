@@ -166,6 +166,10 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
+			// add a connection where the dashboard doesn't exist. Shouldn't be returned in the list
+			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, 99999999)
+			require.NoError(t, err)
+
 			var expected = func(res model.LibraryElementConnectionsResponse) model.LibraryElementConnectionsResponse {
 				return model.LibraryElementConnectionsResponse{
 					Result: []model.LibraryElementConnectionDTO{
