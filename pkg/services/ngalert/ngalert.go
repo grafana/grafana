@@ -419,7 +419,8 @@ func (ng *AlertNG) init() error {
 		Log:                            log.New("ngalert.state.manager"),
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
-	stateManager := ng.initStateManager(stateManagerCfg)
+	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
+	stateManager := state.NewManager(stateManagerCfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -513,12 +514,6 @@ func (ng *AlertNG) init() error {
 	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
-func (ng *AlertNG) initStateManager(cfg state.ManagerCfg) *state.Manager {
-	instanceStore := initInstanceStore(ng.SQLStore, ng.Log.New("ngalert.state.instancestore"), ng.FeatureToggles)
-	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, cfg, instanceStore, ng.FeatureToggles)
-	return state.NewManager(cfg, statePersister)
-}
-
 func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) state.InstanceStore {
 	var instanceStore state.InstanceStore
 
@@ -548,7 +543,7 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	return instanceStore
 }
 
-func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, instanceStore state.InstanceStore, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
+func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
 	var statePersister state.StatePersister
 

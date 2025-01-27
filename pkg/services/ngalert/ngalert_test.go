@@ -249,7 +249,6 @@ func TestInitStatePersister(t *testing.T) {
 		StatePeriodicSaveInterval: 1 * time.Minute,
 	}
 	cfg := state.ManagerCfg{}
-	instanceStore := &mockInstanceStore{}
 
 	tests := []struct {
 		name                       string
@@ -287,7 +286,7 @@ func TestInitStatePersister(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			statePersister := initStatePersister(ua, cfg, instanceStore, tt.ft)
+			statePersister := initStatePersister(ua, cfg, tt.ft)
 			assert.IsType(t, tt.expectedStatePersisterType, statePersister)
 		})
 	}
