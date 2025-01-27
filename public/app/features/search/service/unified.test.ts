@@ -10,7 +10,7 @@ describe('Unified Storage Searcher', () => {
         location: '/dashboards/1',
         folder: 'General',
         tags: ['monitoring', 'performance'],
-        field: { errors_today: 1},
+        field: { errors_today: 1 },
         url: '/dashboards/1',
       },
       {
@@ -20,7 +20,7 @@ describe('Unified Storage Searcher', () => {
         location: '/dashboards/1',
         folder: 'General',
         tags: ['monitoring', 'performance'],
-        field: { errors_today: 2},
+        field: { errors_today: 2 },
         url: '/dashboards/1',
       },
     ];
@@ -30,7 +30,7 @@ describe('Unified Storage Searcher', () => {
       hits: mockHits,
       facets: {},
     };
-    const results = toDashboardResults(mockResponse, "errors_today");
+    const results = toDashboardResults(mockResponse, 'errors_today');
 
     expect(results.length).toBe(2);
     const sprinklesField = results.fields[10];

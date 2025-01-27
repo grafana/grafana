@@ -300,9 +300,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     // display null field values as "-"
     let field = hit.field;
     if (hit.field) {
-      field = Object.fromEntries(
-          Object.entries(hit.field).map(([key, value]) => [key, value == null ? "-" : value])
-        );
+      field = Object.fromEntries(Object.entries(hit.field).map(([key, value]) => [key, value == null ? '-' : value]));
     }
 
     return {
