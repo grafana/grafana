@@ -20,7 +20,7 @@ const loadingFrameName = 'Loading';
 
 const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
 
-type SearchHit = {
+export type SearchHit = {
   resource: string; // dashboards | folders
   name: string;
   title: string;
@@ -28,13 +28,13 @@ type SearchHit = {
   folder: string;
   tags: string[];
 
-  field: Record<string, string|number>; // extra fields from the backend - sort fields included here as well
+  field: object; // extra fields from the backend - sort fields included here as well
 
   // calculated in the frontend
   url: string;
 };
 
-type SearchAPIResponse = {
+export type SearchAPIResponse = {
   totalHits: number;
   hits: SearchHit[];
   facets?: {
@@ -281,7 +281,7 @@ function getSortFieldDisplayName(name: string) {
   return name;
 }
 
-function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
+export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFrame {
   const hits = rsp.hits;
   if (hits.length < 1) {
     return { fields: [], length: 0 };
