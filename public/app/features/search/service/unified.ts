@@ -219,6 +219,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.sort) {
       const sort = query.sort.replace('_sort', '').replace('name', 'title');
       uri += `&sort=${sort}`;
+      let sortField = sort;
+      if (sort[0] === '-') {
+        sortField = sort.substring(1);
+      }
+      uri += `&field=${sortField}`; // we want to the sort field to be included in the response
     }
 
     if (query.name?.length) {

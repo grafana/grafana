@@ -532,16 +532,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
 
-	// Sort fields need to be included as results in the hits
-	allFields := []string{}
-	allFields = append(allFields, req.Fields...)
-	for _, sort := range req.SortBy {
-		allFields = append(allFields, sort.Field)
-	}
-
 	// Convert resource-specific fields to bleve fields (just considers dashboard fields for now)
-	fields := make([]string, 0, len(allFields))
-	for _, f := range allFields {
+	fields := make([]string, 0, len(req.Fields))
+	for _, f := range req.Fields {
 		if slices.Contains(DashboardFields(), f) {
 			f = "fields." + f
 		}
