@@ -19,7 +19,6 @@ export function useMultiInputAutoSize(inputValue: string) {
 
     const fontSize = window.getComputedStyle(inputRef.current).fontSize;
     const textWidth = measureText(inputRef.current.value || '', parseInt(fontSize, 10)).width;
-    const measureInputWidth = inputRef.current.getBoundingClientRect().width || 0;
 
     if (textWidth < initialInputWidth.current) {
       // Let input fill all space before resizing
