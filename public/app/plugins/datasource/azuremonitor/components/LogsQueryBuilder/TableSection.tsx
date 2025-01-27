@@ -52,10 +52,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
     const selectedTableDetails = tableOptions.find((t) => t.value === selected.value);
     if (selectedTableDetails && 'columns' in selectedTableDetails) {
-      const newColumnOptions: AzureLogsColumnSchema[] = (selectedTableDetails.columns).map((col: AzureLogsColumnSchema) => ({
-        label: toColumnName(col),
-        value: col.name,
-      }));
+      const newColumnOptions: AzureLogsColumnSchema[] = selectedTableDetails.columns.map(
+        (col: AzureLogsColumnSchema) => ({
+          label: toColumnName(col),
+          value: col.name,
+        })
+      );
       setColumnOptions(newColumnOptions);
     } else {
       setColumnOptions([]);

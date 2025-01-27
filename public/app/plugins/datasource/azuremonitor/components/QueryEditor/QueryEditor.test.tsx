@@ -105,7 +105,7 @@ describe('Azure Monitor QueryEditor', () => {
         datasource: mockQuery.datasource,
         queryType: AzureQueryType.LogAnalytics,
       })
-    );    
+    );
   });
 
   it('displays error messages from frontend Azure calls', async () => {
