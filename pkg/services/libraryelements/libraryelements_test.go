@@ -229,6 +229,7 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 				Title: "Testing create element",
 				Data:  simplejson.NewFromAny(map[string]any{}),
 			}
+			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
@@ -518,7 +519,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
 			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, cfg, nil, tracing.InitializeTracerForTest())
 		alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-		folderSvc.RegisterService(alertStore)
+		require.NoError(t, err)
+		err = folderSvc.RegisterService(alertStore)
+		require.NoError(t, err)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, ac,
