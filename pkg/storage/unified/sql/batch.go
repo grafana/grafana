@@ -57,7 +57,6 @@ func (x *batchLock) Finish(keys []*resource.ResourceKey) {
 	for _, k := range keys {
 		delete(x.running, toBatchKey(k))
 	}
-	return
 }
 
 func (x *batchLock) Active() bool {
