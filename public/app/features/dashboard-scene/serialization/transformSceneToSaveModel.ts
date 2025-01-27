@@ -140,6 +140,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
     refresh: refreshPicker?.state.refresh,
+    // @ts-expect-error not in dashboard schema because it's experimental
+    scopeMeta: state.scopeMeta,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
