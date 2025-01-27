@@ -455,6 +455,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid
+        className={styles.dataGrid}
         key={`DataGrid${revId}`}
         rows={filteredRows}
         columns={columns}
@@ -553,6 +554,16 @@ function getComparator(sortColumnType: string): Comparator {
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
+  dataGrid: css({
+    '--rdg-background-color': theme.colors.background.primary,
+    '--rdg-header-background-color': theme.colors.background.primary,
+    '--rdg-border-color': theme.colors.border.medium,
+    '--rdg-color': theme.colors.text.primary,
+
+    '&:hover': {
+      '--rdg-row-hover-background-color': theme.colors.action.hover,
+    },
+  }),
   menuItem: css({
     maxWidth: '200px',
   }),
@@ -582,6 +593,11 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+
+    '&:hover': {
+      border: `1px solid ${theme.colors.text.link}`,
+      backgroundColor: theme.colors.background.primary,
+    },
   }),
 });
 
