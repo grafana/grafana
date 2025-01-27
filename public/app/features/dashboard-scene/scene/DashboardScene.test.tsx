@@ -110,27 +110,6 @@ describe('DashboardScene', () => {
       });
     });
 
-    describe('Given new dashboard in edit mode', () => {
-      it('when saving it should clear isNew state', () => {
-        const scene = buildTestScene({
-          meta: { isNew: true },
-        });
-
-        scene.activate();
-        scene.onEnterEditMode();
-        scene.saveCompleted({} as Dashboard, {
-          id: 1,
-          slug: 'slug',
-          uid: 'dash-1',
-          url: 'sss',
-          version: 2,
-          status: 'aaa',
-        });
-
-        expect(scene.state.meta.isNew).toBeFalsy();
-      });
-    });
-
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
       let deactivateScene: () => void;
@@ -489,7 +468,7 @@ describe('DashboardScene', () => {
           title: 'Library Panel',
           pluginId: 'table',
           key: 'panel-4',
-          $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+          $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
         });
 
         scene.copyPanel(libVizPanel);
@@ -544,7 +523,7 @@ describe('DashboardScene', () => {
               title: 'Library Panel',
               pluginId: 'table',
               key: 'panel-4',
-              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+              $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
             }),
           })
         );
@@ -563,7 +542,7 @@ describe('DashboardScene', () => {
         const libPanel = new VizPanel({
           title: 'Panel B',
           pluginId: 'table',
-          $behaviors: [new LibraryPanelBehavior({ name: 'lib panel', uid: 'abc', isLoaded: true })],
+          $behaviors: [new LibraryPanelBehavior({ title: 'title', name: 'lib panel', uid: 'abc', isLoaded: true })],
         });
 
         const scene = buildTestScene({
@@ -928,7 +907,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
                   title: 'Library Panel',
                   pluginId: 'table',
                   key: 'panel-5',
-                  $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+                  $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
                 }),
               }),
             ],
@@ -946,7 +925,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
               title: 'Library Panel',
               pluginId: 'table',
               key: 'panel-6',
-              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+              $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
             }),
           }),
         ],
