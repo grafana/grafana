@@ -2,7 +2,9 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -528,4 +530,31 @@ func (ss *FolderUnifiedStoreImpl) getK8sContext(ctx context.Context) (context.Co
 	}
 
 	return newCtx, nil, nil
+}
+
+func (ss *FolderUnifiedStoreImpl) getUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) { //
+	if userMeta == "" || toUID(userMeta) == "" {
+		return &user.User{}, nil
+	}
+	usr, err := ss.getUser(ctx, toUID(userMeta))
+	if err != nil && errors.Is(err, user.ErrUserNotFound) {
+		return &user.User{}, nil
+	}
+	return usr, err
+}
+
+func (ss *FolderUnifiedStoreImpl) getUser(ctx context.Context, uid string) (*user.User, error) {
+	userId, err := strconv.ParseInt(uid, 10, 64)
+	if err == nil {
+		return ss.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userId})
+	}
+	return ss.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
+}
+
+func toUID(rawIdentifier string) string {
+	parts := strings.Split(rawIdentifier, ":")
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[1]
 }
