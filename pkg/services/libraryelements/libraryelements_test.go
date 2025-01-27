@@ -486,10 +486,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashService.RegisterDashboardPermissions(dashboardPermissions)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
 		service := LibraryElementService{
-			Cfg:           cfg,
-			features:      featuremgmt.WithFeatures(),
-			SQLStore:      sqlStore,
-			folderService: folderSvc,
+			Cfg:               cfg,
+			features:          featuremgmt.WithFeatures(),
+			SQLStore:          sqlStore,
+			folderService:     folderSvc,
+			dashboardsService: dashService,
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
