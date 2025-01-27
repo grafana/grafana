@@ -9,7 +9,7 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { setupLoadDashboardMock } from '../utils/test-utils';
+import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {
   DashboardScenePageStateManager,
@@ -45,14 +45,34 @@ describe('DashboardScenePageStateManager v1', () => {
     });
 
     it("should error when the dashboard doesn't exist", async () => {
-      setupLoadDashboardMock({ dashboard: undefined, meta: {} });
+      setupLoadDashboardMockReject({
+        status: 404,
+        statusText: 'Not Found',
+        data: {
+          message: 'Dashboard not found',
+        },
+        config: {
+          method: 'GET',
+          url: 'api/dashboards/uid/adfjq9edwm0hsdsa',
+          retry: 0,
+          headers: {
+            'X-Grafana-Org-Id': 1,
+          },
+          hideFromInspector: true,
+        },
+        isHandled: true,
+      });
 
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
-      expect(loader.state.loadError).toBe('Dashboard not found');
+      expect(loader.state.loadError).toEqual({
+        status: 404,
+        messageId: undefined,
+        message: 'Dashboard not found',
+      });
     });
 
     it('should clear current dashboard while loading next', async () => {
@@ -128,7 +148,11 @@ describe('DashboardScenePageStateManager v1', () => {
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(loader.state.dashboard).toBeUndefined();
-        expect(loader.state.loadError).toEqual('Failed to load home dashboard');
+        expect(loader.state.loadError).toEqual({
+          message: 'Failed to load home dashboard',
+          messageId: undefined,
+          status: 500,
+        });
       });
     });
 
@@ -425,7 +449,11 @@ describe('DashboardScenePageStateManager v2', () => {
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
         expect(loader.state.dashboard).toBeUndefined();
-        expect(loader.state.loadError).toEqual('Failed to load home dashboard');
+        expect(loader.state.loadError).toEqual({
+          message: 'Failed to load home dashboard',
+          messageId: undefined,
+          status: 500,
+        });
       });
     });
 

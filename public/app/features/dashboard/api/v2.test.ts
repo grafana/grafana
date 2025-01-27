@@ -75,8 +75,7 @@ describe('v2 dashboard API', () => {
       updatedBy: '',
     });
 
-    const convertToV1 = false;
-    const api = new K8sDashboardV2API(convertToV1);
+    const api = new K8sDashboardV2API(false);
     // because the API can currently return both DashboardDTO and DashboardWithAccessInfo<DashboardV2Spec> based on the
     // parameter convertToV1, we need to cast the result to DashboardWithAccessInfo<DashboardV2Spec> to be able to
     // access
@@ -85,6 +84,13 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolderTitle]).toBe('New Folder');
     expect(result.metadata.annotations![AnnoKeyFolderUrl]).toBe('/folder/url');
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
+  });
+
+  it('throws an error if folder is not found', async () => {
+    jest.spyOn(backendSrv, 'getFolderByUid').mockRejectedValue({ message: 'folder not found', status: 'not-found' });
+
+    const api = new K8sDashboardV2API(false);
+    await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
   });
 });
 

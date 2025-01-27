@@ -1,5 +1,5 @@
 import { AppEvents, UrlQueryMap } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { FetchError, getBackendSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -33,7 +33,12 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
 
     if (result.meta.isFolder) {
       appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
-      throw new Error('Dashboard not found');
+      const fetchError: FetchError = {
+        status: 404,
+        config: { url: `/api/dashboards/uid/${uid}` },
+        data: { message: 'Dashboard not found' },
+      };
+      throw fetchError;
     }
 
     return result;
