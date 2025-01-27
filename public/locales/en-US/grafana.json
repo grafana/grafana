@@ -1815,7 +1815,8 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "more"
+      "more": "more",
+      "see-details": "See log details"
     },
     "log-rows": {
       "disable-popover": {
