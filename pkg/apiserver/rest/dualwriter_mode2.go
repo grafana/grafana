@@ -143,7 +143,6 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 }
 
 // List overrides the behavior of the generic DualWriter.
-// It returns Storage entries if possible and falls back to LegacyStorage entries if not.
 func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	var method = "list"
 	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "method", method)
@@ -189,7 +188,6 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	for _, obj := range storageList {
 		name := getName(obj)
 		if i, ok := legacyNames[name]; ok {
-			legacyList[i] = obj
 			areEqual := Compare(obj, legacyList[i])
 			d.recordOutcome(mode2Str, name, areEqual, method)
 			if !areEqual {
