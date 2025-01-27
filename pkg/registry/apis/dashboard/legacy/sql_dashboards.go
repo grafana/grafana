@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -54,8 +55,9 @@ type dashboardSqlAccess struct {
 	provisioning provisioning.ProvisioningService
 
 	// Use for writing (not reading)
-	dashStore  dashboards.Store
-	softDelete bool
+	dashStore             dashboards.Store
+	softDelete            bool
+	dashboardSearchClient legacysearcher.DashboardSearchClient
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -68,12 +70,14 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.ProvisioningService,
 	softDelete bool,
 ) DashboardAccess {
+	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore)
 	return &dashboardSqlAccess{
-		sql:          sql,
-		namespacer:   namespacer,
-		dashStore:    dashStore,
-		provisioning: provisioning,
-		softDelete:   softDelete,
+		sql:                   sql,
+		namespacer:            namespacer,
+		dashStore:             dashStore,
+		provisioning:          provisioning,
+		softDelete:            softDelete,
+		dashboardSearchClient: *dashboardSearchClient,
 	}
 }
 

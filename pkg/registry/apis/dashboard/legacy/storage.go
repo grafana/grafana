@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -255,9 +254,8 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
-// TODO: this needs to be implemented
 func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	return nil, fmt.Errorf("not yet (filter)")
+	return a.dashboardSearchClient.Search(ctx, req)
 }
 
 func (a *dashboardSqlAccess) ListRepositoryObjects(ctx context.Context, req *resource.ListRepositoryObjectsRequest) (*resource.ListRepositoryObjectsResponse, error) {
@@ -270,35 +268,5 @@ func (a *dashboardSqlAccess) CountRepositoryObjects(context.Context, *resource.C
 
 // GetStats implements ResourceServer.
 func (a *dashboardSqlAccess) GetStats(ctx context.Context, req *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	info, err := claims.ParseNamespace(req.Namespace)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read namespace")
-	}
-	if info.OrgID == 0 {
-		return nil, fmt.Errorf("invalid OrgID found in namespace")
-	}
-
-	if len(req.Kinds) != 1 {
-		return nil, fmt.Errorf("only can query for dashboard kind in legacy fallback")
-	}
-
-	parts := strings.SplitN(req.Kinds[0], "/", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid kind")
-	}
-
-	count, err := a.dashStore.CountInOrg(ctx, info.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resource.ResourceStatsResponse{
-		Stats: []*resource.ResourceStatsResponse_Stats{
-			{
-				Group:    parts[0],
-				Resource: parts[1],
-				Count:    count,
-			},
-		},
-	}, nil
+	return a.dashboardSearchClient.GetStats(ctx, req)
 }
