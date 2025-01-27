@@ -169,7 +169,6 @@ func (g *JobWorker) doSync(ctx context.Context,
 		return nil, err
 	}
 
-	fmt.Printf("SEND PATCH (starting): %s\n", (patch))
 	cfg, err = g.client.Repositories(cfg.Namespace).
 		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
 	if err != nil {
@@ -220,7 +219,6 @@ func (g *JobWorker) doSync(ctx context.Context,
 		return nil, err
 	}
 
-	fmt.Printf("SEND PATCH (after): %s\n", (patch))
 	_, err = g.client.Repositories(cfg.Namespace).
 		Patch(ctx, cfg.Name, types.MergePatchType, patch, v1.PatchOptions{}, "status")
 	if err != nil {
