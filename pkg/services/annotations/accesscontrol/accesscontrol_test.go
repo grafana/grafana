@@ -16,7 +16,6 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardsservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -47,13 +46,14 @@ func TestIntegrationAuthorize(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	folderSvc := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotatest.New(false, nil), nil)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	folderSvc := folderimpl.ProvideService(
+		fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sql, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(),
+		ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil, nil)
 	require.NoError(t, err)
+	dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 
 	u := &user.SignedInUser{
 		UserID: 1,

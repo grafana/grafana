@@ -24,9 +24,8 @@ import {
   IntervalVariableKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
-import { AnnoKeyDashboardIsNew } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -38,7 +37,11 @@ import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import {
+  getLibraryPanelElement,
+  getPanelElement,
+  transformSaveModelSchemaV2ToScene,
+} from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -217,29 +220,44 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels).toHaveLength(1);
-    const vizPanel = vizPanels[0];
-    validateVizPanel(vizPanel, dash);
+    expect(vizPanels).toHaveLength(2);
 
     // Layout
     const layout = scene.state.body as DefaultGridLayoutManager;
-    expect(layout.state.grid.state.children.length).toBe(1);
-    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${dash.elements['panel-1'].spec.id}`);
+
+    // Panel
+    const panel = getPanelElement(dash, 'panel-1')!;
+    expect(layout.state.grid.state.children.length).toBe(2);
+    expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
     const gridLayoutItemSpec = dash.layout.spec.items[0].spec;
     expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
+    const vizPanel = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    validateVizPanel(vizPanel, dash);
+
+    // Library Panel
+    const libraryPanel = getLibraryPanelElement(dash, 'panel-2')!;
+    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.id}`);
+    const libraryGridLayoutItemSpec = dash.layout.spec.items[1].spec;
+    expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
+    expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
+    expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
+    expect(layout.state.grid.state.children[1].state.y).toBe(libraryGridLayoutItemSpec.y);
+    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'panel-2')!;
+    validateVizPanel(vizLibraryPanel, dash);
 
     // Transformations
-    expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
-      dash.elements['panel-1'].spec.data.spec.transformations[0].spec
+    const panelWithTransformations = vizPanels.find((p) => p.state.key === 'panel-1')!;
+    expect((panelWithTransformations.state.$data as SceneDataTransformer)?.state.transformations[0]).toEqual(
+      getPanelElement(dash, 'panel-1')!.spec.data.spec.transformations[0].spec
     );
   });
 
   it('should set panel ds if it is mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -260,14 +278,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
     const dashboard = cloneDeep(defaultDashboard);
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -288,14 +306,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
   });
 
   it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
 
-    dashboard.spec.elements['panel-1'].spec.data.spec.queries.push({
+    getPanelElement(dashboard.spec, 'panel-1')?.spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
@@ -312,7 +330,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
-    expect(vizPanels.length).toBe(1);
+    expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
@@ -469,27 +487,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.canSave).toBe(true);
         expect(scene.state.meta.canEdit).toBe(true);
         expect(scene.state.meta.canDelete).toBe(true);
-      });
-    });
-
-    describe('is new dashboard handling', () => {
-      it('handles undefined is new dashbaord annotation', () => {
-        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
-        expect(scene.state.meta.isNew).toBe(false);
-      });
-      it('handles defined is new dashbaord annotation', () => {
-        const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
-          ...defaultDashboard,
-          metadata: {
-            ...defaultDashboard.metadata,
-            annotations: {
-              ...defaultDashboard.metadata.annotations,
-              [AnnoKeyDashboardIsNew]: true,
-            },
-          },
-        };
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
-        expect(scene.state.meta.isNew).toBe(true);
       });
     });
   });

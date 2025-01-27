@@ -134,7 +134,6 @@ type Cfg struct {
 	DataPath              string
 	LogsPath              string
 	PluginsPath           string
-	BundledPluginsPath    string
 	EnterpriseLicensePath string
 
 	// SMTP email settings
@@ -398,20 +397,22 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	// User settings
-	AllowUserSignUp            bool
-	AllowUserOrgCreate         bool
-	VerifyEmailEnabled         bool
-	LoginHint                  string
-	PasswordHint               string
-	DisableSignoutMenu         bool
-	ExternalUserMngLinkUrl     string
-	ExternalUserMngLinkName    string
-	ExternalUserMngInfo        string
-	AutoAssignOrg              bool
-	AutoAssignOrgId            int
-	AutoAssignOrgRole          string
-	LoginDefaultOrgId          int64
-	OAuthSkipOrgRoleUpdateSync bool
+	AllowUserSignUp                bool
+	AllowUserOrgCreate             bool
+	VerifyEmailEnabled             bool
+	LoginHint                      string
+	PasswordHint                   string
+	DisableSignoutMenu             bool
+	ExternalUserMngLinkUrl         string
+	ExternalUserMngLinkName        string
+	ExternalUserMngInfo            string
+	ExternalUserMngAnalytics       bool
+	ExternalUserMngAnalyticsParams string
+	AutoAssignOrg                  bool
+	AutoAssignOrgId                int
+	AutoAssignOrgRole              string
+	LoginDefaultOrgId              int64
+	OAuthSkipOrgRoleUpdateSync     bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
@@ -474,7 +475,8 @@ type Cfg struct {
 
 	RBAC RBACSettings
 
-	Zanzana ZanzanaSettings
+	ZanzanaClient ZanzanaClientSettings
+	ZanzanaServer ZanzanaServerSettings
 
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
@@ -1101,7 +1103,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
-	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 
@@ -1714,6 +1715,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	cfg.ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
+	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
+	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
 
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)

@@ -11,7 +11,7 @@
   "title_sort": "test aaa",
   "created": 1731336353000,
   "createdBy": "user:t000000001",
-  "repository": {
+  "repo": {
     "name": "UI",
     "path": "/playlists/new",
     "hash": "Grafana v11.4.0-pre (c0de407fee)"

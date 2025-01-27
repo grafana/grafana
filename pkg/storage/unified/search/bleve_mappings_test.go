@@ -26,9 +26,10 @@ func TestDocumentMapping(t *testing.T) {
 		},
 		RV: 1234,
 		RepoInfo: &utils.ResourceRepositoryInfo{
-			Name: "nnn",
-			Path: "ppp",
-			Hash: "hhh",
+			Name:      "nnn",
+			Path:      "ppp",
+			Hash:      "hhh",
+			Timestamp: asTimePointer(1234),
 		},
 	}
 
@@ -42,5 +43,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 12, len(doc.Fields))
+	require.Equal(t, 13, len(doc.Fields))
 }

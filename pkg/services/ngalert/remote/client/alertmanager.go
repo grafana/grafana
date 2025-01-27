@@ -110,6 +110,14 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
 
 			if status != http.StatusOK {
 				if status >= 400 && status < 500 {
+					if status == http.StatusNotAcceptable {
+						// Mimir returns a 406 when the Alertmanager for the tenant is not running.
+						// This is expected if the Grafana Alertmanager configuration is default or not promoted.
+						// We can still use the endpoints to store and retrieve configuration/state.
+						am.logger.Debug("Remote Alertmanager not initialized for tenant", "attempt", attempts, "status", status)
+						return true, nil
+					}
+
 					am.logger.Debug("Ready check failed with non-retriable status code", "attempt", attempts, "status", status)
 					return false, fmt.Errorf("ready check failed with non-retriable status code %d", status)
 				}

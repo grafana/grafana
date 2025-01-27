@@ -40,9 +40,9 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
 		"name": "test1",
-		"repository": {
-			"name": "SQL",
-			"path": "15",
+		"repo": {
+			"name": "something",
+			"path": "path/in/system.json",
 			"hash": "xyz"
 		}
 		}`, string(jj))

@@ -1,10 +1,18 @@
-import { useCallback } from 'react';
-import * as React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
+import { mergeMap } from 'rxjs';
 
-import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, DataTopic } from '@grafana/data';
+import {
+  DataTransformerConfig,
+  TransformerRegistryItem,
+  FrameMatcherID,
+  DataTransformContext,
+  getFrameMatchers,
+  transformDataFrame,
+  DataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
@@ -46,6 +54,10 @@ export const TransformationOperationRow = ({
   const topic = configs[index].transformation.topic;
   const showFilterEditor = configs[index].transformation.filter != null || topic != null;
   const showFilterToggle = showFilterEditor || data.series.length > 0 || (data.annotations?.length ?? 0) > 0;
+  const [input, setInput] = useState<DataFrame[]>([]);
+  const [output, setOutput] = useState<DataFrame[]>([]);
+  // output of previous transformation
+  const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -91,6 +103,48 @@ export const TransformationOperationRow = ({
       },
     [configs, index]
   );
+
+  useEffect(() => {
+    const config = configs[index].transformation;
+    const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+    // we need previous transformation index to get its outputs
+    //    to be used in this transforms inputs
+    const prevTransformIndex = index - 1;
+
+    let prevInputTransforms: Array<DataTransformerConfig<{}>> = [];
+    let prevOutputTransforms: Array<DataTransformerConfig<{}>> = [];
+
+    if (prevTransformIndex >= 0) {
+      prevInputTransforms = configs.slice(0, prevTransformIndex).map((t) => t.transformation);
+      prevOutputTransforms = configs.slice(prevTransformIndex, index).map((t) => t.transformation);
+    }
+
+    const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
+    const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
+
+    const ctx: DataTransformContext = {
+      interpolate: (v: string) => getTemplateSrv().replace(v),
+    };
+
+    const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((data) => {
+      if (matcher) {
+        data = data.filter((frame) => matcher(frame));
+      }
+      setInput(data);
+    });
+    const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
+      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
+      .subscribe(setOutput);
+    const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
+      .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
+      .subscribe(setPrevOutput);
+
+    return function unsubscribe() {
+      inputSubscription.unsubscribe();
+      outputSubscription.unsubscribe();
+      prevOutputSubscription.unsubscribe();
+    };
+  }, [index, data, configs]);
 
   const renderActions = () => {
     return (
@@ -162,13 +216,20 @@ export const TransformationOperationRow = ({
         }}
       >
         {showFilterEditor && (
-          <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
+          <TransformationFilter
+            data={prevOutput}
+            index={index}
+            config={configs[index].transformation}
+            annotations={data.annotations}
+            onChange={onChange}
+          />
         )}
 
         <TransformationEditor
+          input={input}
+          output={output}
           debugMode={showDebug}
           index={index}
-          data={topic === DataTopic.Annotations ? (data.annotations ?? []) : data.series}
           configs={configs}
           uiConfig={uiConfig}
           onChange={onChange}

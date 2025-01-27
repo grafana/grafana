@@ -4,14 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
+
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
@@ -21,6 +24,7 @@ import (
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
+	RepositoryIndexClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -29,6 +33,7 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
+	RepositoryIndexClient
 	BlobStoreClient
 	DiagnosticsClient
 }
@@ -36,10 +41,11 @@ type resourceClient struct {
 func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
+		ResourceStoreClient:   NewResourceStoreClient(cc),
+		ResourceIndexClient:   NewResourceIndexClient(cc),
+		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BlobStoreClient:       NewBlobStoreClient(cc),
+		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
 }
 
@@ -51,6 +57,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
+		&RepositoryIndex_ServiceDesc,
 		&BlobStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
@@ -65,17 +72,18 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
-		&authnlib.GrpcClientConfig{},
-		authnlib.WithDisableAccessTokenOption(),
+		&authnlib.GrpcClientConfig{TokenRequest: &authnlib.TokenExchangeRequest{}},
+		authnlib.WithTokenClientOption(grpcutils.ProvideInProcExchanger()),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		BlobStoreClient:     NewBlobStoreClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
+		ResourceStoreClient:   NewResourceStoreClient(cc),
+		ResourceIndexClient:   NewResourceIndexClient(cc),
+		RepositoryIndexClient: NewRepositoryIndexClient(cc),
+		BlobStoreClient:       NewBlobStoreClient(cc),
+		DiagnosticsClient:     NewDiagnosticsClient(cc),
 	}
 }
 
@@ -95,6 +103,7 @@ func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (Resour
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}, nil
 }
@@ -119,19 +128,33 @@ func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg au
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}, nil
 }
 
+var authLogger = slog.Default().With("logger", "resource-client-auth-interceptor")
+
 func idTokenExtractor(ctx context.Context) (string, error) {
-	authInfo, ok := claims.From(ctx)
+	if identity.IsServiceIdentity(ctx) {
+		return "", nil
+	}
+
+	info, ok := types.AuthInfoFrom(ctx)
 	if !ok {
 		return "", fmt.Errorf("no claims found")
 	}
 
-	extra := authInfo.GetExtra()
-	if token, exists := extra["id-token"]; exists && len(token) != 0 && token[0] != "" {
-		return token[0], nil
+	if token := info.GetIDToken(); len(token) != 0 {
+		return token, nil
+	}
+
+	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+		authLogger.Warn(
+			"calling resource store as the service without id token or marking it as the service identity",
+			"subject", info.GetSubject(),
+			"uid", info.GetUID(),
+		)
 	}
 
 	return "", nil

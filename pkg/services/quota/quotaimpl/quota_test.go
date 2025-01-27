@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashService "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -491,14 +490,14 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	fStore := folderimpl.ProvideStore(sqlStore)
 	dashStore, err := dashboardStore.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	folderSvc := folderimpl.ProvideService(fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, sqlStore, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-	_, err = dashService.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaService, nil)
-
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	folderSvc := folderimpl.ProvideService(
+		fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+	dashService, err := dashService.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(),
+		ac, folderSvc, fStore, nil, nil, nil, nil, quotaService, nil, nil)
 	require.NoError(t, err)
+	dashService.RegisterDashboardPermissions(acmock.NewMockedPermissionsService())
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(),

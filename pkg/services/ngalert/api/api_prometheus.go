@@ -352,7 +352,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 
 		if nextToken != "" && !foundToken {
-			if nextToken != getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup) {
+			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
 				continue
 			}
 			foundToken = true
@@ -392,6 +392,14 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 
 func getRuleGroupNextToken(namespace, group string) string {
 	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
+}
+
+// Returns true if tokenA >= tokenB
+func tokenGreaterThanOrEqual(tokenA string, tokenB string) bool {
+	decodedTokenA, _ := base64.URLEncoding.DecodeString(tokenA)
+	decodedTokenB, _ := base64.URLEncoding.DecodeString(tokenB)
+
+	return string(decodedTokenA) >= string(decodedTokenB)
 }
 
 type ruleGroup struct {
@@ -489,7 +497,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
-		File: folderFullPath,
+		File:      folderFullPath,
+		FolderUID: groupKey.NamespaceUID,
 	}
 
 	rulesTotals := make(map[string]int64, len(rules))
@@ -514,7 +523,9 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		}
 
 		newRule := apimodels.Rule{
+			UID:            rule.UID,
 			Name:           rule.Title,
+			FolderUID:      rule.NamespaceUID,
 			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
 			Health:         status.Health,
 			LastError:      errorOrEmpty(status.LastError),
