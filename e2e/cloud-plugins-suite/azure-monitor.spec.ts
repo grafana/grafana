@@ -209,7 +209,7 @@ describe('Azure monitor datasource', () => {
           .type('{enter}');
         cy.contains(logAnalyticsName).click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
-        e2e.components.CodeEditor.container().type('AzureDiagnostics');
+        e2eSelectors.queryEditor.logsQueryEditor.container.input.apply('AzureDiagnostics');
         e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
       },
       timeout: 10000,
