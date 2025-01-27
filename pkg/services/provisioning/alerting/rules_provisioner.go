@@ -45,7 +45,8 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
-			u := provisionerUser(group.OrgID)
+			ctx, u := identity.WithServiceIdentitiy(ctx, group.OrgID)
+
 			folderUID, err := prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
 			if err != nil {
 				prov.logger.Error("failed to get or create folder", "folder", group.FolderFullpath, "org", group.OrgID, "err", err)
@@ -83,7 +84,6 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 	ctx context.Context,
 	user identity.Requester,
 	rule alert_models.AlertRule) error {
-	ctx, user = identity.WithServiceIdentitiy(ctx, rule.OrgID)
 	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
 	_, _, err := prov.ruleService.GetAlertRule(ctx, user, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
