@@ -101,7 +101,7 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
             size="sm"
             options={EDITOR_MODES}
             value={query.azureLogAnalytics?.mode || LogsEditorMode.Builder}
-            onChange={(newMode) => onLogsModeChange(newMode as LogsEditorMode)}
+            onChange={(newMode: LogsEditorMode) => onLogsModeChange(newMode)}
           />
         )}
       </EditorHeader>

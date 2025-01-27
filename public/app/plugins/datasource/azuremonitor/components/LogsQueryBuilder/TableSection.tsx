@@ -37,12 +37,12 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   useEffect(() => {
     if (tables.length > 0) {
-      const options = tables.map((table) => ({
+      const options: Array<SelectableValue<string>> = tables.map((table) => ({
         label: table.name,
         value: table.name,
         columns: table.columns,
       }));
-      setTableOptions(options as Array<SelectableValue<string>>);
+      setTableOptions(options);
     }
   }, [tables]);
 
@@ -52,7 +52,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
     const selectedTableDetails = tableOptions.find((t) => t.value === selected.value);
     if (selectedTableDetails && 'columns' in selectedTableDetails) {
-      const newColumnOptions = (selectedTableDetails.columns as AzureLogsColumnSchema[]).map((col) => ({
+      const newColumnOptions: AzureLogsColumnSchema[] = (selectedTableDetails.columns).map((col: AzureLogsColumnSchema) => ({
         label: toColumnName(col),
         value: col.name,
       }));

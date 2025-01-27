@@ -80,10 +80,10 @@ describe('VariableEditor:', () => {
       render(<VariableEditor {...defaultProps} onChange={onChange} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
       expect(screen.queryByTestId('mockeditor')).toBeInTheDocument();
-      await userEvent.type(screen.getByTestId('mockeditor'), '{backspace}');
+      await userEvent.type(screen.getByTestId('mockeditor'), '2');
       expect(onChange).toHaveBeenCalledWith({
         azureLogAnalytics: {
-          query: 'test query',
+          query: 'test query2',
         },
         queryType: 'Azure Log Analytics',
         refId: 'A',

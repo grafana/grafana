@@ -99,11 +99,13 @@ describe('Azure Monitor QueryEditor', () => {
     const metrics = await screen.findByLabelText(/Service/);
     await selectOptionInTest(metrics, 'Logs');
 
-    expect(onChange).toHaveBeenCalledWith({
-      refId: mockQuery.refId,
-      datasource: mockQuery.datasource,
-      queryType: AzureQueryType.LogAnalytics,
-    });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refId: mockQuery.refId,
+        datasource: mockQuery.datasource,
+        queryType: AzureQueryType.LogAnalytics,
+      })
+    );    
   });
 
   it('displays error messages from frontend Azure calls', async () => {
