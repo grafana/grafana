@@ -13,7 +13,7 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { CLONE_KEY, CLONE_SEPARATOR, isInClonedKeyTree } from '../../utils/clone';
+import { CLONE_KEY, CLONE_SEPARATOR, hasClonedAncestors } from '../../utils/clone';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
 
@@ -77,8 +77,8 @@ describe('RowRepeaterBehavior', () => {
     it('Repeated rows should be read only', () => {
       const row1 = grid.state.children[1] as SceneGridRow;
       const row2 = grid.state.children[2] as SceneGridRow;
-      expect(isInClonedKeyTree(row1.state.key!)).toBe(false);
-      expect(isInClonedKeyTree(row2.state.key!)).toBe(true);
+      expect(hasClonedAncestors(row1.state.key!)).toBe(false);
+      expect(hasClonedAncestors(row2.state.key!)).toBe(true);
     });
 
     it('Should update all rows when a panel is added to a clone', async () => {

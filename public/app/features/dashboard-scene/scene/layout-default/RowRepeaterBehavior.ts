@@ -16,9 +16,9 @@ import {
 
 import {
   containsCloneKey,
-  getAncestorsFromCloneTree,
+  getAncestorsFromClone,
   getCloneKey,
-  getLastKeyFromCloneTree,
+  getLastKeyFromClone,
   getOriginalKey,
   isClonedKey,
   isClonedKeyOf,
@@ -57,14 +57,14 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const layout = this._getLayout();
     const originalRow = this._getRow();
-    const originalRowKey = getOriginalKey(getLastKeyFromCloneTree(originalRow.state.key!));
+    const originalRowKey = getOriginalKey(getLastKeyFromClone(originalRow.state.key!));
     const originalRowNonClonedPanels = originalRow.state.children.filter(
-      (child) => !isClonedKey(getLastKeyFromCloneTree(child.state.key!))
+      (child) => !isClonedKey(getLastKeyFromClone(child.state.key!))
     );
 
     const sub = layout.subscribeToState(() => {
       const repeatedRows = layout.state.children.filter((child) =>
-        isClonedKeyOf(getLastKeyFromCloneTree(child.state.key!), originalRowKey)
+        isClonedKeyOf(getLastKeyFromClone(child.state.key!), originalRowKey)
       );
 
       // go through cloned rows, search for panels that are not clones
@@ -74,7 +74,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
 
         const rowNonClonedPanels = row.state.children.filter(
-          (child) => !isClonedKey(getLastKeyFromCloneTree(child.state.key!))
+          (child) => !isClonedKey(getLastKeyFromClone(child.state.key!))
         );
 
         // if no differences in row children compared to original, then no new panel added to clone
@@ -156,8 +156,8 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     this._clonedRows = [];
 
-    const originalRowKey = getOriginalKey(getLastKeyFromCloneTree(rowToRepeat.state.key!));
-    const rowKeyAncestors = getAncestorsFromCloneTree(rowToRepeat.state.key!);
+    const originalRowKey = getOriginalKey(getLastKeyFromClone(rowToRepeat.state.key!));
+    const rowKeyAncestors = getAncestorsFromClone(rowToRepeat.state.key!);
     const rowContent = rowToRepeat.state.children;
     const rowContentHeight = getRowContentHeight(rowContent);
 
@@ -204,7 +204,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       const children: SceneGridItemLike[] = [];
 
       for (const sourceItem of rowContent) {
-        const sourceItemKey = getLastKeyFromCloneTree(sourceItem.state.key!);
+        const sourceItemKey = getLastKeyFromClone(sourceItem.state.key!);
         const sourceItemY = sourceItem.state.y ?? 0;
 
         const cloneItemKey = joinCloneKeys(rowCloneKey, sourceItemKey);
@@ -299,7 +299,7 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
 }
 
 function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowKey: string) {
-  return layout.state.children.filter((child) => !isClonedKeyOf(getLastKeyFromCloneTree(child.state.key!), rowKey));
+  return layout.state.children.filter((child) => !isClonedKeyOf(getLastKeyFromClone(child.state.key!), rowKey));
 }
 
 function ensureUniqueKeys(item: SceneGridItemLike, ancestors: string) {

@@ -3,10 +3,11 @@ import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
 
+import { getCloneKey } from '../utils/clone';
+
 import { DashboardScene } from './DashboardScene';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { getRepeatKey } from './layouts-shared/repeatUtils';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 describe('DashboardSceneUrlSync', () => {
@@ -83,7 +84,7 @@ describe('DashboardSceneUrlSync', () => {
     let errorNotice = 0;
     appEvents.on(AppEvents.alertError, (evt) => errorNotice++);
 
-    scene.urlSync?.updateFromUrl({ viewPanel: getRepeatKey('panel-1', '1') });
+    scene.urlSync?.updateFromUrl({ viewPanel: getCloneKey('panel-1', 1) });
 
     expect(scene.state.viewPanelScene).toBeUndefined();
     // Verify no error notice was shown
@@ -99,7 +100,7 @@ describe('DashboardSceneUrlSync', () => {
           x: 0,
           body: new VizPanel({
             title: 'Clone Panel A',
-            key: getRepeatKey('panel-1', '1'),
+            key: getCloneKey('panel-1', 1),
             pluginId: 'table',
           }),
         }),
@@ -108,7 +109,7 @@ describe('DashboardSceneUrlSync', () => {
 
     // Verify it subscribes to DashboardRepeatsProcessedEvent
     scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
-    expect(scene.state.viewPanelScene?.getUrlKey()).toBe(getRepeatKey('panel-1', '1'));
+    expect(scene.state.viewPanelScene?.getUrlKey()).toBe(getCloneKey('panel-1', 1));
   });
 });
 

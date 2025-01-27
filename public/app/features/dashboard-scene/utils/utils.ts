@@ -21,6 +21,8 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
 
+import { getLastKeyFromClone, getOriginalKey } from './clone';
+
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
 
@@ -29,7 +31,7 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+  return parseInt(getOriginalKey(getLastKeyFromClone(panel.state.key!)).replace('panel-', ''), 10);
 }
 
 /**

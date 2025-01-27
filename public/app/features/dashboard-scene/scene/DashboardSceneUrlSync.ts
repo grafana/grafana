@@ -12,7 +12,8 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { findVizPanelByKey, getLibraryPanelBehavior, isPanelClone } from '../utils/utils';
+import { hasClonedAncestors } from '../utils/clone';
+import { findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -95,7 +96,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       if (!panel) {
         // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        if (isPanelClone(values.viewPanel)) {
+        if (hasClonedAncestors(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
         }
