@@ -2,9 +2,9 @@ import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
 
-import { ComboboxOption } from './Combobox';
 import { MultiCombobox } from './MultiCombobox';
 import { generateOptions } from './storyUtils';
+import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
   title: 'Forms/MultiCombobox',

@@ -2,7 +2,8 @@ import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { Combobox, ComboboxOption } from './Combobox';
+import { Combobox } from './Combobox';
+import { ComboboxOption } from './types';
 
 // Mock data for the Combobox options
 const options: ComboboxOption[] = [

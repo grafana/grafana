@@ -6,9 +6,10 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from '../Alert/Alert';
 import { Field } from '../Forms/Field';
 
-import { Combobox, ComboboxOption, ComboboxProps } from './Combobox';
+import { Combobox, ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
 import { fakeSearchAPI, generateOptions } from './storyUtils';
+import { ComboboxOption } from './types';
 
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
   numberOfOptions: number;
