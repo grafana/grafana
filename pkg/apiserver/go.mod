@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335
+	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701135906-559738ce6ae1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
@@ -88,7 +88,7 @@ require (
 	google.golang.org/genproto v0.0.0-20241021214115-324edc3d5d38 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250102185135-69823020774d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
-	google.golang.org/grpc v1.69.2 // indirect
+	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

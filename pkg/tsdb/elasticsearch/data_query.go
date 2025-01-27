@@ -225,7 +225,7 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 
 func addHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
 	aggBuilder.Histogram(bucketAgg.ID, bucketAgg.Field, func(a *es.HistogramAgg, b es.AggBuilder) {
-		a.Interval = stringToIntWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
+		a.Interval = stringToFloatWithDefaultValue(bucketAgg.Settings.Get("interval").MustString(), 1000)
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 
 		if missing, err := bucketAgg.Settings.Get("missing").Int(); err == nil {
@@ -510,6 +510,18 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 
 func stringToIntWithDefaultValue(valueStr string, defaultValue int) int {
 	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		value = defaultValue
+	}
+	// In our case, 0 is not a valid value and in this case we default to defaultValue
+	if value == 0 {
+		value = defaultValue
+	}
+	return value
+}
+
+func stringToFloatWithDefaultValue(valueStr string, defaultValue float64) float64 {
+	value, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
 		value = defaultValue
 	}

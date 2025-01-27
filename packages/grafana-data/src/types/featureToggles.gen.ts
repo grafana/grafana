@@ -112,9 +112,7 @@ export interface FeatureToggles {
   kubernetesDashboards?: boolean;
   kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFolders?: boolean;
   kubernetesFoldersServiceV2?: boolean;
-  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -124,7 +122,6 @@ export interface FeatureToggles {
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
-  panelTitleSearchInV1?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
   prometheusCodeModeMetricNamesSearch?: boolean;
@@ -156,7 +153,6 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;
@@ -219,6 +215,7 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   unifiedStorageSearchSprinkles?: boolean;
+  unifiedStorageSearchPermissionFiltering?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
@@ -253,5 +250,7 @@ export interface FeatureToggles {
   ABTestFeatureToggleA?: boolean;
   ABTestFeatureToggleB?: boolean;
   queryLibraryDashboards?: boolean;
+  grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
+  datasourceConnectionsTab?: boolean;
 }

@@ -190,7 +190,6 @@ module.exports = [
   {
     name: 'grafana/ui-overrides',
     files: ['packages/grafana-ui/**/*.{ts,tsx}'],
-    ignores: ['packages/grafana-ui/**/*.{test,story}.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',

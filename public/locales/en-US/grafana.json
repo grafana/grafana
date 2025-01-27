@@ -37,7 +37,7 @@
   "actions-editor": {
     "inline": {
       "add-button": "Add action",
-      "one-click-link": "One-click link"
+      "one-click-action": "One-click action"
     }
   },
   "admin": {
@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Alert rules"
-      }
+      },
+      "rulerrule-loading-error": "Failed to load the rule"
     },
     "rule-state": {
       "creating": "Creating",
@@ -892,6 +893,9 @@
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
+    "errors": {
+      "failed-to-load": "Failed to load dashboard"
+    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Error",
@@ -943,6 +947,12 @@
       "request-time": "Total request time",
       "rows": "Total number rows",
       "table-title": "Stats"
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
+        "no-rules": "There are no alert rules linked to this panel."
+      }
     },
     "toolbar": {
       "add": "Add",
@@ -1391,10 +1401,16 @@
     },
     "data-link-editor-modal": {
       "cancel": "Cancel",
+      "one-click-description": "Only one link can have one click enabled at a time",
       "save": "Save"
+    },
+    "data-link-inline-editor": {
+      "one-click": "One click"
     },
     "data-links-inline-editor": {
       "add-link": "Add link",
+      "one-click": "One click",
+      "one-click-enabled": "One click enabled",
       "one-click-link": "One-click link"
     },
     "data-source-http-settings": {
@@ -1476,7 +1492,8 @@
       "right-axis-indicator": "(right y-axis)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Add annotation"
+      "footer-add-annotation": "Add annotation",
+      "footer-click-to-navigate": "Click to open {{linkTitle}}"
     }
   },
   "graph": {
@@ -2049,6 +2066,12 @@
       "title": "Why host with Grafana?"
     }
   },
+  "multicombobox": {
+    "all": {
+      "title": "All",
+      "title-filtered": "All (filtered)"
+    }
+  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
@@ -2534,6 +2557,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": "The data source connections below are all {{pluginName}}. You can find all of your data source connections of all types in <4><0>Connections</0> - <3>Data sources</3>.</4>"
+      },
       "labels": {
         "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
@@ -2880,6 +2906,10 @@
     "title": "Unable to find application file"
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "The message is {{messageLength}} characters, which exceeds the maximum length of 500 characters. Please shorten it before saving.",
+      "title": "Message too long"
+    },
     "name-exists": {
       "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",
       "message-suggestion": "Please choose a different name or folder.",
@@ -3333,15 +3363,6 @@
       "lets-start": "Let's start!",
       "start-your-metrics-exploration": "Start your metrics exploration!",
       "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
-    },
-    "metric-overview": {
-      "description-label": "Description",
-      "labels": "Labels",
-      "metric-attributes": "Attributes",
-      "no-description": "No description available",
-      "type-label": "Type",
-      "unit-label": "Unit",
-      "unknown-type": "Unknown"
     },
     "metric-select": {
       "filter-by": "Filter by",

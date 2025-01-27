@@ -383,17 +383,9 @@ const (
 	// Allow restoring objects in k8s
 	FlagKubernetesRestore = "kubernetesRestore"
 
-	// FlagKubernetesFolders
-	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
-	FlagKubernetesFolders = "kubernetesFolders"
-
 	// FlagKubernetesFoldersServiceV2
 	// Use the Folders Service V2, and route Folder Service requests to k8s
 	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
-
-	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
-	// Facilitate integration testing of experimental APIs
-	FlagGrafanaAPIServerTestingWithExperimentalAPIs = "grafanaAPIServerTestingWithExperimentalAPIs"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -430,10 +422,6 @@ const (
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
-
-	// FlagPanelTitleSearchInV1
-	// Enable searching for dashboards using panel title in search v1
-	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
 
 	// FlagManagedPluginsInstall
 	// Install managed plugins directly from plugins catalog
@@ -558,10 +546,6 @@ const (
 	// FlagOnPremToCloudMigrations
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
-
-	// FlagOnPremToCloudMigrationsAuthApiMig
-	// Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.
-	FlagOnPremToCloudMigrationsAuthApiMig = "onPremToCloudMigrationsAuthApiMig"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -811,6 +795,10 @@ const (
 	// Enable sprinkles on unified storage search
 	FlagUnifiedStorageSearchSprinkles = "unifiedStorageSearchSprinkles"
 
+	// FlagUnifiedStorageSearchPermissionFiltering
+	// Enable permission filtering on unified storage search
+	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
@@ -947,7 +935,15 @@ const (
 	// Enables Query Library feature in Dashboards
 	FlagQueryLibraryDashboards = "queryLibraryDashboards"
 
+	// FlagGrafanaAdvisor
+	// Enables Advisor app
+	FlagGrafanaAdvisor = "grafanaAdvisor"
+
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
+
+	// FlagDatasourceConnectionsTab
+	// Shows defined connections for a data source in the plugins detail page
+	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"
 )

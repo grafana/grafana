@@ -1,10 +1,20 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneGridItemLike,
+  SceneGridRow,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from '../DashboardScene';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
@@ -101,6 +111,50 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): RowsLayoutManager {
+    if (layout instanceof DefaultGridLayoutManager) {
+      const config: Array<{
+        title?: string;
+        isCollapsed?: boolean;
+        children: SceneGridItemLike[];
+      }> = [];
+      let children: SceneGridItemLike[] | undefined;
+
+      layout.state.grid.forEachChild((child) => {
+        if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
+          throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
+        }
+
+        if (child instanceof SceneGridRow) {
+          if (!child.state.key?.includes('-clone-')) {
+            config.push({
+              title: child.state.title,
+              isCollapsed: !!child.state.isCollapsed,
+              children: child.state.children,
+            });
+            children = undefined;
+          }
+        } else {
+          if (!children) {
+            children = [];
+            config.push({ children });
+          }
+
+          children.push(child);
+        }
+      });
+
+      const rows = config.map(
+        (rowConfig) =>
+          new RowItem({
+            title: rowConfig.title ?? 'Row title',
+            isCollapsed: !!rowConfig.isCollapsed,
+            layout: DefaultGridLayoutManager.fromGridItems(rowConfig.children),
+          })
+      );
+
+      return new RowsLayoutManager({ rows });
+    }
+
     const row = new RowItem({ layout: layout.clone(), title: 'Row title' });
 
     return new RowsLayoutManager({ rows: [row] });

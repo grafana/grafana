@@ -11,12 +11,12 @@ replace (
 require (
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib v0.0.0-20250108202437-7a039176d884
-	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335
+	github.com/grafana/authlib v0.0.0-20250123104008-e99947858901
+	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-plugin-sdk-go v0.262.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da
+	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
+	github.com/grafana/grafana-plugin-sdk-go v0.263.0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.20.5
@@ -25,7 +25,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.33.0
 	gocloud.dev v0.40.0
 	golang.org/x/sync v0.10.0
-	google.golang.org/grpc v1.69.2
+	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.1
 	k8s.io/apimachinery v0.32.0
 )
@@ -38,13 +38,13 @@ require (
 	cloud.google.com/go/iam v1.2.1 // indirect
 	cloud.google.com/go/storage v1.43.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.3.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // indirect
 	github.com/apache/arrow-go/v18 v18.0.1-0.20241212180703-82be143d7c30 // indirect
@@ -109,19 +109,18 @@ require (
 	github.com/google/flatbuffers v24.3.25+incompatible // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/google/wire v0.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250110220613-267368fd1968 // indirect
+	github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
-	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // indirect
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da // indirect
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect
