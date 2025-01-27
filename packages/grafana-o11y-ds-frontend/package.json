@@ -36,7 +36,7 @@
     "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "^29.5.4",
-    "@types/node": "22.10.9",
+    "@types/node": "22.10.10",
     "@types/react": "18.3.18",
     "@types/systemjs": "6.15.1",
     "jest": "^29.6.4",
