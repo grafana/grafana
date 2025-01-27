@@ -92,7 +92,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 }
 
-func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 		authnlib.WithTracerOption(tracer),
