@@ -575,7 +575,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	if req.Query != "" && req.Query != "*" {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
 		// mimic the behavior of the sql search
-		query := req.Query
+		query := strings.ToLower(req.Query)
 		if !strings.Contains(query, "*") {
 			query = "*" + query + "*"
 		}
