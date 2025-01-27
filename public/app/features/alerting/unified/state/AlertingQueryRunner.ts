@@ -1,4 +1,3 @@
-import { produce } from 'immer';
 import { reject } from 'lodash';
 import { Observable, OperatorFunction, ReplaySubject, Unsubscribable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
@@ -24,7 +23,6 @@ import { setStructureRevision } from 'app/features/query/state/processing/revisi
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDagFromQueries, getDescendants, isDagError } from '../components/rule-editor/dag';
-import { stringifyErrorLike } from '../utils/misc';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {
@@ -204,16 +202,6 @@ const initialState = (queries: AlertQuery[], state: LoadingState): Record<string
 
     return dataByQuery;
   }, {});
-};
-
-const setQueryErrorState = (panelData: Record<string, PanelData>, refId: string, error: unknown) => {
-  return produce(panelData, (draft) => {
-    draft[refId].state = LoadingState.Error;
-
-    draft[refId].errors = (draft[refId].errors ?? []).concat({
-      message: stringifyErrorLike(error),
-    });
-  });
 };
 
 const getTimeRange = (query: AlertQuery, queries: AlertQuery[]): TimeRange => {
