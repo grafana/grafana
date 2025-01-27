@@ -114,6 +114,16 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Schema:   spec.StringProperty(),
 									},
 								},
+								// these are to support legacy search (modes 0-2)
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "deleted",
+										In:          "query",
+										Description: "search/list deleted dashboards",
+										Required:    false,
+										Schema:      spec.BooleanProperty(),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -230,6 +240,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Limit:   int64(limit),
 		Offset:  int64(offset),
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
+		// TODO add support for this in unistore
+		IsDeleted: queryParams.Has("deleted") && queryParams.Get("deleted") == "true",
 	}
 	fields := []string{"title", "folder", "tags"}
 	if queryParams.Has("field") {

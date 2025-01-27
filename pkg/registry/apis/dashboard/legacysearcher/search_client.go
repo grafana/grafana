@@ -38,7 +38,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// - page (check)
 	// - type
 	// - sort
-	// - deleted
 	// - permission
 	// - dashboardIds
 	// - dashboardUIDs
@@ -51,6 +50,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		// FolderUIDs:   req.FolderUIDs,
 		Type:         searchstore.TypeDashboard,
 		SignedInUser: user,
+		IsDeleted:    req.IsDeleted,
 	}
 
 	// TODO need to test this

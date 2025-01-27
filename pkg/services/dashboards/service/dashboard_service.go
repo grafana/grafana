@@ -1713,6 +1713,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
+	if query.IsDeleted {
+		request.IsDeleted = query.IsDeleted
+	}
+
 	if query.Limit > 0 {
 		request.Limit = query.Limit
 	}
