@@ -131,7 +131,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const {
-    //getToggleButtonProps,
+    getToggleButtonProps,
     //getLabelProps,
     isOpen,
     highlightedIndex,
@@ -201,7 +201,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width === 'auto');
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width);
 
   const virtualizerOptions = {
     count: items.length,
@@ -219,13 +219,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
   return (
     <div ref={containerRef}>
-      <div
-        style={{
-          width: width === 'auto' ? undefined : width,
-        }}
-        className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })}
-        ref={measureRef}
-      >
+      <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
@@ -263,14 +257,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
-                placeholder: selectedItems.length > 0 ? undefined : placeholder,
+                placeholder,
                 ref: inputRef,
                 style: { width: inputWidth },
               })
             )}
           />
 
-          <div className={multiStyles.suffix} ref={suffixMeasureRef}>
+          <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
             <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
           </div>
         </span>

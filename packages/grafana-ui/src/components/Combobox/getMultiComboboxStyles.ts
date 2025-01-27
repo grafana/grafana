@@ -10,19 +10,22 @@ export const getMultiComboboxStyles = (
   isOpen: boolean,
   invalid?: boolean,
   disabled?: boolean,
-  isAutoWidth?: boolean
+  width?: number | 'auto'
 ) => {
   const inputStyles = getInputStyles({ theme, invalid });
   const focusStyles = getFocusStyles(theme);
+
+  const wrapperWidth = width && width !== 'auto' ? theme.spacing(width) : '100%';
 
   return {
     wrapper: cx(
       inputStyles.input,
       css({
-        display: isAutoWidth ? 'inline-flex' : 'flex',
-        width: isAutoWidth ? 'auto' : '100%',
+        display: 'flex',
+        width: width === 'auto' ? 'auto' : wrapperWidth,
         gap: theme.spacing(0.5),
         padding: theme.spacing(0.5),
+        paddingRight: 28, // Account for suffix
         '&:focus-within': {
           ...focusStyles,
         },

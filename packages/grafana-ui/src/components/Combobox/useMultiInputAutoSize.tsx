@@ -4,9 +4,14 @@ import { measureText } from '../../utils';
 
 export function useMultiInputAutoSize(inputValue: string) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const initialInputWidth = useRef<number>(0); // Store initial width to prevent resizing on backspace
   const [inputWidth, setInputWidth] = useState<string>('');
 
   useLayoutEffect(() => {
+    if (inputRef.current && inputValue == null && initialInputWidth.current === 0) {
+      initialInputWidth.current = inputRef?.current.getBoundingClientRect().width;
+    }
+
     if (!inputRef.current || inputValue == null) {
       setInputWidth('');
       return;
@@ -16,11 +21,12 @@ export function useMultiInputAutoSize(inputValue: string) {
     const textWidth = measureText(inputRef.current.value || '', parseInt(fontSize, 10)).width;
     const measureInputWidth = inputRef.current.getBoundingClientRect().width || 0;
 
-    if (textWidth >= measureInputWidth) {
-      setInputWidth(`${textWidth}px`);
-    } else if (textWidth < measureInputWidth) {
+    if (textWidth < initialInputWidth.current) {
       // Let input fill all space before resizing
       setInputWidth('');
+    } else {
+      // Add pixels to prevent clipping
+      setInputWidth(`${textWidth + 5}px`);
     }
   }, [inputValue]);
 
