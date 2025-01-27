@@ -22,7 +22,7 @@ const getEnvConfig = () => {
 
   // Take all frontend keys from the ini file and prefix with `frontend_dev_`,
   // so they can be added to `process.env` elsewhere
-  /** @type {Record<string, unknown>} */
+  /** @type {Record<string, string|null|undefined>} */
   const env = {};
 
   for (const [key, value] of Object.entries(merged)) {
