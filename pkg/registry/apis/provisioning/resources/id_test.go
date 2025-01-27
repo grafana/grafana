@@ -96,9 +96,9 @@ func TestParseFolderID(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Description, func(t *testing.T) {
-			id := ParseFolderID(c.Path, repoName)
+			id := ParseFolder(c.Path, repoName)
 			assert.Equal(t, c.Path, id.Path)
-			assert.Equal(t, c.KubeName, id.KubernetesName)
+			assert.Equal(t, c.KubeName, id.ID)
 			assert.Equal(t, c.Title, id.Title)
 		})
 	}

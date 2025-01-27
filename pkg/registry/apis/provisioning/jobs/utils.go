@@ -16,7 +16,7 @@ import (
 // The root folder is special-cased as a folder that exists, but is not itself stored. It has no ID, no title, and no data, but will return `true` for OK bools.
 type folderTree struct {
 	tree    map[string]string
-	folders map[string]resources.FolderID
+	folders map[string]resources.Folder
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
@@ -33,12 +33,12 @@ func (t *folderTree) In(folder string) bool {
 //
 // If In(folder) or In(baseFolder) is false, this will return ok=false, because it would be undefined behaviour.
 // If baseFolder is not a parent of folder, ok=false is returned.
-func (t *folderTree) DirPath(folder, baseFolder string) (fid resources.FolderID, ok bool) {
+func (t *folderTree) DirPath(folder, baseFolder string) (fid resources.Folder, ok bool) {
 	if !t.In(folder) || !t.In(baseFolder) {
-		return resources.FolderID{}, false
+		return resources.Folder{}, false
 	}
 	if folder == "" && baseFolder != "" {
-		return resources.FolderID{}, false
+		return resources.Folder{}, false
 	} else if folder == baseFolder {
 		// Zero-value: we're fine with the zv if we're working with the root folder here.
 		// Any other folder ID will have the correct metadata and no path (which is correct).
@@ -76,17 +76,17 @@ func fetchRepoFolderTree(ctx context.Context, client *resources.DynamicClient) (
 
 	tree := make(map[string]string, len(rawFolders.Items))
 	tree[""] = "" // the root has no further parents
-	folders := make(map[string]resources.FolderID, len(rawFolders.Items))
+	folders := make(map[string]resources.Folder, len(rawFolders.Items))
 	for _, rf := range rawFolders.Items {
 		name := rf.GetName()
 		// TODO: Can I use MetaAccessor here?
 		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
 		tree[name] = parent
 
-		id := resources.FolderID{
-			Title:          name,
-			KubernetesName: name,
-			Path:           "", // We'll set this later in the DirPath function :)
+		id := resources.Folder{
+			Title: name,
+			ID:    name,
+			Path:  "", // We'll set this later in the DirPath function :)
 		}
 		if title, ok, _ := unstructured.NestedString(rf.Object, "spec", "title"); ok {
 			// If the title doesn't exist (it should), we'll just use the K8s name.

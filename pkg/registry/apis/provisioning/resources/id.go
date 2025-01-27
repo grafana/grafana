@@ -107,27 +107,28 @@ func NamesFromHashedRepoPath(repo string, fpath string) (objectName string, fold
 	return
 }
 
-// FolderID contains the identifier data for a folder.
-type FolderID struct {
+// Folder contains the data for a folder we use in provisioning.
+type Folder struct {
 	// Title is the human-readable name created by a human who wrote it.
 	Title string
-	// KubernetesName represents the name the folder should have, derived from the title.
+	// ID represents the name the folder should have, derived from the title.
 	// It contains a suffix calculated from the path of the folder.
-	KubernetesName string
+	// The ID is used in Kubernetes and the folders API server. This is the same as the legacy (and by the time you read this, hopefully removed) UID concept of folders.
+	ID string
 	// Path is the full path to the folder, as given to the parse function.
 	Path string
 }
 
-func ParseFolderID(dirPath, repositoryName string) FolderID {
+func ParseFolder(dirPath, repositoryName string) Folder {
 	clean := strings.Trim(path.Clean(dirPath), "/")
-	return FolderID{
-		Title:          calculateFolderTitleFromPath(clean),
-		KubernetesName: calculateKubernetesNameFromPath(clean, repositoryName),
-		Path:           dirPath,
+	return Folder{
+		Title: folderTitleFromPath(clean),
+		ID:    idFromPath(clean, repositoryName),
+		Path:  dirPath,
 	}
 }
 
-func calculateFolderTitleFromPath(cleanDirPath string) string {
+func folderTitleFromPath(cleanDirPath string) string {
 	titleIdx := strings.LastIndex(cleanDirPath, "/")
 	title := cleanDirPath
 	if titleIdx != -1 {
@@ -136,7 +137,7 @@ func calculateFolderTitleFromPath(cleanDirPath string) string {
 	return title
 }
 
-func calculateKubernetesNameFromPath(cleanDirPath, repositoryName string) string {
+func idFromPath(cleanDirPath, repositoryName string) string {
 	suffixer := appendHashSuffix(cleanDirPath, repositoryName)
 
 	kubernetesName := stringAfterLastSep(cleanDirPath, "/")

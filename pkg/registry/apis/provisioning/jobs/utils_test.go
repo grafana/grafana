@@ -8,14 +8,14 @@ import (
 )
 
 func TestFolderTree(t *testing.T) {
-	newFid := func(kube, title string) resources.FolderID {
-		return resources.FolderID{KubernetesName: kube, Title: title}
+	newFid := func(kube, title string) resources.Folder {
+		return resources.Folder{ID: kube, Title: title}
 	}
 
 	t.Run("empty tree", func(t *testing.T) {
 		tree := &folderTree{
 			tree:    make(map[string]string),
-			folders: make(map[string]resources.FolderID),
+			folders: make(map[string]resources.Folder),
 		}
 
 		assert.False(t, tree.In("x"), "x should not be in tree")
@@ -27,19 +27,19 @@ func TestFolderTree(t *testing.T) {
 	t.Run("single directory in tree", func(t *testing.T) {
 		tree := &folderTree{
 			tree:    map[string]string{"x": ""},
-			folders: map[string]resources.FolderID{"x": newFid("x", "X!")},
+			folders: map[string]resources.Folder{"x": newFid("x", "X!")},
 		}
 
 		assert.True(t, tree.In("x"), "x should be in tree")
 		id, ok := tree.DirPath("x", "x")
 		if assert.True(t, ok, "x should have DirPath with itself as base") {
-			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "x", id.ID, "KubernetesName")
 			assert.Equal(t, "X!", id.Title, "Title")
 			assert.Equal(t, "", id.Path, "Path")
 		}
 		id, ok = tree.DirPath("x", "")
 		if assert.True(t, ok, "x should have DirPath with empty base") {
-			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "x", id.ID, "KubernetesName")
 			assert.Equal(t, "X!", id.Title, "Title")
 			assert.Equal(t, "X!", id.Path, "Path")
 		}
@@ -48,7 +48,7 @@ func TestFolderTree(t *testing.T) {
 	t.Run("simple nesting tree", func(t *testing.T) {
 		tree := &folderTree{
 			tree: map[string]string{"a": "b", "b": "c", "c": "x", "x": ""},
-			folders: map[string]resources.FolderID{
+			folders: map[string]resources.Folder{
 				"x": newFid("x", "X!"),
 				"c": newFid("c", "C :)"),
 				"b": newFid("b", "!!B#!"),
@@ -62,21 +62,21 @@ func TestFolderTree(t *testing.T) {
 
 		id, ok := tree.DirPath("x", "")
 		if assert.True(t, ok, "x should have DirPath with empty base") {
-			assert.Equal(t, "x", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "x", id.ID, "KubernetesName")
 			assert.Equal(t, "X!", id.Title, "Title")
 			assert.Equal(t, "X!", id.Path, "Path")
 		}
 
 		id, ok = tree.DirPath("c", "c")
 		if assert.True(t, ok, "c should have DirPath with itself as base") {
-			assert.Equal(t, "c", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "c", id.ID, "KubernetesName")
 			assert.Equal(t, "C :)", id.Title, "Title")
 			assert.Equal(t, "", id.Path, "Path")
 		}
 
 		id, ok = tree.DirPath("a", "x")
 		if assert.True(t, ok, "a should have DirPath with x as base") {
-			assert.Equal(t, "a", id.KubernetesName, "KubernetesName")
+			assert.Equal(t, "a", id.ID, "KubernetesName")
 			assert.Equal(t, "[€]@£a", id.Title, "Title")
 			assert.Equal(t, "C :)/!!B#!/[€]@£a", id.Path, "Path")
 		}
@@ -85,7 +85,7 @@ func TestFolderTree(t *testing.T) {
 
 		id, ok = tree.DirPath("", "")
 		if assert.True(t, ok, "the root folder should have a path to itself") {
-			assert.Empty(t, id.KubernetesName)
+			assert.Empty(t, id.ID)
 			assert.Empty(t, id.Path)
 			assert.Empty(t, id.Title)
 		}
