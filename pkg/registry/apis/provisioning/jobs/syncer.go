@@ -325,7 +325,7 @@ func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string,
 		}
 
 		currentPath = path.Join(currentPath, folder)
-		folderID := resources.ParseFolderID(currentPath)
+		folderID := resources.ParseFolderID(currentPath, r.repository.Config().GetName())
 
 		logger := logger.With("folder", currentPath)
 		obj, err := r.folders.Get(ctx, folderID.KubernetesName, metav1.GetOptions{})
