@@ -10,13 +10,18 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
-  VizPanelMenu,
 } from '@grafana/scenes';
 
+import {
+  getAncestorsFromClone,
+  getCloneKey,
+  getLastKeyFromClone,
+  getOriginalKey,
+  isClonedKeyOf,
+  joinCloneKeys,
+} from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
-import { repeatPanelMenuBehavior } from '../PanelMenuBehavior';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { getRepeatKeyForSceneObject, isRepeatedSceneObjectOf } from '../layouts-shared/repeatUtils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
 import { TabItem } from './TabItem';
@@ -46,21 +51,6 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
     this.addActivationHandler(() => this._activationHandler());
   }
 
-  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
-    const allTabs = [this._getTab(), ...(this._clonedTabs ?? [])];
-
-    for (const tab of allTabs) {
-      const vizPanels = tab.getLayout().getVizPanels();
-
-      for (const vizPanel of vizPanels) {
-        const queryRunner = getQueryRunnerFor(vizPanel);
-        if (queryRunner) {
-          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
-        }
-      }
-    }
-  }
-
   private _activationHandler() {
     this.performRepeat();
   }
@@ -83,56 +73,19 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
     return layout;
   }
 
-  private _getTabClone(
-    tabToRepeat: TabItem,
-    index: number,
-    value: VariableValueSingle,
-    text: VariableValueSingle,
-    variable: MultiValueVariable
-  ): TabItem {
-    const $variables = new SceneVariableSet({
-      variables: [
-        new LocalValueVariable({
-          name: this.state.variableName,
-          value,
-          text: String(text),
-          isMulti: variable.state.isMulti,
-          includeAll: variable.state.includeAll,
-        }),
-      ],
-    });
+  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
+    const allTabs = [this._getTab(), ...(this._clonedTabs ?? [])];
 
-    const layout = tabToRepeat.getLayout().clone();
+    for (const tab of allTabs) {
+      const vizPanels = tab.getLayout().getVizPanels();
 
-    if (layout instanceof DefaultGridLayoutManager) {
-      layout.state.grid.setState({
-        isDraggable: false,
-      });
-
-      layout.getVizPanels().forEach((panel) => {
-        panel.setState({
-          menu: new VizPanelMenu({
-            $behaviors: [repeatPanelMenuBehavior],
-          }),
-        });
-      });
+      for (const vizPanel of vizPanels) {
+        const queryRunner = getQueryRunnerFor(vizPanel);
+        if (queryRunner) {
+          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
+        }
+      }
     }
-
-    if (index === 0) {
-      tabToRepeat.setState({
-        $variables,
-        layout,
-      });
-      return tabToRepeat;
-    }
-
-    return tabToRepeat.clone({
-      key: getRepeatKeyForSceneObject(tabToRepeat, value),
-      $variables,
-      $behaviors: [],
-      layout,
-      isClone: true,
-    });
   }
 
   public performRepeat(force = false) {
@@ -167,6 +120,10 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
 
     this._clonedTabs = [];
 
+    const originalTabKey = getOriginalKey(getLastKeyFromClone(tabToRepeat.state.key!));
+    const tabKeyAncestors = getAncestorsFromClone(tabToRepeat.state.key!);
+    const tabContent = tabToRepeat.getLayout();
+
     // when variable has no options (due to error or similar) it will not render any panels at all
     // adding a placeholder in this case so that there is at least empty panel that can display error
     const emptyVariablePlaceholderOption = {
@@ -178,13 +135,38 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
     const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
 
     // Loop through variable values and create repeats
-    for (let index = 0; index < variableValues.length; index++) {
-      this._clonedTabs.push(
-        this._getTabClone(tabToRepeat, index, variableValues[index], variableTexts[index], variable)
-      );
+    for (let tabIndex = 0; tabIndex < variableValues.length; tabIndex++) {
+      const isSourceTab = tabIndex === 0;
+      const tabClone = isSourceTab ? tabToRepeat : tabToRepeat.clone({ $behaviors: [] });
+
+      const tabCloneKey = joinCloneKeys(tabKeyAncestors, getCloneKey(originalTabKey, tabIndex));
+
+      const layout = tabContent.clone();
+
+      if (layout instanceof DefaultGridLayoutManager) {
+        layout.state.grid.setState({ isDraggable: false });
+      }
+
+      tabClone.setState({
+        key: tabCloneKey,
+        $variables: new SceneVariableSet({
+          variables: [
+            new LocalValueVariable({
+              name: this.state.variableName,
+              value: variableValues[tabIndex],
+              text: String(variableTexts[tabIndex]),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
+            }),
+          ],
+        }),
+        layout,
+      });
+
+      this._clonedTabs.push(tabClone);
     }
 
-    updateLayout(layout, this._clonedTabs, tabToRepeat);
+    updateLayout(layout, this._clonedTabs, originalTabKey);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
@@ -193,7 +175,7 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
   public removeBehavior() {
     const tab = this._getTab();
     const layout = this._getLayout();
-    const tabs = getTabsFilterOutRepeatClones(layout, tab);
+    const tabs = getTabsFilterOutRepeatClones(layout, tab.state.key!);
 
     layout.setState({ tabs });
 
@@ -202,9 +184,9 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
   }
 }
 
-function updateLayout(layout: TabsLayoutManager, tabs: TabItem[], tabToRepeat: TabItem) {
-  const allTabs = getTabsFilterOutRepeatClones(layout, tabToRepeat);
-  const index = allTabs.indexOf(tabToRepeat);
+function updateLayout(layout: TabsLayoutManager, tabs: TabItem[], tabKey: string) {
+  const allTabs = getTabsFilterOutRepeatClones(layout, tabKey);
+  const index = allTabs.findIndex((tab) => tab.state.key!.includes(tabKey));
 
   if (index === -1) {
     throw new Error('TabItemRepeaterBehavior: Tab not found in layout');
@@ -213,6 +195,6 @@ function updateLayout(layout: TabsLayoutManager, tabs: TabItem[], tabToRepeat: T
   layout.setState({ tabs: [...allTabs.slice(0, index), ...tabs, ...allTabs.slice(index + 1)] });
 }
 
-function getTabsFilterOutRepeatClones(layout: TabsLayoutManager, tabToRepeat: TabItem) {
-  return layout.state.tabs.filter((tab) => !isRepeatedSceneObjectOf(tab, tabToRepeat));
+function getTabsFilterOutRepeatClones(layout: TabsLayoutManager, tabKey: string) {
+  return layout.state.tabs.filter((tab) => !isClonedKeyOf(getLastKeyFromClone(tab.state.key!), tabKey));
 }
