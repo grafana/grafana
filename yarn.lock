@@ -18010,7 +18010,7 @@ __metadata:
     react-virtual: "npm:2.10.4"
     react-virtualized-auto-sizer: "npm:1.0.25"
     react-window: "npm:1.8.11"
-    react-window-infinite-loader: "npm:1.0.9"
+    react-window-infinite-loader: "npm:1.0.10"
     react-zoom-pan-pinch: "npm:^3.3.0"
     reduce-reducers: "npm:^1.0.4"
     redux: "npm:5.0.1"
@@ -26553,13 +26553,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-window-infinite-loader@npm:1.0.9":
-  version: 1.0.9
-  resolution: "react-window-infinite-loader@npm:1.0.9"
+"react-window-infinite-loader@npm:1.0.10":
+  version: 1.0.10
+  resolution: "react-window-infinite-loader@npm:1.0.10"
   peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
-  checksum: 10/4a11ad949443cd76f9304d0558516c53474f53ca370e54bc29c2c362657b43545c89aec3e7df42d8e8511df379aed79b6fdd2c8fc52e25a9559b64e41ac7aefe
+    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/4f4c097a2948f8da71d13199289d85c89720e41888ea50039d2b8e6d7cf160300e97f66421c53420d8cb95b3ece74940c07ebd23bddd7a705a679d7e2dc2957e
   languageName: node
   linkType: hard
 
