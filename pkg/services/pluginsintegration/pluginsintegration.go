@@ -129,6 +129,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 	plugininstaller.ProvideService,
 	pluginassets.ProvideService,
+	plugininstaller.ProvidePreinstall,
+	wire.Bind(new(plugininstaller.Preinstall), new(*plugininstaller.PreinstallImpl)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
