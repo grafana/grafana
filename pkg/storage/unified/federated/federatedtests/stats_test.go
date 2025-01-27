@@ -52,7 +52,7 @@ func TestDirectSQLStats(t *testing.T) {
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		folderimpl.ProvideDashboardFolderStore(db), db, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+		supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	// create parent folder
 
@@ -69,7 +69,7 @@ func TestDirectSQLStats(t *testing.T) {
 
 	// create an alert rule inside of folder test2
 	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
-	_, err = ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{
+	_, err = ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.AlertRule{
 		{
 			DashboardUID: &folder2UID,
 			UID:          "test",

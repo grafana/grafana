@@ -37,7 +37,7 @@
   "actions-editor": {
     "inline": {
       "add-button": "Åđđ äčŧįőŉ",
-      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+      "one-click-action": "Øŉę-čľįčĸ äčŧįőŉ"
     }
   },
   "admin": {
@@ -944,6 +944,12 @@
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
     },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
+        "no-rules": "Ŧĥęřę äřę ŉő äľęřŧ řūľęş ľįŉĸęđ ŧő ŧĥįş päŉęľ."
+      }
+    },
     "toolbar": {
       "add": "Åđđ",
       "alert-rules": "Åľęřŧ řūľęş",
@@ -1391,10 +1397,16 @@
     },
     "data-link-editor-modal": {
       "cancel": "Cäŉčęľ",
+      "one-click-description": "Øŉľy őŉę ľįŉĸ čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę",
       "save": "Ŝävę"
+    },
+    "data-link-inline-editor": {
+      "one-click": "Øŉę čľįčĸ"
     },
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
+      "one-click": "Øŉę čľįčĸ",
+      "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ",
       "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
     },
     "data-source-http-settings": {
@@ -1476,7 +1488,8 @@
       "right-axis-indicator": "(řįģĥŧ y-äχįş)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ"
+      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
   "graph": {

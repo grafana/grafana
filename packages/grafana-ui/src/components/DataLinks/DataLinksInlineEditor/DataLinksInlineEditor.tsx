@@ -51,6 +51,15 @@ export const DataLinksInlineEditor = ({
         setIsNew(false);
       }
     }
+
+    if (link.oneClick === true) {
+      linksSafe.forEach((link) => {
+        if (link.oneClick) {
+          link.oneClick = false;
+        }
+      });
+    }
+
     const update = cloneDeep(linksSafe);
     update[index] = link;
     onChange(update);
