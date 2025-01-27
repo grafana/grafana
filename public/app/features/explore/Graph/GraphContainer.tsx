@@ -12,6 +12,7 @@ import {
   ThresholdsConfig,
   GrafanaTheme2,
   TimeRange,
+  ThresholdsMode,
 } from '@grafana/data';
 import {
   GraphThresholdsStyleConfig,
@@ -21,6 +22,7 @@ import {
   Button,
   useStyles2,
   Tooltip,
+  GraphThresholdsStyleMode,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { ExploreGraphStyle } from 'app/types';
@@ -46,9 +48,14 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  warnThreshold?: number;
+  criticalThreshold?: number;
+  queryBuilderOnly?: boolean;
+  title?: string;
 }
 
 export const GraphContainer = ({
+  title,
   data,
   eventBus,
   height,
@@ -62,6 +69,9 @@ export const GraphContainer = ({
   thresholdsStyle,
   loadingState,
   statusMessage,
+  warnThreshold,
+  criticalThreshold,
+  queryBuilderOnly,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
@@ -76,9 +86,29 @@ export const GraphContainer = ({
     return showAllSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
   }, [data, showAllSeries]);
 
+  if (criticalThreshold || warnThreshold) {
+    thresholdsStyle = {
+      mode: GraphThresholdsStyleMode.Dashed,
+    }
+
+    let steps = [
+      { value: 0, color: 'green', state: 'ok' },
+    ];
+    if (warnThreshold) {
+      steps.push({ value: warnThreshold, color: 'yellow', state: 'warning' });
+    }
+    if (criticalThreshold) {
+      steps.push({ value: criticalThreshold, color: 'red', state: 'critical' });
+    }
+    thresholdsConfig = {
+      steps: steps,
+      mode: ThresholdsMode.Absolute,
+    };
+  }
+
   return (
     <PanelChrome
-      title={t('graph.container.title', 'Graph')}
+      title={title ? title : t('graph.container.title', 'Graph')}
       titleItems={[
         !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
@@ -105,7 +135,7 @@ export const GraphContainer = ({
       height={height}
       loadingState={loadingState}
       statusMessage={statusMessage}
-      actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
+      actions={!queryBuilderOnly && <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
     >
       {(innerWidth, innerHeight) => (
         <ExploreGraph

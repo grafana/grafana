@@ -182,12 +182,15 @@ export function ExploreGraph({
     toggleLegendRef.current = toggleLegend;
   }
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const hideLegend = searchParams.has('hideLegend');
+
   const panelOptions: TimeSeriesOptions = useMemo(
     () => ({
       tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
       legend: {
         displayMode: LegendDisplayMode.List,
-        showLegend: true,
+        showLegend: !hideLegend,
         placement: 'bottom',
         calcs: [],
         ...vizLegendOverrides,
