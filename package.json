@@ -62,6 +62,7 @@
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "generate-icons": "nx run grafana-icons:generate",
+    "process-specs": "ts-node ./scripts/process-spec.ts",
     "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
   },
   "grafana": {

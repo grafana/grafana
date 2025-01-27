@@ -1,6 +1,6 @@
 /**
  * To generate query library k8s APIs, run:
- * `ts-node ./scripts/process-spec.ts && npx rtk-query-codegen-openapi ./public/app/features/query-library/api/scripts/generate-rtk-apis.ts` from the root of the repo
+ * `npx rtk-query-codegen-openapi ./public/app/features/query-library/api/scripts/generate-rtk-apis.ts` from the root of the repo
  */
 
 import { ConfigFile } from '@rtk-query/codegen-openapi';

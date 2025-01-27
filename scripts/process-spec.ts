@@ -32,7 +32,6 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
       }
 
       const operation = pathItem[method];
-      removeDescription(operation);
       updateRefs(operation);
 
       newPathItem[method] = operation;
@@ -48,7 +47,6 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
     const newKey = simplifySchemaName(schemaKey);
 
     const schemaObject = newSpec.components.schemas[schemaKey];
-    removeDescription(schemaObject);
     updateRefs(schemaObject);
 
     newSchemas[newKey] = schemaObject;
@@ -56,23 +54,6 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
   newSpec.components.schemas = newSchemas;
 
   return newSpec;
-}
-
-/**
- * Recursively remove 'description' fields from all objects, effectively removing all comments from the generated API
- * TODO handle case when the actual field name is 'description'
- */
-function removeDescription(obj: any) {
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      removeDescription(item);
-    }
-  } else if (typeof obj === 'object' && obj !== null) {
-    delete obj.description;
-    for (const key in obj) {
-      removeDescription(obj[key]);
-    }
-  }
 }
 
 /**
@@ -115,11 +96,27 @@ function simplifySchemaName(schemaName: string) {
     return schemaName;
   }
 }
+// Process all OpenAPI specs in the specs directory
+const specsDir = path.resolve(__dirname, '../data/specs');
 
-// TODO make this to run for all resources in the spec folder
-const filePath = path.resolve(__dirname, '../data/specs/query-library/openapi.json');
-const outputFilePath = path.resolve(__dirname, '../data/specs/query-library/spec.json');
+// Get all subdirectories in the specs folder
+const specFolders = fs.readdirSync(specsDir).filter((file: string) => {
+  return fs.statSync(path.join(specsDir, file)).isDirectory();
+});
 
-const inputSpec = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-const outputSpec = processOpenAPISpec(inputSpec);
-fs.writeFileSync(outputFilePath, JSON.stringify(outputSpec, null, 2), 'utf-8');
+// Process each spec folder
+for (const folder of specFolders) {
+  const inputPath = path.join(specsDir, folder, 'openapi.json');
+  const outputPath = path.join(specsDir, folder, 'spec.json');
+
+  // Skip if input file doesn't exist
+  if (!fs.existsSync(inputPath)) {
+    continue;
+  }
+
+  console.log(`Processing spec for ${folder}...`);
+  const inputSpec = JSON.parse(fs.readFileSync(inputPath, 'utf-8'));
+  const outputSpec = processOpenAPISpec(inputSpec);
+  fs.writeFileSync(outputPath, JSON.stringify(outputSpec, null, 2), 'utf-8');
+  console.log(`Processing completed for ${folder}`);
+}
