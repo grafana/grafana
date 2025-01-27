@@ -7,7 +7,6 @@ import { useDeleteModal } from 'app/features/alerting/unified/components/rule-vi
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
-import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
@@ -126,9 +125,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
       />
       {deleteModal}
       {isGrafanaAlertingRule(rule.rulerRule) && showSilenceDrawer && (
-        <AlertmanagerProvider accessType="instance">
-          <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
-        </AlertmanagerProvider>
+        <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,11 +21,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -52,6 +61,11 @@ const defaultAlertmanagerConfigJSON = `
 	}
 }
 `
+
+type Response struct {
+	Message string `json:"message"`
+	TraceID string `json:"traceID"`
+}
 
 func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 	t.Helper()
@@ -1007,4 +1021,24 @@ func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) 
 func requireStatusCode(t *testing.T, expected, actual int, response string) {
 	t.Helper()
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
+}
+
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+	t.Helper()
+
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 1
+
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+
+	u, err := usrSvc.Create(context.Background(), &cmd)
+	require.NoError(t, err)
+	return u.ID
 }
