@@ -53,10 +53,10 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
           if (!(error instanceof StaleResultError)) {
             setAsyncError(true);
             setAsyncLoading(false);
-          }
 
-          if (error) {
-            console.error('Error loading async options for Combobox', error);
+            if (error) {
+              console.error('Error loading async options for Combobox', error);
+            }
           }
         });
     },

@@ -36,8 +36,7 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { placeholder, onChange, value, width, enableAllOption, invalid, loading, disabled, minWidth, maxWidth } =
-    props;
+  const { placeholder, onChange, value, width, enableAllOption, invalid, disabled, minWidth, maxWidth } = props;
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
@@ -54,12 +53,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [inputValue]);
 
   // Handle async options and the 'All' option
-  const { options: baseOptions, updateOptions } = useOptions(props.options);
+  const { options: baseOptions, updateOptions, asyncLoading } = useOptions(props.options);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;
     return addAllOption ? [allOptionItem, ...baseOptions] : baseOptions;
   }, [baseOptions, enableAllOption, allOptionItem]);
+  const loading = props.loading || asyncLoading;
 
   const selectedItems = useMemo(() => {
     if (!value) {
@@ -91,10 +91,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
           case useMultipleSelection.stateChangeTypes.FunctionAddSelectedItem:
           case useMultipleSelection.stateChangeTypes.FunctionSetSelectedItems:
-            console.log('useMultipleSelection has new items', newSelectedItems);
             // TODO: i don't like multiple breaks
             if (!newSelectedItems) {
-              console.warn('newSelectedItems is undefined, but should it ever be?');
               break;
             }
 
@@ -184,7 +182,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
 
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
-      console.log('state change', type);
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
