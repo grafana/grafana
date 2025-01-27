@@ -430,10 +430,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const { meta, viewPanelScene, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
 
-    if (meta.dashboardNotFound) {
-      return { text: 'Not found' };
-    }
-
     let pageNav: NavModelItem = {
       text: title,
       url: getDashboardUrl({

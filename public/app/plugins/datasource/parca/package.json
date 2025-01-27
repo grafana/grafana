@@ -23,7 +23,7 @@
     "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "14.5.2",
     "@types/lodash": "4.17.14",
-    "@types/node": "22.10.9",
+    "@types/node": "22.10.10",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "ts-node": "10.9.2",
