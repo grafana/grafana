@@ -80,7 +80,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	})
 
 	t.Run("build open", func(t *testing.T) {
-		// Now write each OpenAPI spec to a static file
 		dir := filepath.Join("..", "..", "..", "..", "openapi")
 		for _, gv := range check {
 			path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
@@ -93,44 +92,43 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			require.NotNil(t, rsp.Response)
 			require.Equal(t, 200, rsp.Response.StatusCode, path)
 
-			// Pretty-print the raw JSON for debugging
+			// Pretty-print the response for debugging
 			var prettyJSON bytes.Buffer
 			err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
 			require.NoError(t, err)
-			pretty := prettyJSON.String()
 
-			// 1) Unmarshal
 			var openAPISpec map[string]interface{}
-			err = json.Unmarshal([]byte(pretty), &openAPISpec)
+			err = json.Unmarshal(prettyJSON.Bytes(), &openAPISpec)
 			require.NoError(t, err)
 
-			// 2) Process transformations (similar to the TS code)
-			processed := ProcessOpenAPISpec(openAPISpec)
+			// 1) Transform the spec
+			transformed := ProcessOpenAPISpec(openAPISpec)
 
-			// 3) Marshal again
-			processedBytes, err := json.MarshalIndent(processed, "", "  ")
+			// 2) Reorder top-level keys so that "paths" comes before "components"
+			//    (and preserve "openapi", "info", etc. in a sensible sequence).
+			ordered := reorderTopLevelKeys(transformed)
+
+			// 3) Marshal with indentation
+			finalBytes, err := json.MarshalIndent(ordered, "", "  ")
 			require.NoError(t, err)
-			finalOutput := string(processedBytes)
+			finalOutput := string(finalBytes)
 
-			// Compare with what's on disk, or write a new file
-			write := false
+			// Compare or write out
 			fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
-
-			// nolint:gosec
-			body, err := os.ReadFile(fpath)
+			existing, err := os.ReadFile(fpath)
+			writeNeeded := false
 			if err == nil {
-				if diff := cmp.Diff(finalOutput, string(body)); diff != "" {
+				if diff := cmp.Diff(finalOutput, string(existing)); diff != "" {
 					t.Logf("openapi spec has changed: %s", path)
 					t.Logf("body mismatch (-want +got):\n%s\n", diff)
 					t.Fail()
-					write = true
+					writeNeeded = true
 				}
 			} else {
 				t.Errorf("missing openapi spec for: %s", path)
-				write = true
+				writeNeeded = true
 			}
-
-			if write {
+			if writeNeeded {
 				e2 := os.WriteFile(fpath, []byte(finalOutput), 0o644)
 				if e2 != nil {
 					t.Errorf("error writing file: %s", e2.Error())
@@ -140,119 +138,130 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	})
 }
 
-// ProcessOpenAPISpec applies similar transformations as the TypeScript version:
-//  1. Remove any path containing "/watch/" (deprecated).
-//  2. Remove "/apis/<group>/<version>" and the "/namespaces/{namespace}" part (if present)
-//     so that e.g., "/apis/peakq.grafana.app/v0alpha1/namespaces/{namespace}/querytemplates"
-//     becomes "/querytemplates".
-//  3. Filter out "namespace" from path parameters.
-//  4. Update $ref fields to simpler schema names.
+// ProcessOpenAPISpec applies transformations similar to your TypeScript code:
+//  1. Remove any path containing "/watch/".
+//  2. Remove the prefix: "/apis/<group>/<version>/namespaces/{namespace}" (if present).
+//  3. Filter out `namespace` from path parameters.
+//  4. Update all $ref fields to remove k8s metadata from schema names.
 //  5. Simplify schema names in "components.schemas".
 func ProcessOpenAPISpec(spec map[string]interface{}) map[string]interface{} {
 	newSpec := deepCopy(spec)
 
-	// --------------------------------------------------------------------
-	// Process 'paths'
-	// --------------------------------------------------------------------
+	// 1) Process 'paths'
 	pathsVal, ok := newSpec["paths"]
-	if !ok {
-		return newSpec
-	}
-	paths, ok := pathsVal.(map[string]interface{})
-	if !ok {
-		return newSpec
+	if ok {
+		if pathsMap, _ := pathsVal.(map[string]interface{}); pathsMap != nil {
+			newSpec["paths"] = processPaths(pathsMap)
+		}
 	}
 
-	newPaths := map[string]interface{}{}
+	// 2) Process 'components.schemas'
+	compsVal, ok := newSpec["components"]
+	if ok {
+		if compsMap, _ := compsVal.(map[string]interface{}); compsMap != nil {
+			if schemasVal, ok := compsMap["schemas"]; ok {
+				if schemasMap, _ := schemasVal.(map[string]interface{}); schemasMap != nil {
+					newSpecComponents := map[string]interface{}{}
+					for schemaKey, schemaVal := range schemasMap {
+						newKey := simplifySchemaName(schemaKey)
+						updateRefs(schemaVal)
+						newSpecComponents[newKey] = schemaVal
+					}
+					compsMap["schemas"] = newSpecComponents
+					newSpec["components"] = compsMap
+				}
+			}
+		}
+	}
 
+	return newSpec
+}
+
+func processPaths(paths map[string]interface{}) map[string]interface{} {
+	newPaths := make(map[string]interface{})
 	// This regex removes "/apis/<group>/<version>" plus optionally "/namespaces/{namespace}"
-	// from the start of the path, leaving whatever follows.
 	// Example: "/apis/peakq.grafana.app/v0alpha1/namespaces/{namespace}/querytemplates" -> "/querytemplates"
-	//          "/apis/peakq.grafana.app/v0alpha1/querytemplates" -> "/querytemplates"
-	pathRegex := regexp.MustCompile(`^/apis/[^/]+/[^/]+(?:/namespaces/\{namespace\})?`)
+	pathRegex := regexp.MustCompile(`^/apis/[^/]+/[^/]+/namespaces/\{namespace}`)
 
-	for pathKey, pathItemVal := range paths {
+	for pathKey, pathValue := range paths {
 		// Skip any path that contains "/watch/"
 		if strings.Contains(pathKey, "/watch/") {
 			continue
 		}
-
 		newPathKey := pathRegex.ReplaceAllString(pathKey, "")
-		pathItemMap, ok := pathItemVal.(map[string]interface{})
+
+		pathItemMap, ok := pathValue.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		newPathItem := map[string]interface{}{}
-		for methodKey, operationVal := range pathItemMap {
-			// Filter out "namespace" param if found in parameters array
+		newPathItem := make(map[string]interface{})
+		for methodKey, methodValue := range pathItemMap {
+			// If this is "parameters", filter out "namespace"
 			if methodKey == "parameters" {
-				if arr, ok := operationVal.([]interface{}); ok {
+				if arr, ok := methodValue.([]interface{}); ok {
 					var filtered []interface{}
-					for _, param := range arr {
-						paramMap, ok := param.(map[string]interface{})
+					for _, paramVal := range arr {
+						paramMap, ok := paramVal.(map[string]interface{})
 						if !ok {
 							continue
 						}
-						if paramMap["name"] == "namespace" {
+						nameVal := paramMap["name"]
+						if nameVal == "namespace" {
 							// skip
 							continue
 						}
 						filtered = append(filtered, paramMap)
 					}
-					operationVal = filtered
+					methodValue = filtered
 				}
-				newPathItem[methodKey] = operationVal
+				newPathItem[methodKey] = methodValue
 			} else {
-				// For method definitions, update $ref references
-				updateRefs(operationVal)
-				newPathItem[methodKey] = operationVal
+				// For methods, recursively update refs
+				updateRefs(methodValue)
+				newPathItem[methodKey] = methodValue
 			}
 		}
 		newPaths[newPathKey] = newPathItem
 	}
-	newSpec["paths"] = newPaths
-
-	// --------------------------------------------------------------------
-	// Process components -> schemas
-	// --------------------------------------------------------------------
-	compVal, ok := newSpec["components"]
-	if !ok {
-		return newSpec
-	}
-	compMap, ok := compVal.(map[string]interface{})
-	if !ok {
-		return newSpec
-	}
-	schemasVal, ok := compMap["schemas"]
-	if !ok {
-		return newSpec
-	}
-	schemasMap, ok := schemasVal.(map[string]interface{})
-	if !ok {
-		return newSpec
-	}
-
-	newSchemas := map[string]interface{}{}
-	for schemaKey, schemaVal := range schemasMap {
-		newKey := simplifySchemaName(schemaKey)
-		updateRefs(schemaVal)
-		newSchemas[newKey] = schemaVal
-	}
-	compMap["schemas"] = newSchemas
-	newSpec["components"] = compMap
-
-	return newSpec
+	return newPaths
 }
 
-// updateRefs recursively finds $ref fields and rewrites them
-// so that "io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-// becomes "Time".
+// reorderTopLevelKeys returns a new map with keys in a set order:
+// "openapi", "info", "paths", "components", then everything else.
+// This ensures "paths" appears before "components" in the JSON output.
+func reorderTopLevelKeys(m map[string]interface{}) map[string]interface{} {
+	ordered := make(map[string]interface{})
+
+	// Pick desired keys in order
+	order := []string{"openapi", "info", "paths", "components"}
+
+	// Copy known keys in sequence
+	for _, k := range order {
+		if v, ok := m[k]; ok {
+			ordered[k] = v
+		}
+	}
+
+	// Copy the rest in no particular order (if any).
+	for k, v := range m {
+		// If it's not one of the known keys, add it at the end
+		if k == "openapi" || k == "info" || k == "paths" || k == "components" {
+			continue
+		}
+		ordered[k] = v
+	}
+
+	return ordered
+}
+
+// updateRefs recursively finds $ref fields and updates them
+// so that "io.k8s.apimachinery.pkg.apis.meta.v1.Time" -> "Time".
 func updateRefs(obj interface{}) {
 	switch val := obj.(type) {
 	case []interface{}:
-		for _, elem := range val {
-			updateRefs(elem)
+		for _, item := range val {
+			updateRefs(item)
 		}
 	case map[string]interface{}:
 		if refRaw, ok := val["$ref"]; ok {
@@ -271,26 +280,25 @@ func updateRefs(obj interface{}) {
 	}
 }
 
-// simplifySchemaName removes the version prefix from schema names,
-// e.g. "io.k8s.apimachinery.pkg.apis.meta.v1.Time" -> "Time".
+// simplifySchemaName removes e.g. "io.k8s.apimachinery.pkg.apis.meta.v1." from the front
 func simplifySchemaName(schemaName string) string {
 	parts := strings.Split(schemaName, ".")
-	versionRegex := regexp.MustCompile(`^v\d+[a-zA-Z0-9]*$`)
+	versionRe := regexp.MustCompile(`^v\d+[a-zA-Z0-9]*$`)
 	for i, p := range parts {
-		if versionRegex.MatchString(p) && i+1 < len(parts) {
+		if versionRe.MatchString(p) && i+1 < len(parts) {
 			return strings.Join(parts[i+1:], ".")
 		}
 	}
 	return schemaName
 }
 
-// deepCopy does a JSON-based deep copy of a map[string]interface{}.
+// deepCopy makes a JSON-based deep copy of a map.
 func deepCopy(src map[string]interface{}) map[string]interface{} {
-	raw, err := json.Marshal(src)
+	b, err := json.Marshal(src)
 	if err != nil {
 		return src
 	}
 	var dst map[string]interface{}
-	_ = json.Unmarshal(raw, &dst)
+	_ = json.Unmarshal(b, &dst)
 	return dst
 }
