@@ -574,7 +574,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.Res
 	// Add a text query
 	if req.Query != "" && req.Query != "*" {
 		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-		queries = append(queries, bleve.NewFuzzyQuery(req.Query))
+		// mimic the behavior of the sql search
+		query := req.Query
+		if !strings.Contains(query, "*") {
+			query = "*" + query + "*"
+		}
+		queries = append(queries, bleve.NewWildcardQuery(query))
 	}
 
 	switch len(queries) {
