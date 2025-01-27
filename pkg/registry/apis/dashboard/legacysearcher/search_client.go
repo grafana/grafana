@@ -33,7 +33,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	// TODO add missing support for the following query params:
-	// - tag
 	// - starred (won't support)
 	// - page (check)
 	// - type
@@ -51,6 +50,12 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		Type:         searchstore.TypeDashboard,
 		SignedInUser: user,
 		IsDeleted:    req.IsDeleted,
+	}
+
+	for _, field := range req.Options.Fields {
+		if field.Key == resource.SEARCH_FIELD_TAGS {
+			query.Tags = field.GetValues()
+		}
 	}
 
 	// TODO need to test this
