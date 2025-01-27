@@ -223,7 +223,7 @@ async function buildTestSceneWithLibraryPanel() {
     title: 'Panel A',
     pluginId: 'table',
     key: 'panel-12',
-    $behaviors: [new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: '111' })],
+    $behaviors: [new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' })],
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     $data: new SceneDataTransformer({
       transformations: [

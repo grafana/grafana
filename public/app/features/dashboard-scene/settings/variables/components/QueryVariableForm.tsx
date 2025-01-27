@@ -63,6 +63,13 @@ export function QueryVariableEditorForm({
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
+    const defaultQuery = datasource?.variables?.getDefaultQuery?.();
+
+    if (!query && defaultQuery) {
+      const query =
+        typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };
+      onQueryChange(query);
+    }
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);

@@ -12,8 +12,6 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { PanelTimeRange } from './PanelTimeRange';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
-  // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
-  title?: string;
   uid: string;
   name: string;
   isLoaded?: boolean;
@@ -49,7 +47,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const libPanelModel = new PanelModel(libPanel.model);
 
     const vizPanelState: VizPanelState = {
-      title: libPanelModel.title,
+      title: vizPanel.state.title ?? libPanelModel.title,
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,
@@ -70,7 +68,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
 
     const layoutElement = vizPanel.parent!;
 
