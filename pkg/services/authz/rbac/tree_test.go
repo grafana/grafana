@@ -9,7 +9,6 @@ import (
 )
 
 func Test_Tree(t *testing.T) {
-
 	tree := newFolderTree([]store.Folder{
 		{UID: "1"},
 		{UID: "11", ParentUID: strPtr("1")},
