@@ -218,7 +218,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
   return (
-    <div ref={containerRef}>
+    <div className={multiStyles.container} ref={containerRef}>
       <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (

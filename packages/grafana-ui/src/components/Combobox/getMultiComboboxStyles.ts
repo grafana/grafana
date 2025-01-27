@@ -18,11 +18,14 @@ export const getMultiComboboxStyles = (
   const wrapperWidth = width && width !== 'auto' ? theme.spacing(width) : '100%';
 
   return {
+    container: css({
+      width: width === 'auto' ? 'auto' : wrapperWidth,
+    }), // wraps everything
     wrapper: cx(
       inputStyles.input,
       css({
         display: 'flex',
-        width: width === 'auto' ? 'auto' : wrapperWidth,
+        width: '100%',
         gap: theme.spacing(0.5),
         padding: theme.spacing(0.5),
         paddingRight: 28, // Account for suffix
