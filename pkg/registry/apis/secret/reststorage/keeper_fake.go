@@ -40,6 +40,7 @@ func (s *fakeKeeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
+
 	return &v, nil
 }
 
@@ -54,7 +55,6 @@ func (s *fakeKeeperStorage) Update(ctx context.Context, nk *secretv0alpha1.Keepe
 		return nil, contracts.ErrSecureValueNotFound
 	}
 	ns[nk.Name] = v
-	s.values[nk.Namespace] = ns
 
 	return &v, nil
 }
@@ -69,6 +69,7 @@ func (s *fakeKeeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) 
 		return contracts.ErrSecureValueNotFound
 	}
 	delete(ns, nn.Name)
+
 	return nil
 }
 

@@ -41,6 +41,7 @@ func (s *fakeSecureValueStorage) Read(ctx context.Context, nn xkube.NameNamespac
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
+
 	return &v, nil
 }
 
@@ -56,7 +57,6 @@ func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1
 		return nil, contracts.ErrSecureValueNotFound
 	}
 	ns[nsv.Name] = v
-	s.values[nsv.Namespace] = ns
 
 	return &v, nil
 }
@@ -71,6 +71,7 @@ func (s *fakeSecureValueStorage) Delete(ctx context.Context, nn xkube.NameNamesp
 		return contracts.ErrSecureValueNotFound
 	}
 	delete(ns, nn.Name)
+
 	return nil
 }
 
