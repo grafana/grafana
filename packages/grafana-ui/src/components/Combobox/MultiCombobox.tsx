@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Checkbox } from '../Forms/Checkbox';
+import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
@@ -35,7 +36,8 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value, width, enableAllOption, invalid, loading, disabled } = props;
+  const { options, placeholder, onChange, value, width, enableAllOption, invalid, loading, disabled, isClearable } =
+    props;
   const isAsync = typeof options === 'function';
 
   const selectedItems = useMemo(() => {
@@ -98,7 +100,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             onChange(getComboboxOptionsValues(newSelectedItems));
           }
           break;
-
+        case useMultipleSelection.stateChangeTypes.FunctionReset:
+          onChange([]);
+          break;
         default:
           break;
       }
@@ -267,6 +271,25 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             <div className={multiStyles.suffix} ref={suffixMeasureRef}>
               <Spinner inline={true} />
             </div>
+          )}
+          {!loading && isClearable && selectedItems.length > 1 && (
+            <span className={multiStyles.suffix}>
+              <Icon
+                name="times"
+                className={styles.clear}
+                title={t('multicombobox.clear.title', 'Clear  all')}
+                tabIndex={0}
+                role="button"
+                onClick={() => {
+                  onChange([]);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    onChange([]);
+                  }
+                }}
+              />
+            </span>
           )}
         </span>
       </div>
