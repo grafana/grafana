@@ -88,7 +88,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     [selectedItems]
   );
 
-  const { getSelectedItemProps, getDropdownProps, removeSelectedItem } = useMultipleSelection({
+  const { getSelectedItemProps, getDropdownProps, removeSelectedItem, reset } = useMultipleSelection({
     selectedItems, //initally selected items,
     onStateChange: ({ type, selectedItems: newSelectedItems }) => {
       switch (type) {
@@ -272,20 +272,20 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               <Spinner inline={true} />
             </div>
           )}
-          {!loading && isClearable && selectedItems.length > 1 && (
+          {isClearable && (
             <span className={multiStyles.suffix}>
               <Icon
                 name="times"
                 className={styles.clear}
-                title={t('multicombobox.clear.title', 'Clear  all')}
+                title={t('multicombobox.clear.title', 'Clear all')}
                 tabIndex={0}
                 role="button"
                 onClick={() => {
-                  onChange([]);
+                  reset();
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    onChange([]);
+                    reset();
                   }
                 }}
               />
