@@ -214,6 +214,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           key: cloneItemKey,
           y: cloneItemY,
           isDraggable: !isSourceRow && sourceItem instanceof DashboardGridItem ? false : sourceItem.state.isDraggable,
+          isResizable: !isSourceRow && sourceItem instanceof DashboardGridItem ? false : sourceItem.state.isResizable,
         });
 
         ensureUniqueKeys(cloneItem, cloneItemKey);
