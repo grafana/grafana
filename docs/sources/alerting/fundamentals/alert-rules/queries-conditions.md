@@ -103,7 +103,7 @@ The threshold expression allows you to compare two single values. It returns `0`
 - Is above (x > y)
 - Is below (x < y)
 - Is within range (x > y1 AND x < y2)
-- Is outside range (x < y1 AND x > y2)
+- Is outside range (x < y1 OR x > y2)
 
 **Classic condition (legacy)**
 
