@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-	"time"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -101,15 +100,4 @@ func toUID(rawIdentifier string) string {
 		return ""
 	}
 	return parts[1]
-}
-
-func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
-	created := meta.GetCreationTimestamp().Time
-	return &created, nil
-}
-
-func getURL(meta utils.GrafanaMetaAccessor, title string) string {
-	slug := slugify.Slugify(title)
-	uid := meta.GetName()
-	return dashboards.GetFolderURL(uid, slug)
 }
