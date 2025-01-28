@@ -4,9 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchItemType } from 'app/features/search/types';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
@@ -66,22 +67,52 @@ async function getFoldersAsOptions(
 ): Promise<Array<SelectableValue<FolderInfo>>> {
   setLoading(true);
 
-  const params = {
-    query: searchString,
-    type: DashboardSearchItemType.DashFolder,
-    permission: PermissionLevelString.View,
-  };
+  try {
+    if (config.featureToggles.unifiedStorageSearchUI) {
+      const searcher = getGrafanaSearcher();
+      const queryResponse = await searcher.search({
+        query: searchString,
+        kind: ['folder'],
+        limit: 100,
+        permission: PermissionLevelString.View,
+      });
 
-  // FIXME: stop using id from search and use UID instead
-  const searchHits = await getBackendSrv().search(params);
-  const options = searchHits.map((d) => ({ label: d.title, value: { uid: d.uid, title: d.title } }));
-  if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
-    options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
+      const options = queryResponse.view.map((item) => ({
+        label: item.name,
+        value: { uid: item.uid, title: item.name }
+      }));
+
+      if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
+        options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
+      }
+
+      return options;
+    } else {
+      // Use existing backend service search
+      const params = {
+        query: searchString,
+        type: 'folder',
+        permission: PermissionLevelString.View,
+      };
+
+      const searchHits = await getBackendSrv().search(params);
+      const options = searchHits.map((d) => ({ 
+        label: d.title, 
+        value: { uid: d.uid, title: d.title } 
+      }));
+
+      if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
+        options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
+      }
+
+      return options;
+    }
+  } catch (error) {
+    console.error('Failed to fetch folders:', error);
+    return [];
+  } finally {
+    setLoading(false);
   }
-
-  setLoading(false);
-
-  return options;
 }
 
 function getStyles(theme: GrafanaTheme2) {

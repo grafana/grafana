@@ -1,8 +1,9 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, isFetchError, config } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
@@ -13,7 +14,7 @@ import {
 } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
-import { DashboardSearchHit } from '../../search/types';
+import { DashboardSearchHit, DashboardSearchItemType } from '../../search/types';
 import { DashboardJson } from '../types';
 
 import {
@@ -267,11 +268,33 @@ export function createFolder(payload: any) {
 
 export const SLICE_FOLDER_RESULTS_TO = 1000;
 
-export function searchFolders(
+export async function searchFolders(
   query: any,
   permission?: PermissionLevelString,
   type: SearchQueryType = SearchQueryType.Folder
 ): Promise<DashboardSearchHit[]> {
+  if (config.featureToggles.unifiedStorageSearchUI) {
+    const searcher = getGrafanaSearcher();
+    const queryResponse = await searcher.search({
+      query: query || '*',
+      kind: ['folder'],
+      limit: SLICE_FOLDER_RESULTS_TO,
+      permission,
+    });
+
+    return queryResponse.view.map((item) => ({
+      uid: item.uid,
+      title: item.name,
+      url: item.url,
+      type: DashboardSearchItemType.DashFolder,
+      tags: item.tags || [],
+      isStarred: false,
+      folderId: 0,
+      folderUid: item.location || 'general',
+      folderTitle: item.location || 'General',
+    }));
+  }
+
   return getBackendSrv().get('/api/search', {
     query,
     type: type,
