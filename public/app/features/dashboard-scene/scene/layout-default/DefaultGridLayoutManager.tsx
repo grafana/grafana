@@ -13,7 +13,7 @@ import {
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { getLastKeyFromClone, isClonedKey, joinCloneKeys } from '../../utils/clone';
+import { isLastKeyCloned, joinCloneKeys } from '../../utils/clone';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
@@ -357,7 +357,7 @@ export class DefaultGridLayoutManager
               const row = child.clone({
                 key: rowKey,
                 children: child.state.children.reduce<SceneGridItemLike[]>((rowAcc, rowChild) => {
-                  if (isClonedKey(getLastKeyFromClone(rowChild.state.key!))) {
+                  if (isLastKeyCloned(rowChild.state.key!)) {
                     return rowAcc;
                   }
 

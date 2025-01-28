@@ -23,13 +23,7 @@ import {
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import {
-  getAncestorsFromClone,
-  getCloneKey,
-  getLastKeyFromClone,
-  getOriginalKey,
-  joinCloneKeys,
-} from '../../utils/clone';
+import { setCloneKeyIndex } from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
 
@@ -122,8 +116,6 @@ export class DashboardGridItem
 
     const panelToRepeat = this.state.body;
     const repeatedPanels: VizPanel[] = [];
-    const originalPanelKey = getOriginalKey(getLastKeyFromClone(panelToRepeat.state.key!));
-    const panelKeyAncestors = getAncestorsFromClone(panelToRepeat.state.key!);
 
     // when variable has no options (due to error or similar) it will not render any panels at all
     //  adding a placeholder in this case so that there is at least empty panel that can display error
@@ -147,7 +139,7 @@ export class DashboardGridItem
             }),
           ],
         }),
-        key: joinCloneKeys(panelKeyAncestors, getCloneKey(originalPanelKey, index)),
+        key: setCloneKeyIndex(panelToRepeat.state.key!, index),
       };
       const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);

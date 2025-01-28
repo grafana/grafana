@@ -21,7 +21,7 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
 
-import { getLastKeyFromClone, getOriginalKey } from './clone';
+import { getLastKeyFromClone, getLastOriginalKeyFromClone, hasClonedAncestors } from './clone';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -31,7 +31,7 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(getOriginalKey(getLastKeyFromClone(panel.state.key!)).replace('panel-', ''), 10);
+  return parseInt(getLastOriginalKeyFromClone(panel.state.key!).replace('panel-', ''), 10);
 }
 
 /**
@@ -64,7 +64,11 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   const panel = sceneGraph.findObject(scene, (obj) => {
     const objKey = obj.state.key!;
 
-    if (objKey === key) {
+    if (
+      objKey === key ||
+      getLastKeyFromClone(objKey) === getLastKeyFromClone(key) ||
+      (!hasClonedAncestors(objKey) && getLastOriginalKeyFromClone(objKey) === key)
+    ) {
       return true;
     }
 

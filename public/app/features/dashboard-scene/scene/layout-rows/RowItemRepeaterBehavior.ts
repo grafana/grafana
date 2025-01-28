@@ -12,14 +12,7 @@ import {
   VariableValueSingle,
 } from '@grafana/scenes';
 
-import {
-  getAncestorsFromClone,
-  getCloneKey,
-  getLastKeyFromClone,
-  getOriginalKey,
-  isClonedKeyOf,
-  joinCloneKeys,
-} from '../../utils/clone';
+import { setCloneKeyIndex, isClonedKeyOf } from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
@@ -119,8 +112,6 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
 
     this._clonedRows = [];
 
-    const originalRowKey = getOriginalKey(getLastKeyFromClone(rowToRepeat.state.key!));
-    const rowKeyAncestors = getAncestorsFromClone(rowToRepeat.state.key!);
     const rowContent = rowToRepeat.getLayout();
 
     // when variable has no options (due to error or similar) it will not render any panels at all
@@ -138,7 +129,7 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
       const isSourceRow = rowIndex === 0;
       const rowClone = isSourceRow ? rowToRepeat : rowToRepeat.clone({ $behaviors: [] });
 
-      const rowCloneKey = joinCloneKeys(rowKeyAncestors, getCloneKey(originalRowKey, rowIndex));
+      const rowCloneKey = setCloneKeyIndex(rowToRepeat.state.key!, rowIndex);
 
       rowClone.setState({
         key: rowCloneKey,
@@ -159,7 +150,7 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
       this._clonedRows.push(rowClone);
     }
 
-    updateLayout(layout, this._clonedRows, originalRowKey);
+    updateLayout(layout, this._clonedRows, rowToRepeat.state.key!);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
@@ -189,5 +180,5 @@ function updateLayout(layout: RowsLayoutManager, rows: RowItem[], rowKey: string
 }
 
 function getRowsFilterOutRepeatClones(layout: RowsLayoutManager, rowKey: string) {
-  return layout.state.rows.filter((rows) => !isClonedKeyOf(getLastKeyFromClone(rows.state.key!), rowKey));
+  return layout.state.rows.filter((rows) => !isClonedKeyOf(rows.state.key!, rowKey));
 }

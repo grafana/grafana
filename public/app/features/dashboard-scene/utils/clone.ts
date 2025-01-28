@@ -37,7 +37,7 @@ export function getOriginalKey(key: string): string {
  * @param key2 - scene object to check against
  */
 export function isClonedKeyOf(key1: string, key2: string): boolean {
-  return isClonedKey(key1) && getOriginalKey(key1) === getOriginalKey(key2);
+  return isClonedKey(key1) && getLastOriginalKeyFromClone(key1) === getLastOriginalKeyFromClone(key2);
 }
 
 /**
@@ -50,12 +50,11 @@ export function getLastKeyFromClone(key: string): string {
 }
 
 /**
- * Get the ancestors from a clone key
- * @param key - key to get ancestors from
+ * Get the last original key from a clone key
+ * @param key - key to get last original key from
  */
-export function getAncestorsFromClone(key: string): string {
-  const keys = key.split(CLONE_SEPARATOR);
-  return keys.slice(0, keys.length - 1).join(CLONE_SEPARATOR);
+export function getLastOriginalKeyFromClone(key: string): string {
+  return getOriginalKey(getLastKeyFromClone(key));
 }
 
 /**
@@ -80,4 +79,24 @@ export function hasClonedAncestors(key: string): boolean {
  */
 export function containsCloneKey(key: string): boolean {
   return key.includes(CLONE_KEY);
+}
+
+/**
+ * Checks if a key is the last clone key
+ * @param key - key to check
+ */
+export function isLastKeyCloned(key: string): boolean {
+  return isClonedKey(getLastKeyFromClone(key));
+}
+
+/**
+ * Change the index of a clone key
+ * @param key - key to change index of
+ * @param newIndex - new index
+ */
+export function setCloneKeyIndex(key: string, newIndex: number): string {
+  const parts = key.split(CLONE_SEPARATOR);
+  let actualKey = parts.pop()!;
+  actualKey = getCloneKey(getOriginalKey(actualKey), newIndex);
+  return joinCloneKeys(...parts, actualKey);
 }

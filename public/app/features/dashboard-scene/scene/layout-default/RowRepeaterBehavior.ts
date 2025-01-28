@@ -15,13 +15,11 @@ import {
 } from '@grafana/scenes';
 
 import {
+  setCloneKeyIndex,
   containsCloneKey,
-  getAncestorsFromClone,
-  getCloneKey,
   getLastKeyFromClone,
-  getOriginalKey,
-  isClonedKey,
   isClonedKeyOf,
+  isLastKeyCloned,
   joinCloneKeys,
 } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
@@ -57,14 +55,11 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const layout = this._getLayout();
     const originalRow = this._getRow();
-    const originalRowKey = getOriginalKey(getLastKeyFromClone(originalRow.state.key!));
-    const originalRowNonClonedPanels = originalRow.state.children.filter(
-      (child) => !isClonedKey(getLastKeyFromClone(child.state.key!))
-    );
+    const originalRowNonClonedPanels = originalRow.state.children.filter((child) => !isLastKeyCloned(child.state.key!));
 
     const sub = layout.subscribeToState(() => {
       const repeatedRows = layout.state.children.filter((child) =>
-        isClonedKeyOf(getLastKeyFromClone(child.state.key!), originalRowKey)
+        isClonedKeyOf(child.state.key!, originalRow.state.key!)
       );
 
       // go through cloned rows, search for panels that are not clones
@@ -73,9 +68,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           continue;
         }
 
-        const rowNonClonedPanels = row.state.children.filter(
-          (child) => !isClonedKey(getLastKeyFromClone(child.state.key!))
-        );
+        const rowNonClonedPanels = row.state.children.filter((child) => !isLastKeyCloned(child.state.key!));
 
         // if no differences in row children compared to original, then no new panel added to clone
         if (rowNonClonedPanels.length === originalRowNonClonedPanels.length) {
@@ -156,8 +149,6 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     this._clonedRows = [];
 
-    const originalRowKey = getOriginalKey(getLastKeyFromClone(rowToRepeat.state.key!));
-    const rowKeyAncestors = getAncestorsFromClone(rowToRepeat.state.key!);
     const rowContent = rowToRepeat.state.children;
     const rowContentHeight = getRowContentHeight(rowContent);
 
@@ -183,7 +174,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
             actions: undefined,
           });
 
-      const rowCloneKey = joinCloneKeys(rowKeyAncestors, getCloneKey(originalRowKey, rowIndex));
+      const rowCloneKey = setCloneKeyIndex(rowToRepeat.state.key!, rowIndex);
 
       rowClone.setState({
         key: rowCloneKey,
@@ -204,10 +195,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       const children: SceneGridItemLike[] = [];
 
       for (const sourceItem of rowContent) {
-        const sourceItemKey = getLastKeyFromClone(sourceItem.state.key!);
         const sourceItemY = sourceItem.state.y ?? 0;
 
-        const cloneItemKey = joinCloneKeys(rowCloneKey, sourceItemKey);
+        const cloneItemKey = joinCloneKeys(rowCloneKey, getLastKeyFromClone(sourceItem.state.key!));
         const cloneItemY = sourceItemY + (rowContentHeight + 1) * rowIndex;
 
         const cloneItem = sourceItem.clone({
@@ -231,7 +221,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       this._clonedRows.push(rowClone);
     }
 
-    updateLayout(layout, this._clonedRows, maxYOfRows, originalRowKey);
+    updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat.state.key!);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
@@ -300,7 +290,7 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
 }
 
 function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowKey: string) {
-  return layout.state.children.filter((child) => !isClonedKeyOf(getLastKeyFromClone(child.state.key!), rowKey));
+  return layout.state.children.filter((child) => !isClonedKeyOf(child.state.key!, rowKey));
 }
 
 function ensureUniqueKeys(item: SceneGridItemLike, ancestors: string) {
