@@ -50,9 +50,7 @@ export const getActions = (
       dataContext.value.calculatedValue = config.calculatedValue;
     }
 
-    let actionModel: ActionModel<Field> = { title: '', onClick: (e) => {}, oneClick: false };
-
-    actionModel = {
+    let actionModel: ActionModel<Field> = {
       title: replaceVariables(action.title || '', actionScopedVars),
       onClick: (evt: MouseEvent, origin: Field) => {
         buildActionOnClick(action, boundReplaceVariables);
