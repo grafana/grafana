@@ -352,16 +352,23 @@ func (a *alertRule) Run() error {
 
 		case <-grafanaCtx.Done():
 			reason := grafanaCtx.Err()
-			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
+
+			// We do not want a context to be unbounded which could potentially cause a go routine running
+			// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
+			// cases.
+			ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
+			defer cancelFunc()
+
 			if errors.Is(reason, errRuleDeleted) {
-				// We do not want a context to be unbounded which could potentially cause a go routine running
-				// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
-				// cases.
-				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
-				defer cancelFunc()
-				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
-				a.expireAndSend(grafanaCtx, states)
+				// Clean up the state and send resolved notifications for firing alerts only if the reason for stopping
+				// the evaluation loop is that the rule was deleted.
+				stateTransitions := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
+				a.expireAndSend(grafanaCtx, stateTransitions)
+			} else {
+				// Otherwise, just clean up the cache.
+				a.stateManager.ForgetStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key)
 			}
+
 			a.logger.Debug("Stopping alert rule routine", "reason", reason)
 			return nil
 		}
