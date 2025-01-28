@@ -666,8 +666,8 @@ export const TooltipPlugin2 = ({
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
-        // we expect to re-dispatch mousemove, but on mobile we'll get mouseup or click
-        const isMobile = event.type !== 'mousemove';
+        // we expect to re-dispatch mousemove, but we need to explicitly do it for mobile
+        const isMobile = event.type !== 'mousemove' || /Android|iPhone|iPad/i.test(navigator.userAgent);
 
         if (isMobile) {
           event = new MouseEvent('mousemove', {
