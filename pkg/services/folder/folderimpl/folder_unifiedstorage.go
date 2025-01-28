@@ -241,7 +241,7 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 				{
 					Key:      resource.SEARCH_FIELD_TITLE_SORT,
 					Operator: string(selection.In),
-					Values:   []string{title},
+					Values:   []string{strings.ToLower(title)},
 				},
 			},
 			Labels: []*resource.Requirement{},
