@@ -361,14 +361,12 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	// Validate folder
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
-		query := &folder.GetFolderQuery{
+		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
 			ID:           &dash.FolderID,
 			SignedInUser: dto.User,
-		}
-
-		folder, err := dr.folderService.Get(ctx, query)
+		})
 		if err != nil {
 			return nil, err
 		}
