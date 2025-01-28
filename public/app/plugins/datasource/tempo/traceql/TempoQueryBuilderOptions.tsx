@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
@@ -32,6 +33,7 @@ const parseIntWithFallback = (val: string, fallback: number) => {
 
 export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, searchStreaming, metricsStreaming }) => {
   const styles = useStyles2(getStyles);
+  const [isOpen, toggleOpen] = useToggle(false);
 
   if (!query.hasOwnProperty('limit')) {
     query.limit = DEFAULT_LIMIT;
@@ -82,7 +84,12 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, se
   return (
     <EditorRow>
       <div className={styles.options}>
-        <QueryOptionGroup title="Search Options" collapsedInfo={collapsedSearchOptions}>
+        <QueryOptionGroup
+          title="Search Options"
+          collapsedInfo={collapsedSearchOptions}
+          isOpen={isOpen}
+          onToggle={toggleOpen}
+        >
           <EditorField label="Limit" tooltip="Maximum number of traces to return.">
             <AutoSizeInput
               className="width-4"
@@ -120,7 +127,12 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, se
           </EditorField>
         </QueryOptionGroup>
 
-        <QueryOptionGroup title="Metrics Options" collapsedInfo={collapsedMetricsOptions}>
+        <QueryOptionGroup
+          title="Metrics Options"
+          collapsedInfo={collapsedMetricsOptions}
+          isOpen={isOpen}
+          onToggle={toggleOpen}
+        >
           <EditorField
             label="Step"
             tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
