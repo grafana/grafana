@@ -55,20 +55,18 @@ func TestFolderConversions(t *testing.T) {
 	converted, err := fs.UnstructuredToLegacyFolder(context.Background(), input)
 	require.NoError(t, err)
 	require.Equal(t, folder.Folder{
-		ID:           234,
-		OrgID:        1,
-		Version:      4,
-		UID:          "be79sztagf20wd",
-		ParentUID:    "parent-folder-name",
-		Title:        "test folder",
-		Description:  "Something set in the file",
-		URL:          "/dashboards/f/be79sztagf20wd/test-folder",
-		Repository:   "example-repo",
-		Created:      created,
-		Updated:      created.Add(time.Hour * 5),
-		CreatedBy:    10,
-		CreatedByUID: "useruid",
-		UpdatedBy:    10,
-		UpdatedByUID: "useruid",
+		ID:          234,
+		OrgID:       1,
+		Version:     4,
+		UID:         "be79sztagf20wd",
+		ParentUID:   "parent-folder-name",
+		Title:       "test folder",
+		Description: "Something set in the file",
+		URL:         "/dashboards/f/be79sztagf20wd/test-folder",
+		Repository:  "example-repo",
+		Created:     created,
+		Updated:     created.Add(time.Hour * 5),
+		CreatedBy:   10,
+		UpdatedBy:   10,
 	}, *converted)
 }

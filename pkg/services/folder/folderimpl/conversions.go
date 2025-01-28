@@ -64,14 +64,12 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		Version:     int(meta.GetGeneration()),
 		Repository:  meta.GetRepositoryName(),
 
-		URL:          url,
-		Created:      created,
-		Updated:      *updated,
-		OrgID:        info.OrgID,
-		CreatedBy:    creator.ID,
-		CreatedByUID: creator.UID,
-		UpdatedBy:    updater.ID,
-		UpdatedByUID: updater.UID,
+		URL:       url,
+		Created:   created,
+		Updated:   *updated,
+		OrgID:     info.OrgID,
+		CreatedBy: creator.ID,
+		UpdatedBy: updater.ID,
 	}, nil
 }
 

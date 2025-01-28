@@ -88,7 +88,6 @@ func ProvideService(
 		dashboardStore:         dashboardStore,
 		dashboardFolderStore:   folderStore,
 		store:                  store,
-		userService:            userService, // #TODO remove from the struct
 		features:               features,
 		accessControl:          ac,
 		bus:                    bus,
