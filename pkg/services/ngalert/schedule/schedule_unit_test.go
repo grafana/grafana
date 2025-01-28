@@ -991,7 +991,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			require.False(t, sch.registry.exists(key))
 		})
 
-		t.Run("it should not call ruleStopReasonProvider if the rule is not found in the registry", func(t *testing.T) {
+		t.Run("it should still call ruleStopReasonProvider if the rule is not found in the registry", func(t *testing.T) {
 			mockReasonProvider := new(mockAlertRuleStopReasonProvider)
 			expectedReason := errors.New("some rule deletion reason")
 			mockReasonProvider.On("FindReason", mock.Anything, mock.Anything, mock.Anything).Return(expectedReason, nil)
@@ -1008,9 +1008,9 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 
 			sch.deleteAlertRule(ctx, key)
 
-			mockReasonProvider.AssertNotCalled(t, "FindReason")
+			mockReasonProvider.AssertCalled(t, "FindReason", mock.Anything, mock.Anything, rule.GetKeyWithGroup())
 
-			require.ErrorIs(t, info.(*alertRule).ctx.Err(), errRuleDeleted)
+			require.ErrorIs(t, info.(*alertRule).ctx.Err(), expectedReason)
 			require.False(t, sch.registry.exists(key))
 		})
 	})

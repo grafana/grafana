@@ -269,6 +269,14 @@ func TestAlertRule(t *testing.T) {
 	})
 }
 
+func TestAlertRuleIdentifier(t *testing.T) {
+	t.Run("should return correct identifier", func(t *testing.T) {
+		key := models.GenerateRuleKeyWithGroup(1)
+		r := blankRuleForTests(context.Background(), key)
+		require.Equal(t, key, r.Identifier())
+	})
+}
+
 func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *alertRule {
 	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
