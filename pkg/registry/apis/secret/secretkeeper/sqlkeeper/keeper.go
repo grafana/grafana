@@ -2,6 +2,7 @@ package sqlkeeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -51,6 +52,9 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 
 	encryptedValue, err := s.store.Get(ctx, externalID.String())
 	if err != nil {
+		if errors.Is(err, secretStorage.ErrEncryptedValueNotFound) {
+			return "", keepertypes.ErrSecretNotFound
+		}
 		return "", fmt.Errorf("unable to get encrypted value: %w", err)
 	}
 
