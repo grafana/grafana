@@ -75,7 +75,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, err
 	}
 	obj.SetRepositoryInfo(repo)
-	obj.SetUpdatedBy(user.GetUID())
+	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(user.GetUID())
 
