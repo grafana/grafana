@@ -42,6 +42,8 @@ type Rule interface {
 	Type() ngmodels.RuleType
 	// Status indicates the status of the evaluating rule.
 	Status() ngmodels.RuleStatus
+	// Identifier returns the identifier of the rule.
+	Identifier() ngmodels.AlertRuleKeyWithGroup
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -71,7 +73,7 @@ func newRuleFactory(
 		if rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
-				rule.GetKey(),
+				rule.GetKeyWithGroup(),
 				maxAttempts,
 				clock,
 				evalFactory,
@@ -176,6 +178,10 @@ func newAlertRule(
 		logger:               logger.FromContext(ctx),
 		tracer:               tracer,
 	}
+}
+
+func (a *alertRule) Identifier() ngmodels.AlertRuleKeyWithGroup {
+	return a.key
 }
 
 func (a *alertRule) Type() ngmodels.RuleType {
