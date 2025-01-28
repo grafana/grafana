@@ -228,6 +228,7 @@ export interface GrafanaConfig {
   rudderstackConfigUrl: string | undefined;
   rudderstackIntegrationsUrl: string | undefined;
   analyticsConsoleReporting: boolean;
+  dashboardPerformanceMetrics: string[];
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
