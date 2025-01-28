@@ -2,7 +2,6 @@ package reststorage
 
 import (
 	"context"
-	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -21,7 +20,6 @@ type fakeSecureValueStorage struct {
 }
 
 func (s *fakeSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	fmt.Println("create secret")
 	v := *sv
 	v.Spec.Value = ""
 	ns, ok := s.values[sv.Namespace]
@@ -35,7 +33,6 @@ func (s *fakeSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.
 }
 
 func (s *fakeSecureValueStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*secretv0alpha1.SecureValue, error) {
-	fmt.Println("read secret")
 	ns, ok := s.values[nn.Namespace.String()]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
@@ -48,7 +45,6 @@ func (s *fakeSecureValueStorage) Read(ctx context.Context, nn xkube.NameNamespac
 }
 
 func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	fmt.Println("update secret")
 	v := *nsv
 	v.Spec.Value = ""
 	ns, ok := s.values[nsv.Namespace]
@@ -66,7 +62,6 @@ func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1
 }
 
 func (s *fakeSecureValueStorage) Delete(ctx context.Context, nn xkube.NameNamespace) error {
-	fmt.Println("delete secret")
 	ns, ok := s.values[nn.Namespace.String()]
 	if !ok {
 		return contracts.ErrSecureValueNotFound
@@ -80,7 +75,6 @@ func (s *fakeSecureValueStorage) Delete(ctx context.Context, nn xkube.NameNamesp
 }
 
 func (s *fakeSecureValueStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	fmt.Println("list secrets")
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		ns = make(map[string]secretv0alpha1.SecureValue)
