@@ -2,8 +2,8 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent, { UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { ComboboxOption } from './Combobox';
 import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
+import { ComboboxOption } from './types';
 
 describe('MultiCombobox', () => {
   beforeAll(() => {
