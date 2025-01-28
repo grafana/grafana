@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
@@ -7,7 +7,6 @@ import { Stack, Text, LinkButton, Box, TextLink, CollapsableSection, Tooltip, Ic
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
-import { getPluginRepositoryUrl, fetchDefaultBranchFromRepo, getCustomLink } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 type Props = {
@@ -18,37 +17,19 @@ type Props = {
 
 export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const { pluginExtentionsInfo, plugin, width = '250px' } = props;
-  const [defaultBranch, setDefaultBranch] = useState<string | null>(null);
   const [reportAbuseModalOpen, setReportAbuseModalOpen] = useState(false);
 
-  const trailURLSlash = (url: string | null) => (url?.endsWith('/') ? url?.slice(0, -1) : url);
+  const trailURLSlash = (url: string | undefined) => (url?.endsWith('/') ? url?.slice(0, -1) : url);
 
-  const repositoryLink = trailURLSlash(
-    plugin.url ||
-      (plugin.signatureType === 'community' && plugin.details?.links
-        ? getPluginRepositoryUrl(plugin.details.links)
-        : null)
-  );
+  console.log('plugin', plugin);
+  console.log('pluginExtentionsInfo', pluginExtentionsInfo);
 
-  useEffect(() => {
-    if (repositoryLink) {
-      fetchDefaultBranchFromRepo(repositoryLink)
-        .then(setDefaultBranch)
-        .catch(() => setDefaultBranch(null));
-    }
-  }, [repositoryLink]);
-
-  const licenseLink = plugin.details?.links
-    ? getCustomLink(plugin.details?.links, 'LICENSE', repositoryLink, defaultBranch)
-    : null;
-  const documentationLink = plugin.details?.links
-    ? getCustomLink(plugin.details?.links, 'Documentation', repositoryLink, defaultBranch)
-    : null;
   const customLinks = plugin.details?.links?.filter(
-    (link) => ![repositoryLink, licenseLink, documentationLink].includes(trailURLSlash(link.url))
+    (link) =>
+      ![plugin.url, plugin.details?.licenseUrl, plugin.details?.documentationUrl].includes(trailURLSlash(link.url))
   );
 
-  const shouldRenderLinks = Boolean(plugin.details?.links?.length || repositoryLink);
+  const shouldRenderLinks = plugin.url || plugin.details?.licenseUrl || plugin.details?.documentationUrl;
 
   return (
     <>
@@ -97,60 +78,64 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                 <Text color="secondary">
                   <Trans i18nKey="plugins.details.labels.links">Links </Trans>
                 </Text>
-                {repositoryLink && (
-                  <LinkButton href={repositoryLink} variant="secondary" fill="solid" icon="github">
+                {plugin.url && (
+                  <LinkButton href={plugin.url} variant="secondary" fill="solid" icon="github">
                     <Trans i18nKey="plugins.details.labels.repository">Repository</Trans>
                   </LinkButton>
                 )}
-                {repositoryLink && (
-                  <LinkButton href={`${repositoryLink}/issues/new`} variant="secondary" fill="solid" icon="github">
+                {plugin.url && (
+                  <LinkButton href={`${plugin.url}/issues/new`} variant="secondary" fill="solid" icon="github">
                     <Trans i18nKey="plugins.details.labels.raiseAnIssue">Raise an issue</Trans>
                   </LinkButton>
                 )}
-                {licenseLink && (
-                  <LinkButton href={licenseLink} variant="secondary" fill="solid" icon={'document-info'}>
+                {plugin.details?.licenseUrl && (
+                  <LinkButton href={plugin.details?.licenseUrl} variant="secondary" fill="solid" icon={'document-info'}>
                     <Trans i18nKey="plugins.details.labels.license">License</Trans>
                   </LinkButton>
                 )}
-                {documentationLink && (
-                  <LinkButton href={documentationLink} variant="secondary" fill="solid" icon={'list-ui-alt'}>
+                {plugin.details?.documentationUrl && (
+                  <LinkButton
+                    href={plugin.details?.documentationUrl}
+                    variant="secondary"
+                    fill="solid"
+                    icon={'list-ui-alt'}
+                  >
                     <Trans i18nKey="plugins.details.labels.documentation">Documentation</Trans>
                   </LinkButton>
                 )}
               </Stack>
             </Box>
-
-            {customLinks && customLinks?.length > 0 && (
-              <Box padding={2} borderColor="medium" borderStyle="solid">
-                <CollapsableSection
-                  isOpen={false}
-                  label={
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Text color="secondary" variant="body">
-                        <Trans i18nKey="plugins.details.labels.customLinks">Custom links </Trans>
-                      </Text>
-                      <Tooltip
-                        content={
-                          'These links are provided by the plugin developer to offer additional, developer-specific resources and information'
-                        }
-                        placement="right-end"
-                      >
-                        <Icon name="info-circle" size="xs" />
-                      </Tooltip>
-                    </Stack>
-                  }
-                >
-                  <Stack direction="column" gap={2}>
-                    {customLinks.map((link, index) => (
-                      <TextLink key={index} href={link.url} external>
-                        {link.name}
-                      </TextLink>
-                    ))}
-                  </Stack>
-                </CollapsableSection>
-              </Box>
-            )}
           </>
+        )}
+        {customLinks && customLinks?.length > 0 && (
+          <Box padding={2} borderColor="medium" borderStyle="solid">
+            <CollapsableSection
+              isOpen={true}
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Text color="secondary" variant="body">
+                    <Trans i18nKey="plugins.details.labels.customLinks">Custom links </Trans>
+                  </Text>
+                  <Tooltip
+                    content={
+                      'These links are provided by the plugin developer to offer additional, developer-specific resources and information'
+                    }
+                    placement="right-end"
+                  >
+                    <Icon name="info-circle" size="xs" />
+                  </Tooltip>
+                </Stack>
+              }
+            >
+              <Stack direction="column" gap={2}>
+                {customLinks.map((link, index) => (
+                  <TextLink key={index} href={link.url} external>
+                    {link.name}
+                  </TextLink>
+                ))}
+              </Stack>
+            </CollapsableSection>
+          </Box>
         )}
         {!plugin?.isCore && (
           <Box padding={2} borderColor="medium" borderStyle="solid">

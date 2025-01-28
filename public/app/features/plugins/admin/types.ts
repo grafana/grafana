@@ -80,6 +80,8 @@ export interface CatalogPluginDetails {
   iam?: IdentityAccessManagement;
   changelog?: string;
   lastCommitDate?: string;
+  licenseUrl?: string;
+  documentationUrl?: string;
 }
 
 export interface CatalogPluginInfo {
@@ -142,6 +144,8 @@ export type RemotePlugin = {
   versionStatus: string;
   angularDetected?: boolean;
   lastCommitDate?: string;
+  licenseUrl?: string;
+  documentationUrl?: string;
 };
 
 // The available status codes on GCOM are available here:
