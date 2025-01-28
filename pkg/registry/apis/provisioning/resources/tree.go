@@ -2,9 +2,7 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"path"
-	"strings"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -76,32 +74,6 @@ func NewEmptyFolderTree() *FolderTree {
 		tree:    make(map[string]string, 0),
 		folders: make(map[string]Folder, 0),
 	}
-}
-
-type WalkFunc func(ctx context.Context, path, parent string) (Folder, error)
-
-func (t *FolderTree) Walk(ctx context.Context, folderPath, parent string, fn WalkFunc) error {
-	if folderPath == "." || folderPath == "/" {
-		return nil
-	}
-
-	var currentPath string
-	for _, folder := range strings.Split(folderPath, "/") {
-		if folder == "" {
-			// Trailing / leading slash?
-			continue
-		}
-
-		currentPath = path.Join(currentPath, folder)
-		id, err := fn(ctx, currentPath, parent)
-		if err != nil {
-			return fmt.Errorf("failed to create folder '%s': %w", id.ID, err)
-		}
-
-		parent = id.ID
-	}
-
-	return nil
 }
 
 func NewFolderTreeFromUnstructure(ctx context.Context, rawFolders *unstructured.UnstructuredList) *FolderTree {

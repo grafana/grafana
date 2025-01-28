@@ -502,19 +502,20 @@ func (r *Syncer) parseResource(ctx context.Context, fileInfo *repository.FileInf
 
 // ensureFolderPathExists creates the folder structure in the cluster.
 func (r *Syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent string, folderTree *resources.FolderTree) error {
-	return folderTree.Walk(ctx, dirPath, parent, func(ctx context.Context, path, parent string) (resources.Folder, error) {
+	return resources.Walk(ctx, dirPath, parent, func(ctx context.Context, path, parent string) (string, error) {
 		fid := resources.ParseFolder(path, r.repository.Config().GetName())
 		if folderTree.In(fid.ID) {
 			// already visited
-			return fid, nil
+			return fid.ID, nil
 		}
 
 		if err := r.ensureFolderExists(ctx, fid, parent); err != nil {
-			return resources.Folder{}, fmt.Errorf("ensure folder exists: %w", err)
+			return "", fmt.Errorf("ensure folder exists: %w", err)
 		}
+
 		folderTree.Add(fid, parent)
 
-		return fid, nil
+		return fid.ID, nil
 	})
 }
 
