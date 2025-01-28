@@ -102,7 +102,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
 	q := rawQuery
-	if true {
+	if false {
 		pretty := sqltemplate.RemoveEmptyLines(rawQuery)
 		fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
 	}
