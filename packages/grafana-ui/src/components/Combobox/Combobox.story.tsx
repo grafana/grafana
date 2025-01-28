@@ -162,15 +162,15 @@ export const AsyncOptionsWithLabels: Story = {
 
     return (
       <Field
-        label='Asynbc options fn returns objects like { label: "Option 69", value: "69" }'
+        label='Async options fn returns objects like { label: "Option 69", value: "69" }'
         description="Search for 'break' to see an error"
       >
         <Combobox
           {...args}
           {...dynamicArgs}
-          onChange={(val: ComboboxOption | null) => {
-            onChangeAction(val);
-            setArgs({ value: val });
+          onChange={(value: ComboboxOption | null) => {
+            onChangeAction(value);
+            setArgs({ value });
           }}
         />
       </Field>
@@ -205,7 +205,7 @@ export const AsyncOptionsWithOnlyValues: Story = {
           {...dynamicArgs}
           onChange={(value: ComboboxOption | null) => {
             onChangeAction(value);
-            setArgs({ value: value });
+            setArgs({ value });
           }}
         />
       </Field>
