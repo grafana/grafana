@@ -287,7 +287,7 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 	// Create folders
 	folderTree := resources.NewFolderTreeFromResourceList(list)
 	for _, entry := range fileTree {
-		parent := resources.ParentFolder(entry.Path, r.repository.Config())
+		parent := resources.ParentFolder(path.Dir(entry.Path), r.repository.Config())
 		if err := r.ensureFolderPathExists(ctx, path.Dir(entry.Path), parent, folderTree); err != nil {
 			return fmt.Errorf("ensure folder path exists: %w", err)
 		}
@@ -413,7 +413,7 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 			continue
 		}
 
-		parent := resources.ParentFolder(change.Path, r.repository.Config())
+		parent := resources.ParentFolder(path.Dir(change.Path), r.repository.Config())
 		if err := r.ensureFolderPathExists(ctx, path.Dir(change.Path), parent, folderTree); err != nil {
 			return fmt.Errorf("ensure folder path exists: %w", err)
 		}
