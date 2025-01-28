@@ -25,6 +25,7 @@ import {
   CustomScrollbar,
   ErrorBoundaryAlert,
   PanelContainer,
+  Spinner,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
@@ -654,6 +655,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const searchParams = new URLSearchParams(window.location.search);
     const hideQueryEditor = searchParams.has('hideQueryBuilder');
 
+    const showSpinner = queryBuilderOnly && hideQueryEditor && !graphResult;
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         {!hideQueryEditor && <ExploreToolbar
@@ -663,7 +665,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
           isContentOutlineOpen={contentOutlineVisible}
           queryBuilderOnly={queryBuilderOnly}
         />}
-        <div
+        {showSpinner && (
+          <Spinner style={{width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center"}} />
+        )}
+        {!showSpinner && <div
           style={{
             position: 'relative',
             height: '100%',
@@ -749,7 +754,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
               </div>
             </CustomScrollbar>
           </div>
-        </div>
+        </div>}
       </ContentOutlineContextProvider>
     );
   }
