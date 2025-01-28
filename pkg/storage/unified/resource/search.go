@@ -379,7 +379,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 		for {
 			v := <-events
 
-			// Skip index events for batch updates
+			// Skip events during batch updates
 			if v.PreviousRV < 0 {
 				continue
 			}
@@ -399,10 +399,19 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 // Async event
 func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"HandleEvent")
 	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
 		s.log.Info("ignoring watch event", "type", evt.Type)
 		return
 	}
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("event_type", evt.Type.String()),
+		attribute.String("namespace", evt.Key.Namespace),
+		attribute.String("group", evt.Key.Group),
+		attribute.String("resource", evt.Key.Resource),
+		attribute.String("name", evt.Key.Name),
+	)
 
 	nsr := NamespacedResource{
 		Namespace: evt.Key.Namespace,
@@ -416,7 +425,6 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		return
 	}
 
-	start := time.Now()
 	builder, err := s.builders.get(ctx, nsr)
 	if err != nil {
 		s.log.Warn("error getting builder for watch event", "error", err)
@@ -452,12 +460,14 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	}
 
 	// record latency from when event was created to when it was indexed
-	latency := time.Since(start).Seconds()
-	if latency > 5 {
-		s.log.Warn("high index latency", "latency", latency)
+	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
+	span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
+	if latencySeconds > 5 {
+		s.log.Debug("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Object.GetName(), "namespace", evt.Object.GetNamespace(), "uid", evt.Object.GetUID())
+		s.log.Warn("high index latency", "latency", latencySeconds)
 	}
 	if IndexMetrics != nil {
-		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latency)
+		IndexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
 	}
 }
 
@@ -522,8 +532,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					//return fmt.Errorf("error building search document. %s // %w", key.SearchID(), err)
-					fmt.Printf("BUILD INDEX ERROR %s / %+v", key.SearchID(), err)
+					s.log.Error("error building search document", "key", key.SearchID(), "err", err)
 					continue
 				}
 

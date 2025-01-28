@@ -529,6 +529,36 @@ func TestBleveBackend(t *testing.T) {
 	})
 }
 
+func TestGetSortFields(t *testing.T) {
+	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
+		searchReq := &resource.ResourceSearchRequest{
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "views_total", Desc: false},
+			},
+		}
+		sortFields := getSortFields(searchReq)
+		assert.Equal(t, []string{"fields.views_total"}, sortFields)
+	})
+	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
+		searchReq := &resource.ResourceSearchRequest{
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "views_total", Desc: true},
+			},
+		}
+		sortFields := getSortFields(searchReq)
+		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
+	})
+	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
+		searchReq := &resource.ResourceSearchRequest{
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "description", Desc: false},
+			},
+		}
+		sortFields := getSortFields(searchReq)
+		assert.Equal(t, []string{"description"}, sortFields)
+	})
+}
+
 func asTimePointer(milli int64) *time.Time {
 	if milli > 0 {
 		t := time.UnixMilli(milli)
