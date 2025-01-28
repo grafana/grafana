@@ -6,7 +6,7 @@ import { usePrevious } from 'react-use';
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, Icon, Stack } from '@grafana/ui';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -15,6 +15,7 @@ import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/fe
 import { DashboardRoutes } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
+import { DashboardPreviewBanner } from '../saving/provisioned/DashboardPreviewBanner';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
@@ -77,30 +78,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      {queryParams.isPreview && (
-        <Alert
-          title={'This is a preview'}
-          severity={'success'}
-          style={{ flex: 0 }}
-          buttonContent={
-            !!queryParams.prLink && (
-              <Stack alignItems={'center'}>
-                <span>Open pull request in GitHub</span>
-                <Icon name="external-link-alt" />
-              </Stack>
-            )
-          }
-          onRemove={
-            !!queryParams.prLink
-              ? () => {
-                  window.open(queryParams.prLink, '_blank');
-                }
-              : undefined
-          }
-        >
-          {queryParams.prLink && <>Branch successfully created.</>}
-        </Alert>
-      )}
+      <DashboardPreviewBanner queryParams={queryParams} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </UrlSyncContextProvider>
