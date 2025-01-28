@@ -3,13 +3,16 @@ package grpcutils
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
 
-	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -18,20 +21,33 @@ import (
 
 var once sync.Once
 
-func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
-	// In proc grpc ID token signature verification can be skipped
-	return authnlib.NewUnsafeGrpcAuthenticator(
-		&authnlib.GrpcAuthenticatorConfig{},
-		authnlib.WithIDTokenAuthOption(false),
+func NewInProcGrpcAuthenticator() interceptors.Authenticator {
+	auth := authn.NewDefaultAuthenticator(
+		authn.NewUnsafeAccessTokenVerifier(authn.VerifierConfig{}),
+		authn.NewUnsafeIDTokenVerifier(authn.VerifierConfig{}),
 	)
+
+	return interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			return nil, errors.New("missing metedata in context")
+		}
+
+		info, err := auth.Authenticate(ctx, authn.NewGRPCTokenProvider(md))
+		if err != nil {
+			return ctx, err
+		}
+
+		return types.WithAuthInfo(ctx, info), nil
+	})
 }
 
-func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
-	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
-		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
+func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*authn.GrpcAuthenticator, error) {
+	grpcAuthCfg := authn.GrpcAuthenticatorConfig{
+		KeyRetrieverConfig: authn.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,
 		},
-		VerifierConfig: authnlib.VerifierConfig{
+		VerifierConfig: authn.VerifierConfig{
 			AllowedAudiences: authCfg.AllowedAudiences,
 		},
 	}
@@ -41,20 +57,21 @@ func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*au
 		// allow insecure connections in development mode to facilitate testing
 		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	}
-	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
+	keyRetriever := authn.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authn.WithHTTPClientKeyRetrieverOpt(client))
 
-	grpcOpts := []authnlib.GrpcAuthenticatorOption{
-		authnlib.WithKeyRetrieverOption(keyRetriever),
-		authnlib.WithTracerAuthOption(tracer),
-		authnlib.WithIDTokenAuthOption(false),
+	grpcOpts := []authn.GrpcAuthenticatorOption{
+		authn.WithKeyRetrieverOption(keyRetriever),
+		authn.WithTracerAuthOption(tracer),
+		authn.WithIDTokenAuthOption(false),
 	}
+
 	if authCfg.Mode == ModeOnPrem {
 		grpcOpts = append(grpcOpts,
 			// Access token are not yet available on-prem
-			authnlib.WithDisableAccessTokenAuthOption(),
+			authn.WithDisableAccessTokenAuthOption(),
 		)
 	}
-	return authnlib.NewGrpcAuthenticator(
+	return authn.NewGrpcAuthenticator(
 		&grpcAuthCfg,
 		grpcOpts...,
 	)
@@ -63,7 +80,7 @@ func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*au
 type contextFallbackKey struct{}
 
 type AuthenticatorWithFallback struct {
-	authenticator *authnlib.GrpcAuthenticator
+	authenticator *authn.GrpcAuthenticator
 	fallback      interceptors.Authenticator
 	metrics       *metrics
 	tracer        tracing.Tracer

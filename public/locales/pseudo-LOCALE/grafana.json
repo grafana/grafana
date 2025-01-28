@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Åľęřŧ řūľęş"
-      }
+      },
+      "rulerrule-loading-error": "Fäįľęđ ŧő ľőäđ ŧĥę řūľę"
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
@@ -943,6 +944,12 @@
       "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
+        "no-rules": "Ŧĥęřę äřę ŉő äľęřŧ řūľęş ľįŉĸęđ ŧő ŧĥįş päŉęľ."
+      }
     },
     "toolbar": {
       "add": "Åđđ",
