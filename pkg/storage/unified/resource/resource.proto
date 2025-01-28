@@ -356,13 +356,24 @@ message BatchResponse {
     int64 previous_history = 8;
   }
 
+  // Collect a few invalid messages
+  message Rejected {
+    ResourceKey         key    = 1;
+    BatchRequest.Action action = 2;
+    string              error  = 3;
+  }
+
   // Error details
   ErrorResult error = 1;
 
   // Total events processed
   int64 processed = 2;
 
+  // Summary status for the processed values
   repeated Summary summary = 3;
+
+  // Rejected 
+  repeated Rejected rejected = 4;
 }
 
 

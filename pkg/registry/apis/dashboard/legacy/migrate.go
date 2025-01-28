@@ -163,11 +163,12 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			}
 		}
 
-		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", dash.Generation, dash.Name, len(req.Value)))
+		opts.Progress(i, fmt.Sprintf("[v:%d] %s (size:%d / %d|%d)", dash.Generation, dash.Name, len(req.Value), i, rows.count))
 
 		err = stream.Send(req)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
+				opts.Progress(i, fmt.Sprintf("stream EOF/cancelled. index=%d", i))
 				err = nil
 			}
 			return err

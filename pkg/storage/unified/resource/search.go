@@ -477,7 +477,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	if idx == nil {
 		idx, _, err = s.build(ctx, key, 10, 0) // unknown size and RV
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error building search index, %w", err)
 		}
 		if idx == nil {
 			return nil, fmt.Errorf("nil index after build")
@@ -522,7 +522,9 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
-					return err
+					//return fmt.Errorf("error building search document. %s // %w", key.SearchID(), err)
+					fmt.Printf("BUILD INDEX ERROR %s / %+v", key.SearchID(), err)
+					continue
 				}
 
 				// And finally write it to the index

@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -114,6 +116,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			ctx:     ctx,
 			tx:      tx,
 			dialect: b.dialect,
+			logger:  logging.FromContext(ctx),
 		}
 
 		// Use the max RV from all resources
@@ -146,6 +149,8 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			return rollbackWithError(fmt.Errorf("expected resource version to be set"))
 		}
 
+		obj := &unstructured.Unstructured{}
+
 		// Write each event into the history
 		for iter.Next() {
 			if iter.RollbackRequested() {
@@ -155,20 +160,35 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 			if req == nil {
 				return rollbackWithError(fmt.Errorf("missing request"))
 			}
+			rsp.Processed++
 
 			if req.Action == resource.BatchRequest_UNKNOWN {
-				return rollbackWithError(fmt.Errorf("unknown action"))
+				rsp.Rejected = append(rsp.Rejected, &resource.BatchResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  "unknown action",
+				})
+				continue
 			}
+
+			err := obj.UnmarshalJSON(req.Value)
+			if err != nil {
+				rsp.Rejected = append(rsp.Rejected, &resource.BatchResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  "unable to unmarshal json",
+				})
+				continue
+			}
+
 			rv++ // Increment the resource version
-			rsp.Processed++
-			eventType := resource.WatchEvent_Type(req.Action)
 
 			// Write the event to history
 			if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 				SQLTemplate: sqltemplate.New(b.dialect),
 				WriteEvent: resource.WriteEvent{
 					Key:        req.Key,
-					Type:       eventType,
+					Type:       resource.WatchEvent_Type(req.Action),
 					Value:      req.Value,
 					PreviousRV: -1, // Used for WATCH, but we want to skip watch events
 				},
@@ -217,6 +237,7 @@ type batchWroker struct {
 	ctx     context.Context
 	tx      db.ContextExecer
 	dialect sqltemplate.Dialect
+	logger  logging.Logger
 }
 
 // This will remove everything from the `resource` and `resource_history` table for a given namespace/group/resource
@@ -259,6 +280,7 @@ func (w *batchWroker) deleteCollection(key *resource.ResourceKey) (*resource.Bat
 
 // Copy the latest value from history into the active resource table
 func (w *batchWroker) syncCollection(key *resource.ResourceKey, summary *resource.BatchResponse_Summary) error {
+	w.logger.Info("synchronize collection", "key", key.BatchID())
 	_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
 		Key:         key,

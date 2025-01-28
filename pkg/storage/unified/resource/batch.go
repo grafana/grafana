@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"google.golang.org/grpc/metadata"
 
@@ -205,21 +204,19 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 
 	// Rebuild any changed indexes
 	for _, summary := range rsp.Summary {
-		started := time.Now()
-		idx, rv, err := s.search.build(ctx, NamespacedResource{
+		_, _, err := s.search.build(ctx, NamespacedResource{
 			Namespace: summary.Namespace,
 			Group:     summary.Group,
 			Resource:  summary.Resource,
 		}, summary.Count, summary.ResourceVersion)
 		if err != nil {
-			return err // should not happen
+			s.log.Warn("error building search index after batch load", "err", err)
+			rsp.Error = &ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: "err building search index: " + summary.Resource,
+				Reason:  err.Error(),
+			}
 		}
-		count, err := idx.DocCount(ctx, "")
-		if err != nil {
-			return err // should not happen
-		}
-		elapsed := time.Since(started)
-		fmt.Printf("Index: %s / size:%d / rv:%d / elapsed: %s\n", summary.Resource, count, rv, elapsed.String())
 	}
 
 	fmt.Printf("backend finished, now SendAndClose\n")

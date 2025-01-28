@@ -128,8 +128,9 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 var _ resource.ListIterator = (*rowsWrapper)(nil)
 
 type rowsWrapper struct {
-	a    *dashboardSqlAccess
-	rows *sql.Rows
+	a     *dashboardSqlAccess
+	rows  *sql.Rows
+	count int
 
 	canReadDashboard func(scopes ...string) bool
 
@@ -157,6 +158,8 @@ func (r *rowsWrapper) Next() bool {
 
 	// breaks after first readable value
 	for r.rows.Next() {
+		r.count++
+
 		r.row, err = r.a.scanRow(r.rows)
 		if err != nil {
 			r.err = err
@@ -175,7 +178,7 @@ func (r *rowsWrapper) Next() bool {
 				continue
 			}
 
-			// returns the first folder it can
+			// returns the first visible dashboard
 			return true
 		}
 	}

@@ -471,7 +471,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 		ap, exists := availablePlugins.Get(plugins.TypeDataSource, ds.Type)
 		if !exists {
-			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
+			//c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
 		plugin := ap.Plugin

@@ -257,7 +257,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	err := s.Init(ctx)
 	if err != nil {
-		s.log.Error("error initializing resource server", "error", err)
+		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
 
@@ -311,7 +311,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		if s.initErr != nil {
-			s.log.Error("error initializing resource server", "error", s.initErr)
+			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
