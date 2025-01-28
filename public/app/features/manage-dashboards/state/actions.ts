@@ -291,7 +291,7 @@ export async function searchFolders(
       isStarred: false,
       folderId: 0,
       folderUid: item.location ?? 'general',
-      folderTitle: item.location || 'General',
+      folderTitle: item.location ?? 'General',
     }));
   }
 
