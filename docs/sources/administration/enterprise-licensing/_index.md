@@ -272,7 +272,7 @@ For instructions about how to activate your license after it is updated, refer t
 
 ## Usage billing
 
-Standard Grafana Enterprise licenses include a certain number of seats that can be used, and prevent more users logging into Grafana than have been licensed. This makes sense if you prefer a predictable bill. It can however be a problem if you anticipate uneven usage patterns over time or when it's critical that no user ever be prevented from logging into Grafana due to capacity constraints.
+Standard Grafana Enterprise licenses include a certain number of seats that can be used, and prevent more users logging into Grafana than have been licensed. This makes sense if you prefer a predictable bill. It can however be a problem if you anticipate uneven usage patterns over time or when it's critical that no user ever be prevented from logging in to Grafana due to capacity constraints.
 
 For those use-cases we support usage-based billing, where your license includes a certain number of included users and you are billed on a monthly basis for any excess active users during the month.
 
