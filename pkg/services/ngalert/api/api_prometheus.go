@@ -334,6 +334,11 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 
 	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
+	if nextToken != "" {
+		if _, err := base64.URLEncoding.DecodeString(nextToken); err != nil {
+			nextToken = ""
+		}
+	}
 
 	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.Namespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
