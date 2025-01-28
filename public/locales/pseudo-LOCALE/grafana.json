@@ -37,7 +37,7 @@
   "actions-editor": {
     "inline": {
       "add-button": "Åđđ äčŧįőŉ",
-      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+      "one-click-action": "Øŉę-čľįčĸ äčŧįőŉ"
     }
   },
   "admin": {
@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Åľęřŧ řūľęş"
-      }
+      },
+      "rulerrule-loading-error": "Fäįľęđ ŧő ľőäđ ŧĥę řūľę"
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
@@ -892,6 +893,9 @@
       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
     },
+    "errors": {
+      "failed-to-load": "Fäįľęđ ŧő ľőäđ đäşĥþőäřđ"
+    },
     "inspect": {
       "data-tab": "Đäŧä",
       "error-tab": "Ēřřőř",
@@ -943,6 +947,12 @@
       "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
+        "no-rules": "Ŧĥęřę äřę ŉő äľęřŧ řūľęş ľįŉĸęđ ŧő ŧĥįş päŉęľ."
+      }
     },
     "toolbar": {
       "add": "Åđđ",
@@ -1391,10 +1401,16 @@
     },
     "data-link-editor-modal": {
       "cancel": "Cäŉčęľ",
+      "one-click-description": "Øŉľy őŉę ľįŉĸ čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę",
       "save": "Ŝävę"
+    },
+    "data-link-inline-editor": {
+      "one-click": "Øŉę čľįčĸ"
     },
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
+      "one-click": "Øŉę čľįčĸ",
+      "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ",
       "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
     },
     "data-source-http-settings": {
@@ -1476,7 +1492,8 @@
       "right-axis-indicator": "(řįģĥŧ y-äχįş)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ"
+      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
   "graph": {
@@ -1798,7 +1815,8 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "mőřę"
+      "more": "mőřę",
+      "see-details": "Ŝęę ľőģ đęŧäįľş"
     },
     "log-rows": {
       "disable-popover": {
@@ -2540,6 +2558,9 @@
       }
     },
     "details": {
+      "connections-tab": {
+        "description": "Ŧĥę đäŧä şőūřčę čőŉŉęčŧįőŉş þęľőŵ äřę äľľ {{pluginName}}. Ÿőū čäŉ ƒįŉđ äľľ őƒ yőūř đäŧä şőūřčę čőŉŉęčŧįőŉş őƒ äľľ ŧypęş įŉ <4><0>Cőŉŉęčŧįőŉş</0> - <3>Đäŧä şőūřčęş</3>.</4>"
+      },
       "labels": {
         "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
         "dependencies": "Đępęŉđęŉčįęş",
@@ -2886,6 +2907,10 @@
     "title": "Ůŉäþľę ŧő ƒįŉđ äppľįčäŧįőŉ ƒįľę"
   },
   "save-dashboards": {
+    "message-length": {
+      "info": "Ŧĥę męşşäģę įş {{messageLength}} čĥäřäčŧęřş, ŵĥįčĥ ęχčęęđş ŧĥę mäχįmūm ľęŉģŧĥ őƒ 500 čĥäřäčŧęřş. Pľęäşę şĥőřŧęŉ įŧ þęƒőřę şävįŉģ.",
+      "title": "Męşşäģę ŧőő ľőŉģ"
+    },
     "name-exists": {
       "message-info": "Å đäşĥþőäřđ ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę şęľęčŧęđ ƒőľđęř äľřęäđy ęχįşŧş, įŉčľūđįŉģ řęčęŉŧľy đęľęŧęđ đäşĥþőäřđş.",
       "message-suggestion": "Pľęäşę čĥőőşę ä đįƒƒęřęŉŧ ŉämę őř ƒőľđęř.",
@@ -3339,15 +3364,6 @@
       "lets-start": "Ŀęŧ'ş şŧäřŧ!",
       "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!",
       "subtitle": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy."
-    },
-    "metric-overview": {
-      "description-label": "Đęşčřįpŧįőŉ",
-      "labels": "Ŀäþęľş",
-      "metric-attributes": "Åŧŧřįþūŧęş",
-      "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
-      "type-label": "Ŧypę",
-      "unit-label": "Ůŉįŧ",
-      "unknown-type": "Ůŉĸŉőŵŉ"
     },
     "metric-select": {
       "filter-by": "Fįľŧęř þy",

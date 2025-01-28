@@ -53,10 +53,6 @@ var (
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
-
-	sqlMigratorGetDeletionMarkers  = mustTemplate("migrator_get_deletion_markers.sql")
-	sqlMigratorGetValueFromRV      = mustTemplate("migrator_get_value_from_rv.sql")
-	sqlMigratorUpdateValueWithGUID = mustTemplate("migrator_update_value_with_guid.sql")
 )
 
 // TxOptions.
@@ -348,20 +344,4 @@ func (r *sqlResourceVersionListRequest) Validate() error {
 func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
 	x := *r.groupResourceVersion
 	return &x, nil
-}
-
-// This holds all the variables used in migration queries
-
-type sqlMigrationQueryRequest struct {
-	sqltemplate.SQLTemplate
-	MarkerQuery string //
-	Group       string
-	Resource    string
-	RV          int64
-	GUID        string
-	Value       string
-}
-
-func (r sqlMigrationQueryRequest) Validate() error {
-	return nil // TODO
 }

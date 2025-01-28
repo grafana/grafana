@@ -26,7 +26,6 @@ import {
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
-import { AnnoKeyDashboardIsNew } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -239,14 +238,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     validateVizPanel(vizPanel, dash);
 
     // Library Panel
-    const libraryPanel = getLibraryPanelElement(dash, 'library-panel-1')!;
-    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.uid}`);
+    const libraryPanel = getLibraryPanelElement(dash, 'panel-2')!;
+    expect(layout.state.grid.state.children[1].state.key).toBe(`grid-item-${libraryPanel.spec.id}`);
     const libraryGridLayoutItemSpec = dash.layout.spec.items[1].spec;
     expect(layout.state.grid.state.children[1].state.width).toBe(libraryGridLayoutItemSpec.width);
     expect(layout.state.grid.state.children[1].state.height).toBe(libraryGridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[1].state.x).toBe(libraryGridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[1].state.y).toBe(libraryGridLayoutItemSpec.y);
-    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'library-panel-1')!;
+    const vizLibraryPanel = vizPanels.find((p) => p.state.key === 'panel-2')!;
     validateVizPanel(vizLibraryPanel, dash);
 
     // Transformations
@@ -488,27 +487,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.canSave).toBe(true);
         expect(scene.state.meta.canEdit).toBe(true);
         expect(scene.state.meta.canDelete).toBe(true);
-      });
-    });
-
-    describe('is new dashboard handling', () => {
-      it('handles undefined is new dashbaord annotation', () => {
-        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
-        expect(scene.state.meta.isNew).toBe(false);
-      });
-      it('handles defined is new dashbaord annotation', () => {
-        const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
-          ...defaultDashboard,
-          metadata: {
-            ...defaultDashboard.metadata,
-            annotations: {
-              ...defaultDashboard.metadata.annotations,
-              [AnnoKeyDashboardIsNew]: true,
-            },
-          },
-        };
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
-        expect(scene.state.meta.isNew).toBe(true);
       });
     });
   });

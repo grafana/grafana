@@ -266,7 +266,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     // check if we have dataFrames that return the same level
     const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
     logVolumeDataFrames.forEach((dataFrame) => {
-      const { level } = getLogLevelInfo(dataFrame);
+      const { level } = getLogLevelInfo(dataFrame, logsVolumeData?.data ?? []);
       logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
     });
 
