@@ -166,7 +166,6 @@ export function GrafanaEvaluationBehaviorStep({
   const existingGroup = Object.values(rulerNamespace ?? {})
     .flat()
     .find((ruleGroup) => ruleGroup.name === group);
-  const isNewGroup = !existingGroup && !loadingGroups;
 
   // synchronize the evaluation interval with the group name when it's an existing group
   useEffect(() => {

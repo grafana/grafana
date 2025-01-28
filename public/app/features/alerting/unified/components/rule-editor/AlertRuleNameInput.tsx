@@ -61,6 +61,9 @@ export const AlertRuleNameAndMetric = () => {
                   ? recordingRuleNameValidationPattern(RuleFormType.cloudRecording)
                   : undefined,
               })}
+              // because we chose to use "name" 1Password will try to auto-fill this, so we disable it
+              // see https://developer.1password.com/docs/web/compatible-website-design/
+              data-1p-ignore
               aria-label="name"
               placeholder={`Give your ${namePlaceholder} a name`}
             />
