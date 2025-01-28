@@ -54,6 +54,9 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
+	if updater.UID == "" {
+		updater = creator
+	}
 
 	return &folder.Folder{
 		UID:         uid,
@@ -73,7 +76,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 	}, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) getUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) { //
+func (ss *FolderUnifiedStoreImpl) getUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
 	if userMeta == "" || toUID(userMeta) == "" {
 		return &user.User{}, nil
 	}

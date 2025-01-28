@@ -68,8 +68,6 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 		return nil, err
 	}
 
-	folder.UpdatedBy = folder.CreatedBy
-
 	return folder, err
 }
 
