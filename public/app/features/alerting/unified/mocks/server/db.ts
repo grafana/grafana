@@ -16,34 +16,30 @@ import {
 
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
+import { namespaces } from '../mimirRulerApi';
 
-const prometheusRuleFactory = Factory.define<PromAlertingRuleDTO>(({ sequence }) => ({
-  name: `test-rule-${sequence}`,
+import { MIMIR_DATASOURCE_UID, PROMETHEUS_DATASOURCE_UID } from './constants';
+
+class PromRuleFactory extends Factory<PromAlertingRuleDTO> {
+  fromRuler(rulerRule: RulerAlertingRuleDTO) {
+    return this.params({
+      name: rulerRule.alert,
+      query: rulerRule.expr,
+      type: PromRuleType.Alerting,
+      labels: rulerRule.labels,
+      annotations: rulerRule.annotations,
+    });
+  }
+}
+
+const prometheusRuleFactory = PromRuleFactory.define(({ sequence, params }) => ({
+  name: `${params.name ?? 'test-rule'}-${sequence}`,
   query: 'test-query',
   state: PromAlertingRuleState.Inactive,
-  type: PromRuleType.Alerting,
+  type: PromRuleType.Alerting as const,
   health: 'ok',
-  labels: { team: 'infra' },
-}));
-
-const rulerAlertingRuleFactory = Factory.define<RulerAlertingRuleDTO>(({ sequence }) => ({
-  alert: `ruler-alerting-rule-${sequence}`,
-  expr: 'vector(0)',
-  annotations: { 'annotation-key-1': 'annotation-value-1' },
-  labels: { 'label-key-1': 'label-value-1' },
-  for: '5m',
-}));
-
-const rulerRecordingRuleFactory = Factory.define<RulerRecordingRuleDTO>(({ sequence }) => ({
-  record: `ruler-recording-rule-${sequence}`,
-  expr: 'vector(0)',
-  labels: { 'label-key-1': 'label-value-1' },
-}));
-
-const rulerRuleGroupFactory = Factory.define<RulerRuleGroupDTO>(({ sequence }) => ({
-  name: `ruler-rule-group-${sequence}`,
-  rules: [],
-  interval: '1m',
+  labels: {},
+  annotations: {},
 }));
 
 const prometheusRuleGroupFactory = Factory.define<PromRuleGroupDTO>(({ sequence }) => {
@@ -59,7 +55,49 @@ const prometheusRuleGroupFactory = Factory.define<PromRuleGroupDTO>(({ sequence 
   return group;
 });
 
-const dataSourceFactory = Factory.define<DataSourceInstanceSettings>(({ sequence, params, afterBuild }) => {
+const rulerAlertingRuleFactory = Factory.define<RulerAlertingRuleDTO>(({ sequence }) => ({
+  alert: `test-rule-${sequence}`,
+  expr: 'up = 1',
+  labels: { severity: 'warning' },
+  annotations: { summary: 'test alert' },
+}));
+
+const rulerRecordingRuleFactory = Factory.define<RulerRecordingRuleDTO>(({ sequence }) => ({
+  record: `ruler-recording-rule-${sequence}`,
+  expr: 'vector(0)',
+  labels: {},
+}));
+
+const rulerGroupFactory = Factory.define<RulerRuleGroupDTO, { addToNamespace: string }>(
+  ({ sequence, transientParams, afterBuild }) => {
+    afterBuild((group) => {
+      if (transientParams.addToNamespace) {
+        if (!namespaces[transientParams.addToNamespace]) {
+          namespaces[transientParams.addToNamespace] = [];
+        }
+        namespaces[transientParams.addToNamespace].push(group);
+      }
+    });
+
+    return {
+      name: `test-group-${sequence}`,
+      interval: '1m',
+      rules: rulerAlertingRuleFactory.buildList(3),
+    };
+  }
+);
+
+class DataSourceFactory extends Factory<DataSourceInstanceSettings> {
+  vanillaPrometheus() {
+    return this.params({ uid: PROMETHEUS_DATASOURCE_UID, name: 'Prometheus' });
+  }
+
+  mimir() {
+    return this.params({ uid: MIMIR_DATASOURCE_UID, name: 'Mimir' });
+  }
+}
+
+const dataSourceFactory = DataSourceFactory.define(({ sequence, params, afterBuild }) => {
   afterBuild((dataSource) => {
     config.datasources[dataSource.name] = dataSource;
     setupDataSources(...Object.values(config.datasources));
@@ -71,7 +109,7 @@ const dataSourceFactory = Factory.define<DataSourceInstanceSettings>(({ sequence
     uid,
     type: DataSourceType.Prometheus,
     name: `Prometheus-${uid}`,
-    access: 'proxy',
+    access: 'proxy' as const,
     url: `/api/datasources/proxy/uid/${uid}`,
     jsonData: {},
     meta: {
@@ -126,4 +164,8 @@ export const alertingFactory = {
     recordingRule: rulerRecordingRuleFactory,
   },
   dataSource: dataSourceFactory,
+  ruler: {
+    group: rulerGroupFactory,
+    rule: rulerAlertingRuleFactory,
+  },
 };
