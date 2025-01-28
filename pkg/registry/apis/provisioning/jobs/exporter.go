@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -29,6 +30,7 @@ type Exporter interface {
 
 type exporter struct {
 	client     *resources.DynamicClient
+	dashboards dynamic.ResourceInterface
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
@@ -39,13 +41,21 @@ func NewExporter(
 ) (Exporter, error) {
 	dynamicClient := parser.Client()
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
 	})
+
+	dashboards := dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v2alpha1",
+		Resource: "dashboards",
+	})
+
 	return &exporter{
 		client:     dynamicClient,
 		folders:    folders,
+		dashboards: dashboards,
 		repository: repo,
 	}, nil
 }
@@ -56,12 +66,6 @@ func (r *exporter) Export(ctx context.Context,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx)
-	dashboardIface := r.client.Resource(schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v2alpha1",
-		Resource: "dashboards",
-	})
-
 	err := progress(provisioning.JobStatus{
 		State:   provisioning.JobStateWorking,
 		Message: "getting folder tree...",
@@ -70,10 +74,13 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, err
 	}
 
-	folders, err := resources.FetchRepoFolderTree(ctx, r.client)
+	// TODO: handle pagination
+	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
+
+	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders)
 
 	var ref string
 	if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
@@ -87,7 +94,7 @@ func (r *exporter) Export(ctx context.Context,
 		Message: "exporting folders...",
 	})
 
-	for _, folder := range folders.AllFolders() {
+	for _, folder := range folderTree.AllFolders() {
 		folderPath := folder.Path
 		logger := logger.With("path", folderPath)
 		_, err = r.repository.Read(ctx, folderPath, ref)
@@ -116,7 +123,7 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, err
 	}
 	// TODO: handle pagination
-	dashboardList, err := dashboardIface.List(ctx, metav1.ListOptions{Limit: 1000})
+	dashboardList, err := r.dashboards.List(ctx, metav1.ListOptions{Limit: 1000})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list dashboards: %w", err)
 	}
@@ -137,7 +144,7 @@ func (r *exporter) Export(ctx context.Context,
 
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 		logger = logger.With("folder", folder)
-		fid, ok := folders.DirPath(folder, r.repository.Config().Spec.Folder)
+		fid, ok := folderTree.DirPath(folder, r.repository.Config().Spec.Folder)
 		if !ok {
 			logger.Debug("folder of item was not in tree of repository")
 			continue

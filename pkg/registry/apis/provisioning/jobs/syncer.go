@@ -263,15 +263,15 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 		return fmt.Errorf("list resources: %w", err)
 	}
 
-	// Remove resouces not longer present in the repository
+	// Remove resources not longer present in the repository
 	if err := r.cleanUnnecessaryResources(ctx, fileTree, list); err != nil {
 		return fmt.Errorf("clean up before replicating tree: %w", err)
 	}
 
 	// Create folders
-	folderTree := resources.FolderTreeFromResourceList(list)
+	folderTree := resources.NewFolderTreeFromResourceList(list)
 	for _, entry := range fileTree {
-		if err := folderTree.CreateFolder(ctx, r.client, path.Dir(entry.Path), r.repository.Config()); err != nil {
+		if err := folderTree.CreateFolder(ctx, r.folders, path.Dir(entry.Path), r.repository.Config()); err != nil {
 			return fmt.Errorf("create folder: %w", err)
 		}
 	}
@@ -291,6 +291,7 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 		}
 
 		if !entry.Blob {
+			logger.Debug("ignoring non-blob entry")
 			continue
 		}
 
@@ -397,7 +398,7 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 			continue
 		}
 
-		if err := folderTree.CreateFolder(ctx, r.client, path.Dir(change.Path), r.repository.Config()); err != nil {
+		if err := folderTree.CreateFolder(ctx, r.folders, path.Dir(change.Path), r.repository.Config()); err != nil {
 			return fmt.Errorf("create folder: %w", err)
 		}
 	}

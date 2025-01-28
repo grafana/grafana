@@ -13,7 +13,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
@@ -77,13 +77,7 @@ func NewEmptyFolderTree() *FolderTree {
 	}
 }
 
-func (t *FolderTree) CreateFolder(ctx context.Context, client *DynamicClient, folder string, repository *provisioning.Repository) error {
-	iface := client.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
-
+func (t *FolderTree) CreateFolder(ctx context.Context, client dynamic.ResourceInterface, folder string, repository *provisioning.Repository) error {
 	dir := folder
 	if dir == "." || dir == "/" {
 		return nil
@@ -111,7 +105,7 @@ func (t *FolderTree) CreateFolder(ctx context.Context, client *DynamicClient, fo
 		t.tree[folderID.ID] = parent
 		t.folders[folderID.ID] = folderID
 
-		obj, err := iface.Get(ctx, folderID.ID, metav1.GetOptions{})
+		obj, err := client.Get(ctx, folderID.ID, metav1.GetOptions{})
 		// FIXME: Check for IsNotFound properly
 		if obj != nil || err == nil {
 			logger.Debug("folder already existed")
@@ -122,8 +116,7 @@ func (t *FolderTree) CreateFolder(ctx context.Context, client *DynamicClient, fo
 		obj = &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"spec": map[string]any{
-					"title":       folderID.Title,
-					"description": "Repository-managed folder.",
+					"title": folderID.Title,
 				},
 			},
 		}
@@ -133,7 +126,7 @@ func (t *FolderTree) CreateFolder(ctx context.Context, client *DynamicClient, fo
 			return fmt.Errorf("create meta accessor for the object: %w", err)
 		}
 
-		obj.SetNamespace(client.GetNamespace())
+		obj.SetNamespace(repository.GetNamespace())
 		obj.SetName(folderID.ID)
 		meta.SetFolder(parent)
 		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
@@ -143,7 +136,7 @@ func (t *FolderTree) CreateFolder(ctx context.Context, client *DynamicClient, fo
 			Timestamp: nil, // ???&info.Modified.Time,
 		})
 
-		_, err = iface.Create(ctx, obj, metav1.CreateOptions{})
+		_, err = client.Create(ctx, obj, metav1.CreateOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to create folder '%s': %w", folderID.ID, err)
 		}
@@ -154,21 +147,10 @@ func (t *FolderTree) CreateFolder(ctx context.Context, client *DynamicClient, fo
 	return nil
 }
 
-func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTree, error) {
-	iface := client.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
-
-	// TODO: handle pagination
-	rawFolders, err := iface.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
+func NewFolderTreeFromUnstructure(ctx context.Context, rawFolders *unstructured.UnstructuredList) *FolderTree {
 	tree := make(map[string]string, len(rawFolders.Items))
 	folders := make(map[string]Folder, len(rawFolders.Items))
+
 	for _, rf := range rawFolders.Items {
 		name := rf.GetName()
 		// TODO: Can I use MetaAccessor here?
@@ -191,10 +173,10 @@ func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTre
 	return &FolderTree{
 		tree:    tree,
 		folders: folders,
-	}, nil
+	}
 }
 
-func FolderTreeFromResourceList(resources *provisioning.ResourceList) *FolderTree {
+func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) *FolderTree {
 	tree := make(map[string]string, len(resources.Items))
 	folderIDs := make(map[string]Folder, len(resources.Items))
 	for _, rf := range resources.Items {
