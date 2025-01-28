@@ -141,45 +141,8 @@ func (r *Syncer) Unsync(ctx context.Context) error {
 	cfg := r.repository.Config()
 
 	logger := logging.FromContext(ctx)
-	logger = logger.With("repository", cfg.Name, "namespace", cfg.GetNamespace(), "folder", cfg.Spec.Folder, "mode", cfg.Spec.DeletePolicy)
-	logger.Info("start repository unsync")
-	defer logger.Info("end repository unsync")
-
-	switch cfg.Spec.DeletePolicy {
-	case provisioning.DeletePolityRetain:
-		logger.Info("keep all resources")
-
-		// TODO: remove repository info from all resources in the list
-
-		if r.repository.Config().Spec.Folder != "" {
-			obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
-			if err != nil {
-				return fmt.Errorf("get folder to unsync: %w", err)
-			}
-
-			meta, err := utils.MetaAccessor(obj)
-			if err != nil {
-				return fmt.Errorf("create meta accessor from folder object: %w", err)
-			}
-
-			meta.SetRepositoryInfo(nil)
-			obj, err = r.folders.Update(ctx, obj, metav1.UpdateOptions{})
-			if err != nil {
-				return fmt.Errorf("remove repo info from folder: %w", err)
-			}
-
-			logger.Info("removed repo info from folder", "object", obj)
-		} else {
-			logger.Info("skip repo info removal as it's root folder")
-		}
-	case provisioning.DeletePolityClean:
-		logger.Info("remove all provisioned resources")
-		if err := r.deleteAllProvisionedResources(ctx); err != nil {
-			return fmt.Errorf("delete all resources: %w", err)
-		}
-	default:
-		return fmt.Errorf("invalid unsync mode: %s", cfg.Spec.DeletePolicy)
-	}
+	logger = logger.With("repository", cfg.Name, "namespace", cfg.GetNamespace())
+	logger.Info("TODO... removed from PR temporarily")
 
 	return nil
 }

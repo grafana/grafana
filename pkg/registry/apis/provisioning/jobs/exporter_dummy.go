@@ -16,7 +16,7 @@ type dummyExporter struct{}
 
 func (s *dummyExporter) Export(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.ExportOptions,
+	options provisioning.ExportJobOptions,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx).With("logger", "exporter", "repository", repo.Config().Name, "namespace", repo.Config().Name)

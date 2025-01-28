@@ -18,7 +18,7 @@ import (
 type PullRequestWorker interface {
 	ProcessPullRequest(ctx context.Context,
 		repo repository.Repository,
-		options provisioning.PullRequestOptions,
+		options provisioning.PullRequestJobOptions,
 		progress func(provisioning.JobStatus) error,
 	) (*provisioning.JobStatus, error)
 }
@@ -109,14 +109,13 @@ func NewPullRequestCommenter(
 
 func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.PullRequestOptions,
+	options provisioning.PullRequestJobOptions,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	cfg := c.repo.Config().Spec
 
 	// TODO: clean specification to have better options
-	if !(cfg.Linting && cfg.GitHub.PullRequestLinter) &&
-		!cfg.GitHub.GenerateDashboardPreviews {
+	if !cfg.GitHub.GenerateDashboardPreviews {
 		return &provisioning.JobStatus{
 			State:   provisioning.JobStateSuccess,
 			Message: "linting and previews are not required",
@@ -180,7 +179,8 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 			continue
 		}
 
-		if cfg.Linting && cfg.GitHub.PullRequestLinter && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
+		// TODO: support lint callback
+		if false && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
 			var buf bytes.Buffer
 			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
 				return nil, fmt.Errorf("execute lint comment template: %w", err)

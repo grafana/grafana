@@ -64,16 +64,16 @@ type JobSpec struct {
 	Repository string `json:"repository"`
 
 	// Pull request options
-	PullRequest *PullRequestOptions `json:"pr,omitempty"`
+	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
 
 	// Required when the action is `export`
-	Export *ExportOptions `json:"export,omitempty"`
+	Export *ExportJobOptions `json:"export,omitempty"`
 
 	// Required when the action is `sync`
-	Sync *SyncOptions `json:"sync,omitempty"`
+	Sync *SyncJobOptions `json:"sync,omitempty"`
 }
 
-type PullRequestOptions struct {
+type PullRequestJobOptions struct {
 	// The branch of commit hash
 	Ref string `json:"ref,omitempty"`
 
@@ -85,12 +85,12 @@ type PullRequestOptions struct {
 	URL string `json:"url,omitempty"`
 }
 
-type SyncOptions struct {
+type SyncJobOptions struct {
 	// Complete forces the sync to overwrite
 	Complete bool `json:"complete,omitempty"`
 }
 
-type ExportOptions struct {
+type ExportJobOptions struct {
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 

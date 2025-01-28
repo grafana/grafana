@@ -12,6 +12,7 @@ import (
 // with apply.
 type SyncStatusApplyConfiguration struct {
 	State     *provisioningv0alpha1.JobState `json:"state,omitempty"`
+	Folder    *string                        `json:"folder,omitempty"`
 	JobID     *string                        `json:"job,omitempty"`
 	Started   *int64                         `json:"started,omitempty"`
 	Finished  *int64                         `json:"finished,omitempty"`
@@ -31,6 +32,14 @@ func SyncStatus() *SyncStatusApplyConfiguration {
 // If called multiple times, the State field is set to the value of the last call.
 func (b *SyncStatusApplyConfiguration) WithState(value provisioningv0alpha1.JobState) *SyncStatusApplyConfiguration {
 	b.State = &value
+	return b
+}
+
+// WithFolder sets the Folder field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Folder field is set to the value of the last call.
+func (b *SyncStatusApplyConfiguration) WithFolder(value string) *SyncStatusApplyConfiguration {
+	b.Folder = &value
 	return b
 }
 

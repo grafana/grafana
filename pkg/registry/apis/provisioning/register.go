@@ -321,10 +321,6 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		return fmt.Errorf("expected repository configuration")
 	}
 
-	if r.Spec.DeletePolicy == "" {
-		r.Spec.DeletePolicy = provisioning.DeletePolityClean
-	}
-
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")
@@ -681,7 +677,7 @@ spec:
 
 	sub = oas.Paths.Paths[repoprefix+"/sync"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"SyncOptions"].Schema
+		optionsSchema := defs[defsBase+"SyncJobOptions"].Schema
 		sub.Post.Description = "Sync from repository into Grafana"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
@@ -689,7 +685,7 @@ spec:
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
-							Example: &provisioning.SyncOptions{
+							Example: &provisioning.SyncJobOptions{
 								Complete: true,
 							},
 						},
@@ -701,7 +697,7 @@ spec:
 
 	sub = oas.Paths.Paths[repoprefix+"/export"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"ExportOptions"].Schema
+		optionsSchema := defs[defsBase+"ExportJobOptions"].Schema
 		sub.Post.Description = "Export from grafana into the remote repository"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
@@ -709,7 +705,7 @@ spec:
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
-							Example: &provisioning.ExportOptions{
+							Example: &provisioning.ExportJobOptions{
 								Folder:  "grafan-folder-ref",
 								History: true,
 								Branch:  "target-branch",

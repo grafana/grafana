@@ -56,7 +56,7 @@ type GitHubRepositoryConfig struct {
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// PullRequestLinter enables the dashboard linter for this repository in Pull Requests
-	PullRequestLinter bool `json:"pullRequestLinter,omitempty"`
+	// PullRequestLinter bool `json:"pullRequestLinter,omitempty"`
 }
 
 // RepositoryType defines the types of Repository
@@ -71,38 +71,31 @@ const (
 )
 
 type RepositorySpec struct {
-	// Describe the feature toggle
+	// The repository display name (shown in the UI)
 	Title string `json:"title"`
 
-	// Describe the feature toggle
+	// Repository description
 	Description string `json:"description,omitempty"`
-
-	// The folder that is backed by the repository.
-	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
-	Folder string `json:"folder,omitempty"`
 
 	// Edit options within the repository
 	Editing EditingOptions `json:"editing"`
 
-	// DeletePolicy options within the repository
-	DeletePolicy DeletePolicy `json:"deletePolicy"`
+	// Sync settings -- how values are pulled from the repository into grafana
+	Sync SyncOptions `json:"sync"`
 
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
-	// Linting enables linting for this repository
-	Linting bool `json:"linting,omitempty"`
-
 	// The repository on the local file system.
-	// Mutually exclusive with s3 and github.
+	// Mutually exclusive with local | s3 | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
 	// The repository in an S3 bucket.
-	// Mutually exclusive with local and github.
+	// Mutually exclusive with local | s3 | github.
 	S3 *S3RepositoryConfig `json:"s3,omitempty"`
 
 	// The repository on GitHub.
-	// Mutually exclusive with local and s3.
+	// Mutually exclusive with local | s3 | github.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
@@ -115,6 +108,38 @@ const (
 	// DeletePolityClean delete all provisioned resources on repository deletion
 	DeletePolityClean DeletePolicy = "clean"
 )
+
+// SyncTargetType defines where we want all values to resolve
+// +enum
+type SyncTargetType string
+
+// RepositoryType values
+const (
+	// Resources should be saved into the root grafana directory
+	// currently, only one repository may specify `root` target
+	SyncTargetTypeRoot RepositoryType = "root"
+
+	// Resources will be saved into a folder managed by this repository
+	SyncTargetTypeFolder RepositoryType = "folder"
+
+	// Pick an explicit folder where we can save resources, not managed by provisioning
+	// SyncTargetTypeShared RepositoryType = "shared"
+)
+
+type SyncOptions struct {
+	// Enabled must be saved as true before any sync job will run
+	Enabled bool `json:"enabled"`
+
+	// Where values should be saved
+	Target SyncTargetType `json:"target"`
+
+	// Shared folder target
+	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace
+	// Folder string `json:"folder,omitempty"`
+
+	// When non-zero, the sync will run periodically
+	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
+}
 
 type EditingOptions struct {
 	// End users can create new files in the remote file system
@@ -159,6 +184,9 @@ type HealthStatus struct {
 type SyncStatus struct {
 	// pending, running, success, error
 	State JobState `json:"state"`
+
+	// The target folder ID (or empty when root)
+	Folder string `json:"folder,omitempty"`
 
 	// The ID for the job that ran this sync
 	JobID string `json:"job,omitempty"`

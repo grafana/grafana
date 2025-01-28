@@ -162,6 +162,12 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
 	}
 
+	// Make sure a target is set when enabled
+	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.Target == "" {
+		list = append(list, field.Invalid(field.NewPath("spec", "sync", "target"),
+			cfg.Spec.Sync.Target, "When sync is enabled, make sure the target is set"))
+	}
+
 	// Reserved names (for now)
 	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file", "new", "create", "update", "delete"}
 	if slices.Contains(reserved, cfg.Name) {
@@ -171,12 +177,6 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.Local != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "local"),
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
-	}
-
-	switch cfg.Spec.DeletePolicy {
-	case provisioning.DeletePolityRetain, provisioning.DeletePolityClean:
-	default:
-		list = append(list, field.Invalid(field.NewPath("spec", "deletePolicy"), cfg.Spec.DeletePolicy, "Invalid unsync mode"))
 	}
 
 	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {

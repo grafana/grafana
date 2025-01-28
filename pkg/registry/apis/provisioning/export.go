@@ -54,7 +54,7 @@ func (c *exportConnector) Connect(
 	cfg := repo.Config()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		options := &provisioning.ExportOptions{}
+		options := &provisioning.ExportJobOptions{}
 		err := json.NewDecoder(r.Body).Decode(options)
 		if err != nil {
 			responder.Error(apierrors.NewBadRequest("error decoding request"))

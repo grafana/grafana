@@ -522,7 +522,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		Job: &provisioning.JobSpec{
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionPullRequest,
-			PullRequest: &provisioning.PullRequestOptions{
+			PullRequest: &provisioning.PullRequestJobOptions{
 				URL:  pr.GetHTMLURL(),
 				PR:   pr.GetNumber(),
 				Ref:  pr.GetHead().GetRef(),
@@ -600,7 +600,7 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 }
 
 func (r *githubRepository) shouldLintPullRequest() bool {
-	return r.config.Spec.GitHub.PullRequestLinter && r.config.Spec.Linting
+	return false // r.config.Spec.GitHub.PullRequestLinter && r.config.Spec.Linting
 }
 
 // ClearAllPullRequestFileComments clears all comments on a pull request

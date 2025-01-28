@@ -22,7 +22,7 @@ import (
 type Exporter interface {
 	Export(ctx context.Context,
 		repo repository.Repository,
-		options provisioning.ExportOptions,
+		options provisioning.ExportJobOptions,
 		progress func(provisioning.JobStatus) error,
 	) (*provisioning.JobStatus, error)
 }
@@ -52,7 +52,7 @@ func NewExporter(
 
 func (r *exporter) Export(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.ExportOptions,
+	options provisioning.ExportJobOptions,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx)
@@ -104,7 +104,7 @@ func (r *exporter) Export(ctx context.Context,
 
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 		logger = logger.With("folder", folder)
-		fid, ok := folders.DirPath(folder, r.repository.Config().Spec.Folder)
+		fid, ok := folders.DirPath(folder, "") // r.repository.Config().Spec.Folder)
 		if !ok {
 			logger.Debug("folder of item was not in tree of repository")
 			continue
