@@ -1604,8 +1604,9 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	fStore := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(fStore, ac, inProcBus, dashboardStore, folderStore, sqlStore,
-		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+	folderService := folderimpl.ProvideService(
+		fStore, ac, inProcBus, dashboardStore, folderStore,
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
