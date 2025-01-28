@@ -276,7 +276,7 @@ export async function searchFolders(
   if (config.featureToggles.unifiedStorageSearchUI) {
     const searcher = getGrafanaSearcher();
     const queryResponse = await searcher.search({
-      query: query || '*',
+      query: query ?? '*',
       kind: ['folder'],
       limit: SLICE_FOLDER_RESULTS_TO,
       permission,
