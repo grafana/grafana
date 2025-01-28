@@ -20,6 +20,7 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
+import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
@@ -108,9 +109,15 @@ export function mimirDataSource() {
     { alerting: true, module: 'core:plugin/prometheus' }
   );
 
+  const rulerConfig: RulerDataSourceConfig = {
+    apiVersion: 'config',
+    dataSourceUid: dataSource.uid,
+    dataSourceName: dataSource.name,
+  };
+
   setupDataSources(dataSource);
 
-  return { dataSource };
+  return { dataSource, rulerConfig };
 }
 
 export function setPrometheusRules(ds: DataSourceInstanceSettings, groups: PromRuleGroupDTO[]) {

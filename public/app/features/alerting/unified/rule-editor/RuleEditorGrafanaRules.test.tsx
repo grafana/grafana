@@ -9,10 +9,10 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types';
 
-import { grantUserPermissions, mockDataSource } from './mocks';
-import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
-import { captureRequests, serializeRequests } from './mocks/server/events';
-import { setupDataSources } from './testSetup/datasources';
+import { grantUserPermissions, mockDataSource } from '../mocks';
+import { grafanaRulerGroup } from '../mocks/grafanaRulerApi';
+import { captureRequests, serializeRequests } from '../mocks/server/events';
+import { setupDataSources } from '../testSetup/datasources';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,

@@ -19,9 +19,9 @@ grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
 setupMswServer();
 
-const mimirGroups = alertingFactory.group.buildList(500, { file: 'test-mimir-namespace' });
-alertingFactory.group.rewindSequence();
-const prometheusGroups = alertingFactory.group.buildList(130, { file: 'test-prometheus-namespace' });
+const mimirGroups = alertingFactory.prometheus.group.buildList(500, { file: 'test-mimir-namespace' });
+alertingFactory.prometheus.group.rewindSequence();
+const prometheusGroups = alertingFactory.prometheus.group.buildList(130, { file: 'test-prometheus-namespace' });
 
 const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
