@@ -2,9 +2,10 @@ import { debounce } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ListChildComponentProps, VariableSizeList } from 'react-window';
 
-import { CoreApp, EventBus, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, EventBus, LogRowModel, LogsSortOrder, TimeRange } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
+import { InfiniteScroll } from './InfiniteScroll';
 import { LogLine } from './LogLine';
 import { preProcessLogs, ProcessedLogModel } from './processing';
 import {
@@ -21,8 +22,10 @@ interface Props {
   containerElement: HTMLDivElement;
   eventBus: EventBus;
   forceEscape?: boolean;
+  loadMore?: (range: AbsoluteTimeRange) => void;
   showTime: boolean;
   sortOrder: LogsSortOrder;
+  timeRange: TimeRange;
   timeZone: string;
   wrapLogMessage: boolean;
 }
@@ -30,11 +33,13 @@ interface Props {
 export const LogList = ({
   app,
   containerElement,
+  loadMore,
   logs,
   eventBus,
   forceEscape = false,
   showTime,
   sortOrder,
+  timeRange,
   timeZone,
   wrapLogMessage,
 }: Props) => {
@@ -119,17 +124,25 @@ export const LogList = ({
   }
 
   return (
-    <VariableSizeList
-      height={listHeight}
-      itemCount={processedLogs.length}
-      itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
-      itemKey={(index: number) => processedLogs[index].uid}
-      layout="vertical"
-      ref={listRef}
-      style={{ overflowY: 'scroll' }}
-      width="100%"
-    >
-      {Renderer}
-    </VariableSizeList>
+    <InfiniteScroll logs={processedLogs} loadMore={loadMore} timeRange={timeRange} timeZone={timeZone}>
+      {({ onItemsRendered, ref }) => (
+        <VariableSizeList
+          height={listHeight}
+          itemCount={processedLogs.length}
+          itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
+          itemKey={(index: number) => processedLogs[index].uid}
+          layout="vertical"
+          onItemsRendered={onItemsRendered}
+          ref={(element: VariableSizeList) => {
+            ref(element);
+            listRef.current = element;
+          }}
+          style={{ overflowY: 'scroll' }}
+          width="100%"
+        >
+          {Renderer}
+        </VariableSizeList>
+      )}
+    </InfiniteScroll>
   );
 };
