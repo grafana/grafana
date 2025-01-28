@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { isFunction } from 'lodash';
 import { ComponentPropsWithoutRef, PropsWithChildren, ReactNode, useMemo } from 'react';
 
@@ -13,7 +13,6 @@ export interface RuleEditorSectionProps {
   stepNo: number;
   description?: string;
   helpInfo?: ComponentPropsWithoutRef<typeof NeedHelpInfo>;
-  fullWidth?: boolean;
   switchMode?: {
     isAdvancedMode: boolean;
     setAdvancedMode: (isAdvanced: boolean) => void;
@@ -28,7 +27,6 @@ export const RuleEditorSection = ({
   description,
   children,
   helpInfo,
-  fullWidth = false,
   switchMode,
 }: PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
@@ -87,7 +85,7 @@ export const RuleEditorSection = ({
 
   return (
     <div className={styles.parent}>
-      <FieldSet className={cx(fullWidth && styles.fullWidth, styles.fieldSetFix)} label={titleElement}>
+      <FieldSet className={styles.fieldSetFix} label={titleElement}>
         {children}
       </FieldSet>
     </div>
@@ -100,6 +98,7 @@ interface RuleEditorSubSectionProps extends PropsWithChildren {
   helpInfo?: ComponentPropsWithoutRef<typeof NeedHelpInfo>;
   onToggle?: () => void;
   isCollapsed?: boolean;
+  fullWidth?: boolean;
 }
 
 export const RuleEditorSubSection = ({
@@ -109,13 +108,14 @@ export const RuleEditorSubSection = ({
   children,
   onToggle,
   isCollapsed = false,
+  fullWidth = false,
 }: RuleEditorSubSectionProps) => {
   const styles = useStyles2(getStyles);
   const showHeader = title || description;
 
   return (
     <div className={styles.subSection}>
-      <Stack direction="column" gap={2} alignItems="flex-start">
+      <Stack direction="column" gap={2} alignItems={fullWidth ? 'stretch' : 'flex-start'}>
         {showHeader && (
           <>
             <Stack direction="column" gap={0}>
@@ -164,9 +164,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   parent: css({
     border: `solid 1px ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-  }),
-  fullWidth: css({
-    width: '100%',
   }),
   switch: css({
     padding: 0,

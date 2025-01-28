@@ -463,7 +463,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         stepNo={2}
         title={sectionTitle}
         description={sectionDescription}
-        fullWidth={true}
         helpInfo={{
           title: sectionDescription,
           contentText: helpContent,
@@ -472,7 +471,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         }}
         switchMode={switchMode}
       >
-        <RuleEditorSubSection>
+        <RuleEditorSubSection fullWidth>
           {/* This is the cloud data source selector */}
           {isDataSourceManagedRuleByType(type) && (
             <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />

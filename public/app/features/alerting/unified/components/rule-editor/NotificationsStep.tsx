@@ -81,7 +81,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       description={description}
       switchMode={switchMode}
       helpInfo={simplifiedRoutingMode ? needHelpInfoForContactPoint : needHelpInfoForNotificationPolicy}
-      fullWidth
     >
       {/* simplified routing mode */}
       {simplifiedRoutingMode && <SimplifiedRouting />}
@@ -96,6 +95,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
               notification policy below to view more details.
             </Trans>
           }
+          fullWidth
         >
           <PreviewNotificationPolicyRouting alertUid={alertUid} />
         </RuleEditorSubSection>

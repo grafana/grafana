@@ -3,6 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Input, Label, useStyles2 } from '@grafana/ui';
 
+import { ANNOTATION_INPUT_WIDTH } from './AnnotationsStep';
+
 interface CustomAnnotationHeaderFieldProps {
   field: { onChange: () => void; onBlur: () => void; value: string; name: string };
 }
@@ -15,7 +17,7 @@ const CustomAnnotationHeaderField = ({ field }: CustomAnnotationHeaderFieldProps
       <Label htmlFor={field.name}>Custom annotation name and content</Label>
       <Input
         placeholder="Enter custom annotation name"
-        width={18}
+        width={ANNOTATION_INPUT_WIDTH}
         {...field}
         className={styles.customAnnotationInput}
       />

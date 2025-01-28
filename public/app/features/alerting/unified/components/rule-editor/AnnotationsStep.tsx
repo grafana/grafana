@@ -19,7 +19,7 @@ import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 import { useDashboardQuery } from './useDashboardQuery';
 
-const INPUT_WIDTH = 70;
+export const ANNOTATION_INPUT_WIDTH = 70;
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
@@ -106,24 +106,35 @@ const AnnotationsStep = () => {
         For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
         Annotations can contain a combination of text and template code.`,
       }}
-      fullWidth
     >
-      <RuleEditorSubSection>
+      <RuleEditorSubSection fullWidth>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
+
           // eslint-disable-next-line
           const annotation = annotationField.key as Annotation;
           const annotationError = errors.annotations?.[index]?.value?.message;
 
+          const hiddenAnnotationValue =
+            annotationField.key === Annotation.panelID || annotationField.key === Annotation.dashboardUID;
+
           return (
-            <Stack key={annotationField.id} direction="column" alignItems="flex-start" gap={0.5}>
+            <Stack
+              key={annotationField.id}
+              direction="column"
+              alignItems="flex-start"
+              // hide the entire panelID annotation
+              hidden={annotationField.key === Annotation.panelID}
+              gap={0.5}
+            >
               <AnnotationHeaderField
                 annotationField={annotationField}
                 annotations={annotations}
                 annotation={annotation}
                 index={index}
               />
+
               {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
                 <DashboardAnnotationField
                   dashboard={selectedDashboard}
@@ -135,65 +146,55 @@ const AnnotationsStep = () => {
                 />
               )}
 
-              {
-                <div className={styles.annotationValueContainer}>
-                  <Field
-                    hidden={
-                      annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
+              <Stack direction="row" alignItems="flex-start" hidden={hiddenAnnotationValue}>
+                <Field invalid={Boolean(annotationError)} error={annotationError} style={{ marginBottom: 0 }}>
+                  <ValueInputComponent
+                    data-testid={`annotation-value-${index}`}
+                    // Input uses (8 x width) but TextArea uses (1 x width) so we set both `width` and `className` with width.
+                    width={ANNOTATION_INPUT_WIDTH}
+                    className={cx({ [styles.textarea]: !isUrl })}
+                    {...register(`annotations.${index}.value`)}
+                    placeholder={
+                      isUrl
+                        ? 'https://'
+                        : ((annotationField.key && `Enter a ${annotationField.key}`) ??
+                          'Enter custom annotation content')
                     }
-                    invalid={Boolean(annotationError)}
-                    error={annotationError}
-                    style={{ marginBottom: 0 }}
-                  >
-                    <ValueInputComponent
-                      data-testid={`annotation-value-${index}`}
-                      // Input uses (8 x width) but TextArea uses (1 x width) so we set both `width` and `className` with width.
-                      width={INPUT_WIDTH}
-                      className={cx({ [styles.textarea]: !isUrl })}
-                      {...register(`annotations.${index}.value`)}
-                      placeholder={
-                        isUrl
-                          ? 'https://'
-                          : ((annotationField.key && `Enter a ${annotationField.key}`) ??
-                            'Enter custom annotation content')
-                      }
-                      defaultValue={annotationField.value}
-                    />
-                  </Field>
-                  {!annotationLabels[annotation] && (
-                    <Button
-                      type="button"
-                      className={styles.deleteAnnotationButton}
-                      aria-label="delete annotation"
-                      icon="trash-alt"
-                      variant="secondary"
-                      onClick={() => remove(index)}
-                    />
-                  )}
-                </div>
-              }
+                    defaultValue={annotationField.value}
+                  />
+                </Field>
+                {!annotationLabels[annotation] && (
+                  <Button
+                    type="button"
+                    aria-label="delete annotation"
+                    icon="trash-alt"
+                    variant="secondary"
+                    onClick={() => remove(index)}
+                  />
+                )}
+              </Stack>
             </Stack>
           );
         })}
+
         <Stack direction="row" gap={1}>
-          <div className={styles.addAnnotationsButtonContainer}>
-            <Button
-              icon="plus"
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                append({ key: '', value: '' });
-              }}
-            >
-              Add custom annotation
+          <Button
+            icon="plus"
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              append({ key: '', value: '' });
+            }}
+          >
+            Add custom annotation
+          </Button>
+          {!selectedDashboard && (
+            <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
+              Link dashboard and panel
             </Button>
-            {!selectedDashboard && (
-              <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-                Link dashboard and panel
-              </Button>
-            )}
-          </div>
+          )}
         </Stack>
+
         {showPanelSelector && (
           <DashboardPicker
             isOpen={true}
@@ -212,21 +213,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // @TODO ideally full width but 100% doesn't work, need to investigate why
   textarea: css({
     height: 76,
-    width: theme.spacing(INPUT_WIDTH),
-  }),
-  addAnnotationsButtonContainer: css({
-    marginTop: theme.spacing(1),
-    gap: theme.spacing(1),
-    display: 'flex',
-  }),
-  deleteAnnotationButton: css({
-    display: 'inline-block',
-    marginTop: '10px',
-    marginLeft: '10px',
-  }),
-  annotationValueContainer: css({
-    display: 'flex',
-    marginTop: theme.spacing(0.5),
+    width: theme.spacing(ANNOTATION_INPUT_WIDTH),
   }),
 });
 
