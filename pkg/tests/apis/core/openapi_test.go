@@ -80,7 +80,10 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	})
 
 	t.Run("build open", func(t *testing.T) {
-		dir := filepath.Join("..", "..", "..", "..", "openapi")
+		dir := filepath.Join("..", "..", "..", "..", "data", "openapi")
+		// Create the directory if it doesn't exist
+		err := os.MkdirAll(dir, 0o755)
+		require.NoError(t, err)
 		for _, gv := range check {
 			path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
 			rsp := apis.DoRequest(h, apis.RequestParams{
@@ -110,7 +113,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			finalOutput := string(finalBytes)
 
 			// Compare or write out
-			fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
+			fpath := filepath.Join(dir, gv.Group, gv.Version+".json")
+			err = os.MkdirAll(filepath.Dir(fpath), 0o755)
+			require.NoError(t, err)
 			existing, err := os.ReadFile(fpath)
 			writeNeeded := false
 			if err == nil {
@@ -134,25 +139,23 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	})
 }
 
-// ProcessOpenAPISpec applies transformations similar to your TypeScript code:
+// ProcessOpenAPISpec processes an OpenAPI spec to make it more suitable for FE client generation:
 //  1. Remove any path containing "/watch/".
-//  2. Remove the prefix: "/apis/<group>/<version>/namespaces/{namespace}" (if present).
+//  2. Remove the prefix: "/apis/<group>/<version>/namespaces/{namespace}".
 //  3. Filter out `namespace` from path parameters.
 //  4. Update all $ref fields to remove k8s metadata from schema names.
 //  5. Simplify schema names in "components.schemas".
 func ProcessOpenAPISpec(spec map[string]interface{}) map[string]interface{} {
-	newSpec := deepCopy(spec)
-
 	// 1) Process 'paths'
-	pathsVal, ok := newSpec["paths"]
+	pathsVal, ok := spec["paths"]
 	if ok {
 		if pathsMap, _ := pathsVal.(map[string]interface{}); pathsMap != nil {
-			newSpec["paths"] = processPaths(pathsMap)
+			spec["paths"] = processPaths(pathsMap)
 		}
 	}
 
 	// 2) Process 'components.schemas'
-	compsVal, ok := newSpec["components"]
+	compsVal, ok := spec["components"]
 	if ok {
 		if compsMap, _ := compsVal.(map[string]interface{}); compsMap != nil {
 			if schemasVal, ok := compsMap["schemas"]; ok {
@@ -164,18 +167,18 @@ func ProcessOpenAPISpec(spec map[string]interface{}) map[string]interface{} {
 						newSpecComponents[newKey] = schemaVal
 					}
 					compsMap["schemas"] = newSpecComponents
-					newSpec["components"] = compsMap
+					spec["components"] = compsMap
 				}
 			}
 		}
 	}
 
-	return newSpec
+	return spec
 }
 
 func processPaths(paths map[string]interface{}) map[string]interface{} {
 	newPaths := make(map[string]interface{})
-	// This regex removes "/apis/<group>/<version>" plus optionally "/namespaces/{namespace}"
+	// This regex removes "/apis/<group>/<version>/namespaces/{namespace}"
 	// Example: "/apis/peakq.grafana.app/v0alpha1/namespaces/{namespace}/querytemplates" -> "/querytemplates"
 	pathRegex := regexp.MustCompile(`^/apis/[^/]+/[^/]+/namespaces/\{namespace}`)
 
@@ -193,7 +196,7 @@ func processPaths(paths map[string]interface{}) map[string]interface{} {
 
 		newPathItem := make(map[string]interface{})
 		for methodKey, methodValue := range pathItemMap {
-			// If this is "parameters", filter out "namespace"
+			// Filter out "namespace"
 			if methodKey == "parameters" {
 				if arr, ok := methodValue.([]interface{}); ok {
 					var filtered []interface{}
@@ -204,7 +207,6 @@ func processPaths(paths map[string]interface{}) map[string]interface{} {
 						}
 						nameVal := paramMap["name"]
 						if nameVal == "namespace" {
-							// skip
 							continue
 						}
 						filtered = append(filtered, paramMap)
@@ -248,7 +250,7 @@ func updateRefs(obj interface{}) {
 	}
 }
 
-// simplifySchemaName removes e.g. "io.k8s.apimachinery.pkg.apis.meta.v1." from the front
+// simplifySchemaName removes e.g. "io.k8s.apimachinery.pkg.apis.meta.v1."
 func simplifySchemaName(schemaName string) string {
 	parts := strings.Split(schemaName, ".")
 	versionRe := regexp.MustCompile(`^v\d+[a-zA-Z0-9]*$`)
@@ -258,15 +260,4 @@ func simplifySchemaName(schemaName string) string {
 		}
 	}
 	return schemaName
-}
-
-// deepCopy makes a JSON-based deep copy of a map.
-func deepCopy(src map[string]interface{}) map[string]interface{} {
-	b, err := json.Marshal(src)
-	if err != nil {
-		return src
-	}
-	var dst map[string]interface{}
-	_ = json.Unmarshal(b, &dst)
-	return dst
 }
