@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useEffect } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
@@ -26,6 +26,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const [overrideEditPaneToggle, setOverrideEditPanelToggle] = useState(false);
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
@@ -39,19 +40,27 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     );
   }
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
-    useSnappingSplitter({
-      direction: 'row',
-      dragPosition: 'end',
-      initialSize: 0.8,
-      handleSize: 'sm',
-      collapsed: isCollapsed,
+  const {
+    containerProps,
+    primaryProps,
+    secondaryProps,
+    splitterProps,
+    splitterState,
+    onToggleCollapse,
+    onOpen,
+    onClose,
+  } = useSnappingSplitter({
+    direction: 'row',
+    dragPosition: 'end',
+    initialSize: 0.8,
+    handleSize: 'sm',
+    collapsed: isCollapsed,
 
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
-    });
+    paneOptions: {
+      collapseBelowPixels: 250,
+      snapOpenToPixels: 50,
+    },
+  });
 
   useEffect(() => {
     setIsCollapsed(splitterState.collapsed);
@@ -59,6 +68,16 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
 
   const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const containerStyle: CSSProperties = {};
+
+  useEffect(() => {
+    if (selectionContext.selected.length && splitterState.collapsed && !overrideEditPaneToggle) {
+      onOpen();
+      setOverrideEditPanelToggle(true);
+    } else if (!selectionContext.selected.length && !splitterState.collapsed && overrideEditPaneToggle) {
+      onClose();
+      setOverrideEditPanelToggle(false);
+    }
+  }, [onClose, onOpen, overrideEditPaneToggle, selectionContext.selected.length, splitterState.collapsed]);
 
   if (!isEditing) {
     primaryProps.style.flexGrow = 1;
