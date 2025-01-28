@@ -9,13 +9,13 @@ import (
 type WalkFunc func(ctx context.Context, path string) error
 
 // Walk walks the given folder path and calls the given function for each folder.
-func Walk(ctx context.Context, folderPath string, fn WalkFunc) error {
-	if folderPath == "." || folderPath == "/" {
+func Walk(ctx context.Context, p string, fn WalkFunc) error {
+	if p == "." || p == "/" {
 		return nil
 	}
 
 	var currentPath string
-	for _, folder := range strings.Split(folderPath, "/") {
+	for _, folder := range strings.Split(p, "/") {
 		if folder == "" {
 			// Trailing / leading slash?
 			continue
