@@ -805,6 +805,8 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
+
+	start := time.Now()
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -820,6 +822,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
+	end := time.Now()
+	resource.NewStorageMetrics().PollerLatency.Observe(end.Sub(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {
@@ -847,6 +851,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}
+		b.log.Debug("poller sent event to stream", "namespace", rec.Key.Namespace, "group", rec.Key.Group, "resource", rec.Key.Resource, "name", rec.Key.Name, "action", rec.Action, "rv", rec.ResourceVersion)
 	}
 
 	return nextRV, nil
