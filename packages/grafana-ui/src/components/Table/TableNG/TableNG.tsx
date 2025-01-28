@@ -355,6 +355,14 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
+            if (isCountRowsSet && fieldIndex === 0) {
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Count</span>
+                  <span>{calcsRef.current[fieldIndex]}</span>
+                </div>
+              );
+            }
             return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
           },
         }),
@@ -472,7 +480,7 @@ export function TableNG(props: TableNGProps) {
         delete field.state?.calcs;
       }
       if (isCountRowsSet) {
-        return index === 0 ? `Count: ${filteredRows.length}` : '';
+        return index === 0 ? `${filteredRows.length}` : '';
       }
       if (index === 0) {
         const footerCalcReducer = footerOptions?.reducer[0];
@@ -609,11 +617,16 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
   dataGrid: css({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
-    '--rdg-border-color': theme.colors.border.medium,
+    '--rdg-border-color': 'transparent',
+    '--rdg-summary-border-color': theme.colors.border.medium,
     '--rdg-color': theme.colors.text.primary,
+    // TODO replace with ScrollContainer
+    overflow: 'hidden',
+    scrollbarWidth: 'thin',
 
     '&:hover': {
       '--rdg-row-hover-background-color': theme.colors.action.hover,
+      overflow: 'scroll',
     },
   }),
   menuItem: css({
@@ -641,6 +654,8 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     marginLeft: theme.spacing(0.5),
   }),
   cell: css({
+    '--rdg-border-color': theme.colors.border.medium,
+    'border-left': 'none',
     whiteSpace: `${textWrap ? 'break-spaces' : 'nowrap'}`,
     wordWrap: 'break-word',
     overflow: 'hidden',
