@@ -26,7 +26,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 
 	// Migrate everything
 	if len(opts.Resources) == 1 && opts.Resources[0] == "*" {
-		opts.SendHistory = true
+		opts.WithHistory = true
 		opts.Resources = []string{
 			"folders",
 			"dashboards",
@@ -93,7 +93,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
-		GetHistory: opts.SendHistory, // include history
+		GetHistory: opts.WithHistory, // include history
 	}
 
 	sql, err := a.sql(ctx)
@@ -101,7 +101,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		return err
 	}
 
-	opts.Progress(-1, "migrating dashboards...")
+	opts.Progress(-1, fmt.Sprintf("migrating dashboards... %+v", query))
 	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {
@@ -175,6 +175,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		}
 	}
 
+	opts.Progress(-2, fmt.Sprintf("finished dashboards... (%d)", rows.count))
 	return nil
 }
 
@@ -251,6 +252,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 		}
 	}
 
+	opts.Progress(-2, fmt.Sprintf("finished folders... (%d)", rows.count))
 	return nil
 }
 
@@ -298,5 +300,6 @@ func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opt
 			return err
 		}
 	}
+	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
 	return nil
 }

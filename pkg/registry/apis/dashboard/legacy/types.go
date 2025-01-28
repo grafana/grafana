@@ -13,7 +13,7 @@ type MigrateOptions struct {
 	Store        resource.ResourceClient
 	LargeObjects apistore.LargeObjectSupport
 	Resources    []string
-	SendHistory  bool // only applies to dashboards
+	WithHistory  bool // only applies to dashboards
 	Progress     func(count int, msg string)
 }
 
