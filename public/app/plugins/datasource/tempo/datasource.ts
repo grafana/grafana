@@ -1160,7 +1160,7 @@ function makeTempoLinkServiceMap(
         // Only do the peer query if service is actively set as not instrumented
         if (isInstrumented === false) {
           const filters = ['db.name', 'db.system', 'peer.service', 'messaging.system', 'net.peer.name']
-            .map((peerAttribute) => `span.${peerAttribute}="\${__data.fields.${NodeGraphDataFrameFieldNames.title}}"`)
+            .map((peerAttribute) => `span.${peerAttribute}="${serviceName}"`)
             .join(' || ');
           query.queryType = 'traceql';
           query.query = `{${filters}}`;
