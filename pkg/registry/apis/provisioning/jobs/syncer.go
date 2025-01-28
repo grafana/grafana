@@ -61,8 +61,23 @@ func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
-	if err := r.ensureRepositoryFolderExists(ctx); err != nil {
-		return "", fmt.Errorf("ensure repository folder exists: %w", err)
+	// Ensure the configured folder exists and it's managed by the repository
+	if cfg.Spec.Folder != "" {
+		title := cfg.Spec.Title
+		if title == "" {
+			title = cfg.Spec.Folder
+		}
+
+		folder := resources.Folder{
+			Path:  "",
+			ID:    cfg.Spec.Folder,
+			Title: title,
+		}
+
+		// If the folder already exists, the parent won't be changed
+		if err := r.ensureFolderExists(ctx, folder, ""); err != nil {
+			return "", fmt.Errorf("ensure repository folder exists: %w", err)
+		}
 	}
 
 	logger := logging.FromContext(ctx)
@@ -271,8 +286,9 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 	// Create folders
 	folderTree := resources.NewFolderTreeFromResourceList(list)
 	for _, entry := range fileTree {
-		if err := folderTree.CreateFolder(ctx, r.folders, path.Dir(entry.Path), r.repository.Config()); err != nil {
-			return fmt.Errorf("create folder: %w", err)
+		parent := resources.ParentFolder(entry.Path, r.repository.Config())
+		if err := r.ensureFolderPathExists(ctx, path.Dir(entry.Path), parent, folderTree); err != nil {
+			return fmt.Errorf("ensure folder path exists: %w", err)
 		}
 	}
 
@@ -396,8 +412,9 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 			continue
 		}
 
-		if err := folderTree.CreateFolder(ctx, r.folders, path.Dir(change.Path), r.repository.Config()); err != nil {
-			return fmt.Errorf("create folder: %w", err)
+		parent := resources.ParentFolder(change.Path, r.repository.Config())
+		if err := r.ensureFolderPathExists(ctx, path.Dir(change.Path), parent, folderTree); err != nil {
+			return fmt.Errorf("ensure folder path exists: %w", err)
 		}
 	}
 
@@ -483,25 +500,56 @@ func (r *Syncer) parseResource(ctx context.Context, fileInfo *repository.FileInf
 	return file, nil
 }
 
-func (r *Syncer) ensureRepositoryFolderExists(ctx context.Context) error {
-	if r.repository.Config().Spec.Folder == "" {
-		return nil
-	}
+// ensureFolderPathExists creates the folder structure in the cluster.
+func (r *Syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent string, folderTree *resources.FolderTree) error {
+	return folderTree.Walk(ctx, dirPath, parent, func(ctx context.Context, path, parent string) (resources.Folder, error) {
+		fid := resources.ParseFolder(path, r.repository.Config().GetName())
+		if folderTree.In(fid.ID) {
+			// already visited
+			return fid, nil
+		}
 
-	obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
+		if err := r.ensureFolderExists(ctx, fid, parent); err != nil {
+			return resources.Folder{}, fmt.Errorf("ensure folder exists: %w", err)
+		}
+		folderTree.Add(fid, parent)
+
+		return fid, nil
+	})
+}
+
+// ensureFolderExists creates the folder if it doesn't exist.
+// If the folder already exists:
+// - it will update the repository info.
+// - it will keep the parent folder already set
+func (r *Syncer) ensureFolderExists(ctx context.Context, folder resources.Folder, parent string) error {
+	cfg := r.repository.Config()
+	repoInfo := &utils.ResourceRepositoryInfo{
+		Name:      cfg.GetName(),
+		Path:      folder.Path,
+		Hash:      "",  // FIXME: which hash?
+		Timestamp: nil, // ???&info.Modified.Time,
+	}
+	obj, err := r.folders.Get(ctx, folder.ID, metav1.GetOptions{})
 	if err == nil {
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return fmt.Errorf("create meta accessor for the object: %w", err)
 		}
 
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name:      r.repository.Config().Name,
-			Path:      "",
-			Hash:      "",  // FIXME: which hash?
-			Timestamp: nil, // ???&info.Modified.Time,
-		})
+		existingInfo, err := meta.GetRepositoryInfo()
+		if err != nil {
+			return fmt.Errorf("get repository info: %w", err)
+		}
 
+		// Skip update if already present with right values
+		if existingInfo.Name == repoInfo.Name && existingInfo.Path == repoInfo.Path {
+			return nil
+		}
+
+		meta.SetRepositoryInfo(repoInfo)
+
+		// TODO: should we keep the parent?
 		if _, err := r.folders.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
 			return fmt.Errorf("failed to add repo info to configured folder: %w", err)
 		}
@@ -511,16 +559,10 @@ func (r *Syncer) ensureRepositoryFolderExists(ctx context.Context) error {
 		return fmt.Errorf("failed to check if folder exists: %w", err)
 	}
 
-	cfg := r.repository.Config()
-	title := cfg.Spec.Title
-	if title == "" {
-		title = cfg.Spec.Folder
-	}
-
 	obj = &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]any{
-				"title": title, // TODO: how do we want to get this?
+				"title": folder.Title,
 			},
 		},
 	}
@@ -531,13 +573,11 @@ func (r *Syncer) ensureRepositoryFolderExists(ctx context.Context) error {
 	}
 
 	obj.SetNamespace(cfg.GetNamespace())
-	obj.SetName(cfg.Spec.Folder)
-	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      r.repository.Config().Name,
-		Path:      "",
-		Hash:      "",  // FIXME: which hash?
-		Timestamp: nil, // ???&info.Modified.Time,
-	})
+	obj.SetName(folder.ID)
+	if parent != "" {
+		meta.SetFolder(parent)
+	}
+	meta.SetRepositoryInfo(repoInfo)
 
 	if _, err := r.folders.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("failed to create folder: %w", err)

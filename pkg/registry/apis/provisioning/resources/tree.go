@@ -6,14 +6,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 )
 
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
@@ -70,6 +66,11 @@ func (t *FolderTree) AllFolders() map[string]Folder {
 	return t.folders
 }
 
+func (t *FolderTree) Add(folder Folder, parent string) {
+	t.tree[folder.ID] = parent
+	t.folders[folder.ID] = folder
+}
+
 func NewEmptyFolderTree() *FolderTree {
 	return &FolderTree{
 		tree:    make(map[string]string, 0),
@@ -77,74 +78,29 @@ func NewEmptyFolderTree() *FolderTree {
 	}
 }
 
-func (t *FolderTree) CreateFolder(ctx context.Context, client dynamic.ResourceInterface, folder string, repository *provisioning.Repository) error {
-	dir := folder
-	if dir == "." || dir == "/" {
+type WalkFunc func(ctx context.Context, path, parent string) (Folder, error)
+
+func (t *FolderTree) Walk(ctx context.Context, folderPath, parent string, fn WalkFunc) error {
+	if folderPath == "." || folderPath == "/" {
 		return nil
 	}
 
-	logger := logging.FromContext(ctx).With("folder", folder)
 	var currentPath string
-	parent := repository.Spec.Folder
-
-	for _, folder := range strings.Split(dir, "/") {
+	for _, folder := range strings.Split(folderPath, "/") {
 		if folder == "" {
 			// Trailing / leading slash?
 			continue
 		}
 
 		currentPath = path.Join(currentPath, folder)
-		folderID := ParseFolder(currentPath, repository.GetName())
-		logger := logger.With("folder", currentPath)
-
-		if t.tree[folderID.ID] != "" {
-			logger.Debug("folder already visited")
-			parent = folderID.ID
-			continue
-		}
-
-		t.tree[folderID.ID] = parent
-		t.folders[folderID.ID] = folderID
-
-		obj, err := client.Get(ctx, folderID.ID, metav1.GetOptions{})
-		// FIXME: Check for IsNotFound properly
-		if obj != nil || err == nil {
-			logger.Debug("folder already existed")
-			parent = folderID.ID
-			continue
-		}
-
-		obj = &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"spec": map[string]any{
-					"title": folderID.Title,
-				},
-			},
-		}
-
-		meta, err := utils.MetaAccessor(obj)
+		id, err := fn(ctx, currentPath, parent)
 		if err != nil {
-			return fmt.Errorf("create meta accessor for the object: %w", err)
+			return fmt.Errorf("failed to create folder '%s': %w", id.ID, err)
 		}
 
-		obj.SetNamespace(repository.GetNamespace())
-		obj.SetName(folderID.ID)
-		meta.SetFolder(parent)
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name:      repository.GetName(),
-			Path:      currentPath,
-			Hash:      "",  // FIXME: which hash?
-			Timestamp: nil, // ???&info.Modified.Time,
-		})
-
-		_, err = client.Create(ctx, obj, metav1.CreateOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to create folder '%s': %w", folderID.ID, err)
-		}
-
-		parent = folderID.ID
-		logger.Info("folder created")
+		parent = id.ID
 	}
+
 	return nil
 }
 
