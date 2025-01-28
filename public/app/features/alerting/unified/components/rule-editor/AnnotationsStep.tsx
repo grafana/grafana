@@ -19,6 +19,8 @@ import { DashboardPicker, PanelDTO, getVisualPanels } from './DashboardPicker';
 import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 import { useDashboardQuery } from './useDashboardQuery';
 
+const INPUT_WIDTH = 70;
+
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
@@ -145,7 +147,9 @@ const AnnotationsStep = () => {
                   >
                     <ValueInputComponent
                       data-testid={`annotation-value-${index}`}
-                      className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                      // Input uses (8 x width) but TextArea uses (1 x width) so we set both `width` and `className` with width.
+                      width={INPUT_WIDTH}
+                      className={cx({ [styles.textarea]: !isUrl })}
                       {...register(`annotations.${index}.value`)}
                       placeholder={
                         isUrl
@@ -206,11 +210,9 @@ const AnnotationsStep = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   // @TODO ideally full width but 100% doesn't work, need to investigate why
-  annotationValueInput: css({
-    width: 550,
-  }),
   textarea: css({
     height: 76,
+    width: theme.spacing(INPUT_WIDTH),
   }),
   addAnnotationsButtonContainer: css({
     marginTop: theme.spacing(1),

@@ -58,7 +58,6 @@ function NotificationRouteHeader({
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
           <Stack gap={1} direction="row" alignItems="center">
-            Notification policy
             <NotificationPolicyMatchers
               route={route}
               matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
@@ -191,10 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   routeHeader: css({
     display: 'flex',
     flexDirection: 'row',
-    gap: theme.spacing(1),
     alignItems: 'center',
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    padding: theme.spacing(0.5, 0.5, 0.5, 0),
     '&:hover': {
       backgroundColor: theme.components.table.rowHoverBackground,
     },

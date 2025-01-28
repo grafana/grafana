@@ -1,10 +1,13 @@
+import { css } from '@emotion/css';
 import { compact, debounce } from 'lodash';
 import { Suspense, lazy, useEffect, useRef } from 'react';
 
-import { LoadingPlaceholder, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+
 
 import { Folder, KBObjectArray } from '../../../types/rule-form';
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
@@ -30,6 +33,8 @@ export const NotificationPreview = ({
   alertName,
   alertUid,
 }: NotificationPreviewProps) => {
+  const styles = useStyles2(getStyles);
+
   const previewEndpoint = alertRuleApi.endpoints.preview;
   const canPreview = folder && condition;
 
@@ -81,14 +86,25 @@ export const NotificationPreview = ({
 
   return (
     <Suspense fallback={<LoadingPlaceholder text="Loading..." />}>
-      {alertManagerDataSources.map((alertManagerSource) => (
-        <NotificationPreviewByAlertManager
-          alertManagerSource={alertManagerSource}
-          potentialInstances={potentialInstances}
-          onlyOneAM={onlyOneAM}
-          key={alertManagerSource.name}
-        />
-      ))}
+      <div className={styles.previewContainer}>
+        {alertManagerDataSources.map((alertManagerSource) => (
+          <NotificationPreviewByAlertManager
+            alertManagerSource={alertManagerSource}
+            potentialInstances={potentialInstances}
+            onlyOneAM={onlyOneAM}
+            key={alertManagerSource.name}
+          />
+        ))}
+      </div>
     </Suspense>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  previewContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    width: '100%',
+  })
+})

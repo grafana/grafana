@@ -47,6 +47,7 @@ export const RuleEditorSection = ({
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
+                  id={`step-${stepNo}`}
                   data-testid={AlertRuleSelectors.stepAdvancedModeSwitch(stepNo.toString())}
                   value={switchMode.isAdvancedMode}
                   onChange={(event) => {
