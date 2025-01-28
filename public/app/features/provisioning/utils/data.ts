@@ -8,6 +8,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     title: data.title || '',
     editing: data.editing,
     linting: data.linting,
+    deletePolicy: 'retain',
   };
   switch (data.type) {
     case 'github':
