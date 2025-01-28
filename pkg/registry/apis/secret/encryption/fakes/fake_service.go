@@ -12,10 +12,10 @@ func NewFakeEncryptionService() FakeEncryptionService {
 	return FakeEncryptionService{}
 }
 
-func (f FakeEncryptionService) Encrypt(_ context.Context, payload []byte, _ encryption.EncryptionOptions) ([]byte, error) {
+func (f FakeEncryptionService) Encrypt(_ context.Context, namespace string, payload []byte, _ encryption.EncryptionOptions) ([]byte, error) {
 	return payload, nil
 }
-func (f FakeEncryptionService) Decrypt(_ context.Context, payload []byte) ([]byte, error) {
+func (f FakeEncryptionService) Decrypt(_ context.Context, namespace string, payload []byte) ([]byte, error) {
 	return payload, nil
 }
 func (f FakeEncryptionService) EncryptJsonData(_ context.Context, kv map[string]string, _ encryption.EncryptionOptions) (map[string][]byte, error) {
@@ -40,11 +40,11 @@ func (f FakeEncryptionService) GetDecryptedValue(_ context.Context, sjd map[stri
 	return fallback
 }
 
-func (f FakeEncryptionService) RotateDataKeys(_ context.Context) error {
+func (f FakeEncryptionService) RotateDataKeys(_ context.Context, namespace string) error {
 	return nil
 }
 
-func (f FakeEncryptionService) ReEncryptDataKeys(_ context.Context) error {
+func (f FakeEncryptionService) ReEncryptDataKeys(_ context.Context, namespace string) error {
 	return nil
 }
 
