@@ -87,19 +87,6 @@
         "y": 0
       },
       "id": 1,
-      "transformations": [
-        {
-          "id": "timeSeriesTable",
-          "options": {
-            "A": {
-              "stat": "mean"
-            },
-            "B": {
-              "stat": "max"
-            }
-          }
-        }
-      ],
       "options": {
         "legend": {
           "calcs": [],
@@ -128,11 +115,24 @@
             "type": "datasource",
             "uid": "grafana"
           },
-          "queryType": "randomWalk", 
+          "queryType": "randomWalk",
           "refId": "B"
         }
       ],
       "title": "Panel Title",
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {
+            "A": {
+              "stat": "mean"
+            },
+            "B": {
+              "stat": "max"
+            }
+          }
+        }
+      ],
       "type": "timeseries"
     }
   ],
