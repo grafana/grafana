@@ -7,6 +7,7 @@ import {
   SceneTimeRangeLike,
   SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
@@ -33,12 +34,19 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     this.addActivationHandler(() => this._onActivate());
   }
 
+  protected _variableDependency: VariableDependencyConfig<PanelTimeRangeState> = new VariableDependencyConfig(this, {
+    statePaths: ['timeFrom', 'timeShift'],
+  });
+
   private _onActivate() {
     this._subs.add(
-      this.subscribeToState((n, p) => {
-        // Listen to own changes and update time info when required
-        if (n.timeFrom !== p.timeFrom || n.timeShift !== p.timeShift) {
-          const { timeInfo, timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+      this.subscribeToState((n) => {
+        const { timeInfo, timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+
+        // When timeFrom or timeShift is a variable we cannot compare to previous interpolated value
+        //   therefore we need to compare timeInfo directly and update when required
+        // Note: compare to newState.timeInfo because it is always one behind
+        if (n.timeInfo !== timeInfo) {
           this.setState({ timeInfo, value: timeRange });
         }
       })
