@@ -1,7 +1,7 @@
 import { NodeType, SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
-import { QueryBuilderLabelFilter } from '@grafana/experimental';
+import { QueryBuilderLabelFilter } from '@grafana/plugin-ui';
 import {
   Identifier,
   LabelFilter,

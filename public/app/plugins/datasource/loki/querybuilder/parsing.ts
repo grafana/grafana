@@ -1,6 +1,6 @@
 import { SyntaxNode } from '@lezer/common';
 
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/experimental';
+import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/plugin-ui';
 import {
   And,
   BinOpExpr,
