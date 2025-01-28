@@ -54,15 +54,11 @@ export const DataLinksInlineEditor = ({
 
     if (link.oneClick === true) {
       linksSafe.forEach((link) => {
-        if (link.oneClick) {
-          link.oneClick = false;
-        }
+        link.oneClick = false;
       });
 
       actions?.forEach((action) => {
-        if (action.oneClick) {
-          action.oneClick = false;
-        }
+        action.oneClick = false;
       });
     }
 
