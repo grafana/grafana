@@ -5,7 +5,6 @@ import { UseFormSetValue, useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DeprecatedInternalId } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
