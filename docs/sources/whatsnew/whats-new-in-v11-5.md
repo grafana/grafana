@@ -29,7 +29,7 @@ posts:
   - title: Alerting
     items:
       - docs/grafana-cloud/whats-new/2025-01-22-rbac-for-alerting-notifications.md
-      - docs/grafana-cloud/whats-new/2025-01-22-rbac-for-notification-policies.md      
+      - docs/grafana-cloud/whats-new/2025-01-22-rbac-for-notification-policies.md
   - title: Data sources
     items:
       - docs/grafana-cloud/whats-new/2025-01-09-elasticsearch-cross-cluster-search-support.md
@@ -42,7 +42,7 @@ posts:
     items:
       - docs/grafana-cloud/whats-new/2025-01-10-plugin-frontend-sandbox.md
   - title: Public dashboards
-    items: 
+    items:
       - docs/grafana-cloud/whats-new/2024-09-09-public-dashboards-are-now-shared-dashboards.md
 whats_new_grafana_version: 11.5
 weight: -47
