@@ -28,7 +28,6 @@ export interface Props {
 
 export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
-  const dashboardId = getDashboardIdFromScene(dashboard);
 
   const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
@@ -140,7 +139,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
           // Old folder picker fields
           value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
-          dashboardId={dashboardId ?? undefined}
+          dashboardId={dashboard.state.id ?? undefined}
           enableCreateNew
         />
       </Field>
@@ -200,14 +199,5 @@ async function validateDashboardName(title: string, formValues: SaveDashboardAsF
     return true;
   } catch (e) {
     return e instanceof Error ? e.message : 'Dashboard name is invalid';
-  }
-}
-
-function getDashboardIdFromScene(dashboard: DashboardScene) {
-  // if we are working on a k8s dashboard
-  if (dashboard.state.meta.k8s) {
-    return dashboard.state.meta.k8s?.labels?.[DeprecatedInternalId];
-  } else {
-    return dashboard.state.id;
   }
 }
