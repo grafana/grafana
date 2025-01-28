@@ -8,18 +8,18 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-    Badge,
-    Button,
-    Dropdown,
-    Icon,
-    IconButton,
-    Menu,
-    Stack,
-    Text,
-    TextLink,
-    Tooltip,
-    getTagColorsFromName,
-    useStyles2,
+  Badge,
+  Button,
+  Dropdown,
+  Icon,
+  IconButton,
+  Menu,
+  Stack,
+  Text,
+  TextLink,
+  Tooltip,
+  getTagColorsFromName,
+  useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
@@ -27,11 +27,11 @@ import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointReceiverSummary } from 'app/features/alerting/unified/components/contact-points/ContactPoint';
 import {
-    AlertmanagerGroup,
-    MatcherOperator,
-    ObjectMatcher,
-    Receiver,
-    RouteWithID,
+  AlertmanagerGroup,
+  MatcherOperator,
+  ObjectMatcher,
+  Receiver,
+  RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
