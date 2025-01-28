@@ -2,6 +2,7 @@ package parquet
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -31,15 +32,15 @@ type resourceWriter struct {
 	resource  *array.StringBuilder
 	name      *array.StringBuilder
 	folder    *array.StringBuilder
-	value     *array.StringBuilder
 	action    *array.Int8Builder
+	value     *array.StringBuilder
 }
 
 func NewResourceWriter(f io.Writer) (*resourceWriter, error) {
 	w := &resourceWriter{
 		pool:   memory.DefaultAllocator,
 		schema: newSchema(nil),
-		buffer: 1024 * 10 * 100, // 1MB
+		buffer: 1024 * 10 * 100 * 10, // 10MB
 	}
 
 	props := parquet.NewWriterProperties(
@@ -62,6 +63,7 @@ func (w *resourceWriter) Close() error {
 
 // writes the current buffer to parquet and re-inits the arrow buffer
 func (w *resourceWriter) flush() error {
+	fmt.Printf("FLUSH: %d\n", w.rv.Len())
 	rec := array.NewRecord(w.schema, []arrow.Array{
 		w.rv.NewArray(),
 		w.namespace.NewArray(),
@@ -69,8 +71,8 @@ func (w *resourceWriter) flush() error {
 		w.resource.NewArray(),
 		w.name.NewArray(),
 		w.folder.NewArray(),
-		w.value.NewArray(),
 		w.action.NewArray(),
+		w.value.NewArray(),
 	}, int64(w.rv.Len()))
 	defer rec.Release()
 	err := w.writer.Write(rec)
@@ -87,8 +89,9 @@ func (w *resourceWriter) init() error {
 	w.resource = array.NewStringBuilder(w.pool)
 	w.name = array.NewStringBuilder(w.pool)
 	w.folder = array.NewStringBuilder(w.pool)
-	w.value = array.NewStringBuilder(w.pool)
 	w.action = array.NewInt8Builder(w.pool)
+	w.value = array.NewStringBuilder(w.pool)
+	w.wrote = 0
 	return nil
 }
 
@@ -125,6 +128,7 @@ func (w *resourceWriter) Add(ctx context.Context, key *resource.ResourceKey, val
 
 	w.wrote = w.wrote + len(value)
 	if w.wrote > w.buffer {
+		fmt.Printf("flush (%d > %d)\n", w.wrote, w.buffer)
 		return w.flush()
 	}
 	return nil

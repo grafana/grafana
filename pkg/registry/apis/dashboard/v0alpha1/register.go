@@ -259,7 +259,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				LargeObjects: nil, // ???
 				Store:        b.unified,
 				Progress: func(count int, msg string) {
-					if time.Since(last) > time.Second*2 {
+					if count < 1 || time.Since(last) > time.Second*2 {
 						_, _ = w.Write([]byte(fmt.Sprintf("[%4d] %s\n", count, msg)))
 						flusher.Flush()
 						last = time.Now()

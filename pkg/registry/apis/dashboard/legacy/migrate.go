@@ -177,8 +177,9 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 
 	if len(rows.rejected) > 0 {
 		for _, row := range rows.rejected {
-			fmt.Printf("REJECTED: %+v // %v\n", row.Dash, row)
-			opts.Progress(-2, fmt.Sprintf("rejected (%+v)", row.Dash))
+			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
+			fmt.Printf("REJECTED: %s / %s\n", id, row.Dash.Name)
+			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}
 	}
 
