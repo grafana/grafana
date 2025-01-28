@@ -1194,9 +1194,6 @@ exports[`better eslint`] = {
     "public/app/core/components/TagFilter/TagOption.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
-    "public/app/core/components/TimePicker/TimePickerWithHistory.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/core/components/TimeSeries/TimeSeries.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/components/uPlot/PlotLegend\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
       [0, 0, 0, "\'@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
@@ -2499,12 +2496,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
     ],
     "public/app/features/alerting/unified/components/rule-viewer/tabs/Details.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -3728,8 +3724,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/sharing/ShareButton/share-snapshot/UpsertSnapshot.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/components/Input/Input\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/dashboard-scene/sharing/ShareDrawer/ShareDrawerConfirmAction.tsx:5381": [
       [0, 0, 0, "\'@grafana/ui/src/components/ConfirmModal/ConfirmContent\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
@@ -4230,9 +4225,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/features/dashboard/services/TimeSrv.ts:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/dashboard/state/DashboardMigrator.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -4654,9 +4646,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/explore/ExploreRunQueryButton.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "2"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
     ],
     "public/app/features/explore/ExploreToolbar.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
@@ -5062,9 +5053,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/state/time.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/explore/state/time.ts:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
     ],
     "public/app/features/explore/state/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5970,9 +5958,6 @@ exports[`better eslint`] = {
     "public/app/features/search/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/serviceaccounts/ServiceAccountCreatePage.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/serviceaccounts/ServiceAccountPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"],
       [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"],
@@ -6173,8 +6158,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/trails/DataTrailSettings.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/trails/DataTrailsHistory.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/datetime/rangeutil\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
@@ -6201,9 +6185,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"]
     ],
-    "public/app/features/trails/MetricSelect/NativeHistogramBadge.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/trails/MetricsHeader.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
@@ -6217,8 +6198,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/trails/banners/NativeHistogramBanner.tsx:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/utils/i18n\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "1"]
+      [0, 0, 0, "No untranslated strings in text props. Wrap text with <Trans /> or use t()", "0"]
     ],
     "public/app/features/transformers/FilterByValueTransformer/FilterByValueFilterEditor.tsx:5381": [
       [0, 0, 0, "\'@grafana/data/src/transformations/transformers/filterByValue\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
