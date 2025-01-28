@@ -61,7 +61,7 @@
     "marked": "15.0.6",
     "marked-mangle": "1.1.10",
     "moment": "2.30.1",
-    "moment-timezone": "0.5.46",
+    "moment-timezone": "0.5.47",
     "monaco-promql": "1.7.4",
     "pluralize": "8.0.0",
     "prismjs": "1.29.0",
