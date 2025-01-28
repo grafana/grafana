@@ -135,11 +135,7 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 	if err := f.Hook(*q); err != nil {
 		return nil, err
 	}
-	rules, ok := f.Rules[q.OrgID]
-	if !ok {
-		return nil, nil
-	}
-
+	rules := f.Rules[q.OrgID]
 	for _, rule := range rules {
 		if rule.UID == q.UID {
 			return rule, nil
