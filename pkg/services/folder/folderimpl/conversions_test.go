@@ -32,8 +32,8 @@ func TestFolderConversions(t *testing.T) {
           "grafana.app/folder": "parent-folder-name",
           "grafana.app/updatedTimestamp": "2022-12-02T07:02:02Z",
           "grafana.app/repoName": "example-repo",
-          "grafana.app/createdBy": "user:abc",
-          "grafana.app/updatedBy": "service:xyz"
+          "grafana.app/createdBy": "user:useruid",
+          "grafana.app/updatedBy": "user:useruid"
         }
       },
       "spec": {
@@ -47,26 +47,28 @@ func TestFolderConversions(t *testing.T) {
 	created = created.UTC()
 	require.NoError(t, err)
 
-	userService := &usertest.FakeUserService{
-		ExpectedUser: &user.User{},
-	}
+	fake := usertest.NewUserServiceFake()
+	fake.ExpectedUser = &user.User{ID: 10, UID: "useruid"}
 
-	// #TODO implement this properly
-	fs := ProvideUnifiedStore(nil, userService)
+	fs := ProvideUnifiedStore(nil, fake)
 
 	converted, err := fs.UnstructuredToLegacyFolder(context.Background(), input)
 	require.NoError(t, err)
 	require.Equal(t, folder.Folder{
-		ID:          234,
-		OrgID:       1,
-		Version:     4,
-		UID:         "be79sztagf20wd",
-		ParentUID:   "parent-folder-name",
-		Title:       "test folder",
-		Description: "Something set in the file",
-		URL:         "/dashboards/f/be79sztagf20wd/test-folder",
-		Repository:  "example-repo",
-		Created:     created,
-		Updated:     created.Add(time.Hour * 5),
+		ID:           234,
+		OrgID:        1,
+		Version:      4,
+		UID:          "be79sztagf20wd",
+		ParentUID:    "parent-folder-name",
+		Title:        "test folder",
+		Description:  "Something set in the file",
+		URL:          "/dashboards/f/be79sztagf20wd/test-folder",
+		Repository:   "example-repo",
+		Created:      created,
+		Updated:      created.Add(time.Hour * 5),
+		CreatedBy:    10,
+		CreatedByUID: "useruid",
+		UpdatedBy:    10,
+		UpdatedByUID: "useruid",
 	}, *converted)
 }
