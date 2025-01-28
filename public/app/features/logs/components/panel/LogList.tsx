@@ -1,12 +1,11 @@
 import { debounce } from 'lodash';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ListChildComponentProps, VariableSizeList } from 'react-window';
+import { VariableSizeList } from 'react-window';
 
 import { AbsoluteTimeRange, CoreApp, EventBus, LogRowModel, LogsSortOrder, TimeRange } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { InfiniteScroll } from './InfiniteScroll';
-import { LogLine } from './LogLine';
 import { preProcessLogs, ProcessedLogModel } from './processing';
 import {
   getLogLineSize,
@@ -97,25 +96,6 @@ export const LogList = ({
     [containerElement]
   );
 
-  const Renderer = useCallback(
-    ({ index, style }: ListChildComponentProps) => {
-      if (!processedLogs[index]) {
-        return null;
-      }
-      return (
-        <LogLine
-          index={index}
-          log={processedLogs[index]}
-          showTime={showTime}
-          style={style}
-          wrapLogMessage={wrapLogMessage}
-          onOverflow={handleOverflow}
-        />
-      );
-    },
-    [handleOverflow, processedLogs, showTime, wrapLogMessage]
-  );
-
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
     return null;
@@ -123,14 +103,17 @@ export const LogList = ({
 
   return (
     <InfiniteScroll
+      handleOverflow={handleOverflow}
       listRef={listRef}
       logs={processedLogs}
       loadMore={loadMore}
+      showTime={showTime}
       sortOrder={sortOrder}
       timeRange={timeRange}
       timeZone={timeZone}
+      wrapLogMessage={wrapLogMessage}
     >
-      {({ itemCount, onItemsRendered, ref }) => (
+      {({ itemCount, onItemsRendered, ref, Renderer }) => (
         <VariableSizeList
           height={listHeight}
           itemCount={itemCount}
