@@ -38,4 +38,28 @@ describe('Unified Storage Searcher', () => {
     expect(sprinklesField.values).toEqual([1, 2]); // this also tests the hits original order is preserved
     expect(results.meta?.custom?.sortBy).toBe('errors_today');
   });
+
+  it('will trim "-" from the sort field name', () => {
+    const mockHits: SearchHit[] = [
+      {
+        resource: 'dashboard',
+        name: 'Main Dashboard',
+        title: 'Main Dashboard Title',
+        location: '/dashboards/1',
+        folder: 'General',
+        tags: ['monitoring', 'performance'],
+        field: { errors_today: 1 },
+        url: '/dashboards/1',
+      },
+    ];
+
+    const mockResponse: SearchAPIResponse = {
+      totalHits: 0,
+      hits: mockHits,
+      facets: {},
+    };
+    const results = toDashboardResults(mockResponse, '-errors_today');
+
+    expect(results.meta?.custom?.sortBy).toBe('errors_today');
+  });
 });

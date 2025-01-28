@@ -219,10 +219,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.sort) {
       const sort = query.sort.replace('_sort', '').replace('name', 'title');
       uri += `&sort=${sort}`;
-      let sortField = sort;
-      if (sort[0] === '-') {
-        sortField = sort.substring(1);
-      }
+      const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+
       uri += `&field=${sortField}`; // we want to the sort field to be included in the response
     }
 
@@ -298,10 +296,9 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     }
 
     // display null field values as "-"
-    let field = hit.field;
-    if (hit.field) {
-      field = Object.fromEntries(Object.entries(hit.field).map(([key, value]) => [key, value == null ? '-' : value]));
-    }
+    const field = Object.fromEntries(
+      Object.entries(hit.field ?? {}).map(([key, value]) => [key, value == null ? '-' : value])
+    );
 
     return {
       ...hit,
@@ -324,10 +321,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
   };
   if (sort && frame.meta.custom) {
     // trim the "-" from sort if it exists
-    if (sort.startsWith('-')) {
-      sort = sort.substring(1);
-    }
-    frame.meta.custom.sortBy = sort;
+    frame.meta.custom.sortBy = sort.startsWith('-') ? sort.substring(1) : sort;
   }
 
   for (const field of frame.fields) {
