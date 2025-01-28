@@ -53,7 +53,6 @@ type Service struct {
 	log                    *slog.Logger
 	dashboardStore         dashboards.Store
 	dashboardFolderStore   folder.FolderStore
-	userService            user.Service
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
 	k8sclient              folderK8sHandler
