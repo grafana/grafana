@@ -3223,7 +3223,7 @@ __metadata:
     marked: "npm:15.0.6"
     marked-mangle: "npm:1.1.10"
     moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.46"
+    moment-timezone: "npm:0.5.47"
     ol: "npm:7.4.0"
     papaparse: "npm:5.5.2"
     react: "npm:18.3.1"
@@ -3666,7 +3666,7 @@ __metadata:
     marked: "npm:15.0.6"
     marked-mangle: "npm:1.1.10"
     moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.46"
+    moment-timezone: "npm:0.5.47"
     monaco-promql: "npm:1.7.4"
     pluralize: "npm:8.0.0"
     prettier: "npm:3.4.2"
@@ -17959,7 +17959,7 @@ __metadata:
     ml-regression-polynomial: "npm:^3.0.0"
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.46"
+    moment-timezone: "npm:0.5.47"
     monaco-editor: "npm:0.34.1"
     moveable: "npm:0.53.0"
     msw: "npm:2.7.0"
@@ -22430,6 +22430,15 @@ __metadata:
   dependencies:
     moment: "npm:^2.29.4"
   checksum: 10/7613ba388fa6004af62675fb9945cb0d37758b559d07470a5e188419ffe1ac03eb2ed16fe80aa34d1e7dd39fc5bd67dc02cd59e8dcdab95504cface2c78e4b3d
+  languageName: node
+  linkType: hard
+
+"moment-timezone@npm:0.5.47":
+  version: 0.5.47
+  resolution: "moment-timezone@npm:0.5.47"
+  dependencies:
+    moment: "npm:^2.29.4"
+  checksum: 10/b2ad32e6b7ea4ce99756c9f571f8eb1bdd6592ecdc2bf3f7fb988ae980a49a7e87b986776090571b9608c8576205f839b736dc7589c180ce36c82fad4b8416c6
   languageName: node
   linkType: hard
 
