@@ -21,6 +21,7 @@ import {
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
   getGridItemKeyForPanelId,
+  getDashboardSceneFor,
 } from '../../utils/utils';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
@@ -234,7 +235,7 @@ export class DefaultGridLayoutManager
     return panels;
   }
 
-  public getNextPanelId(): number {
+  public getMaxPanelId(): number {
     let max = 0;
 
     for (const child of this.state.grid.state.children) {
@@ -274,7 +275,11 @@ export class DefaultGridLayoutManager
       }
     }
 
-    return max + 1;
+    return max;
+  }
+
+  public getNextPanelId(): number {
+    return getDashboardSceneFor(this).getNextPanelId();
   }
 
   public collapseAllRows(): void {

@@ -62,6 +62,10 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     });
   }
 
+  public getMaxPanelId(): number {
+    return Math.max(...this.state.rows.map((row) => row.getLayout().getMaxPanelId()));
+  }
+
   public getNextPanelId(): number {
     return 0;
   }

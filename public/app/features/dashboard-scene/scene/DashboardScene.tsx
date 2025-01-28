@@ -475,6 +475,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public getNextPanelId(): number {
+    return this.state.body.getMaxPanelId() + 1;
+  }
+
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
