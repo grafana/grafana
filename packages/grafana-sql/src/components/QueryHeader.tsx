@@ -3,7 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/experimental';
+import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space } from '@grafana/ui';
 
