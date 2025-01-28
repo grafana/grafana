@@ -267,7 +267,12 @@ export const handyTestingSchema: DashboardV2Spec = {
         multi: true,
         name: 'queryVar',
         options: [],
-        query: 'query1',
+        query: {
+          kind: 'prometheus',
+          spec: {
+            expr: 'test-query',
+          },
+        },
         refresh: 'onDashboardLoad',
         regex: 'regex1',
         skipUrlSync: false,

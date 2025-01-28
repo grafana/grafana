@@ -27,6 +27,7 @@ import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
   transformSortVariableToEnum,
+  LEGACY_STRING_VALUE_KEY,
 } from './transformToV2TypesUtils';
 /**
  * Converts a SceneVariables object into an array of VariableModel objects.
@@ -278,7 +279,12 @@ export function sceneVariablesSetToSchemaV2Variables(
           spec: getDataQuerySpec(query),
         };
       } else {
-        dataQuery = query;
+        dataQuery = {
+          kind: variable.state.datasource?.type || '',
+          spec: {
+            [LEGACY_STRING_VALUE_KEY]: query,
+          },
+        };
       }
       const queryVariable: QueryVariableKind = {
         kind: 'QueryVariable',

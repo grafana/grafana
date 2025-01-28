@@ -928,7 +928,7 @@ export interface QueryVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	datasource?: DataSourceRef;
-	query: string | DataQueryKind;
+	query: DataQueryKind;
 	regex: string;
 	sort: VariableSort;
 	definition?: string;
@@ -945,7 +945,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	hide: "dontHide",
 	refresh: "never",
 	skipUrlSync: false,
-	query: "",
+	query: defaultDataQueryKind(),
 	regex: "",
 	sort: "disabled",
 	options: [],
