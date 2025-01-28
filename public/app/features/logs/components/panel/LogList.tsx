@@ -56,13 +56,9 @@ export const LogList = ({
   }, [theme]);
 
   useEffect(() => {
-    const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) => {
-      if (e.payload.scrollTo === 'top') {
-        listRef.current?.scrollTo(0);
-      } else {
-        listRef.current?.scrollToItem(processedLogs.length - 1);
-      }
-    });
+    const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
+      handleScrollToEvent(e, processedLogs.length, listRef.current)
+    );
     return () => subscription.unsubscribe();
   }, [eventBus, processedLogs.length]);
 
@@ -146,3 +142,11 @@ export const LogList = ({
     </InfiniteScroll>
   );
 };
+
+function handleScrollToEvent(event: ScrollToLogsEvent, logsCount: number, list: VariableSizeList | null) {
+  if (event.payload.scrollTo === 'top') {
+    list?.scrollTo(0);
+  } else {
+    list?.scrollToItem(logsCount - 1);
+  }
+}
