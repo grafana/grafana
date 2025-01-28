@@ -181,7 +181,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 
 // InsertAlertRules is a handler for creating/updating alert rules.
 // Returns the UID and ID of rules that were created in the same order as the input rules.
-func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
+func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -200,7 +200,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			if err := st.validateAlertRule(r); err != nil {
 				return err
 			}
-			if err := (&r).PreSave(TimeNow); err != nil {
+			if err := (&r).PreSave(TimeNow, user); err != nil {
 				return err
 			}
 
@@ -245,7 +245,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 }
 
 // UpdateAlertRules is a handler for updating alert rules.
-func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateRule) error {
+func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		err := st.preventIntermediateUniqueConstraintViolations(sess, rules)
 		if err != nil {
@@ -263,7 +263,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if err := st.validateAlertRule(r.New); err != nil {
 				return err
 			}
-			if err := (&r.New).PreSave(TimeNow); err != nil {
+			if err := (&r.New).PreSave(TimeNow, user); err != nil {
 				return err
 			}
 			converted, err := alertRuleFromModelsAlertRule(r.New)
@@ -956,7 +956,9 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 	if dryRun {
 		return result, nil, nil
 	}
-	return result, nil, st.UpdateAlertRules(ctx, updates)
+	// Provide empty user identifier to ensure it's clear that the rule update was made by the system
+	// and not by the user who changed the receiver's title.
+	return result, nil, st.UpdateAlertRules(ctx, nil, updates)
 }
 
 // RenameTimeIntervalInNotificationSettings renames all rules that use old time interval name to the new name.
@@ -1031,7 +1033,9 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	if dryRun {
 		return result, nil, nil
 	}
-	return result, nil, st.UpdateAlertRules(ctx, updates)
+	// Provide empty user identifier to ensure it's clear that the rule update was made by the system
+	// and not by the user who changed the receiver's title.
+	return result, nil, st.UpdateAlertRules(ctx, nil, updates)
 }
 
 func ruleConstraintViolationToErr(sess *db.Session, rule ngmodels.AlertRule, err error, logger log.Logger) error {

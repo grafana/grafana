@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -40,15 +40,9 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	db, cfg := db.InitTestDBWithCfg(t)
 	orgSvc := populateDB(t, db, cfg)
 	dashSvc := &dashboards.FakeDashboardService{}
-	emptyJson := simplejson.New()
-	emptyJsonBytes, err := emptyJson.ToDB()
-	require.NoError(t, err)
-	largerJson := simplejson.NewFromAny(map[string]string{"key": "value"})
-	largerJsonBytes, err := largerJson.ToDB()
-	require.NoError(t, err)
-	dashSvc.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{{Data: largerJson}, {Data: emptyJson}}, nil)
-	dashSvc.On("GetAllDashboardsByOrgId", mock.Anything, int64(2)).Return([]*dashboards.Dashboard{}, nil)
-	dashSvc.On("GetAllDashboardsByOrgId", mock.Anything, int64(3)).Return([]*dashboards.Dashboard{}, nil)
+	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(1)).Return(int64(2), nil)
+	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(2)).Return(int64(1), nil)
+	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(3)).Return(int64(0), nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 1}).Return([]*dashboards.DashboardTagCloudItem{{Term: "test"}}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 2}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 3}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
@@ -61,6 +55,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		dashSvc:   dashSvc,
 		orgSvc:    orgSvc,
 		folderSvc: folderService,
+		features:  featuremgmt.WithFeatures(),
 	}
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
@@ -76,10 +71,8 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
 		assert.Equal(t, int64(3), result.Orgs)
-		assert.Equal(t, int64(2), result.Dashboards)
+		assert.Equal(t, int64(3), result.Dashboards)
 		assert.Equal(t, int64(9), result.Folders) // will return 3 folders for each org
-		assert.Equal(t, int64(len(largerJsonBytes)+len(emptyJsonBytes)), result.DashboardBytesTotal)
-		assert.Equal(t, int64(len(largerJsonBytes)), result.DashboardBytesMax)
 		assert.NotNil(t, result.DatabaseCreatedTime)
 		assert.Equal(t, db.GetDialect().DriverName(), result.DatabaseDriver)
 	})
@@ -113,7 +106,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		stats, err := statsService.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(1), stats.Tags)
-		assert.Equal(t, int64(2), stats.Dashboards)
+		assert.Equal(t, int64(3), stats.Dashboards)
 		assert.Equal(t, int64(3), stats.Orgs)
 	})
 }

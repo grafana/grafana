@@ -3,6 +3,7 @@ import { isFunction } from 'lodash';
 import { ComponentPropsWithoutRef, PropsWithChildren, ReactNode, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { FieldSet, IconButton, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
@@ -19,6 +20,8 @@ export interface RuleEditorSectionProps {
   };
 }
 
+const AlertRuleSelectors = selectors.components.AlertRules;
+
 export const RuleEditorSection = ({
   title,
   stepNo,
@@ -32,7 +35,7 @@ export const RuleEditorSection = ({
 
   const titleElement = useMemo(
     () => (
-      <div className={styles.section} id={`step-${stepNo}`}>
+      <div className={styles.section} data-testid={AlertRuleSelectors.step(stepNo.toString())}>
         <Stack direction="column" gap={0.5}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             {/* title */}
@@ -44,10 +47,7 @@ export const RuleEditorSection = ({
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
-                  id={`advanced-switch-${stepNo}`}
-                  data-testid={
-                    switchMode.isAdvancedMode ? `advanced-switch-${stepNo}-advanced` : `advanced-switch-${stepNo}-basic`
-                  }
+                  data-testid={AlertRuleSelectors.stepAdvancedModeSwitch(stepNo.toString())}
                   value={switchMode.isAdvancedMode}
                   onChange={(event) => {
                     switchMode.setAdvancedMode(event.currentTarget.checked);

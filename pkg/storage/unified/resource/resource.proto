@@ -225,6 +225,12 @@ enum ResourceVersionMatch {
 }
 
 message ListRequest {
+  enum Source { 
+    STORE = 0; // the standard place
+    HISTORY = 1; 
+    TRASH = 2;
+  }
+
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
@@ -240,6 +246,9 @@ message ListRequest {
 
   // Filtering
   ListOptions options = 5;
+
+  // Select values from history or trash
+  Source source = 6; 
 }
 
 message ListResponse {

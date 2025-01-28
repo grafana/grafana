@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
@@ -8,6 +8,7 @@ import { Stack, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
+import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 import { RuleEditorSubSection } from '../../RuleEditorSection';
 
@@ -35,6 +36,20 @@ export function AlertManagerContactPointRouting({ alertManager }: AlertManagerMa
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
+
+  const contactPointInForm = watch(`contactPoints.${alertManagerName}.selectedContactPoint`);
+  const { contactPoints } = useContactPointsWithStatus({
+    // we only fetch the contact points with metadata for the first time we render an existing alert rule
+    alertmanager: alertManagerName,
+    skip: Boolean(selectedContactPointWithMetadata),
+  });
+  const contactPointWithMetadata = contactPoints.find((cp) => cp.name === contactPointInForm);
+
+  useEffect(() => {
+    if (contactPointWithMetadata && !selectedContactPointWithMetadata) {
+      onSelectContactPoint(contactPointWithMetadata);
+    }
+  }, [contactPointWithMetadata, selectedContactPointWithMetadata]);
 
   const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
     setSelectedContactPointWithMetadata(contactPoint);
