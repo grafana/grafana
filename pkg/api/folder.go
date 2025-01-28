@@ -94,10 +94,11 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 		hits := make([]dtos.FolderSearchHit, 0)
 		for _, f := range folders {
 			hits = append(hits, dtos.FolderSearchHit{
-				ID:        f.ID, // nolint:staticcheck
-				UID:       f.UID,
-				Title:     f.Title,
-				ParentUID: f.ParentUID,
+				ID:         f.ID, // nolint:staticcheck
+				UID:        f.UID,
+				Title:      f.Title,
+				ParentUID:  f.ParentUID,
+				Repository: f.Repository,
 			})
 			metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolders).Inc()
 		}
@@ -425,6 +426,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 			Version:       f.Version,
 			AccessControl: acMetadata,
 			ParentUID:     f.ParentUID,
+			Repository:    f.Repository,
 		}, nil
 	}
 

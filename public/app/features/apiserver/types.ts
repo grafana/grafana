@@ -30,7 +30,7 @@ export interface ObjectMeta {
   // General resource annotations -- including the common grafana.app values
   annotations?: GrafanaAnnotations & GrafanaClientAnnotations;
   // General application level key+value pairs
-  labels?: Record<string, string>;
+  labels?: GrafanaLabels;
 }
 
 export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
@@ -56,6 +56,9 @@ export const AnnoKeyDashboardIsSnapshot = 'grafana.app/dashboard-is-snapshot';
 export const AnnoKeyDashboardSnapshotOriginalUrl = 'grafana.app/dashboard-snapshot-original-url';
 export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 
+// labels
+export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
+
 // Annotations provided by the API
 type GrafanaAnnotations = {
   [AnnoKeyCreatedBy]?: string;
@@ -79,13 +82,17 @@ type GrafanaClientAnnotations = {
   [AnnoKeyFolderId]?: number;
   [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
-  [AnnoKeyDashboardNotFound]?: boolean;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
 
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
+};
+
+// Labels
+type GrafanaLabels = {
+  [DeprecatedInternalId]?: number;
 };
 
 export interface Resource<T = object, S = object, K = string> extends TypeMeta<K> {

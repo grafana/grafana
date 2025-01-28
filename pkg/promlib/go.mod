@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
-	github.com/grafana/grafana-plugin-sdk-go v0.262.0
+	github.com/grafana/grafana-plugin-sdk-go v0.263.0
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/common v0.61.0
@@ -116,7 +116,7 @@ require (
 	google.golang.org/api v0.216.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250102185135-69823020774d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
-	google.golang.org/grpc v1.69.4 // indirect
+	google.golang.org/grpc v1.70.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

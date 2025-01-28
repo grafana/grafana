@@ -36,16 +36,6 @@ SELECT DISTINCT
 	, (SELECT COUNT(connection_id) FROM ` + model.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
 
-// redundant SELECT to trick mysql's optimizer
-const deleteInvalidConnections = `
-DELETE FROM library_element_connection
-WHERE connection_id IN (
-	SELECT connection_id FROM (
-		SELECT connection_id as id FROM library_element_connection
-		WHERE element_id=? AND connection_id NOT IN (SELECT id as connection_id from dashboard)
-	) as dummy
-)`
-
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
 	user := dialect.Quote("user")
 	userJoin := `
@@ -89,15 +79,12 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 	return nil
 }
 
-func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (model.LibraryElementWithMeta, error) {
+func (l *LibraryElementService) GetLibraryElement(c context.Context, signedInUser identity.Requester, session *db.Session, uid string) (model.LibraryElementWithMeta, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
-		", coalesce(dashboard.title, 'General') AS folder_name" +
-		", coalesce(dashboard.uid, '') AS folder_uid" +
-		getFromLibraryElementDTOWithMeta(dialect) +
-		" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id" +
+		getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()) +
 		" WHERE le.uid=? AND le.org_id=?"
-	sess := session.SQL(sql, uid, orgID)
+	sess := session.SQL(sql, uid, signedInUser.GetOrgID())
 	err := sess.Find(&elements)
 	if err != nil {
 		return model.LibraryElementWithMeta{}, err
@@ -107,6 +94,19 @@ func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string
 	}
 	if len(elements) > 1 {
 		return model.LibraryElementWithMeta{}, fmt.Errorf("found %d elements, while expecting at most one", len(elements))
+	}
+
+	// get the folder title
+	f, err := l.folderService.Get(c, &folder.GetFolderQuery{
+		OrgID:        elements[0].OrgID,
+		UID:          &elements[0].FolderUID,
+		SignedInUser: signedInUser,
+	})
+	if err == nil {
+		elements[0].FolderName = f.Title
+	} else {
+		// default to General if we cannot find the folder
+		elements[0].FolderName = "General"
 	}
 
 	return elements[0], nil
@@ -230,7 +230,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
 			return err
 		}
@@ -243,11 +243,37 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			}
 		}
 
-		// Delete any hanging/invalid connections
-		if _, err = session.Exec(deleteInvalidConnections, element.ID); err != nil {
+		dashboardIDs := []int64{}
+		// get all connections for this element
+		if err := session.SQL("SELECT connection_id FROM library_element_connection where element_id = ?", element.ID).Find(&dashboardIDs); err != nil {
 			return err
 		}
 
+		// then find the dashboards that were supposed to be connected to this element
+		_, requester := identity.WithServiceIdentitiy(c, signedInUser.GetOrgID())
+		dashs, err := l.dashboardsService.FindDashboards(c, &dashboards.FindPersistedDashboardsQuery{
+			OrgId:        signedInUser.GetOrgID(),
+			DashboardIds: dashboardIDs,
+			SignedInUser: requester, // a user may be able to delete a library element but not read all dashboards. We still need to run this check, so we don't allow deleting elements if dashboards are connected
+		})
+		if err != nil {
+			return err
+		}
+
+		foundDashes := make([]int64, len(dashs))
+		for i, d := range dashs {
+			foundDashes[i] = d.ID
+		}
+
+		// delete any connections that are orphaned for this element (i.e. the dashboard was deleted)
+		session.Table("library_element_connection")
+		session.Where("element_id = ?", element.ID)
+		session.NotIn("connection_id", foundDashes)
+		if _, err = session.Delete(model.LibraryElementConnectionWithMeta{}); err != nil {
+			return err
+		}
+
+		// now try to delete the element, but fail if it is connected to any dashboards
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
 		}
@@ -577,7 +603,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		return model.LibraryElementDTO{}, err
 	}
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		elementInDB, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		elementInDB, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
 			return err
 		}
@@ -594,7 +620,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				return model.ErrLibraryElementUIDTooLong
 			}
 
-			_, err := GetLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.GetOrgID())
+			_, err := l.GetLibraryElement(c, signedInUser, session, updateUID)
 			if !errors.Is(err, model.ErrLibraryElementNotFound) {
 				return model.ErrLibraryElementAlreadyExists
 			}
@@ -689,20 +715,21 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 	}
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
 		if err != nil {
 			return err
 		}
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
-		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
+		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
-		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
 		}
+
+		// getting all folders a user can see
 		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
 		if err != nil {
 			return err
@@ -712,19 +739,26 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		for _, f := range fs {
 			folderUIDS = append(folderUIDS, f.UID)
 		}
-
+		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, connection := range libraryElementConnections {
 			if !signedInUser.HasRole(org.RoleAdmin) {
 				if !contains(folderUIDS, element.FolderUID) {
 					continue
 				}
 			}
+			ds, err := l.dashboardsService.GetDashboardUIDByID(c, &dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID})
+			if err != nil {
+				if errors.Is(err, dashboards.ErrDashboardNotFound) {
+					continue
+				}
+				return err
+			}
 			connections = append(connections, model.LibraryElementConnectionDTO{
 				ID:            connection.ID,
 				Kind:          connection.Kind,
 				ElementID:     connection.ElementID,
 				ConnectionID:  connection.ConnectionID,
-				ConnectionUID: connection.ConnectionUID,
+				ConnectionUID: ds.UID,
 				Created:       connection.Created,
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        connection.CreatedBy,
@@ -808,7 +842,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			return err
 		}
 		for _, elementUID := range elementUIDs {
-			element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, elementUID, signedInUser.GetOrgID())
+			element, err := l.GetLibraryElement(c, signedInUser, session, elementUID)
 			if err != nil {
 				return err
 			}

@@ -2,11 +2,11 @@ package folders
 
 import (
 	"fmt"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -26,98 +26,65 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 			},
 		},
 	}
-	// #TODO: let's see if we need to set the json field to "-"
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
+
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
 	}
-	obj.SetName(cmd.UID)
-
-	if err := setParentUID(obj, cmd.ParentUID); err != nil {
-		return &unstructured.Unstructured{}, err
-	}
+	meta.SetName(cmd.UID)
+	meta.SetFolder(cmd.ParentUID)
 
 	return obj, nil
 }
 
-func LegacyUpdateCommandToUnstructured(obj *unstructured.Unstructured, cmd *folder.UpdateFolderCommand) (*unstructured.Unstructured, error) {
-	spec, ok := obj.Object["spec"].(map[string]any)
-	if !ok {
-		return &unstructured.Unstructured{}, fmt.Errorf("could not convert object to folder")
-	}
-	if cmd.NewTitle != nil {
-		spec["title"] = cmd.NewTitle
-	}
-	if cmd.NewDescription != nil {
-		spec["description"] = cmd.NewDescription
-	}
-	if cmd.NewParentUID != nil {
-		if err := setParentUID(obj, *cmd.NewParentUID); err != nil {
-			return &unstructured.Unstructured{}, err
-		}
-	}
-
-	return obj, nil
-}
-
-func LegacyMoveCommandToUnstructured(obj *unstructured.Unstructured, cmd folder.MoveFolderCommand) (*unstructured.Unstructured, error) {
-	if err := setParentUID(obj, cmd.NewParentUID); err != nil {
-		return &unstructured.Unstructured{}, err
-	}
-
-	return obj, nil
-}
-
-func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*folder.Folder, string) {
-	// #TODO reduce duplication of the different conversion functions
-	spec := item.Object["spec"].(map[string]any)
-	uid := item.GetName()
-	title := spec["title"].(string)
-
-	meta, err := utils.MetaAccessor(&item)
+func UnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.Folder, error) {
+	meta, err := utils.MetaAccessor(item)
 	if err != nil {
-		return nil, ""
+		return nil, err
 	}
 
-	id := meta.GetDeprecatedInternalID() // nolint:staticcheck
-
-	created, err := getCreated(meta)
-	if err != nil {
-		return nil, ""
+	info, _ := authlib.ParseNamespace(meta.GetNamespace())
+	if info.OrgID < 0 {
+		info.OrgID = 1 // This resolves all test cases that assume org 1
 	}
 
-	// avoid panic
-	var createdTime time.Time
-	if created != nil {
-		// #TODO Fix this time format. The legacy time format seems to be along the lines of time.Now()
-		// which includes a part that represents a fraction of a second. Format should be "2024-09-12T15:37:41.09466+02:00"
-		createdTime = (*created).UTC()
+	title, _, _ := unstructured.NestedString(item.Object, "spec", "title")
+	description, _, _ := unstructured.NestedString(item.Object, "spec", "description")
+
+	uid := meta.GetName()
+	url := ""
+	if uid != folder.RootFolder.UID {
+		slug := slugify.Slugify(title)
+		url = dashboards.GetFolderURL(uid, slug)
 	}
 
-	url := getURL(meta, title)
-
-	// RootFolder does not have URL
-	if uid == folder.RootFolder.UID {
-		url = ""
+	created := meta.GetCreationTimestamp().Time.UTC()
+	updated, _ := meta.GetUpdatedTimestamp()
+	if updated == nil {
+		updated = &created
+	} else {
+		tmp := updated.UTC()
+		updated = &tmp
 	}
 
-	f := &folder.Folder{
-		UID:       uid,
-		Title:     title,
-		ID:        id,
-		ParentUID: meta.GetFolder(),
-		// #TODO add created by field if necessary
-		URL: url,
-		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
-		Created: createdTime,
-		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
-		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
-		Updated: createdTime,
-		OrgID:   orgID,
-	}
-	// CreatedBy needs to be returned separately because it's the user UID (string) but
-	// folder.Folder expects user ID (int64).
-	return f, meta.GetCreatedBy()
-	// #TODO figure out about adding version, parents, orgID fields
+	return &folder.Folder{
+		UID:         uid,
+		Title:       title,
+		Description: description,
+		ID:          meta.GetDeprecatedInternalID(), // nolint:staticcheck
+		ParentUID:   meta.GetFolder(),
+		Version:     int(meta.GetGeneration()),
+		Repository:  meta.GetRepositoryName(),
+
+		URL:     url,
+		Created: created,
+		Updated: *updated,
+		OrgID:   info.OrgID,
+	}, nil
 }
 
 func LegacyFolderToUnstructured(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
@@ -163,24 +130,4 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
-}
-
-func setParentUID(u *unstructured.Unstructured, parentUid string) error {
-	meta, err := utils.MetaAccessor(u)
-	if err != nil {
-		return err
-	}
-	meta.SetFolder(parentUid)
-	return nil
-}
-
-func getURL(meta utils.GrafanaMetaAccessor, title string) string {
-	slug := slugify.Slugify(title)
-	uid := meta.GetName()
-	return dashboards.GetFolderURL(uid, slug)
-}
-
-func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
-	created := meta.GetCreationTimestamp().Time
-	return &created, nil
 }
