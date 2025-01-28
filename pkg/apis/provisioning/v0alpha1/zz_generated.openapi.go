@@ -1521,7 +1521,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"force": {
+					"complete": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Complete forces the sync to overwrite",
 							Type:        []string{"boolean"},
