@@ -314,7 +314,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   titleItems.push(new PanelNotices());
 
   const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
-  debugger;
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
