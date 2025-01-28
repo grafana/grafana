@@ -433,6 +433,83 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, obj2.Spec, spec)
 		require.NoError(t, err)
 	})
+
+	t.Run("ManagerProperties", func(t *testing.T) {
+		tests := []struct {
+			name           string
+			setProperties  *utils.ManagerProperties
+			wantProperties utils.ManagerProperties
+			wantOK         bool
+		}{
+			{
+				name: "get default values",
+				wantProperties: utils.ManagerProperties{
+					Identity:  "",
+					Kind:      utils.ManagerKindUI,
+					Exclusive: false,
+				},
+				wantOK: false,
+			},
+			{
+				name: "set and get valid values",
+				setProperties: &utils.ManagerProperties{
+					Identity:  "identity",
+					Kind:      utils.ManagerKindTerraform,
+					Exclusive: true,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:  "identity",
+					Kind:      utils.ManagerKindTerraform,
+					Exclusive: true,
+				},
+				wantOK: true,
+			},
+			{
+				name: "set empty identity returns default values",
+				setProperties: &utils.ManagerProperties{
+					Identity:  "",
+					Kind:      utils.ManagerKindGeneric,
+					Exclusive: true,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:  "",
+					Kind:      utils.ManagerKindUI,
+					Exclusive: false,
+				},
+				wantOK: false,
+			},
+			{
+				name: "invalid kind falls back to generic kind",
+				setProperties: &utils.ManagerProperties{
+					Identity:  "identity",
+					Kind:      utils.ManagerKind("invalid"),
+					Exclusive: true,
+				},
+				wantProperties: utils.ManagerProperties{
+					Identity:  "identity",
+					Kind:      utils.ManagerKindGeneric,
+					Exclusive: true,
+				},
+				wantOK: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				res := &TestResource2{}
+				meta, err := utils.MetaAccessor(res)
+				require.NoError(t, err)
+
+				if tt.setProperties != nil {
+					meta.SetManagerProperties(*tt.setProperties)
+				}
+
+				mp, ok := meta.GetManagerProperties()
+				require.Equal(t, tt.wantOK, ok)
+				require.Equal(t, tt.wantProperties, mp)
+			})
+		}
+	})
 }
 
 func asJSON(v any, pretty bool) string {

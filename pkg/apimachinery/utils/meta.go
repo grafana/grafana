@@ -46,6 +46,12 @@ const AnnoKeyRepoPath = "grafana.app/repoPath"
 const AnnoKeyRepoHash = "grafana.app/repoHash"
 const AnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
 
+// Annotations used to store manager properties
+
+const AnnoKeyManagerIdentity = "grafana.app/managerId"
+const AnnoKeyManagerKind = "grafana.app/managerType"
+const AnnoKeyManagerExclusive = "grafana.app/managerExclusive"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -138,6 +144,17 @@ type GrafanaMetaAccessor interface {
 	//  * title
 	// and return an empty string if nothing was found
 	FindTitle(defaultTitle string) string
+
+	// GetManagedBy returns the identity of the user or tool,
+	// which is responsible for managing the resource.
+	//
+	// If the identity is not known, it is assumed to be managed by a user,
+	// and the second return value will be false.
+	GetManagerProperties() (ManagerProperties, bool)
+
+	// SetManagedBy sets the identity of the user or tool,
+	// which is responsible for managing the resource.
+	SetManagerProperties(ManagerProperties)
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -718,6 +735,49 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	return defaultTitle
 }
 
+func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
+	res := ManagerProperties{
+		Identity:  "",
+		Kind:      ManagerKindUI,
+		Exclusive: false,
+	}
+
+	annot := m.obj.GetAnnotations()
+
+	id, ok := annot[AnnoKeyManagerIdentity]
+	if !ok || id == "" {
+		// If the identity is not set, we should ignore the other annotations and return the default values.
+		//
+		// This is to prevent inadvertently marking resources as managed exclusively,
+		// since that can potentially block updates from other sources.
+		return res, false
+	}
+	res.Identity = id
+
+	if v, ok := annot[AnnoKeyManagerKind]; ok {
+		res.Kind = ParseManagerKindString(v)
+	}
+
+	if v, ok := annot[AnnoKeyManagerExclusive]; ok {
+		res.Exclusive = v == "true"
+	}
+
+	return res, true
+}
+
+func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
+	annot := m.obj.GetAnnotations()
+	if annot == nil {
+		annot = make(map[string]string, 3)
+	}
+
+	annot[AnnoKeyManagerIdentity] = v.Identity
+	annot[AnnoKeyManagerKind] = string(v.Kind)
+	annot[AnnoKeyManagerExclusive] = strconv.FormatBool(v.Exclusive)
+
+	m.obj.SetAnnotations(annot)
+}
+
 type BlobInfo struct {
 	UID      string `json:"uid"`
 	Size     int64  `json:"size,omitempty"`
@@ -795,4 +855,48 @@ func ParseBlobInfo(v string) *BlobInfo {
 		}
 	}
 	return info
+}
+
+// ManagerProperties is used to identify the manager of the resource.
+//
+// This is used to identify the manager of the resource.
+//
+// The manager kind is the type of manager, such as "ui", "api/generic", "api/kubectl", or "api/terraform".
+//
+// The manager identity is the identity of the manager, such as the username of the user who created the resource,
+// or the name of the tool that created the resource.
+//
+// The is exclusive flag indicates whether the manager is the exclusive owner of the resource.
+// If set to true, then only updates coming from the manager will be accepted.
+type ManagerProperties struct {
+	Kind      ManagerKind
+	Identity  string
+	Exclusive bool
+}
+
+// ManagerKind is the type of manager, which is responsible for managing the resource.
+// It can be a user or a tool or a generic API client.
+type ManagerKind string
+
+// Known values for ManagerKind.
+const (
+	ManagerKindUI        ManagerKind = "ui"
+	ManagerKindGeneric   ManagerKind = "api/generic"
+	ManagerKindKubectl   ManagerKind = "api/kubectl"
+	ManagerKindTerraform ManagerKind = "api/terraform"
+)
+
+// ParseManagerKindString parses a string into a ManagerKind.
+// It only supports the known values and defaults to ManagerKindGeneric for unknown ones.
+func ParseManagerKindString(v string) ManagerKind {
+	switch v {
+	case string(ManagerKindUI):
+		return ManagerKindUI
+	case string(ManagerKindTerraform):
+		return ManagerKindTerraform
+	case string(ManagerKindKubectl):
+		return ManagerKindKubectl
+	default:
+		return ManagerKindGeneric
+	}
 }
