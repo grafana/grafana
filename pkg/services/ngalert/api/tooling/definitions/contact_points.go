@@ -227,6 +227,7 @@ type SlackIntegration struct {
 	MentionChannel *string `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty" hcl:"mention_channel"`
 	MentionUsers   *string `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty" hcl:"mention_users"`
 	MentionGroups  *string `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty" hcl:"mention_groups"`
+	Color          *string `json:"color,omitempty" yaml:"color,omitempty" hcl:"color"`
 }
 
 type TelegramIntegration struct {
