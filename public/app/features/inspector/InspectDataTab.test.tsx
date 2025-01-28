@@ -4,9 +4,9 @@ import { ComponentProps } from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 
 import { DataFrame, FieldType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { InspectDataTab } from './InspectDataTab';
-import { config } from '@grafana/runtime';
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
