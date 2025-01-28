@@ -29,7 +29,7 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
 
 export function valuesToOptions(unique: Record<string, unknown>): SelectableValue[] {
   return Object.keys(unique)
-    .reduce<SelectableValue[]>((all, key) => all.concat({ value: unique[key], label: key }), [])
+    .map((key) => ({ value: unique[key], label: key }))
     .sort(sortOptions);
 }
 
