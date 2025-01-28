@@ -198,7 +198,7 @@ func (sch *schedule) deleteAlertRule(ctx context.Context, keys ...ngmodels.Alert
 		// It can happen that the scheduler has deleted the alert rule before the
 		// Ruler API has called DeleteAlertRule. This can happen as requests to
 		// the Ruler API do not hold an exclusive lock over all scheduler operations.
-		rule, ok := sch.schedulableAlertRules.del(key)
+		_, ok := sch.schedulableAlertRules.del(key)
 		if !ok {
 			sch.log.Info("Alert rule cannot be removed from the scheduler as it is not scheduled", key.LogContext()...)
 		}
@@ -210,7 +210,7 @@ func (sch *schedule) deleteAlertRule(ctx context.Context, keys ...ngmodels.Alert
 		}
 
 		// stop rule evaluation
-		reason := sch.getRuleStopReason(ctx, key, rule)
+		reason := sch.getRuleStopReason(ctx, ruleRoutine.Identifier())
 		ruleRoutine.Stop(reason)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
@@ -218,14 +218,14 @@ func (sch *schedule) deleteAlertRule(ctx context.Context, keys ...ngmodels.Alert
 	sch.updateRulesMetrics(alertRules)
 }
 
-func (sch *schedule) getRuleStopReason(ctx context.Context, key ngmodels.AlertRuleKey, rule *ngmodels.AlertRule) error {
+func (sch *schedule) getRuleStopReason(ctx context.Context, key ngmodels.AlertRuleKeyWithGroup) error {
 	// If the ruleStopReasonProvider is defined, we will use it to get the reason why the
 	// alert rule was stopped. If it returns an error, we will use the default reason.
-	if sch.ruleStopReasonProvider == nil || rule == nil {
+	if sch.ruleStopReasonProvider == nil {
 		return errRuleDeleted
 	}
 
-	stopReason, err := sch.ruleStopReasonProvider.FindReason(ctx, sch.log, rule.GetKeyWithGroup())
+	stopReason, err := sch.ruleStopReasonProvider.FindReason(ctx, sch.log, key)
 	if err != nil {
 		sch.log.New(key.LogContext()...).Error("Failed to get stop reason", "error", err)
 		return errRuleDeleted

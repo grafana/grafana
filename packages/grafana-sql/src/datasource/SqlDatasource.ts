@@ -17,7 +17,7 @@ import {
   VariableWithMultiSupport,
   TimeRange,
 } from '@grafana/data';
-import { EditorMode } from '@grafana/experimental';
+import { EditorMode } from '@grafana/plugin-ui';
 import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
