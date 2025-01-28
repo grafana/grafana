@@ -39,8 +39,8 @@ func (x *batchLock) Start(keys []*resource.ResourceKey) error {
 		id := k.BatchID()
 		if x.running[id] {
 			return &apierrors.StatusError{ErrStatus: v1.Status{
-				Code:   http.StatusPreconditionFailed,
-				Status: "batch export is already runnning",
+				Code:    http.StatusPreconditionFailed,
+				Message: "batch export is already running",
 			}}
 		}
 		ids[i] = id
@@ -281,14 +281,17 @@ func (w *batchWroker) deleteCollection(key *resource.ResourceKey) (*resource.Bat
 // Copy the latest value from history into the active resource table
 func (w *batchWroker) syncCollection(key *resource.ResourceKey, summary *resource.BatchResponse_Summary) error {
 	w.logger.Info("synchronize collection", "key", key.BatchID())
-	_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
-		SQLTemplate: sqltemplate.New(w.dialect),
-		Key:         key,
-	})
-	if err != nil {
-		return err
+	if false {
+		_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
+			SQLTemplate: sqltemplate.New(w.dialect),
+			Key:         key,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
+	w.logger.Info("get stats (still in transaction)", "key", key.BatchID())
 	rows, err := dbutil.QueryRows(w.ctx, w.tx, sqlResourceStats, &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
 		Namespace:   key.Namespace,

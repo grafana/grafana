@@ -18,6 +18,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -240,49 +241,45 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 		Spec: &spec3.PathProps{
 			Get: &spec3.Operation{}, // Get is easiest to test from brower
 		},
-		Handler: func(w http.ResponseWriter, r *http.Request) {
+		Handler: func(rx http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			flusher, ok := w.(http.Flusher)
+			query := r.URL.Query()
+			last := time.Now()
+			auth, ok := authlib.AuthInfoFrom(r.Context())
 			if !ok {
-				w.WriteHeader(500)
-				_, _ = w.Write([]byte("Expected flusher"))
+				rx.WriteHeader(http.StatusBadRequest)
+				_, _ = rx.Write([]byte("no auth founx"))
 				return
 			}
-			query := r.URL.Query()
+			go func() {
+				ctx := authlib.WithAuthInfo(context.Background(), auth)
+				rsp, err := b.legacy.Access.Migrate(ctx, legacy.MigrateOptions{
+					Namespace:    "default", // get from namespace
+					WithHistory:  query.Get("history") == "true",
+					Resources:    query["resource"],
+					LargeObjects: nil, // ???
+					Store:        b.unified,
+					Progress: func(count int, msg string) {
+						if count < 1 || time.Since(last) > time.Second*2 {
+							fmt.Printf("[%4d] %s\n", count, msg)
+							last = time.Now()
+						}
+					},
+				})
 
-			last := time.Now()
-			ctx := context.WithoutCancel(r.Context())
-			rsp, err := b.legacy.Access.Migrate(ctx, legacy.MigrateOptions{
-				Namespace:    "default", // get from namespace
-				WithHistory:  query.Get("history") == "true",
-				Resources:    query["resource"],
-				LargeObjects: nil, // ???
-				Store:        b.unified,
-				Progress: func(count int, msg string) {
-					if count < 1 || time.Since(last) > time.Second*2 {
-						_, _ = w.Write([]byte(fmt.Sprintf("[%4d] %s\n", count, msg)))
-						flusher.Flush()
-						last = time.Now()
-					}
-				},
-			})
-
-			if rsp != nil {
-				jj, err := json.MarshalIndent(rsp, "", "  ")
+				fmt.Printf("\n\n------------------\n")
+				fmt.Printf("MIGRATE DONE: %s\n", time.Since(start))
 				if err != nil {
-					_, _ = w.Write([]byte(fmt.Sprintf("JSON error: %s\n", err)))
+					fmt.Printf("ERROR: %v\n", err)
 				}
-				_, _ = w.Write(jj)
-			}
-			if err != nil {
-				fmt.Printf("Migrate ERROR: %s\n", err.Error())
-				_, _ = w.Write([]byte(fmt.Sprintf("Migrate ERROR: %s\n", err)))
-			}
-			done := fmt.Sprintf(">MIGRATE DONE!!! %s\n", time.Since(start))
-			_, _ = w.Write([]byte(done))
+				if rsp != nil {
+					jj, _ := json.MarshalIndent(rsp, "", "  ")
+					fmt.Printf("%s\n", string(jj))
+				}
+				fmt.Printf("------------------\n\n")
+			}()
 
-			flusher.Flush()
-			fmt.Printf("%s", done)
+			_, _ = rx.Write([]byte("starting migration"))
 		},
 	})
 	return routes
