@@ -369,7 +369,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		switch {
 		case dash.FolderUID != "":
 			query.UID = &dash.FolderUID
-		case dash.FolderID != 0:
+		case dash.FolderID != 0: // nolint:staticcheck
 			query.ID = &dash.FolderID // nolint:staticcheck
 		default:
 			// return the default folder if no folder information is set
