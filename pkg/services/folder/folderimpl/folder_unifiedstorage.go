@@ -589,7 +589,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 			// We need a list of dashboard uids inside the folder to delete related public dashboards
 			var dashboardUIDs []string
-			// we cannot use the dashboard service directly due to circular depedencies,
+			// we cannot use the dashboard service directly due to circular dependencies,
 			// so either use the search client if the feature is enabled or use the dashboard store
 			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
 				dashboardKey := &resource.ResourceKey{
