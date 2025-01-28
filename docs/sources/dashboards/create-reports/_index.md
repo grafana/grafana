@@ -348,4 +348,3 @@ Refer to the [log filters configuration documentation](ref:log-filters) for more
 filters = report:debug
 ```
 
-<!-- is there a Cloud version of this? -->
