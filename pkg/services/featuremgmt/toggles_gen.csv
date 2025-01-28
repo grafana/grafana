@@ -210,7 +210,6 @@ passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,f
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
 prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
-zipkinBackendMigration,GA,@grafana/oss-big-tent,false,false,false
 enableSCIM,experimental,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
