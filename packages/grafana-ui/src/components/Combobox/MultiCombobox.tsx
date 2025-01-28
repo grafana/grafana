@@ -281,9 +281,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
           <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
             <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
-          </div>
-          {isClearable && (
-            <span className={multiStyles.suffix}>
+            {isClearable && selectedItems.length > 0 && (
               <Icon
                 name="times"
                 className={styles.clear}
@@ -299,8 +297,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                   }
                 }}
               />
-            </span>
-          )}
+            )}
+          </div>
         </span>
       </div>
       <Portal>
