@@ -4,36 +4,36 @@ import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from '
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { AccessControlAction } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
-
-import { AccessControlAction } from '../../../types';
 import {
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
-} from '../../../types/unified-alerting-dto';
+} from 'app/types/unified-alerting-dto';
 
-import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { setupMswServer } from './mockApi';
+import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
+import { setupMswServer } from '../mockApi';
 import {
   grantUserPermissions,
   mockDataSource,
   mockRulerAlertingRule,
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
-} from './mocks';
-import { grafanaRulerRule } from './mocks/grafanaRulerApi';
-import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
-import { AlertingQueryRunner } from './state/AlertingQueryRunner';
-import { setupDataSources } from './testSetup/datasources';
-import { RuleFormValues } from './types/rule-form';
-import { Annotation } from './utils/constants';
-import { getDefaultFormValues } from './utils/rule-form';
-import { hashRulerRule } from './utils/rule-id';
+} from '../mocks';
+import { grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mocks/rulerApi';
+import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
+import { setupDataSources } from '../testSetup/datasources';
+import { RuleFormValues } from '../types/rule-form';
+import { Annotation } from '../utils/constants';
+import { hashRulerRule } from '../utils/rule-id';
 
-jest.mock('./components/rule-editor/ExpressionEditor', () => ({
+import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
+import { getDefaultFormValues } from './formDefaults';
+
+jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
