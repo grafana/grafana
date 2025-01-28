@@ -13,6 +13,9 @@ import (
 // > start with an alphanumeric character
 // > end with an alphanumeric character
 //
+// That said, the Kubernetes name is extended with one more rule: it must not contain more than 40 characters.
+// We do this to support storage modes that write to legacy storage, where UIDs are limited to 40 characters or less.
+//
 // If no characters are valid, this returns an empty string.
 func sanitiseKubeName(s string) string {
 	// Note: Builder never returns an error.
@@ -35,8 +38,8 @@ func sanitiseKubeName(s string) string {
 		}
 		// Else, skip it, silently.
 
-		if b.Len() == 253 {
-			// Technically, we could be less than 253 after some more cleaning... but this is good enough.
+		if b.Len() == 40 {
+			// Technically, we could be less than 40 after some more cleaning... but this is good enough.
 			break
 		}
 	}
@@ -52,15 +55,15 @@ func sanitiseKubeName(s string) string {
 // The goal of this function is to represent all needs for hashing IDs.
 //
 // The hash uses the input hashKey and repositoryName as a salt.
-// The output string is at most 253 characters long.
+// The output string is at most 40 characters long. (253 is Kubernetes' limit, but UIDs have a max of 40 characters.)
 // The output string is a valid Kubernetes name (see [sanitiseKubeName]).
 // The output string contains at least 12 characters of a hash, plus a 1 character hyphen to separate the input and the hash.
 // The function is deterministic given the same invocation parameters to this function.
 func appendHashSuffix(hashKey, repositoryName string) func(string) string {
 	salt := []byte(repositoryName + "/" + hashKey)
 
-	const maxLen = 253             // valid Kubernetes name
-	const minSuffix = 12           // excluding hyphen
+	const maxLen = 40              // valid Kubernetes name
+	const minSuffix = 8            // excluding hyphen
 	const minSpace = minSuffix + 1 // +1 for hyphen
 
 	return func(s string) string {
