@@ -131,7 +131,7 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Routing && <Routing />}
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
           {activeTab === ActiveTab.VersionHistory && isGrafanaRulerRule(rule.rulerRule) && (
-            <AlertVersionHistory ruleUID={rule.rulerRule?.grafana_alert.uid} />
+            <AlertVersionHistory ruleUid={rule.rulerRule?.grafana_alert.uid} />
           )}
         </TabContent>
       </Stack>
