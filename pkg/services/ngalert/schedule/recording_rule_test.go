@@ -152,11 +152,20 @@ func TestRecordingRule(t *testing.T) {
 	})
 }
 
+func TestRecordingRuleIdentifier(t *testing.T) {
+	t.Run("should return correct identifier", func(t *testing.T) {
+		key := models.GenerateRuleKeyWithGroup(1)
+		r := blankRecordingRuleForTests(context.Background())
+		r.key = key
+		require.Equal(t, key, r.Identifier())
+	})
+}
+
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 	st := setting.RecordingRuleSettings{
 		Enabled: true,
 	}
-	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
+	return newRecordingRule(context.Background(), models.AlertRuleKeyWithGroup{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
