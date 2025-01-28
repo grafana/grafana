@@ -22,7 +22,7 @@ import {
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { getDataQueryKind, getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
+import { getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -275,7 +275,7 @@ export function sceneVariablesSetToSchemaV2Variables(
       let dataQuery: DataQueryKind | string;
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: getDataQueryKind(query),
+          kind: variable.state.datasource?.type || '',
           spec: getDataQuerySpec(query),
         };
       } else {
