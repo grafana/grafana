@@ -1,3 +1,17 @@
+<!-- 11.1.11 START -->
+
+# 11.1.11 (2025-01-28)
+
+### Features and enhancements
+
+- **Security:** Update to Go 1.22.11 - Backport to v11.1.x [#99126](https://github.com/grafana/grafana/pull/99126), [@Proximyst](https://github.com/Proximyst)
+- **Security:** Update to Go 1.22.11 - Backport to v11.1.x (Enterprise)
+
+### Bug fixes
+
+- **Azure/GCM:** Improve error display [#97595](https://github.com/grafana/grafana/pull/97595), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.1.11 END -->
 <!-- 11.0.10 START -->
 
 # 11.0.10 (2025-01-28)
