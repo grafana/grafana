@@ -99,6 +99,7 @@ func (t *FolderTree) CreateFolder(ctx context.Context, client dynamic.ResourceIn
 
 		if t.tree[folderID.ID] != "" {
 			logger.Debug("folder already visited")
+			parent = folderID.ID
 			continue
 		}
 
