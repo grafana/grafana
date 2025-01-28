@@ -2,9 +2,9 @@ import { action } from '@storybook/addon-actions';
 import { useArgs, useEffect, useState } from '@storybook/preview-api';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
 
-import { ComboboxOption } from './Combobox';
-import { generateOptions } from './Combobox.story';
 import { MultiCombobox } from './MultiCombobox';
+import { generateOptions } from './storyUtils';
+import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
   title: 'Forms/MultiCombobox',
@@ -13,11 +13,11 @@ const meta: Meta<typeof MultiCombobox> = {
 
 const commonArgs = {
   options: [
-    { label: 'Option 1', value: 'option1' },
-    { label: 'Option 2', value: 'option2' },
-    { label: 'Option 3', value: 'option3' },
-    { label: 'Option 4', value: 'option4' },
-    { label: 'Option 5', value: 'option5' },
+    { label: 'wasd - 1', value: 'option1' },
+    { label: 'wasd - 2', value: 'option2' },
+    { label: 'wasd - 3', value: 'option3' },
+    { label: 'asdf - 1', value: 'option4' },
+    { label: 'asdf - 2', value: 'option5' },
   ],
   value: ['option2'],
   placeholder: 'Select multiple options...',
@@ -32,6 +32,24 @@ type Story = StoryObj<typeof MultiCombobox>;
 
 export const Basic: Story = {
   args: commonArgs,
+  render: (args) => {
+    const [{ value }, setArgs] = useArgs();
+
+    return (
+      <MultiCombobox
+        {...args}
+        value={value}
+        onChange={(val) => {
+          action('onChange')(val);
+          setArgs({ value: val });
+        }}
+      />
+    );
+  },
+};
+
+export const AutoSize: Story = {
+  args: { ...commonArgs, width: 'auto', minWidth: 20 },
   render: (args) => {
     const [{ value }, setArgs] = useArgs();
 

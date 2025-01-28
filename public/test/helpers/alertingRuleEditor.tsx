@@ -32,14 +32,17 @@ export const ui = {
       contactPoint: byTestId('contact-point-picker'),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
-    switchModeBasic: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-basic`),
-    switchModeAdvanced: (stepNo: GrafanaRuleFormStep) => byTestId(`advanced-switch-${stepNo}-advanced`),
+    switchModeBasic: (stepNo: GrafanaRuleFormStep) =>
+      byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
+    switchModeAdvanced: (stepNo: GrafanaRuleFormStep) =>
+      byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
   },
   buttons: {
     saveAndExit: byRole('button', { name: 'Save rule and exit' }),
     save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
+    preview: byRole('button', { name: /^Preview$/ }),
   },
 };
 export function renderRuleEditor(identifier?: string, recording?: 'recording' | 'grafana-recording') {
