@@ -352,7 +352,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 
 		if nextToken != "" && !foundToken {
-			if nextToken != getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup) {
+			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
 				continue
 			}
 			foundToken = true
@@ -392,6 +392,14 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 
 func getRuleGroupNextToken(namespace, group string) string {
 	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
+}
+
+// Returns true if tokenA >= tokenB
+func tokenGreaterThanOrEqual(tokenA string, tokenB string) bool {
+	decodedTokenA, _ := base64.URLEncoding.DecodeString(tokenA)
+	decodedTokenB, _ := base64.URLEncoding.DecodeString(tokenB)
+
+	return string(decodedTokenA) >= string(decodedTokenB)
 }
 
 type ruleGroup struct {
