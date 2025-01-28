@@ -98,15 +98,20 @@ func (r *exporter) Export(ctx context.Context,
 
 	// TODO: short by depth
 	for _, folder := range folderTree.AllFolders() {
-		folderPath := folder.Path
-		logger := logger.With("path", folderPath)
-		_, err = r.repository.Read(ctx, folderPath, ref)
+		fid, ok := folderTree.DirPath(folder.ID, r.repository.Config().Spec.Folder)
+		if !ok {
+			logger.Error("folder was not in tree of repository", "folder", folder.ID, "tree", folderTree)
+			return nil, fmt.Errorf("folder %s was not in tree of repository", folder.ID)
+		}
+
+		logger := logger.With("path", fid.Path)
+		_, err = r.repository.Read(ctx, fid.Path, ref)
 
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			logger.Error("failed to check if folder exists before writing", "error", err)
 			return nil, fmt.Errorf("failed to check if folder exists before writing: %w", err)
 		} else if err != nil { // ErrFileNotFound
-			err = r.repository.Create(ctx, folderPath, ref, nil, "export of folder `"+folderPath+"` in namespace "+ns)
+			err = r.repository.Create(ctx, fid.Path, ref, nil, "export of folder `"+fid.Path+"` in namespace "+ns)
 		} else {
 			logger.Info("folder already exists")
 		}
