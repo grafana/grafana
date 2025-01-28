@@ -6,6 +6,7 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Popover } from '../../..';
 import { useStyles2 } from '../../../../themes';
 import { Icon } from '../../../Icon/Icon';
+import { TableRow } from '../../types';
 
 import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
@@ -16,10 +17,27 @@ interface Props {
   filter: any;
   setFilter: (value: any) => void;
   field?: Field;
+  crossFilterOrder: string[];
+  crossFilterRows: { [key: string]: TableRow[] };
 }
 
-export const Filter = ({ name, rows, filter, setFilter, field }: Props) => {
+export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder, crossFilterRows }: Props) => {
   const filterValue = filter[name]?.filtered;
+
+  // get rows for cross filtering
+  const filterIndex = crossFilterOrder.indexOf(name);
+  let filteredRows: TableRow[];
+  if (filterIndex > 0) {
+    // current filter list should be based on the previous filter list
+    const previousFilterName = crossFilterOrder[filterIndex - 1];
+    filteredRows = crossFilterRows[previousFilterName];
+  } else if (filterIndex === -1 && crossFilterOrder.length > 0) {
+    // current filter list should be based on the last filter list
+    const previousFilterName = crossFilterOrder[crossFilterOrder.length - 1];
+    filteredRows = crossFilterRows[previousFilterName];
+  } else {
+    filteredRows = rows;
+  }
 
   const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
@@ -43,7 +61,7 @@ export const Filter = ({ name, rows, filter, setFilter, field }: Props) => {
           content={
             <FilterPopup
               name={name}
-              rows={rows}
+              rows={filteredRows}
               filterValue={filterValue}
               setFilter={setFilter}
               field={field}
