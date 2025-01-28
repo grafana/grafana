@@ -593,9 +593,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
-
-
-
 /scripts/benchmark-access-control.sh @grafana/access-squad
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
 /scripts/ci-* @grafana/grafana-developer-enablement-squad
@@ -733,6 +730,10 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/schemas/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
 /cue.mod/ @grafana/grafana-as-code
+
+# Rendered OpenAPI from app platform
+# Eventually each file owned by the right team, OR a structure with the rendered value under /apis/{group}/openapi
+/openapi/ @grafana/grafana-app-platform-squad
 
 # GitHub Workflows and Templates
 /.github/CODEOWNERS @tolzhabayev

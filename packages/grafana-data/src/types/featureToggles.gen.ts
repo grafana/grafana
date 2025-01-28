@@ -229,7 +229,6 @@ export interface FeatureToggles {
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
-  zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;

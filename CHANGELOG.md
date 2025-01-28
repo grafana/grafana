@@ -1,3 +1,118 @@
+<!-- 11.4.1 START -->
+
+# 11.4.1 (2025-01-28)
+
+### Features and enhancements
+
+- **Security:** Update to Go 1.23.5 - Backport to v11.4.x [#99123](https://github.com/grafana/grafana/pull/99123), [@Proximyst](https://github.com/Proximyst)
+- **Security:** Update to Go 1.23.5 - Backport to v11.4.x (Enterprise)
+
+### Bug fixes
+
+- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97830](https://github.com/grafana/grafana/pull/97830), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix alert rules unpausing after moving rule to different folder [#97583](https://github.com/grafana/grafana/pull/97583), [@santihernandezc](https://github.com/santihernandezc)
+- **Alerting:** Fix label escaping in rule export [#98649](https://github.com/grafana/grafana/pull/98649), [@moustafab](https://github.com/moustafab)
+- **Alerting:** Fix slack image uploading to use new api [#98066](https://github.com/grafana/grafana/pull/98066), [@moustafab](https://github.com/moustafab)
+- **Azure/GCM:** Improve error display [#97594](https://github.com/grafana/grafana/pull/97594), [@aangelisc](https://github.com/aangelisc)
+- **Dashboards:** Fix issue where filtered panels would not react to variable changes [#98734](https://github.com/grafana/grafana/pull/98734), [@oscarkilhed](https://github.com/oscarkilhed)
+- **Dashboards:** Fixes issue with panel header showing even when hide time override was enabled [#98747](https://github.com/grafana/grafana/pull/98747), [@torkelo](https://github.com/torkelo)
+- **Dashboards:** Fixes week relative time ranges when weekStart was changed [#98269](https://github.com/grafana/grafana/pull/98269), [@torkelo](https://github.com/torkelo)
+- **Dashboards:** Panel react for `timeFrom` and `timeShift` changes using variables [#98659](https://github.com/grafana/grafana/pull/98659), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **DateTimePicker:** Fixes issue with date picker showing invalid date [#97971](https://github.com/grafana/grafana/pull/97971), [@torkelo](https://github.com/torkelo)
+- **Fix:** Add support for datasource variable queries [#98119](https://github.com/grafana/grafana/pull/98119), [@sunker](https://github.com/sunker)
+- **InfluxDB:** Adhoc filters can use template vars as values [#98786](https://github.com/grafana/grafana/pull/98786), [@bossinc](https://github.com/bossinc)
+- **LibraryPanel:** Fallback to panel title if library panel title is not set [#99410](https://github.com/grafana/grafana/pull/99410), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+### Plugin development fixes & changes
+
+- **Grafana UI:** Re-add react-router-dom as a dependency [#98422](https://github.com/grafana/grafana/pull/98422), [@leventebalogh](https://github.com/leventebalogh)
+
+<!-- 11.4.1 END -->
+<!-- 11.3.3 START -->
+
+# 11.3.3 (2025-01-28)
+
+### Features and enhancements
+
+- **Azure Monitor:** Add a feature flag to toggle user auth for Azure Monitor only [#97576](https://github.com/grafana/grafana/pull/97576), [@adamyeats](https://github.com/adamyeats)
+- **Security:** Update to Go 1.23.5 - Backport to v11.3.x [#99124](https://github.com/grafana/grafana/pull/99124), [@Proximyst](https://github.com/Proximyst)
+- **Security:** Update to Go 1.23.5 - Backport to v11.3.x (Enterprise)
+
+### Bug fixes
+
+- **Alerting:** AlertingQueryRunner should skip descendant nodes of invalid queries [#97829](https://github.com/grafana/grafana/pull/97829), [@gillesdemey](https://github.com/gillesdemey)
+- **Azure/GCM:** Improve error display [#97593](https://github.com/grafana/grafana/pull/97593), [@aangelisc](https://github.com/aangelisc)
+- **Dashboard:** Fixes issue with compatability of old DashboardModel.annotations [#97467](https://github.com/grafana/grafana/pull/97467), [@torkelo](https://github.com/torkelo)
+- **Dashboards:** Fix issue where filtered panels would not react to variable changes [#98733](https://github.com/grafana/grafana/pull/98733), [@oscarkilhed](https://github.com/oscarkilhed)
+- **Dashboards:** Fixes issue with panel header showing even when hide time override was enabled [#97389](https://github.com/grafana/grafana/pull/97389), [@torkelo](https://github.com/torkelo)
+- **Dashboards:** Fixes week relative time ranges when weekStart was changed [#98268](https://github.com/grafana/grafana/pull/98268), [@torkelo](https://github.com/torkelo)
+- **DateTimePicker:** Fixes issue with date picker showing invalid date [#97970](https://github.com/grafana/grafana/pull/97970), [@torkelo](https://github.com/torkelo)
+- **Fix:** Add support for datasource variable queries [#98118](https://github.com/grafana/grafana/pull/98118), [@sunker](https://github.com/sunker)
+- **InfluxDB:** Adhoc filters can use template vars as values [#98785](https://github.com/grafana/grafana/pull/98785), [@bossinc](https://github.com/bossinc)
+- **Unified Storage:** Use tls preferred when grafana db using ssl [#97379](https://github.com/grafana/grafana/pull/97379), [@owensmallwood](https://github.com/owensmallwood)
+
+### Plugin development fixes & changes
+
+- **Grafana UI:** Re-add react-router-dom as a dependency [#98421](https://github.com/grafana/grafana/pull/98421), [@leventebalogh](https://github.com/leventebalogh)
+
+<!-- 11.3.3 END -->
+<!-- 11.2.6 START -->
+
+# 11.2.6 (2025-01-28)
+
+### Features and enhancements
+
+- **Azure Monitor:** Add a feature flag to toggle user auth for Azure Monitor only [#97565](https://github.com/grafana/grafana/pull/97565), [@adamyeats](https://github.com/adamyeats)
+- **Security:** Update to Go 1.22.11 - Backport to v11.2.x [#99125](https://github.com/grafana/grafana/pull/99125), [@Proximyst](https://github.com/Proximyst)
+- **Security:** Update to Go 1.22.11 - Backport to v11.2.x (Enterprise)
+
+### Bug fixes
+
+- **Azure/GCM:** Improve error display [#97591](https://github.com/grafana/grafana/pull/97591), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.2.6 END -->
+<!-- 11.1.11 START -->
+
+# 11.1.11 (2025-01-28)
+
+### Features and enhancements
+
+- **Security:** Update to Go 1.22.11 - Backport to v11.1.x [#99126](https://github.com/grafana/grafana/pull/99126), [@Proximyst](https://github.com/Proximyst)
+- **Security:** Update to Go 1.22.11 - Backport to v11.1.x (Enterprise)
+
+### Bug fixes
+
+- **Azure/GCM:** Improve error display [#97595](https://github.com/grafana/grafana/pull/97595), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.1.11 END -->
+<!-- 11.0.10 START -->
+
+# 11.0.10 (2025-01-28)
+
+### Features and enhancements
+
+- **Security:** Update to Go 1.22.11 - Backport to v11.0.x [#99127](https://github.com/grafana/grafana/pull/99127), [@Proximyst](https://github.com/Proximyst)
+- **Security:** Update to Go 1.22.11 - Backport to v11.0.x (Enterprise)
+
+### Bug fixes
+
+- **Azure/GCM:** Improve error display [#97592](https://github.com/grafana/grafana/pull/97592), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 11.0.10 END -->
+<!-- 10.4.15 START -->
+
+# 10.4.15 (2025-01-28)
+
+### Features and enhancements
+
+- **Security:** Update to Go 1.22.11 - Backport to v10.4.x [#99128](https://github.com/grafana/grafana/pull/99128), [@Proximyst](https://github.com/Proximyst)
+- **Security:** Update to Go 1.22.11 - Backport to v10.4.x (Enterprise)
+
+### Bug fixes
+
+- **Azure/GCM:** Improve error display [#97590](https://github.com/grafana/grafana/pull/97590), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.4.15 END -->
 <!-- 11.4.0 START -->
 
 # 11.4.0 (2024-12-05)
