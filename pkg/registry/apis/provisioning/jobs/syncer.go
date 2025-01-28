@@ -332,9 +332,10 @@ func (r *Syncer) replicateFile(ctx context.Context, file *resources.ParsedResour
 	logger := logging.FromContext(ctx).With("file", file.Info.Path, "ref", file.Info.Ref)
 	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace(), "namespace", r.client.GetNamespace())
 
-	parentID, ok := folderTree.DirPath(path.Dir(file.Info.Path), r.repository.Config().Spec.Folder)
+	parentID := resources.ParseFolder(path.Dir(file.Info.Path), r.repository.Config().Spec.Folder)
+	parentID, ok := folderTree.DirPath(parentID.ID, r.repository.Config().Spec.Folder)
 	if !ok {
-		return fmt.Errorf("failed to find parent for %s", file.Info.Path)
+		return fmt.Errorf("failed to find parent in tree for %s", file.Info.Path)
 	}
 
 	logger = logger.With("folder", parentID)

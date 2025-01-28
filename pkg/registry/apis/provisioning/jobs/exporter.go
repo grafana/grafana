@@ -73,15 +73,6 @@ func (r *exporter) Export(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: handle pagination
-	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list folders: %w", err)
-	}
-
-	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders)
-
 	var ref string
 	if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
 		ref = r.repository.Config().Spec.GitHub.Branch
@@ -93,7 +84,19 @@ func (r *exporter) Export(ctx context.Context,
 		State:   provisioning.JobStateWorking,
 		Message: "exporting folders...",
 	})
+	if err != nil {
+		return nil, err
+	}
 
+	// TODO: handle pagination
+	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list folders: %w", err)
+	}
+
+	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders)
+
+	// TODO: short by depth
 	for _, folder := range folderTree.AllFolders() {
 		folderPath := folder.Path
 		logger := logger.With("path", folderPath)
@@ -144,10 +147,11 @@ func (r *exporter) Export(ctx context.Context,
 
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 		logger = logger.With("folder", folder)
-		fid, ok := folderTree.DirPath(folder, r.repository.Config().Spec.Folder)
+
+		fid, ok := folderTree.DirPath(folder, r.repository.Config().GetNamespace())
 		if !ok {
-			logger.Debug("folder of item was not in tree of repository")
-			continue
+			logger.Error("folder of item was not in tree of repository")
+			return nil, fmt.Errorf("folder of item was not in tree of repository")
 		}
 
 		delete(item.Object, "metadata")
