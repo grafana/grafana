@@ -11,7 +11,8 @@ func TestV39(t *testing.T) {
 		{
 			name: "no transformations",
 			input: map[string]interface{}{
-				"title": "Test Dashboard",
+				"schemaVersion": 38,
+				"title":         "Test Dashboard",
 				"panels": []interface{}{
 					map[string]interface{}{
 						"title": "Panel 1",
@@ -31,6 +32,7 @@ func TestV39(t *testing.T) {
 		{
 			name: "timeSeriesTable transformation with refIdToStat",
 			input: map[string]interface{}{
+				"schemaVersion": 38,
 				"panels": []interface{}{
 					map[string]interface{}{
 						"transformations": []interface{}{
@@ -105,5 +107,5 @@ func TestV39(t *testing.T) {
 			},
 		},
 	}
-	runMigrationTests(t, tests, schemaversion.V40)
+	runMigrationTests(t, tests, schemaversion.V39)
 }
