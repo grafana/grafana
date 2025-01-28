@@ -40,7 +40,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// - type
 	// - sort
 	// - permission
-	// - dashboardUIDs
 	// - folderIds
 	// - folderUIDs
 	// - sort (default by title)
@@ -70,6 +69,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	for _, field := range req.Options.Fields {
 		if field.Key == resource.SEARCH_FIELD_TAGS {
 			query.Tags = field.GetValues()
+		} else if field.Key == resource.SEARCH_FIELD_NAME {
+			query.DashboardUIDs = field.GetValues()
+			query.DashboardIds = nil
 		}
 	}
 

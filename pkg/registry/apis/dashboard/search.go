@@ -17,6 +17,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -122,6 +123,24 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "search/list deleted dashboards",
 										Required:    false,
 										Schema:      spec.BooleanProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "dashboardIds",
+										In:          "query",
+										Description: "search/list dashboards by legacy id (deprecated)",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "dashboardUIDs",
+										In:          "query",
+										Description: "search/list dashboards by uid",
+										Required:    false,
+										Schema:      spec.StringProperty(),
 									},
 								},
 							},
@@ -354,6 +373,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			Operator: "in",
 			Values:   dashboardIds,
 		})
+	}
+
+	dashboardUids, ok := queryParams["dashboardUIDs"]
+	if ok {
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: "in",
+			Values:   dashboardUids,
+		}}
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
