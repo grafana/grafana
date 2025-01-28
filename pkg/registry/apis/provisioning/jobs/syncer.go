@@ -23,6 +23,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type Syncer struct {
@@ -503,20 +504,22 @@ func (r *Syncer) parseResource(ctx context.Context, fileInfo *repository.FileInf
 
 // ensureFolderPathExists creates the folder structure in the cluster.
 func (r *Syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent string, folderTree *resources.FolderTree) error {
-	return resources.Walk(ctx, dirPath, parent, func(ctx context.Context, path, parent string) (string, error) {
+	return safepath.Walk(ctx, dirPath, func(ctx context.Context, path string) error {
 		fid := resources.ParseFolder(path, r.repository.Config().GetName())
 		if folderTree.In(fid.ID) {
 			// already visited
-			return fid.ID, nil
+			parent = fid.ID
+			return nil
 		}
 
 		if err := r.ensureFolderExists(ctx, fid, parent); err != nil {
-			return "", fmt.Errorf("ensure folder exists: %w", err)
+			return fmt.Errorf("ensure folder exists: %w", err)
 		}
 
 		folderTree.Add(fid, parent)
+		parent = fid.ID
 
-		return fid.ID, nil
+		return nil
 	})
 }
 

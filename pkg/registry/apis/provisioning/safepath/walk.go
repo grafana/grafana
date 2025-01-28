@@ -1,16 +1,15 @@
-package resources
+package safepath
 
 import (
 	"context"
-	"fmt"
 	"path"
 	"strings"
 )
 
-type WalkFunc func(ctx context.Context, path, parent string) (string, error)
+type WalkFunc func(ctx context.Context, path string) error
 
 // Walk walks the given folder path and calls the given function for each folder.
-func Walk(ctx context.Context, folderPath, parent string, fn WalkFunc) error {
+func Walk(ctx context.Context, folderPath string, fn WalkFunc) error {
 	if folderPath == "." || folderPath == "/" {
 		return nil
 	}
@@ -23,12 +22,9 @@ func Walk(ctx context.Context, folderPath, parent string, fn WalkFunc) error {
 		}
 
 		currentPath = path.Join(currentPath, folder)
-		id, err := fn(ctx, currentPath, parent)
-		if err != nil {
-			return fmt.Errorf("failed to create folder '%s': %w", id, err)
+		if err := fn(ctx, currentPath); err != nil {
+			return err
 		}
-
-		parent = id
 	}
 
 	return nil
