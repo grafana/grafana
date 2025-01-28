@@ -10204,12 +10204,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/swagger-ui-react@npm:4.18.3":
-  version: 4.18.3
-  resolution: "@types/swagger-ui-react@npm:4.18.3"
+"@types/swagger-ui-react@npm:4.19.0":
+  version: 4.19.0
+  resolution: "@types/swagger-ui-react@npm:4.19.0"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10/4927314f1b0d68edf200ef15bca7555f12ec1bb8cc699fa397ef2f4e1e1873d17880b663bbc6d70e30149e50c3e7055178c1e0aad110520dfb31d781ab326dcb
+  checksum: 10/c4a7ae85ca081bf079164b3e11ecc0c91dec1ed10da0f44fc67f8cf93a7d92d5bfa681035eb8b9d3327a0361d201861c02571b4b18f361253510f3ce19ce073f
   languageName: node
   linkType: hard
 
@@ -17886,7 +17886,7 @@ __metadata:
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
-    "@types/swagger-ui-react": "npm:4.18.3"
+    "@types/swagger-ui-react": "npm:4.19.0"
     "@types/systemjs": "npm:6.15.1"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:10.0.0"
