@@ -87,7 +87,6 @@ Any changes you make to a dashboard used in a report are reflected the next time
 - SMTP must be configured for reports to be sent. Refer to [SMTP configuration documentation](ref:smtp) for more information.
 - The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.0+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
 
-<!-- are these requirements for Enterprise only? Can we clarify what the requirements are for Enterprise vs Cloud? -->
 
 ### Rendering configuration
 
@@ -96,8 +95,6 @@ You can configure the per-panel rendering timeout and number of concurrently ren
 
 To make a panel more legible, you can set a scale factor for the rendered images.
 However, a higher scale factor increases the file size of the generated PDF.
-
-<!-- does above apply to any file type? -->
 
 You can also specify custom fonts that support different Unicode scripts.
 The DejaVu font is the default used for PDF rendering.
