@@ -39,7 +39,7 @@ func TestDashboardVersionService(t *testing.T) {
 		require.Equal(t, dashboard.ToDTO("uid"), dashboardVersion)
 	})
 
-	t.Run("Get dashboard version sthrough k8s", func(t *testing.T) {
+	t.Run("Get dashboard versions through k8s", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
