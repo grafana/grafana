@@ -5,6 +5,7 @@ import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-
 import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 
 import MuteTimingForm from './MuteTimingForm';
@@ -12,7 +13,11 @@ import MuteTimingForm from './MuteTimingForm';
 const EditTimingRoute = () => {
   const [queryParams] = useURLSearchParams();
   const { selectedAlertmanager } = useAlertmanager();
-  const name = queryParams.get('muteName')!;
+  // we need to replace all backslashes with double backslashes, otherwise the rule will not be found
+  const name =
+    selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME
+      ? queryParams.get('muteName')!.replace(/\\/g, '\\\\')
+      : queryParams.get('muteName')!;
 
   const {
     isLoading,
