@@ -6,7 +6,7 @@ interface OpenAPISpec {
   components: {
     schemas: Record<string, object>;
   };
-  [key: string]: unknown;
+  // [key: string]: unknown;
 }
 
 function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
@@ -32,6 +32,12 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
       }
 
       const operation = pathItem[method];
+
+      //@ts-expect-error
+      if ('operationId' in operation && operation.operationId.includes('ForAllNamespaces')) {
+        continue;
+      }
+
       updateRefs(operation);
 
       newPathItem[method] = operation;
