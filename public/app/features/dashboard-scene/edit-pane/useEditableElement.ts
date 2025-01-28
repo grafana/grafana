@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 
 import { EditableDashboardElement, MultiSelectedEditableDashboardElement } from '../scene/types';
 
-import { ElementSelectionAdapter } from './ElementSelectionAdapter';
+import { ElementSelection } from './ElementSelection';
 
 export function useEditableElement(
-  selection: ElementSelectionAdapter | undefined
+  selection: ElementSelection | undefined
 ): EditableDashboardElement | MultiSelectedEditableDashboardElement | undefined {
   return useMemo(() => {
     if (!selection) {

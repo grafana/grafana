@@ -13,7 +13,7 @@ import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEdita
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 
-export class ElementSelectionAdapter {
+export class ElementSelection {
   public selectedObjects?: Map<string, SceneObjectRef<SceneObject>>;
 
   private isMultiSelection: boolean;

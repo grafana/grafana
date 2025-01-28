@@ -15,11 +15,11 @@ import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButto
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
-import { ElementSelectionAdapter } from './ElementSelectionAdapter';
+import { ElementSelection } from './ElementSelection';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
-  selection?: ElementSelectionAdapter;
+  selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
 }
 
@@ -70,7 +70,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     this.setState({
-      selection: new ElementSelectionAdapter(selectionArray),
+      selection: new ElementSelection(selectionArray),
       selectionContext: {
         ...this.state.selectionContext,
         selected,
@@ -81,7 +81,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public clearSelection() {
     const dashboard = getDashboardSceneFor(this);
     this.setState({
-      selection: new ElementSelectionAdapter([[dashboard.state.uid!, dashboard.getRef()]]),
+      selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
       selectionContext: {
         ...this.state.selectionContext,
         selected: [],
@@ -105,7 +105,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     if (!editPane.state.selection) {
       const dashboard = getDashboardSceneFor(editPane);
       editPane.setState({
-        selection: new ElementSelectionAdapter([[dashboard.state.uid!, dashboard.getRef()]]),
+        selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
       });
     }
 
