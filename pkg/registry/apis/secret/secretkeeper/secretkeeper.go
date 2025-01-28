@@ -3,6 +3,7 @@ package secretkeeper
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	keepertypes "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/types"
@@ -14,6 +15,7 @@ type Service interface {
 }
 
 type OSSKeeperService struct {
+	tracer            tracing.Tracer
 	encryptionManager *manager.EncryptionManager
 	store             secretstorage.EncryptedValueStorage
 }
@@ -26,7 +28,7 @@ func ProvideService(encryptionManager *manager.EncryptionManager, store secretst
 }
 
 func (ks OSSKeeperService) GetKeepers() (map[keepertypes.KeeperType]keepertypes.Keeper, error) {
-	sqlKeeper, err := sqlkeeper.NewSQLKeeper(ks.encryptionManager, ks.store)
+	sqlKeeper, err := sqlkeeper.NewSQLKeeper(ks.tracer, ks.encryptionManager, ks.store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sql keeper: %w", err)
 	}
