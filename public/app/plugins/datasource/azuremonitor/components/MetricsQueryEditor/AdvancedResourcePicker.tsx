@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
