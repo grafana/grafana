@@ -148,9 +148,9 @@ The options are:
 
 | Option | Description |
 | ------ | ----------- |
-| Source dashboard | Select the dashboard from which you want to generate the report. |
-| [Template variables (optional)](#template-variables) | Select the variable values for the selected dashboard. This option is only displayed if the dashboard has variables. |
-| [Time range (optional)](#time-range) | If you leave the field empty, reports use the saved time range of the dashboard. Optionally, you can change the time range of the report. |
+| Source dashboard (required) | Select the dashboard from which you want to generate the report. |
+| [Template variables](#template-variables) | Select the variable values for the selected dashboard. This option is only displayed if the dashboard has variables. |
+| [Time range](#time-range) | If you leave the field empty, reports use the saved time range of the dashboard. Optionally, you can change the time range of the report. |
 | Add another dashboard | Add more dashboards to the report. |
 
 <!-- prettier-ignore-end -->
@@ -204,7 +204,7 @@ You can select multiple options, but you must select _at least one_:
 
 If you selected the PDF format option under the **Style the PDF** section, you can configure the following options:
 
-- **Configure multiple PDFs** - Click the **Combine all dashboard PDFs in one file** checkbox if you want to generate one PDF file for all the dashboards included in the report. This option is only displayed if your report inculdes multiple dashboards.
+- **Configure multiple PDFs** - Click the **Combine all dashboard PDFs in one file** checkbox if you want to generate one PDF file for all the dashboards included in the report. This option is only displayed if your report includes multiple dashboards.
 - **Configure report header** - Click the **Show template variables** checkbox to show dashboard variables.
 - **Orientation** - Set the report orientation in **Portrait** or **Landscape**. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
 - **Layout** - Select one of the following:
@@ -278,8 +278,8 @@ At this step, enter information related to sharing the report:
 
 | Option | Description |
 | ------ | ----------- |
-| Report name | The name of the report as you want it to appear in the **Reports** list. The report name also populates the email subject line. |
-| Recipients | Enter the email addresses of the people or teams that you want to receive the report, separated by commas or semicolons. |
+| Report name (required) | The name of the report as you want it to appear in the **Reports** list. The report name also populates the email subject line. |
+| Recipients (required) | Enter the email addresses of the people or teams that you want to receive the report, separated by commas or semicolons. |
 | Reply-to email address | The address that appears in the **Reply to** field of the email. |
 | Message | The body of the message in the email with the report. |
 | Include a dashboard link | Include a links to the dashboards in the report email. |
