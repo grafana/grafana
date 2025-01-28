@@ -38,11 +38,11 @@ func (s *fakeSecureValueStorage) Read(ctx context.Context, nn xkube.NameNamespac
 	fmt.Println("read secret")
 	ns, ok := s.values[nn.Namespace.String()]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	v, ok := ns[nn.Name]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	return &v, nil
 }
@@ -53,11 +53,11 @@ func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1
 	v.Spec.Value = ""
 	ns, ok := s.values[nsv.Namespace]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	_, ok = ns[nsv.Name]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	ns[nsv.Name] = v
 	s.values[nsv.Namespace] = ns
@@ -69,11 +69,11 @@ func (s *fakeSecureValueStorage) Delete(ctx context.Context, nn xkube.NameNamesp
 	fmt.Println("delete secret")
 	ns, ok := s.values[nn.Namespace.String()]
 	if !ok {
-		return fmt.Errorf("not found")
+		return contracts.ErrSecureValueNotFound
 	}
 	_, ok = ns[nn.Name]
 	if !ok {
-		return fmt.Errorf("not found")
+		return contracts.ErrSecureValueNotFound
 	}
 	delete(ns, nn.Name)
 	return nil

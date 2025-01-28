@@ -37,11 +37,11 @@ func (s *fakeKeeperStorage) Read(ctx context.Context, nn xkube.NameNamespace) (*
 	fmt.Println("read keeper")
 	ns, ok := s.values[nn.Namespace.String()]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	v, ok := ns[nn.Name]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	return &v, nil
 }
@@ -51,11 +51,11 @@ func (s *fakeKeeperStorage) Update(ctx context.Context, nk *secretv0alpha1.Keepe
 	v := *nk
 	ns, ok := s.values[nk.Namespace]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	_, ok = ns[nk.Name]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, contracts.ErrSecureValueNotFound
 	}
 	ns[nk.Name] = v
 	s.values[nk.Namespace] = ns
@@ -67,11 +67,11 @@ func (s *fakeKeeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) 
 	fmt.Println("delete keeper")
 	ns, ok := s.values[nn.Namespace.String()]
 	if !ok {
-		return fmt.Errorf("not found")
+		return contracts.ErrSecureValueNotFound
 	}
 	_, ok = ns[nn.Name]
 	if !ok {
-		return fmt.Errorf("not found")
+		return contracts.ErrSecureValueNotFound
 	}
 	delete(ns, nn.Name)
 	return nil
