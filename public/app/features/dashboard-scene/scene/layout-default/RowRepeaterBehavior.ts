@@ -15,12 +15,12 @@ import {
 } from '@grafana/scenes';
 
 import {
-  setCloneKeyIndex,
   containsCloneKey,
   getLastKeyFromClone,
   isClonedKeyOf,
-  isLastKeyCloned,
   joinCloneKeys,
+  getCloneKey,
+  isClonedKey,
 } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types';
@@ -55,7 +55,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const layout = this._getLayout();
     const originalRow = this._getRow();
-    const originalRowNonClonedPanels = originalRow.state.children.filter((child) => !isLastKeyCloned(child.state.key!));
+    const originalRowNonClonedPanels = originalRow.state.children.filter((child) => !isClonedKey(child.state.key!));
 
     const sub = layout.subscribeToState(() => {
       const repeatedRows = layout.state.children.filter((child) =>
@@ -68,7 +68,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           continue;
         }
 
-        const rowNonClonedPanels = row.state.children.filter((child) => !isLastKeyCloned(child.state.key!));
+        const rowNonClonedPanels = row.state.children.filter((child) => !isClonedKey(child.state.key!));
 
         // if no differences in row children compared to original, then no new panel added to clone
         if (rowNonClonedPanels.length === originalRowNonClonedPanels.length) {
@@ -174,7 +174,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
             actions: undefined,
           });
 
-      const rowCloneKey = setCloneKeyIndex(rowToRepeat.state.key!, rowIndex);
+      const rowCloneKey = getCloneKey(rowToRepeat.state.key!, rowIndex);
 
       rowClone.setState({
         key: rowCloneKey,

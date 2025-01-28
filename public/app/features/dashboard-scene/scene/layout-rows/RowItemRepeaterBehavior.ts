@@ -12,7 +12,7 @@ import {
   VariableValueSingle,
 } from '@grafana/scenes';
 
-import { setCloneKeyIndex, isClonedKeyOf } from '../../utils/clone';
+import { isClonedKeyOf, getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
@@ -129,7 +129,7 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
       const isSourceRow = rowIndex === 0;
       const rowClone = isSourceRow ? rowToRepeat : rowToRepeat.clone({ $behaviors: [] });
 
-      const rowCloneKey = setCloneKeyIndex(rowToRepeat.state.key!, rowIndex);
+      const rowCloneKey = getCloneKey(rowToRepeat.state.key!, rowIndex);
 
       rowClone.setState({
         key: rowCloneKey,

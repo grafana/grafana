@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { hasClonedAncestors } from '../utils/clone';
+import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
@@ -47,7 +47,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   private selectElement(element: ElementSelectionContextItem, multi?: boolean) {
-    if (hasClonedAncestors(element.id)) {
+    if (isInCloneChain(element.id)) {
       if (multi) {
         return;
       }
