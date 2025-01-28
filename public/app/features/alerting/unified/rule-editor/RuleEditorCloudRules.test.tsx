@@ -5,15 +5,15 @@ import { screen } from 'test/test-utils';
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessControlAction } from 'app/types';
 
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { setupMswServer } from './mockApi';
-import { grantUserPermissions } from './mocks';
-import { GROUP_3, NAMESPACE_2 } from './mocks/mimirRulerApi';
-import { mimirDataSource } from './mocks/server/configure';
-import { MIMIR_DATASOURCE_UID } from './mocks/server/constants';
-import { captureRequests, serializeRequests } from './mocks/server/events';
+import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
+import { setupMswServer } from '../mockApi';
+import { grantUserPermissions } from '../mocks';
+import { GROUP_3, NAMESPACE_2 } from '../mocks/mimirRulerApi';
+import { mimirDataSource } from '../mocks/server/configure';
+import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
+import { captureRequests, serializeRequests } from '../mocks/server/events';
 
-jest.mock('./components/rule-editor/ExpressionEditor', () => ({
+jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />

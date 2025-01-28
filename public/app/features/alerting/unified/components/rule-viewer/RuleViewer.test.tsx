@@ -4,7 +4,6 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
@@ -20,6 +19,7 @@ import {
   mockPromAlertingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
@@ -75,16 +75,6 @@ setPluginLinksHook(() => ({
   ],
   isLoading: false,
 }));
-
-/**
- * "Grants" permissions via contextSrv mock, and additionally sets folder access control
- * API response to match
- */
-const grantPermissionsHelper = (permissions: AccessControlAction[]) => {
-  const permissionsHash = permissions.reduce((hash, permission) => ({ ...hash, [permission]: true }), {});
-  grantUserPermissions(permissions);
-  setFolderAccessControl(permissionsHash);
-};
 
 const openSilenceDrawer = async () => {
   const user = userEvent.setup();

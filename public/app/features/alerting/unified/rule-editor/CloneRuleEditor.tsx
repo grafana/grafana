@@ -1,18 +1,17 @@
 import { cloneDeep } from 'lodash';
 
-import { locationService } from '@grafana/runtime/src';
-import { Alert, LoadingPlaceholder } from '@grafana/ui/src';
+import { locationService } from '@grafana/runtime';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
-import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
-
-import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
-import { useRuleWithLocation } from './hooks/useCombinedRule';
-import { generateCopiedName } from './utils/duplicate';
-import { stringifyErrorLike } from './utils/misc';
-import { rulerRuleToFormValues } from './utils/rule-form';
-import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
-import { createRelativeUrl } from './utils/url';
+import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
+import { useRuleWithLocation } from '../hooks/useCombinedRule';
+import { generateCopiedName } from '../utils/duplicate';
+import { stringifyErrorLike } from '../utils/misc';
+import { rulerRuleToFormValues } from '../utils/rule-form';
+import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../utils/rules';
+import { createRelativeUrl } from '../utils/url';
 
 export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
   const { loading, result: rule, error } = useRuleWithLocation({ ruleIdentifier: sourceRuleId });

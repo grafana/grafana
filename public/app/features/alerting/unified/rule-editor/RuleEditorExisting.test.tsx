@@ -7,15 +7,15 @@ import { setFolderResponse } from 'app/features/alerting/unified/mocks/server/co
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { DashboardSearchItemType } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types';
 
-import { AccessControlAction } from '../../../types';
+import { setupMswServer } from '../mockApi';
+import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
+import { grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import { setupDataSources } from '../testSetup/datasources';
+import { Annotation } from '../utils/constants';
 
 import RuleEditor from './RuleEditor';
-import { setupMswServer } from './mockApi';
-import { grantUserPermissions, mockDataSource, mockFolder } from './mocks';
-import { grafanaRulerRule } from './mocks/grafanaRulerApi';
-import { setupDataSources } from './testSetup/datasources';
-import { Annotation } from './utils/constants';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
