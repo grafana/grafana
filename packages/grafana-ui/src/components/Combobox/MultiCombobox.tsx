@@ -280,7 +280,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           />
 
           <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
-            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
             {isClearable && selectedItems.length > 0 && (
               <Icon
                 name="times"
@@ -298,6 +297,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 }}
               />
             )}
+            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
           </div>
         </span>
       </div>
