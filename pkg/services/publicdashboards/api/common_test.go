@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -56,7 +55,7 @@ func setupTestServer(
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	// build mux
 	m := web.New()
@@ -153,18 +152,18 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		setting.NewCfg(),
 		cs,
 		nil,
-		&fakePluginRequestValidator{},
+		&fakeDataSourceRequestValidator{},
 		fpc,
 		pCtxProvider,
 	)
 }
 
 // copied from pkg/api/metrics_test.go
-type fakePluginRequestValidator struct {
+type fakeDataSourceRequestValidator struct {
 	err error
 }
 
-func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
 

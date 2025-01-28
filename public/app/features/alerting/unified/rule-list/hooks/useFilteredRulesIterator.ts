@@ -1,13 +1,21 @@
+import { AsyncIterableX, from } from 'ix/asynciterable/index';
 import { merge } from 'ix/asynciterable/merge';
 import { filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
-import { useCallback } from 'react';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import {
+  DataSourceRuleGroupIdentifier,
+  DataSourceRulesSourceIdentifier,
+  GrafanaRuleGroupIdentifier,
+} from 'app/types/unified-alerting';
+import {
+  GrafanaPromRuleDTO,
+  GrafanaPromRuleGroupDTO,
+  PromRuleDTO,
+  PromRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
-import { prometheusApi } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
@@ -15,83 +23,73 @@ import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/dataso
 import { parseMatcher } from '../../utils/matchers';
 import { isAlertingRule } from '../../utils/rules';
 
-export interface RuleWithOrigin {
-  rule: PromRuleDTO;
-  groupIdentifier: DataSourceRuleGroupIdentifier;
+import { useGrafanaGroupsGenerator, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
+
+export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
+
+export interface GrafanaRuleWithOrigin {
+  rule: GrafanaPromRuleDTO;
+  groupIdentifier: GrafanaRuleGroupIdentifier;
+  /**
+   * The name of the namespace that contains the rule group
+   * groupIdentifier contains the uid of the namespace, but not the user-friendly display name
+   */
+  namespaceName: string;
+  origin: 'grafana';
 }
 
-const { useLazyGroupsQuery } = prometheusApi;
+export interface PromRuleWithOrigin {
+  rule: PromRuleDTO;
+  groupIdentifier: DataSourceRuleGroupIdentifier;
+  origin: 'datasource';
+}
 
 export function useFilteredRulesIteratorProvider() {
-  const [fetchGroups] = useLazyGroupsQuery();
   const allExternalRulesSources = getExternalRulesSources();
 
-  /**
-   * This async generator will continue to yield rule groups and will keep fetching backend pages as long as the consumer
-   * is iterating.
-   */
-  const fetchRuleSourceGroups = useCallback(
-    async function* (ruleSource: ExternalRulesSourceIdentifier, maxGroups: number) {
-      const response = await fetchGroups({ ruleSource: { uid: ruleSource.uid }, groupLimit: maxGroups });
+  const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
 
-      if (!response.isSuccess) {
-        return;
-      }
+  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number): AsyncIterableX<RuleWithOrigin> => {
+    const normalizedFilterState = normalizeFilterState(filterState);
 
-      if (response.data?.data) {
-        yield* response.data.data.groups.map((group) => [ruleSource, group] as const);
-      }
-
-      let lastToken: string | undefined = undefined;
-      if (response.data?.data?.groupNextToken) {
-        lastToken = response.data.data.groupNextToken;
-      }
-
-      while (lastToken) {
-        const response = await fetchGroups({
-          ruleSource: { uid: ruleSource.uid },
-          groupNextToken: lastToken,
-          groupLimit: maxGroups,
-        });
-
-        if (!response.isSuccess) {
-          return;
-        }
-
-        if (response.data?.data) {
-          yield* response.data.data.groups.map((group) => [ruleSource, group] as const);
-        }
-
-        lastToken = response.data?.data?.groupNextToken;
-      }
-    },
-    [fetchGroups]
-  );
-
-  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number) => {
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
-      ? filterState.dataSourceNames.map((ds) => ({ name: ds, uid: getDatasourceAPIUid(ds) }))
+      ? filterState.dataSourceNames.map<DataSourceRulesSourceIdentifier>((ds) => ({
+          name: ds,
+          uid: getDatasourceAPIUid(ds),
+          ruleSourceType: 'datasource',
+        }))
       : allExternalRulesSources;
 
-    // This split into the first one and the rest is only for compatibility with the merge function from ix
-    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => fetchRuleSourceGroups(ds, groupLimit));
+    const grafanaIterator = from(grafanaGroupsGenerator(groupLimit)).pipe(
+      filter((group) => groupFilter(group, normalizedFilterState)),
+      flatMap((group) => group.rules.map((rule) => [group, rule] as const)),
+      filter(([_, rule]) => ruleFilter(rule, normalizedFilterState)),
+      map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
+    );
 
-    return merge(source, ...iterables).pipe(
-      filter(([_, group]) => groupFilter(group, filterState)),
+    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => {
+      return from(prometheusGroupsGenerator(ds, groupLimit)).pipe(map((group) => [ds, group] as const));
+    });
+
+    const dataSourcesIterator = merge(source, ...iterables).pipe(
+      filter(([_, group]) => groupFilter(group, normalizedFilterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
       filter(([_, __, rule]) => ruleFilter(rule, filterState)),
       map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
     );
+
+    return merge(grafanaIterator, dataSourcesIterator);
   };
 
   return { getFilteredRulesIterator };
 }
 
 function mapRuleToRuleWithOrigin(
-  rulesSource: ExternalRulesSourceIdentifier,
+  rulesSource: DataSourceRulesSourceIdentifier,
   group: PromRuleGroupDTO,
   rule: PromRuleDTO
-): RuleWithOrigin {
+): PromRuleWithOrigin {
   return {
     rule,
     groupIdentifier: {
@@ -100,6 +98,23 @@ function mapRuleToRuleWithOrigin(
       groupName: group.name,
       groupOrigin: 'datasource',
     },
+    origin: 'datasource',
+  };
+}
+
+function mapGrafanaRuleToRuleWithOrigin(
+  group: GrafanaPromRuleGroupDTO,
+  rule: GrafanaPromRuleDTO
+): GrafanaRuleWithOrigin {
+  return {
+    rule,
+    groupIdentifier: {
+      namespace: { uid: group.folderUid },
+      groupName: group.name,
+      groupOrigin: 'grafana',
+    },
+    namespaceName: group.file,
+    origin: 'grafana',
   };
 }
 
@@ -111,11 +126,11 @@ function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean
   const { name, file } = group;
 
   // TODO Add fuzzy filtering or not
-  if (filterState.namespace && !file.includes(filterState.namespace)) {
+  if (filterState.namespace && !file.toLowerCase().includes(filterState.namespace)) {
     return false;
   }
 
-  if (filterState.groupName && !name.includes(filterState.groupName)) {
+  if (filterState.groupName && !name.toLowerCase().includes(filterState.groupName)) {
     return false;
   }
 
@@ -125,11 +140,13 @@ function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean
 function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   const { name, labels = {}, health, type } = rule;
 
-  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => name.includes(word))) {
+  const nameLower = name.toLowerCase();
+
+  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => nameLower.includes(word))) {
     return false;
   }
 
-  if (filterState.ruleName && !name.includes(filterState.ruleName)) {
+  if (filterState.ruleName && !nameLower.includes(filterState.ruleName)) {
     return false;
   }
 
@@ -163,6 +180,19 @@ function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   }
 
   return true;
+}
+
+/**
+ * Lowercase free form words, rule name, group name and namespace
+ */
+function normalizeFilterState(filterState: RulesFilter): RulesFilter {
+  return {
+    ...filterState,
+    freeFormWords: filterState.freeFormWords.map((word) => word.toLowerCase()),
+    ruleName: filterState.ruleName?.toLowerCase(),
+    groupName: filterState.groupName?.toLowerCase(),
+    namespace: filterState.namespace?.toLowerCase(),
+  };
 }
 
 function looseParseMatcher(matcherQuery: string): Matcher | undefined {

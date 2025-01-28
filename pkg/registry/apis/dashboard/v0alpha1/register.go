@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -72,6 +72,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
+	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore)
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards.v0alpha1"),
 		DashboardsAPIBuilder: dashboard.DashboardsAPIBuilder{
@@ -81,7 +82,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		features:         features,
 		accessControl:    accessControl,
 		unified:          unified,
-		search:           dashboard.NewSearchHandler(unified, tracing),
+		search:           dashboard.NewSearchHandler(unified, tracing, cfg, legacyDashboardSearcher),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
@@ -146,14 +147,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
-	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
-		b.legacy.Server, // as client???
-		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
-	)
-
-	if optsGetter == nil {
-		return errors.New("missing RESTOptionsGetter")
-	}
 
 	// Dual writes if a RESTOptionsGetter is provided
 	if dualWriteBuilder != nil {

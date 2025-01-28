@@ -49,11 +49,25 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
     onChange({ ...query, step: e.currentTarget.value });
   };
 
+  // There's a bug in Tempo which causes the exemplars param to be ignored. It's commented out for now.
+
+  // const onExemplarsChange = (e: React.FormEvent<HTMLInputElement>) => {
+  //   const exemplars = parseInt(e.currentTarget.value, 10);
+  //   if (!isNaN(exemplars) && exemplars >= 0) {
+  //     onChange({ ...query, exemplars });
+  //   } else {
+  //     onChange({ ...query, exemplars: undefined });
+  //   }
+  // };
+
   const collapsedInfoList = [
     `Limit: ${query.limit || DEFAULT_LIMIT}`,
     `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
+    '|',
     `Step: ${query.step || 'auto'}`,
+    // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
+    '|',
     `Streaming: ${isStreaming ? 'Enabled' : 'Disabled'}`,
   ];
 
@@ -106,6 +120,19 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
               value={query.step}
             />
           </EditorField>
+          {/*<EditorField*/}
+          {/*  label="Exemplars"*/}
+          {/*  tooltip="Defines the amount of exemplars to request for metric queries. A value of 0 means no exemplars."*/}
+          {/*>*/}
+          {/*  <AutoSizeInput*/}
+          {/*    className="width-4"*/}
+          {/*    placeholder="auto"*/}
+          {/*    type="string"*/}
+          {/*    defaultValue={query.exemplars}*/}
+          {/*    onCommitChange={onExemplarsChange}*/}
+          {/*    value={query.exemplars}*/}
+          {/*  />*/}
+          {/*</EditorField>*/}
           <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
             <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
           </EditorField>
