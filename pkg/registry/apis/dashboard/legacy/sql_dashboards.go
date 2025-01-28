@@ -137,6 +137,9 @@ type rowsWrapper struct {
 	// Current
 	row *dashboardRow
 	err error
+
+	// max 100 rejected?
+	rejected []dashboardRow
 }
 
 func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
@@ -162,8 +165,12 @@ func (r *rowsWrapper) Next() bool {
 
 		r.row, err = r.a.scanRow(r.rows)
 		if err != nil {
-			r.err = err
-			return false
+			if len(r.rejected) > 1000 || r.row == nil {
+				r.err = err
+				return false
+			}
+			r.rejected = append(r.rejected, *r.row)
+			continue
 		}
 
 		if r.row != nil {
@@ -241,7 +248,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var createdByID sql.NullInt64
 	var message sql.NullString
 
-	var plugin_id string
+	var plugin_id sql.NullString
 	var origin_name sql.NullString
 	var origin_path sql.NullString
 	var origin_ts sql.NullInt64
@@ -311,17 +318,17 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				repo.Path = originPath
 			}
 			meta.SetRepositoryInfo(repo)
-		} else if plugin_id != "" {
+		} else if plugin_id.String != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name: "plugin",
-				Path: plugin_id,
+				Path: plugin_id.String,
 			})
 		}
 
 		if len(data) > 0 {
 			err = dash.Spec.UnmarshalJSON(data)
 			if err != nil {
-				return row, err
+				return row, fmt.Errorf("JSON unmarshal error for: %s // %w", dash.Name, err)
 			}
 		}
 		dash.Spec.Remove("id")

@@ -26,7 +26,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 
 	// Migrate everything
 	if len(opts.Resources) == 1 && opts.Resources[0] == "*" {
-		opts.WithHistory = true
+		// opts.WithHistory = true
 		opts.Resources = []string{
 			"folders",
 			"dashboards",
@@ -123,7 +123,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 
 		body, err := json.Marshal(dash)
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading json from: %s // %w", rows.row.Dash.Name, err)
 		}
 
 		req := &resource.BatchRequest{
@@ -173,6 +173,17 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			}
 			return err
 		}
+	}
+
+	if len(rows.rejected) > 0 {
+		for _, row := range rows.rejected {
+			fmt.Printf("REJECTED: %+v // %v\n", row.Dash, row)
+			opts.Progress(-2, fmt.Sprintf("rejected (%+v)", row.Dash))
+		}
+	}
+
+	if rows.Error() != nil {
+		return rows.Error()
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished dashboards... (%d)", rows.count))
@@ -250,6 +261,10 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 			}
 			return err
 		}
+	}
+
+	if rows.Error() != nil {
+		return rows.Error()
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished folders... (%d)", rows.count))
