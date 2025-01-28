@@ -68,10 +68,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard saved'],
-      });
       dashboard.setState({ isDirty: false });
       const prLink = workflow === WorkflowOption.Direct ? undefined : href;
       dashboard.closeModal();
