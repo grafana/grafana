@@ -80,7 +80,6 @@ export const SingleTopBar = memo(function SingleTopBar({
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        {config.newsFeedEnabled && <NewsContainer />}
         <ToolbarButton
           icon="monitor"
           className={styles.kioskToggle}
