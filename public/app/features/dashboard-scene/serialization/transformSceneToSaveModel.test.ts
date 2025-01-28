@@ -355,6 +355,7 @@ describe('transformSceneToSaveModel', () => {
         $behaviors: [
           new LibraryPanelBehavior({
             name: 'Some lib panel panel',
+            title: 'A panel',
             uid: 'lib-panel-uid',
           }),
         ],
@@ -398,7 +399,7 @@ describe('transformSceneToSaveModel', () => {
         x: 0,
         y: 0,
       });
-      expect(result.title).toBe('Panel blahh blah');
+      expect(result.title).toBe('A panel');
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
       expect(result.options).toBeUndefined();
@@ -850,6 +851,7 @@ describe('transformSceneToSaveModel', () => {
             $behaviors: [
               new LibraryPanelBehavior({
                 name: 'Some lib panel panel',
+                title: 'A panel',
                 uid: 'lib-panel-uid',
               }),
             ],
@@ -863,7 +865,7 @@ describe('transformSceneToSaveModel', () => {
 
         expect(result[0]).toMatchObject({
           id: 4,
-          title: 'Panel blahh blah',
+          title: 'A panel',
           libraryPanel: {
             name: 'Some lib panel panel',
             uid: 'lib-panel-uid',

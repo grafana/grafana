@@ -53,6 +53,7 @@ type Service struct {
 	log                    *slog.Logger
 	dashboardStore         dashboards.Store
 	dashboardFolderStore   folder.FolderStore
+	userService            user.Service
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
 	k8sclient              folderK8sHandler
@@ -73,6 +74,7 @@ func ProvideService(
 	bus bus.Bus,
 	dashboardStore dashboards.Store,
 	folderStore folder.FolderStore,
+	userService user.Service,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
@@ -86,6 +88,7 @@ func ProvideService(
 		dashboardStore:         dashboardStore,
 		dashboardFolderStore:   folderStore,
 		store:                  store,
+		userService:            userService,
 		features:               features,
 		accessControl:          ac,
 		bus:                    bus,

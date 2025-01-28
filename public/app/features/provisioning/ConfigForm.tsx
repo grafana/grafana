@@ -25,6 +25,7 @@ import { RepositoryFormData } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
+
 const appEvents = getAppEvents();
 
 function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {

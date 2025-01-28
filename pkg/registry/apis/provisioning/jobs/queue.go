@@ -64,6 +64,10 @@ func (s *jobStore) Add(ctx context.Context, job *provisioning.Job) (*provisionin
 		return nil, apierrors.NewBadRequest("missing spec.export")
 	}
 
+	if job.Spec.Action == provisioning.JobActionSync && job.Spec.Sync == nil {
+		return nil, apierrors.NewBadRequest("missing spec.sync")
+	}
+
 	// Only for add
 	if job.Status.State != "" {
 		return nil, apierrors.NewBadRequest("must add jobs with empty status")

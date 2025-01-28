@@ -235,16 +235,19 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
-export type ListJobResponse = JobList;
-export type ListJobArg = {};
-export type GetJobResponse = Job;
+export type ListJobResponse =  JobList;
+export type ListJobArg = {
+};
+export type GetJobResponse =  Job;
 export type GetJobArg = {
   name: string;
   pretty?: string;
 };
-export type ListRepositoryResponse = RepositoryList;
-export type ListRepositoryArg = {};
-export type CreateRepositoryResponse = Repository;
+export type ListRepositoryResponse =
+   RepositoryList;
+export type ListRepositoryArg = {
+};
+export type CreateRepositoryResponse = | Repository;
 export type CreateRepositoryArg = {
   pretty?: string;
   dryRun?: string;
@@ -252,12 +255,12 @@ export type CreateRepositoryArg = {
   fieldValidation?: string;
   body: Repository;
 };
-export type GetRepositoryResponse = Repository;
+export type GetRepositoryResponse =  Repository;
 export type GetRepositoryArg = {
   name: string;
   pretty?: string;
 };
-export type ReplaceRepositoryResponse = Repository;
+export type ReplaceRepositoryResponse = | Repository;
 export type ReplaceRepositoryArg = {
   name: string;
   pretty?: string;
@@ -266,7 +269,7 @@ export type ReplaceRepositoryArg = {
   fieldValidation?: string;
   body: Repository;
 };
-export type DeleteRepositoryResponse = Status;
+export type DeleteRepositoryResponse = | Status;
 export type DeleteRepositoryArg = {
   name: string;
   pretty?: string;
@@ -277,7 +280,7 @@ export type DeleteRepositoryArg = {
   propagationPolicy?: string;
   body: DeleteOptions;
 };
-export type CreateRepositoryExportResponse = Job;
+export type CreateRepositoryExportResponse =  Job;
 export type CreateRepositoryExportArg = {
   name: string;
   body: {
@@ -287,7 +290,7 @@ export type CreateRepositoryExportArg = {
     prefix?: string;
   };
 };
-export type GetRepositoryFilesResponse = {
+export type GetRepositoryFilesResponse =  {
   apiVersion?: string;
   items?: any[];
   kind?: string;
@@ -297,13 +300,15 @@ export type GetRepositoryFilesArg = {
   name: string;
   ref?: string;
 };
-export type GetRepositoryFilesWithPathResponse = ResourceWrapper;
+export type GetRepositoryFilesWithPathResponse =
+   ResourceWrapper;
 export type GetRepositoryFilesWithPathArg = {
   name: string;
   path: string;
   ref?: string;
 };
-export type ReplaceRepositoryFilesWithPathResponse = ResourceWrapper;
+export type ReplaceRepositoryFilesWithPathResponse =
+   ResourceWrapper;
 export type ReplaceRepositoryFilesWithPathArg = {
   name: string;
   path: string;
@@ -313,7 +318,8 @@ export type ReplaceRepositoryFilesWithPathArg = {
     [key: string]: any;
   };
 };
-export type CreateRepositoryFilesWithPathResponse = ResourceWrapper;
+export type CreateRepositoryFilesWithPathResponse =
+   ResourceWrapper;
 export type CreateRepositoryFilesWithPathArg = {
   name: string;
   path: string;
@@ -323,34 +329,37 @@ export type CreateRepositoryFilesWithPathArg = {
     [key: string]: any;
   };
 };
-export type DeleteRepositoryFilesWithPathResponse = ResourceWrapper;
+export type DeleteRepositoryFilesWithPathResponse =
+   ResourceWrapper;
 export type DeleteRepositoryFilesWithPathArg = {
   name: string;
   path: string;
   ref?: string;
   message?: string;
 };
-export type GetRepositoryHistoryResponse = string;
+export type GetRepositoryHistoryResponse =  string;
 export type GetRepositoryHistoryArg = {
   name: string;
   ref?: string;
 };
-export type GetRepositoryHistoryWithPathResponse = string;
+export type GetRepositoryHistoryWithPathResponse =  string;
 export type GetRepositoryHistoryWithPathArg = {
   name: string;
   path: string;
   ref?: string;
 };
-export type GetRepositoryResourcesResponse = ResourceList;
+export type GetRepositoryResourcesResponse =
+   ResourceList;
 export type GetRepositoryResourcesArg = {
   name: string;
 };
-export type GetRepositoryStatusResponse = Repository;
+export type GetRepositoryStatusResponse =
+   Repository;
 export type GetRepositoryStatusArg = {
   name: string;
   pretty?: string;
 };
-export type ReplaceRepositoryStatusResponse = Repository;
+export type ReplaceRepositoryStatusResponse = | Repository;
 export type ReplaceRepositoryStatusArg = {
   name: string;
   pretty?: string;
@@ -359,11 +368,12 @@ export type ReplaceRepositoryStatusArg = {
   fieldValidation?: string;
   body: Repository;
 };
-export type CreateRepositorySyncResponse = Job;
+export type CreateRepositorySyncResponse =  Job;
 export type CreateRepositorySyncArg = {
   name: string;
 };
-export type CreateRepositoryTestResponse = TestResults;
+export type CreateRepositoryTestResponse =
+   TestResults;
 export type CreateRepositoryTestArg = {
   name: string;
   body: {
@@ -374,21 +384,24 @@ export type CreateRepositoryTestArg = {
     status?: any;
   };
 };
-export type GetRepositoryWebhookResponse = WebhookResponse;
+export type GetRepositoryWebhookResponse =
+   WebhookResponse;
 export type GetRepositoryWebhookArg = {
   name: string;
 };
-export type CreateRepositoryWebhookResponse = WebhookResponse;
+export type CreateRepositoryWebhookResponse =
+   WebhookResponse;
 export type CreateRepositoryWebhookArg = {
   name: string;
 };
-export type GetResourceStatsResponse = {
+export type GetResourceStatsResponse =  {
   apiVersion?: string;
   items?: any[];
   kind?: string;
   metadata?: any;
 };
-export type GetResourceStatsArg = {};
+export type GetResourceStatsArg = {
+};
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {
