@@ -3799,11 +3799,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:5.38.0":
-  version: 5.38.0
-  resolution: "@grafana/scenes-react@npm:5.38.0"
+"@grafana/scenes-react@npm:5.41.0":
+  version: 5.41.0
+  resolution: "@grafana/scenes-react@npm:5.41.0"
   dependencies:
-    "@grafana/scenes": "npm:5.38.0"
+    "@grafana/scenes": "npm:5.41.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3814,13 +3814,13 @@ __metadata:
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/f130dabfd82abeb232f5b9d485102d03d19a7b0a91924899f6df25ee79e093d216738c9c9b12cd0ae0378eeae91dc1a0b06dadc3c9bda80ab7a2f855fb1cdac9
+  checksum: 10/80d5b51a190ed962e17468c0646e9b48a52133c3af026f8bc599c5e8e1150bcd0210f7973dd13e28f96a300798a1c2a1ec41c1bcedc580d8da393591d1e69eb4
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.38.0":
-  version: 5.38.0
-  resolution: "@grafana/scenes@npm:5.38.0"
+"@grafana/scenes@npm:5.41.0":
+  version: 5.41.0
+  resolution: "@grafana/scenes@npm:5.41.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3837,7 +3837,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/ed6f67e1d54ec49df77cf5fce55e13402c84755dc2f2ef09650fa44c3783dd7f18d08de26721dd4ba5f51ac02187f2c35d27023d75deb9d71c8599490f05eaf8
+  checksum: 10/a77b57688b5ac518fa1f3842a871ad21e2daf840d670abda6b69facce74bb6761195c43f25507a3dff87c8551625a979c4240debe62832834473b67145b5d589
   languageName: node
   linkType: hard
 
@@ -10204,12 +10204,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/swagger-ui-react@npm:4.18.3":
-  version: 4.18.3
-  resolution: "@types/swagger-ui-react@npm:4.18.3"
+"@types/swagger-ui-react@npm:4.19.0":
+  version: 4.19.0
+  resolution: "@types/swagger-ui-react@npm:4.19.0"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10/4927314f1b0d68edf200ef15bca7555f12ec1bb8cc699fa397ef2f4e1e1873d17880b663bbc6d70e30149e50c3e7055178c1e0aad110520dfb31d781ab326dcb
+  checksum: 10/c4a7ae85ca081bf079164b3e11ecc0c91dec1ed10da0f44fc67f8cf93a7d92d5bfa681035eb8b9d3327a0361d201861c02571b4b18f361253510f3ce19ce073f
   languageName: node
   linkType: hard
 
@@ -17794,8 +17794,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.38.0"
-    "@grafana/scenes-react": "npm:5.38.0"
+    "@grafana/scenes": "npm:5.41.0"
+    "@grafana/scenes-react": "npm:5.41.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -17886,7 +17886,7 @@ __metadata:
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
-    "@types/swagger-ui-react": "npm:4.18.3"
+    "@types/swagger-ui-react": "npm:4.19.0"
     "@types/systemjs": "npm:6.15.1"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:10.0.0"
@@ -20982,8 +20982,8 @@ __metadata:
   linkType: hard
 
 "knip@npm:^5.10.0":
-  version: 5.43.5
-  resolution: "knip@npm:5.43.5"
+  version: 5.43.6
+  resolution: "knip@npm:5.43.6"
   dependencies:
     "@nodelib/fs.walk": "npm:3.0.1"
     "@snyk/github-codeowners": "npm:1.1.0"
@@ -21007,7 +21007,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10/d6d7b6561b07fc1696aa109c822c4653c4cfdfd4aafb3bbb27e508415ff8b6e7d2fd14158cea800d59aa783e8fee25c641d1348374af86f743e2dee8140722d0
+  checksum: 10/d843ed0f5b56baf5c29257308b0cf1956348cfa9d2b9b627420db023a6ccdaf54450f047fe900b263dc10291f395bc3eceef221dc6050e7fd55fb1fbe4fce3a2
   languageName: node
   linkType: hard
 
