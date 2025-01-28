@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -240,6 +241,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 			Get: &spec3.Operation{}, // Get is easiest to test from brower
 		},
 		Handler: func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
 			flusher, ok := w.(http.Flusher)
 			if !ok {
 				w.WriteHeader(500)
@@ -273,8 +275,11 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 				fmt.Printf("Migrate ERROR: %s\n", err.Error())
 				_, _ = w.Write([]byte(fmt.Sprintf("Migrate ERROR: %s\n", err)))
 			}
+			done := fmt.Sprintf(">MIGRATE DONE!!! %s\n", time.Since(start))
+			_, _ = w.Write([]byte(done))
+
 			flusher.Flush()
-			fmt.Printf(">>MIGRATE DONE!!!\n")
+			fmt.Printf("%s", done)
 		},
 	})
 	return routes

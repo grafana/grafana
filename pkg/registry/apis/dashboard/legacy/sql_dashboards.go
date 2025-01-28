@@ -441,12 +441,12 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := a.sql(ctx)
+	sqlx, err := a.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newLibraryQueryReq(sql, &query)
+	req := newLibraryQueryReq(sqlx, &query)
 	rawQuery, err := sqltemplate.Execute(sqlQueryPanels, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
@@ -454,7 +454,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	q := rawQuery
 
 	res := &dashboard.LibraryPanelList{}
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sqlx.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -467,7 +467,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	type panel struct {
 		ID        int64
 		UID       string
-		FolderUID string
+		FolderUID sql.NullString
 
 		Created   time.Time
 		CreatedBy string
@@ -539,7 +539,9 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		if err != nil {
 			return nil, err
 		}
-		meta.SetFolder(p.FolderUID)
+		if p.FolderUID.Valid {
+			meta.SetFolder(p.FolderUID.String)
+		}
 		meta.SetCreatedBy(p.CreatedBy)
 		meta.SetGeneration(1)
 		meta.SetDeprecatedInternalID(p.ID) //nolint:staticcheck
@@ -558,7 +560,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 	}
 	if query.UID == "" {
-		rv, err := sql.GetResourceVersion(ctx, "library_element", "updated")
+		rv, err := sqlx.GetResourceVersion(ctx, "library_element", "updated")
 		if err == nil {
 			res.ResourceVersion = strconv.FormatInt(rv, 10)
 		}

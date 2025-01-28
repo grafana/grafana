@@ -76,12 +76,22 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 
 	// We may want to first write parquet, then read parquet
 	if b.dialect.DialectName() == "SQLite" {
-		writer := parquet.NewBatchWriter()
-		rsp := writer.ProcessBatch(ctx, setting, iter)
+		handler, err := parquet.NewBatchHandler()
+		if err != nil {
+			return &resource.BatchResponse{
+				Error: resource.AsErrorResult(err),
+			}
+		}
+
+		// Parquet export
+		rsp := handler.ProcessBatch(ctx, setting, iter)
 		if rsp.Error != nil {
 			return rsp
 		}
 
+		// Now read from parquet into the local function
+
+		return rsp
 	}
 
 	return b.processBatch(ctx, setting, iter)
@@ -169,7 +179,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 				return rollbackWithError(fmt.Errorf("insert into resource history: %w", err))
 			}
 
-			fmt.Printf("WROTE %4d/%d/%s\n", rsp.Processed, rv, req.Key.Name)
+			// fmt.Printf("WROTE %4d/%d/%s\n", rsp.Processed, rv, req.Key.Name)
 		}
 
 		// Now update the resource table from history
@@ -194,7 +204,7 @@ func (b *backend) processBatch(ctx context.Context, setting resource.BatchSettin
 				time.Sleep(10 * time.Millisecond)
 			}
 		}
-		fmt.Printf("DONE (SQL)\n")
+		fmt.Printf("DONE (SQL) [%d]\n", rsp.Processed)
 		return nil
 	})
 	if err != nil {

@@ -13,7 +13,7 @@ SELECT
   mkv.{{ .Ident "previous_resource_version" }},
   mkv.{{ .Ident "folder" }}
 FROM {{ .Ident "resource_history" }} AS mkv
-WHERE {{ .Ident "action" }} != 2
+WHERE {{ .Ident "action" }} != 3
   {{ if .Key.Namespace }}
   AND {{ .Ident "namespace" }} = {{ .Arg .Key.Namespace }}
   {{ end }}

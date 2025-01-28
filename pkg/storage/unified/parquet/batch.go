@@ -8,7 +8,6 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/apache/arrow-go/v18/parquet"
 	"github.com/apache/arrow-go/v18/parquet/file"
-	"github.com/zeebo/assert"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -67,8 +66,6 @@ type batchIter struct {
 	rowGroupID int
 
 	req *resource.BatchRequest
-
-	namespace
 }
 
 func NewBatchIterator(path string) (resource.BatchRequestIterator, error) {
@@ -88,23 +85,23 @@ func NewBatchIterator(path string) (resource.BatchRequestIterator, error) {
 // Next implements resource.BatchRequestIterator.
 func (b *batchIter) Next() bool {
 
-	xxx, err := b.fileReader.RowGroup(1).GetColumnPageReader(1)
+	//	xxx, err := b.fileReader.RowGroup(1).GetColumnPageReader(1)
 
-	p := xxx.Page()
-	p.
-		xxx.HasNext()
-	b.rowGroupReader.C
+	// p := xxx.Page()
+	// p.
+	// 	xxx.HasNext()
+	// b.rowGroupReader.C
 
-	if b.rowGroupReader == nil {
-		return false
-	}
+	// if b.rowGroupReader == nil {
+	// 	return false
+	// }
 
-	columnReader, err := b.reader.RowGroup()(context.Background(), 0)
-	assert.NoError(t, err)
+	// columnReader, err := b.reader.RowGroup()(context.Background(), 0)
+	// assert.NoError(t, err)
 
-	b.reader.
-		require.NoError(t, err)
-	defer fileReader.Close()
+	// b.reader.
+	// 	require.NoError(t, err)
+	// defer fileReader.Close()
 
 	panic("unimplemented")
 }
