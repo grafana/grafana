@@ -91,12 +91,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
           case useMultipleSelection.stateChangeTypes.FunctionAddSelectedItem:
           case useMultipleSelection.stateChangeTypes.FunctionSetSelectedItems:
-            // TODO: i don't like multiple breaks
-            if (!newSelectedItems) {
-              break;
-            }
-
-            onChange(newSelectedItems);
+            // Unclear why newSelectedItems would be undefined, but this seems logical
+            onChange(newSelectedItems ?? []);
             break;
 
           default:
@@ -146,7 +142,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       const { type } = actionAndChanges;
       let { changes } = actionAndChanges;
       const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
-      // const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
 
       // Reset the input value when the menu is opened. If the menu is opened due to an input change
       // then make sure we keep that.
@@ -157,8 +152,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           inputValue: '',
         };
       }
-
-      // TODO: handle menuBeingClosed?
 
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
@@ -185,22 +178,15 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-          // TODO: i don't like multiple breaks
-          if (!newSelectedItem) {
-            break;
-          }
-
           // Handle All functionality
           if (newSelectedItem?.value === ALL_OPTION_VALUE) {
-            // Get the 'real options', excluding the ALL_OPTION_VALUE
-            const realOptions = options.slice(1);
-
             // TODO: fix bug where if the search filtered items list is the
             // same length, but different, than the selected items (ask tobias)
             const isAllFilteredSelected = selectedItems.length === options.length - 1;
 
             // if every option is already selected, clear the selection.
             // otherwise, select all the options (excluding the first ALL_OTION)
+            const realOptions = options.slice(1);
             let newSelectedItems = isAllFilteredSelected && inputValue === '' ? [] : realOptions;
 
             if (!isAllFilteredSelected && inputValue !== '') {
@@ -215,9 +201,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             }
 
             setSelectedItems(newSelectedItems);
-          } else if (isOptionSelected(newSelectedItem)) {
+          } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
             removeSelectedItem(newSelectedItem);
-          } else {
+          } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
 
