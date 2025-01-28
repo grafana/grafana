@@ -295,15 +295,7 @@ function initExtensions() {
 }
 
 function initEchoSrv() {
-  if (process.env.BENCHMARK) {
-    const echo = new Echo({ debug: true });
-    //@ts-ignore
-    window.__grafanaEcho = echo;
-    setEchoSrv(echo);
-    registerEchoBackend(new DashboardBenchmarkBackend({}));
-  } else {
-    setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
-  }
+  setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
