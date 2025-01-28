@@ -115,7 +115,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Schema:   spec.StringProperty(),
 									},
 								},
-								// these are to support legacy search (modes 0-2)
 								{
 									ParameterProps: spec3.ParameterProps{
 										Name:        "deleted",
@@ -263,12 +262,11 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchRequest := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{},
-		Query:   queryParams.Get("query"),
-		Limit:   int64(limit),
-		Offset:  int64(offset),
-		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
-		// TODO add support for this in unistore
+		Options:   &resource.ListOptions{},
+		Query:     queryParams.Get("query"),
+		Limit:     int64(limit),
+		Offset:    int64(offset),
+		Explain:   queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		IsDeleted: queryParams.Has("deleted") && queryParams.Get("deleted") == "true",
 	}
 	fields := []string{"title", "folder", "tags"}
@@ -374,7 +372,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	// dashboardIds filter
 	dashboardIds, ok := queryParams["dashboardIds"]
 	if ok {
 		searchRequest.Options.Labels = append(searchRequest.Options.Labels, &resource.Requirement{
@@ -402,6 +399,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 	}
 
+	// TODO the following params only work in modes 0-2 (legacy):
+	// - "deleted": soft delete not implemented yet
+	// - "page": paging not implemented yet in bleve.go
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)

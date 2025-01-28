@@ -35,7 +35,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	// TODO add missing support for the following query params:
-	// - starred (won't support)
 	// - folderIds (won't support, must use folderUIDs)
 	// - type (dash-db or dash-folder) this is handled in dosearch
 	// - permission
@@ -59,6 +58,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			}
 		}
 	}
+	// handle deprecated dashboardIds query param
 	for _, field := range req.Options.Labels {
 		if field.Key == utils.LabelKeyDeprecatedInternalID {
 			values := field.GetValues()
@@ -74,12 +74,13 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	for _, field := range req.Options.Fields {
-		if field.Key == resource.SEARCH_FIELD_TAGS {
+		switch field.Key {
+		case resource.SEARCH_FIELD_TAGS:
 			query.Tags = field.GetValues()
-		} else if field.Key == resource.SEARCH_FIELD_NAME {
+		case resource.SEARCH_FIELD_NAME:
 			query.DashboardUIDs = field.GetValues()
 			query.DashboardIds = nil
-		} else if field.Key == resource.SEARCH_FIELD_FOLDER {
+		case resource.SEARCH_FIELD_FOLDER:
 			query.FolderUIDs = field.GetValues()
 		}
 	}
