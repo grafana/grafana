@@ -332,32 +332,13 @@ func (r *Syncer) replicateFile(ctx context.Context, file *resources.ParsedResour
 	logger := logging.FromContext(ctx).With("file", file.Info.Path, "ref", file.Info.Ref)
 	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace(), "namespace", r.client.GetNamespace())
 
-	// TODO: can this be handled by the folder tree?
-	parent := path.Dir(file.Info.Path)
-	var parentID resources.Folder
-	switch {
-	case parent == "." && r.repository.Config().Spec.Folder == "":
-		// use the root folder
-	case parent == "." && r.repository.Config().Spec.Folder != "":
-		// use the spec folder
-		var ok bool
-		parentID, ok = folderTree.DirPath(r.repository.Config().Spec.Folder, r.repository.Config().Spec.Folder)
-		if !ok {
-			return fmt.Errorf("failed to find root folder in tree for %s in %s", file.Info.Path, parent)
-		}
-	default:
-		parentID = resources.ParseFolder(parent, r.repository.Config().Spec.Folder)
-		var ok bool
-		parentID, ok = folderTree.DirPath(parentID.ID, r.repository.Config().Spec.Folder)
-		if !ok {
+	parent := resources.ParentFolder(file.Info.Path, r.repository.Config())
+	logger = logger.With("folder", parent)
+	if parent != "" {
+		if !folderTree.In(parent) {
 			return fmt.Errorf("failed to find parent in tree for %s in %s", file.Info.Path, parent)
 		}
-	}
-
-	logger = logger.With("folder", parentID)
-	isRoot := parentID == resources.Folder{}
-	if !isRoot {
-		file.Meta.SetFolder(parentID.ID)
+		file.Meta.SetFolder(parent)
 	}
 
 	if file.Action == provisioning.ResourceActionCreate {

@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"path"
 	"strings"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 // sanitiseKubeName removes all characters that don't fulfil the DNS subdomain name rules: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
@@ -126,6 +128,14 @@ func ParseFolder(dirPath, repositoryName string) Folder {
 		ID:    idFromPath(clean, repositoryName),
 		Path:  dirPath,
 	}
+}
+
+func ParentFolder(filePath string, repository *provisioning.Repository) string {
+	parent := path.Dir(filePath)
+	if parent == "." {
+		return repository.Spec.Folder
+	}
+	return ParseFolder(parent, repository.GetName()).ID
 }
 
 func folderTitleFromPath(cleanDirPath string) string {
