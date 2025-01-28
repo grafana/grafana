@@ -263,16 +263,27 @@ export const browseDashboardsAPI = createApi({
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          if (config.featureToggles.useV2DashboardsAPI) {
+            const fullDash = await getDashboardAPI('v2').getDashboardDTO(dashboardUID);
 
-          await getDashboardAPI().saveDashboard({
-            dashboard: fullDash.dashboard,
-            folderUid: destinationUID,
-            overwrite: false,
-            message: '',
-          });
+            await getDashboardAPI('v2').saveDashboard({
+              dashboard: fullDash.spec,
+              folderUid: destinationUID,
+              overwrite: false,
+              message: '',
+              k8s: fullDash.metadata,
+            });
+          } else {
+            const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
+
+            await getDashboardAPI().saveDashboard({
+              dashboard: fullDash.dashboard,
+              folderUid: destinationUID,
+              overwrite: false,
+              message: '',
+            });
+          }
         }
-
         return { data: undefined };
       },
       onQueryStarted: ({ destinationUID, selectedItems }, { queryFulfilled, dispatch }) => {

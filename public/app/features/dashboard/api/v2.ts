@@ -117,6 +117,8 @@ export class K8sDashboardV2API
     }
 
     if (obj.metadata.name) {
+      // remove resource version when updating
+      delete obj.metadata.resourceVersion;
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
