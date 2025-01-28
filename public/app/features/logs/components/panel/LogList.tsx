@@ -65,7 +65,6 @@ export const LogList = ({
   useEffect(() => {
     setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone }));
     listRef.current?.resetAfterIndex(0);
-    listRef.current?.scrollTo(0);
   }, [forceEscape, logs, sortOrder, timeZone, wrapLogMessage]);
 
   useEffect(() => {
@@ -100,6 +99,9 @@ export const LogList = ({
 
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
+      if (!processedLogs[index]) {
+        return null;
+      }
       return (
         <LogLine
           index={index}
@@ -120,13 +122,20 @@ export const LogList = ({
   }
 
   return (
-    <InfiniteScroll logs={processedLogs} loadMore={loadMore} timeRange={timeRange} timeZone={timeZone}>
-      {({ onItemsRendered, ref }) => (
+    <InfiniteScroll
+      listRef={listRef}
+      logs={processedLogs}
+      loadMore={loadMore}
+      sortOrder={sortOrder}
+      timeRange={timeRange}
+      timeZone={timeZone}
+    >
+      {({ itemCount, onItemsRendered, ref }) => (
         <VariableSizeList
           height={listHeight}
-          itemCount={processedLogs.length}
+          itemCount={itemCount}
           itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
-          itemKey={(index: number) => processedLogs[index].uid}
+          itemKey={(index: number) => (processedLogs[index] ? processedLogs[index].uid : index)}
           layout="vertical"
           onItemsRendered={onItemsRendered}
           ref={(element: VariableSizeList) => {

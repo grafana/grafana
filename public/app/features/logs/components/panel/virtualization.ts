@@ -152,7 +152,8 @@ export function getLogLineSize(
   if (!container) {
     return 0;
   }
-  if (!wrap) {
+  // !logs[index] means the line is not yet loaded by infinite scrolling
+  if (!wrap || !logs[index]) {
     return lineHeight + paddingBottom;
   }
   const storedSize = retrieveLogLineSize(logs[index].uid, container);

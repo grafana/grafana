@@ -284,7 +284,7 @@ function shouldIgnoreChainOfEvents(
   return true;
 }
 
-function getVisibleRange(rows: LogRowModel[]) {
+export function getVisibleRange(rows: LogRowModel[]) {
   const firstTimeStamp = rows[0].timeEpochMs;
   const lastTimeStamp = rows[rows.length - 1].timeEpochMs;
 
@@ -326,7 +326,7 @@ function canScrollTop(
   return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
 }
 
-function canScrollBottom(
+export function canScrollBottom(
   visibleRange: AbsoluteTimeRange,
   currentRange: TimeRange,
   timeZone: TimeZone,
