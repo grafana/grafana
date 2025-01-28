@@ -219,7 +219,17 @@ export function TableNG(props: TableNGProps) {
     }, [column]);
 
     return (
-      <div ref={headerRef} style={{ display: 'flex', justifyContent }}>
+      <div
+        ref={headerRef}
+        style={{ display: 'flex', justifyContent }}
+        // TODO find a better solution to this issue, see: https://github.com/adazzle/react-data-grid/issues/3535
+        // Unblock spacebar event
+        onKeyDown={(event) => {
+          if (event.key === ' ') {
+            event.stopPropagation();
+          }
+        }}
+      >
         <button className={styles.headerCellLabel} onClick={handleSort}>
           <div>{column.name}</div>
           {direction &&
