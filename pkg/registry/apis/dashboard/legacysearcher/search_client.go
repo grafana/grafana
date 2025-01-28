@@ -36,16 +36,14 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 	// TODO add missing support for the following query params:
 	// - starred (won't support)
-	// - page (check)
-	// - type
-	// - sort
+	// - folderIds (won't support, must use folderUIDs)
+	// - type (dash-db or dash-folder) this is handled in dosearch
 	// - permission
-	// - folderIds
-	// - folderUIDs
 	// - sort (default by title)
 	query := &dashboards.FindPersistedDashboardsQuery{
 		Title: req.Query,
 		Limit: req.Limit,
+		Page:  req.Page,
 		// FolderUIDs:   req.FolderUIDs,
 		Type:         searchstore.TypeDashboard,
 		SignedInUser: user,

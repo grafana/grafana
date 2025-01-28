@@ -396,6 +396,8 @@ message ResourceSearchRequest {
   bool explain = 9;
 
   bool is_deleted = 10;
+
+  int64 page = 11;
 }
 
 message ResourceSearchResponse {

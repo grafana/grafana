@@ -1721,6 +1721,10 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Limit = query.Limit
 	}
 
+	if query.Page > 0 {
+		request.Page = query.Page
+	}
+
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
 	if err != nil {
 		return nil, err
