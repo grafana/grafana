@@ -1,0 +1,33 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+pool:
+  name: Agents On-Premise
+  demands:
+    - Agent.Name -equals agent-build-1
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: Vetta/platform-vetta-automation
+      ref: master
+
+steps:
+  - checkout: self
+    fetchDepth: 1
+
+  - template: tasks/_docker-build.yml@templates
+    parameters:
+      imageName: "digital-grafana-base"
+      imageTags: "11.5.0-pre,latest"
+      containerRegistry: "vettadigitalcontainers-Platform"
+      enableCache: false
+
+  - template: tasks/_docker-push.yml@templates
+    parameters:
+      imageName: "digital-grafana-base"
+      imageTags: "11.5.0-pre,latest"
+      containerRegistry: "vettadigitalcontainers-Platform"
