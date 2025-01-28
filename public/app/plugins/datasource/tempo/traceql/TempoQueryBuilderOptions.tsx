@@ -13,7 +13,8 @@ import { TempoQuery } from '../types';
 interface Props {
   onChange: (value: TempoQuery) => void;
   query: Partial<TempoQuery> & TempoQuery;
-  isStreaming: boolean;
+  searchStreaming: boolean;
+  metricsStreaming: boolean;
 }
 
 /**
@@ -29,7 +30,7 @@ const parseIntWithFallback = (val: string, fallback: number) => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
-export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, isStreaming }) => {
+export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, searchStreaming, metricsStreaming }) => {
   const styles = useStyles2(getStyles);
 
   if (!query.hasOwnProperty('limit')) {
@@ -69,11 +70,12 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
     `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
     `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
     '|',
-    `Streaming: ${isStreaming ? 'Enabled' : 'Disabled'}`,
+    `Streaming: ${searchStreaming ? 'Enabled' : 'Disabled'}`,
   ];
 
   const collapsedMetricsOptions = [
     `Step: ${query.step || 'auto'}`,
+    `Streaming: ${metricsStreaming ? 'Enabled' : 'Disabled'}`,
     // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
   ];
 
@@ -114,7 +116,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
             />
           </EditorField>
           <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
-            <div>{isStreaming ? 'Enabled' : 'Disabled'}</div>
+            <div>{searchStreaming ? 'Enabled' : 'Disabled'}</div>
           </EditorField>
         </QueryOptionGroup>
 
@@ -131,6 +133,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, is
               onCommitChange={onStepChange}
               value={query.step}
             />
+          </EditorField>
+
+          <EditorField label="Streaming" tooltip={<StreamingTooltip />} tooltipInteractive>
+            <div>{metricsStreaming ? 'Enabled' : 'Disabled'}</div>
           </EditorField>
           {/*<EditorField*/}
           {/*  label="Exemplars"*/}

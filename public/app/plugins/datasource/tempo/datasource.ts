@@ -67,7 +67,8 @@ export const DEFAULT_LIMIT = 20;
 export const DEFAULT_SPSS = 3; // spans per span set
 
 export enum FeatureName {
-  streaming = 'streaming',
+  searchStreaming = 'searchStreaming',
+  metricsStreaming = 'metricsStreaming',
 }
 
 /* Map, for each feature (e.g., streaming), the minimum Tempo version required to have that
@@ -75,7 +76,8 @@ export enum FeatureName {
  ** target version, the feature is disabled in Grafana (frontend).
  */
 export const featuresToTempoVersion = {
-  [FeatureName.streaming]: '2.2.0',
+  [FeatureName.searchStreaming]: '2.2.0',
+  [FeatureName.metricsStreaming]: '2.7.0',
 };
 
 // The version that we use as default in case we cannot retrieve it from the backend.
@@ -115,6 +117,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   streamingEnabled?: {
     search?: boolean;
+    metrics?: boolean;
   };
 
   // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
@@ -291,6 +294,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   isStreamingSearchEnabled() {
     return this.streamingEnabled?.search && config.liveEnabled;
   }
+  /**
+   * Check if streaming for metrics queries is enabled (and available).
+   *
+   * We need to check:
+   * - the Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
+   * - if Grafana Live is enabled
+   *
+   * @return true if streaming for metrics queries is enabled, false otherwise
+   */
+  isStreamingMetricsEnabled() {
+    return this.streamingEnabled?.metrics && config.liveEnabled;
+  }
 
   isTraceQlMetricsQuery(query: string): boolean {
     // Check whether this is a metrics query by checking if it contains a metrics function
@@ -355,9 +370,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: this.isStreamingSearchEnabled(),
+              streaming: this.isStreamingMetricsEnabled(),
             });
-            if (this.isStreamingSearchEnabled()) {
+            if (this.isStreamingMetricsEnabled()) {
               subQueries.push(this.handleMetricsStreamingQuery(options, targets.traceql, queryValue));
             } else {
               subQueries.push(this.handleTraceQlMetricsQuery(options, targets.traceql));
