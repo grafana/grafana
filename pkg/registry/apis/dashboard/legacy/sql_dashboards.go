@@ -115,8 +115,9 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		rows = nil
 	}
 	return &rowsWrapper{
-		rows: rows,
-		a:    a,
+		rows:    rows,
+		a:       a,
+		history: query.GetHistory,
 		// This looks up rules from the permissions on a user
 		canReadDashboard: func(scopes ...string) bool {
 			return true // ???
@@ -128,9 +129,10 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 var _ resource.ListIterator = (*rowsWrapper)(nil)
 
 type rowsWrapper struct {
-	a     *dashboardSqlAccess
-	rows  *sql.Rows
-	count int
+	a       *dashboardSqlAccess
+	rows    *sql.Rows
+	history bool
+	count   int
 
 	canReadDashboard func(scopes ...string) bool
 
@@ -163,7 +165,7 @@ func (r *rowsWrapper) Next() bool {
 	for r.rows.Next() {
 		r.count++
 
-		r.row, err = r.a.scanRow(r.rows)
+		r.row, err = r.a.scanRow(r.rows, r.history)
 		if err != nil {
 			if len(r.rejected) > 1000 || r.row == nil {
 				r.err = fmt.Errorf("too many rejected rows (%d) %w", len(r.rejected), err)
@@ -194,6 +196,11 @@ func (r *rowsWrapper) Next() bool {
 
 // ContinueToken implements resource.ListIterator.
 func (r *rowsWrapper) ContinueToken() string {
+	return r.row.token.String()
+}
+
+// ContinueTokenWithCurrentRV implements resource.ListIterator.
+func (r *rowsWrapper) ContinueTokenWithCurrentRV() string {
 	return r.row.token.String()
 }
 
@@ -228,7 +235,7 @@ func (r *rowsWrapper) Value() []byte {
 	return b
 }
 
-func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
+func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRow, error) {
 	dash := &dashboard.Dashboard{
 		TypeMeta:   dashboard.DashboardResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
@@ -265,8 +272,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	)
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
+	// when listing from the history table, we want to use the version as the ID to continue from
+	if history {
+		row.token.id = version
+	}
 	if err == nil {
-		row.RV = getResourceVersion(dashboard_id, version)
+		row.RV = version
 		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
@@ -415,6 +426,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
+		Message:   meta.GetMessage(),
 		PluginID:  service.GetPluginIDFromMeta(meta),
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
