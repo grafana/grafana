@@ -252,7 +252,7 @@ A license token is a digital key that activates your license. By default, licens
 
 To view the details of your license token, sign into Grafana Enterprise as a Server Administrator and visit **Administration** > **General** > **Statistics and licensing**. Token details are in the Token section under License Details.
 
-License token renewal requires internet access, and requires that the `auto_refresh_license` config setting be set to `true`. If your Grafana Enterprise instance cannot connect to the internet, contact your Grafana Labs account team for additional options for token renewal and license audit.
+License token renewal requires internet access, and requires that the `auto_refresh_license` [configuration setting](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license) be set to `true`. If your Grafana Enterprise instance cannot connect to the internet, contact your Grafana Labs account team for additional options for token renewal and license audit.
 
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
