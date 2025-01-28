@@ -106,27 +106,24 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	var dashFolder *folder.Folder
 	var err error
 	switch {
-	case q.UID != nil:
-		if *q.UID == "" {
-			return &folder.GeneralFolder, nil
-		}
+	case q.UID != nil && *q.UID != "":
 		dashFolder, err = s.unifiedStore.Get(ctx, *q)
 		if err != nil {
 			return nil, toFolderError(err)
 		}
 	// nolint:staticcheck
-	case q.ID != nil:
+	case q.ID != nil && *q.ID != 0:
 		dashFolder, err = s.getFolderByIDFromApiServer(ctx, *q.ID, q.OrgID)
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-	case q.Title != nil:
+	case q.Title != nil && *q.Title != "":
 		dashFolder, err = s.getFolderByTitleFromApiServer(ctx, q.OrgID, *q.Title, q.ParentUID)
 		if err != nil {
 			return nil, toFolderError(err)
 		}
 	default:
-		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
+		return &folder.GeneralFolder, nil
 	}
 
 	if dashFolder.IsGeneral() {
@@ -585,6 +582,26 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		}
 		if alertRulesInFolder > 0 {
 			return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
+		}
+
+		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+			// We need a list of dashboard uids inside the folder to delete related public dashboards
+			dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folders, OrgId: cmd.OrgID})
+			if err != nil {
+				return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+			}
+
+			dashboardUIDs := make([]string, 0, len(dashes))
+			for _, dashboard := range dashes {
+				dashboardUIDs = append(dashboardUIDs, dashboard.UID)
+			}
+
+			// Delete all public dashboards in the folders
+			err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+			if err != nil {
+				return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
+			}
 		}
 	}
 

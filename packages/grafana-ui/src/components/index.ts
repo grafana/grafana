@@ -239,7 +239,8 @@ export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
-export { Combobox, type ComboboxOption } from './Combobox/Combobox';
+export { Combobox } from './Combobox/Combobox';
+export { type ComboboxOption } from './Combobox/types';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';

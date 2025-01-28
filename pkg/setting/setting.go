@@ -218,9 +218,10 @@ type Cfg struct {
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
-	DashboardVersionsToKeep  int
-	MinRefreshInterval       string
-	DefaultHomeDashboardPath string
+	DashboardVersionsToKeep     int
+	MinRefreshInterval          string
+	DefaultHomeDashboardPath    string
+	DashboardPerformanceMetrics []string
 
 	// Auth
 	LoginCookieName               string
@@ -539,6 +540,8 @@ type Cfg struct {
 	CACertPath                  string
 	HttpsSkipVerify             bool
 }
+
+const UnifiedStorageConfigKeyDashboard = "dashboards.dashboard.grafana.app"
 
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
@@ -1131,6 +1134,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
+	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err

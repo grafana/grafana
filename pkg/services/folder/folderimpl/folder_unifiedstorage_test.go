@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	clientrest "k8s.io/client-go/rest"
@@ -31,8 +32,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -179,7 +182,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		recourceClientProvider: f,
 	}
 
-	unifiedStore := ProvideUnifiedStore(k8sHandler)
+	userService := &usertest.FakeUserService{
+		ExpectedUser: &user.User{},
+	}
+
+	unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -200,21 +207,23 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	featuresArr := []any{
-		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagKubernetesFoldersServiceV2}
 	features := featuremgmt.WithFeatures(featuresArr...)
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	folderService := &Service{
-		log:          slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
-		unifiedStore: unifiedStore,
-		features:     features,
-		bus:          bus.ProvideBus(tracing.InitializeTracerForTest()),
-		// db:            db,
-		accessControl: acimpl.ProvideAccessControl(features),
-		registry:      make(map[string]folder.RegistryService),
-		metrics:       newFoldersMetrics(nil),
-		tracer:        tracing.InitializeTracerForTest(),
-		k8sclient:     k8sHandler,
+		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		unifiedStore:           unifiedStore,
+		features:               features,
+		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
+		accessControl:          acimpl.ProvideAccessControl(features),
+		registry:               make(map[string]folder.RegistryService),
+		metrics:                newFoldersMetrics(nil),
+		tracer:                 tracing.InitializeTracerForTest(),
+		k8sclient:              k8sHandler,
+		dashboardStore:         dashboardStore,
+		publicDashboardService: publicDashboardService,
 	}
 
 	require.NoError(t, folderService.RegisterService(alertingStore))
@@ -346,6 +355,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil)
+				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
 					UID:              "deletefolder",
 					OrgID:            orgID,
@@ -412,9 +424,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			t.Run("When get folder by ID should return folder", func(t *testing.T) {
+			t.Run("When get folder by ID and uid is an empty string should return folder by id", func(t *testing.T) {
 				id := int64(123)
+				emptyString := ""
 				query := &folder.GetFolderQuery{
+					UID:          &emptyString,
 					ID:           &id,
 					OrgID:        1,
 					SignedInUser: usr,
@@ -470,10 +484,13 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		})
 
 		t.Run("Returns root folder", func(t *testing.T) {
-			t.Run("When the folder UID is blank should return the root folder", func(t *testing.T) {
+			t.Run("When the folder UID and title are blank, and id is 0, should return the root folder", func(t *testing.T) {
 				emptyString := ""
+				idZero := int64(0)
 				actual, err := folderService.Get(ctx, &folder.GetFolderQuery{
 					UID:          &emptyString,
+					ID:           &idZero,
+					Title:        &emptyString,
 					OrgID:        1,
 					SignedInUser: usr,
 				})
