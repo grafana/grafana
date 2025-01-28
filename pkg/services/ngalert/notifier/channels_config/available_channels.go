@@ -387,6 +387,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "VictorOps url",
 					PropertyName: "url",
 					Required:     true,
+					Secure:       true,
 				},
 				{ // New in 8.0.
 					Label:        "Message Type",
