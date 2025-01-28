@@ -364,7 +364,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        dash.OrgID,
 			UID:          &dash.FolderUID,
-			ID:           &dash.FolderID,
+			ID:           &dash.FolderID, // nolint:staticcheck
 			SignedInUser: dto.User,
 		})
 		if err != nil {
