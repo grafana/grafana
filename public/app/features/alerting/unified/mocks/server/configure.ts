@@ -111,6 +111,7 @@ export function mimirDataSource() {
 
   const rulerConfig: RulerDataSourceConfig = {
     apiVersion: 'config',
+    dataSourceUid: dataSource.uid,
     dataSourceName: dataSource.name,
   };
 
