@@ -52,6 +52,21 @@ jobs:
         echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
         echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+  create_next_release_branch:
+    needs: setup
+    uses: ./.github/workflows/create-next-release-branch.yml
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+  migrate_prs:
+    needs: create_next_release_branch
+    uses: ./.github/workflows/migrate-prs.yml
+    with:
+      from:
+      to: 
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
   post_changelog_on_forum:
     needs: setup
     uses: ./.github/workflows/community-release.yml
