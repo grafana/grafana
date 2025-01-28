@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorField } from '@grafana/experimental';
+import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Button, Select, Stack, useStyles2 } from '@grafana/ui';
 

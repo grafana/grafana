@@ -12,6 +12,7 @@ import { SelectRow } from './SelectRow';
 
 // Mock featureToggle sqlQuerybuilderFunctionParameters
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   config: {
     featureToggles: {
       sqlQuerybuilderFunctionParameters: true,

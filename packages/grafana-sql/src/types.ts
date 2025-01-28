@@ -9,7 +9,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/experimental';
+import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/plugin-ui';
 
 import { QueryWithDefaults } from './defaults';
 import {
