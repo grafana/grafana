@@ -4062,6 +4062,7 @@
         "name": "zipkinBackendMigration",
         "resourceVersion": "1733846643829",
         "creationTimestamp": "2024-11-07T09:35:53Z",
+        "deletionTimestamp": "2025-01-27T11:47:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-10 16:04:03.82919 +0000 UTC"
         }
