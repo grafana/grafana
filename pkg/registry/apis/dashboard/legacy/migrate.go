@@ -163,7 +163,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 			}
 		}
 
-		opts.Progress(i, fmt.Sprintf("[v:%d] %s (size:%d / %d|%d)", dash.Generation, dash.Name, len(req.Value), i, rows.count))
+		opts.Progress(i, fmt.Sprintf("[v:%2d] %s (size:%d / %d|%d)", dash.Generation, dash.Name, len(req.Value), i, rows.count))
 
 		err = stream.Send(req)
 		if err != nil {
