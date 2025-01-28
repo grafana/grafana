@@ -15,14 +15,14 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c
-	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250121113133-e747350fee2d
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
-	google.golang.org/grpc v1.69.4
+	google.golang.org/grpc v1.70.0
 	k8s.io/apimachinery v0.32.0
 	k8s.io/apiserver v0.32.0
 	k8s.io/client-go v0.32.0
@@ -30,7 +30,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.18.0 // indirect
+	cel.dev/expr v0.19.0 // indirect
 	cloud.google.com/go v0.116.0 // indirect
 	cloud.google.com/go/auth v0.13.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
@@ -170,14 +170,14 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20250115195200-209e052dba64 // indirect
-	github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c // indirect
+	github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4 // indirect
+	github.com/grafana/authlib v0.0.0-20250123104008-e99947858901 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
-	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.5 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.262.0 // indirect
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.263.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect

@@ -176,6 +176,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
+  const uid = dto.uid;
 
   if (oldModel.templating?.list?.length) {
     if (oldModel.meta.isSnapshot) {
@@ -217,6 +218,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     });
   }
 
+  const scopeMeta =
+    config.featureToggles.scopeFilters && oldModel.scopeMeta
+      ? {
+          trait: oldModel.scopeMeta.trait,
+          groups: oldModel.scopeMeta.groups,
+        }
+      : undefined;
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
@@ -233,15 +242,16 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     addPanelsOnLoadBehavior,
     new DashboardScopesFacade({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
-      uid: oldModel.uid,
+      uid,
     }),
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
-      uid: oldModel.uid,
+      uid,
       version: oldModel.version,
     }),
   ];
   const dashboardScene = new DashboardScene({
+    uid,
     description: oldModel.description,
     editable: oldModel.editable,
     preload: dto.preload ?? false,
@@ -251,8 +261,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     meta: oldModel.meta,
     tags: oldModel.tags || [],
     title: oldModel.title,
-    uid: oldModel.uid,
     version: oldModel.version,
+    scopeMeta,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),

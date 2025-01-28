@@ -34,7 +34,7 @@ import store from 'app/core/store';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel, ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
@@ -99,6 +99,8 @@ export interface DashboardSceneState extends SceneObjectState {
   preload?: boolean;
   /** A uid when saved */
   uid?: string;
+  /** @experimental */
+  scopeMeta?: ScopeMeta;
   /** @deprecated */
   id?: number | null;
   /** Layout of panels */
@@ -114,7 +116,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
-  meta: DashboardMeta;
+  meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
   /** Panel to inspect */
@@ -202,6 +204,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
+    const isNew = locationService.getLocation().pathname === '/dashboard/new';
 
     window.__grafanaSceneContext = this;
 
@@ -212,7 +215,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._changeTracker.startTrackingChanges();
     }
 
-    if (this.state.meta.isNew) {
+    if (isNew) {
       this.onEnterEditMode();
       this.setState({ isDirty: true });
     }
@@ -286,7 +289,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         url: result.url,
         slug: result.slug,
         folderUid: folderUid,
-        isNew: false,
         version: result.version,
       },
     });
@@ -417,10 +419,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel, title, uid } = this.state;
-
-    if (meta.dashboardNotFound) {
-      return { text: 'Not found' };
-    }
+    const isNew = !Boolean(uid);
 
     let pageNav: NavModelItem = {
       text: title,
@@ -429,7 +428,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot,
+        isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
         isSnapshot: meta.isSnapshot,
       }),
     };
