@@ -67,7 +67,6 @@ import { backendSrv } from './core/services/backend_srv';
 import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
-import { DashboardBenchmarkBackend } from './core/services/echo/backends/DashboardBenchmarkBackend';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { BrowserConsoleBackend } from './core/services/echo/backends/analytics/BrowseConsoleBackend';
