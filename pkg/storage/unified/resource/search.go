@@ -230,6 +230,9 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 
 // Search implements ResourceIndexServer.
 func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
+	defer span.End()
+
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
 		Namespace: req.Options.Key.Namespace,
@@ -467,6 +470,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
+	defer span.End()
+
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
