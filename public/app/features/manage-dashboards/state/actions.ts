@@ -287,7 +287,7 @@ export async function searchFolders(
       title: item.name,
       url: item.url,
       type: DashboardSearchItemType.DashFolder,
-      tags: item.tags || [],
+      tags: item.tags ?? [],
       isStarred: false,
       folderId: 0,
       folderUid: item.location || 'general',
