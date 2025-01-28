@@ -244,9 +244,9 @@ Click **Download CSV** in the top-right corner of the screen to download a zippe
 
 #### Table data in PDF
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, as well as in [Grafana Cloud](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
 
@@ -274,6 +274,8 @@ Options vary depending on the frequency you select.
 
 At this step, enter information related to sharing the report:
 
+<!-- vale Grafana.GoogleLyHyphens = NO -->
+
 <!-- prettier-ignore-start -->
 
 | Option | Description |
@@ -285,6 +287,8 @@ At this step, enter information related to sharing the report:
 | Include a dashboard link | Include a links to the dashboards in the report email. |
 
 <!-- prettier-ignore-end -->
+
+<!-- vale Grafana.GoogleLyHyphens = YES -->
 
 Click **Send test email** in the top-right corner of the screen to verify that the configuration works as expected and to verify that emails are working.
 You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
