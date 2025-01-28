@@ -232,10 +232,6 @@
 /devenv/dev-dashboards/panel-common @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-dashlist @grafana/dashboards-squad
 /devenv/dev-dashboards/live @grafana/dashboards-squad
-/devenv/dev-dashboards/benchmark/bench-query-variable-single-panel.json @grafana/dashboards-squad
-/devenv/dev-dashboards/benchmark/bench-single-panel.json @grafana/dashboards-squad
-/devenv/dev-dashboards/benchmark/bench-slow-query.json @grafana/dashboards-squad
-/devenv/dev-dashboards/benchmark/bench-text-panel.json @grafana/dashboards-squad
 
 /devenv/dev-dashboards/panel-flamegraph/ @grafana/observability-traces-and-profiling
 /devenv/dev-dashboards/panel-polystat @grafana/plugins-platform-frontend
