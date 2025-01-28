@@ -66,12 +66,12 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
       for (const element of root.elements) {
         if (element.oneClickMode === OneClickMode.Link || element.oneClickLinks) {
           element.links[0].oneClick = true;
-          delete element.oneClickMode;
-          delete element.oneClickLinks;
         } else if (element.oneClickMode === OneClickMode.Action) {
           element.actions[0].oneClick = true;
-          delete element.oneClickMode;
         }
+
+        delete element.oneClickMode;
+        delete element.oneClickLinks;
       }
     }
   }
