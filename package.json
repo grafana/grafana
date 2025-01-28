@@ -120,7 +120,7 @@
     "@types/jquery": "3.5.32",
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
-    "@types/lodash": "4.17.14",
+    "@types/lodash": "4.17.15",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
     "@types/node": "22.10.10",
