@@ -1,4 +1,4 @@
-package folders
+package folderimpl
 
 import (
 	"testing"
