@@ -349,7 +349,7 @@
     "ml-regression-polynomial": "^3.0.0",
     "ml-regression-simple-linear": "^3.0.0",
     "moment": "2.30.1",
-    "moment-timezone": "0.5.46",
+    "moment-timezone": "0.5.47",
     "monaco-editor": "0.34.1",
     "moveable": "0.53.0",
     "nanoid": "^5.0.4",
