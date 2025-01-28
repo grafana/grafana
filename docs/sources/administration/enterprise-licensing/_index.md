@@ -246,6 +246,14 @@ Your license is controlled by the following rules:
 
 As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration]({{< relref "#license-expiration" >}}).
 
+**License token expiration:** Your license must contain a valid token, which renews periodically.
+
+A license token is a digital key that activates your license. By default, license tokens renew every 7 days by calling the Grafana.com API. Short-lived license tokens enable more frequent validation that licenses are compliant, and allow for more frequent license updates - for example, adding users or invalidating a compromised license.
+
+To view the details of your license token, sign in to Grafana Enterprise as a Server Administrator and visit **Administration** > **General** > **Statistics and licensing**. Token details are in the Token section under License Details.
+
+License token renewal requires internet access, and requires that the `auto_refresh_license` [configuration setting](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license) be set to `true`. If your Grafana Enterprise instance cannot connect to the internet, contact your Grafana Labs account team for additional options for token renewal and license audit.
+
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
 The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}) configuration setting.
@@ -264,7 +272,7 @@ For instructions about how to activate your license after it is updated, refer t
 
 ## Usage billing
 
-Standard Grafana Enterprise licenses include a certain number of seats that can be used, and prevent more users logging into Grafana than have been licensed. This makes sense if you prefer a predictable bill. It can however be a problem if you anticipate uneven usage patterns over time or when it's critical that no user ever be prevented from logging into Grafana due to capacity constraints.
+Standard Grafana Enterprise licenses include a certain number of seats that can be used, and prevent more users logging into Grafana than have been licensed. This makes sense if you prefer a predictable bill. It can however be a problem if you anticipate uneven usage patterns over time or when it's critical that no user ever be prevented from logging in to Grafana due to capacity constraints.
 
 For those use-cases we support usage-based billing, where your license includes a certain number of included users and you are billed on a monthly basis for any excess active users during the month.
 
