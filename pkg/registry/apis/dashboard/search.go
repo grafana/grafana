@@ -143,6 +143,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Schema:      spec.StringProperty(),
 									},
 								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "folderUIDs",
+										In:          "query",
+										Description: "search/list dashboards by folder uid",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -381,6 +390,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			Key:      resource.SEARCH_FIELD_NAME,
 			Operator: "in",
 			Values:   dashboardUids,
+		}}
+	}
+
+	folderUids, ok := queryParams["folderUIDs"]
+	if ok {
+		searchRequest.Options.Fields = []*resource.Requirement{{
+			Key:      resource.SEARCH_FIELD_FOLDER,
+			Operator: "in",
+			Values:   folderUids,
 		}}
 	}
 

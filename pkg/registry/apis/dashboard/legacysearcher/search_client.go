@@ -72,6 +72,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		} else if field.Key == resource.SEARCH_FIELD_NAME {
 			query.DashboardUIDs = field.GetValues()
 			query.DashboardIds = nil
+		} else if field.Key == resource.SEARCH_FIELD_FOLDER {
+			query.FolderUIDs = field.GetValues()
 		}
 	}
 
