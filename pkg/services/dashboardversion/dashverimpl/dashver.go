@@ -287,7 +287,7 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 	// by that user
 	if obj.GetUpdatedBy() != "" {
 		updatedBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetUpdatedBy())
-		if err == nil {
+		if err == nil && updatedBy != nil {
 			createdBy = updatedBy
 		}
 	}
