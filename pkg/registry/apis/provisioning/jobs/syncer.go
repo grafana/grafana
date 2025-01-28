@@ -418,6 +418,7 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 		}
 	}
 
+	// Replicate the file changes
 	for _, change := range changes {
 		if resources.ShouldIgnorePath(change.Path) {
 			continue
