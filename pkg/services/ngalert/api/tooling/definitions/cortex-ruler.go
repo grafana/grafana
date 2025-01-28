@@ -364,7 +364,7 @@ const (
 type PostableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
-	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	// GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *PostableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
@@ -401,7 +401,7 @@ func (n *PostableExtendedRuleNode) validate() error {
 type GettableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
-	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	// GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *GettableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
@@ -541,6 +541,7 @@ type GettableGrafanaRule struct {
 	Condition            string                         `json:"condition" yaml:"condition"`
 	Data                 []AlertQuery                   `json:"data" yaml:"data"`
 	Updated              time.Time                      `json:"updated" yaml:"updated"`
+	UpdatedBy            *UserInfo                      `json:"updated_by" yaml:"updated_by"`
 	IntervalSeconds      int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
 	Version              int64                          `json:"version" yaml:"version"`
 	UID                  string                         `json:"uid" yaml:"uid"`
@@ -553,6 +554,12 @@ type GettableGrafanaRule struct {
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+// UserInfo represents user-related information, including a unique identifier and a name.
+type UserInfo struct {
+	UID  string `json:"uid"`
+	Name string `json:"name"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

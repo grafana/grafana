@@ -897,7 +897,11 @@ export class ElasticDatasource
    * Get values for a given field.
    * Used for example in getTagValues.
    */
-  getTerms(queryDef: TermsQuery, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
+  getTerms(
+    queryDef: TermsQuery,
+    range = getDefaultTimeRange(),
+    isTagValueQuery = false
+  ): Observable<MetricFindValue[]> {
     const searchType = 'query_then_fetch';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
@@ -919,9 +923,10 @@ export class ElasticDatasource
 
         const buckets = res.responses[0].aggregations['1'].buckets;
         return _map(buckets, (bucket) => {
+          const keyString = String(bucket.key);
           return {
-            text: bucket.key_as_string || bucket.key,
-            value: bucket.key,
+            text: bucket.key_as_string || keyString,
+            value: isTagValueQuery ? keyString : bucket.key,
           };
         });
       })
@@ -979,7 +984,7 @@ export class ElasticDatasource
    * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
   getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
-    return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
+    return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange, true));
   }
 
   /**

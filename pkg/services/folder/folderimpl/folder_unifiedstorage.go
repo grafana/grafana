@@ -106,27 +106,24 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	var dashFolder *folder.Folder
 	var err error
 	switch {
-	case q.UID != nil:
-		if *q.UID == "" {
-			return &folder.GeneralFolder, nil
-		}
+	case q.UID != nil && *q.UID != "":
 		dashFolder, err = s.unifiedStore.Get(ctx, *q)
 		if err != nil {
 			return nil, toFolderError(err)
 		}
 	// nolint:staticcheck
-	case q.ID != nil:
+	case q.ID != nil && *q.ID != 0:
 		dashFolder, err = s.getFolderByIDFromApiServer(ctx, *q.ID, q.OrgID)
 		if err != nil {
 			return nil, toFolderError(err)
 		}
-	case q.Title != nil:
+	case q.Title != nil && *q.Title != "":
 		dashFolder, err = s.getFolderByTitleFromApiServer(ctx, q.OrgID, *q.Title, q.ParentUID)
 		if err != nil {
 			return nil, toFolderError(err)
 		}
 	default:
-		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
+		return &folder.GeneralFolder, nil
 	}
 
 	if dashFolder.IsGeneral() {

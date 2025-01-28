@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Åľęřŧ řūľęş"
-      }
+      },
+      "rulerrule-loading-error": "Fäįľęđ ŧő ľőäđ ŧĥę řūľę"
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
@@ -892,6 +893,9 @@
       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
     },
+    "errors": {
+      "failed-to-load": "Fäįľęđ ŧő ľőäđ đäşĥþőäřđ"
+    },
     "inspect": {
       "data-tab": "Đäŧä",
       "error-tab": "Ēřřőř",
@@ -943,6 +947,12 @@
       "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
+        "no-rules": "Ŧĥęřę äřę ŉő äľęřŧ řūľęş ľįŉĸęđ ŧő ŧĥįş päŉęľ."
+      }
     },
     "toolbar": {
       "add": "Åđđ",
@@ -1805,7 +1815,8 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "mőřę"
+      "more": "mőřę",
+      "see-details": "Ŝęę ľőģ đęŧäįľş"
     },
     "log-rows": {
       "disable-popover": {

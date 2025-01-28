@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectBase } from '@grafana/scenes';
 import { Badge, useStyles2 } from '@grafana/ui';
-import { Trans } from '@grafana/ui/src/utils/i18n';
+import { Trans } from 'app/core/internationalization';
 
 export class NativeHistogramBadge extends SceneObjectBase {
   public static Component = () => {

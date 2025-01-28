@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -181,7 +182,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		recourceClientProvider: f,
 	}
 
-	unifiedStore := ProvideUnifiedStore(k8sHandler)
+	userService := &usertest.FakeUserService{
+		ExpectedUser: &user.User{},
+	}
+
+	unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -419,9 +424,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			t.Run("When get folder by ID should return folder", func(t *testing.T) {
+			t.Run("When get folder by ID and uid is an empty string should return folder by id", func(t *testing.T) {
 				id := int64(123)
+				emptyString := ""
 				query := &folder.GetFolderQuery{
+					UID:          &emptyString,
 					ID:           &id,
 					OrgID:        1,
 					SignedInUser: usr,
@@ -477,10 +484,13 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		})
 
 		t.Run("Returns root folder", func(t *testing.T) {
-			t.Run("When the folder UID is blank should return the root folder", func(t *testing.T) {
+			t.Run("When the folder UID and title are blank, and id is 0, should return the root folder", func(t *testing.T) {
 				emptyString := ""
+				idZero := int64(0)
 				actual, err := folderService.Get(ctx, &folder.GetFolderQuery{
 					UID:          &emptyString,
+					ID:           &idZero,
+					Title:        &emptyString,
 					OrgID:        1,
 					SignedInUser: usr,
 				})

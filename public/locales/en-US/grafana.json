@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Alert rules"
-      }
+      },
+      "rulerrule-loading-error": "Failed to load the rule"
     },
     "rule-state": {
       "creating": "Creating",
@@ -892,6 +893,9 @@
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
+    "errors": {
+      "failed-to-load": "Failed to load dashboard"
+    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Error",
@@ -943,6 +947,12 @@
       "request-time": "Total request time",
       "rows": "Total number rows",
       "table-title": "Stats"
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
+        "no-rules": "There are no alert rules linked to this panel."
+      }
     },
     "toolbar": {
       "add": "Add",
@@ -1805,7 +1815,8 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "more"
+      "more": "more",
+      "see-details": "See log details"
     },
     "log-rows": {
       "disable-popover": {
