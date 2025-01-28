@@ -3,7 +3,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2, Alert, Button } from '@grafana/ui';
-import { t, Trans } from '@grafana/ui/src/utils/i18n';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DataTrail } from '../DataTrail';
 import { reportExploreMetrics } from '../interactions';

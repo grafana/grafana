@@ -10,13 +10,13 @@ import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
-import { Spinner } from '../Spinner/Spinner';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
 
 import { ComboboxBaseProps, AutoSizeConditionals, VIRTUAL_OVERSCAN_ITEMS } from './Combobox';
 import { NotFoundError } from './MessageRows';
 import { OptionListItem } from './OptionListItem';
+import { SuffixIcon } from './SuffixIcon';
 import { ValuePill } from './ValuePill';
 import { itemFilter, itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
@@ -24,6 +24,7 @@ import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 import { ALL_OPTION_VALUE, ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
+import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: T[] | Array<ComboboxOption<T>>;
@@ -34,7 +35,19 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options, placeholder, onChange, value, width, enableAllOption, invalid, loading, disabled } = props;
+  const {
+    options,
+    placeholder,
+    onChange,
+    value,
+    width,
+    enableAllOption,
+    invalid,
+    loading,
+    disabled,
+    minWidth,
+    maxWidth,
+  } = props;
   const isAsync = typeof options === 'function';
 
   const selectedItems = useMemo(() => {
@@ -129,7 +142,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const {
-    //getToggleButtonProps,
+    getToggleButtonProps,
     //getLabelProps,
     isOpen,
     highlightedIndex,
@@ -199,7 +212,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled);
+  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width, minWidth, maxWidth);
 
   const virtualizerOptions = {
     count: items.length,
@@ -214,13 +227,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   // Selected items that show up in the input field
   const visibleItems = isOpen ? selectedItems.slice(0, MAX_SHOWN_ITEMS) : selectedItems.slice(0, shownItems);
 
+  const { inputRef, inputWidth } = useMultiInputAutoSize(inputValue);
   return (
-    <div ref={containerRef}>
-      <div
-        style={{ width: width === 'auto' ? undefined : width }}
-        className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })}
-        ref={measureRef}
-      >
+    <div className={multiStyles.container} ref={containerRef}>
+      <div className={cx(multiStyles.wrapper, { [multiStyles.disabled]: disabled })} ref={measureRef}>
         <span className={multiStyles.pillWrapper}>
           {visibleItems.map((item, index) => (
             <ValuePill
@@ -258,15 +268,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
-                placeholder: selectedItems.length > 0 ? undefined : placeholder,
+                placeholder,
+                ref: inputRef,
+                style: { width: inputWidth },
               })
             )}
           />
-          {loading && (
-            <div className={multiStyles.suffix} ref={suffixMeasureRef}>
-              <Spinner inline={true} />
-            </div>
-          )}
+
+          <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
+            <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+          </div>
         </span>
       </div>
       <Portal>
