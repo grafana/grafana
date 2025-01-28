@@ -281,14 +281,12 @@ func (w *batchWroker) deleteCollection(key *resource.ResourceKey) (*resource.Bat
 // Copy the latest value from history into the active resource table
 func (w *batchWroker) syncCollection(key *resource.ResourceKey, summary *resource.BatchResponse_Summary) error {
 	w.logger.Info("synchronize collection", "key", key.BatchID())
-	if false {
-		_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
-			SQLTemplate: sqltemplate.New(w.dialect),
-			Key:         key,
-		})
-		if err != nil {
-			return err
-		}
+	_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
+		SQLTemplate: sqltemplate.New(w.dialect),
+		Key:         key,
+	})
+	if err != nil {
+		return err
 	}
 
 	w.logger.Info("get stats (still in transaction)", "key", key.BatchID())
