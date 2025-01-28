@@ -5,6 +5,7 @@ import { UseFormSetValue, useForm } from 'react-hook-form';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { DeprecatedInternalId } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -27,6 +28,7 @@ export interface Props {
 
 export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
+  const dashboardId = getDashboardIdFromScene(dashboard);
 
   const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
@@ -138,7 +140,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
           // Old folder picker fields
           value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
-          dashboardId={changedSaveModel.id ?? undefined}
+          dashboardId={dashboardId ?? undefined}
           enableCreateNew
         />
       </Field>
@@ -198,5 +200,14 @@ async function validateDashboardName(title: string, formValues: SaveDashboardAsF
     return true;
   } catch (e) {
     return e instanceof Error ? e.message : 'Dashboard name is invalid';
+  }
+}
+
+function getDashboardIdFromScene(dashboard: DashboardScene) {
+  // if we are working on a k8s dashboard
+  if (dashboard.state.meta.k8s) {
+    return dashboard.state.meta.k8s?.labels?.[DeprecatedInternalId];
+  } else {
+    return dashboard.state.id;
   }
 }
