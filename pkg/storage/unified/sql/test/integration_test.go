@@ -351,6 +351,83 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
+
+	// add 5 events for item1 - should be saved to history
+	rvHistory1, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	require.NoError(t, err)
+	require.Greater(t, rvHistory1, rv1)
+	rvHistory2, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	require.NoError(t, err)
+	require.Greater(t, rvHistory2, rvHistory1)
+	rvHistory3, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	require.NoError(t, err)
+	require.Greater(t, rvHistory3, rvHistory2)
+	rvHistory4, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	require.NoError(t, err)
+	require.Greater(t, rvHistory4, rvHistory3)
+	rvHistory5, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_MODIFIED)
+	require.NoError(t, err)
+	require.Greater(t, rvHistory5, rvHistory4)
+
+	t.Run("fetch first history page at revision with limit", func(t *testing.T) {
+		res, err := server.List(ctx, &resource.ListRequest{
+			Limit:  3,
+			Source: resource.ListRequest_HISTORY,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "namespace",
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "item1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 3)
+		t.Log(res.Items)
+		// should be in desc order, so the newest RVs are returned first
+		require.Equal(t, "item1 MODIFIED", string(res.Items[0].Value))
+		require.Equal(t, rvHistory5, res.Items[0].ResourceVersion)
+		require.Equal(t, "item1 MODIFIED", string(res.Items[1].Value))
+		require.Equal(t, rvHistory4, res.Items[1].ResourceVersion)
+		require.Equal(t, "item1 MODIFIED", string(res.Items[2].Value))
+		require.Equal(t, rvHistory3, res.Items[2].ResourceVersion)
+
+		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		require.NoError(t, err)
+		//  should return the furthest back RV as the next page token
+		require.Equal(t, rvHistory3, continueToken.ResourceVersion)
+	})
+
+	t.Run("fetch second page of history at revision", func(t *testing.T) {
+		continueToken := &sql.ContinueToken{
+			ResourceVersion: rvHistory3,
+			StartOffset:     2,
+		}
+		res, err := server.List(ctx, &resource.ListRequest{
+			NextPageToken: continueToken.String(),
+			Limit:         2,
+			Source:        resource.ListRequest_HISTORY,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "namespace",
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "item1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 2)
+		t.Log(res.Items)
+		require.Equal(t, "item1 MODIFIED", string(res.Items[0].Value))
+		require.Equal(t, rvHistory2, res.Items[0].ResourceVersion)
+		require.Equal(t, "item1 MODIFIED", string(res.Items[1].Value))
+		require.Equal(t, rvHistory1, res.Items[1].ResourceVersion)
+	})
 }
 
 func TestIntegrationBlobSupport(t *testing.T) {

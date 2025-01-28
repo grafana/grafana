@@ -60,6 +60,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
                         icon="history"
                         onClick={() => {
                           showModal(RevertDashboardModal, {
+                            id: version.id,
                             version: version.version,
                             hideModal,
                           });
