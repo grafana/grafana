@@ -33,7 +33,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/
-  explore-profile-install:
+  explore-profiles-install:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/access/
     - pattern: /docs/grafana-cloud/
