@@ -127,7 +127,7 @@ describe('MultiCombobox', () => {
     render(<MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} />);
     const fistPillRemoveButton = await screen.findByRole('button', { name: 'Remove A' });
     await user.click(fistPillRemoveButton);
-    expect(onChange).toHaveBeenCalledWith(['b', 'c']);
+    expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'a'));
   });
 
   it('should remove all selected items when clicking on clear all button', async () => {
