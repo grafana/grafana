@@ -67,6 +67,7 @@ import { backendSrv } from './core/services/backend_srv';
 import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
+import { DashboardBenchmarkBackend } from './core/services/echo/backends/DashboardBenchmarkBackend';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { BrowserConsoleBackend } from './core/services/echo/backends/analytics/BrowseConsoleBackend';
@@ -294,7 +295,15 @@ function initExtensions() {
 }
 
 function initEchoSrv() {
-  setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
+  if (process.env.BENCHMARK) {
+    const echo = new Echo({ debug: true });
+    //@ts-ignore
+    window.__grafanaEcho = echo;
+    setEchoSrv(echo);
+    registerEchoBackend(new DashboardBenchmarkBackend({}));
+  } else {
+    setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
+  }
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';

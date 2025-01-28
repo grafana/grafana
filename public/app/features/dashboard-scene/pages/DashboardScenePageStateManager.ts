@@ -2,6 +2,7 @@ import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { sceneGraph } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -135,7 +136,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       this.setState({ dashboard: dashboard, isLoading: false, options });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
+      const queryController = sceneGraph.getQueryController(dashboard);
+
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+      queryController?.startProfile(dashboard);
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
