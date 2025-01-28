@@ -2,8 +2,13 @@ package types
 
 import (
 	"context"
+	"errors"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+)
+
+var (
+	ErrSecretNotFound = errors.New("secret not found")
 )
 
 type KeeperType string
