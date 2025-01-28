@@ -39,7 +39,7 @@ type Service struct {
 	log       log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, features featuremgmt.FeatureToggles,
+func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
 	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient) dashver.Service {
 	return &Service{
 		cfg: cfg,
@@ -49,10 +49,12 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 		},
 		features: features,
 		k8sclient: client.NewK8sHandler(
+			cfg,
 			request.GetNamespaceMapper(cfg),
 			v0alpha1.DashboardResourceInfo.GroupVersionResource(),
 			restConfigProvider,
 			unified,
+			dashboardStore,
 			userService,
 		),
 		dashSvc: dashboardService,
