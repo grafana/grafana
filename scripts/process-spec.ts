@@ -16,8 +16,8 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
   // Process 'paths' property
   const newPaths: Record<string, unknown> = {};
   for (const [path, pathItem] of Object.entries<Record<string, unknown>>(newSpec.paths)) {
-    // Remove 'watch' paths as they're deprecated
-    if (path.includes('/watch/')) {
+    // Remove 'watch' paths as they're deprecated / remove empty path items
+    if (path.includes('/watch/') || !pathItem) {
       continue;
     }
     // Remove the specified part from the path key
@@ -97,27 +97,34 @@ function simplifySchemaName(schemaName: string) {
     return schemaName;
   }
 }
-// Process all OpenAPI specs in the specs directory
-const specsDir = path.resolve(__dirname, '../data/specs');
 
-// Get all subdirectories in the specs folder
-const specFolders = fs.readdirSync(specsDir).filter((file: string) => {
-  return fs.statSync(path.join(specsDir, file)).isDirectory();
-});
+const sourceDir = path.resolve(__dirname, '../openapi');
+const outputDir = path.resolve(__dirname, '../data/openapi');
 
-// Process each spec folder
-for (const folder of specFolders) {
-  const inputPath = path.join(specsDir, folder, 'openapi.json');
-  const outputPath = path.join(specsDir, folder, 'spec.json');
+// Create the output directory if it doesn't exist
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
 
-  // Skip if input file doesn't exist
-  if (!fs.existsSync(inputPath)) {
+const files = fs.readdirSync(sourceDir).filter((file: string) => file.endsWith('.json'));
+
+for (const file of files) {
+  const inputPath = path.join(sourceDir, file);
+  const outputPath = path.join(outputDir, file);
+
+  console.log(`Processing file "${file}"...`);
+
+  const fileContent = fs.readFileSync(inputPath, 'utf-8');
+
+  let inputSpec;
+  try {
+    inputSpec = JSON.parse(fileContent);
+  } catch (err) {
+    console.error(`Invalid JSON file "${file}". Skipping this file.`);
     continue;
   }
 
-  console.log(`Processing spec for ${folder}...`);
-  const inputSpec = JSON.parse(fs.readFileSync(inputPath, 'utf-8'));
   const outputSpec = processOpenAPISpec(inputSpec);
   fs.writeFileSync(outputPath, JSON.stringify(outputSpec, null, 2), 'utf-8');
-  console.log(`Processing completed for ${folder}`);
+  console.log(`Processing completed for file "${file}".`);
 }

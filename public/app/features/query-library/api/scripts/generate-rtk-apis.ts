@@ -6,7 +6,7 @@
 import { ConfigFile } from '@rtk-query/codegen-openapi';
 import { accessSync } from 'fs';
 
-const schemaFile = '../../../../../../data/specs/query-library/spec.json';
+const schemaFile = '../../../../../../data/openapi/peakq.grafana.app-v0alpha1.json';
 
 try {
   // Check we have the OpenAPI before generating query library RTK APIs,
