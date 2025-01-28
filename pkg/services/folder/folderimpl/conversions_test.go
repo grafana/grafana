@@ -1,6 +1,7 @@
-package folders
+package folderimpl
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 func TestFolderConversions(t *testing.T) {
@@ -29,8 +32,8 @@ func TestFolderConversions(t *testing.T) {
           "grafana.app/folder": "parent-folder-name",
           "grafana.app/updatedTimestamp": "2022-12-02T07:02:02Z",
           "grafana.app/repoName": "example-repo",
-          "grafana.app/createdBy": "user:abc",
-          "grafana.app/updatedBy": "service:xyz"
+          "grafana.app/createdBy": "user:useruid",
+          "grafana.app/updatedBy": "user:useruid"
         }
       },
       "spec": {
@@ -44,7 +47,12 @@ func TestFolderConversions(t *testing.T) {
 	created = created.UTC()
 	require.NoError(t, err)
 
-	converted, err := UnstructuredToLegacyFolder(input)
+	fake := usertest.NewUserServiceFake()
+	fake.ExpectedUser = &user.User{ID: 10, UID: "useruid"}
+
+	fs := ProvideUnifiedStore(nil, fake)
+
+	converted, err := fs.UnstructuredToLegacyFolder(context.Background(), input)
 	require.NoError(t, err)
 	require.Equal(t, folder.Folder{
 		ID:          234,
@@ -58,5 +66,7 @@ func TestFolderConversions(t *testing.T) {
 		Repository:  "example-repo",
 		Created:     created,
 		Updated:     created.Add(time.Hour * 5),
+		CreatedBy:   10,
+		UpdatedBy:   10,
 	}, *converted)
 }
