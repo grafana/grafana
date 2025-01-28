@@ -512,7 +512,7 @@ func (b *bleveIndex) getIndex(
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex,
 ) (bleve.Index, error) {
-	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
+	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
 	defer span.End()
 
 	if len(req.Federated) != len(federate) {
@@ -755,7 +755,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 }
 
 func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
-	ctx, span := b.tracing.Start(ctx, tracingPrexfixBleve+"hitsToTable")
+	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"hitsToTable")
 	defer span.End()
 
 	fields := []*resource.ResourceTableColumnDefinition{}
