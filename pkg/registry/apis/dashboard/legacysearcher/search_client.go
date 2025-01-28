@@ -3,10 +3,12 @@ package legacysearcher
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -38,7 +40,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// - type
 	// - sort
 	// - permission
-	// - dashboardIds
 	// - dashboardUIDs
 	// - folderIds
 	// - folderUIDs
@@ -50,6 +51,20 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		Type:         searchstore.TypeDashboard,
 		SignedInUser: user,
 		IsDeleted:    req.IsDeleted,
+	}
+
+	for _, field := range req.Options.Labels {
+		if field.Key == utils.LabelKeyDeprecatedInternalID {
+			values := field.GetValues()
+			dashboardIds := make([]int64, len(values))
+			for i, id := range values {
+				if n, err := strconv.ParseInt(id, 10, 64); err == nil {
+					dashboardIds[i] = n
+				}
+			}
+
+			query.DashboardIds = dashboardIds
+		}
 	}
 
 	for _, field := range req.Options.Fields {

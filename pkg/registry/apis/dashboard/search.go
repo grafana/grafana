@@ -346,6 +346,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
+	// dashboardIds filter
+	dashboardIds, ok := queryParams["dashboardIds"]
+	if ok {
+		searchRequest.Options.Labels = append(searchRequest.Options.Labels, &resource.Requirement{
+			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+			Operator: "in",
+			Values:   dashboardIds,
+		})
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
