@@ -655,6 +655,10 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 			input = field
 		}
 
+		if slices.Contains(DashboardFields(), input) {
+			input = "fields." + input
+		}
+
 		if sort.Desc {
 			input = "-" + input
 		}
