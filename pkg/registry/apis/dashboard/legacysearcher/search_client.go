@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"google.golang.org/grpc"
 )
@@ -39,17 +39,26 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// - folderIds (won't support, must use folderUIDs)
 	// - type (dash-db or dash-folder) this is handled in dosearch
 	// - permission
-	// - sort (default by title)
 	query := &dashboards.FindPersistedDashboardsQuery{
 		Title: req.Query,
 		Limit: req.Limit,
 		Page:  req.Page,
 		// FolderUIDs:   req.FolderUIDs,
-		Type:         searchstore.TypeDashboard,
 		SignedInUser: user,
 		IsDeleted:    req.IsDeleted,
 	}
 
+	// technically, there exists the ability to register multiple ways of sorting using the legacy database
+	// see RegisterSortOption in pkg/services/search/sorting.go
+	// however, it doesn't look like we are taking advantage of that. And since by default the legacy
+	// sql will sort by title ascending, we only really need to handle the "alpha-desc" case
+	if req.SortBy != nil {
+		for _, sort := range req.SortBy {
+			if sort.Field == "title" && sort.Desc == true {
+				query.Sort = search.SortAlphaDesc
+			}
+		}
+	}
 	for _, field := range req.Options.Labels {
 		if field.Key == utils.LabelKeyDeprecatedInternalID {
 			values := field.GetValues()

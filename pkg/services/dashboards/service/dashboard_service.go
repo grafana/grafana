@@ -1725,6 +1725,14 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Page = query.Page
 	}
 
+	// technically, there exists the ability to register multiple ways of sorting using the legacy database
+	// see RegisterSortOption in pkg/services/search/sorting.go
+	// however, it doesn't look like we are taking advantage of that. And since by default the legacy
+	// sql will sort by title ascending, we only really need to handle the "alpha-desc" case
+	if query.Sort.Name == "alpha-desc" {
+		request.SortBy = append(request.SortBy, &resource.ResourceSearchRequest_Sort{Field: resource.SEARCH_FIELD_TITLE, Desc: true})
+	}
+
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
 	if err != nil {
 		return nil, err
