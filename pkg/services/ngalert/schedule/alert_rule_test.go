@@ -3,6 +3,7 @@ package schedule
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -278,7 +279,12 @@ func TestAlertRuleIdentifier(t *testing.T) {
 }
 
 func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *alertRule {
-	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
+	managerCfg := state.ManagerCfg{
+		Historian: &state.FakeHistorian{},
+		Log:       log.NewNopLogger(),
+	}
+	st := state.NewManager(managerCfg, state.NewNoopPersister())
+	return newAlertRule(ctx, key, nil, false, 0, nil, st, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -477,12 +483,26 @@ func TestRuleRoutine(t *testing.T) {
 	}
 
 	t.Run("should exit", func(t *testing.T) {
-		t.Run("and not clear the state if parent context is cancelled", func(t *testing.T) {
-			stoppedChan := make(chan error)
-			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+		rule := gen.With(withQueryForState(t, eval.Alerting)).GenerateRef()
+		genEvalResults := func(now time.Time) eval.Results {
+			return eval.GenerateResults(
+				rand.Intn(5)+1,
+				eval.ResultGen(
+					eval.WithEvaluatedAt(now),
+					// State should be alerting to test resolved notifications in some cases.
+					// When the alert rule is firing and is deleted, we should send
+					// resolved notifications.
+					eval.WithState(eval.Alerting),
+				),
+			)
+		}
 
-			rule := gen.GenerateRef()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
+		t.Run("and clean up the state if parent context is cancelled", func(t *testing.T) {
+			stoppedChan := make(chan error)
+			sender := NewSyncAlertsSenderMock()
+			sch, _, _, _ := createSchedule(make(chan time.Time), sender)
+
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
@@ -497,14 +517,40 @@ func TestRuleRoutine(t *testing.T) {
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
-			require.Equal(t, len(expectedStates), len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)))
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			sender.AlertsSenderMock.AssertNotCalled(t, "Send")
 		})
-		t.Run("and clean up the state if delete is cancellation reason for inner context", func(t *testing.T) {
-			stoppedChan := make(chan error)
-			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
-			rule := gen.GenerateRef()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
+		t.Run("and clean up the state but not send anything if the reason is not rule deleted", func(t *testing.T) {
+			stoppedChan := make(chan error)
+			sender := NewSyncAlertsSenderMock()
+			sch, _, _, _ := createSchedule(make(chan time.Time), sender)
+
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+
+			factory := ruleFactoryFromScheduler(sch)
+			ruleInfo := factory.new(context.Background(), rule)
+			go func() {
+				err := ruleInfo.Run()
+				stoppedChan <- err
+			}()
+
+			ruleInfo.Stop(errors.New("some reason"))
+			err := waitForErrChannel(t, stoppedChan)
+			require.NoError(t, err)
+
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			sender.AlertsSenderMock.AssertNotCalled(t, "Send")
+		})
+
+		t.Run("and send resolved notifications if errRuleDeleted is the reason for stopping", func(t *testing.T) {
+			stoppedChan := make(chan error)
+			sender := NewSyncAlertsSenderMock()
+			sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Times(1)
+			sch, _, _, _ := createSchedule(make(chan time.Time), sender)
+
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
@@ -519,6 +565,7 @@ func TestRuleRoutine(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			sender.AlertsSenderMock.AssertExpectations(t)
 		})
 	})
 

@@ -242,7 +242,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
 
-	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+	states := st.ForgetStateByRuleUID(ctx, ruleKey)
 
 	if len(states) == 0 {
 		return nil
@@ -280,9 +280,17 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
 		}
 	}
+
 	logger.Info("Rules state was reset", "states", len(states))
 
 	return transitions
+}
+
+func (st *Manager) ForgetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup) []*State {
+	logger := st.log.FromContext(ctx)
+	logger.Debug("Removing rule state from cache")
+
+	return st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
 }
 
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
