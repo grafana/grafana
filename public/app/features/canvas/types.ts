@@ -2,6 +2,12 @@ import { LinkModel } from '@grafana/data/src';
 import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from '@grafana/schema';
 import { BackgroundImageSize } from 'app/plugins/panel/canvas/panelcfg.gen';
 
+export enum OneClickMode {
+  Action = 'action',
+  Link = 'link',
+  Off = 'off',
+}
+
 export enum QuickPlacement {
   Top = 'top',
   Bottom = 'bottom',

@@ -18,6 +18,7 @@ import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plu
 import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
+import { OneClickMode } from '../types';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -46,8 +47,8 @@ export class ElementState implements LayerElement {
 
   getLinks?: (config: ValueLinkConfig) => LinkModel[];
 
-  hasOneClickLink?: boolean;
-  hasOneClickAction?: boolean;
+  // cached for tooltips/mousemove
+  oneClickMode = OneClickMode.Off;
 
   constructor(
     public item: CanvasElementItem,
@@ -73,6 +74,12 @@ export class ElementState implements LayerElement {
       options.name = newName ?? fallbackName;
     }
     scene?.byName.set(options.name, this);
+
+    if (this.options.links?.some((link) => link.oneClick === true)) {
+      this.oneClickMode = OneClickMode.Link;
+    } else if (this.options.actions?.some((action) => action.oneClick === true)) {
+      this.oneClickMode = OneClickMode.Action;
+    }
   }
 
   private getScene(): Scene | undefined {
@@ -590,8 +597,6 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    this.hasOneClickLink = this.options.links?.some((link) => link.oneClick === true);
-    this.hasOneClickAction = this.options.actions?.some((action) => action.oneClick === true);
 
     const shouldHandleTooltip = !scene?.isEditingEnabled && !scene?.tooltip?.isOpen;
     if (shouldHandleTooltip) {
@@ -600,22 +605,19 @@ export class ElementState implements LayerElement {
       scene?.connections.handleMouseEnter(event);
     }
 
-    const shouldHandleOneClickLink = this.hasOneClickLink && this.options.links && this.options.links.length > 0;
-
-    const shouldHandleOneClickAction =
-      this.hasOneClickAction && this.options.actions && this.options.actions.length > 0;
-
-    if (shouldHandleOneClickLink && this.div) {
-      const primaryDataLink = this.getPrimaryDataLink();
-      if (primaryDataLink) {
-        this.div.style.cursor = 'pointer';
-        this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
-      }
-    } else if (shouldHandleOneClickAction && this.div) {
-      const primaryAction = this.getPrimaryAction();
-      if (primaryAction) {
-        this.div.style.cursor = 'pointer';
-        this.div.title = primaryAction.title;
+    if (this.div != null) {
+      if (this.oneClickMode === OneClickMode.Link) {
+        const primaryDataLink = this.getPrimaryDataLink();
+        if (primaryDataLink) {
+          this.div.style.cursor = 'pointer';
+          this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
+        }
+      } else if (this.oneClickMode === OneClickMode.Action) {
+        const primaryAction = this.getPrimaryAction();
+        if (primaryAction) {
+          this.div.style.cursor = 'pointer';
+          this.div.title = primaryAction.title;
+        }
       }
     }
   };
@@ -679,7 +681,7 @@ export class ElementState implements LayerElement {
       scene.tooltipCallback(undefined);
     }
 
-    if ((this.hasOneClickLink || this.hasOneClickAction) && this.div) {
+    if (this.oneClickMode !== OneClickMode.Off && this.div) {
       this.div.style.cursor = 'auto';
       this.div.title = '';
     }
@@ -687,12 +689,12 @@ export class ElementState implements LayerElement {
 
   onElementClick = (event: React.MouseEvent) => {
     // If one-click access is enabled, open the primary link
-    if (this.hasOneClickLink) {
+    if (this.oneClickMode === OneClickMode.Link) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         window.open(primaryDataLink.href, primaryDataLink.target ?? '_self');
       }
-    } else if (this.hasOneClickAction) {
+    } else if (this.oneClickMode === OneClickMode.Action) {
       let primaryAction = this.getPrimaryAction();
       if (primaryAction && primaryAction.onClick) {
         primaryAction.onClick(event);

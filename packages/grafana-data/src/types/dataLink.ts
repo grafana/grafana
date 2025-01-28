@@ -132,8 +132,3 @@ export enum VariableSuggestionsScope {
   Values = 'values',
 }
 
-export enum OneClickMode {
-  Action = 'action',
-  Link = 'link',
-  Off = 'off',
-}
