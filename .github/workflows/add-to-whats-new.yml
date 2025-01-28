@@ -13,4 +13,4 @@ jobs:
       - uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728 # v2.9.1
         with:
           message: |
-            Since you've added the `Add to what's new` label, consider drafting a [What's new note](https://admin.grafana.com/content-admin/#/collections/whats-new/) for this feature.
+            Since you've added the `Add to what's new` label, consider drafting a [What's new note](https://admin.grafana.com/content-admin/#/collections/whats-new/new) for this feature.
