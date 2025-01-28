@@ -170,14 +170,6 @@ When you add the offset, the resulting visualization makes the datasets appear t
 
 You can [link alert rules](ref:link-alert) to time series visualizations in the form of annotations to observe when alerts fire and are resolved. In addition, you can create alert rules from the **Alert** tab within the [panel editor](ref:panel-editor-alerts).
 
-## Pan and zoom keyboard shortcuts
-
-Use the following pointer and keyboard shortcuts to pan and zoom in the time series visualization:
-
-- **Y-axis zoom** - Shift + left button drag
-- **Reset** - Double-click (if zoomed in)
-- **Zoom out to larger range and re-query** - Double-click or Control + z (if not zoomed in)
-
 ## Special overrides
 
 The following overrides help you further refine a time series visualization.
