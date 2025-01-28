@@ -360,6 +360,11 @@ type DeleteDashboardsInFolderRequest struct {
 	OrgID      int64
 }
 
+type GetAllDashboardsInFolderRequest struct {
+	FolderUIDs []string
+	OrgID      int64
+}
+
 //
 // DASHBOARD ACL
 //
@@ -428,6 +433,10 @@ type FindPersistedDashboardsQuery struct {
 	Permission dashboardaccess.PermissionType
 	Sort       model.SortOption
 	IsDeleted  bool
+
+	ProvisionedRepo       string
+	ProvisionedPath       string
+	ProvisionedReposNotIn []string
 
 	Filters []any
 

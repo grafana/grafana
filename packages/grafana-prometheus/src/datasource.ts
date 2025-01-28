@@ -71,6 +71,7 @@ import {
   RawRecordingRules,
   RuleQueryMapping,
 } from './types';
+import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
@@ -705,7 +706,11 @@ export class PrometheusDatasource
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
-        const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const interpolatedQuery = this.templateSrv.replace(
+          query.expr,
+          scopedVars,
+          this.interpolateExploreMetrics(query.fromExploreMetrics)
+        );
         const replacedInterpolatedQuery = config.featureToggles.promQLScope
           ? interpolatedQuery
           : this.templateSrv.replace(
@@ -925,7 +930,11 @@ export class PrometheusDatasource
 
     // We need a first replace to evaluate variables before applying adhoc filters
     // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
-    const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+    const expr = this.templateSrv.replace(
+      target.expr,
+      variables,
+      this.interpolateExploreMetrics(target.fromExploreMetrics)
+    );
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
@@ -948,6 +957,20 @@ export class PrometheusDatasource
 
   interpolateString(string: string, scopedVars?: ScopedVars) {
     return this.templateSrv.replace(string, scopedVars, this.interpolateQueryExpr);
+  }
+
+  interpolateExploreMetrics(fromExploreMetrics?: boolean) {
+    return (value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) => {
+      if (typeof value === 'string' && fromExploreMetrics) {
+        if (variable.name === 'filters') {
+          return wrapUtf8Filters(value);
+        }
+        if (variable.name === 'groupby') {
+          return utf8Support(value);
+        }
+      }
+      return this.interpolateQueryExpr(value, variable);
+    };
   }
 
   getDebounceTimeInMilliseconds(): number {

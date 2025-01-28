@@ -206,6 +206,10 @@ export class LokiDatasource
    * @returns A supplemented Loki query or undefined if unsupported.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: LokiQuery): LokiQuery | undefined {
+    if (query.hide) {
+      return undefined;
+    }
+
     const normalizedQuery = getNormalizedLokiQuery(query);
     let expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
@@ -542,6 +546,11 @@ export class LokiDatasource
     if (!res.data && res.values) {
       return res.values ?? [];
     }
+
+    // detected_fields has a different return structure then other metadata responses
+    if (!res.data && res.fields) {
+      return res.fields ?? [];
+    }
     return res.data ?? [];
   }
 
@@ -814,7 +823,7 @@ export class LokiDatasource
   interpolateQueryExpr(value: any, variable: QueryVariableModel | CustomVariableModel) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
-      return lokiRegularEscape(value);
+      return value;
     }
 
     if (typeof value === 'string') {
@@ -1097,13 +1106,8 @@ export class LokiDatasource
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
       const { key, operator } = filter;
       let { value } = filter;
-      if (isRegexSelector(operator)) {
-        // Adhoc filters don't support multiselect, therefore if user selects regex operator
-        // we are going to consider value to be regex filter and use lokiRegularEscape
-        // that does not escape regex special characters (e.g. .*test.* => .*test.*)
-        value = lokiRegularEscape(value);
-      } else {
-        // Otherwise, we want to escape special characters in value
+      if (!isRegexSelector(operator)) {
+        // We want to escape special characters in value for non-regex selectors to match the same char in the log line as the user types in the input
         value = escapeLabelValueInSelector(value, operator);
       }
       return addLabelToQuery(acc, key, operator, value);
@@ -1207,20 +1211,9 @@ export class LokiDatasource
     };
   }
 }
-
-// NOTE: these two functions are very similar to the escapeLabelValueIn* functions
-// in language_utils.ts, but they are not exactly the same algorithm, and we found
-// no way to reuse one in the another or vice versa.
-export function lokiRegularEscape<T>(value: T) {
-  if (typeof value === 'string') {
-    return value.replace(/'/g, "\\\\'");
-  }
-  return value;
-}
-
 export function lokiSpecialRegexEscape<T>(value: T) {
   if (typeof value === 'string') {
-    return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
+    return value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&');
   }
   return value;
 }

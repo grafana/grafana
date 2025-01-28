@@ -431,29 +431,27 @@ export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
   return idxs.map((id) => getId(dataArray[id]));
 }
 
-export function isPluginUpdateable(plugin: CatalogPlugin) {
+function isPluginModifiable(plugin: CatalogPlugin) {
+  if (
+    plugin.isProvisioned || //provisioned plugins cannot be modified
+    plugin.isCore || //core plugins cannot be modified
+    plugin.type === PluginType.renderer || // currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall
+    plugin.isPreinstalled.withVersion || // Preinstalled plugins (with specified version) cannot be modified
+    plugin.isManaged // Managed plugins cannot be modified
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export function isPluginUpdatable(plugin: CatalogPlugin) {
+  if (!isPluginModifiable(plugin)) {
+    return false;
+  }
+
   // If there is no update available, the plugin cannot be updated
   if (!plugin.hasUpdate) {
-    return false;
-  }
-
-  // Provisioned plugins cannot be updated
-  if (plugin.isProvisioned) {
-    return false;
-  }
-
-  // Core plugins cannot be updated
-  if (plugin.isCore) {
-    return false;
-  }
-
-  // Currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall.
-  if (plugin.type === PluginType.renderer) {
-    return false;
-  }
-
-  // Preinstalled plugins (with specified version) cannot be updated
-  if (plugin.isPreinstalled.withVersion) {
     return false;
   }
 
@@ -462,10 +460,20 @@ export function isPluginUpdateable(plugin: CatalogPlugin) {
     return false;
   }
 
-  // Managed plugins cannot be updated
-  if (plugin.isManaged) {
-    return false;
+  return true;
+}
+
+export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
+  if (
+    !isPluginModifiable(plugin) ||
+    plugin.type === PluginType.secretsmanager ||
+    (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
+    !plugin.isPublished ||
+    plugin.isDisabled ||
+    !isInstallControlsEnabled()
+  ) {
+    return true;
   }
 
-  return true;
+  return false;
 }

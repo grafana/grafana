@@ -1,6 +1,8 @@
 package authnimpl
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -80,9 +82,24 @@ func ProvideRegistration(
 		}
 	}
 
-	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
-		authnSvc.RegisterClient(passwordless)
+	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabled(context.Background(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+		hasEnabledProviders := authnSvc.IsClientEnabled(authn.ClientSAML) || authnSvc.IsClientEnabled(authn.ClientLDAP)
+		if !hasEnabledProviders {
+			oauthInfos := socialService.GetOAuthInfoProviders()
+			for _, provider := range oauthInfos {
+				if provider.Enabled {
+					hasEnabledProviders = true
+					break
+				}
+			}
+		}
+
+		if hasEnabledProviders {
+			logger.Error("Failed to configure passwordless magic link auth: cannot enable both passwordless magic link auth & SSO")
+		} else {
+			passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
+			authnSvc.RegisterClient(passwordless)
+		}
 	}
 
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {

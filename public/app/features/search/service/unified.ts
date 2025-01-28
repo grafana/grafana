@@ -58,12 +58,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-
-    if (query.kind?.length === 1 && query.kind[0] === 'dashboard') {
-      // TODO: this is browse mode, so skip the search
-      return noDataResponse();
-    }
-
     return this.doSearchQuery(query);
   }
 
@@ -72,10 +66,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
     // get the starred dashboards
-    const starsUIDS = await getBackendSrv().get('api/user/stars');
-    if (starsUIDS?.length) {
+    const starsIds = await getBackendSrv().get('api/user/stars');
+    if (starsIds?.length) {
       return this.doSearchQuery({
-        uid: starsUIDS,
+        ...query,
+        name: starsIds,
         query: query.query ?? '*',
       });
     }
@@ -222,6 +217,15 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.sort) {
       const sort = query.sort.replace('_sort', '').replace('name', 'title');
       uri += `&sort=${sort}`;
+    }
+
+    if (query.name?.length) {
+      uri += '&' + query.name.map((name) => `name=${encodeURIComponent(name)}`).join('&');
+    }
+
+    if (query.uid?.length) {
+      // legacy support for filtering by dashboard uid
+      uri += '&' + query.uid.map((name) => `name=${encodeURIComponent(name)}`).join('&');
     }
     return uri;
   }
