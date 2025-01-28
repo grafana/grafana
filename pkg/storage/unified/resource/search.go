@@ -448,6 +448,7 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
 	if latencySeconds > 5 {
+		s.log.Debug("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Object.GetName(), "namespace", evt.Object.GetNamespace(), "uid", evt.Object.GetUID())
 		s.log.Warn("high index latency", "latency", latencySeconds)
 	}
 	if IndexMetrics != nil {
