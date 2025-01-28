@@ -6,13 +6,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,52 +36,6 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 	meta.SetFolder(cmd.ParentUID)
 
 	return obj, nil
-}
-
-func UnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.Folder, error) {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return nil, err
-	}
-
-	info, _ := authlib.ParseNamespace(meta.GetNamespace())
-	if info.OrgID < 0 {
-		info.OrgID = 1 // This resolves all test cases that assume org 1
-	}
-
-	title, _, _ := unstructured.NestedString(item.Object, "spec", "title")
-	description, _, _ := unstructured.NestedString(item.Object, "spec", "description")
-
-	uid := meta.GetName()
-	url := ""
-	if uid != folder.RootFolder.UID {
-		slug := slugify.Slugify(title)
-		url = dashboards.GetFolderURL(uid, slug)
-	}
-
-	created := meta.GetCreationTimestamp().Time.UTC()
-	updated, _ := meta.GetUpdatedTimestamp()
-	if updated == nil {
-		updated = &created
-	} else {
-		tmp := updated.UTC()
-		updated = &tmp
-	}
-
-	return &folder.Folder{
-		UID:         uid,
-		Title:       title,
-		Description: description,
-		ID:          meta.GetDeprecatedInternalID(), // nolint:staticcheck
-		ParentUID:   meta.GetFolder(),
-		Version:     int(meta.GetGeneration()),
-		Repository:  meta.GetRepositoryName(),
-
-		URL:     url,
-		Created: created,
-		Updated: *updated,
-		OrgID:   info.OrgID,
-	}, nil
 }
 
 func LegacyFolderToUnstructured(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
