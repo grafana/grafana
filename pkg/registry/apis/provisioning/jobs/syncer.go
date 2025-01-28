@@ -251,36 +251,43 @@ func (r *Syncer) deleteListResource(ctx context.Context, item provisioning.Resou
 
 // replicateTree replicates all files in the repository.
 func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
-	tree, err := r.repository.ReadTree(ctx, ref)
+	// Load the tree of the repository
+	fileTree, err := r.repository.ReadTree(ctx, ref)
 	if err != nil {
 		return fmt.Errorf("read tree: %w", err)
 	}
 
+	// Load the list of resources in the cluster
 	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
 	if err != nil {
 		return fmt.Errorf("list resources: %w", err)
 	}
 
-	if err := r.cleanUnnecessaryResources(ctx, tree, list); err != nil {
+	// Remove resouces not longer present in the repository
+	if err := r.cleanUnnecessaryResources(ctx, fileTree, list); err != nil {
 		return fmt.Errorf("clean up before replicating tree: %w", err)
 	}
 
+	// Create folders
+	folderTree := resources.FolderTreeFromResourceList(list)
+	for _, entry := range fileTree {
+		if err := folderTree.CreateFolder(ctx, r.client, path.Dir(entry.Path), r.repository.Config()); err != nil {
+			return fmt.Errorf("create folder: %w", err)
+		}
+	}
+
+	// Create a list of hashes to identify changed files
 	hashes := make(map[string]string)
 	for _, item := range list.Items {
 		hashes[item.Path] = item.Hash
 	}
 
-	// TODO: Does the file tree gives us folders?
-
-	for _, entry := range tree {
+	// Create Dashboards
+	for _, entry := range fileTree {
 		logger := logging.FromContext(ctx).With("file", entry.Path)
 		if hashes[entry.Path] == entry.Hash {
 			logger.Debug("file is up to date")
 			continue
-		}
-
-		if _, err := r.createFolderPath(ctx, entry.Path); err != nil {
-			return fmt.Errorf("create folder path: %w", err)
 		}
 
 		if !entry.Blob {
@@ -301,7 +308,12 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 		info.Hash = entry.Hash
 		info.Modified = nil // modified?
 
-		if err := r.replicateFile(ctx, info); err != nil {
+		parsed, err := r.parseResource(ctx, info)
+		if err != nil {
+			return fmt.Errorf("parse resource: %w", err)
+		}
+
+		if err := r.replicateFile(ctx, parsed, folderTree); err != nil {
 			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 				logger.Info("file does not contain a resource")
 				continue
@@ -315,22 +327,19 @@ func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
 
 // replicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *Syncer) replicateFile(ctx context.Context, fileInfo *repository.FileInfo) error {
-	logger := logging.FromContext(ctx).With("file", fileInfo.Path, "ref", fileInfo.Ref)
-	file, err := r.parseResource(ctx, fileInfo)
-	if err != nil {
-		return err
-	}
+func (r *Syncer) replicateFile(ctx context.Context, file *resources.ParsedResource, folderTree *resources.FolderTree) error {
+	logger := logging.FromContext(ctx).With("file", file.Info.Path, "ref", file.Info.Ref)
 	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace(), "namespace", r.client.GetNamespace())
 
-	parent, err := r.createFolderPath(ctx, fileInfo.Path)
-	if err != nil {
-		return fmt.Errorf("failed to create folder path: %w", err)
+	parentID, ok := folderTree.DirPath(path.Dir(file.Info.Path), r.repository.Config().Spec.Folder)
+	if !ok {
+		return fmt.Errorf("failed to find parent for %s", file.Info.Path)
 	}
-	logger = logger.With("folder", parent)
 
-	if parent != "" {
-		file.Meta.SetFolder(parent)
+	logger = logger.With("folder", parentID)
+	isRoot := parentID == resources.Folder{}
+	if !isRoot {
+		file.Meta.SetFolder(parentID.ID)
 	}
 
 	if file.Action == provisioning.ResourceActionCreate {
@@ -377,80 +386,23 @@ func (r *Syncer) replicateFile(ctx context.Context, fileInfo *repository.FileInf
 	return nil
 }
 
-func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string, error) {
-	dir := path.Dir(filePath)
-	parent := r.repository.Config().Spec.Folder
-	if dir == "." || dir == "/" {
-		return parent, nil
-	}
-
-	logger := logging.FromContext(ctx).With("file", filePath)
-
-	var currentPath string
-	for _, folder := range strings.Split(dir, "/") {
-		if folder == "" {
-			// Trailing / leading slash?
-			continue
-		}
-
-		currentPath = path.Join(currentPath, folder)
-		folderID := resources.ParseFolder(currentPath, r.repository.Config().GetName())
-
-		logger := logger.With("folder", currentPath)
-		obj, err := r.folders.Get(ctx, folderID.ID, metav1.GetOptions{})
-		// FIXME: Check for IsNotFound properly
-		if obj != nil || err == nil {
-			logger.Debug("folder already existed")
-			parent = folderID.ID
-			continue
-		}
-
-		obj = &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"spec": map[string]any{
-					"title":       folderID.Title,
-					"description": "Repository-managed folder.",
-				},
-			},
-		}
-
-		meta, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return "", fmt.Errorf("create meta accessor for the object: %w", err)
-		}
-
-		obj.SetNamespace(r.client.GetNamespace())
-		obj.SetName(folderID.ID)
-		meta.SetFolder(parent)
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name:      r.repository.Config().Name,
-			Path:      currentPath,
-			Hash:      "",  // FIXME: which hash?
-			Timestamp: nil, // ???&info.Modified.Time,
-		})
-
-		_, err = r.folders.Create(ctx, obj, metav1.CreateOptions{})
-		if err != nil {
-			return parent, fmt.Errorf("failed to create folder '%s': %w", folderID.ID, err)
-		}
-
-		parent = folderID.ID
-		logger.Info("folder created")
-	}
-
-	return parent, nil
-}
-
 func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
+	// Create an empty tree to avoid loading all folders unnecessarily
+	folderTree := resources.NewEmptyFolderTree()
+
+	// Create folder structure first
 	for _, change := range changes {
-		// HACK: this will leave empty folder behind until the next sync
-		if change.Action != repository.FileActionDeleted {
-			// FIXME: we need to consolidate where we create the paths
-			if _, err := r.createFolderPath(ctx, change.Path); err != nil {
-				return fmt.Errorf("create folder path: %w", err)
-			}
+		if change.Action == repository.FileActionDeleted {
+			// FIXME: this will leave empty folder behind until the next sync
+			continue
 		}
 
+		if err := folderTree.CreateFolder(ctx, r.client, path.Dir(change.Path), r.repository.Config()); err != nil {
+			return fmt.Errorf("create folder: %w", err)
+		}
+	}
+
+	for _, change := range changes {
 		if resources.ShouldIgnorePath(change.Path) {
 			continue
 		}
@@ -460,9 +412,14 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 			return fmt.Errorf("read file: %w", err)
 		}
 
+		parsed, err := r.parseResource(ctx, fileInfo)
+		if err != nil {
+			return fmt.Errorf("parse resource: %w", err)
+		}
+
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			if err := r.replicateFile(ctx, fileInfo); err != nil {
+			if err := r.replicateFile(ctx, parsed, folderTree); err != nil {
 				return fmt.Errorf("replicate file: %w", err)
 			}
 		case repository.FileActionRenamed:
@@ -471,15 +428,19 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 			if err != nil {
 				return fmt.Errorf("read previous path: %w", err)
 			}
-			if err := r.deleteFile(ctx, oldPath); err != nil {
+			oldParsed, err := r.parseResource(ctx, oldPath)
+			if err != nil {
+				return fmt.Errorf("parse old resource: %w", err)
+			}
+			if err := r.deleteFile(ctx, oldParsed); err != nil {
 				return fmt.Errorf("delete file: %w", err)
 			}
 
-			if err := r.replicateFile(ctx, fileInfo); err != nil {
+			if err := r.replicateFile(ctx, parsed, folderTree); err != nil {
 				return fmt.Errorf("replicate file in new path: %w", err)
 			}
 		case repository.FileActionDeleted:
-			if err := r.deleteFile(ctx, fileInfo); err != nil {
+			if err := r.deleteFile(ctx, parsed); err != nil {
 				return fmt.Errorf("delete file: %w", err)
 			}
 		}
@@ -488,13 +449,8 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 	return nil
 }
 
-func (r *Syncer) deleteFile(ctx context.Context, fileInfo *repository.FileInfo) error {
-	file, err := r.parseResource(ctx, fileInfo)
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
+func (r *Syncer) deleteFile(ctx context.Context, file *resources.ParsedResource) error {
+	_, err := file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
 	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 	if false && err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if object already exists: %w", err)

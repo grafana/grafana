@@ -2,9 +2,15 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"path"
+	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -64,6 +70,90 @@ func (t *FolderTree) AllFolders() map[string]Folder {
 	return t.folders
 }
 
+func NewEmptyFolderTree() *FolderTree {
+	return &FolderTree{
+		tree:    make(map[string]string, 0),
+		folders: make(map[string]Folder, 0),
+	}
+}
+
+func (t *FolderTree) CreateFolder(ctx context.Context, client *DynamicClient, folder string, repository *provisioning.Repository) error {
+	iface := client.Resource(schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "folders",
+	})
+
+	dir := folder
+	if dir == "." || dir == "/" {
+		return nil
+	}
+
+	logger := logging.FromContext(ctx).With("folder", folder)
+	var currentPath string
+	parent := repository.Spec.Folder
+
+	for _, folder := range strings.Split(dir, "/") {
+		if folder == "" {
+			// Trailing / leading slash?
+			continue
+		}
+
+		currentPath = path.Join(currentPath, folder)
+		folderID := ParseFolder(currentPath, repository.GetName())
+		logger := logger.With("folder", currentPath)
+
+		if t.tree[folderID.ID] != "" {
+			logger.Debug("folder already visited")
+			continue
+		}
+
+		t.tree[folderID.ID] = parent
+		t.folders[folderID.ID] = folderID
+
+		obj, err := iface.Get(ctx, folderID.ID, metav1.GetOptions{})
+		// FIXME: Check for IsNotFound properly
+		if obj != nil || err == nil {
+			logger.Debug("folder already existed")
+			parent = folderID.ID
+			continue
+		}
+
+		obj = &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"spec": map[string]any{
+					"title":       folderID.Title,
+					"description": "Repository-managed folder.",
+				},
+			},
+		}
+
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("create meta accessor for the object: %w", err)
+		}
+
+		obj.SetNamespace(client.GetNamespace())
+		obj.SetName(folderID.ID)
+		meta.SetFolder(parent)
+		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+			Name:      repository.GetName(),
+			Path:      currentPath,
+			Hash:      "",  // FIXME: which hash?
+			Timestamp: nil, // ???&info.Modified.Time,
+		})
+
+		_, err = iface.Create(ctx, obj, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to create folder '%s': %w", folderID.ID, err)
+		}
+
+		parent = folderID.ID
+		logger.Info("folder created")
+	}
+	return nil
+}
+
 func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTree, error) {
 	iface := client.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
@@ -88,7 +178,8 @@ func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTre
 		id := Folder{
 			Title: name,
 			ID:    name,
-			Path:  "", // We'll set this later in the DirPath function :)
+			// TODO: should not this be be the annotation itself?
+			Path: "", // We'll set this later in the DirPath function :)
 		}
 		if title, ok, _ := unstructured.NestedString(rf.Object, "spec", "title"); ok {
 			// If the title doesn't exist (it should), we'll just use the K8s name.
@@ -101,4 +192,26 @@ func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTre
 		tree:    tree,
 		folders: folders,
 	}, nil
+}
+
+func FolderTreeFromResourceList(resources *provisioning.ResourceList) *FolderTree {
+	tree := make(map[string]string, len(resources.Items))
+	folderIDs := make(map[string]Folder, len(resources.Items))
+	for _, rf := range resources.Items {
+		if rf.Group != folders.GROUP {
+			continue
+		}
+
+		tree[rf.Name] = rf.Folder
+		folderIDs[rf.Name] = Folder{
+			Title: rf.Title,
+			ID:    rf.Name,
+			Path:  rf.Path,
+		}
+	}
+
+	return &FolderTree{
+		tree,
+		folderIDs,
+	}
 }
