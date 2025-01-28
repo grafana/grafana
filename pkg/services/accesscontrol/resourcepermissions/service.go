@@ -293,7 +293,9 @@ func (s *Service) SetPermissions(
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetPermissions")
 	defer span.End()
 
-	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
+	// permissions have not yet been set - validate the resource with a service account
+	identityCtx, _ := identity.WithServiceIdentitiy(ctx, orgID)
+	if err := s.validateResource(identityCtx, orgID, resourceID); err != nil {
 		return nil, err
 	}
 
