@@ -271,6 +271,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           kind: 'prometheus',
           spec: {
             expr: 'test-query',
+            refId: 'A',
           },
         },
         refresh: 'onDashboardLoad',
