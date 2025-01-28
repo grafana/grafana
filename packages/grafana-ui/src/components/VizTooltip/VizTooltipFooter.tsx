@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
@@ -67,17 +68,13 @@ const renderActions = (actions: ActionModel[], styles: ReturnType<typeof getStyl
 
 export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
-  const hasOneClickLink = dataLinks.some((link) => link.oneClick === true);
-  const hasOneClickAction = actions.some((action) => action.oneClick === true);
+  const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
+  const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
 
   return (
     <div className={styles.wrapper}>
-      {!hasOneClickAction && dataLinks.length > 0 && (
-        <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>
-      )}
-      {!hasOneClickLink && actions.length > 0 && (
-        <div className={styles.dataLinks}>{renderActions(actions, styles)}</div>
-      )}
+      {!hasOneClickAction && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
+      {!hasOneClickLink && <div className={styles.dataLinks}>{renderActions(actions, styles)}</div>}
       {!hasOneClickLink && !hasOneClickAction && annotate != null && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
