@@ -10,7 +10,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -199,7 +198,7 @@ func (t *RepositoryTester) testSyncFolder(ctx context.Context, repo repository.R
 		},
 	}
 
-	_, err = folders.Create(ctx, obj, v1.CreateOptions{})
+	_, err = folders.Create(ctx, obj, metav1.CreateOptions{})
 	if err != nil {
 		return &provisioning.TestResults{
 			Code:    http.StatusUnprocessableEntity, // Invalid

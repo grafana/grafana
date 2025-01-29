@@ -1529,7 +1529,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 					},
 					"target": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository\n - `\"root\"` Resources should be saved into the root grafana directory currently, only one repository may specify `root` target",
+							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name\n - `\"root\"` Resources should be saved into the root grafana directory Only one repository may specify the `root` target",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -1563,13 +1563,6 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"error", "pending", "success", "working"},
-						},
-					},
-					"folder": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The target folder ID (or empty when root)",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 					"job": {

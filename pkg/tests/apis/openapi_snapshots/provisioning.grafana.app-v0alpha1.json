@@ -4519,7 +4519,7 @@
             "format": "int64"
           },
           "target": {
-            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository\n - `\"root\"` Resources should be saved into the root grafana directory currently, only one repository may specify `root` target",
+            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name\n - `\"root\"` Resources should be saved into the root grafana directory Only one repository may specify the `root` target",
             "type": "string",
             "default": "",
             "enum": [
@@ -4539,10 +4539,6 @@
             "description": "When the sync job finished",
             "type": "integer",
             "format": "int64"
-          },
-          "folder": {
-            "description": "The target folder ID (or empty when root)",
-            "type": "string"
           },
           "hash": {
             "description": "The repository hash when the last sync ran",
