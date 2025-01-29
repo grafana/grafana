@@ -19,7 +19,7 @@ export const DataLinksInlineEditor = ({ links, getSuggestions, showOneClick, ...
         onSave={onSave}
         onCancel={onCancel}
         getSuggestions={getSuggestions}
-        showOneClick={showOneClick ?? false}
+        showOneClick={showOneClick ?? true}
       />
     )}
   </DataLinksInlineEditorBase>
