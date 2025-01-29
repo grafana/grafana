@@ -514,16 +514,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      ...(config.featureToggles.exploreMetricsUseExternalAppPlugin
-        ? getRouteForAppPlugin('grafana-exploremetrics-app')
-        : {
-            chromeless: false,
-            roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
-            component: SafeDynamicImport(
-              () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
-            ),
-          }),
       path: '/explore/metrics/*',
+      chromeless: false,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
+      component: config.featureToggles.exploreMetricsUseExternalAppPlugin
+        ? getRouteForAppPlugin('grafana-exploremetrics-app').component
+        : SafeDynamicImport(() => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')),
     },
     {
       path: '/bookmarks',
