@@ -149,7 +149,14 @@ func (s *jobStore) drainPending() {
 					State:  provisioning.JobStateError,
 					Errors: []string{err.Error()},
 				}
-			} else if status.State == "" {
+			}
+			if status == nil {
+				status = &provisioning.JobStatus{
+					State:  provisioning.JobStateError,
+					Errors: []string{"no status response from worker"},
+				}
+			}
+			if status.State == "" {
 				status.State = provisioning.JobStateSuccess
 			}
 			logger.Debug("job processing finished", "status", status.State)
@@ -187,6 +194,19 @@ func (s *jobStore) Next(ctx context.Context) *provisioning.Job {
 				Type:   watch.Modified,
 			}, oldObj)
 			return &job
+		}
+	}
+	return nil
+}
+
+// Get the status for a job
+func (s *jobStore) Status(ctx context.Context, namespace string, name string) *provisioning.JobStatus {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	for _, job := range s.jobs {
+		if job.Name == name && job.Namespace == namespace {
+			return job.Status.DeepCopy()
 		}
 	}
 	return nil

@@ -987,14 +987,6 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions"),
 						},
 					},
-					"deletePolicy": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DeletePolicy options within the repository",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
@@ -1023,7 +1015,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"title", "editing", "deletePolicy", "type"},
+				Required: []string{"title", "editing", "type"},
 			},
 		},
 		Dependencies: []string{

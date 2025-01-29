@@ -22,6 +22,9 @@ type JobQueue interface {
 	// Get the next job we should process
 	Next(ctx context.Context) *provisioning.Job
 
+	// Get the status for a job
+	Status(ctx context.Context, namespace string, name string) *provisioning.JobStatus
+
 	// Update the status on a given job
 	// This is only valid if current job is not finished
 	Update(ctx context.Context, namespace string, name string, status provisioning.JobStatus) error
