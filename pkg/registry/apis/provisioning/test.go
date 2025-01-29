@@ -10,10 +10,15 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -127,7 +132,82 @@ func (t *RepositoryTester) TestRepository(ctx context.Context, repo repository.R
 		return rsp, nil
 	}
 
+	rsp := t.testSyncFolder(ctx, repo)
+	if rsp != nil {
+		return rsp, nil
+	}
+
 	return repo.Test(ctx)
+}
+
+// Make sure the target folder exists and is valid
+func (t *RepositoryTester) testSyncFolder(ctx context.Context, repo repository.Repository) *provisioning.TestResults {
+	cfg := repo.Config()
+	sync := cfg.Spec.Sync
+	if !sync.Enabled || sync.Target == provisioning.SyncTargetTypeRoot {
+		return nil // when not enabled we do not care
+	}
+
+	dynamicClient, _, err := t.clientFactory.New(cfg.Namespace)
+	if err != nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusInternalServerError, // Invalid
+			Success: false,
+			Errors:  []string{"unable to create folder client", err.Error()},
+		}
+	}
+	folders := dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
+	})
+
+	obj, err := folders.Get(ctx, cfg.Name, metav1.GetOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return &provisioning.TestResults{
+			Code:    http.StatusInternalServerError, // Invalid
+			Success: false,
+			Errors:  []string{"unable to create read folder", err.Error()},
+		}
+	}
+
+	if obj != nil {
+		anno := obj.GetAnnotations()
+		if anno == nil || anno[utils.AnnoKeyRepoName] != cfg.Name {
+			return &provisioning.TestResults{
+				Code:    http.StatusUnprocessableEntity, // Invalid
+				Success: false,
+				Errors:  []string{"Target folder is missing the repo annotation"},
+			}
+		}
+		return nil // OK!
+	}
+
+	obj = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]any{
+				"name":      cfg.Name,
+				"namespace": cfg.Namespace,
+				"annotations": map[string]any{
+					utils.AnnoKeyRepoName: cfg.Name,
+				},
+			},
+			"spec": map[string]any{
+				"title":       cfg.Spec.Title,
+				"description": "Repository managed folder",
+			},
+		},
+	}
+
+	_, err = folders.Create(ctx, obj, v1.CreateOptions{})
+	if err != nil {
+		return &provisioning.TestResults{
+			Code:    http.StatusUnprocessableEntity, // Invalid
+			Success: false,
+			Errors:  []string{"Unable to create target folder", err.Error()},
+		}
+	}
+	return nil
 }
 
 // This function will check if the repository is configured and functioning as expected

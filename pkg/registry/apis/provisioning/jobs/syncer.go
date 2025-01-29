@@ -59,27 +59,12 @@ func NewSyncer(
 func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
 	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
+	if !cfg.Spec.Sync.Enabled {
+		return "", fmt.Errorf("sync is not enabled")
+	}
+
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
-
-	// Ensure the configured folder exists and it's managed by the repository
-	if cfg.Status.Sync.Folder != "" {
-		title := cfg.Spec.Title
-		if title == "" {
-			title = cfg.Status.Sync.Folder
-		}
-
-		folder := resources.Folder{
-			Path:  "",
-			ID:    cfg.Status.Sync.Folder,
-			Title: title,
-		}
-
-		// If the folder already exists, the parent won't be changed
-		if err := r.ensureFolderExists(ctx, folder, ""); err != nil {
-			return "", fmt.Errorf("ensure repository folder exists: %w", err)
-		}
-	}
 
 	logger := logging.FromContext(ctx)
 

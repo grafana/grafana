@@ -361,10 +361,17 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		if err != nil {
 			return fmt.Errorf("get old repository for update: %w", err)
 		}
+		oldCfg := oldRepo.Config()
 
-		if cfg.Spec.Type != oldRepo.Config().Spec.Type {
+		if cfg.Spec.Type != oldCfg.Spec.Type {
 			list = append(list, field.Invalid(field.NewPath("spec", "type"),
 				cfg.Spec.Type, "Changing repository type is not supported"))
+		}
+
+		// Do not allow changing the sync target after running
+		if cfg.Spec.Sync.Target != oldCfg.Spec.Sync.Target && len(cfg.Status.Stats) > 0 {
+			list = append(list, field.Invalid(field.NewPath("spec", "sync", "target"),
+				cfg.Spec.Type, "Changing sync target after running sync is not supported"))
 		}
 	}
 

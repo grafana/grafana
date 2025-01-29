@@ -133,10 +133,17 @@ func ParseFolder(dirPath, repositoryName string) Folder {
 	}
 }
 
+func RootFolder(repository *provisioning.Repository) string {
+	if repository.Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
+		return repository.Name
+	}
+	return ""
+}
+
 func ParentFolder(filePath string, repository *provisioning.Repository) string {
 	parent := path.Dir(filePath)
 	if parent == "." || parent == "/" {
-		return repository.Status.Sync.Folder
+		return RootFolder(repository)
 	}
 	return ParseFolder(parent, repository.GetName()).ID
 }

@@ -329,7 +329,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Maybe add a new sync job
-	if status.Health.Healthy && sync != nil && status.Sync.State != provisioning.JobStateWorking {
+	if status.Health.Healthy &&
+		obj.Spec.Sync.Enabled && sync != nil &&
+		status.ObservedGeneration > 0 &&
+		status.Sync.State != provisioning.JobStateWorking {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,

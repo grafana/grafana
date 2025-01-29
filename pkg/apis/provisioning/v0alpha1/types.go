@@ -104,10 +104,11 @@ type SyncTargetType string
 // RepositoryType values
 const (
 	// Resources should be saved into the root grafana directory
-	// currently, only one repository may specify `root` target
+	// Only one repository may specify the `root` target
 	SyncTargetTypeRoot SyncTargetType = "root"
 
 	// Resources will be saved into a folder managed by this repository
+	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
 
 	// Pick an explicit folder where we can save resources, not managed by provisioning
@@ -172,9 +173,6 @@ type HealthStatus struct {
 type SyncStatus struct {
 	// pending, running, success, error
 	State JobState `json:"state"`
-
-	// The target folder ID (or empty when root)
-	Folder string `json:"folder,omitempty"`
 
 	// The ID for the job that ran this sync
 	JobID string `json:"job,omitempty"`
