@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { Action, DataFrame, GrafanaTheme2, defaultActionConfig, VariableSuggestion, DataLink } from '@grafana/data';
+import { Action, DataFrame, GrafanaTheme2, defaultActionConfig, VariableSuggestion } from '@grafana/data';
 import { Button } from '@grafana/ui/src/components/Button';
 import { Modal } from '@grafana/ui/src/components/Modal/Modal';
 import { useStyles2 } from '@grafana/ui/src/themes';
@@ -17,7 +17,6 @@ interface ActionsInlineEditorProps {
   onChange: (actions: Action[]) => void;
   data: DataFrame[];
   getSuggestions: () => VariableSuggestion[];
-  dataLinks?: DataLink[];
 }
 
 export const ActionsInlineEditor = ({
@@ -25,7 +24,6 @@ export const ActionsInlineEditor = ({
   onChange,
   data,
   getSuggestions,
-  dataLinks,
 }: ActionsInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -54,10 +52,6 @@ export const ActionsInlineEditor = ({
     if (action.oneClick === true) {
       actionsSafe.forEach((action) => {
         action.oneClick = false;
-      });
-
-      dataLinks?.forEach((dataLink) => {
-        dataLink.oneClick = false;
       });
     }
 
