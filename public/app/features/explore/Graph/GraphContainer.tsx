@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import {ReactNode, useCallback, useMemo, useState} from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -12,7 +12,7 @@ import {
   ThresholdsConfig,
   GrafanaTheme2,
   TimeRange,
-  ThresholdsMode,
+  ThresholdsMode, RawTimeRange,
 } from '@grafana/data';
 import {
   GraphThresholdsStyleConfig,
@@ -25,12 +25,13 @@ import {
   GraphThresholdsStyleMode,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { ExploreGraphStyle } from 'app/types';
+import {ExploreGraphStyle, ExploreTimeRangeOptions} from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
 
 import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
+import { ExploreGraphTimeSelector } from "./ExploreTimeSelector";
 import { loadGraphStyle } from './utils';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -43,6 +44,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   eventBus: EventBus;
   timeRange: TimeRange;
   timeZone: TimeZone;
+  updateTimeRange?: (rawRange: RawTimeRange) => void;
   onChangeTime: (absoluteRange: AbsoluteTimeRange) => void;
   splitOpenFn: SplitOpen;
   loadingState: LoadingState;
@@ -51,6 +53,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   warnThreshold?: number;
   criticalThreshold?: number;
   queryBuilderOnly?: boolean;
+  hideQueryEditor?: boolean;
   title?: string;
 }
 
@@ -63,6 +66,7 @@ export const GraphContainer = ({
   timeRange,
   timeZone,
   annotations,
+  updateTimeRange,
   onChangeTime,
   splitOpenFn,
   thresholdsConfig,
@@ -72,9 +76,11 @@ export const GraphContainer = ({
   warnThreshold,
   criticalThreshold,
   queryBuilderOnly,
+  hideQueryEditor,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
+  const [timeRangeOption, setTimeRangeOption] = useState<ExploreTimeRangeOptions>('24h');
   const styles = useStyles2(getStyles);
 
   const onGraphStyleChange = useCallback((graphStyle: ExploreGraphStyle) => {
@@ -106,6 +112,22 @@ export const GraphContainer = ({
     };
   }
 
+  const onTimeRangeChange = useCallback((timeRange: ExploreTimeRangeOptions) => {
+    if (!updateTimeRange) {
+      return;
+    }
+
+    updateTimeRange({ from: 'now-' + timeRange, to: 'now' });
+    setTimeRangeOption(timeRange);
+  }, [updateTimeRange]);
+
+  let actions: ReactNode = null;
+  if (queryBuilderOnly && hideQueryEditor) {
+    actions = <ExploreGraphTimeSelector timeRange={timeRangeOption} onChangeTimeRange={onTimeRangeChange} />
+  } else {
+    actions = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />
+  }
+
   return (
     <PanelChrome
       title={title ? title : t('graph.container.title', 'Graph')}
@@ -135,7 +157,7 @@ export const GraphContainer = ({
       height={height}
       loadingState={loadingState}
       statusMessage={statusMessage}
-      actions={!queryBuilderOnly && <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
+      actions={actions}
     >
       {(innerWidth, innerHeight) => (
         <ExploreGraph

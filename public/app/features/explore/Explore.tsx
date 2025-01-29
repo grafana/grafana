@@ -447,6 +447,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
       panelTitle = panelTitleParam;
     }
 
+    const hideQueryEditor = searchParams.has('hideQueryBuilder');
+
     return (
       <ContentOutlineItem panelId="Graph" title={panelTitle} icon="graph-bar">
         <GraphContainer
@@ -456,6 +458,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           width={panelWidth}
           timeRange={queryResponse.timeRange}
           timeZone={timeZone}
+          updateTimeRange={this.onChangeTime}
           onChangeTime={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
           splitOpenFn={this.onSplitOpen('graph')}
@@ -464,6 +467,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           warnThreshold={warnThreshold}
           criticalThreshold={criticalThreshold}
           queryBuilderOnly={queryBuilderOnly}
+          hideQueryEditor={hideQueryEditor}
         />
       </ContentOutlineItem>
     );
