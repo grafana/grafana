@@ -1661,6 +1661,20 @@
     },
     {
       "metadata": {
+        "name": "fetchRulesUsingPost",
+        "resourceVersion": "1738148593383",
+        "creationTimestamp": "2025-01-29T11:03:13Z"
+      },
+      "spec": {
+        "description": "Use a POST request to list rules by passing down the namespaces user has access to",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "flameGraphItemCollapsing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-09T14:31:07Z",
