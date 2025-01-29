@@ -167,24 +167,6 @@ const getActionsInlineEditorStyle = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
   }),
-  oneClickOverlay: css({
-    border: `2px dashed ${theme.colors.text.link}`,
-    fontSize: 10,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing(1),
-    position: 'absolute',
-    width: '100%',
-    height: '89px',
-  }),
-  oneClickSpan: css({
-    padding: 10,
-    // Negates the padding on the span from moving the underlying link
-    marginBottom: -10,
-    display: 'inline-block',
-  }),
-  itemWrapper: css({
-    padding: '4px 8px 8px 8px',
-  }),
   button: css({
     marginLeft: theme.spacing(1),
   }),
