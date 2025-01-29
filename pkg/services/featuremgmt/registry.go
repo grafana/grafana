@@ -1757,6 +1757,14 @@ var (
 			RequiresDevMode: false,
 			FrontendOnly:    true,
 		},
+		{
+			Name:              "fetchRulesUsingPost",
+			Description:       "Use a POST request to list rules by passing down the namespaces user has access to",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
 	}
 )
 
