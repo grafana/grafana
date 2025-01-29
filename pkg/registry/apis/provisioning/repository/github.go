@@ -523,7 +523,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 		Job: &provisioning.JobSpec{
 			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionPullRequest,
-			PullRequest: &provisioning.PullRequestOptions{
+			PullRequest: &provisioning.PullRequestJobOptions{
 				URL:  pr.GetHTMLURL(),
 				PR:   pr.GetNumber(),
 				Ref:  pr.GetHead().GetRef(),

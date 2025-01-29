@@ -68,7 +68,7 @@ func TestParseWebhooks(t *testing.T) {
 			Job: &provisioning.JobSpec{
 				Repository: "unit-test-repo",
 				Action:     provisioning.JobActionPullRequest,
-				PullRequest: &provisioning.PullRequestOptions{
+				PullRequest: &provisioning.PullRequestJobOptions{
 					Ref:  "dashboard/1733653266690",
 					Hash: "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
 					PR:   12,

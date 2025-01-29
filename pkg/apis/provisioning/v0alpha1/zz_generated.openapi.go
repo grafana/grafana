@@ -16,7 +16,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Author":                 schema_pkg_apis_provisioning_v0alpha1_Author(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.EditingOptions":         schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions":          schema_pkg_apis_provisioning_v0alpha1_ExportOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportJobOptions":       schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem":               schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList":               schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
@@ -31,7 +31,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.JobStatus":              schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LintIssue":              schema_pkg_apis_provisioning_v0alpha1_LintIssue(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":  schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestOptions":     schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":  schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":             schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":         schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec":         schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
@@ -44,7 +44,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceType":           schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceWrapper":        schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig":     schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions":            schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions":         schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncStatus":             schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.TestResults":            schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.WebhookResponse":        schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
@@ -122,7 +122,7 @@ func schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_ExportOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -665,19 +665,19 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 					"pr": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pull request options",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestOptions"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions"),
 						},
 					},
 					"export": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `export`",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportJobOptions"),
 						},
 					},
 					"sync": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Required when the action is `sync`",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions"),
 						},
 					},
 				},
@@ -685,7 +685,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncOptions"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportJobOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.SyncJobOptions"},
 	}
 }
 
@@ -819,7 +819,7 @@ func schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref common.Refe
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1493,7 +1493,7 @@ func schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

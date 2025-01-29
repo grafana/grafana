@@ -22,7 +22,7 @@ import (
 type Exporter interface {
 	Export(ctx context.Context,
 		repo repository.Repository,
-		options provisioning.ExportOptions,
+		options provisioning.ExportJobOptions,
 		progress func(provisioning.JobStatus) error,
 	) (*provisioning.JobStatus, error)
 }
@@ -52,7 +52,7 @@ func NewExporter(
 
 func (r *exporter) Export(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.ExportOptions,
+	options provisioning.ExportJobOptions,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx)

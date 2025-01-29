@@ -1248,27 +1248,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "branch": {
-                    "description": "Target branch for export",
-                    "type": "string"
-                  },
-                  "folder": {
-                    "description": "The source folder (or empty) to export",
-                    "type": "string"
-                  },
-                  "history": {
-                    "description": "Preserve history (if possible)",
-                    "type": "boolean"
-                  },
-                  "prefix": {
-                    "description": "File prefix",
-                    "type": "string"
-                  }
-                }
-              },
+              "schema": {},
               "example": {
                 "folder": "grafan-folder-ref",
                 "history": true,
@@ -2236,15 +2216,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "complete": {
-                    "description": "Complete forces the sync to overwrite",
-                    "type": "boolean"
-                  }
-                }
-              },
+              "schema": {},
               "example": {
                 "complete": true
               }
@@ -3626,7 +3598,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
         "type": "object",
         "properties": {
           "branch": {
@@ -3853,7 +3825,7 @@
             "description": "Required when the action is `export`",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
               }
             ]
           },
@@ -3861,7 +3833,7 @@
             "description": "Pull request options",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions"
               }
             ]
           },
@@ -3874,7 +3846,7 @@
             "description": "Required when the action is `sync`",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions"
               }
             ]
           }
@@ -3969,7 +3941,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions": {
         "type": "object",
         "properties": {
           "hash": {
@@ -4486,7 +4458,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions": {
         "type": "object",
         "properties": {
           "complete": {

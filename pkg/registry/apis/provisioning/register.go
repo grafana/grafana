@@ -694,7 +694,7 @@ spec:
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
-							Example: &provisioning.SyncOptions{
+							Example: &provisioning.SyncJobOptions{
 								Complete: true,
 							},
 						},
@@ -714,7 +714,7 @@ spec:
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
-							Example: &provisioning.ExportOptions{
+							Example: &provisioning.ExportJobOptions{
 								Folder:  "grafan-folder-ref",
 								History: true,
 								Branch:  "target-branch",

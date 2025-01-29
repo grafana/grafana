@@ -328,16 +328,7 @@ export type CreateRepositoryExportArg = {
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
-  body: {
-    /** Target branch for export */
-    branch?: string;
-    /** The source folder (or empty) to export */
-    folder?: string;
-    /** Preserve history (if possible) */
-    history?: boolean;
-    /** File prefix */
-    prefix?: string;
-  };
+  body: any;
 };
 export type GetRepositoryFilesResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -477,10 +468,7 @@ export type CreateRepositorySyncArg = {
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
-  body: {
-    /** Complete forces the sync to overwrite */
-    complete?: boolean;
-  };
+  body: any;
 };
 export type CreateRepositoryTestResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1TestResults;
@@ -609,7 +597,7 @@ export type IoK8SApimachineryPkgApisMetaV1ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ExportOptions = {
+export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ExportJobOptions = {
   /** Target branch for export */
   branch?: string;
   /** The source folder (or empty) to export */
@@ -619,7 +607,7 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ExportOptions = {
   /** File prefix */
   prefix?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1PullRequestOptions = {
+export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1PullRequestJobOptions = {
   hash?: string;
   /** Pull request number (when appropriate) */
   pr?: number;
@@ -628,7 +616,7 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1PullRequestOptions
   /** URL to the originator (eg, PR URL) */
   url?: string;
 };
-export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1SyncOptions = {
+export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1SyncJobOptions = {
   /** Complete forces the sync to overwrite */
   complete?: boolean;
 };
@@ -639,13 +627,13 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1JobSpec = {
      - `"sync"` Sync the remote branch with the grafana instance */
   action: 'export' | 'pr' | 'sync';
   /** Required when the action is `export` */
-  export?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ExportOptions;
+  export?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1ExportJobOptions;
   /** Pull request options */
-  pr?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1PullRequestOptions;
+  pr?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1PullRequestJobOptions;
   /** The the repository reference (for now also in labels) */
   repository: string;
   /** Required when the action is `sync` */
-  sync?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1SyncOptions;
+  sync?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1SyncJobOptions;
 };
 export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1JobResourceSummary = {
   create?: number;
