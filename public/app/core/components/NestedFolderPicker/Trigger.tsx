@@ -8,15 +8,17 @@ import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
 import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { Trans, t } from 'app/core/internationalization';
 
-interface TriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface TriggerProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'prefix'> {
+  prefix?: ReactNode;
   isLoading: boolean;
+  placeholder?: string;
   handleClearSelection?: (event: React.MouseEvent<SVGElement> | React.KeyboardEvent<SVGElement>) => void;
   invalid?: boolean;
   label?: ReactNode;
 }
 
 function Trigger(
-  { handleClearSelection, isLoading, invalid, label, ...rest }: TriggerProps,
+  { handleClearSelection, prefix, isLoading, placeholder, invalid, label, ...rest }: TriggerProps,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
   const theme = useTheme2();
@@ -28,18 +30,16 @@ function Trigger(
     }
   };
 
+  const prefixNode = prefix ?? (label ? <Icon name="folder" /> : undefined);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.inputWrapper}>
-        {label ? (
-          <div className={styles.prefix}>
-            <Icon name="folder" />
-          </div>
-        ) : undefined}
+        {prefixNode && <div className={styles.prefix}>{prefixNode}</div>}
 
         <button
           type="button"
-          className={cx(styles.fakeInput, label ? styles.hasPrefix : undefined)}
+          className={cx(styles.fakeInput, prefixNode ? styles.hasPrefix : undefined)}
           {...rest}
           ref={ref}
         >
@@ -49,7 +49,7 @@ function Trigger(
             <Text truncate>{label}</Text>
           ) : (
             <Text truncate color="secondary">
-              <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>
+              {placeholder ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
             </Text>
           )}
 

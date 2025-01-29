@@ -19,7 +19,7 @@ interface LibraryPanelViewProps {
   searchString: string;
   sortDirection?: string;
   panelFilter?: string[];
-  folderFilter?: string[];
+  folderFilter?: string;
   perPage?: number;
 }
 
@@ -42,6 +42,7 @@ export const LibraryPanelsView = ({
       perPage: propsPerPage,
     }
   );
+  const folderFilterUIDs = useMemo(() => (folderFilter ? [folderFilter] : []), [folderFilter]);
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
   useDebounce(
     () =>
@@ -50,7 +51,7 @@ export const LibraryPanelsView = ({
           searchString,
           sortDirection,
           panelFilter,
-          folderFilterUIDs: folderFilter,
+          folderFilterUIDs,
           page,
           perPage,
           currentPanelId,
@@ -65,7 +66,7 @@ export const LibraryPanelsView = ({
         searchString,
         sortDirection,
         panelFilter,
-        folderFilterUIDs: folderFilter,
+        folderFilterUIDs,
         page,
         perPage,
       })

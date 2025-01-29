@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import debounce from 'debounce-promise';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -24,6 +24,12 @@ import { useTreeInteractions } from './useTreeInteractions';
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
   value?: string;
+
+  /* Placeholder to show when no value is selected */
+  placeholder?: string;
+
+  /* Node/Icon that appears in front of the placeholder item. Not shown when searching, or when a folder is selected */
+  prefix?: ReactNode;
 
   /** Show an invalid state around the folder picker */
   invalid?: boolean;
@@ -60,6 +66,8 @@ async function getSearchResults(searchQuery: string, permission?: PermissionLeve
 
 export function NestedFolderPicker({
   value,
+  placeholder,
+  prefix,
   invalid,
   showRootFolder = true,
   clearable = false,
@@ -259,6 +267,8 @@ export function NestedFolderPicker({
     return (
       <Trigger
         label={label}
+        placeholder={placeholder}
+        prefix={prefix}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
         isLoading={selectedFolder.isLoading}

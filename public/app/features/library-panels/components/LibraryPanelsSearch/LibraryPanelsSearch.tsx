@@ -3,10 +3,10 @@ import { memo, useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
-import { FolderInfo } from 'app/types';
+import { useStyles2, VerticalGroup, FilterInput, Icon } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { t } from 'app/core/internationalization';
 
-import { FolderFilter } from '../../../../core/components/FolderFilter/FolderFilter';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
 import { SortPicker } from '../../../../core/components/Select/SortPicker';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../core/constants';
@@ -48,8 +48,10 @@ export const LibraryPanelsSearch = ({
   useDebounce(() => setDebouncedSearchQuery(searchQuery), 200, [searchQuery]);
 
   const [sortDirection, setSortDirection] = useState<SelectableValue<string>>({});
-  const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderUID ? [currentFolderUID] : []);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
+
+  // Existing code expects an array, so just match that for now
+  const [folderFilter, setFolderFilter] = useState<string | undefined>(currentFolderUID);
 
   const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
   const verticalGroupSpacing = variant === LibraryPanelsSearchVariant.Tight ? 'lg' : 'xs';
@@ -77,6 +79,7 @@ export const LibraryPanelsSearch = ({
               showPanelFilter={showPanelFilter}
               showFolderFilter={showFolderFilter}
               onSortChange={setSortDirection}
+              folderFilterValue={folderFilter}
               onFolderFilterChange={setFolderFilter}
               onPanelFilterChange={setPanelFilter}
               sortDirection={sortDirection.value}
@@ -130,13 +133,16 @@ function getStyles(theme: GrafanaTheme2, variant: LibraryPanelsSearchVariant) {
   };
 }
 
+const SORT_MODES = ['alpha-asc', 'alpha-desc'];
+
 interface SearchControlsProps {
   showSort: boolean;
   showPanelFilter: boolean;
   showFolderFilter: boolean;
   sortDirection?: string;
+  folderFilterValue: string | undefined;
   onSortChange: (sortValue: SelectableValue) => void;
-  onFolderFilterChange: (folder: string[]) => void;
+  onFolderFilterChange: (folderUID: string | undefined) => void;
   onPanelFilterChange: (plugins: string[]) => void;
   variant?: LibraryPanelsSearchVariant;
 }
@@ -148,6 +154,7 @@ const SearchControls = memo(
     showPanelFilter,
     showFolderFilter,
     sortDirection,
+    folderFilterValue,
     onSortChange,
     onFolderFilterChange,
     onPanelFilterChange,
@@ -158,7 +165,7 @@ const SearchControls = memo(
       [onPanelFilterChange]
     );
     const folderFilterChanged = useCallback(
-      (folders: FolderInfo[]) => onFolderFilterChange(folders.map((f) => f.uid ?? '')),
+      (folderUID: string | undefined) => onFolderFilterChange(folderUID),
       [onFolderFilterChange]
     );
 
@@ -168,14 +175,21 @@ const SearchControls = memo(
           [styles.containerTight]: variant === LibraryPanelsSearchVariant.Tight,
         })}
       >
-        {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={['alpha-asc', 'alpha-desc']} />}
+        {showSort && <SortPicker value={sortDirection} onChange={onSortChange} filter={SORT_MODES} />}
         {(showFolderFilter || showPanelFilter) && (
           <div
             className={cx(styles.filterContainer, {
               [styles.filterContainerTight]: variant === LibraryPanelsSearchVariant.Tight,
             })}
           >
-            {showFolderFilter && <FolderFilter onChange={folderFilterChanged} />}
+            {showFolderFilter && (
+              <FolderPicker
+                placeholder={t('library-panels.search.folder-placeholder', 'Filter by folder')}
+                prefix={<Icon className={styles.icon} name="filter" />}
+                value={folderFilterValue}
+                onChange={folderFilterChanged}
+              />
+            )}
             {showPanelFilter && <PanelTypeFilter onChange={panelFilterChanged} />}
           </div>
         )}
@@ -208,6 +222,9 @@ function getRowStyles(theme: GrafanaTheme2) {
     filterContainerTight: css({
       flexDirection: 'column',
       marginLeft: 'initial',
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
     }),
   };
 }
