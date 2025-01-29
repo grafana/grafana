@@ -684,7 +684,7 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 
 // fields that we went to sort by the full text
 var textSortFields = map[string]string{
-	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE + "_sort",
+	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE_PHRASE,
 }
 
 // Convert a "requirement" into a bleve query
