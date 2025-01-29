@@ -116,7 +116,7 @@ func (am *Alertmanager) exponentialReadinessCheck(ctx context.Context, c chan<- 
 			}
 
 			if status >= 400 && status < 500 {
-				c <- fmt.Errorf("Readiness check failed on attempt %d with non-retriable status code %d", attempt, status)
+				c <- fmt.Errorf("readiness check failed on attempt %d with non-retriable status code %d", attempt, status)
 				return
 			}
 
