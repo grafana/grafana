@@ -1,5 +1,4 @@
-import { t } from 'i18next';
-
+import { t } from 'app/core/internationalization';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { validationSrv } from '../services/ValidationSrv';
