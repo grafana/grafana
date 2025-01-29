@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestComputeFullPath(t *testing.T) {
@@ -70,8 +70,8 @@ func TestComputeFullPath(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			gotPath, gotPathUIDs := computeFullPath(tc.parents)
-			assert.Equal(t, tc.wantPath, gotPath)
-			assert.Equal(t, tc.wantPathUIDs, gotPathUIDs)
+			require.Equal(t, tc.wantPath, gotPath)
+			require.Equal(t, tc.wantPathUIDs, gotPathUIDs)
 		})
 	}
 }
