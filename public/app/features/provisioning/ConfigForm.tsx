@@ -89,6 +89,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     submitData(spec);
   };
 
+  // NOTE: We do not want the lint option to be listed.
   return (
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
@@ -175,9 +176,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Show dashboard previews'}>
             <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
           </Field>
-          <Field label={'Lint pull requests'}>
-            <Switch {...register('pullRequestLinter')} id={'pullRequestLinter'} />
-          </Field>
+          {/* The lint option is intentionally not presented here, as it's an experimental feature. */}
         </>
       )}
 
@@ -203,9 +202,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
           name={'folder'}
           render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
         />
-      </Field>
-      <Field label={'Linting'}>
-        <Switch {...register('linting')} id={'linting'} />
       </Field>
       <FieldSet label={'Editing options'}>
         <Field label={'Create'} description={'Enable creating files on repository'}>

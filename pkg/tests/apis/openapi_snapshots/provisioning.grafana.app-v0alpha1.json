@@ -78,8 +78,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -226,8 +226,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -374,8 +374,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -544,8 +544,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "post": {
@@ -658,8 +658,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "delete": {
@@ -821,8 +821,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -879,8 +879,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "put": {
@@ -973,8 +973,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "delete": {
@@ -1084,8 +1084,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "patch": {
@@ -1202,8 +1202,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -1270,9 +1270,9 @@
                 }
               },
               "example": {
-                "branch": "target-branch",
                 "folder": "grafan-folder-ref",
                 "history": true,
+                "branch": "target-branch",
                 "prefix": "prefix/in/repo/tree"
               }
             }
@@ -1293,8 +1293,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -1386,8 +1386,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "parameters": [
@@ -1458,8 +1458,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "put": {
@@ -1554,8 +1554,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "post": {
@@ -1650,8 +1650,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "delete": {
@@ -1706,8 +1706,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
         }
       },
       "parameters": [
@@ -1788,8 +1788,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "HistoryList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "HistoryList"
         }
       },
       "parameters": [
@@ -1860,8 +1860,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "HistoryList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "HistoryList"
         }
       },
       "parameters": [
@@ -1919,8 +1919,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "ResourceList",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "ResourceList"
         }
       },
       "parameters": [
@@ -1978,8 +1978,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "put": {
@@ -2072,8 +2072,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "patch": {
@@ -2190,8 +2190,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -2231,8 +2231,26 @@
         "tags": [
           "Repository"
         ],
-        "description": "connect POST requests to sync of Repository",
+        "description": "Sync from repository into Grafana",
         "operationId": "createRepositorySync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "complete": {
+                    "description": "Complete forces the sync to overwrite",
+                    "type": "boolean"
+                  }
+                }
+              },
+              "example": {
+                "complete": true
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -2248,8 +2266,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -2326,8 +2344,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "TestResults",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "TestResults"
         }
       },
       "parameters": [
@@ -2375,8 +2393,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "WebhookResponse",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "WebhookResponse"
         }
       },
       "post": {
@@ -2400,8 +2418,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "WebhookResponse",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "WebhookResponse"
         }
       },
       "parameters": [
@@ -2521,8 +2539,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -2669,8 +2687,8 @@
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -2817,8 +2835,8 @@
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -2975,8 +2993,8 @@
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Job"
         }
       },
       "parameters": [
@@ -3143,8 +3161,8 @@
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -3301,8 +3319,8 @@
         "x-kubernetes-action": "watch",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -3469,8 +3487,8 @@
         "x-kubernetes-action": "watchlist",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
       },
       "parameters": [
@@ -3647,10 +3665,6 @@
           "owner": {
             "description": "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
             "type": "string"
-          },
-          "pullRequestLinter": {
-            "description": "PullRequestLinter enables the dashboard linter for this repository in Pull Requests",
-            "type": "boolean"
           },
           "repository": {
             "description": "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
@@ -3855,6 +3869,14 @@
             "description": "The the repository reference (for now also in labels)",
             "type": "string",
             "default": ""
+          },
+          "sync": {
+            "description": "Required when the action is `sync`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions"
+              }
+            ]
           }
         }
       },
@@ -4067,9 +4089,15 @@
         "required": [
           "title",
           "editing",
+          "deletePolicy",
           "type"
         ],
         "properties": {
+          "deletePolicy": {
+            "description": "DeletePolicy options within the repository",
+            "type": "string",
+            "default": ""
+          },
           "description": {
             "description": "Describe the feature toggle",
             "type": "string"
@@ -4094,10 +4122,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig"
               }
             ]
-          },
-          "linting": {
-            "description": "Linting enables linting for this repository",
-            "type": "boolean"
           },
           "local": {
             "description": "The repository on the local file system. Mutually exclusive with s3 and github.",
@@ -4465,6 +4489,15 @@
           },
           "region": {
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions": {
+        "type": "object",
+        "properties": {
+          "complete": {
+            "description": "Complete forces the sync to overwrite",
+            "type": "boolean"
           }
         }
       },

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 
 	"gopkg.in/yaml.v3"
@@ -41,7 +42,9 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 		client: client,
 		kinds:  kinds,
 	}
-	if repo.Config().Spec.Linting {
+	// TODO: Figure out how we want to determine this in practice.
+	linting, ok := os.LookupEnv("GRAFANA_LINTING")
+	if ok && linting == "true" {
 		linterFactory := lint.NewDashboardLinterFactory()
 		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
 

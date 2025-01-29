@@ -73,7 +73,6 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
-  const isNotFound = Boolean(meta.dashboardNotFound);
   const isNew = !Boolean(uid);
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
@@ -84,10 +83,6 @@ export function ToolbarActions({ dashboard }: Props) {
   const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
   const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
   const isProvisionedNG = Boolean(meta.k8s?.annotations?.[AnnoKeyRepoName] || folderRepo);
-
-  if (isNotFound) {
-    return null;
-  }
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -165,7 +160,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
+    condition: meta.isSnapshot && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl() ?? ''} />
     ),
@@ -619,7 +614,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
+      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isProvisionedNG) {
         return (
           <Button
             onClick={() => {

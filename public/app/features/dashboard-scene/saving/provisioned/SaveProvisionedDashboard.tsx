@@ -2,22 +2,23 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
+import { getAppEvents, locationService } from '@grafana/runtime';
+import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
-import { DashboardMeta } from 'app/types';
+import { AnnoKeyRepoName } from 'app/features/apiserver/types';
+import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { Repository } from 'app/features/provisioning/api';
+import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from 'app/features/provisioning/hooks';
+import { WorkflowOption } from 'app/features/provisioning/types';
+import { createPRLink, validateBranchName } from 'app/features/provisioning/utils/git';
 
-import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
-import { Repository, RepositorySpec } from '../../provisioning/api';
-import { useCreateOrUpdateRepositoryFile, useFolderRepository, usePullRequestParam } from '../../provisioning/hooks';
-import { WorkflowOption } from '../../provisioning/types';
-import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { SaveDashboardDrawer } from '../SaveDashboardDrawer';
+import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
+import { DashboardChangeInfo } from '../shared';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
-import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
-import { DashboardChangeInfo } from './shared';
+import { getDefaultWorkflow, getWorkflowOptions } from './defaults';
+import { useDefaultValues } from './hooks';
 
 type FormData = {
   ref?: string;
@@ -27,40 +28,11 @@ type FormData = {
   workflow?: WorkflowOption;
   title: string;
   description: string;
-  folder: { uid?: string; title?: string };
-};
-
-function getDefaultValues(meta: DashboardMeta, repositoryName = '') {
-  const anno = meta.k8s?.annotations;
-  const timestamp = Date.now();
-  const ref = `dashboard/${timestamp}`;
-  const pathName = meta.slug || `new-dashboard-${timestamp}`;
-  let path = anno?.[AnnoKeyRepoPath] ?? `${pathName}.json`;
-  const repo = anno?.[AnnoKeyRepoName] ?? repositoryName;
-  const idx = path.indexOf('#');
-  if (idx > 0) {
-    path = path.substring(0, idx);
-  }
-
-  return {
-    ref,
-    path,
-    repo,
-    comment: '',
-    folder: { uid: meta.folderUid, title: '' },
+  folder: {
+    uid?: string;
+    title?: string;
   };
-}
-
-const getDefaultWorkflow = (config?: RepositorySpec) => {
-  return config?.github?.branchWorkflow ? WorkflowOption.PullRequest : WorkflowOption.Direct;
 };
-
-function getWorkflowOptions(branch = 'main') {
-  return [
-    { label: `Commit to ${branch}`, value: WorkflowOption.Direct },
-    { label: 'Create pull request', value: WorkflowOption.PullRequest },
-  ];
-}
 
 export interface Props {
   dashboard: DashboardScene;
@@ -69,15 +41,16 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Props) {
-  // Saving as a new provisioned dashboard
   const { saveProvisioned } = drawer.useState();
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const prURL = usePullRequestParam();
-  const isNew = !meta.k8s?.annotations?.[AnnoKeyRepoPath];
-  const folderRepository = useFolderRepository(meta.folderUid);
-  const repositoryConfig = folderRepository?.spec;
-  const repo = folderRepository?.metadata?.name;
-  const defaultValues = getDefaultValues(meta, repo);
+
+  const {
+    values: defaultValues,
+    isNew,
+    isGitHub,
+    repositoryConfig,
+  } = useDefaultValues({ meta, defaultTitle, defaultDescription });
   const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned || isNew ? undefined : defaultValues.path);
   const {
     register,
@@ -86,34 +59,31 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     formState: { errors },
     control,
     setValue,
-  } = useForm<FormData>({
-    defaultValues: {
-      ...defaultValues,
-      title: defaultTitle,
-      description: defaultDescription,
-      workflow: WorkflowOption.PullRequest,
-    },
-  });
+  } = useForm<FormData>({ defaultValues });
+
   const [title, ref, workflow, comment] = watch(['title', 'ref', 'workflow', 'comment']);
-  const isGitHub = repositoryConfig?.type === 'github';
-  const href = createPRLink(repositoryConfig, title, ref, comment);
   const { isDirty } = dashboard.state;
+  const href = createPRLink(repositoryConfig, title, ref, comment);
 
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard saved'],
-      });
       dashboard.setState({ isDirty: false });
+      const prLink = workflow === WorkflowOption.Direct ? undefined : href;
+      dashboard.closeModal();
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+        isPreview: true,
+        prLink,
+      });
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard]);
+  }, [request.isSuccess, request.isError, request.error, dashboard, workflow, href]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -141,23 +111,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {isGitHub && workflow === WorkflowOption.PullRequest && !isDirty && (
-          <Alert
-            severity="success"
-            title="Branch successfully created"
-            buttonContent={
-              <Stack alignItems={'center'}>
-                <span>Open pull request in GitHub</span>
-                <Icon name="external-link-alt" />
-              </Stack>
-            }
-            onRemove={() => {
-              window.open(href, '_blank');
-            }}
-          >
-            You can now open a pull request in Github.
-          </Alert>
-        )}
         {isNew && (
           <>
             <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>
@@ -222,7 +175,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 control={control}
                 name={'workflow'}
                 render={({ field: { ref, ...field } }) => {
-                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig.github?.branch)} />;
+                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig?.github?.branch)} />;
                 }}
               />
             </Field>
@@ -272,7 +225,6 @@ const BranchValidationError = () => {
     </>
   );
 };
-
 async function validateDashboardName(title: string, formValues: FormData) {
   if (title === formValues.folder.title?.trim()) {
     return 'Dashboard name cannot be the same as folder name';

@@ -6,14 +6,16 @@ import { usePrevious } from 'react-use';
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box } from '@grafana/ui';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
+import { DashboardPreviewBanner } from '../saving/provisioned/DashboardPreviewBanner';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
@@ -50,17 +52,19 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type, path]);
 
   if (!dashboard) {
+    let errorElement;
+    if (loadError) {
+      errorElement = <DashboardPageError error={loadError} type={type} />;
+    }
+
     return (
-      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
-        <Box paddingY={4} display="flex" direction="column" alignItems="center">
-          {isLoading && <PageLoader />}
-          {loadError && (
-            <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-not-found">
-              {loadError}
-            </Alert>
-          )}
-        </Box>
-      </Page>
+      errorElement || (
+        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
+          <Box paddingY={4} display="flex" direction="column" alignItems="center">
+            {isLoading && <PageLoader />}
+          </Box>
+        </Page>
+      )
     );
   }
 
@@ -74,6 +78,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+      <DashboardPreviewBanner queryParams={queryParams} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </UrlSyncContextProvider>
