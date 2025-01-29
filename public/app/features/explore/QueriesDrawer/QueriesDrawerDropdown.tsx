@@ -4,6 +4,7 @@ import { ComponentProps, useState } from 'react';
 import { config } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
+import { t } from 'app/core/internationalization';
 
 import { createDatasourcesList } from '../../../core/utils/richHistory';
 import { useSelector } from '../../../types';
@@ -102,7 +103,12 @@ export function QueriesDrawerDropdown({ variant }: Props) {
         <Button className={styles.close} variant="secondary" icon="times" onClick={() => toggle()}></Button>
       ) : (
         <Dropdown overlay={menu}>
-          <ToolbarButton className={styles.toggle} variant="canvas" icon="angle-down" />
+          <ToolbarButton
+            className={styles.toggle}
+            variant="canvas"
+            icon="angle-down"
+            aria-label={t('explore.rich-history.library-history-dropdown', 'Open query library or query history')}
+          />
         </Dropdown>
       )}
     </ButtonGroup>
