@@ -2,7 +2,7 @@ This folder contains a rendered OpenAPI file for each group/version. The “real
 
 ## Generating RTK API Clients
 
-The RTK API clients are generated from processed OpenAPI files using the script `scripts/process-specs.ts`. The source files are in `pkg/tests/apis/openapi_snapshots`, and the processed files are stored in the `data/openapi` directory.
+The RTK API clients are generated from processed OpenAPI files using the `scripts/process-specs.ts` script. The source files are in `pkg/tests/apis/openapi_snapshots`, and the processed files are stored in the `data/openapi` directory. Spec processing happens as part of `yarn generate-apis` task, but can also be triggered separately (see below).
 
 To generate or update the RTK API clients:
 
