@@ -29,8 +29,12 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const renderMenu = () => (
     <TopNavBarMenu node={profileNode}>
       <Menu.Divider />
-      <MenuItem icon="rss" onClick={onToggleShowNewsDrawer} label={t('news.title', 'Latest from the blog')} />
-      <Menu.Item icon="monitor" onClick={onToggleKioskMode} label="Toggle kiosk mode" />
+      <MenuItem
+        icon="rss"
+        onClick={onToggleShowNewsDrawer}
+        label={t('navigation.rss-button', 'Latest from the blog')}
+      />
+      <Menu.Item icon="monitor" onClick={onToggleKioskMode} label={t('navigation.kiosk-button', 'Enter kiosk mode')} />
     </TopNavBarMenu>
   );
 
