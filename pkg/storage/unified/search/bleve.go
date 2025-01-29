@@ -684,8 +684,10 @@ func getSortFields(req *resource.ResourceSearchRequest) []string {
 
 // fields that we went to sort by the full text
 var textSortFields = map[string]string{
-	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE + "_sort",
+	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE_PHRASE,
 }
+
+const lowerCase = "phrase"
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
@@ -696,14 +698,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		}
 
 		if len(req.Values[0]) == 1 {
-			q := query.NewMatchQuery(req.Values[0])
+			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
 			q.FieldVal = prefix + req.Key
 			return q, nil
 		}
 
 		conjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(v)
+			q := query.NewMatchQuery(filterValue(req.Key, v))
 			q.FieldVal = prefix + req.Key
 			conjuncts = append(conjuncts, q)
 		}
@@ -720,14 +722,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 			return query.NewMatchAllQuery(), nil
 		}
 		if len(req.Values) == 1 {
-			q := query.NewMatchQuery(req.Values[0])
+			q := query.NewMatchQuery(filterValue(req.Key, req.Values[0]))
 			q.FieldVal = prefix + req.Key
 			return q, nil
 		}
 
 		disjuncts := []query.Query{}
 		for _, v := range req.Values {
-			q := query.NewMatchQuery(v)
+			q := query.NewMatchQuery(filterValue(req.Key, v))
 			q.FieldVal = prefix + req.Key
 			disjuncts = append(disjuncts, q)
 		}
@@ -739,7 +741,7 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(value))
+			mustNotQueries = append(mustNotQueries, bleve.NewMatchQuery(filterValue(req.Key, value)))
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
 
@@ -752,6 +754,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+// filterValue will convert the value to lower case if the field is a phrase field
+func filterValue(field string, v string) string {
+	if strings.HasSuffix(field, lowerCase) {
+		return strings.ToLower(v)
+	}
+	return v
 }
 
 func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
