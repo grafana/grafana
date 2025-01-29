@@ -89,7 +89,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       },
     },
   },
-  "id": 1,
   "layout": {
     "kind": "GridLayout",
     "spec": {
