@@ -10,10 +10,17 @@ export function DataLinksEditor({ value, onChange, item, context }: Props) {
   return (
     <DataLinksInlineEditor
       links={value}
-      onChange={onChange}
+      onChange={(links) => {
+        if (links.some(({ oneClick }) => oneClick === true)) {
+          actions.forEach((action) => {
+            action.oneClick = false;
+          });
+        }
+        onChange(links);
+      }}
       getSuggestions={() => (context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [])}
       data={[]}
-      actions={actions}
+      showOneClick={true}
     />
   );
 }

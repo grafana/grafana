@@ -11,8 +11,8 @@ export function ActionsEditor({ value, onChange, item, context }: Props) {
     <ActionsInlineEditor
       actions={value}
       onChange={(actions) => {
-        if (actions.some((action) => action.oneClick === true)) {
-          item.settings?.links?.forEach((link) => {
+        if (actions.some(({ oneClick }) => oneClick === true)) {
+          dataLinks.forEach((link) => {
             link.oneClick = false;
           });
         }
@@ -20,6 +20,7 @@ export function ActionsEditor({ value, onChange, item, context }: Props) {
       }}
       getSuggestions={() => (context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [])}
       data={[]}
+      showOneClick={true}
     />
   );
 }

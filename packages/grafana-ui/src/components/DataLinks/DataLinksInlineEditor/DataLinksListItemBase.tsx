@@ -1,29 +1,40 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
-import { Action, DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { Badge } from '@grafana/ui';
-import { Icon } from '@grafana/ui/src/components/Icon/Icon';
-import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
-import { useStyles2 } from '@grafana/ui/src/themes';
-import { t } from '@grafana/ui/src/utils/i18n';
+import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
-export interface ActionsListItemProps {
+import { useStyles2 } from '../../../themes';
+import { t } from '../../../utils/i18n';
+import { Badge } from '../../Badge/Badge';
+import { Icon } from '../../Icon/Icon';
+import { IconButton } from '../../IconButton/IconButton';
+
+export interface DataLinksListItemBaseProps<T extends DataLink | Action> {
   index: number;
-  action: Action;
+  item: T;
   data: DataFrame[];
-  onChange: (index: number, action: Action) => void;
+  onChange: (index: number, item: T) => void;
   onEdit: () => void;
   onRemove: () => void;
   isEditing?: boolean;
   itemKey: string;
 }
 
-export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: ActionsListItemProps) => {
-  const styles = useStyles2(getActionListItemStyles);
-  const { title = '', oneClick = false } = action;
+export function DataLinksListItemBase<T extends DataLink | Action>({
+  item,
+  onEdit,
+  onRemove,
+  index,
+  itemKey,
+}: DataLinksListItemBaseProps<T>) {
+  const styles = useStyles2(getDataLinkListItemStyles);
+  const { title = '', oneClick = false } = item;
+
+  // @ts-ignore - https://github.com/microsoft/TypeScript/issues/27808
+  const url = item.url ?? item.fetch?.url ?? '';
 
   const hasTitle = title.trim() !== '';
+  const hasUrl = url.trim() !== '';
 
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
@@ -35,7 +46,7 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
           key={index}
         >
           <div className={styles.linkDetails}>
-            <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
               {hasTitle ? title : 'Title not provided'}
             </div>
           </div>
@@ -57,9 +68,9 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
       )}
     </Draggable>
   );
-};
+}
 
-const getActionListItemStyles = (theme: GrafanaTheme2) => {
+const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       display: 'flex',
