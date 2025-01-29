@@ -39,7 +39,7 @@ export class ResponsiveGridLayoutManager
     getDashboardSceneFor(this).switchLayout(rowsLayout);
   }
 
-    public addNewTab(): void {
+  public addNewTab(): void {
     const tabsLayout = TabsLayoutManager.createFromLayout(this);
     tabsLayout.addNewTab();
     getDashboardSceneFor(this).switchLayout(tabsLayout);
