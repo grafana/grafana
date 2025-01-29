@@ -1729,6 +1729,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "templateVariablesUsesCombobox",
+			Description:  "Use new combobox component for template variables",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "ABTestFeatureToggleB",
 			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
 			Stage:        FeatureStageExperimental,
