@@ -78,7 +78,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store))
 	require.NoError(b, err)
 
-	fStore := folderimpl.ProvideStore(store)
+	fStore := folderimpl.ProvideStore(store, features)
 	folderSvc := folderimpl.ProvideService(
 		fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store),
 		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())

@@ -43,7 +43,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 	defer func() { guardian.New = origNewDashboardGuardian }()
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
-	fStore := folderimpl.ProvideStore(sql)
+	fStore := folderimpl.ProvideStore(sql, featuremgmt.WithFeatures())
 	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())

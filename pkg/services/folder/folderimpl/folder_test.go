@@ -63,7 +63,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		ac := acmock.New()
 		db, cfg := db.InitTestDBWithCfg(t)
-		store := ProvideStore(db)
+		store := ProvideStore(db, featuremgmt.WithFeatures())
 		ProvideService(
 			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
 			nil, nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
@@ -79,7 +79,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
 		db, cfg := sqlstore.InitTestDB(t)
-		nestedFolderStore := ProvideStore(db)
+		nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 
 		folderStore := foldertest.NewFakeFolderStore(t)
 		publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -431,7 +431,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db)
+	nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
@@ -553,7 +553,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db)
+			nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 
 			serviceWithFlagOff := &Service{
 				log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
@@ -718,7 +718,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				dashStore, err := database.ProvideDashboardStore(db, cfg, tc.featuresFlag, tagimpl.ProvideService(db))
 				require.NoError(t, err)
-				nestedFolderStore := ProvideStore(db)
+				nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 				publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -847,7 +847,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 	db, _ := sqlstore.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-	nestedFolderStore := ProvideStore(db)
+	nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
@@ -1482,7 +1482,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOn, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db)
+	nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOn)
@@ -1908,7 +1908,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 		featuresFlagOff := featuremgmt.WithFeatures()
 		dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 		require.NoError(t, err)
-		nestedFolderStore := ProvideStore(db)
+		nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 
 		b := bus.ProvideBus(tracing.InitializeTracerForTest())
 		ac := acimpl.ProvideAccessControl(featuresFlagOff)
@@ -2003,7 +2003,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	featuresFlagOff := featuremgmt.WithFeatures()
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db)
+	nestedFolderStore := ProvideStore(db, featuremgmt.WithFeatures())
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOff)
@@ -2087,7 +2087,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	featuresFlagOff := featuremgmt.WithFeatures()
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuresFlagOff, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db)
+	nestedFolderStore := ProvideStore(db, featuresFlagOff)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOff)
@@ -2316,7 +2316,7 @@ func TestIntegration_canMove(t *testing.T) {
 	dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db)
+	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
 	orgID := CreateOrg(t, db, cfg)
 
 	adminUsr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleAdmin}

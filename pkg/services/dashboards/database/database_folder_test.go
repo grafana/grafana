@@ -299,7 +299,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderStore := folderimpl.ProvideStore(sqlStore)
+		folderStore := folderimpl.ProvideStore(sqlStore, features)
 		folderSvc := folderimpl.ProvideService(
 			folderStore, mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore),
 			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())

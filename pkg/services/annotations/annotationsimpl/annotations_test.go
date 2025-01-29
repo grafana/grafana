@@ -55,7 +55,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	defer func() { guardian.New = origNewDashboardGuardian }()
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
-	fStore := folderimpl.ProvideStore(sql)
+	fStore := folderimpl.ProvideStore(sql, features)
 	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
@@ -240,7 +240,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		})
 
 		ac := acimpl.ProvideAccessControl(features)
-		fStore := folderimpl.ProvideStore(sql)
+		fStore := folderimpl.ProvideStore(sql, features)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 		folderSvc := folderimpl.ProvideService(
 			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,

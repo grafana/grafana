@@ -827,7 +827,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
 	db := db.InitTestDB(t)
-	fStore := folderimpl.ProvideStore(db)
+	fStore := folderimpl.ProvideStore(db, featuremgmt.WithFeatures())
 	quotaService := quotatest.New(false, nil)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,

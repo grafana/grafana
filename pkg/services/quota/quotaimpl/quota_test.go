@@ -488,7 +488,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore, featuremgmt.WithFeatures())
 	dashStore, err := dashboardStore.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())

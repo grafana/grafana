@@ -1391,7 +1391,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	require.NoError(t, err)
 	ac := acmock.New()
 
-	fStore := folderimpl.ProvideStore(testDB)
+	fStore := folderimpl.ProvideStore(testDB, features)
 	folderPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(testDB)
 	folderSvc := folderimpl.ProvideService(

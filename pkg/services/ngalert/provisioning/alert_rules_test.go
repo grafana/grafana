@@ -1603,7 +1603,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	fStore := folderimpl.ProvideStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore, features)
 	folderService := folderimpl.ProvideService(
 		fStore, ac, inProcBus, dashboardStore, folderStore,
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())

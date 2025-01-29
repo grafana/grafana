@@ -1918,7 +1918,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore)
+	fStore := folderimpl.ProvideStore(sqlStore, featuremgmt.WithFeatures())
 	folderService := folderimpl.ProvideService(
 		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
 		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())

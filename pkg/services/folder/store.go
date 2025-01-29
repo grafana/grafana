@@ -2,6 +2,8 @@ package folder
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 type GetFoldersFromStoreQuery struct {
@@ -46,6 +48,10 @@ type Store interface {
 
 	// GetFolders returns folders with given uids
 	GetFolders(ctx context.Context, q GetFoldersFromStoreQuery) ([]*Folder, error)
+
+	// SearchFolders returns a hit list of folders given a query
+	SearchFolders(ctx context.Context, q SearchFoldersQuery) (model.HitList, error)
+
 	// GetDescendants returns all descendants of a folder
 	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*Folder, error)
 }

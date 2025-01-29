@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -165,6 +166,14 @@ func (s *Service) DBMigration(db db.DB) {
 	}
 
 	s.log.Debug("syncing dashboard and folder tables finished")
+}
+
+func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		// TODO: implement filtering by alerting folders and k6 folders: see the dashboards store `FindDashboards` method for reference
+		return s.unifiedStore.SearchFolders(ctx, q)
+	}
+	return s.store.SearchFolders(ctx, q)
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
