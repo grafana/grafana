@@ -1689,9 +1689,9 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	// but is currently not needed by other services in the backend
 	if query.Title != "" {
 		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_TITLE,
+			Key:      resource.SEARCH_FIELD_TITLE_SORT, // use title sort to prevent issues with `-` in the title & how bleve searches
 			Operator: string(selection.In),
-			Values:   []string{query.Title},
+			Values:   []string{strings.ToLower(query.Title)},
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
 	}

@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashboardv0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -587,16 +588,54 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 			// We need a list of dashboard uids inside the folder to delete related public dashboards
-			dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folders, OrgId: cmd.OrgID})
-			if err != nil {
-				return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-			}
+			var dashboardUIDs []string
+			// we cannot use the dashboard service directly due to circular dependencies,
+			// so either use the search client if the feature is enabled or use the dashboard store
+			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
+				dashboardKey := &resource.ResourceKey{
+					Namespace: s.k8sclient.getNamespace(cmd.OrgID),
+					Group:     dashboardv0.DashboardResourceInfo.GroupVersionResource().Group,
+					Resource:  dashboardv0.DashboardResourceInfo.GroupVersionResource().Resource,
+				}
+				request := &resource.ResourceSearchRequest{
+					Options: &resource.ListOptions{
+						Key:    dashboardKey,
+						Labels: []*resource.Requirement{},
+						Fields: []*resource.Requirement{
+							{
+								Key:      resource.SEARCH_FIELD_FOLDER,
+								Operator: string(selection.In),
+								Values:   folders,
+							},
+						},
+					},
+					Limit: 100000}
 
-			dashboardUIDs := make([]string, 0, len(dashes))
-			for _, dashboard := range dashes {
-				dashboardUIDs = append(dashboardUIDs, dashboard.UID)
-			}
+				client := s.k8sclient.getSearcher(ctx)
+				res, err := client.Search(ctx, request)
+				if err != nil {
+					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+				}
 
+				hits, err := dashboardsearch.ParseResults(res, 0)
+				if err != nil {
+					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+				}
+
+				dashboardUIDs = make([]string, len(hits.Hits))
+				for i, dashboard := range hits.Hits {
+					dashboardUIDs[i] = dashboard.Name
+				}
+			} else {
+				dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folders, OrgId: cmd.OrgID})
+				if err != nil {
+					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
+				}
+				dashboardUIDs = make([]string, len(dashes))
+				for i, dashboard := range dashes {
+					dashboardUIDs[i] = dashboard.UID
+				}
+			}
 			// Delete all public dashboards in the folders
 			err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
 			if err != nil {
