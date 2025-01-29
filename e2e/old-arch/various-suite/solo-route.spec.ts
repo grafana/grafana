@@ -28,7 +28,7 @@ describe('Solo Route', () => {
       'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=panel-16-clone-0%7Cgrid-item-2%7Cpanel-2-clone-0&__feature.dashboardSceneSolo=true'
     );
 
-    e2e.components.Panels.Panel.title('server=B').should('exist');
+    e2e.components.Panels.Panel.title('server = B, pod = Bob').should('exist');
     cy.contains('uplot-main-div').should('not.exist');
   });
 
@@ -38,7 +38,7 @@ describe('Solo Route', () => {
       'Repeating-rows-uid/repeating-rows?orgId=1&var-server=A&var-server=B&var-server=D&var-pod=1&var-pod=2&var-pod=3&panelId=panel-16-clone-1%7Cgrid-item-2%7Cpanel-2-clone-1&__feature.dashboardSceneSolo=true'
     );
 
-    e2e.components.Panels.Panel.title('server = D, pod = Sod').should('exist');
+    e2e.components.Panels.Panel.title('server = A, pod = Rob').should('exist');
     cy.contains('uplot-main-div').should('not.exist');
   });
 });
