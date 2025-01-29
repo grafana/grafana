@@ -209,7 +209,7 @@ describe('Azure monitor datasource', () => {
           .type('{enter}');
         cy.contains(logAnalyticsName).click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
-        cy.contains('KQL').click();
+        cy.get('[data-testid="azure-query-header-logs-radio-button"]').contains('KQL').click({ force: true });
         e2e.components.CodeEditor.container().type('AzureDiagnostics');
         e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
       },
