@@ -95,7 +95,7 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
 
-	var unprovisionedFolders []unstructured.Unstructured
+	unprovisionedFolders := make([]unstructured.Unstructured, 0)
 	for _, f := range rawFolders.Items {
 		repoName := f.GetAnnotations()[apiutils.AnnoKeyRepoName]
 		if repoName == repo.Config().GetName() {
