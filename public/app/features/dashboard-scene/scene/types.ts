@@ -1,5 +1,5 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
-import { SceneObject, SceneVariable, VizPanel } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -64,11 +64,6 @@ export interface DashboardLayoutManager extends SceneObject {
    * Renders options and layout actions
    */
   getOptions?(): OptionsPaneItemDescriptor[];
-
-  /**
-   * Method to be called by DashboardScene when a variable update has been completed
-   */
-  handleVariableUpdateCompleted?(variable: SceneVariable, hasChange: boolean): void;
 
   /**
    * Create a clone of the layout manager given an ancestor key

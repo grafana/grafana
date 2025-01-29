@@ -8,7 +8,6 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
@@ -200,16 +199,6 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return new RowsLayoutManager({ rows });
   }
 
-  public handleVariableUpdateCompleted(variable: SceneVariable, hasChanged: boolean): void {
-    if (hasChanged) {
-      for (const row of this.state.rows) {
-        if (row.variableDependency?.hasDependencyOn(variable.state.name)) {
-          row.forceRender();
-        }
-      }
-    }
-  }
-
   public static Component = ({ model }: SceneComponentProps<RowsLayoutManager>) => {
     const { rows } = model.useState();
     const styles = useStyles2(getStyles);
@@ -217,7 +206,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return (
       <div className={styles.wrapper}>
         {rows.map((row) => (
-          <RowItem.Component model={row} key={row.state.key!} />
+          <row.Component model={row} key={row.state.key!} />
         ))}
       </div>
     );

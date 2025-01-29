@@ -763,9 +763,6 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
         this._dashboard.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
       }
     }
-
-    const layout = this._dashboard.state.body;
-    layout.handleVariableUpdateCompleted?.(variable, hasChanged);
   }
 }
 
