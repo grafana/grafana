@@ -17,7 +17,6 @@ require (
 	github.com/grafana/grafana v11.4.0-00010101000000-000000000000+incompatible
 	github.com/grafana/grafana-plugin-sdk-go v0.263.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250121113133-e747350fee2d
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.20.5
@@ -121,6 +120,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // indirect
 	github.com/grafana/grafana-aws-sdk v0.31.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250121113133-e747350fee2d // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/sqlds/v4 v4.1.3 // indirect
@@ -192,6 +192,7 @@ require (
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/tjhop/slog-gokit v0.1.3 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect

@@ -229,7 +229,6 @@ export interface FeatureToggles {
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
-  zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;
@@ -254,4 +253,5 @@ export interface FeatureToggles {
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
   datasourceConnectionsTab?: boolean;
+  fetchRulesUsingPost?: boolean;
 }

@@ -4,9 +4,6 @@ import * as common from '@grafana/schema';
 
 
 export interface DashboardV2Spec {
-	// Unique numeric identifier for the dashboard.
-	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	id?: number;
 	// Title of dashboard.
 	title: string;
 	// Description of dashboard.
