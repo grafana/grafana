@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, DataFrame, GrafanaTheme2, LogsSortOrder, PanelProps } from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, DataFrame, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
-import { ScrollToLogsEvent } from 'app/features/logs/components/panel/virtualization';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
@@ -24,7 +23,6 @@ export const LogsPanel = ({
   options: { dedupStrategy, enableInfiniteScrolling, onNewLogsReceived, showTime, sortOrder, wrapLogMessage },
   id,
 }: LogsPanelProps) => {
-  const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
   const [logsContainer, setLogsContainer] = useState<HTMLDivElement | null>(null);
   const [panelData, setPanelData] = useState(data);
@@ -46,30 +44,11 @@ export const LogsPanel = ({
     setPanelData(data);
   }, [data]);
 
-  useLayoutEffect(() => {
-    if (keepScrollPositionRef.current) {
-      keepScrollPositionRef.current = false;
-      return;
-    }
-    /**
-     * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
-     * when new data is received. See https://github.com/grafana/grafana/pull/37634
-     */
-    if (data.request?.app === CoreApp.Dashboard || data.request?.app === CoreApp.PanelEditor) {
-      eventBus.publish(
-        new ScrollToLogsEvent({
-          scrollTo: isAscending ? 'top' : 'bottom',
-        })
-      );
-    }
-  }, [data.request?.app, eventBus, isAscending, logs]);
-
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
       if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
         return;
       }
-
       loadingRef.current = true;
 
       const onNewLogsReceivedCallback = isOnNewLogsReceivedType(onNewLogsReceived) ? onNewLogsReceived : undefined;
