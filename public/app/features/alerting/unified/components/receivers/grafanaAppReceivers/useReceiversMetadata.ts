@@ -1,6 +1,6 @@
 import { GrafanaManagedReceiverConfig } from '../../../../../../plugins/datasource/alertmanager/types';
 import { OnCallIntegrationDTO } from '../../../api/onCallApi';
-import { getIrmIfPresentOrOnCallPluginId } from '../../../utils/config';
+import { getIrmIfPresentOrOnCallPluginId, getIsIrmPluginPresent } from '../../../utils/config';
 import { createBridgeURL } from '../../PluginBridge';
 
 import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from './types';
@@ -26,7 +26,7 @@ export function getOnCallMetadata(
   receiver: GrafanaManagedReceiverConfig,
   hasAlertManagerConfigData = true
 ): ReceiverPluginMetadata {
-  const pluginName = getIrmIfPresentOrOnCallPluginId() ? 'IRM' : 'OnCall';
+  const pluginName = getIsIrmPluginPresent() ? 'IRM' : 'OnCall';
 
   if (!hasAlertManagerConfigData) {
     return onCallReceiverMeta;

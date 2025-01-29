@@ -29,10 +29,14 @@ export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: str
   return { globalLimit: evaluateEveryGlobalLimitMs, exceedsLimit };
 }
 
+export function getIsIrmPluginPresent() {
+  return SupportedPlugin.Irm in config.apps;
+}
+
 export function getIrmIfPresentOrIncidentPluginId() {
-  return SupportedPlugin.Irm in config.apps ? SupportedPlugin.Irm : SupportedPlugin.Incident;
+  return getIsIrmPluginPresent() ? SupportedPlugin.Irm : SupportedPlugin.Incident;
 }
 
 export function getIrmIfPresentOrOnCallPluginId() {
-  return SupportedPlugin.Irm in config.apps ? SupportedPlugin.Irm : SupportedPlugin.OnCall;
+  return getIsIrmPluginPresent() ? SupportedPlugin.Irm : SupportedPlugin.OnCall;
 }
