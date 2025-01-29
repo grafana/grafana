@@ -43,7 +43,7 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   const colors = {
     critical: '#B877D9',
     error: '#FF5286',
@@ -62,6 +62,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         opacity: 0.9,
       },
+    }),
+    logLineMessage: css({
+      textAlign: 'center',
     }),
     timestamp: css({
       color: theme.colors.text.secondary,

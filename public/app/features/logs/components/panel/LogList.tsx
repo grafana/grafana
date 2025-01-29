@@ -113,14 +113,15 @@ export const LogList = ({
       timeZone={timeZone}
       wrapLogMessage={wrapLogMessage}
     >
-      {({ itemCount, onItemsRendered, ref, Renderer }) => (
+      {({ getItemKey, itemCount, onItemsRendered, onScroll, ref, Renderer }) => (
         <VariableSizeList
           height={listHeight}
           itemCount={itemCount}
           itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
-          itemKey={(index: number) => (processedLogs[index] ? processedLogs[index].uid : index)}
+          itemKey={getItemKey}
           layout="vertical"
           onItemsRendered={onItemsRendered}
+          onScroll={onScroll}
           ref={(element: VariableSizeList) => {
             ref(element);
             listRef.current = element;
