@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Field, Icon, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
+import { getAppEvents, locationService } from '@grafana/runtime';
+import { Alert, Button, Field, Input, RadioButtonGroup, Stack, TextArea, TextLink } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeyRepoName } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -44,7 +44,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   const { saveProvisioned } = drawer.useState();
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const prURL = usePullRequestParam();
-  const [prOpened, setPrOpened] = useState(false);
+
   const {
     values: defaultValues,
     isNew,
@@ -68,23 +68,22 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess) {
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard saved'],
-      });
       dashboard.setState({ isDirty: false });
-      if (workflow === WorkflowOption.Direct) {
-        dashboard.closeModal();
-      } else {
-        setPrOpened(true);
-      }
+      const prLink = workflow === WorkflowOption.Direct ? undefined : href;
+      dashboard.closeModal();
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+        isPreview: true,
+        prLink,
+      });
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, workflow]);
+  }, [request.isSuccess, request.isError, request.error, dashboard, workflow, href]);
 
   useEffect(() => {
     setValue('workflow', getDefaultWorkflow(repositoryConfig));
@@ -112,24 +111,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {prOpened && href && (
-          <Alert
-            severity="success"
-            title="Branch successfully created"
-            buttonContent={
-              <Stack alignItems={'center'}>
-                <span>Open pull request in GitHub</span>
-                <Icon name="external-link-alt" />
-              </Stack>
-            }
-            onRemove={() => {
-              window.open(href, '_blank');
-              dashboard.closeModal();
-            }}
-          >
-            You can now open a pull request in Github.
-          </Alert>
-        )}
         {isNew && (
           <>
             <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>

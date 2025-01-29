@@ -10,12 +10,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/version"
 	apimachineryversion "k8s.io/apimachinery/pkg/version"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -39,6 +38,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "folder.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "provisioning.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "peakq.grafana.app",
 		Version: "v0alpha1",
 	}}
@@ -48,6 +50,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagKubernetesFoldersServiceV2, // Will be default on by G12
 			featuremgmt.FlagQueryService,               // Query Library
+			featuremgmt.FlagProvisioning,
 		},
 	})
 

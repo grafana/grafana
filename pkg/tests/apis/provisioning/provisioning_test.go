@@ -242,11 +242,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				}
 			]
 		}`, string(v1Disco))
-
-		// also verify the openapi
-		helper.VerifyStaticOpenAPISpec(schema.GroupVersion{
-			Group: "provisioning.grafana.app", Version: "v0alpha1",
-		}, "testdata/openapi.json")
 	})
 
 	t.Run("Check basic create and get", func(t *testing.T) {
