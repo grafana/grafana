@@ -10,7 +10,11 @@ import {
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
-import { isK8sEntityProvisioned, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import {
+  encodeFieldSelector,
+  isK8sEntityProvisioned,
+  shouldUseK8sApi,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
@@ -200,7 +204,8 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
   useEffect(() => {
     if (useK8sApi) {
       const namespace = getAPINamespace();
-      getGrafanaTimeInterval({ namespace, fieldSelector: `spec.name=${nameToFind}` }, true);
+      const entityName = encodeFieldSelector(nameToFind);
+      getGrafanaTimeInterval({ namespace, fieldSelector: `spec.name=${entityName}` }, true);
     } else {
       getAlertmanagerTimeInterval(alertmanager, true);
     }
