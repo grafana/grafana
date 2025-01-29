@@ -468,7 +468,7 @@ describe('DashboardScene', () => {
           title: 'Library Panel',
           pluginId: 'table',
           key: 'panel-4',
-          $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+          $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
         });
 
         scene.copyPanel(libVizPanel);
@@ -523,7 +523,7 @@ describe('DashboardScene', () => {
               title: 'Library Panel',
               pluginId: 'table',
               key: 'panel-4',
-              $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
             }),
           })
         );
@@ -542,7 +542,7 @@ describe('DashboardScene', () => {
         const libPanel = new VizPanel({
           title: 'Panel B',
           pluginId: 'table',
-          $behaviors: [new LibraryPanelBehavior({ title: 'title', name: 'lib panel', uid: 'abc', isLoaded: true })],
+          $behaviors: [new LibraryPanelBehavior({ name: 'lib panel', uid: 'abc', isLoaded: true })],
         });
 
         const scene = buildTestScene({
@@ -907,7 +907,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
                   title: 'Library Panel',
                   pluginId: 'table',
                   key: 'panel-5',
-                  $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+                  $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
                 }),
               }),
             ],
@@ -925,7 +925,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
               title: 'Library Panel',
               pluginId: 'table',
               key: 'panel-6',
-              $behaviors: [new LibraryPanelBehavior({ title: 'Library Panel', name: 'libraryPanel', uid: 'uid' })],
+              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
             }),
           }),
         ],

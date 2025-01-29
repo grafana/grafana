@@ -138,7 +138,7 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 	}
 	version := int64(0)
 	if req.ResourceVersion > 0 {
-		version = getVersionFromRV(req.ResourceVersion)
+		version = req.ResourceVersion
 	}
 
 	dash, rv, err := a.GetDashboard(ctx, info.OrgID, req.Key.Name, version)

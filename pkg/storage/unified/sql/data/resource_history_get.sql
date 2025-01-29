@@ -16,6 +16,6 @@ WHERE 1 = 1
   AND {{ .Ident "action" }} = 3
   {{ end }}
   {{ if (gt .StartRV 0) }}
-  AND {{ .Ident "resource_version" }} > {{ .Arg .StartRV }}
+  AND {{ .Ident "resource_version" }} < {{ .Arg .StartRV }}
   {{ end }}
 ORDER BY resource_version DESC

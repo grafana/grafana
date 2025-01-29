@@ -321,6 +321,11 @@ func (c *cdkListIterator) ContinueToken() string {
 	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
 }
 
+// ContinueTokenWithCurrentRV implements ListIterator.
+func (c *cdkListIterator) ContinueTokenWithCurrentRV() string {
+	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
+}
+
 // Name implements ListIterator.
 func (c *cdkListIterator) Name() string {
 	return c.currentKey // TODO (parse name from key)
