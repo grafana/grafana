@@ -78,6 +78,7 @@ func TestSearch_StarredResults(t *testing.T) {
 		sqlstore:         db,
 		starService:      ss,
 		dashboardService: ds,
+		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{
