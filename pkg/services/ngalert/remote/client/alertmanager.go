@@ -66,42 +66,26 @@ func (am *Alertmanager) GetAuthedClient() client.Requester {
 }
 
 // IsReadyWithBackoff executes a readiness check against the `/-/ready` Alertmanager endpoint.
-// If it takes more than 10s to get a response back, we abort the check.
+// It uses exponential backoff (100ms * 2^attempts) with a 10s timeout.
 func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	c := make(chan error)
-	go am.exponentialReadinessCheck(ctx, c)
-	select {
-	case err := <-c:
-		return err
-	case <-ctx.Done():
-		return fmt.Errorf("readiness check timed out")
-	}
-}
-
-// exponentialReadinessCheck performs a readiness check against the Alertmanager instance.
-// It uses exponential backoff (100ms * 2^attempts).
-func (am *Alertmanager) exponentialReadinessCheck(ctx context.Context, c chan<- error) {
-	var attempt int
-	for {
+	var wait time.Duration
+	for attempt := 1; ; attempt++ {
 		select {
 		case <-ctx.Done():
-			return
-		default:
-			wait := time.Duration(100<<attempt) * time.Millisecond
-			attempt++
+			return fmt.Errorf("readiness check timed out")
+		case <-time.After(wait):
+			wait = time.Duration(100<<attempt-1) * time.Millisecond
 			status, err := am.checkReadiness(ctx)
 			if err != nil {
 				am.logger.Debug("Readiness check attempt failed", "attempt", attempt, "err", err)
-				time.Sleep(wait)
 				break
 			}
 
 			if status == http.StatusOK {
-				close(c)
-				return
+				return nil
 			}
 
 			if status == http.StatusNotAcceptable {
@@ -109,17 +93,13 @@ func (am *Alertmanager) exponentialReadinessCheck(ctx context.Context, c chan<- 
 				// This is expected if the Grafana Alertmanager configuration is default or not promoted.
 				// We can still use the endpoints to store and retrieve configuration/state.
 				am.logger.Debug("Remote Alertmanager not initialized for tenant")
-				close(c)
-				return
+				return nil
 			}
 
 			if status >= 400 && status < 500 {
-				c <- fmt.Errorf("readiness check failed on attempt %d with non-retriable status code %d", attempt, status)
-				return
+				return fmt.Errorf("readiness check failed on attempt %d with non-retriable status code %d", attempt, status)
 			}
-
 			am.logger.Debug("Readiness check failed, status code is not 200", "attempt", attempt, "status", status, "err", err)
-			time.Sleep(wait)
 		}
 	}
 }
