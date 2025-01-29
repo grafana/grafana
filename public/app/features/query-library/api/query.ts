@@ -23,7 +23,7 @@ export const getK8sNamespace = () => config.namespace;
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/${getK8sNamespace()}/querytemplates`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/${getK8sNamespace()}`;
 
 interface QueryLibraryBackendRequest extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
@@ -32,7 +32,7 @@ interface QueryLibraryBackendRequest extends BackendSrvRequest {
 export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, unknown, Error> = async (requestOptions) => {
   try {
     const responseObservable = getBackendSrv().fetch({
-      url: `${requestOptions.url ?? ''}`,
+      url: `${BASE_URL}/${requestOptions.url ?? ''}`,
       showErrorAlert: true,
       method: requestOptions.method || 'GET',
       data: requestOptions.body,

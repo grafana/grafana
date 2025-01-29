@@ -18013,6 +18013,7 @@ __metadata:
     nx: "npm:19.8.2"
     ol: "npm:7.4.0"
     ol-ext: "npm:4.0.26"
+    openapi-types: "npm:^12.1.3"
     pluralize: "npm:^8.0.0"
     postcss: "npm:8.5.1"
     postcss-loader: "npm:8.1.1"
@@ -20982,8 +20983,8 @@ __metadata:
   linkType: hard
 
 "knip@npm:^5.10.0":
-  version: 5.43.1
-  resolution: "knip@npm:5.43.1"
+  version: 5.43.6
+  resolution: "knip@npm:5.43.6"
   dependencies:
     "@nodelib/fs.walk": "npm:3.0.1"
     "@snyk/github-codeowners": "npm:1.1.0"
@@ -21007,7 +21008,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10/068e4145371cf3a4434d07a206eddf8f1d509541482d76252440484562f0b989c11c3efb9c4083d8b5854a90758d3bbcc4a228fe935f6e90ecc9ef2c9f9da8a7
+  checksum: 10/d843ed0f5b56baf5c29257308b0cf1956348cfa9d2b9b627420db023a6ccdaf54450f047fe900b263dc10291f395bc3eceef221dc6050e7fd55fb1fbe4fce3a2
   languageName: node
   linkType: hard
 
@@ -23500,6 +23501,13 @@ __metadata:
   dependencies:
     apg-lite: "npm:^1.0.4"
   checksum: 10/4a98f67cedc0958d3a30cc6db91f35970b0aeae113d0403639adbe3f5e123ff02abebc0468c10639bd0d6db165a9bb0f21c4e367836e984c2345a5a4213620a9
+  languageName: node
+  linkType: hard
+
+"openapi-types@npm:^12.1.3":
+  version: 12.1.3
+  resolution: "openapi-types@npm:12.1.3"
+  checksum: 10/9d1d7ed848622b63d0a4c3f881689161b99427133054e46b8e3241e137f1c78bb0031c5d80b420ee79ac2e91d2e727ffd6fc13c553d1b0488ddc8ad389dcbef8
   languageName: node
   linkType: hard
 
