@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -55,18 +54,11 @@ func (c *syncConnector) Connect(
 	cfg := repo.Config()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		options := &provisioning.SyncOptions{}
-		body, err := io.ReadAll(r.Body)
+		var options provisioning.SyncOptions
+		err := json.NewDecoder(r.Body).Decode(&options)
 		if err != nil {
-			responder.Error(apierrors.NewBadRequest("error reading body"))
+			responder.Error(apierrors.NewBadRequest("error decoding request"))
 			return
-		}
-		if len(body) > 0 {
-			err = json.Unmarshal(body, &options)
-			if err != nil {
-				responder.Error(apierrors.NewBadRequest("error decoding request"))
-				return
-			}
 		}
 
 		job, err := c.jobs.Add(ctx, &provisioning.Job{
@@ -76,7 +68,7 @@ func (c *syncConnector) Connect(
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionSync,
 				Repository: cfg.Name,
-				Sync:       options,
+				Sync:       &options,
 			},
 		})
 		if err != nil {

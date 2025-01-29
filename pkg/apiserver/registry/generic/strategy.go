@@ -3,6 +3,7 @@ package generic
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
@@ -13,8 +14,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type genericStrategy struct {
