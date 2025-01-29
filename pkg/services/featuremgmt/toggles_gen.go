@@ -946,4 +946,8 @@ const (
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page
 	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"
+
+	// FlagFetchRulesUsingPost
+	// Use a POST request to list rules by passing down the namespaces user has access to
+	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 )
