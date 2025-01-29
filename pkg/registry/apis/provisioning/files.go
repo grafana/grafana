@@ -198,7 +198,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 		return &provisioning.ResourceWrapper{
 			Path:      path,
 			Ref:       ref,
-			Timestamp: &metav1.Time{time.Now()},
+			Timestamp: &metav1.Time{Time: time.Now()},
 			// TODO: should we return something here?
 			// TypeMeta:  metav1.TypeMeta{},
 			// Resource: provisioning.ResourceObjects{},
