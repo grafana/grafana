@@ -52,6 +52,11 @@ func TestMigrate(t *testing.T) {
 		})
 
 		for targetVersion := range schemaversion.Migrations {
+			// Skip backward migrations
+			if targetVersion < inputVersion {
+				continue
+			}
+
 			testName := fmt.Sprintf("%s v%d to v%d", name, inputVersion, targetVersion)
 			t.Run(testName, func(t *testing.T) {
 				testMigration(t, f, targetVersion)
