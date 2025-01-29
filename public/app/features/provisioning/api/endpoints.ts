@@ -513,7 +513,6 @@ export type S3RepositoryConfig = {
   region?: string;
 };
 export type RepositorySpec = {
-  deletePolicy: string;
   description?: string;
   editing: EditingOptions;
   folder?: string;

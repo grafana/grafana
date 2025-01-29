@@ -4089,15 +4089,9 @@
         "required": [
           "title",
           "editing",
-          "deletePolicy",
           "type"
         ],
         "properties": {
-          "deletePolicy": {
-            "description": "DeletePolicy options within the repository",
-            "type": "string",
-            "default": ""
-          },
           "description": {
             "description": "Describe the feature toggle",
             "type": "string"
