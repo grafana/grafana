@@ -66,69 +66,87 @@ func (am *Alertmanager) GetAuthedClient() client.Requester {
 }
 
 // IsReadyWithBackoff executes a readiness check against the `/-/ready` Alertmanager endpoint.
-// If it takes more than 10s to get a response back - we abort the check.
-func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) (bool, error) {
-	ctx, cancel := context.WithCancel(ctx)
+// If it takes more than 10s to get a response back, we abort the check.
+func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	readyURL := am.url.JoinPath(alertmanagerAPIMountPath, alertmanagerReadyPath)
-
-	attempt := func() (int, error) {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL.String(), nil)
-		if err != nil {
-			return 0, fmt.Errorf("error creating the readiness request: %w", err)
-		}
-
-		res, err := am.httpClient.Do(req)
-		if err != nil {
-			return 0, fmt.Errorf("error performing the readiness check: %w", err)
-		}
-
-		defer func() {
-			if err := res.Body.Close(); err != nil {
-				am.logger.Warn("Error closing response body", "err", err)
-			}
-		}()
-
-		return res.StatusCode, nil
-	}
-
-	var attempts int
-	ticker := time.NewTicker(100 * time.Millisecond)
-	deadlineCh := time.After(10 * time.Second)
-	defer ticker.Stop()
-
+	c := make(chan error)
+	go am.exponentialReadinessCheck(ctx, c)
 	for {
 		select {
-		case <-ticker.C:
-			attempts++
-			status, err := attempt()
-			if err != nil {
-				am.logger.Debug("Ready check attempt failed", "attempt", attempts, "err", err)
-				continue
-			}
-
-			if status != http.StatusOK {
-				if status >= 400 && status < 500 {
-					if status == http.StatusNotAcceptable {
-						// Mimir returns a 406 when the Alertmanager for the tenant is not running.
-						// This is expected if the Grafana Alertmanager configuration is default or not promoted.
-						// We can still use the endpoints to store and retrieve configuration/state.
-						am.logger.Debug("Remote Alertmanager not initialized for tenant", "attempt", attempts, "status", status)
-						return true, nil
-					}
-
-					am.logger.Debug("Ready check failed with non-retriable status code", "attempt", attempts, "status", status)
-					return false, fmt.Errorf("ready check failed with non-retriable status code %d", status)
-				}
-				am.logger.Debug("Ready check failed, status code is not 200", "attempt", attempts, "status", status, "err", err)
-				continue
-			}
-
-			return true, nil
-		case <-deadlineCh:
-			cancel()
-			return false, fmt.Errorf("ready check timed out after %d attempts", attempts)
+		case err := <-c:
+			return err
+		case <-ctx.Done():
+			return fmt.Errorf("readiness check timed out")
 		}
 	}
+}
+
+// exponentialReadinessCheck performs a readiness check against the Alertmanager instance.
+// It uses exponential backoff (100ms * 2^attempts).
+func (am *Alertmanager) exponentialReadinessCheck(ctx context.Context, c chan<- error) {
+	var attempt int
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			wait := time.Duration(100<<attempt) * time.Millisecond
+			attempt++
+			status, err := am.checkReadiness(ctx)
+			if err != nil {
+				am.logger.Debug("Readiness check attempt failed", "attempt", attempt, "err", err)
+				time.Sleep(wait)
+				break
+			}
+
+			if status == http.StatusOK {
+				close(c)
+				return
+			}
+
+			if status == http.StatusNotAcceptable {
+				// Mimir returns a 406 when the Alertmanager for the tenant is not running.
+				// This is expected if the Grafana Alertmanager configuration is default or not promoted.
+				// We can still use the endpoints to store and retrieve configuration/state.
+				am.logger.Debug("Remote Alertmanager not initialized for tenant")
+				close(c)
+				return
+			}
+
+			if status >= 400 && status < 500 {
+				c <- fmt.Errorf("Readiness check failed on attempt %d with non-retriable status code %d", attempt, status)
+				return
+			}
+
+			am.logger.Debug("Readiness check failed, status code is not 200", "attempt", attempt, "status", status, "err", err)
+			time.Sleep(wait)
+		}
+	}
+}
+
+func (am *Alertmanager) checkReadiness(ctx context.Context) (int, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		am.url.JoinPath(alertmanagerAPIMountPath, alertmanagerReadyPath).String(),
+		nil,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("error creating the readiness request: %w", err)
+	}
+
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("error performing the readiness check: %w", err)
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.logger.Warn("Error closing response body", "err", err)
+		}
+	}()
+
+	return res.StatusCode, nil
 }
