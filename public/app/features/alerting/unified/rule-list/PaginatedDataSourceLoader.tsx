@@ -103,12 +103,7 @@ function RuleGroupListItem({ rulesSourceIdentifier, group, namespaceName }: Rule
       isOpen={false}
       actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
     >
-      <DataSourceGroupLoader
-        groupIdentifier={groupIdentifier}
-        namespaceName={namespaceName}
-        groupName={group.name}
-        expectedRulesCount={group.rules.length}
-      />
+      <DataSourceGroupLoader groupIdentifier={groupIdentifier} expectedRulesCount={group.rules.length} />
     </ListGroup>
   );
 }
