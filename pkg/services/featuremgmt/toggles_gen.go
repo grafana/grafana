@@ -931,6 +931,10 @@ const (
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
 
+	// FlagTemplateVariablesUsesCombobox
+	// Use new combobox component for template variables
+	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
+
 	// FlagABTestFeatureToggleB
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
