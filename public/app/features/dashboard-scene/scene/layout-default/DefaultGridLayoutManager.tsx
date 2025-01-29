@@ -9,7 +9,6 @@ import {
   sceneUtils,
   SceneComponentProps,
   SceneGridItemLike,
-  SceneVariable,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
@@ -490,24 +489,6 @@ export class DefaultGridLayoutManager
         isResizable,
       }),
     });
-  }
-
-  public handleVariableUpdateCompleted(variable: SceneVariable, hasChanged: boolean): void {
-    for (const child of this.state.grid.state.children) {
-      if (!(child instanceof SceneGridRow) || !child.state.$behaviors) {
-        continue;
-      }
-
-      for (const behavior of child.state.$behaviors) {
-        if (behavior instanceof RowRepeaterBehavior) {
-          if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
-            behavior.performRepeat(true);
-          } else if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
-            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
-          }
-        }
-      }
-    }
   }
 
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {

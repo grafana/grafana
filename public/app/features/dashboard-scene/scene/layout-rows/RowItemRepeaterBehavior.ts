@@ -6,14 +6,13 @@ import {
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
 } from '@grafana/scenes';
 
 import { isClonedKeyOf, getCloneKey } from '../../utils/clone';
-import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
+import { getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
 import { RowItem } from './RowItem';
@@ -30,10 +29,9 @@ interface RowItemRepeaterBehaviorState extends SceneObjectState {
 export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
-    onVariableUpdateCompleted: () => {},
+    onVariableUpdateCompleted: () => this.performRepeat(),
   });
 
-  public isWaitingForVariables = false;
   private _prevRepeatValues?: VariableValueSingle[];
   private _clonedRows?: RowItem[];
 
@@ -65,25 +63,8 @@ export class RowItemRepeaterBehavior extends SceneObjectBase<RowItemRepeaterBeha
     return layout;
   }
 
-  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
-    const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
-
-    for (const row of allRows) {
-      const vizPanels = row.getLayout().getVizPanels();
-
-      for (const vizPanel of vizPanels) {
-        const queryRunner = getQueryRunnerFor(vizPanel);
-        if (queryRunner) {
-          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
-        }
-      }
-    }
-  }
-
   public performRepeat(force = false) {
-    this.isWaitingForVariables = this._variableDependency.hasDependencyInLoadingState();
-
-    if (this.isWaitingForVariables) {
+    if (this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
 

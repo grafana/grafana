@@ -201,22 +201,10 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public handleVariableUpdateCompleted(variable: SceneVariable, hasChanged: boolean): void {
-    for (const row of this.state.rows) {
-      if (row.variableDependency?.hasDependencyOn(variable.state.name) && hasChanged) {
-        row.forceRender();
-      }
-
-      if (!row.state.$behaviors) {
-        continue;
-      }
-
-      for (const behavior of row.state.$behaviors) {
-        if (behavior instanceof RowItemRepeaterBehavior) {
-          if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
-            behavior.performRepeat(true);
-          } else if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
-            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
-          }
+    if (hasChanged) {
+      for (const row of this.state.rows) {
+        if (row.variableDependency?.hasDependencyOn(variable.state.name)) {
+          row.forceRender();
         }
       }
     }
