@@ -1,13 +1,20 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneComponentProps,
+  sceneGraph,
+  VariableDependencyConfig,
+} from '@grafana/scenes';
 import { Alert, Button, Input, Tab, TextLink, useElementSelection } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { getDashboardSceneFor, getDefaultVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
@@ -24,6 +31,10 @@ export interface TabItemState extends SceneObjectState {
 }
 
 export class TabItem extends SceneObjectBase<TabItemState> implements LayoutParent, EditableDashboardElement {
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['title'],
+  });
+
   public isEditableDashboardElement: true = true;
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -149,7 +160,11 @@ export function TabRepeatSelect({ tab, dashboard }: { tab: TabItem; dashboard: D
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
-    return runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
+    return (
+      runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY ||
+      (runner?.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+        runner?.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY))
+    );
   });
 
   return (

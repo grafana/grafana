@@ -6,21 +6,13 @@ import {
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
 } from '@grafana/scenes';
 
-import {
-  getAncestorsFromClone,
-  getCloneKey,
-  getLastKeyFromClone,
-  getOriginalKey,
-  isClonedKeyOf,
-  joinCloneKeys,
-} from '../../utils/clone';
-import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
+import { getCloneKey, isClonedKeyOf } from '../../utils/clone';
+import { getMultiVariableValues } from '../../utils/utils';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { DashboardRepeatsProcessedEvent } from '../types';
 
@@ -38,10 +30,9 @@ interface TabItemRepeaterBehaviorState extends SceneObjectState {
 export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
-    onVariableUpdateCompleted: () => {},
+    onVariableUpdateCompleted: () => this.performRepeat(),
   });
 
-  public isWaitingForVariables = false;
   private _prevRepeatValues?: VariableValueSingle[];
   private _clonedTabs?: TabItem[];
 
@@ -73,25 +64,8 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
     return layout;
   }
 
-  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
-    const allTabs = [this._getTab(), ...(this._clonedTabs ?? [])];
-
-    for (const tab of allTabs) {
-      const vizPanels = tab.getLayout().getVizPanels();
-
-      for (const vizPanel of vizPanels) {
-        const queryRunner = getQueryRunnerFor(vizPanel);
-        if (queryRunner) {
-          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
-        }
-      }
-    }
-  }
-
   public performRepeat(force = false) {
-    this.isWaitingForVariables = this._variableDependency.hasDependencyInLoadingState();
-
-    if (this.isWaitingForVariables) {
+    if (this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
 
@@ -120,8 +94,6 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
 
     this._clonedTabs = [];
 
-    const originalTabKey = getOriginalKey(getLastKeyFromClone(tabToRepeat.state.key!));
-    const tabKeyAncestors = getAncestorsFromClone(tabToRepeat.state.key!);
     const tabContent = tabToRepeat.getLayout();
 
     // when variable has no options (due to error or similar) it will not render any panels at all
@@ -139,7 +111,7 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
       const isSourceTab = tabIndex === 0;
       const tabClone = isSourceTab ? tabToRepeat : tabToRepeat.clone({ $behaviors: [] });
 
-      const tabCloneKey = joinCloneKeys(tabKeyAncestors, getCloneKey(originalTabKey, tabIndex));
+      const tabCloneKey = getCloneKey(tabToRepeat.state.key!, tabIndex);
 
       const layout = tabContent.clone();
 
@@ -166,7 +138,7 @@ export class TabItemRepeaterBehavior extends SceneObjectBase<TabItemRepeaterBeha
       this._clonedTabs.push(tabClone);
     }
 
-    updateLayout(layout, this._clonedTabs, originalTabKey);
+    updateLayout(layout, this._clonedTabs, tabToRepeat.state.key!);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
@@ -196,5 +168,5 @@ function updateLayout(layout: TabsLayoutManager, tabs: TabItem[], tabKey: string
 }
 
 function getTabsFilterOutRepeatClones(layout: TabsLayoutManager, tabKey: string) {
-  return layout.state.tabs.filter((tab) => !isClonedKeyOf(getLastKeyFromClone(tab.state.key!), tabKey));
+  return layout.state.tabs.filter((tab) => !isClonedKeyOf(tab.state.key!, tabKey));
 }
