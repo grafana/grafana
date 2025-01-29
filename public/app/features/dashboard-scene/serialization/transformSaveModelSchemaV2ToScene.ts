@@ -142,7 +142,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     createdBy: metadata.annotations?.[AnnoKeyCreatedBy],
     updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
-    folderUid: metadata.annotations?.[AnnoKeyFolder],
+    // empty folder uid means the dashboard is in root level
+    folderUid: metadata.annotations?.[AnnoKeyFolder] ?? '',
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
 
     // UI-only metadata, ref: DashboardModel.initMeta
