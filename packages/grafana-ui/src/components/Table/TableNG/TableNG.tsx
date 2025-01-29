@@ -43,9 +43,10 @@ interface TableColumn extends Column<TableRow> {
 interface HeaderCellProps {
   column: Column<any>;
   field: Field;
-  onSort: (columnKey: string, direction: SortDirection) => void;
+  onSort: (columnKey: string, direction: SortDirection, isMultiSort: boolean) => void;
   direction: SortDirection | undefined;
   justifyContent?: Property.JustifyContent;
+  filter: any;
 }
 
 export type FilterType = {
@@ -55,7 +56,7 @@ export type FilterType = {
 };
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions, onColumnResize } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
   const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
@@ -96,6 +97,9 @@ export function TableNG(props: TableNGProps) {
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>({});
+
+  const crossFilterOrder = useRef<string[]>([]);
+  const crossFilterRows = useRef<{ [key: string]: TableRow[] }>({});
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [, setReadyForRowHeightCalc] = useState(false);
@@ -160,8 +164,9 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
-  const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent }) => {
-    const headerRef = useRef(null);
+  // TODO: move this component to a separate file
+  const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent, filter }) => {
+    const headerRef = useRef<HTMLDivElement>(null);
 
     let isColumnFilterable = filterable;
     if (field.config.custom?.filterable !== filterable) {
@@ -176,18 +181,58 @@ export function TableNG(props: TableNGProps) {
       });
     }
 
-    const handleSort = () => {
-      onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
+    const handleSort = (event: React.MouseEvent<HTMLButtonElement>) => {
+      const isMultiSort = event.shiftKey;
+      onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
     };
 
+    // collecting header cell refs to handle manual column resize
     useLayoutEffect(() => {
       if (headerRef.current) {
         headerCellRefs.current[column.key] = headerRef.current;
       }
     }, [headerRef, column.key]);
 
+    // TODO: this is a workaround to handle manual column resize;
+    useEffect(() => {
+      const headerCellParent = headerRef.current?.parentElement;
+      if (headerCellParent) {
+        // `lastElement` is an HTML element added by react-data-grid for resizing columns.
+        // We add a click event listener to `lastElement` to handle the end of the resize operation.
+        const lastElement = headerCellParent.lastElementChild;
+        if (lastElement) {
+          const handleMouseUp = () => {
+            let newWidth = headerCellParent.clientWidth;
+            const columnMinWidth = column.minWidth;
+            if (columnMinWidth && newWidth < columnMinWidth) {
+              newWidth = columnMinWidth;
+            }
+            onColumnResize?.(column.key as string, newWidth);
+          };
+
+          lastElement.addEventListener('click', handleMouseUp);
+
+          return () => {
+            lastElement.removeEventListener('click', handleMouseUp);
+          };
+        }
+      }
+      // to handle "Not all code paths return a value." error
+      return;
+    }, [column]);
+
     return (
-      <div ref={headerRef} style={{ display: 'flex', justifyContent }}>
+      <div
+        ref={headerRef}
+        style={{ display: 'flex', justifyContent }}
+        // TODO find a better solution to this issue, see: https://github.com/adazzle/react-data-grid/issues/3535
+        // Unblock spacebar event
+        onKeyDown={(event) => {
+          if (event.key === ' ') {
+            event.stopPropagation();
+          }
+        }}
+      >
         <button className={styles.headerCellLabel} onClick={handleSort}>
           <div>{column.name}</div>
           {direction &&
@@ -199,16 +244,24 @@ export function TableNG(props: TableNGProps) {
         </button>
 
         {isColumnFilterable && (
-          <Filter name={column.key} rows={rows} filter={filter} setFilter={setFilter} field={field} />
+          <Filter
+            name={column.key}
+            rows={rows}
+            filter={filter}
+            setFilter={setFilter}
+            field={field}
+            crossFilterOrder={crossFilterOrder.current}
+            crossFilterRows={crossFilterRows.current}
+          />
         )}
       </div>
     );
   };
 
-  const handleSort = (columnKey: string, direction: SortDirection) => {
+  const handleSort = (columnKey: string, direction: SortDirection, isMultiSort: boolean) => {
     let currentSortColumn: SortColumn | undefined;
 
-    const updatedSortColumns = sortColumns.filter((column) => {
+    const updatedSortColumns = sortColumnsRef.current.filter((column) => {
       const isCurrentColumn = column.columnKey === columnKey;
       if (isCurrentColumn) {
         currentSortColumn = column;
@@ -219,9 +272,16 @@ export function TableNG(props: TableNGProps) {
     // sorted column exists and is descending -> remove it to reset sorting
     if (currentSortColumn && currentSortColumn.direction === 'DESC') {
       setSortColumns(updatedSortColumns);
+      sortColumnsRef.current = updatedSortColumns;
     } else {
       // new sort column or changed direction
-      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+      if (isMultiSort) {
+        setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+        sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
+      } else {
+        setSortColumns([{ columnKey, direction }]);
+        sortColumnsRef.current = [{ columnKey, direction }];
+      }
     }
   };
 
@@ -363,6 +423,14 @@ export function TableNG(props: TableNGProps) {
             },
         ...(footerOptions?.show && {
           renderSummaryCell() {
+            if (isCountRowsSet && fieldIndex === 0) {
+              return (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Count</span>
+                  <span>{calcsRef.current[fieldIndex]}</span>
+                </div>
+              );
+            }
             return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
           },
         }),
@@ -373,6 +441,7 @@ export function TableNG(props: TableNGProps) {
             onSort={handleSort}
             direction={sortDirection}
             justifyContent={justifyColumnContent}
+            filter={filter}
           />
         ),
         // TODO these anys are making me sad
@@ -410,37 +479,73 @@ export function TableNG(props: TableNGProps) {
 
   // Sort rows
   const sortedRows = useMemo(() => {
+    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
+    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
+
     if (sortColumns.length === 0) {
       return rows;
     }
 
-    return [...rows].sort((a, b) => {
-      for (const sort of sortColumns) {
-        const { columnKey, direction } = sort;
-        const comparator = getComparator(columnTypes[columnKey]);
-        const compResult = comparator(a[columnKey], b[columnKey]);
-        if (compResult !== 0) {
-          return direction === 'ASC' ? compResult : -compResult;
+    return rows.slice().sort((a, b) => {
+      let result = 0;
+      let sortIndex = 0;
+
+      for (const { columnKey } of sortColumns) {
+        const compare = comparators[sortIndex];
+        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
+
+        if (result !== 0) {
+          break;
         }
+
+        sortIndex += 1;
       }
-      return 0; // false
+
+      return result;
     });
   }, [rows, sortColumns, columnTypes]);
+
+  const getDisplayedValue = (row: TableRow, key: string) => {
+    const field = props.data.fields.find((field) => field.name === key)!;
+    const displayedValue = formattedValueToString(field.display!(row[key]));
+    return displayedValue;
+  };
 
   // Filter rows
   const filteredRows = useMemo(() => {
     const filterValues = Object.entries(filter);
-
     if (filterValues.length === 0) {
+      // reset cross filter order
+      crossFilterOrder.current = [];
       return sortedRows;
     }
 
+    // Update crossFilterOrder
+    const filterKeys = new Set(filterValues.map(([key]) => key));
+    filterKeys.forEach((key) => {
+      if (!crossFilterOrder.current.includes(key)) {
+        // Each time a filter is added or removed, it is always a single filter.
+        // When adding a new filter, it is always appended to the end, maintaining the order.
+        crossFilterOrder.current.push(key);
+      }
+    });
+    // Remove keys from crossFilterOrder that are no longer present in the current filter values
+    crossFilterOrder.current = crossFilterOrder.current.filter((key) => filterKeys.has(key));
+
+    // reset crossFilterRows
+    crossFilterRows.current = {};
+
     return sortedRows.filter((row) => {
       for (const [key, value] of filterValues) {
-        const field = props.data.fields.find((field) => field.name === key)!;
-        const displayedValue = formattedValueToString(field.display!(row[key]));
+        const displayedValue = getDisplayedValue(row, key);
         if (!value.filteredSet.has(displayedValue)) {
           return false;
+        }
+        // collect rows for crossFilter
+        if (!crossFilterRows.current[key]) {
+          crossFilterRows.current[key] = [row];
+        } else {
+          crossFilterRows.current[key].push(row);
         }
       }
       return true;
@@ -453,10 +558,11 @@ export function TableNG(props: TableNGProps) {
         delete field.state?.calcs;
       }
       if (isCountRowsSet) {
-        return index === 0 ? `Count: ${filteredRows.length}` : '';
+        return index === 0 ? `${filteredRows.length}` : '';
       }
       if (index === 0) {
-        return footerOptions ? fieldReducers.get(footerOptions.reducer[0]).name : '';
+        const footerCalcReducer = footerOptions?.reducer[0];
+        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
       return getFooterItemNG(filteredRows, field, footerOptions);
     });
@@ -487,6 +593,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid
+        className={styles.dataGrid}
         key={`DataGrid${revId}`}
         rows={filteredRows}
         columns={columns}
@@ -533,9 +640,11 @@ export function TableNG(props: TableNGProps) {
         // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
         bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
         onColumnResize={() => {
-          // TODO: this is a hack to force rowHeight re-calculation
+          // NOTE: This method is called continuously during the column resize drag operation,
+          // providing the current column width. There is no separate event for the end of the drag operation.
           if (textWrap) {
             // This is needed only when textWrap is enabled
+            // TODO: this is a hack to force rowHeight re-calculation
             setResizeTrigger((prev) => prev + 1);
           }
         }}
@@ -566,6 +675,8 @@ export function TableNG(props: TableNGProps) {
 
 type Comparator = (a: any, b: any) => number;
 
+const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+
 function getComparator(sortColumnType: string): Comparator {
   switch (sortColumnType) {
     case FieldType.time:
@@ -575,11 +686,26 @@ function getComparator(sortColumnType: string): Comparator {
     case FieldType.string:
     case FieldType.enum:
     default:
-      return (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
+      return (a, b) => compare(String(a), String(b));
   }
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
+  dataGrid: css({
+    '--rdg-background-color': theme.colors.background.primary,
+    '--rdg-header-background-color': theme.colors.background.primary,
+    '--rdg-border-color': 'transparent',
+    '--rdg-summary-border-color': theme.colors.border.medium,
+    '--rdg-color': theme.colors.text.primary,
+    // TODO replace with ScrollContainer
+    overflow: 'hidden',
+    scrollbarWidth: 'thin',
+
+    '&:hover': {
+      '--rdg-row-hover-background-color': theme.colors.action.hover,
+      overflow: 'scroll',
+    },
+  }),
   menuItem: css({
     maxWidth: '200px',
   }),
@@ -605,10 +731,17 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     marginLeft: theme.spacing(0.5),
   }),
   cell: css({
+    '--rdg-border-color': theme.colors.border.medium,
+    'border-left': 'none',
     whiteSpace: `${textWrap ? 'break-spaces' : 'nowrap'}`,
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+
+    '&:hover': {
+      border: `1px solid ${theme.colors.text.link}`,
+      backgroundColor: theme.colors.background.primary,
+    },
   }),
 });
 
