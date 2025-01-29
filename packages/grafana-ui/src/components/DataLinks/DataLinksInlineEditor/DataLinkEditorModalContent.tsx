@@ -46,6 +46,7 @@ export const DataLinkEditorModalContent = ({
           onClick={() => {
             onSave(index, dirtyLink);
           }}
+          disabled={dirtyLink.title.trim() === '' || dirtyLink.url.trim() === ''}
         >
           <Trans i18nKey="grafana-ui.data-link-editor-modal.save">Save</Trans>
         </Button>
