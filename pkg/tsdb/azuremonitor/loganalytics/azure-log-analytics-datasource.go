@@ -35,7 +35,8 @@ func filterTablesWithData(tables []types.MetadataTable) []types.MetadataTable {
 			filtered = append(filtered, table)
 		}
 	}
-	return filtered
+	return tables
+	// return filtered
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
@@ -70,8 +71,8 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		}
 
 		var metadata types.AzureLogAnalyticsMetadata
-		// Filter tables where hasData is false
-		// metadata.Tables = filterTablesWithData(metadata.Tables)
+		// Filter tables where hasData is false [currently not being used => need to confirm functionality with Azure]
+		metadata.Tables = filterTablesWithData(metadata.Tables)
 
 		responseBody, err := json.Marshal(metadata)
 		if err != nil {
