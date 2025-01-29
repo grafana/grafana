@@ -4,11 +4,19 @@ import { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 
-import { migrationFeatureFlags } from './utils';
-
 interface Props {
   dashboardUid: string;
 }
+
+const migrationFeatureFlags = new Set([
+  'autoMigrateOldPanels',
+  'autoMigrateGraphPanel',
+  'autoMigrateTablePanel',
+  'autoMigratePiechartPanel',
+  'autoMigrateWorldmapPanel',
+  'autoMigrateStatPanel',
+  'disableAngular',
+]);
 
 const revertAutoMigrateUrlFlag = () => {
   const url = new URL(window.location.toString());
