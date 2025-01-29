@@ -283,6 +283,15 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 		return nil, err
 	}
 
+	// if updated by is set, then this version of the dashboard was "created"
+	// by that user
+	if obj.GetUpdatedBy() != "" {
+		updatedBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetUpdatedBy())
+		if err == nil && updatedBy != nil {
+			createdBy = updatedBy
+		}
+	}
+
 	id, err := obj.GetResourceVersionInt64()
 	if err != nil {
 		return nil, err
