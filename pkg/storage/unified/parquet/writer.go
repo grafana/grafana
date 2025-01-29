@@ -2,7 +2,6 @@ package parquet
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,6 +13,7 @@ import (
 	"github.com/apache/arrow-go/v18/parquet/compress"
 	"github.com/apache/arrow-go/v18/parquet/pqarrow"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -25,6 +25,7 @@ type resourceWriter struct {
 
 	schema *arrow.Schema
 	writer *pqarrow.FileWriter
+	logger logging.Logger
 
 	rv        *array.Int64Builder
 	namespace *array.StringBuilder
@@ -41,6 +42,7 @@ func NewResourceWriter(f io.Writer) (*resourceWriter, error) {
 		pool:   memory.DefaultAllocator,
 		schema: newSchema(nil),
 		buffer: 1024 * 10 * 100 * 10, // 10MB
+		logger: logging.DefaultLogger.With("logger", "parquet.writer"),
 	}
 
 	props := parquet.NewWriterProperties(
@@ -58,12 +60,13 @@ func (w *resourceWriter) Close() error {
 	if w.rv.Len() > 0 {
 		_ = w.flush()
 	}
+	w.logger.Info("close")
 	return w.writer.Close()
 }
 
 // writes the current buffer to parquet and re-inits the arrow buffer
 func (w *resourceWriter) flush() error {
-	fmt.Printf("FLUSH: %d\n", w.rv.Len())
+	w.logger.Info("flush", "count", w.rv.Len())
 	rec := array.NewRecord(w.schema, []arrow.Array{
 		w.rv.NewArray(),
 		w.namespace.NewArray(),
@@ -128,7 +131,7 @@ func (w *resourceWriter) Add(ctx context.Context, key *resource.ResourceKey, val
 
 	w.wrote = w.wrote + len(value)
 	if w.wrote > w.buffer {
-		fmt.Printf("flush (%d > %d)\n", w.wrote, w.buffer)
+		w.logger.Info("buffer full", "buffer", w.wrote, "max", w.buffer)
 		return w.flush()
 	}
 	return nil
