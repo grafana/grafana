@@ -125,8 +125,12 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   };
 
   try {
-    validateDashboardSchemaV2(dashboardSchemaV2);
-    return dashboardSchemaV2 as DashboardV2Spec;
+    // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
+    if (validateDashboardSchemaV2(dashboardSchemaV2)) {
+      return dashboardSchemaV2;
+    }
+    // should never reach this point, validation should throw an error
+    throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
   } catch (reason) {
     console.error('Error transforming dashboard to schema v2: ' + reason, dashboardSchemaV2);
     throw new Error('Error transforming dashboard to schema v2: ' + reason);
@@ -248,8 +252,12 @@ function getElements(state: DashboardSceneState) {
       const elementSpec: LibraryPanelKind = {
         kind: 'LibraryPanel',
         spec: {
-          name: behavior.state.name,
-          uid: behavior.state.uid,
+          id: getPanelIdForVizPanel(vizPanel),
+          title: vizPanel.state.title,
+          libraryPanel: {
+            uid: behavior.state.uid,
+            name: behavior.state.name,
+          },
         },
       };
       return elementSpec;
@@ -432,14 +440,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 }
 
 function createElements(panels: Element[]): Record<string, Element> {
-  const elements: Record<string, Element> = {};
-
-  for (const panel of panels) {
-    const key = panel.kind === 'Panel' ? getVizPanelKeyForPanelId(panel.spec.id) : panel.spec.uid;
-    elements[key] = panel;
-  }
-
-  return elements;
+  return panels.reduce<Record<string, Element>>((elements, panel) => {
+    elements[getVizPanelKeyForPanelId(panel.spec.id)] = panel;
+    return elements;
+  }, {});
 }
 
 function repeaterToLayoutItems(repeater: DashboardGridItem, isSnapshot = false): GridLayoutItemKind[] {

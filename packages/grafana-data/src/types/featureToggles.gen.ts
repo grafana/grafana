@@ -112,9 +112,7 @@ export interface FeatureToggles {
   kubernetesDashboards?: boolean;
   kubernetesCliDashboards?: boolean;
   kubernetesRestore?: boolean;
-  kubernetesFolders?: boolean;
   kubernetesFoldersServiceV2?: boolean;
-  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -155,8 +153,8 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  alertingSaveStateCompressed?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
@@ -231,7 +229,6 @@ export interface FeatureToggles {
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
-  zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;

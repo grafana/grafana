@@ -49,9 +49,6 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{},
 		}))
 
-		// Ensure the k8s version is valid
-		_ = h.GetVersionInfo()
-
 		// The accepted verbs will change when dual write is enabled
 		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
 		// fmt.Printf("%s", disco)

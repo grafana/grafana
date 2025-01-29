@@ -709,20 +709,8 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "kubernetesFolders",
-			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
 			Name:        "kubernetesFoldersServiceV2",
 			Description: "Use the Folders Service V2, and route Folder Service requests to k8s",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-		},
-		{
-			Name:        "grafanaAPIServerTestingWithExperimentalAPIs",
-			Description: "Facilitate integration testing of experimental APIs",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 		},
@@ -1033,15 +1021,16 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "onPremToCloudMigrationsAuthApiMig",
-			Description: "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-		},
-		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "alertingSaveStateCompressed",
+			Description:  "Enables the compressed protobuf-based alert state storage",
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 		},
@@ -1597,13 +1586,6 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
-		},
-		{
-			Name:        "zipkinBackendMigration",
-			Description: "Enables querying Zipkin data source without the proxy",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "enableSCIM",

@@ -70,7 +70,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20250117230852-a5e8136407d4 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250120145936-5f0e28e7a87c // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20250123104008-e99947858901 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -81,11 +81,11 @@ require (
 	github.com/grafana/grafana-app-sdk v0.30.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.29.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.5 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.5 // @grafana/partner-datasources
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.2.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.262.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.263.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
@@ -177,7 +177,7 @@ require (
 	golang.org/x/tools v0.29.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/oss-big-tent
 	google.golang.org/api v0.216.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.69.4 // @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.70.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.1 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
@@ -198,7 +198,7 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250121115006-c1eac9f9973f // @grafana/plugins-platform-backend
+	github.com/grafana/grafana/apps/advisor v0.0.0-20250123151950-b066a6313173 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250121113133-e747350fee2d // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
@@ -209,14 +209,14 @@ require (
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
-	github.com/grafana/grafana/pkg/promlib v0.0.7 // @grafana/oss-big-tent
+	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250121113133-e747350fee2d // @grafana/grafana-search-and-storage
 )
 
 require (
-	cel.dev/expr v0.18.0 // indirect
+	cel.dev/expr v0.19.0 // indirect
 	cloud.google.com/go v0.116.0 // indirect
 	cloud.google.com/go/auth v0.13.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect

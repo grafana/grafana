@@ -383,17 +383,9 @@ const (
 	// Allow restoring objects in k8s
 	FlagKubernetesRestore = "kubernetesRestore"
 
-	// FlagKubernetesFolders
-	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
-	FlagKubernetesFolders = "kubernetesFolders"
-
 	// FlagKubernetesFoldersServiceV2
 	// Use the Folders Service V2, and route Folder Service requests to k8s
 	FlagKubernetesFoldersServiceV2 = "kubernetesFoldersServiceV2"
-
-	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
-	// Facilitate integration testing of experimental APIs
-	FlagGrafanaAPIServerTestingWithExperimentalAPIs = "grafanaAPIServerTestingWithExperimentalAPIs"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -555,13 +547,13 @@ const (
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
-	// FlagOnPremToCloudMigrationsAuthApiMig
-	// Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.
-	FlagOnPremToCloudMigrationsAuthApiMig = "onPremToCloudMigrationsAuthApiMig"
-
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
+
+	// FlagAlertingSaveStateCompressed
+	// Enables the compressed protobuf-based alert state storage
+	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
 
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
@@ -858,10 +850,6 @@ const (
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
-
-	// FlagZipkinBackendMigration
-	// Enables querying Zipkin data source without the proxy
-	FlagZipkinBackendMigration = "zipkinBackendMigration"
 
 	// FlagEnableSCIM
 	// Enables SCIM support for user and group management
