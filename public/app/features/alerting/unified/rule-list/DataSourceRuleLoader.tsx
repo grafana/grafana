@@ -1,16 +1,15 @@
 import { memo, useMemo } from 'react';
 
 import { DataSourceRuleGroupIdentifier, Rule } from 'app/types/unified-alerting';
-import { RulerCloudRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { getPromRuleFingerprint, getRulerRuleFingerprint } from '../utils/rule-id';
-import { getRuleName, isCloudRulerGroup } from '../utils/rules';
+import { isCloudRulerGroup } from '../utils/rules';
 
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
+import { getMatchingRulerRule } from './ruleMatching';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
@@ -74,31 +73,3 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     />
   );
 });
-
-function getMatchingRulerRule(rulerRuleGroup: RulerRuleGroupDTO<RulerCloudRuleDTO>, rule: Rule) {
-  // If all rule names are unique, we can use the rule name to find the rule. We don't need to hash the rule
-  const rulesByName = rulerRuleGroup.rules.filter((r) => getRuleName(r) === rule.name);
-  if (rulesByName.length === 1) {
-    return rulesByName[0];
-  }
-
-  // If we don't have a unique rule name, try to compare by labels and annotations
-  const rulesByLabelsAndAnnotations = rulesByName.filter((r) => {
-    return getRulerRuleFingerprint(r, false).join('-') === getPromRuleFingerprint(rule, false).join('-');
-  });
-
-  if (rulesByLabelsAndAnnotations.length === 1) {
-    return rulesByLabelsAndAnnotations[0];
-  }
-
-  // As a last resort, compare including the query
-  const rulesByLabelsAndAnnotationsAndQuery = rulesByName.filter((r) => {
-    return getRulerRuleFingerprint(r, true).join('-') === getPromRuleFingerprint(rule, true).join('-');
-  });
-
-  if (rulesByLabelsAndAnnotationsAndQuery.length === 1) {
-    return rulesByLabelsAndAnnotationsAndQuery[0];
-  }
-
-  return undefined;
-}

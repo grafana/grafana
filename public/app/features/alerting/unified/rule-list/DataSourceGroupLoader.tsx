@@ -1,23 +1,29 @@
-import { intersection } from 'lodash';
 import { useMemo } from 'react';
 
 import { Alert } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
-import { PromRuleDTO, RulerCloudRuleDTO, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import {
+  PromRuleDTO,
+  PromRuleGroupDTO,
+  RulerCloudRuleDTO,
+  RulerRuleGroupDTO,
+  RulesSourceApplication,
+} from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { prometheusApi } from '../api/prometheusApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { getPromRuleFingerprint, getRulerRuleFingerprint, hashRule } from '../utils/rule-id';
-import { isAlertingRulerRule, isCloudRulerRule, isRecordingRulerRule } from '../utils/rules';
+import { hashRule } from '../utils/rule-id';
+import { getRuleName, isCloudRulerGroup } from '../utils/rules';
 
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleOperationListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemLoader } from './components/AlertRuleListItemLoader';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
+import { matchRulesGroup } from './ruleMatching';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetGroupsQuery } = prometheusApi;
@@ -92,16 +98,16 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
   }
 
   const promGroup = promResponse?.data.groups.find((g) => g.file === namespaceName && g.name === groupName);
-  if (dsFeatures?.rulerConfig && rulerGroup && promGroup) {
+  if (dsFeatures?.rulerConfig && rulerGroup && isCloudRulerGroup(rulerGroup) && promGroup) {
     // There should be always only one group in the response but some Prometheus-compatible data sources
     // implement different filter parameters
     return (
-      <RulerEnabledDataSourceGroupLoader
+      <RulerBasedRuleGroup
         groupIdentifier={groupIdentifier}
-        promRules={promGroup.rules}
+        promGroup={promGroup}
         // Filter is just for typescript. We should never have other rule type in this component
         // Grafana rules are handled in a different component
-        rulerRules={rulerGroup.rules.filter(isCloudRulerRule)}
+        rulerGroup={rulerGroup}
         application={dsFeatures.application}
       />
     );
@@ -136,27 +142,23 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
   );
 }
 
-interface RulerEnabledDataSourceGroupLoaderProps extends DataSourceGroupLoaderProps {
-  promRules: PromRuleDTO[];
-  rulerRules: RulerCloudRuleDTO[];
+interface RulerBasedRuleGroupProps {
+  groupIdentifier: DataSourceRuleGroupIdentifier;
+  promGroup: PromRuleGroupDTO<PromRuleDTO>;
+  rulerGroup: RulerRuleGroupDTO<RulerCloudRuleDTO>;
   application: RulesSourceApplication;
 }
 
-export function RulerEnabledDataSourceGroupLoader({
-  groupIdentifier,
-  application,
-  promRules,
-  rulerRules,
-}: RulerEnabledDataSourceGroupLoaderProps) {
+export function RulerBasedRuleGroup({ groupIdentifier, application, promGroup, rulerGroup }: RulerBasedRuleGroupProps) {
   const { namespace, groupName } = groupIdentifier;
 
   const { matches, promOnlyRules } = useMemo(() => {
-    return matchRules(rulerRules, promRules);
-  }, [promRules, rulerRules]);
+    return matchRulesGroup(rulerGroup, promGroup);
+  }, [promGroup, rulerGroup]);
 
   return (
     <>
-      {rulerRules.map((rulerRule) => {
+      {rulerGroup.rules.map((rulerRule) => {
         const promRule = matches.get(rulerRule);
 
         return promRule ? (
@@ -195,68 +197,4 @@ export function RulerEnabledDataSourceGroupLoader({
       ))}
     </>
   );
-}
-
-function getRuleName(rule: RulerRuleDTO): string {
-  if (isAlertingRulerRule(rule)) {
-    return rule.alert;
-  }
-  if (isRecordingRulerRule(rule)) {
-    return rule.record;
-  }
-  return '';
-}
-
-interface MatchingResult {
-  matches: Map<RulerRuleDTO, PromRuleDTO>;
-  promOnlyRules: PromRuleDTO[];
-}
-
-export function matchRules(rulerRules: RulerCloudRuleDTO[], promRules: PromRuleDTO[]): MatchingResult {
-  const promRulesByHashWithQuery = new Map(promRules.map((rule) => [getPromRuleIdentifier(rule, true), rule]));
-  const promRulesByHashWithoutQuery = new Map(promRules.map((rule) => [getPromRuleIdentifier(rule, false), rule]));
-
-  const matchingResult = rulerRules.reduce<MatchingResult>(
-    (acc, rulerRule) => {
-      const { matches } = acc;
-
-      // We try to match including the query first, if it fails we try without it
-      const rulerBasedIdentifier = getRulerRuleIdentifier(rulerRule, true);
-      const promRuleMatchedWithQuery = promRulesByHashWithQuery.get(rulerBasedIdentifier);
-
-      if (promRuleMatchedWithQuery) {
-        matches.set(rulerRule, promRuleMatchedWithQuery);
-        promRulesByHashWithQuery.delete(rulerBasedIdentifier);
-        return acc;
-      }
-
-      const rulerBasedIdentifierWithoutQuery = getRulerRuleIdentifier(rulerRule, false);
-      const promRuleMatchedWithoutQuery = promRulesByHashWithoutQuery.get(rulerBasedIdentifierWithoutQuery);
-
-      if (promRuleMatchedWithoutQuery) {
-        matches.set(rulerRule, promRuleMatchedWithoutQuery);
-        promRulesByHashWithoutQuery.delete(rulerBasedIdentifierWithoutQuery);
-        return acc;
-      }
-
-      return acc;
-    },
-    { matches: new Map(), promOnlyRules: [] }
-  );
-
-  // Truly unmatched Prometheus rules are the ones which are still present in both maps
-  const unmatchedPromRules = intersection(
-    Array.from(promRulesByHashWithQuery.values()),
-    Array.from(promRulesByHashWithoutQuery.values())
-  );
-
-  return { ...matchingResult, promOnlyRules: unmatchedPromRules };
-}
-
-function getPromRuleIdentifier(rule: PromRuleDTO, includeQuery: boolean): string {
-  return getPromRuleFingerprint(rule, includeQuery).join('-');
-}
-
-function getRulerRuleIdentifier(rule: RulerCloudRuleDTO, includeQuery: boolean): string {
-  return getRulerRuleFingerprint(rule, includeQuery).join('-');
 }

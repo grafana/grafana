@@ -1,15 +1,15 @@
-import { render, screen, within } from 'test/test-utils';
+import { render, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO, RulerAlertingRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
-import { setPrometheusRules, setRulerRuleGroupHandler } from '../mocks/server/configure';
+import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { createViewLinkV2 } from '../utils/misc';
 import { fromRulerRuleAndGroupIdentifierV2 } from '../utils/rule-id';

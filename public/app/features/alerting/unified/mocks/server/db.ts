@@ -10,6 +10,7 @@ import {
   PromRuleGroupDTO,
   PromRuleType,
   RulerAlertingRuleDTO,
+  RulerCloudRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
@@ -68,7 +69,7 @@ const rulerRecordingRuleFactory = Factory.define<RulerRecordingRuleDTO>(({ seque
   labels: {},
 }));
 
-const rulerGroupFactory = Factory.define<RulerRuleGroupDTO, { addToNamespace: string }>(
+const rulerGroupFactory = Factory.define<RulerRuleGroupDTO<RulerCloudRuleDTO>, { addToNamespace: string }>(
   ({ sequence, transientParams, afterBuild }) => {
     afterBuild((group) => {
       if (transientParams.addToNamespace) {
