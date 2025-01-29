@@ -1401,9 +1401,6 @@
       "export-as-json-tooltip": "Export"
     }
   },
-  "folder-filter": {
-    "clear-folder-button": "Clear folders"
-  },
   "folder-picker": {
     "create-instructions": "Press enter to create the new folder.",
     "loading": "Loading folders..."
@@ -1785,6 +1782,9 @@
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    },
+    "search": {
+      "folder-placeholder": "Filter by folder"
     }
   },
   "link": {

@@ -1401,9 +1401,6 @@
       "export-as-json-tooltip": "Ēχpőřŧ"
     }
   },
-  "folder-filter": {
-    "clear-folder-button": "Cľęäř ƒőľđęřş"
-  },
   "folder-picker": {
     "create-instructions": "Přęşş ęŉŧęř ŧő čřęäŧę ŧĥę ŉęŵ ƒőľđęř.",
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
@@ -1785,6 +1782,9 @@
     "save": {
       "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{errorMsg}}\"",
       "success": "Ŀįþřäřy päŉęľ şävęđ"
+    },
+    "search": {
+      "folder-placeholder": "Fįľŧęř þy ƒőľđęř"
     }
   },
   "link": {
