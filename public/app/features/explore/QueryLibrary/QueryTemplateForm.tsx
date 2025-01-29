@@ -13,7 +13,6 @@ import { useCreateQueryTemplateMutation, useUpdateQueryTemplateMutation } from '
 import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec } from '../../query-library/api/mappers';
-import { getK8sNamespace } from '../../query-library/api/query';
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
@@ -59,9 +58,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
 
   const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
     return addQueryTemplate({
-      namespace: getK8sNamespace(),
-      comGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate:
-        convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
+      queryTemplate: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
     })
       .unwrap()
       .then(() => {
@@ -84,9 +81,8 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
 
   const handleEditQueryTemplate = async (editQueryTemplateCommand: EditQueryTemplateCommand) => {
     return editQueryTemplate({
-      namespace: getK8sNamespace(),
       name: editQueryTemplateCommand.uid,
-      ioK8SApimachineryPkgApisMetaV1Patch: {
+      patch: {
         spec: editQueryTemplateCommand.partialSpec,
       },
     })

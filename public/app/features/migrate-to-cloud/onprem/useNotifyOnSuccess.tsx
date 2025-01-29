@@ -1,7 +1,7 @@
-import { t } from 'i18next';
 import { useRef, useEffect } from 'react';
 
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 
 import { GetSnapshotResponseDto, SnapshotDto } from '../api';
 

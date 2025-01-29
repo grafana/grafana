@@ -4,7 +4,6 @@ import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from '../../../core/internationalization';
 import { useListQueryTemplateQuery } from '../../query-library';
 import { QUERY_LIBRARY_GET_LIMIT } from '../../query-library/api/factory';
-import { getK8sNamespace } from '../../query-library/api/query';
 import { ExploreDrawer } from '../ExploreDrawer';
 
 import { QueryLibrary } from './QueryLibrary';
@@ -22,9 +21,7 @@ type Props = {
  * Drawer with query library feature. Handles its own state and should be included in some top level component.
  */
 export function QueryLibraryDrawer({ isOpen, activeDatasources, close, queryActionButton }: Props) {
-  const { data } = useListQueryTemplateQuery({
-    namespace: getK8sNamespace(),
-  });
+  const { data } = useListQueryTemplateQuery({});
   const queryTemplatesCount = data?.items?.length ?? 0;
 
   // TODO: the tabbed container is here mainly for close button and some margins maybe make sense to use something

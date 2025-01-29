@@ -10,7 +10,6 @@ import { useListQueryTemplateQuery } from 'app/features/query-library';
 import { QueryTemplate } from 'app/features/query-library/types';
 
 import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
-import { getK8sNamespace } from '../../query-library/api/query';
 import { UserDataQueryResponse } from '../../query-library/api/types';
 
 import { QueryLibraryProps } from './QueryLibrary';
@@ -23,13 +22,7 @@ import { searchQueryLibrary } from './utils/search';
 interface QueryTemplatesListProps extends QueryLibraryProps {}
 
 export function QueryTemplatesList(props: QueryTemplatesListProps) {
-  const {
-    data: rawData,
-    isLoading,
-    error,
-  } = useListQueryTemplateQuery({
-    namespace: getK8sNamespace(),
-  });
+  const { data: rawData, isLoading, error } = useListQueryTemplateQuery({});
   const data = useMemo(() => (rawData ? convertDataQueryResponseToQueryTemplates(rawData) : undefined), [rawData]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
