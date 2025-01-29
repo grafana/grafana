@@ -77,7 +77,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 	defer b.batchLock.Finish(setting.Collection)
 
 	// We may want to first write parquet, then read parquet
-	if b.dialect.DialectName() == "SQLite" {
+	if b.dialect.DialectName() == "sqlite" {
 		handler, err := parquet.NewBatchHandler()
 		if err != nil {
 			return &resource.BatchResponse{
