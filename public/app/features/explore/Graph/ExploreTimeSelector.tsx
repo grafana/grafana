@@ -16,6 +16,6 @@ type Props = {
 export function ExploreGraphTimeSelector(props: Props) {
   const { timeRange, onChangeTimeRange } = props;
   return (
-    <RadioButtonGroup size="sm" options={ALL_TIME_SELECTOR_OPTIONS} value={timeRange} onChange={onChangeTimeRange} />
+    <RadioButtonGroup className="explore-time-selector" size="sm" options={ALL_TIME_SELECTOR_OPTIONS} value={timeRange} onChange={onChangeTimeRange} />
   );
 }
