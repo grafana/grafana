@@ -170,10 +170,13 @@ func (s *Service) DBMigration(db db.DB) {
 
 func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
-		// TODO: implement filtering by alerting folders and k6 folders: see the dashboards store `FindDashboards` method for reference
-		return s.unifiedStore.SearchFolders(ctx, q)
+		// TODO:
+		// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
+		// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
+		return s.searchFoldersFromApiServer(ctx, q)
 	}
-	return s.store.SearchFolders(ctx, q)
+
+	return nil, fmt.Errorf("cannot be called on the legacy folder service")
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {

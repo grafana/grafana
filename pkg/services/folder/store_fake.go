@@ -62,10 +62,6 @@ func (f *fakeStore) GetFolders(ctx context.Context, q GetFoldersFromStoreQuery) 
 	return f.ExpectedFolders, f.ExpectedError
 }
 
-func (f *fakeStore) SearchFolders(ctx context.Context, q SearchFoldersQuery) (model.HitList, error) {
-	return f.ExpectedHitList, f.ExpectedError
-}
-
 func (f *fakeStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }

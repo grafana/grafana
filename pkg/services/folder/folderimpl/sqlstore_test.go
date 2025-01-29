@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -37,7 +36,7 @@ func TestIntegrationCreate(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -157,7 +156,7 @@ func TestIntegrationDelete(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -204,7 +203,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -379,7 +378,7 @@ func TestIntegrationGet(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -514,7 +513,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -582,7 +581,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -824,7 +823,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	}
 
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 
@@ -857,7 +856,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	foldersNum := 10
 	db, cfg := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, featuremgmt.WithFeatures())
+	folderStore := ProvideStore(db)
 
 	orgID := CreateOrg(t, db, cfg)
 

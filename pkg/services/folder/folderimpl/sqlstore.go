@@ -15,28 +15,23 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const DEFAULT_BATCH_SIZE = 999
 
 type FolderStoreImpl struct {
-	db       db.DB
-	features featuremgmt.FeatureToggles
-	log      log.Logger
+	db  db.DB
+	log log.Logger
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderStoreImpl)(nil)
 
-func ProvideStore(db db.DB, features featuremgmt.FeatureToggles) *FolderStoreImpl {
-	return &FolderStoreImpl{db: db, log: log.New("folder-store"), features: features}
+func ProvideStore(db db.DB) *FolderStoreImpl {
+	return &FolderStoreImpl{db: db, log: log.New("folder-store")}
 }
 
 func (ss *FolderStoreImpl) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -540,119 +535,6 @@ func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFr
 	}
 
 	return folders, nil
-}
-
-// SearchFolders queries the *dashboard* table for folders that match the query
-func (ss *FolderStoreImpl) SearchFolders(ctx context.Context, query folder.SearchFoldersQuery) (model.HitList, error) {
-	filters := []any{}
-
-	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, filter := range query.Sort.Filter {
-		filters = append(filters, filter)
-	}
-
-	filters = append(filters, query.Filters...)
-
-	var orgID int64
-	if query.OrgID != 0 {
-		orgID = query.OrgID
-		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
-	} else if query.SignedInUser.GetOrgID() != 0 {
-		orgID = query.SignedInUser.GetOrgID()
-		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
-	}
-
-	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: ss.db.GetDialect(), Title: query.Title})
-	}
-
-	if len(query.Type) > 0 {
-		filters = append(filters, searchstore.TypeFilter{Dialect: ss.db.GetDialect(), Type: query.Type})
-	}
-	// nolint:staticcheck
-	if len(query.IDs) > 0 {
-		filters = append(filters, searchstore.FolderFilter{IDs: query.IDs})
-	}
-
-	if len(query.UIDs) > 0 {
-		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              ss.db.GetDialect(),
-			OrgID:                orgID,
-			UIDs:                 query.UIDs,
-			NestedFoldersEnabled: ss.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
-		})
-	}
-
-	// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
-	if query.SignedInUser == nil || !query.SignedInUser.IsIdentityType(claims.TypeServiceAccount) {
-		filters = append(filters, searchstore.K6FolderFilter{})
-	}
-
-	if !query.SkipAccessControlFilter {
-		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, ss.features, recursiveQueriesAreSupported))
-	}
-
-	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: ss.db.GetDialect(), Filters: filters, Features: ss.features}
-
-	limit := query.Limit
-	if limit < 1 {
-		limit = 1000
-	}
-
-	page := query.Page
-	if page < 1 {
-		page = 1
-	}
-
-	sql, params := sb.ToSQL(limit, page)
-
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(sql, params...).Find(&res)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	hitList := make([]*model.Hit, 0)
-	hits := make(map[string]*model.Hit)
-	for _, item := range res {
-		key := fmt.Sprintf("%s-%d", item.UID, item.OrgID)
-		hit, exists := hits[key]
-		if !exists {
-			hit = &model.Hit{
-				ID:          item.ID,
-				UID:         item.UID,
-				OrgID:       item.OrgID,
-				Title:       item.Title,
-				URI:         "db/" + item.Slug,
-				URL:         dashboards.GetFolderURL(item.UID, item.Slug),
-				Type:        model.DashHitFolder,
-				FolderID:    item.FolderID, // nolint:staticcheck
-				FolderUID:   item.FolderUID,
-				FolderTitle: item.FolderTitle,
-			}
-
-			// nolint:staticcheck
-			if item.FolderID > 0 {
-				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
-			}
-
-			if query.Sort.MetaName != "" {
-				hit.SortMeta = item.SortMeta
-				hit.SortMetaName = query.Sort.MetaName
-			}
-
-			hitList = append(hitList, hit)
-			hits[key] = hit
-		}
-	}
-	return hitList, nil
 }
 
 func (ss *FolderStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {

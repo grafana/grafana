@@ -45,7 +45,7 @@ func ProvideFolderPermissions(
 		return nil, err
 	}
 
-	fStore := folderimpl.ProvideStore(sqlStore, featuremgmt.WithFeatures())
+	fStore := folderimpl.ProvideStore(sqlStore)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fService := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,

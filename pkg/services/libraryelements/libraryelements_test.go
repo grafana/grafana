@@ -343,7 +343,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore, features)
+	fStore := folderimpl.ProvideStore(sqlStore)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
@@ -381,7 +381,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc fold
 		require.NoError(t, err)
 
 		folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-		store := folderimpl.ProvideStore(sc.sqlStore, features)
+		store := folderimpl.ProvideStore(sc.sqlStore)
 		folderSvc = folderimpl.ProvideService(
 			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
 			nil, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
@@ -445,7 +445,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore, features)
+	fStore := folderimpl.ProvideStore(sqlStore)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
@@ -512,7 +512,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		fStore := folderimpl.ProvideStore(sqlStore, features)
+		fStore := folderimpl.ProvideStore(sqlStore)
 		publicDash := &publicdashboards.FakePublicDashboardServiceWrapper{}
 		publicDash.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 		folderSvc := folderimpl.ProvideService(

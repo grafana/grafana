@@ -3,30 +3,23 @@ package folderimpl
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/selection"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -301,103 +294,6 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
 	}
 	return height, nil
-}
-
-// SearchFolders uses the search grpc connection to search folders and returns the hit list
-func (ss *FolderUnifiedStoreImpl) SearchFolders(ctx context.Context, query folder.SearchFoldersQuery) (model.HitList, error) {
-	if query.OrgID == 0 {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			return nil, err
-		}
-		query.OrgID = requester.GetOrgID()
-	}
-
-	request := &resource.ResourceSearchRequest{
-		Options: &resource.ListOptions{
-			Key: &resource.ResourceKey{
-				Namespace: ss.k8sclient.getNamespace(query.OrgID),
-				Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
-				Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
-			},
-			Fields: []*resource.Requirement{},
-			Labels: []*resource.Requirement{},
-		},
-		Limit: 100000}
-
-	if len(query.UIDs) > 0 {
-		request.Options.Fields = []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_NAME,
-			Operator: string(selection.In),
-			Values:   query.UIDs,
-		}}
-	} else if len(query.IDs) > 0 {
-		values := make([]string, len(query.IDs))
-		for i, id := range query.IDs {
-			values[i] = strconv.FormatInt(id, 10)
-		}
-
-		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
-			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
-			Operator: string(selection.In),
-			Values:   values,
-		})
-	}
-
-	if query.Title != "" {
-		// allow wildcard search
-		request.Query = "*" + strings.ToLower(query.Title) + "*"
-	}
-
-	if query.Limit > 0 {
-		request.Limit = query.Limit
-	}
-
-	client := ss.k8sclient.getSearcher(ctx)
-
-	res, err := client.Search(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	parsedResults, err := dashboardsearch.ParseResults(res, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	hitList := make([]*model.Hit, len(parsedResults.Hits))
-	foldersMap := map[string]*folder.Folder{
-		"": &folder.GeneralFolder,
-	}
-	for i, item := range parsedResults.Hits {
-		f, ok := foldersMap[item.Folder]
-		if !ok {
-			f, err = ss.Get(ctx, folder.GetFolderQuery{
-				UID:          &item.Folder,
-				OrgID:        query.OrgID,
-				SignedInUser: query.SignedInUser,
-			})
-			if err != nil {
-				return nil, err
-			}
-			foldersMap[item.Folder] = f
-		}
-		slug := slugify.Slugify(item.Title)
-		hitList[i] = &model.Hit{
-			ID:          item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
-			UID:         item.Name,
-			OrgID:       query.OrgID,
-			Title:       item.Title,
-			URI:         "db/" + slug,
-			URL:         dashboards.GetFolderURL(item.Name, slug),
-			Type:        model.DashHitFolder,
-			FolderUID:   item.Folder,
-			FolderTitle: f.Title,
-			FolderID:    f.ID, // nolint:staticcheck
-		}
-	}
-
-	return hitList, nil
 }
 
 // GetFolders returns org folders by their UIDs.

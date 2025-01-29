@@ -124,7 +124,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 	sql, cfgT := db.InitTestDBWithCfg(t)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	fStore := folderimpl.ProvideStore(sql, features)
+	fStore := folderimpl.ProvideStore(sql)
 	tagService := tagimpl.ProvideService(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
 	require.NoError(t, err)
