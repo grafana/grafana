@@ -3,14 +3,14 @@ import { DataLinksInlineEditorBase, DataLinksInlineEditorBaseProps } from '@graf
 
 import { ActionEditorModalContent } from './ActionEditorModalContent';
 
-type DataLinksInlineEditorProps = Omit<DataLinksInlineEditorBaseProps<Action>, 'children' | 'title' | 'items'> & {
+type DataLinksInlineEditorProps = Omit<DataLinksInlineEditorBaseProps<Action>, 'children' | 'type' | 'items'> & {
   actions: Action[];
   showOneClick?: boolean;
   getSuggestions: () => VariableSuggestion[];
 };
 
 export const ActionsInlineEditor = ({ actions, getSuggestions, showOneClick, ...rest }: DataLinksInlineEditorProps) => (
-  <DataLinksInlineEditorBase<Action> title="Edit action" items={actions} {...rest}>
+  <DataLinksInlineEditorBase<Action> type={'action'} items={actions} {...rest}>
     {(item, index, onSave, onCancel) => (
       <ActionEditorModalContent
         index={index}

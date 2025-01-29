@@ -17,6 +17,10 @@ interface VizTooltipFooterProps {
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>) => {
+  if (dataLinks.length === 0) {
+    return;
+  }
+
   const oneClickLink = dataLinks.find((link) => link.oneClick === true);
 
   if (oneClickLink != null) {

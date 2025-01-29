@@ -13,10 +13,10 @@ import { Modal } from '../../Modal/Modal';
 import { DataLinksListItemBase } from './DataLinksListItemBase';
 
 export interface DataLinksInlineEditorBaseProps<T extends DataLink | Action> {
+  type: 'link' | 'action';
   items?: T[];
   onChange: (items: T[]) => void;
   data: DataFrame[];
-  title: string;
   children: (
     item: T,
     index: number,
@@ -27,10 +27,10 @@ export interface DataLinksInlineEditorBaseProps<T extends DataLink | Action> {
 
 /** @internal */
 export function DataLinksInlineEditorBase<T extends DataLink | Action>({
+  type,
   items,
   onChange,
   data,
-  title,
   children,
 }: DataLinksInlineEditorBaseProps<T>) {
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -109,6 +109,20 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
     onChange(update);
   };
 
+  const getItemText = (action: 'edit' | 'add') => {
+    let text = '';
+    switch (type) {
+      case 'link':
+        text = action === 'edit' ? 'Edit link' : 'Add link';
+        break;
+      case 'action':
+        text = action === 'edit' ? 'Edit action' : 'Add action';
+        break;
+    }
+
+    return text;
+  };
+
   return (
     <div className={styles.container}>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -138,7 +152,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
 
       {isEditing && editIndex !== null && (
         <Modal
-          title={title}
+          title={getItemText(isNew ? 'add' : 'edit')}
           isOpen={true}
           closeOnBackdropClick={false}
           onDismiss={() => {
@@ -150,7 +164,15 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
       )}
 
       <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
-        <Trans i18nKey="grafana-ui.data-links-inline-editor.add-link">Add link</Trans>
+        <Trans
+          i18nKey={
+            type === 'link'
+              ? 'grafana-ui.data-links-inline-editor.add-link'
+              : 'grafana-ui.actions-editor.inline.add-button'
+          }
+        >
+          {getItemText('add')}
+        </Trans>
       </Button>
     </div>
   );
