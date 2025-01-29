@@ -718,8 +718,6 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1GitHubRepositoryCo
   generateDashboardPreviews?: boolean;
   /** The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`). */
   owner?: string;
-  /** PullRequestLinter enables the dashboard linter for this repository in Pull Requests */
-  pullRequestLinter?: boolean;
   /** The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`). */
   repository?: string;
   /** Token for accessing the repository. */
@@ -743,8 +741,6 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1RepositorySpec = {
   folder?: string;
   /** The repository on GitHub. Mutually exclusive with local and s3. */
   github?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1GitHubRepositoryConfig;
-  /** Linting enables linting for this repository */
-  linting?: boolean;
   /** The repository on the local file system. Mutually exclusive with s3 and github. */
   local?: ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1LocalRepositoryConfig;
   /** The repository in an S3 bucket. Mutually exclusive with local and github. */

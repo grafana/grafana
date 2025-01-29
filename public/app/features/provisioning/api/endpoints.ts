@@ -515,7 +515,6 @@ export type GitHubRepositoryConfig = {
   branchWorkflow?: boolean;
   generateDashboardPreviews?: boolean;
   owner?: string;
-  pullRequestLinter?: boolean;
   repository?: string;
   token?: string;
 };
@@ -532,7 +531,6 @@ export type RepositorySpec = {
   editing: EditingOptions;
   folder?: string;
   github?: GitHubRepositoryConfig;
-  linting?: boolean;
   local?: LocalRepositoryConfig;
   s3?: S3RepositoryConfig;
   title: string;
