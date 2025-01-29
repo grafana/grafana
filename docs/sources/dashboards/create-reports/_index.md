@@ -98,7 +98,7 @@ However, a higher scale factor increases the file size of the generated PDF.
 You can also specify custom fonts that support different Unicode scripts.
 The DejaVu font is the default used for PDF rendering.
 
-By default, attachments (PDFs, CSV files, and embedded images) larger than 10Mb are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
+By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.
