@@ -59,7 +59,7 @@ func TestComputeFullPath(t *testing.T) {
 				},
 				{
 					Title: "Element With Spaces",
-					UID:   "chElementild-uid",
+					UID:   "Element-uid",
 				},
 			},
 			wantPath:     "Parent/With/Slashes/Element With Spaces",
