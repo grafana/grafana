@@ -31,7 +31,7 @@ export default function MigrateToCloud() {
           >
             Visit our docs
           </TextLink>{' '}
-          to learn more about this feature!
+          to learn more about this feature! Your self-managed instance of Grafana requires version 11.5+, or 11.2+ with the onPremToCloudMigrations feature flag enabled.
         </Trans>
       </Alert>
 
