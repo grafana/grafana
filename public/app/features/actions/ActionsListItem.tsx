@@ -36,7 +36,7 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
         >
           <div className={styles.linkDetails}>
             <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
-              {hasTitle ? title : 'Action title not provided'}
+              {hasTitle ? title : 'Title not provided'}
             </div>
           </div>
           <div className={styles.icons}>
@@ -47,8 +47,8 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
                 tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
               />
             )}
-            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action" />
-            <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove action" />
+            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit" />
+            <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove" />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>
               <Icon name="draggabledots" size="lg" />
             </div>
@@ -75,6 +75,7 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      maxWidth: `calc(100% - 100px)`,
     }),
     errored: css({
       color: theme.colors.error.text,
@@ -94,15 +95,6 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxWidth: `calc(100% - 100px)`,
-    }),
-    dragIcon: css({
-      cursor: 'grab',
-      color: theme.colors.text.secondary,
-      margin: theme.spacing(0, 0.5),
-    }),
-    icon: css({
-      color: theme.colors.text.secondary,
     }),
     dragRow: css({
       position: 'relative',
@@ -113,6 +105,14 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       padding: 6,
       alignItems: 'center',
       gap: 8,
+    }),
+    dragIcon: css({
+      cursor: 'grab',
+      color: theme.colors.text.secondary,
+      margin: theme.spacing(0, 0.5),
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
     }),
   };
 };
