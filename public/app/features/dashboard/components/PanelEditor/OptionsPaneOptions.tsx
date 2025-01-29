@@ -3,9 +3,7 @@ import { useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
@@ -110,16 +108,6 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && !plugin.meta.angular?.hideDeprecation && (
-          <AngularDeprecationPluginNotice
-            className={styles.angularDeprecationWrapper}
-            showPluginDetailsLink={true}
-            pluginId={plugin.meta.id}
-            pluginType={plugin.meta.type}
-            angularSupportEnabled={config?.angularSupportEnabled}
-            interactionElementId="panel-options"
-          />
-        )}
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>

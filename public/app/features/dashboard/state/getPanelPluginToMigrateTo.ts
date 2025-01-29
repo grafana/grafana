@@ -19,7 +19,6 @@ export function getPanelPluginToMigrateTo(panel: any, forceMigration?: boolean):
   // Auto-migrate old angular panels
   const shouldMigrateAllAngularPanels =
     forceMigration ||
-    !config.angularSupportEnabled ||
     config.featureToggles.autoMigrateOldPanels ||
     isUrlFeatureFlagEnabled('autoMigrateOldPanels') ||
     isUrlFeatureFlagEnabled('disableAngular');
