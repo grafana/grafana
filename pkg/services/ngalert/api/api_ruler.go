@@ -331,7 +331,7 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 	return response.JSON(http.StatusOK, result)
 }
 
-func (srv RulerSrv) RouteGetRuleHistoryByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
+func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
 	ctx := c.Req.Context()
 	// make sure the user has access to the current version of the rule. Also, check if it exists
 	_, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
@@ -347,7 +347,7 @@ func (srv RulerSrv) RouteGetRuleHistoryByUID(c *contextmodel.ReqContext, ruleUID
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule history", err)
 	}
 	sort.Slice(rules, func(i, j int) bool { return rules[i].ID > rules[j].ID })
-	result := make(apimodels.GettableRuleHistory, 0, len(rules))
+	result := make(apimodels.GettableRuleVersions, 0, len(rules))
 	for _, rule := range rules {
 		// do not provide provenance status because we do not have historical changes for it
 		result = append(result, toGettableExtendedRuleNode(*rule, map[string]ngmodels.Provenance{}, srv.resolveUserIdToNameFn(ctx)))

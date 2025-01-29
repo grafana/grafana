@@ -1003,11 +1003,11 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 	return sendRequest[apimodels.AlertGroups](t, req, http.StatusOK)
 }
 
-func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleHistory, int, string) {
+func (a apiClient) GetRuleVersionsWithStatus(t *testing.T, ruleUID string) (apimodels.GettableRuleVersions, int, string) {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/history", a.url, ruleUID), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/ruler/grafana/api/v1/rule/%s/versions", a.url, ruleUID), nil)
 	require.NoError(t, err)
-	return sendRequest[apimodels.GettableRuleHistory](t, req, http.StatusOK)
+	return sendRequest[apimodels.GettableRuleVersions](t, req, http.StatusOK)
 }
 
 func (a apiClient) GetRuleByUID(t *testing.T, ruleUID string) apimodels.GettableExtendedRuleNode {

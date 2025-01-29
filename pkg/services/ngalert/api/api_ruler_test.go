@@ -474,10 +474,10 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 		req := createRequestContextWithPerms(orgID, perms, nil)
 
 		svc := createService(ruleStore)
-		response := svc.RouteGetRuleHistoryByUID(req, rule.UID)
+		response := svc.RouteGetRuleVersionsByUID(req, rule.UID)
 
 		require.Equal(t, http.StatusOK, response.Status())
-		var result apimodels.GettableRuleHistory
+		var result apimodels.GettableRuleVersions
 		require.NoError(t, json.Unmarshal(response.Body(), &result))
 		require.NotNil(t, result)
 
@@ -503,7 +503,7 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 
 		perms := createPermissionsForRules(history, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
-		response := createService(ruleStore).RouteGetRuleHistoryByUID(req, ruleKey.UID)
+		response := createService(ruleStore).RouteGetRuleVersionsByUID(req, ruleKey.UID)
 
 		require.Equal(t, http.StatusNotFound, response.Status())
 	})
@@ -521,11 +521,11 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 
 		perms := createPermissionsForRules([]*models.AlertRule{rule}, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
-		response := createService(ruleStore).RouteGetRuleHistoryByUID(req, ruleKey.UID)
+		response := createService(ruleStore).RouteGetRuleVersionsByUID(req, ruleKey.UID)
 
 		require.Equal(t, http.StatusOK, response.Status())
 
-		var result apimodels.GettableRuleHistory
+		var result apimodels.GettableRuleVersions
 		require.NoError(t, json.Unmarshal(response.Body(), &result))
 		require.Empty(t, result)
 	})
@@ -545,7 +545,7 @@ func TestRouteGetRuleHistoryByUID(t *testing.T) {
 
 		perms := createPermissionsForRules(history, orgID) // grant permissions to all records in history but not the rule itself
 		req := createRequestContextWithPerms(orgID, perms, nil)
-		response := createService(ruleStore).RouteGetRuleHistoryByUID(req, ruleKey.UID)
+		response := createService(ruleStore).RouteGetRuleVersionsByUID(req, ruleKey.UID)
 
 		require.Equal(t, http.StatusForbidden, response.Status())
 	})

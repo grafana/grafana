@@ -242,7 +242,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 			require.Equal(t, expected, export.Groups[0])
 		})
 
-		t.Run("Get history of any rule", func(t *testing.T) {
+		t.Run("Get versions of any rule", func(t *testing.T) {
 			for _, groups := range allRules { // random rule from each folder
 				group := groups[rand.Intn(len(groups))]
 				rule := group.Rules[rand.Intn(len(group.Rules))]
@@ -4333,7 +4333,7 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 	})
 }
 
-func TestIntegrationRuleHistory(t *testing.T) {
+func TestIntegrationRuleVersions(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	// Setup Grafana and its Database
@@ -4395,7 +4395,7 @@ func TestIntegrationRuleHistory(t *testing.T) {
 			"GrafanaManagedAlert.ID", // In versions ID has different value
 		}
 		// compare expected and actual and ignore the dynamic fields
-		diff := cmp.Diff(apimodels.GettableRuleHistory{ruleV2, ruleV1}, versions, cmp.FilterPath(func(path cmp.Path) bool {
+		diff := cmp.Diff(apimodels.GettableRuleVersions{ruleV2, ruleV1}, versions, cmp.FilterPath(func(path cmp.Path) bool {
 			for _, s := range pathsToIgnore {
 				if strings.Contains(path.String(), s) {
 					return true

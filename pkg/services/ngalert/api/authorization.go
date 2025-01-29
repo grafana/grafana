@@ -42,7 +42,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}",
-		http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}/history":
+		http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}/versions":
 		eval = ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingRuleRead),
 			ac.EvalPermission(dashboards.ActionFoldersRead),

@@ -20,15 +20,15 @@ import (
 //       403: ForbiddenError
 //       404: description: Not found.
 
-// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID}/history ruler RouteGetRuleHistoryByUID
+// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID}/versions ruler RouteGetRuleVersionsByUID
 //
-// Get historical changes of rule by UID
+// Get rule versions by UID
 //
 //     Produces:
 //     - application/json
 //
 //     Responses:
-//       202: GettableRuleHistory
+//       202: GettableRuleVersions
 //       403: ForbiddenError
 //       404: description: Not found.
 
@@ -230,7 +230,7 @@ type PathGetRulesParams struct {
 	PanelID int64
 }
 
-// swagger:parameters RouteGetRuleByUID RouteGetRuleHistoryByUID
+// swagger:parameters RouteGetRuleByUID RouteGetRuleVersionsByUID
 type PathGetRuleByUIDParams struct {
 	// in: path
 	RuleUID string
@@ -303,7 +303,7 @@ func (c *PostableRuleGroupConfig) validate() error {
 }
 
 // swagger:model
-type GettableRuleHistory []GettableExtendedRuleNode
+type GettableRuleVersions []GettableExtendedRuleNode
 
 // swagger:model
 type GettableRuleGroupConfig struct {
