@@ -3,6 +3,8 @@ import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs
 import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
+import { getAPINamespace } from '../../api/utils';
+
 import {
   ListOptions,
   ListOptionsFieldSelector,
@@ -29,7 +31,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   readonly url: string;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
-    const ns = namespaced ? `namespaces/${config.namespace}/` : '';
+    const ns = namespaced ? `namespaces/${getAPINamespace()}/` : '';
 
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
