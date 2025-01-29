@@ -29,12 +29,12 @@ import (
 )
 
 func filterTablesWithData(tables []types.MetadataTable) []types.MetadataTable {
-	filtered := []types.MetadataTable{}
-	for _, table := range tables {
-		if table.HasData {
-			filtered = append(filtered, table)
-		}
-	}
+	// filtered := []types.MetadataTable{}
+	// for _, table := range tables {
+	// 	if table.HasData {
+	// 		filtered = append(filtered, table)
+	// 	}
+	// }
 	return tables
 	// return filtered
 }
