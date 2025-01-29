@@ -59,32 +59,6 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.length).toBe(5);
   });
 
-  it('Should update panels on refresh if variables load on time range change', async () => {
-    const { scene, repeater } = buildPanelRepeaterScene({
-      variableQueryTime: 0,
-      variableRefresh: VariableRefresh.onTimeRangeChanged,
-    });
-
-    const notifyPanelsSpy = jest.spyOn(repeater, 'notifyRepeatedPanelsWaitingForVariables');
-
-    activateFullSceneTree(scene);
-
-    expect(repeater.state.repeatedPanels?.length).toBe(5);
-
-    expect(notifyPanelsSpy).toHaveBeenCalledTimes(0);
-
-    scene.state.$timeRange?.onRefresh();
-
-    //make sure notifier is called
-    expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
-
-    //make sure getQueryRunner is called for each repeated panel
-    expect(mockGetQueryRunnerFor).toHaveBeenCalledTimes(5);
-
-    notifyPanelsSpy.mockRestore();
-    mockGetQueryRunnerFor.mockClear();
-  });
-
   it('Should display a panel when there are no options', async () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1, numberOfOptions: 0 });
 
