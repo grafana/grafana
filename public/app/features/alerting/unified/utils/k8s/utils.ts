@@ -43,3 +43,11 @@ export const canAdminEntity = (k8sEntity: EntityToCheck) =>
 
 export const canDeleteEntity = (k8sEntity: EntityToCheck) =>
   getAnnotation(k8sEntity, K8sAnnotations.AccessDelete) === 'true';
+
+/**
+ * Escape \ and = characters for field selectors.
+ * The Kubernetes API Machinery will decode those automatically.
+ */
+export const encodeFieldSelector = (value: string): string => {
+  return value.replaceAll(/\\/g, '\\\\').replaceAll(/\=/g, '\\=').replaceAll(/,/g, '\\,');
+};
