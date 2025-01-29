@@ -214,12 +214,12 @@ const outOfRangeMessage = (
   </div>
 );
 
-enum ScrollDirection {
+export enum ScrollDirection {
   Top = -1,
   Bottom = 1,
   NoScroll = 0,
 }
-function shouldLoadMore(
+export function shouldLoadMore(
   event: Event | WheelEvent,
   lastEvent: Event | WheelEvent | null,
   countRef: MutableRefObject<number>,

@@ -49,6 +49,7 @@ export const LogList = ({
   const theme = useTheme2();
   const listRef = useRef<VariableSizeList | null>(null);
   const widthRef = useRef(containerElement.clientWidth);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     initVirtualization(theme);
@@ -104,7 +105,7 @@ export const LogList = ({
   return (
     <InfiniteScroll
       handleOverflow={handleOverflow}
-      listRef={listRef}
+      scrollElement={scrollRef.current}
       logs={processedLogs}
       loadMore={loadMore}
       showTime={showTime}
@@ -113,19 +114,15 @@ export const LogList = ({
       timeZone={timeZone}
       wrapLogMessage={wrapLogMessage}
     >
-      {({ getItemKey, itemCount, onItemsRendered, onScroll, ref, Renderer }) => (
+      {({ getItemKey, itemCount, Renderer }) => (
         <VariableSizeList
           height={listHeight}
           itemCount={itemCount}
           itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
           itemKey={getItemKey}
           layout="vertical"
-          onItemsRendered={onItemsRendered}
-          onScroll={onScroll}
-          ref={(element: VariableSizeList) => {
-            ref(element);
-            listRef.current = element;
-          }}
+          outerRef={scrollRef}
+          ref={listRef}
           style={{ overflowY: 'scroll' }}
           width="100%"
         >
