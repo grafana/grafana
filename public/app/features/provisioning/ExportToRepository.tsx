@@ -4,7 +4,7 @@ import { Box, Button, Field, FieldSet, Input, Stack, Switch, Text } from '@grafa
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import ProgressBar from './ProgressBar';
-import { Repository, useCreateRepositoryExportMutation, useListJobQuery, ExportOptions } from './api';
+import { Repository, useCreateRepositoryExportMutation, useListJobQuery, ExportJobOptions } from './api';
 
 interface Props {
   repo: Repository;
@@ -14,7 +14,7 @@ export function ExportToRepository({ repo }: Props) {
   const [exportRepo, exportQuery] = useCreateRepositoryExportMutation();
   const exportName = exportQuery.data?.metadata?.name;
 
-  const { register, control, formState, handleSubmit } = useForm<ExportOptions>({
+  const { register, control, formState, handleSubmit } = useForm<ExportJobOptions>({
     defaultValues: {
       branch: '*dummy*', // << triggers a fake exporter
       history: true,
@@ -22,7 +22,7 @@ export function ExportToRepository({ repo }: Props) {
     },
   });
 
-  const onSubmit = (body: ExportOptions) =>
+  const onSubmit = (body: ExportJobOptions) =>
     exportRepo({
       name: repo.metadata?.name ?? '',
       body, // << the form
