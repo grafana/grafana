@@ -14,7 +14,10 @@ import (
 	"google.golang.org/grpc"
 )
 
-/* Temporarily disabled search fallback while we add functionality
+/*
+Search Fallback was returning both Folders and Dashboards which resulted
+in issues with rendering the Folder UI. Also, filters are not implemented
+yet. For those reasons, we will be disabling Search Fallback for now
 func TestSearchFallback(t *testing.T) {
 	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
 		mockClient := &MockClient{}
@@ -171,7 +174,8 @@ func TestSearchFallback(t *testing.T) {
 			t.Fatalf("expected Search NOT to be called, but it was")
 		}
 	})
-}*/
+}
+*/
 
 func TestSearchHandlerFields(t *testing.T) {
 	// Create a mock client

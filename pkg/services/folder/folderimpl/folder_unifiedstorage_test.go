@@ -567,7 +567,7 @@ func (r resourceClientMock) Search(ctx context.Context, in *resource.ResourceSea
 	}
 
 	if len(in.Options.Fields) > 0 &&
-		in.Options.Fields[0].Key == resource.SEARCH_FIELD_TITLE &&
+		in.Options.Fields[0].Key == resource.SEARCH_FIELD_TITLE_SORT &&
 		in.Options.Fields[0].Operator == "in" &&
 		len(in.Options.Fields[0].Values) > 0 &&
 		in.Options.Fields[0].Values[0] == "foo" {
