@@ -112,7 +112,6 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
               watch={watch}
-              initialFolderUid={folder.uid}
             />
           )}
         </Form>
