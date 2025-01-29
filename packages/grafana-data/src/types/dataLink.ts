@@ -131,4 +131,3 @@ export interface VariableSuggestion {
 export enum VariableSuggestionsScope {
   Values = 'values',
 }
-
