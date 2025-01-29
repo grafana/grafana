@@ -276,7 +276,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
-                placeholder,
+                placeholder: visibleItems.length === 0 ? placeholder : '',
                 ref: inputRef,
                 style: { width: inputWidth },
               })
