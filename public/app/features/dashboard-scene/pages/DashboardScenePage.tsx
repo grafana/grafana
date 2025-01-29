@@ -42,7 +42,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
     if (isObjectLike(data) && !!data?.['var-resample']) {
       console.log('sent!');
-      store.dispatch(updateLocation({ query: data }));
+      updateLocation({ query: data });
     }
   }, []);
 
