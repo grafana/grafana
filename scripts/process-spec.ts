@@ -1,21 +1,14 @@
 import fs from 'fs';
+import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
-interface OpenAPISpec {
-  paths: Record<string, object>;
-  components: {
-    schemas: Record<string, object>;
-  };
-  // [key: string]: unknown;
-}
-
-function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
+function processOpenAPISpec(spec: OpenAPIV3.Document) {
   // Create a deep copy of the spec to avoid mutating the original
   const newSpec = JSON.parse(JSON.stringify(spec));
 
   // Process 'paths' property
   const newPaths: Record<string, unknown> = {};
-  for (const [path, pathItem] of Object.entries<Record<string, unknown>>(newSpec.paths)) {
+  for (const [path, pathItem] of Object.entries<OpenAPIV3.PathItemObject>(newSpec.paths)) {
     // Remove 'watch' paths as they're deprecated / remove empty path items
     if (path.includes('/watch/') || !pathItem) {
       continue;
@@ -28,17 +21,17 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
     for (const method of Object.keys(pathItem)) {
       // Filter out the 'namespace' param
       if (method === 'parameters' && Array.isArray(pathItem.parameters)) {
-        pathItem.parameters = pathItem.parameters?.filter((param) => param.name !== 'namespace');
+        pathItem.parameters = pathItem.parameters?.filter((param) => 'name' in param && param.name !== 'namespace');
       }
 
-      const operation = pathItem[method];
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const operation = pathItem[method as keyof OpenAPIV3.PathItemObject];
 
       if (
         typeof operation === 'object' &&
         operation !== null &&
         'operationId' in operation &&
-        //@ts-expect-error
-        operation.operationId.includes('ForAllNamespaces')
+        operation.operationId?.includes('ForAllNamespaces')
       ) {
         continue;
       }
