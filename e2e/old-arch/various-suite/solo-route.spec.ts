@@ -28,7 +28,7 @@ describe('Solo Route', () => {
       'templating-repeating-panels/templating-repeating-panels?orgId=1&from=1699934989607&to=1699956589607&panelId=panel-16-clone-0%7Cgrid-item-2%7Cpanel-2-clone-0&__feature.dashboardSceneSolo=true'
     );
 
-    e2e.components.Panels.Panel.title('server = B, pod = Bob').should('exist');
+    e2e.components.Panels.Panel.title('server=A').should('exist');
     cy.contains('uplot-main-div').should('not.exist');
   });
 
