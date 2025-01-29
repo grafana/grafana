@@ -161,7 +161,7 @@ export const GraphContainer = ({
     >
       {(innerWidth, innerHeight) => (
         <ExploreGraph
-          graphStyle={graphStyle}
+          graphStyle={queryBuilderOnly ? 'lines' : graphStyle}
           data={slicedData}
           height={innerHeight}
           width={innerWidth}
