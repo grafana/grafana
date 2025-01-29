@@ -75,7 +75,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// sql will sort by title ascending, we only really need to handle the "alpha-desc" case
 	if req.SortBy != nil {
 		for _, sort := range req.SortBy {
-			if sort.Field == "title" && sort.Desc == true {
+			if sort.Field == "title" && sort.Desc {
 				query.Sort = search.SortAlphaDesc
 			}
 		}
