@@ -40,6 +40,9 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
             <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
               {hasTitle ? title : 'Data link title not provided'}
             </div>
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
+              {hasUrl ? url : 'Data link url not provided'}
+            </div>
           </div>
           <div className={styles.icons}>
             {oneClick && (
