@@ -11,10 +11,11 @@ func NewSearchClient(cfg *setting.Cfg, unifiedStorageConfigKey string, unifiedCl
 		return legacyClient
 	}
 
-	switch config.DualWriterMode {
+	/*switch config.DualWriterMode {
 	case rest.Mode0, rest.Mode1, rest.Mode2:
 		return legacyClient
 	default:
 		return unifiedClient
-	}
+	}*/
+	return unifiedClient
 }
