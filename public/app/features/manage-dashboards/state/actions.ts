@@ -272,7 +272,6 @@ export async function searchFolders(
   permission?: PermissionLevelString,
   type: SearchQueryType = SearchQueryType.Folder
 ): Promise<DashboardSearchHit[]> {
-
   return getBackendSrv().get('/api/search', {
     query,
     type: type,
