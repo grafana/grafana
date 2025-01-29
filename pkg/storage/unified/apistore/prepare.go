@@ -47,7 +47,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, err
 	}
 	if obj.GetName() == "" {
-		return nil, storage.ErrResourceVersionSetOnCreate
+		return nil, storage.NewInvalidObjError("", "missing name")
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
