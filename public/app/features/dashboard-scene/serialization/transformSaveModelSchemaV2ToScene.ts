@@ -55,12 +55,11 @@ import {
 import { contextSrv } from 'app/core/core';
 import {
   AnnoKeyCreatedBy,
-  AnnoKeyDashboardNotFound,
   AnnoKeyFolder,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
-  AnnoKeyDashboardIsNew,
   AnnoKeyDashboardIsSnapshot,
+  DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -127,6 +126,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const isDashboardEditable = Boolean(dashboard.editable);
   const canSave = dto.access.canSave !== false;
+  const dashboardId = metadata.labels?.[DeprecatedInternalId];
 
   const meta: DashboardMeta = {
     canShare: dto.access.canShare !== false,
@@ -149,9 +149,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     showSettings: Boolean(dto.access.canEdit),
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
-    dashboardNotFound: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardNotFound]),
     version: parseInt(metadata.resourceVersion, 10),
-    isNew: Boolean(dto.metadata.annotations?.[AnnoKeyDashboardIsNew]),
+    k8s: metadata,
   };
 
   // Ref: DashboardModel.initMeta
@@ -165,7 +164,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     description: dashboard.description,
     editable: dashboard.editable,
     preload: dashboard.preload,
-    id: dashboard.id,
+    id: dashboardId,
     isDirty: false,
     links: dashboard.links,
     meta,
@@ -201,11 +200,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboard.id?.toString(),
+        uid: dashboardId?.toString(),
       }),
       new DashboardReloadBehavior({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboard.id?.toString(),
+        uid: dashboardId?.toString(),
         version: 1,
       }),
     ],

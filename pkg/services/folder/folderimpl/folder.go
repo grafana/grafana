@@ -73,6 +73,7 @@ func ProvideService(
 	bus bus.Bus,
 	dashboardStore dashboards.Store,
 	folderStore folder.FolderStore,
+	userService user.Service,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
@@ -111,7 +112,7 @@ func ProvideService(
 			recourceClientProvider: unified.GetResourceClient,
 		}
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler)
+		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler
