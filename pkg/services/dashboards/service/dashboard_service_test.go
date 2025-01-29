@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -28,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -71,10 +72,10 @@ func TestDashboardService(t *testing.T) {
 			t.Run("Should return validation error if message is too long", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Message = `Here we go, 500+ characters for testing. I'm sorry that you're
-				having to read this. I spent too long trying to come up with something clever 
+				having to read this. I spent too long trying to come up with something clever
 				to say or a funny joke. Unforuntately, nothing came to mind. So instead, I'm
 				will share this with you, as a form of payment for having to read this:
-				https://youtu.be/dQw4w9WgXcQ?si=KeoTIpn9tUtQnOBk! Enjoy :) Now lets see if 
+				https://youtu.be/dQw4w9WgXcQ?si=KeoTIpn9tUtQnOBk! Enjoy :) Now lets see if
 				this test passes or if the result is more exciting than these 500 characters
 				I wrote. Best of luck to the both of us!`
 				_, err := service.SaveDashboard(context.Background(), dto, false)
@@ -1327,10 +1328,15 @@ func TestDeleteAllDashboards(t *testing.T) {
 
 func TestSearchDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
+	fakeFolders := foldertest.NewFakeService()
+	fakeFolders.ExpectedFolder = &folder.Folder{
+		Title: "testing-folder-1",
+	}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
 		dashboardStore: &fakeStore,
+		folderService:  fakeFolders,
 	}
 
 	expectedResult := model.HitList{
@@ -1345,15 +1351,17 @@ func TestSearchDashboards(t *testing.T) {
 				"tag1",
 				"tag2",
 			},
+			FolderTitle: "testing-folder-1",
 		},
 		{
-			UID:   "uid2",
-			OrgID: 1,
-			Title: "Dashboard 2",
-			Type:  "dash-db",
-			URI:   "db/dashboard-2",
-			URL:   "/d/uid2/dashboard-2",
-			Tags:  []string{},
+			UID:         "uid2",
+			OrgID:       1,
+			Title:       "Dashboard 2",
+			Type:        "dash-db",
+			URI:         "db/dashboard-2",
+			URL:         "/d/uid2/dashboard-2",
+			Tags:        []string{},
+			FolderTitle: "testing-folder-1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
@@ -1363,17 +1371,19 @@ func TestSearchDashboards(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
 			{
-				UID:   "uid1",
-				Slug:  "dashboard-1",
-				OrgID: 1,
-				Title: "Dashboard 1",
-				Tags:  []string{"tag1", "tag2"},
+				UID:         "uid1",
+				Slug:        "dashboard-1",
+				OrgID:       1,
+				Title:       "Dashboard 1",
+				Tags:        []string{"tag1", "tag2"},
+				FolderTitle: "testing-folder-1",
 			},
 			{
-				UID:   "uid2",
-				Slug:  "dashboard-2",
-				OrgID: 1,
-				Title: "Dashboard 2",
+				UID:         "uid2",
+				Slug:        "dashboard-2",
+				OrgID:       1,
+				Title:       "Dashboard 2",
+				FolderTitle: "testing-folder-1",
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
