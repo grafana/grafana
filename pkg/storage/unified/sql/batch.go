@@ -78,7 +78,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 
 	// We may want to first write parquet, then read parquet
 	if b.dialect.DialectName() == "sqlite" {
-		handler, err := parquet.NewBatchHandler()
+		handler, file, err := parquet.NewBatchHandler(".")
 		if err != nil {
 			return &resource.BatchResponse{
 				Error: resource.AsErrorResult(err),
@@ -91,9 +91,15 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 			return rsp
 		}
 
-		// Now read from parquet into the local function
+		fmt.Printf("PARQUET: %s\n", file)
 
-		return rsp
+		// Replace the iterator with one from parquet
+		iter, err = parquet.NewBatchRequestIterator(file, 50)
+		if err != nil {
+			return &resource.BatchResponse{
+				Error: resource.AsErrorResult(err),
+			}
+		}
 	}
 
 	return b.processBatch(ctx, setting, iter)

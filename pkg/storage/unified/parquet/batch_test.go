@@ -2,7 +2,6 @@ package parquet
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func TestParquetWriteThenRead(t *testing.T) {
-	file, err := os.CreateTemp(".", "temp-*.parquet")
+	file, err := os.CreateTemp(t.TempDir(), "temp-*.parquet")
 	require.NoError(t, err)
 	//defer os.Remove(file.Name())
 
@@ -22,7 +21,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 	require.NoError(t, err)
 	ctx := context.Background()
 
-	require.NoError(t, writer.Add(toKeyAndBytes(ctx, "x", "y", &unstructured.Unstructured{
+	require.NoError(t, writer.Add(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
 		Object: map[string]any{
 			"metadata": map[string]any{
 				"namespace":       "ns",
@@ -38,7 +37,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 		},
 	})))
 
-	require.NoError(t, writer.Add(toKeyAndBytes(ctx, "x", "y", &unstructured.Unstructured{
+	require.NoError(t, writer.Add(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
 		Object: map[string]any{
 			"metadata": map[string]any{
 				"namespace":       "ns",
@@ -52,7 +51,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 		},
 	})))
 
-	require.NoError(t, writer.Add(toKeyAndBytes(ctx, "x", "y", &unstructured.Unstructured{
+	require.NoError(t, writer.Add(toKeyAndBytes(ctx, "ggg", "rrr", &unstructured.Unstructured{
 		Object: map[string]any{
 			"metadata": map[string]any{
 				"namespace":       "ns",
@@ -69,17 +68,21 @@ func TestParquetWriteThenRead(t *testing.T) {
 	err = writer.Close()
 	require.NoError(t, err)
 
-	reader, err := newResourceReader(file.Name(), 20)
+	var keys []string
+	reader, err := NewResourceReader(file.Name(), 20)
 	require.NoError(t, err)
 	for reader.Next() {
 		req := reader.Request()
-		fmt.Printf("ROW: %+v\n", req.Key)
+		keys = append(keys, req.Key.SearchID())
+		//fmt.Printf("ROW: %+v\n", req.Key)
 	}
 
-	// err = read(file.Name())
-	// require.NoError(t, err)
-
-	t.Fail()
+	// Verify that we read all values
+	require.Equal(t, []string{
+		"rrr/ns/ggg/aaa",
+		"rrr/ns/ggg/bbb",
+		"rrr/ns/ggg/ccc",
+	}, keys)
 }
 
 func toKeyAndBytes(ctx context.Context, group string, res string, obj *unstructured.Unstructured) (context.Context, *resource.ResourceKey, []byte) {

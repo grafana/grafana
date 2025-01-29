@@ -31,7 +31,7 @@ var (
 
 type columBuffer interface {
 	open(rgr *file.RowGroupReader) error
-	batch(batchSize int64, defLevels []int16, repLevels []int16) error
+	batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error)
 }
 
 type stringColumn struct {
@@ -54,10 +54,10 @@ func (c *stringColumn) open(rgr *file.RowGroupReader) error {
 	return nil
 }
 
-func (c *stringColumn) batch(batchSize int64, defLevels []int16, repLevels []int16) error {
+func (c *stringColumn) batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error) {
 	_, count, err := c.reader.ReadBatch(batchSize, c.buffer, defLevels, repLevels)
 	c.count = count
-	return err
+	return count, err
 }
 
 type int32Column struct {
@@ -80,10 +80,10 @@ func (c *int32Column) open(rgr *file.RowGroupReader) error {
 	return nil
 }
 
-func (c *int32Column) batch(batchSize int64, defLevels []int16, repLevels []int16) error {
+func (c *int32Column) batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error) {
 	_, count, err := c.reader.ReadBatch(batchSize, c.buffer, defLevels, repLevels)
 	c.count = count
-	return err
+	return count, err
 }
 
 type resourceReader struct {
@@ -145,7 +145,7 @@ func (r *resourceReader) Next() bool {
 		}
 
 		r.rowGroupIDX++
-		if r.rowGroupIDX > r.reader.NumRowGroups() {
+		if r.rowGroupIDX >= r.reader.NumRowGroups() {
 			_ = r.reader.Close()
 			r.reader = nil
 			return false
@@ -164,6 +164,10 @@ func (r *resourceReader) Request() *resource.BatchRequest {
 // RollbackRequested implements resource.BatchRequestIterator.
 func (r *resourceReader) RollbackRequested() bool {
 	return r.err != nil
+}
+
+func NewBatchRequestIterator(inputPath string, batchSize int64) (resource.BatchRequestIterator, error) {
+	return newResourceReader(inputPath, batchSize)
 }
 
 func newResourceReader(inputPath string, batchSize int64) (*resourceReader, error) {
@@ -245,11 +249,17 @@ func (r *resourceReader) open(rgr *file.RowGroupReader) error {
 }
 
 func (r *resourceReader) ReadBatch() error {
-	for _, c := range r.columns {
-		err := c.batch(r.batchSize, r.defLevels, r.repLevels)
+	r.bufferIndex = 0
+	r.bufferSize = 0
+	for i, c := range r.columns {
+		count, err := c.batch(r.batchSize, r.defLevels, r.repLevels)
 		if err != nil {
 			return err
 		}
+		if i > 0 && r.bufferSize != count {
+			return fmt.Errorf("expecting the same size for all columns")
+		}
+		r.bufferSize = count
 	}
 	return nil
 }
