@@ -1691,7 +1691,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		req := []*resource.Requirement{{
 			Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // use title phrase to prevent issues with `-` in the title & how bleve searches
 			Operator: string(selection.In),
-			Values:   []string{strings.ToLower(query.Title)},
+			Values:   []string{query.Title},
 		}}
 		request.Options.Fields = append(request.Options.Fields, req...)
 	}
