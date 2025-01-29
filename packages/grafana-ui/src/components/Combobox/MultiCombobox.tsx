@@ -223,7 +223,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width, minWidth, maxWidth);
+  const multiStyles = useStyles2(
+    getMultiComboboxStyles,
+    isOpen,
+    invalid,
+    disabled,
+    width,
+    minWidth,
+    maxWidth,
+    isClearable
+  );
 
   const virtualizerOptions = {
     count: options.length,
