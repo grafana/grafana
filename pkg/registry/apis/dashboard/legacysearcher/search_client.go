@@ -8,6 +8,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"google.golang.org/grpc"
 )
@@ -48,6 +49,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		Title: req.Query,
 		Limit: req.Limit,
 		// FolderUIDs:   req.FolderUIDs,
+		Type:         searchstore.TypeDashboard,
 		SignedInUser: user,
 	}
 
