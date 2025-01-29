@@ -1934,6 +1934,10 @@ Enable or disable the Explore section. Default is `enabled`.
 Set a default time offset from now on the time picker. Default is 1 hour.
 This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1w (week), 1M (month).
 
+#### `hide_logs_download`
+
+Show or hide the button to download logs in Explore. Default is `false`, so that the button will be visible.
+
 ### `[help]`
 
 Configures the help section.

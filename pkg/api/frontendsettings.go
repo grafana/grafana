@@ -247,6 +247,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		LocalFileSystemAvailable:            hs.Cfg.LocalFileSystemAvailable,
 		ReportingStaticContext:              hs.Cfg.ReportingStaticContext,
 		ExploreDefaultTimeOffset:            hs.Cfg.ExploreDefaultTimeOffset,
+		ExploreHideLogsDownload:             hs.Cfg.ExploreHideLogsDownload,
 
 		DefaultDatasourceManageAlertsUIToggle: hs.Cfg.DefaultDatasourceManageAlertsUIToggle,
 
