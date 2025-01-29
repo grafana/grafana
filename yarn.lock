@@ -26013,8 +26013,8 @@ __metadata:
   linkType: hard
 
 "react-i18next@npm:^15.0.0":
-  version: 15.2.0
-  resolution: "react-i18next@npm:15.2.0"
+  version: 15.4.0
+  resolution: "react-i18next@npm:15.4.0"
   dependencies:
     "@babel/runtime": "npm:^7.25.0"
     html-parse-stringify: "npm:^3.0.1"
@@ -26026,7 +26026,7 @@ __metadata:
       optional: true
     react-native:
       optional: true
-  checksum: 10/9b2937f7beab763c494d55a801f21bfdbfe98e9509994c350d24fa404ded573f41e8607eeba290c686d5877d34f0ddefe48e9d6876720d5ed0e1243bcdd5dda6
+  checksum: 10/4b3666d819f01cf96a256af4419b26938d314e33c6388eafccc29f67ad02994e5d53e7bf82eac656cade7f7bcd04f4a237f0b293165d7eda91d62e3fde605a38
   languageName: node
   linkType: hard
 
