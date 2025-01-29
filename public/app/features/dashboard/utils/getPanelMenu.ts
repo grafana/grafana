@@ -1,6 +1,5 @@
 import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
 import { AngularComponent, locationService } from '@grafana/runtime';
-import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
@@ -240,29 +239,6 @@ export function getPanelMenu(
       text: t('panel.header-menu.new-alert-rule', `New alert rule`),
       onClick: onCreateAlert,
     });
-  }
-
-  // add old angular panel options
-  if (angularComponent) {
-    const scope = angularComponent.getScope();
-    const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
-    const angularMenuItems = panelCtrl.getExtendedMenu();
-
-    for (const item of angularMenuItems) {
-      const reactItem: PanelMenuItem = {
-        text: item.text,
-        href: item.href,
-        shortcut: item.shortcut,
-      };
-
-      if (item.click) {
-        reactItem.onClick = () => {
-          scope.$eval(item.click, { ctrl: panelCtrl });
-        };
-      }
-
-      subMenu.push(reactItem);
-    }
   }
 
   if (panel.options.legend) {
