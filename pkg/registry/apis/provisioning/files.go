@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +74,9 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		filePath := strings.TrimPrefix(r.URL.Path[idx+len(prefix):], "/")
-		if filePath == "" || strings.HasSuffix(filePath, "/") {
+		isFolderPath := strings.HasSuffix(filePath, "/")
+
+		if r.Method == http.MethodGet && (filePath == "" || isFolderPath) {
 			if len(filePath) > 0 {
 				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
 				return
@@ -100,13 +103,15 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		switch path.Ext(filePath) {
-		case ".json", ".yaml", ".yml":
-			// ok
-		default:
-			logger.Debug("got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
-			responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
-			return
+		if !isFolderPath {
+			switch path.Ext(filePath) {
+			case ".json", ".yaml", ".yml":
+				// ok
+			default:
+				logger.Debug("got a file extension that was not JSON or YAML", "extension", path.Ext(filePath))
+				responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
+				return
+			}
 		}
 
 		var obj *provisioning.ResourceWrapper
@@ -117,7 +122,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodPost:
 			obj, err = s.doWrite(ctx, false, repo, filePath, ref, message, r)
 		case http.MethodPut:
-			obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)
+			if isFolderPath {
+				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
+			} else {
+				obj, err = s.doWrite(ctx, true, repo, filePath, ref, message, r)
+			}
 		case http.MethodDelete:
 			obj, err = s.doDelete(ctx, repo, filePath, ref, message)
 		default:
@@ -182,6 +191,20 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 	}
 
 	defer func() { _ = req.Body.Close() }()
+	if strings.HasSuffix(path, "/") {
+		if err := repo.Create(ctx, path, ref, nil, message); err != nil {
+			return nil, fmt.Errorf("failed to create folder: %w", err)
+		}
+		return &provisioning.ResourceWrapper{
+			Path:      path,
+			Ref:       ref,
+			Timestamp: &metav1.Time{Time: time.Now()},
+			// TODO: should we return something here?
+			// TypeMeta:  metav1.TypeMeta{},
+			// Resource: provisioning.ResourceObjects{},
+		}, nil
+	}
+
 	data, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
