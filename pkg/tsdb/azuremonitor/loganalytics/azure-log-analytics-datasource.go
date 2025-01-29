@@ -46,7 +46,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			Path:   "/v1/query",
 		}
 		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
-	} else if strings.Contains(req.URL.Path, "/metadata") {
+	} else if strings.Contains(req.URL.Path, "/metadata?select=categories,solutions,tables,workspaces") {
 		// Add necessary headers
 		req.Header.Set("Prefer", "metadata-format-v4,exclude-resourcetypes,exclude-customfunctions")
 		resp, err := cli.Do(req)
@@ -71,7 +71,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 
 		var metadata types.AzureLogAnalyticsMetadata
 		// Filter tables where hasData is false
-		metadata.Tables = filterTablesWithData(metadata.Tables)
+		// metadata.Tables = filterTablesWithData(metadata.Tables)
 
 		responseBody, err := json.Marshal(metadata)
 		if err != nil {

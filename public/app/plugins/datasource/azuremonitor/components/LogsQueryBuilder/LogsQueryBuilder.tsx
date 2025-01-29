@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 import { Alert } from '@grafana/ui';
 
-import { AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
+import { selectors } from '../../e2e/selectors';
+import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
 
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
@@ -15,87 +17,78 @@ interface LogsQueryBuilderProps {
   schema: EngineSchema;
 }
 
-export const sampleData: AzureLogAnalyticsMetadataTable[] = [
-  {
-    id: '1',
-    name: 'Perf',
-    description: 'Performance data for resources',
-    timespanColumn: 'TimeGenerated',
-    columns: [
-      { name: 'TimeGenerated', type: 'datetime', description: 'The timestamp of the record' },
-      { name: 'CounterName', type: 'string', description: 'The name of the performance counter' },
-      { name: 'CounterValue', type: 'real', description: 'The value of the performance counter' },
-    ],
-    related: {
-      categories: ['Performance'],
-      solutions: ['AzureMonitor'],
-      functions: ['calculatePerformance'],
-    },
-    isTroubleshootingAllowed: true,
-    hasData: true,
-  },
-  {
-    id: '2',
-    name: 'Heartbeat',
-    description: 'Heartbeat data for monitored computers',
-    timespanColumn: 'TimeGenerated',
-    columns: [
-      { name: 'TimeGenerated', type: 'datetime', description: 'The timestamp of the record' },
-      { name: 'Computer', type: 'string', description: 'The name of the computer' },
-      { name: 'OSName', type: 'string', description: 'The operating system name' },
-    ],
-    related: {
-      categories: ['Monitoring'],
-      solutions: ['LogAnalytics'],
-      functions: ['getHeartbeatDetails'],
-    },
-    isTroubleshootingAllowed: true,
-    hasData: true,
-  },
-  {
-    id: '3',
-    name: 'EmptyTable',
-    description: 'A table with no data',
-    timespanColumn: 'TimeGenerated',
-    columns: [
-      { name: 'TimeGenerated', type: 'datetime', description: 'The timestamp of the record' },
-      { name: 'DummyColumn', type: 'string', description: 'A dummy column for testing' },
-    ],
-    related: {
-      categories: ['Testing'],
-      solutions: ['TestSolution'],
-      functions: ['noFunction'],
-    },
-    isTroubleshootingAllowed: false,
-    hasData: false,
-  },
-];
-
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const { query, onQueryChange, schema } = props;
-  const [tables, setTables] = useState<AzureLogAnalyticsMetadataTable[]>([]);
-  const [schemaIsLoading, setSchemaIsLoading] = useState<boolean>(true);
+
+  const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
+    return schema?.database?.tables || [];
+  }, [schema?.database]);
+  console.log(tables)
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [columns, setColumns] = useState<AzureLogAnalyticsMetadataColumn[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<SelectableValue<string>>([]);
 
   useEffect(() => {
-    if (schema?.database) {
-      setTables(schema.database.tables);
-      setSchemaIsLoading(false);
+    if (selectedTable) {
+      const tableDetails = tables.find((table) => table.name === selectedTable);
+      setSelectedColumns([]);
+      if (tableDetails && tableDetails.columns) {
+        setColumns(tableDetails.columns || []); 
+      } else {
+        setColumns([]); 
+      }
     }
-  }, [setTables, schema?.database]);
+  }, [selectedTable, tables]);
 
-  // NOTE: use function to create query (same as ADX) in table section? or pass it up to here to build!!
+  const handleColumnChange = (columns: SelectableValue<string>) => {
+    setSelectedColumns(columns);
+    const uniqueLabels = [...new Set(columns.map((c: SelectableValue<string>) => c.label!))];
+    const baseQuery = selectedTable!.split(' | project')[0];
+    const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')}`
+    onQueryChange({
+      ...query,
+      azureLogAnalytics: {
+        ...query.azureLogAnalytics,
+        query: newQueryString, 
+      },
+    });
+  };
+
+  const handleTableChange = (newTable: AzureLogAnalyticsMetadataTable) => {
+    if (newTable) {
+      setSelectedTable(newTable.name);
+      setColumns([]);
+  
+      onQueryChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          query: newTable.name || "", 
+        },
+      });
+    }
+  };
 
   return (
-    <EditorRows>
-      {!schemaIsLoading && tables.length === 0 && (
-        <Alert severity="warning" title="Resource loaded successfully but without any tables" />
-      )}
-      <TableSection {...props} tables={tables} onChange={onQueryChange} />
-      {/* <FilterSection {...props} columns={tableColumns} />
-      <AggregateSection {...props} columns={tableColumns} />
-      <GroupBySection {...props} columns={tableColumns} />
-      <Timeshift {...props} /> */}
-      <KQLPreview query={query.azureLogAnalytics?.query!} />
-    </EditorRows>
+    <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
+      <EditorRows>
+        {(schema && tables.length === 0) && (
+          <Alert severity="warning" title="Resource loaded successfully but without any tables" />
+        )}
+        <TableSection
+          {...props}
+          columns={columns}
+          onColumnChange={handleColumnChange}
+          onTableChange={handleTableChange}
+          selectedColumns={selectedColumns}
+          table={selectedTable}
+          tables={tables}
+        />
+        {/* <FilterSection {...props} columns={columns} />
+        <AggregateSection {...props} columns={columns} />
+        <GroupBySection {...props} columns={columns} /> */}
+        <KQLPreview query={query.azureLogAnalytics?.query || ''} />
+      </EditorRows>
+    </span>
   );
 };
