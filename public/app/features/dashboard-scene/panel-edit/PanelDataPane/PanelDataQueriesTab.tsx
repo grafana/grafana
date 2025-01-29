@@ -26,7 +26,8 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types';
 
-import { QueryActionButtonProps, useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
+import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
+import { QueryActionButtonProps } from '../../../explore/QueryLibrary/types';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
@@ -309,13 +310,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.useState();
   const { data, queries } = model.queryRunner.useState();
+  const { openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
 
   if (!datasource || !dsSettings || !data) {
     return null;
   }
-
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
-  const { openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
 
   // Make the final query library action button by injecting actual addQuery functionality into the button.
   const addQueryActionButton = makeQueryActionButton((queries) => {
