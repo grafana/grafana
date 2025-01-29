@@ -135,7 +135,7 @@ func ParseFolder(dirPath, repositoryName string) Folder {
 
 func ParentFolder(filePath string, repository *provisioning.Repository) string {
 	parent := path.Dir(filePath)
-	if parent == "." {
+	if parent == "." || parent == "/" {
 		return repository.Spec.Folder
 	}
 	return ParseFolder(parent, repository.GetName()).ID
