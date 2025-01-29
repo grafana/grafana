@@ -2,9 +2,11 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -52,7 +54,28 @@ func (c *syncConnector) Connect(
 	cfg := repo.Config()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		responder.Error(fmt.Errorf("xxxx"))
+		var options provisioning.SyncOptions
+		err := json.NewDecoder(r.Body).Decode(&options)
+		if err != nil {
+			responder.Error(apierrors.NewBadRequest("error decoding request"))
+			return
+		}
+
+		job, err := c.jobs.Add(ctx, &provisioning.Job{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: cfg.Namespace,
+			},
+			Spec: provisioning.JobSpec{
+				Action:     provisioning.JobActionSync,
+				Repository: cfg.Name,
+				Sync:       &options,
+			},
+		})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		responder.Object(http.StatusAccepted, job)
 	}), nil
 }
 
