@@ -9,10 +9,12 @@ import (
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -94,8 +96,26 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
 
-	// TODO: skip if folder already belongs to the repository
-	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders)
+	unprovisionedFolders := make([]unstructured.Unstructured, 0)
+	for _, f := range rawFolders.Items {
+		meta, err := utils.MetaAccessor(f)
+		if err != nil {
+			return nil, fmt.Errorf("create meta accessor for the folder object: %w", err)
+		}
+
+		repoInfo, err := meta.GetRepositoryInfo()
+		if err != nil {
+			return nil, fmt.Errorf("get repository info for folder: %w", err)
+		}
+
+		if repoInfo == nil || repoInfo.Name == repo.Config().GetName() {
+			continue
+		}
+
+		unprovisionedFolders = append(unprovisionedFolders, f)
+	}
+
+	folderTree := resources.NewFolderTreeFromUnstructure(ctx, unprovisionedFolders)
 	err = folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
 		logger := logger.With("path", p)
@@ -145,6 +165,19 @@ func (r *exporter) Export(ctx context.Context,
 		ns := r.repository.Config().GetNamespace()
 		if item.GetNamespace() != ns {
 			logger.Debug("skipping dashboard item due to mismatching namespace", "got", ns)
+			continue
+		}
+		meta, err := utils.MetaAccessor(item)
+		if err != nil {
+			return nil, fmt.Errorf("create meta accessor for the folder object: %w", err)
+		}
+
+		repoInfo, err := meta.GetRepositoryInfo()
+		if err != nil {
+			return nil, fmt.Errorf("get repository info for folder: %w", err)
+		}
+
+		if repoInfo == nil || repoInfo.Name == repo.Config().GetName() {
 			continue
 		}
 

@@ -87,11 +87,11 @@ func NewEmptyFolderTree() *FolderTree {
 	}
 }
 
-func NewFolderTreeFromUnstructure(ctx context.Context, rawFolders *unstructured.UnstructuredList) *FolderTree {
-	tree := make(map[string]string, len(rawFolders.Items))
-	folders := make(map[string]Folder, len(rawFolders.Items))
+func NewFolderTreeFromUnstructure(ctx context.Context, rawFolders []unstructured.Unstructured) *FolderTree {
+	tree := make(map[string]string, len(rawFolders))
+	folders := make(map[string]Folder, len(rawFolders))
 
-	for _, rf := range rawFolders.Items {
+	for _, rf := range rawFolders {
 		name := rf.GetName()
 		// TODO: Can I use MetaAccessor here?
 		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
