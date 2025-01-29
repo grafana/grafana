@@ -212,6 +212,7 @@ type FrontendSettingsDTO struct {
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
 	EnableFrontendSandboxForPlugins     []string `json:"enableFrontendSandboxForPlugins"`
 	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
+	ExploreHideLogsDownload             bool     `json:"ExploreHideLogsDownload"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
