@@ -67,52 +67,48 @@ async function getFoldersAsOptions(
 ): Promise<Array<SelectableValue<FolderInfo>>> {
   setLoading(true);
 
-  try {
-    if (config.featureToggles.unifiedStorageSearchUI) {
-      const searcher = getGrafanaSearcher();
-      const queryResponse = await searcher.search({
-        query: searchString,
-        kind: ['folder'],
-        limit: 100,
-        permission: PermissionLevelString.View,
-      });
+  // Use Unified Storage API behind toggle
+  if (config.featureToggles.unifiedStorageSearchUI) {
+    const searcher = getGrafanaSearcher();
+    const queryResponse = await searcher.search({
+      query: searchString,
+      kind: ['folder'],
+      limit: 100,
+      permission: PermissionLevelString.View,
+    });
 
-      const options = queryResponse.view.map((item) => ({
-        label: item.name,
-        value: { uid: item.uid, title: item.name }
-      }));
+    const options = queryResponse.view.map((item) => ({
+      label: item.name,
+      value: { uid: item.uid, title: item.name },
+    }));
 
-      if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
-        options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
-      }
-
-      return options;
-    } else {
-      // Use existing backend service search
-      const params = {
-        query: searchString,
-        type: 'folder',
-        permission: PermissionLevelString.View,
-      };
-
-      const searchHits = await getBackendSrv().search(params);
-      const options = searchHits.map((d) => ({ 
-        label: d.title, 
-        value: { uid: d.uid, title: d.title } 
-      }));
-
-      if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
-        options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
-      }
-
-      return options;
+    if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
+      options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
     }
-  } catch (error) {
-    console.error('Failed to fetch folders:', error);
-    return [];
-  } finally {
+
     setLoading(false);
+    return options;
   }
+
+  // Use existing backend service search
+  const params = {
+    query: searchString,
+    type: 'folder',
+    permission: PermissionLevelString.View,
+  };
+
+  const searchHits = await getBackendSrv().search(params);
+  const options = searchHits.map((d) => ({
+    label: d.title,
+    value: { uid: d.uid, title: d.title },
+  }));
+
+  if (!searchString || 'dashboards'.includes(searchString.toLowerCase())) {
+    options.unshift({ label: 'Dashboards', value: { uid: 'general', title: 'Dashboards' } });
+  }
+
+  setLoading(false);
+  return options;
 }
 
 function getStyles(theme: GrafanaTheme2) {
