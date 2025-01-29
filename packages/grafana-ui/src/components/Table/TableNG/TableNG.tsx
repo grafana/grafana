@@ -360,7 +360,14 @@ export function TableNG(props: TableNGProps) {
           let expandedRecords: Array<Record<string, string>> = [];
           expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
           expandedRecords = frameToRecords(row.data);
-          return <DataGrid rows={expandedRecords} columns={expandedColumns} rowHeight={defaultRowHeight} />;
+          return (
+            <DataGrid
+              rows={expandedRecords}
+              columns={expandedColumns}
+              rowHeight={defaultRowHeight}
+              style={{ height: '100%', overflow: 'visible' }}
+            />
+          );
         },
         width: EXPANDER_WIDTH,
         minWidth: EXPANDER_WIDTH,
