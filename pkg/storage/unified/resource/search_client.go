@@ -1,12 +1,11 @@
 package resource
 
 import (
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func NewSearchClient(cfg *setting.Cfg, unifiedStorageConfigKey string, unifiedClient ResourceIndexClient, legacyClient ResourceIndexClient) ResourceIndexClient {
-	config, ok := cfg.UnifiedStorage[unifiedStorageConfigKey]
+	/*config, ok := cfg.UnifiedStorage[unifiedStorageConfigKey]
 	if !ok {
 		return legacyClient
 	}
@@ -16,5 +15,6 @@ func NewSearchClient(cfg *setting.Cfg, unifiedStorageConfigKey string, unifiedCl
 		return legacyClient
 	default:
 		return unifiedClient
-	}
+	}*/
+	return unifiedClient
 }
