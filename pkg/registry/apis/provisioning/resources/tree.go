@@ -3,6 +3,8 @@ package resources
 import (
 	"context"
 	"path"
+	"sort"
+	"strings"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -68,10 +70,18 @@ func (t *FolderTree) Add(folder Folder, parent string) {
 type WalkFunc func(ctx context.Context, folder Folder) error
 
 func (t *FolderTree) Walk(ctx context.Context, fn WalkFunc) error {
-	// TODO: improve to go from roots first
+	toWalk := make([]Folder, 0, len(t.folders))
 	for _, folder := range t.folders {
-		// From root to fill the path
 		folder, _ := t.DirPath(folder.ID, "")
+		toWalk = append(toWalk, folder)
+	}
+
+	// sort by depth of the paths
+	sort.Slice(toWalk, func(i, j int) bool {
+		return len(strings.Split(toWalk[i].Path, "/")) < len(strings.Split(toWalk[j].Path, "/"))
+	})
+
+	for _, folder := range toWalk {
 		if err := fn(ctx, folder); err != nil {
 			return err
 		}
