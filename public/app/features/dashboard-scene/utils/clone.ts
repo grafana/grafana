@@ -1,12 +1,8 @@
 const CLONE_KEY = '-clone-';
 const CLONE_SEPARATOR = '|';
 
-const REPLACE_REGEX = new RegExp(`(.+?)(?:${CLONE_KEY}\\d+)?$`);
-const ORIGINAL_REGEX = new RegExp(`(?:.*\\|)?(.+?)(?:${CLONE_KEY}\\d+)?$`);
-const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}(?!0\\b)\\d+$`);
-const CLONE_CHAIN_REGEX = new RegExp(`(?:\\b${CLONE_KEY}(?!0\\b)\\d+\\b.*)+`);
-const LAST_SEGMENT_REGEX = new RegExp('(?:.*\\|)?(.+?)?$');
-const CONTAINS_CLONE_KEY_REGEX = new RegExp(`.*${CLONE_KEY}\\d+.*`);
+const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}[1-9]+$`);
+const ORIGINAL_REGEX = new RegExp(`${CLONE_KEY}\\d+$`);
 
 /**
  * Create or alter the last key for a key
@@ -14,7 +10,9 @@ const CONTAINS_CLONE_KEY_REGEX = new RegExp(`.*${CLONE_KEY}\\d+.*`);
  * @param index
  */
 export function getCloneKey(key: string, index: number): string {
-  return key.replace(REPLACE_REGEX, `$1${CLONE_KEY}${index}`);
+  const parts = key.split(CLONE_SEPARATOR).slice(0, -1);
+  const lastKey = getOriginalKey(getLastKeyFromClone(key));
+  return [...parts, `${lastKey}${CLONE_KEY}${index}`].join(CLONE_SEPARATOR);
 }
 
 /**
@@ -22,7 +20,7 @@ export function getCloneKey(key: string, index: number): string {
  * @param key
  */
 export function getOriginalKey(key: string): string {
-  return key.replace(ORIGINAL_REGEX, '$1');
+  return getLastKeyFromClone(key).replace(ORIGINAL_REGEX, '');
 }
 
 /**
@@ -30,7 +28,7 @@ export function getOriginalKey(key: string): string {
  * @param key
  */
 export function isClonedKey(key: string): boolean {
-  return CLONED_KEY_REGEX.test(key);
+  return CLONED_KEY_REGEX.test(getLastKeyFromClone(key));
 }
 
 /**
@@ -47,7 +45,7 @@ export function isClonedKeyOf(key1: string, key2: string): boolean {
  * @param key
  */
 export function isInCloneChain(key: string): boolean {
-  return CLONE_CHAIN_REGEX.test(key);
+  return key.split(CLONE_SEPARATOR).some(isClonedKey);
 }
 
 /**
@@ -55,7 +53,7 @@ export function isInCloneChain(key: string): boolean {
  * @param key
  */
 export function getLastKeyFromClone(key: string): string {
-  return key.replace(LAST_SEGMENT_REGEX, '$1');
+  return key.split(CLONE_SEPARATOR).pop() ?? '';
 }
 
 /**
@@ -71,5 +69,5 @@ export function joinCloneKeys(...keys: string[]): string {
  * @param key
  */
 export function containsCloneKey(key: string): boolean {
-  return CONTAINS_CLONE_KEY_REGEX.test(key);
+  return key.includes(CLONE_KEY);
 }
