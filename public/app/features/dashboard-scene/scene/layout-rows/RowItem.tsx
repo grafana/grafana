@@ -1,9 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useRef } from 'react';
+import { ReactNode, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneComponentProps,
+  sceneGraph,
+  VariableDependencyConfig,
+} from '@grafana/scenes';
 import {
   Alert,
   Button,
@@ -34,42 +40,17 @@ import { RowsLayoutManager } from './RowsLayoutManager';
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
-  interpolatedTitle?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
   height?: 'expand' | 'min';
 }
 
 export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['title'],
+  });
+
   public isEditableDashboardElement: true = true;
-
-  constructor(state: RowItemState) {
-    super({
-      ...state,
-      interpolatedTitle: state.title,
-    });
-
-    this.addActivationHandler(() => this._activationHandler());
-  }
-
-  private _activationHandler() {
-    this.interpolatedTitle();
-  }
-
-  public interpolatedTitle() {
-    const newInterpolatedTitle = sceneGraph.interpolate(this, this.state.title, undefined, 'text');
-
-    if (newInterpolatedTitle !== this.state.interpolatedTitle) {
-      this.setState({ interpolatedTitle: newInterpolatedTitle });
-    }
-  }
-
-  public changeTitle(newTitle: string) {
-    this.setState({
-      title: newTitle,
-      interpolatedTitle: sceneGraph.interpolate(this, newTitle, undefined, 'text'),
-    });
-  }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const row = this;
@@ -130,7 +111,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     layout.removeRow(this);
   };
 
-  public renderActions(): React.ReactNode {
+  public renderActions(): ReactNode {
     return (
       <>
         <Button size="sm" variant="secondary" icon="copy" />
@@ -156,11 +137,12 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   };
 
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, interpolatedTitle, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
+    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
     const isClone = useMemo(() => isClonedKey(key!), [key]);
     const dashboard = getDashboardSceneFor(model);
     const { isEditing, showHiddenElements } = dashboard.useState();
     const styles = useStyles2(getStyles);
+    const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
     const ref = useRef<HTMLDivElement>(null);
     const shouldGrow = !isCollapsed && height === 'expand';
     const { isSelected, onSelect } = useElementSelection(key);
@@ -181,11 +163,11 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
               onClick={model.onCollapseToggle}
               className={styles.rowTitleButton}
               aria-label={isCollapsed ? 'Expand row' : 'Collapse row'}
-              data-testid={selectors.components.DashboardRow.title(interpolatedTitle!)}
+              data-testid={selectors.components.DashboardRow.title(titleInterpolated!)}
             >
               <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
               <span className={styles.rowTitle} role="heading">
-                {interpolatedTitle}
+                {titleInterpolated}
               </span>
             </button>
             {!isClone && isEditing && (
@@ -261,7 +243,7 @@ function getStyles(theme: GrafanaTheme2) {
 export function RowTitleInput({ row }: { row: RowItem }) {
   const { title } = row.useState();
 
-  return <Input value={title} onChange={(e) => row.changeTitle(e.currentTarget.value!)} />;
+  return <Input value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
 }
 
 export function RowHeaderSwitch({ row }: { row: RowItem }) {

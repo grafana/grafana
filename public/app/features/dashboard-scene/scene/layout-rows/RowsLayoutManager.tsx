@@ -202,7 +202,9 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public handleVariableUpdateCompleted(variable: SceneVariable, hasChanged: boolean): void {
     for (const row of this.state.rows) {
-      row.interpolatedTitle();
+      if (row.variableDependency?.hasDependencyOn(variable.state.name) && hasChanged) {
+        row.forceRender();
+      }
 
       if (!row.state.$behaviors) {
         continue;
