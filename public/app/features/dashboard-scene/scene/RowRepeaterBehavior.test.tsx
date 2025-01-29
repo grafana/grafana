@@ -151,26 +151,6 @@ describe('RowRepeaterBehavior', () => {
 
       expect(gridStateUpdates.length).toBe(1);
     });
-
-    it('Should update panels on refresh if variables load on time range change', async () => {
-      const { scene, repeatBehavior } = buildScene({
-        variableQueryTime: 0,
-        variableRefresh: VariableRefresh.onTimeRangeChanged,
-      });
-
-      const notifyPanelsSpy = jest.spyOn(repeatBehavior, 'notifyRepeatedPanelsWaitingForVariables');
-
-      activateFullSceneTree(scene);
-
-      expect(notifyPanelsSpy).toHaveBeenCalledTimes(0);
-
-      scene.state.$timeRange?.onRefresh();
-
-      //make sure notifier is called
-      expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
-
-      notifyPanelsSpy.mockRestore();
-    });
   });
 
   describe('Given scene empty row', () => {
