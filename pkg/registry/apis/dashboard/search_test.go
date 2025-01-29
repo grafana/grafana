@@ -7,17 +7,15 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"google.golang.org/grpc"
 )
 
-/*
-Search Fallback was returning both Folders and Dashboards which resulted
-in issues with rendering the Folder UI. Also, filters are not implemented
-yet. For those reasons, we will be disabling Search Fallback for now
 func TestSearchFallback(t *testing.T) {
 	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
 		mockClient := &MockClient{}
@@ -175,7 +173,6 @@ func TestSearchFallback(t *testing.T) {
 		}
 	})
 }
-*/
 
 func TestSearchHandlerFields(t *testing.T) {
 	// Create a mock client
