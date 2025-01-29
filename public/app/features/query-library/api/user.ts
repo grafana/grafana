@@ -1,6 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-import { getK8sNamespace } from './query';
+import { getK8sNamespace } from '../../../api/utils';
+
 import { UserDataQueryResponse } from './types';
 
 /**

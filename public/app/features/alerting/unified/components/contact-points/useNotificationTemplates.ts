@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Validate } from 'react-hook-form';
 
+import { getK8sNamespace } from '../../../../../api/utils';
 import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { templatesApi } from '../../api/templateApi';
@@ -16,7 +17,7 @@ import {
   updateNotificationTemplateAction,
 } from '../../reducers/alertmanager/notificationTemplates';
 import { K8sAnnotations, PROVENANCE_NONE } from '../../utils/k8s/constants';
-import { getAnnotation, getK8sNamespace, shouldUseK8sApi } from '../../utils/k8s/utils';
+import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 

@@ -12,17 +12,14 @@ import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } f
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import {
-  getK8sNamespace,
-  isK8sEntityProvisioned,
-  shouldUseK8sApi,
-} from 'app/features/alerting/unified/utils/k8s/utils';
+import { isK8sEntityProvisioned, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { getK8sNamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
 import { useAsync } from '../../hooks/useAsync';

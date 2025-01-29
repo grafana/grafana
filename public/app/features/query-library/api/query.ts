@@ -1,8 +1,9 @@
 import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { config } from '@grafana/runtime';
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
+
+import { getK8sNamespace } from '../../../api/utils';
 
 /**
  * @alpha
@@ -15,8 +16,6 @@ export const API_VERSION = 'peakq.grafana.app/v0alpha1';
 export enum QueryTemplateKinds {
   QueryTemplate = 'QueryTemplate',
 }
-
-export const getK8sNamespace = () => config.namespace;
 
 /**
  * Query Library is an experimental feature. API (including the URL path) will likely change.
