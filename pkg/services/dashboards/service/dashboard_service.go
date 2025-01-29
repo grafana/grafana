@@ -1699,17 +1699,9 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
-	// note: this does not allow for partial matching
-	//
-	// partial matching will be allowed through the api layer for the frontend,
-	// but is currently not needed by other services in the backend
 	if query.Title != "" {
-		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_TITLE_SORT, // use title sort to prevent issues with `-` in the title & how bleve searches
-			Operator: string(selection.In),
-			Values:   []string{strings.ToLower(query.Title)},
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
+		// allow wildcard search
+		request.Query = "*" + strings.ToLower(query.Title) + "*"
 	}
 
 	if len(query.Tags) > 0 {
