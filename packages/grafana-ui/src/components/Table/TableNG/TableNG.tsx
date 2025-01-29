@@ -291,11 +291,11 @@ export function TableNG(props: TableNGProps) {
       const values = frame.fields.map(f => f.values);
       let rowCount = 0;
       for (let i = 0; i < frame.length; i++) {
-        rows[rowCount] = {____type: 'parent', index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+        rows[rowCount] = {__depth: 0, __index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
         rowCount += 1;
         if (rows[rowCount-1]['Nested frames']){
           const childFrame = rows[rowCount-1]['Nested frames'];
-          rows[rowCount] = {____type: 'child', index: i, data: childFrame[0]}
+          rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
           rowCount += 1;
         }
       }
@@ -329,12 +329,12 @@ export function TableNG(props: TableNGProps) {
         field: expanderField,
         cellClass: styles.cell,
         colSpan(args) {
-          return args.type === 'ROW' && args.row.____type === 'child' ? main.fields.length : 1;
+          return args.type === 'ROW' && Number(args.row.__depth) === 1 ? main.fields.length : 1;
         },
         renderCell: ({ row }) => {
-          // TODO add TableRow type extension to include row type enum and optional data
-          if (row.____type === 'parent') {
-            const rowIdx = Number(row.index);
+          // TODO add TableRow type extension to include row depth and optional data
+          if (Number(row.__depth) === 0) {
+            const rowIdx = Number(row.__index);
             return (
               <RowExpander
                 height={defaultRowHeight}
@@ -458,7 +458,7 @@ export function TableNG(props: TableNGProps) {
     // i.e. we can look at row styles and such here
     const { row } = props;
     // Don't render non expanded child rows
-    if (row.____type === 'child' && !expandedRows.includes(Number(row.index))) {
+    if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
       return null;
     }
     return <Row key={key} {...props} />;
@@ -603,9 +603,9 @@ export function TableNG(props: TableNGProps) {
           resizable: true,
         }}
         rowHeight={(row) => {
-          if (row.____type === 'child' && !expandedRows.includes(Number(row.index))) {
+          if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
             return 0;
-          } else if (row.____type === 'child' && expandedRows.includes(Number(row.index))) {
+          } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
             return defaultRowHeight * (row.data.length + 1); // TODO this probably isn't very robust
           }
           return getRowHeight(
