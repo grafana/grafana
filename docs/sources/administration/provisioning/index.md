@@ -479,6 +479,7 @@ The following sections detail the supported settings and secure settings for eac
 | mentionGroups  |                |
 | mentionChannel |                |
 | token          | yes            |
+| color          |                |
 
 #### Alert notification `victorops`
 
