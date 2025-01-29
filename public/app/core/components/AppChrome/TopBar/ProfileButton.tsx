@@ -14,10 +14,9 @@ import { TopNavBarMenu } from './TopNavBarMenu';
 
 export interface Props {
   profileNode: NavModelItem;
-  onToggleKioskMode(): void;
 }
 
-export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
+export function ProfileButton({ profileNode }: Props) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
@@ -34,7 +33,6 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
         onClick={onToggleShowNewsDrawer}
         label={t('navigation.rss-button', 'Latest from the blog')}
       />
-      <Menu.Item icon="monitor" onClick={onToggleKioskMode} label={t('navigation.kiosk-button', 'Enter kiosk mode')} />
     </TopNavBarMenu>
   );
 

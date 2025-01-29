@@ -81,7 +81,13 @@ export const SingleTopBar = memo(function SingleTopBar({
           </Dropdown>
         )}
         {!contextSrv.user.isSignedIn && <SignInLink />}
-        {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
+        <ToolbarButton
+          icon="monitor"
+          className={styles.kioskToggle}
+          onClick={onToggleKioskMode}
+          tooltip="Enable kiosk mode"
+        />
+        {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>
   );
