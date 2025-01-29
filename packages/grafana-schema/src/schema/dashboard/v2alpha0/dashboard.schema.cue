@@ -5,10 +5,6 @@ import (
 )
 
 DashboardV2Spec: {
-  // Unique numeric identifier for the dashboard.
-  // `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-  id?: int64
-
   // Title of dashboard.
   title: string
 
@@ -43,7 +39,7 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: Element 
+  elements: [ElementReference.name]: Element
 
   annotations: [...AnnotationQueryKind]
 
@@ -68,7 +64,7 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-  
+
   libraryPanel: LibraryPanelRef
 }
 
