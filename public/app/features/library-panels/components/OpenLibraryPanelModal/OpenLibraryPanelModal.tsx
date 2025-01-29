@@ -77,7 +77,10 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
         </Button>
         <Button onClick={onViewPanel} disabled={!Boolean(option)}>
           {option
-            ? t('library-panels.modal.button-view-panel1', 'View panel in {{label}}...', { label: option?.label })
+            ? t('library-panels.modal.button-view-panel1', 'View panel in {{label}}...', {
+                label: option?.label,
+                interpolation: { escapeValue: false },
+              })
             : t('library-panels.modal.button-view-panel2', 'View panel in dashboard...')}
         </Button>
       </Modal.ButtonRow>
