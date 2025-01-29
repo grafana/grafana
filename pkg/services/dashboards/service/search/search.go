@@ -31,7 +31,7 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 	}
 
 	titleIDX := 0
-	folderIDX := 1
+	folderIDX := -1
 	tagsIDX := -1
 	scoreIDX := 0
 	explainIDX := 0
@@ -80,8 +80,10 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 			Resource: row.Key.Resource, // folders | dashboards
 			Name:     row.Key.Name,     // The Grafana UID
 			Title:    string(row.Cells[titleIDX]),
-			Folder:   string(row.Cells[folderIDX]),
 			Field:    fields,
+		}
+		if folderIDX > 0 && row.Cells[folderIDX] != nil {
+			hit.Folder = string(row.Cells[folderIDX])
 		}
 		if tagsIDX > 0 && row.Cells[tagsIDX] != nil {
 			_ = json.Unmarshal(row.Cells[tagsIDX], &hit.Tags)

@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -28,9 +30,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -167,6 +171,101 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	}
 
 	return f, err
+}
+
+// searchFoldesFromApiServer uses the search grpc connection to search folders and returns the hit list
+func (s *Service) searchFoldersFromApiServer(ctx context.Context, query folder.SearchFoldersQuery) (model.HitList, error) {
+	if query.OrgID == 0 {
+		requester, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+		query.OrgID = requester.GetOrgID()
+	}
+
+	request := &resource.ResourceSearchRequest{
+		Options: &resource.ListOptions{
+			Key: &resource.ResourceKey{
+				Namespace: s.k8sclient.getNamespace(query.OrgID),
+				Group:     v0alpha1.FolderResourceInfo.GroupVersionResource().Group,
+				Resource:  v0alpha1.FolderResourceInfo.GroupVersionResource().Resource,
+			},
+			Fields: []*resource.Requirement{},
+			Labels: []*resource.Requirement{},
+		},
+		Limit: 100000}
+
+	if len(query.UIDs) > 0 {
+		request.Options.Fields = []*resource.Requirement{{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.In),
+			Values:   query.UIDs,
+		}}
+	} else if len(query.IDs) > 0 {
+		values := make([]string, len(query.IDs))
+		for i, id := range query.IDs {
+			values[i] = strconv.FormatInt(id, 10)
+		}
+
+		request.Options.Labels = append(request.Options.Labels, &resource.Requirement{
+			Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
+			Operator: string(selection.In),
+			Values:   values,
+		})
+	}
+
+	if query.Title != "" {
+		// allow wildcard search
+		request.Query = "*" + strings.ToLower(query.Title) + "*"
+	}
+
+	if query.Limit > 0 {
+		request.Limit = query.Limit
+	}
+
+	client := s.k8sclient.getSearcher(ctx)
+
+	res, err := client.Search(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedResults, err := dashboardsearch.ParseResults(res, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	hitList := make([]*model.Hit, len(parsedResults.Hits))
+	foldersMap := map[string]*folder.Folder{}
+	for i, item := range parsedResults.Hits {
+		f, ok := foldersMap[item.Folder]
+		if !ok {
+			f, err = s.Get(ctx, &folder.GetFolderQuery{
+				UID:          &item.Folder,
+				OrgID:        query.OrgID,
+				SignedInUser: query.SignedInUser,
+			})
+			if err != nil {
+				return nil, err
+			}
+			foldersMap[item.Folder] = f
+		}
+		slug := slugify.Slugify(item.Title)
+		hitList[i] = &model.Hit{
+			ID:          item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			UID:         item.Name,
+			OrgID:       query.OrgID,
+			Title:       item.Title,
+			URI:         "db/" + slug,
+			URL:         dashboards.GetFolderURL(item.Name, slug),
+			Type:        model.DashHitFolder,
+			FolderUID:   item.Folder,
+			FolderTitle: f.Title,
+			FolderID:    f.ID, // nolint:staticcheck
+		}
+	}
+
+	return hitList, nil
 }
 
 func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
