@@ -30,6 +30,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
     const spacing = this.getItemSpacing();
+    // check if the total height is bigger than the visualization height, if so, there will be scrollbars for overflow
     const isOverflow = (height + spacing) * count - spacing > this.props.height;
 
     let processor: DisplayProcessor | undefined = undefined;
