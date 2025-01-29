@@ -1,14 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneComponentProps,
-  sceneGraph,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneVariable,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from '../DashboardScene';
@@ -69,6 +62,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
   public addNewRow(): void {
     this.state.currentTab.getLayout().addNewRow();
+  }
+
+  public getMaxPanelId(): number {
+    return Math.max(...this.state.tabs.map((tab) => tab.getLayout().getMaxPanelId()));
   }
 
   public getNextPanelId(): number {
@@ -146,24 +143,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     return new TabsLayoutManager({ tabs: [tab], currentTab: tab });
   }
 
-  public handleVariableUpdateCompleted(variable: SceneVariable, hasChanged: boolean): void {
-    for (const tab of this.state.tabs) {
-      if (!tab.state.$behaviors) {
-        continue;
-      }
-
-      for (const behavior of tab.state.$behaviors) {
-        if (behavior instanceof TabItemRepeaterBehavior) {
-          if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
-            behavior.performRepeat(true);
-          } else if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
-            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
-          }
-        }
-      }
-    }
-  }
-
   public static Component = ({ model }: SceneComponentProps<TabsLayoutManager>) => {
     const styles = useStyles2(getStyles);
     const { tabs, currentTab } = model.useState();
@@ -173,7 +152,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       <>
         <TabsBar className={styles.tabsContainer}>
           {tabs.map((tab) => (
-            <TabItem.Component model={tab} key={tab.state.key!} />
+            <tab.Component model={tab} key={tab.state.key!} />
           ))}
         </TabsBar>
         <TabContent className={styles.tabContentContainer}>{layout && <layout.Component model={layout} />}</TabContent>
