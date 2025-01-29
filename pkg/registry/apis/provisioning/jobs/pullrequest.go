@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"os"
 	"path"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -114,8 +115,13 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 ) (*provisioning.JobStatus, error) {
 	cfg := c.repo.Config().Spec
 
+	// TODO: Figure out how we want to determine this in practice.
+	lintingVal, ok := os.LookupEnv("GRAFANA_LINTING")
+	linting := ok && lintingVal == "true"
+
 	// TODO: clean specification to have better options
-	if !cfg.GitHub.GenerateDashboardPreviews {
+	if !linting &&
+		!cfg.GitHub.GenerateDashboardPreviews {
 		return &provisioning.JobStatus{
 			State:   provisioning.JobStateSuccess,
 			Message: "linting and previews are not required",
@@ -179,8 +185,7 @@ func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 			continue
 		}
 
-		// TODO: support lint callback
-		if false && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
+		if linting && len(parsed.Lint) > 0 && f.Action != repository.FileActionDeleted {
 			var buf bytes.Buffer
 			if err := c.lintTemplate.Execute(&buf, parsed.Lint); err != nil {
 				return nil, fmt.Errorf("execute lint comment template: %w", err)

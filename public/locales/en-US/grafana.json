@@ -1977,6 +1977,7 @@
     "public-preview": {
       "button-text": "Give feedback",
       "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
+      "message-cloud": "Your self-managed instance of Grafana requires version 11.5+, or 11.2+ with the onPremToCloudMigrations feature flag enabled.",
       "message-plugins": "Only Community and Commercial signed plugins are eligible for migration. Their latest version will be installed in the cloud instance, please upgrade your plugins before starting the migration process.",
       "title": "Migrate to Grafana Cloud is in public preview",
       "title-plugins": "Migration of plugins"

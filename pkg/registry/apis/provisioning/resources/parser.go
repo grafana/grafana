@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 
 	"gopkg.in/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -39,6 +41,30 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Repositor
 		repo:   config,
 		client: client,
 		kinds:  kinds,
+	}
+	// TODO: Figure out how we want to determine this in practice.
+	linting, ok := os.LookupEnv("GRAFANA_LINTING")
+	if ok && linting == "true" {
+		linterFactory := lint.NewDashboardLinterFactory()
+		cfg, err := repo.Read(ctx, linterFactory.ConfigPath(), "")
+
+		logger := logging.FromContext(ctx)
+		var linter lint.Linter
+		switch {
+		case err == nil:
+			logger.Info("linter config found", "config", string(cfg.Data))
+			linter, err = linterFactory.NewFromConfig(cfg.Data)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create linter: %w", err)
+			}
+		case apierrors.IsNotFound(err):
+			logger.Info("no linter config found, using default")
+			linter = linterFactory.New()
+		default:
+			return nil, fmt.Errorf("failed to read linter config: %w", err)
+		}
+
+		parser.linter = linter
 	}
 
 	return parser, nil

@@ -54,9 +54,6 @@ type GitHubRepositoryConfig struct {
 	// By default, this is false (i.e. we will not create previews).
 	// This option is a no-op if BranchWorkflow is `false` or default.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
-
-	// PullRequestLinter enables the dashboard linter for this repository in Pull Requests
-	// PullRequestLinter bool `json:"pullRequestLinter,omitempty"`
 }
 
 // RepositoryType defines the types of Repository
@@ -117,13 +114,13 @@ type SyncTargetType string
 const (
 	// Resources should be saved into the root grafana directory
 	// currently, only one repository may specify `root` target
-	SyncTargetTypeRoot RepositoryType = "root"
+	SyncTargetTypeRoot SyncTargetType = "root"
 
 	// Resources will be saved into a folder managed by this repository
-	SyncTargetTypeFolder RepositoryType = "folder"
+	SyncTargetTypeFolder SyncTargetType = "folder"
 
 	// Pick an explicit folder where we can save resources, not managed by provisioning
-	// SyncTargetTypeShared RepositoryType = "shared"
+	// SyncTargetTypeShared SyncTargetType = "shared"
 )
 
 type SyncOptions struct {

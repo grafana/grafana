@@ -9,7 +9,7 @@ import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
 import { DataSourcePicker, DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 

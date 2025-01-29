@@ -61,8 +61,9 @@ func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
-	if err := r.ensureRepositoryFolderExists(ctx); err != nil {
-		return "", fmt.Errorf("ensure repository folder exists: %w", err)
+	err := r.verifyTargetFolderExists(ctx)
+	if err != nil {
+		return "", err
 	}
 
 	logger := logging.FromContext(ctx)
@@ -338,7 +339,7 @@ func (r *Syncer) replicateFile(ctx context.Context, fileInfo *repository.FileInf
 
 func (r *Syncer) createFolderPath(ctx context.Context, filePath string) (string, error) {
 	dir := path.Dir(filePath)
-	parent := r.repository.Config().Spec.Folder
+	parent := "TODO!!!!!" // r.repository.Config().Spec.Folder
 	if dir == "." || dir == "/" {
 		return parent, nil
 	}
@@ -479,64 +480,38 @@ func (r *Syncer) parseResource(ctx context.Context, fileInfo *repository.FileInf
 	return file, nil
 }
 
-func (r *Syncer) ensureRepositoryFolderExists(ctx context.Context) error {
-	if r.repository.Config().Spec.Folder == "" {
-		return nil
-	}
+func (r *Syncer) verifyTargetFolderExists(ctx context.Context) error {
+	cfg := r.repository.Config()
+	folder := cfg.Status.Sync.Folder
 
-	obj, err := r.folders.Get(ctx, r.repository.Config().Spec.Folder, metav1.GetOptions{})
-	if err == nil {
+	switch cfg.Spec.Sync.Target {
+	case provisioning.SyncTargetTypeRoot:
+		if folder != "" {
+			return fmt.Errorf("folder exists in status target, but shouldn't when when targeting root")
+		}
+		return nil
+
+	case provisioning.SyncTargetTypeFolder:
+		if folder == "" {
+			return fmt.Errorf("targeting a folder, but none exist (should we create it here?)")
+		}
+
+		obj, err := r.folders.Get(ctx, folder, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("unable to get folder: %w", err)
+		}
+
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return fmt.Errorf("create meta accessor for the object: %w", err)
 		}
 
-		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-			Name:      r.repository.Config().Name,
-			Path:      "",
-			Hash:      "",  // FIXME: which hash?
-			Timestamp: nil, // ???&info.Modified.Time,
-		})
-
-		if _, err := r.folders.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-			return fmt.Errorf("failed to add repo info to configured folder: %w", err)
+		repo := meta.GetRepositoryName()
+		if repo != cfg.Name {
+			return fmt.Errorf("target folder is not owned by this repository")
 		}
 
 		return nil
-	} else if !apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to check if folder exists: %w", err)
-	}
-
-	cfg := r.repository.Config()
-	title := cfg.Spec.Title
-	if title == "" {
-		title = cfg.Spec.Folder
-	}
-
-	obj = &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"spec": map[string]any{
-				"title": title, // TODO: how do we want to get this?
-			},
-		},
-	}
-
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return fmt.Errorf("create meta accessor for the object: %w", err)
-	}
-
-	obj.SetNamespace(cfg.GetNamespace())
-	obj.SetName(cfg.Spec.Folder)
-	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      r.repository.Config().Name,
-		Path:      "",
-		Hash:      "",  // FIXME: which hash?
-		Timestamp: nil, // ???&info.Modified.Time,
-	})
-
-	if _, err := r.folders.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
-		return fmt.Errorf("failed to create folder: %w", err)
 	}
 
 	return nil

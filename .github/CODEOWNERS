@@ -737,10 +737,6 @@ embed.go @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
 /cue.mod/ @grafana/grafana-as-code
 
-# Rendered OpenAPI from app platform
-# Eventually each file owned by the right team, OR a structure with the rendered value under /apis/{group}/openapi
-/openapi/ @grafana/grafana-app-platform-squad
-
 # GitHub Workflows and Templates
 /.github/CODEOWNERS @tolzhabayev
 /.github/ISSUE_TEMPLATE/ @torkelo @sympatheticmoose
@@ -753,6 +749,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
+/.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
 /.github/workflows/auto-triager/ @grafana/plugins-platform-frontend
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
 /.github/workflows/auto-milestone.yml @grafana/grafana-developer-enablement-squad
