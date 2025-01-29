@@ -13,7 +13,6 @@ import {
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
-  SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
@@ -72,7 +71,6 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
