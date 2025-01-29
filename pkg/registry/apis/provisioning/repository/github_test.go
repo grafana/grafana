@@ -110,7 +110,6 @@ func TestParseWebhooks(t *testing.T) {
 					Branch:     "main",
 
 					GenerateDashboardPreviews: true,
-					PullRequestLinter:         true,
 				},
 			},
 		},

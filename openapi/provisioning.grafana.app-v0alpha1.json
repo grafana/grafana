@@ -7,7 +7,9 @@
   "paths": {
     "/apis/provisioning.grafana.app/v0alpha1/": {
       "get": {
-        "tags": ["API Discovery"],
+        "tags": [
+          "API Discovery"
+        ],
         "description": "get available resources",
         "operationId": "getAPIResources",
         "responses": {
@@ -36,7 +38,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/jobs": {
       "get": {
-        "tags": ["Job"],
+        "tags": [
+          "Job"
+        ],
         "description": "list or watch objects of kind Job",
         "operationId": "listJobForAllNamespaces",
         "responses": {
@@ -182,7 +186,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/jobs": {
       "get": {
-        "tags": ["Job"],
+        "tags": [
+          "Job"
+        ],
         "description": "list or watch objects of kind Job",
         "operationId": "listJob",
         "responses": {
@@ -338,7 +344,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/jobs/{name}": {
       "get": {
-        "tags": ["Job"],
+        "tags": [
+          "Job"
+        ],
         "description": "read the specified Job",
         "operationId": "getJob",
         "responses": {
@@ -404,7 +412,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "list or watch objects of kind Repository",
         "operationId": "listRepository",
         "parameters": [
@@ -539,7 +549,9 @@
         }
       },
       "post": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "create a Repository",
         "operationId": "createRepository",
         "parameters": [
@@ -651,7 +663,9 @@
         }
       },
       "delete": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "delete collection of Repository",
         "operationId": "deletecollectionRepository",
         "parameters": [
@@ -835,7 +849,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "read the specified Repository",
         "operationId": "getRepository",
         "responses": {
@@ -868,7 +884,9 @@
         }
       },
       "put": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "replace the specified Repository",
         "operationId": "replaceRepository",
         "parameters": [
@@ -960,7 +978,9 @@
         }
       },
       "delete": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "delete a Repository",
         "operationId": "deleteRepository",
         "parameters": [
@@ -1069,7 +1089,9 @@
         }
       },
       "patch": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "partially update the specified Repository",
         "operationId": "updateRepository",
         "parameters": [
@@ -1218,7 +1240,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/export": {
       "post": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Export from grafana into the remote repository",
         "operationId": "createRepositoryExport",
         "requestBody": {
@@ -1298,7 +1322,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files/": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "summary": "File listing",
         "description": "Get the files and content hash",
         "operationId": "getRepositoryFiles",
@@ -1389,7 +1415,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files/{path}": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Read value from upstream repository",
         "operationId": "getRepositoryFilesWithPath",
         "parameters": [
@@ -1435,7 +1463,9 @@
         }
       },
       "put": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "connect PUT requests to files of Repository",
         "operationId": "replaceRepositoryFilesWithPath",
         "parameters": [
@@ -1529,7 +1559,9 @@
         }
       },
       "post": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "connect POST requests to files of Repository",
         "operationId": "createRepositoryFilesWithPath",
         "parameters": [
@@ -1623,7 +1655,9 @@
         }
       },
       "delete": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "connect DELETE requests to files of Repository",
         "operationId": "deleteRepositoryFilesWithPath",
         "parameters": [
@@ -1711,7 +1745,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/history": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Get the history of the repository",
         "operationId": "getRepositoryHistory",
         "parameters": [
@@ -1781,7 +1817,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/history/{path}": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Get the history of a path",
         "operationId": "getRepositoryHistoryWithPath",
         "parameters": [
@@ -1861,7 +1899,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/resources": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "connect GET requests to resources of Repository",
         "operationId": "getRepositoryResources",
         "responses": {
@@ -1908,7 +1948,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/status": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "read status of the specified Repository",
         "operationId": "getRepositoryStatus",
         "responses": {
@@ -1941,7 +1983,9 @@
         }
       },
       "put": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "replace status of the specified Repository",
         "operationId": "replaceRepositoryStatus",
         "parameters": [
@@ -2033,7 +2077,9 @@
         }
       },
       "patch": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "partially update status of the specified Repository",
         "operationId": "updateRepositoryStatus",
         "parameters": [
@@ -2182,7 +2228,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/sync": {
       "post": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Sync from repository into Grafana",
         "operationId": "createRepositorySync",
         "requestBody": {
@@ -2247,7 +2295,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/test": {
       "post": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Check if the configuration is valid",
         "operationId": "createRepositoryTest",
         "requestBody": {
@@ -2323,7 +2373,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/webhook": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "connect GET requests to webhook of Repository",
         "operationId": "getRepositoryWebhook",
         "responses": {
@@ -2346,7 +2398,9 @@
         }
       },
       "post": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Currently only supports github webhooks",
         "operationId": "createRepositoryWebhook",
         "responses": {
@@ -2393,7 +2447,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/stats": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "Get resource stats for this namespace",
         "operationId": "getResourceStats",
         "parameters": [
@@ -2443,7 +2499,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/repositories": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "list or watch objects of kind Repository",
         "operationId": "listRepositoryForAllNamespaces",
         "responses": {
@@ -2589,7 +2647,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/watch/jobs": {
       "get": {
-        "tags": ["Job"],
+        "tags": [
+          "Job"
+        ],
         "description": "watch individual changes to a list of Job. deprecated: use the 'watch' parameter with a list operation instead.",
         "operationId": "watchJobListForAllNamespaces",
         "responses": {
@@ -2735,7 +2795,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/jobs": {
       "get": {
-        "tags": ["Job"],
+        "tags": [
+          "Job"
+        ],
         "description": "watch individual changes to a list of Job. deprecated: use the 'watch' parameter with a list operation instead.",
         "operationId": "watchJobList",
         "responses": {
@@ -2891,7 +2953,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/jobs/{name}": {
       "get": {
-        "tags": ["Job"],
+        "tags": [
+          "Job"
+        ],
         "description": "watch changes to an object of kind Job. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "operationId": "watchJob",
         "responses": {
@@ -3057,7 +3121,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/repositories": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "watch individual changes to a list of Repository. deprecated: use the 'watch' parameter with a list operation instead.",
         "operationId": "watchRepositoryList",
         "responses": {
@@ -3213,7 +3279,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/repositories/{name}": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "watch changes to an object of kind Repository. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
         "operationId": "watchRepository",
         "responses": {
@@ -3379,7 +3447,9 @@
     },
     "/apis/provisioning.grafana.app/v0alpha1/watch/repositories": {
       "get": {
-        "tags": ["Repository"],
+        "tags": [
+          "Repository"
+        ],
         "description": "watch individual changes to a list of Repository. deprecated: use the 'watch' parameter with a list operation instead.",
         "operationId": "watchRepositoryListForAllNamespaces",
         "responses": {
@@ -3533,7 +3603,11 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.EditingOptions": {
         "type": "object",
-        "required": ["create", "update", "delete"],
+        "required": [
+          "create",
+          "update",
+          "delete"
+        ],
         "properties": {
           "create": {
             "description": "End users can create new files in the remote file system",
@@ -3592,10 +3666,6 @@
             "description": "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
             "type": "string"
           },
-          "pullRequestLinter": {
-            "description": "PullRequestLinter enables the dashboard linter for this repository in Pull Requests",
-            "type": "boolean"
-          },
           "repository": {
             "description": "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
             "type": "string"
@@ -3608,7 +3678,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HealthStatus": {
         "type": "object",
-        "required": ["healthy"],
+        "required": [
+          "healthy"
+        ],
         "properties": {
           "checked": {
             "description": "When the health was checked last time",
@@ -3762,13 +3834,20 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
-        "required": ["action", "repository"],
+        "required": [
+          "action",
+          "repository"
+        ],
         "properties": {
           "action": {
             "description": "Possible enum values:\n - `\"export\"` Export from grafana into the remote repository\n - `\"pr\"` Update a pull request -- send preview images, links etc\n - `\"sync\"` Sync the remote branch with the grafana instance",
             "type": "string",
             "default": "",
-            "enum": ["export", "pr", "sync"]
+            "enum": [
+              "export",
+              "pr",
+              "sync"
+            ]
           },
           "export": {
             "description": "Required when the action is `export`",
@@ -3831,7 +3910,12 @@
           "state": {
             "description": "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
             "type": "string",
-            "enum": ["error", "pending", "success", "working"]
+            "enum": [
+              "error",
+              "pending",
+              "success",
+              "working"
+            ]
           },
           "summary": {
             "description": "Summary of processed actions",
@@ -3849,7 +3933,11 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LintIssue": {
         "type": "object",
-        "required": ["severity", "rule", "message"],
+        "required": [
+          "severity",
+          "rule",
+          "message"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3863,7 +3951,13 @@
             "description": "Possible enum values:\n - `\"error\"`\n - `\"exclude\"`\n - `\"fixed\"`\n - `\"quiet\"`\n - `\"warning\"`",
             "type": "string",
             "default": "",
-            "enum": ["error", "exclude", "fixed", "quiet", "warning"]
+            "enum": [
+              "error",
+              "exclude",
+              "fixed",
+              "quiet",
+              "warning"
+            ]
           }
         }
       },
@@ -3992,7 +4086,12 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositorySpec": {
         "type": "object",
-        "required": ["title", "editing", "deletePolicy", "type"],
+        "required": [
+          "title",
+          "editing",
+          "deletePolicy",
+          "type"
+        ],
         "properties": {
           "deletePolicy": {
             "description": "DeletePolicy options within the repository",
@@ -4024,10 +4123,6 @@
               }
             ]
           },
-          "linting": {
-            "description": "Linting enables linting for this repository",
-            "type": "boolean"
-          },
           "local": {
             "description": "The repository on the local file system. Mutually exclusive with s3 and github.",
             "allOf": [
@@ -4053,14 +4148,23 @@
             "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
             "type": "string",
             "default": "",
-            "enum": ["github", "local", "s3"]
+            "enum": [
+              "github",
+              "local",
+              "s3"
+            ]
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryStatus": {
         "description": "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
         "type": "object",
-        "required": ["observedGeneration", "health", "sync", "webhook"],
+        "required": [
+          "observedGeneration",
+          "health",
+          "sync",
+          "webhook"
+        ],
         "properties": {
           "health": {
             "description": "This will get updated with the current health status (and updated periodically)",
@@ -4110,7 +4214,11 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount": {
         "type": "object",
-        "required": ["group", "resource", "count"],
+        "required": [
+          "group",
+          "resource",
+          "count"
+        ],
         "properties": {
           "count": {
             "type": "integer",
@@ -4177,7 +4285,13 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceListItem": {
         "type": "object",
-        "required": ["path", "group", "resource", "name", "hash"],
+        "required": [
+          "path",
+          "group",
+          "resource",
+          "name",
+          "hash"
+        ],
         "properties": {
           "folder": {
             "type": "string"
@@ -4214,12 +4328,18 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceObjects": {
         "type": "object",
-        "required": ["type"],
+        "required": [
+          "type"
+        ],
         "properties": {
           "action": {
             "description": "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"update\"`",
             "type": "string",
-            "enum": ["create", "delete", "update"]
+            "enum": [
+              "create",
+              "delete",
+              "update"
+            ]
           },
           "dryRun": {
             "description": "The value returned from a dryRun request",
@@ -4262,7 +4382,12 @@
           "classic": {
             "description": "For non-k8s native formats, what did this start as\n\nPossible enum values:\n - `\"access-control\"` Access control https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/access-control/sample.yaml\n - `\"alerting\"` Alert configuration https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/alerting/sample.yaml\n - `\"dashboard\"` Dashboard JSON\n - `\"datasources\"` Datasource definitions eg: https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/datasources/sample.yaml",
             "type": "string",
-            "enum": ["access-control", "alerting", "dashboard", "datasources"]
+            "enum": [
+              "access-control",
+              "alerting",
+              "dashboard",
+              "datasources"
+            ]
           },
           "group": {
             "type": "string"
@@ -4281,7 +4406,9 @@
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper": {
         "description": "This is a container type for any resource type",
         "type": "object",
-        "required": ["resource"],
+        "required": [
+          "resource"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4376,7 +4503,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncStatus": {
         "type": "object",
-        "required": ["state"],
+        "required": [
+          "state"
+        ],
         "properties": {
           "finished": {
             "description": "When the sync job finished",
@@ -4413,14 +4542,22 @@
             "description": "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
             "type": "string",
             "default": "",
-            "enum": ["error", "pending", "success", "working"]
+            "enum": [
+              "error",
+              "pending",
+              "success",
+              "working"
+            ]
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.TestResults": {
         "description": "HistoryList is a list of versions of a resource",
         "type": "object",
-        "required": ["code", "success"],
+        "required": [
+          "code",
+          "success"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4538,7 +4675,13 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
-        "required": ["name", "singularName", "namespaced", "kind", "verbs"],
+        "required": [
+          "name",
+          "singularName",
+          "namespaced",
+          "kind",
+          "verbs"
+        ],
         "properties": {
           "categories": {
             "description": "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
@@ -4603,7 +4746,10 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
         "description": "APIResourceList is a list of APIResource, it is used to expose the name of the resources supported in a specific group and version, and if the resource is namespaced.",
         "type": "object",
-        "required": ["groupVersion", "resources"],
+        "required": [
+          "groupVersion",
+          "resources"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4842,7 +4988,9 @@
                 }
               ]
             },
-            "x-kubernetes-list-map-keys": ["uid"],
+            "x-kubernetes-list-map-keys": [
+              "uid"
+            ],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -4864,7 +5012,12 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference": {
         "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
         "type": "object",
-        "required": ["apiVersion", "kind", "name", "uid"],
+        "required": [
+          "apiVersion",
+          "kind",
+          "name",
+          "uid"
+        ],
         "properties": {
           "apiVersion": {
             "description": "API version of the referent.",
@@ -5030,7 +5183,10 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
         "description": "Event represents a single event to a watched resource.",
         "type": "object",
-        "required": ["type", "object"],
+        "required": [
+          "type",
+          "object"
+        ],
         "properties": {
           "object": {
             "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",

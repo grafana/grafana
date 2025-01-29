@@ -17,5 +17,4 @@ spec:
     branch: dummy-branch
     branchWorkflow: true
     generateDashboardPreviews: true
-    pullRequestLinter: true
     token: "github_pat_dummy"
