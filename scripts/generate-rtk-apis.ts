@@ -38,7 +38,7 @@ const config: ConfigFile = {
     },
     '../public/app/features/provisioning/api/endpoints.gen.ts': {
       apiFile: '../public/app/features/provisioning/api/baseAPI.ts',
-      schemaFile: '../openapi/provisioning.grafana.app-v0alpha1.json',
+      schemaFile: '../pkg/tests/apis/openapi_snapshots/provisioning.grafana.app-v0alpha1.json',
       apiImport: 'baseAPI',
       filterEndpoints,
       argSuffix: 'Arg',

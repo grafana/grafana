@@ -63,6 +63,18 @@ func (u *Unstructured) DeepCopy() *Unstructured {
 	}
 	out := new(Unstructured)
 	*out = *u
+
+	// If the core value includes an 'int' the runtime will fail
+	defer func() {
+		if r := recover(); r != nil {
+			raw, err := u.MarshalJSON()
+			if err != nil {
+				panic("unable to marshal object")
+			}
+			_ = out.UnmarshalJSON(raw)
+		}
+	}()
+
 	out.Object = runtime.DeepCopyJSON(u.Object)
 	return out
 }

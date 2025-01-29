@@ -97,15 +97,6 @@ type RepositorySpec struct {
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
 
-type DeletePolicy string
-
-const (
-	// DeletePolityRetain keep all provisioned resources on repository deletion
-	DeletePolityRetain DeletePolicy = "retain"
-	// DeletePolityClean delete all provisioned resources on repository deletion
-	DeletePolityClean DeletePolicy = "clean"
-)
-
 // SyncTargetType defines where we want all values to resolve
 // +enum
 type SyncTargetType string

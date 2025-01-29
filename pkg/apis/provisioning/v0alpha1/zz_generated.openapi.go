@@ -990,11 +990,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository\n - `\"github\"`\n - `\"local\"`\n - `\"root\"` Resources should be saved into the root grafana directory currently, only one repository may specify `root` target\n - `\"s3\"`",
+							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"folder", "github", "local", "root", "s3"},
+							Enum:        []interface{}{"github", "local", "s3"},
 						},
 					},
 					"local": {
@@ -1529,11 +1529,11 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 					},
 					"target": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Where values should be saved",
+							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository\n - `\"root\"` Resources should be saved into the root grafana directory currently, only one repository may specify `root` target",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{},
+							Enum:        []interface{}{"folder", "root"},
 						},
 					},
 					"intervalSeconds": {

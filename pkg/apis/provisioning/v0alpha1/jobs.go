@@ -119,6 +119,17 @@ type JobStatus struct {
 	Summary []JobResourceSummary `json:"summary,omitempty"`
 }
 
+// Convert a JOB to a
+func (in *JobStatus) ToSyncStatus(jobId string) SyncStatus {
+	return SyncStatus{
+		JobID:    jobId,
+		State:    in.State,
+		Started:  in.Started,
+		Finished: in.Finished,
+		Message:  in.Errors,
+	}
+}
+
 type JobResourceSummary struct {
 	Group    string `json:"group,omitempty"`
 	Resource string `json:"resource,omitempty"`

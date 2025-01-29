@@ -731,8 +731,6 @@ export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1S3RepositoryConfig
   region?: string;
 };
 export type ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1RepositorySpec = {
-  /** DeletePolicy options within the repository */
-  deletePolicy: string;
   /** Describe the feature toggle */
   description?: string;
   /** Edit options within the repository */
