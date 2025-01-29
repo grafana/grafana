@@ -14,7 +14,6 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -98,17 +97,9 @@ func (r *exporter) Export(ctx context.Context,
 
 	unprovisionedFolders := make([]unstructured.Unstructured, 0)
 	for _, f := range rawFolders.Items {
-		meta, err := utils.MetaAccessor(f)
-		if err != nil {
-			return nil, fmt.Errorf("create meta accessor for the folder object: %w", err)
-		}
-
-		repoInfo, err := meta.GetRepositoryInfo()
-		if err != nil {
-			return nil, fmt.Errorf("get repository info for folder: %w", err)
-		}
-
-		if repoInfo == nil || repoInfo.Name == repo.Config().GetName() {
+		repoName := f.GetAnnotations()[apiutils.AnnoKeyRepoName]
+		if repoName == repo.Config().GetName() {
+			logger.Info("skip as folder is already in repository", "folder", f.GetName())
 			continue
 		}
 
@@ -164,27 +155,22 @@ func (r *exporter) Export(ctx context.Context,
 		logger := logger.With("item", name)
 		ns := r.repository.Config().GetNamespace()
 		if item.GetNamespace() != ns {
-			logger.Debug("skipping dashboard item due to mismatching namespace", "got", ns)
+			// This case shouldn't happen
+			logger.Error("skipping dashboard item due to mismatching namespace", "got", ns)
 			continue
 		}
-		meta, err := utils.MetaAccessor(item)
-		if err != nil {
-			return nil, fmt.Errorf("create meta accessor for the folder object: %w", err)
-		}
 
-		repoInfo, err := meta.GetRepositoryInfo()
-		if err != nil {
-			return nil, fmt.Errorf("get repository info for folder: %w", err)
-		}
-
-		if repoInfo == nil || repoInfo.Name == repo.Config().GetName() {
+		repoName := item.GetAnnotations()[apiutils.AnnoKeyRepoName]
+		if repoName == repo.Config().GetName() {
+			logger.Info("skip as dashboard is already in repository", "name", name)
 			continue
 		}
 
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 		logger = logger.With("folder", folder)
 
-		fid, ok := folderTree.DirPath(folder, r.repository.Config().GetNamespace())
+		// Get the absolute path of the folder
+		fid, ok := folderTree.DirPath(folder, "")
 		if !ok {
 			logger.Error("folder of item was not in tree of repository")
 			return nil, fmt.Errorf("folder of item was not in tree of repository")
