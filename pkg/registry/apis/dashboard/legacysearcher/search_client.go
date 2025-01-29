@@ -2,6 +2,7 @@ package legacysearcher
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -140,12 +141,19 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			Columns: []*resource.ResourceTableColumnDefinition{
 				searchFields.Field(resource.SEARCH_FIELD_TITLE),
 				searchFields.Field(resource.SEARCH_FIELD_FOLDER),
-				// searchFields.Field(resource.SEARCH_FIELD_TAGS),
+				searchFields.Field(resource.SEARCH_FIELD_TAGS),
 			},
 		},
 	}
 
-	for _, dashboard := range res {
+	hits := formatQueryResult(res)
+
+	for _, dashboard := range hits {
+		tags, err := json.Marshal(dashboard.Tags)
+		if err != nil {
+			return nil, err
+		}
+
 		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
 			Key: &resource.ResourceKey{
 				Namespace: "default",
@@ -153,11 +161,36 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 				Resource:  "dashboards",
 				Name:      dashboard.UID,
 			},
-			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID)}, // TODO add tag
+			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags},
 		})
 	}
 
 	return list, nil
+}
+
+func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards.DashboardSearchProjection {
+	hitList := make([]*dashboards.DashboardSearchProjection, 0)
+	hits := make(map[string]*dashboards.DashboardSearchProjection)
+
+	for _, item := range res {
+		key := fmt.Sprintf("%s-%d", item.UID, item.OrgID)
+		hit, exists := hits[key]
+		if !exists {
+			hit = &dashboards.DashboardSearchProjection{
+				Title:     item.Title,
+				FolderUID: item.FolderUID,
+				Tags:      []string{},
+			}
+			hitList = append(hitList, hit)
+			hits[key] = hit
+		}
+
+		if len(item.Term) > 0 {
+			hit.Tags = append(hit.Tags, item.Term)
+		}
+	}
+
+	return hitList
 }
 
 func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
