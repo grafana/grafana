@@ -71,10 +71,6 @@ const (
 	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
 
-	// FlagDisableAngular
-	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-	FlagDisableAngular = "disableAngular"
-
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"

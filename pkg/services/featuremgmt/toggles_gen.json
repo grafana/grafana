@@ -1269,7 +1269,8 @@
       "metadata": {
         "name": "disableAngular",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-23T15:43:45Z"
+        "creationTimestamp": "2023-03-23T15:43:45Z",
+        "deletionTimestamp": "2025-01-29T08:52:05Z"
       },
       "spec": {
         "description": "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",

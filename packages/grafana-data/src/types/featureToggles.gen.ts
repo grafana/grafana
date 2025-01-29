@@ -34,7 +34,6 @@ export interface FeatureToggles {
   autoMigratePiechartPanel?: boolean;
   autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
-  disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
