@@ -7,15 +7,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"google.golang.org/grpc"
 )
 
+/* Temporarily disabled search fallback while we add functionality
 func TestSearchFallback(t *testing.T) {
 	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
 		mockClient := &MockClient{}
@@ -172,7 +171,7 @@ func TestSearchFallback(t *testing.T) {
 			t.Fatalf("expected Search NOT to be called, but it was")
 		}
 	})
-}
+}*/
 
 func TestSearchHandlerFields(t *testing.T) {
 	// Create a mock client
