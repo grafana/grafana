@@ -1,5 +1,5 @@
 // Libraries
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
@@ -32,6 +32,23 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
 
   console.log('DashboardScenePage');
+
+  const handleFrameTasks = useCallback((event: any) => {
+    console.log('event.data:', event.data);
+    // store.dispatch(
+    //   this.updateLocation({
+    //     query: event.data,
+    //   })
+    // );
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('message', handleFrameTasks, false);
+
+    return() => {
+      window.removeEventListener('message', handleFrameTasks);
+    }
+  }, [])
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
