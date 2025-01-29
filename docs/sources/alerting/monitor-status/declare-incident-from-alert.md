@@ -21,6 +21,8 @@ Declare an incident from a firing alert to streamline your alert to incident wor
 
 ## Before you begin
 
+<!-- TODO: ping Alyssa -->
+
 - Ensure you have [Grafana Incident](/docs/grafana-cloud/incident/) installed.
 - You must have a firing alert.
 
