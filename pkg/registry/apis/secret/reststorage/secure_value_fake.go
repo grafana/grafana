@@ -3,6 +3,7 @@ package reststorage
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -13,14 +14,16 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func NewFakeSecureValueStore() contracts.SecureValueStorage {
+func NewFakeSecureValueStore(latency time.Duration) contracts.SecureValueStorage {
 	return &fakeSecureValueStorage{
-		values: make(map[string]map[string]secretv0alpha1.SecureValue),
+		values:  make(map[string]map[string]secretv0alpha1.SecureValue),
+		latency: latency,
 	}
 }
 
 type fakeSecureValueStorage struct {
-	values map[string]map[string]secretv0alpha1.SecureValue
+	values  map[string]map[string]secretv0alpha1.SecureValue
+	latency time.Duration
 }
 
 func (s *fakeSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
@@ -31,9 +34,11 @@ func (s *fakeSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.
 	ns, ok := s.values[sv.Namespace]
 	if !ok {
 		ns = make(map[string]secretv0alpha1.SecureValue)
+		s.values[sv.Namespace] = ns
 	}
-	ns[sv.Name] = v
-	s.values[sv.Namespace] = ns
+	time.AfterFunc(s.latency, func() {
+		ns[sv.Name] = v
+	})
 
 	return &v, nil
 }
@@ -63,8 +68,10 @@ func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
-	ns[nsv.Name] = v
-	s.values[nsv.Namespace] = ns
+	time.AfterFunc(s.latency, func() {
+		ns[nsv.Name] = v
+	})
+
 	return &v, nil
 }
 
@@ -77,7 +84,9 @@ func (s *fakeSecureValueStorage) Delete(ctx context.Context, nn xkube.NameNamesp
 	if !ok {
 		return contracts.ErrSecureValueNotFound
 	}
-	delete(ns, nn.Name)
+	time.AfterFunc(s.latency, func() {
+		delete(ns, nn.Name)
+	})
 
 	return nil
 }

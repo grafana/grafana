@@ -3,6 +3,7 @@ package reststorage
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
@@ -13,14 +14,16 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func NewFakeKeeperStore() contracts.KeeperStorage {
+func NewFakeKeeperStore(latency time.Duration) contracts.KeeperStorage {
 	return &fakeKeeperStorage{
-		values: make(map[string]map[string]secretv0alpha1.Keeper),
+		values:  make(map[string]map[string]secretv0alpha1.Keeper),
+		latency: latency,
 	}
 }
 
 type fakeKeeperStorage struct {
-	values map[string]map[string]secretv0alpha1.Keeper
+	values  map[string]map[string]secretv0alpha1.Keeper
+	latency time.Duration
 }
 
 func (s *fakeKeeperStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
@@ -30,9 +33,11 @@ func (s *fakeKeeperStorage) Create(ctx context.Context, k *secretv0alpha1.Keeper
 	ns, ok := s.values[k.Namespace]
 	if !ok {
 		ns = make(map[string]secretv0alpha1.Keeper)
+		s.values[k.Namespace] = ns
 	}
-	ns[k.Name] = v
-	s.values[k.Namespace] = ns
+	time.AfterFunc(s.latency, func() {
+		ns[k.Name] = v
+	})
 
 	return &v, nil
 }
@@ -61,8 +66,9 @@ func (s *fakeKeeperStorage) Update(ctx context.Context, nk *secretv0alpha1.Keepe
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
 	}
-	ns[nk.Name] = v
-	s.values[nk.Namespace] = ns
+	time.AfterFunc(s.latency, func() {
+		ns[nk.Name] = v
+	})
 
 	return &v, nil
 }
@@ -76,7 +82,9 @@ func (s *fakeKeeperStorage) Delete(ctx context.Context, nn xkube.NameNamespace) 
 	if !ok {
 		return contracts.ErrSecureValueNotFound
 	}
-	delete(ns, nn.Name)
+	time.AfterFunc(s.latency, func() {
+		delete(ns, nn.Name)
+	})
 
 	return nil
 }

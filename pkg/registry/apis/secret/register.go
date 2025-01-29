@@ -55,8 +55,8 @@ func RegisterAPIService(
 	// TODO: Remove before launch
 	if cfg.SecretsManagement.IsDeveloperMode {
 		fmt.Println("developer mode enabled")
-		secureValueStorage = reststorage.NewFakeSecureValueStore()
-		keeperStorage = reststorage.NewFakeKeeperStore()
+		secureValueStorage = reststorage.NewFakeSecureValueStore(cfg.SecretsManagement.DeveloperStubLatency)
+		keeperStorage = reststorage.NewFakeKeeperStore(cfg.SecretsManagement.DeveloperStubLatency)
 	}
 
 	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
