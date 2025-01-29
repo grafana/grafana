@@ -102,7 +102,7 @@ function simplifySchemaName(schemaName: string) {
   }
 }
 
-const sourceDir = path.resolve(__dirname, '../openapi');
+const sourceDir = path.resolve(__dirname, '../pkg/tests/apis/openapi_snapshots');
 const outputDir = path.resolve(__dirname, '../data/openapi');
 
 // Create the output directory if it doesn't exist
