@@ -253,4 +253,5 @@ export interface FeatureToggles {
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
   datasourceConnectionsTab?: boolean;
+  fetchRulesUsingPost?: boolean;
 }

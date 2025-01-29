@@ -234,3 +234,4 @@ queryLibraryDashboards,experimental,@grafana/grafana-frontend-platform,false,fal
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
+fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
