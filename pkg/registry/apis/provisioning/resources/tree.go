@@ -60,13 +60,24 @@ func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	return fid, ok
 }
 
-func (t *FolderTree) AllFolders() map[string]Folder {
-	return t.folders
-}
-
 func (t *FolderTree) Add(folder Folder, parent string) {
 	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
+}
+
+type WalkFunc func(ctx context.Context, folder Folder) error
+
+func (t *FolderTree) Walk(ctx context.Context, fn WalkFunc) error {
+	// TODO: improve to go from roots first
+	for _, folder := range t.folders {
+		// From root to fill the path
+		folder, _ := t.DirPath(folder.ID, "")
+		if err := fn(ctx, folder); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func NewEmptyFolderTree() *FolderTree {

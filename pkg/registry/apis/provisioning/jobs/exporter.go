@@ -94,33 +94,31 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
 
+	// TODO: skip if folder already belongs to the repository
 	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders)
+	err = folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
+		p := folder.Path + "/"
+		logger := logger.With("path", p)
 
-	// TODO: short by depth
-	for _, folder := range folderTree.AllFolders() {
-		fid, ok := folderTree.DirPath(folder.ID, r.repository.Config().Spec.Folder)
-		if !ok {
-			logger.Error("folder was not in tree of repository", "folder", folder.ID, "tree", folderTree)
-			return nil, fmt.Errorf("folder %s was not in tree of repository", folder.ID)
-		}
-
-		logger := logger.With("path", fid.Path)
-		_, err = r.repository.Read(ctx, fid.Path, ref)
-
+		_, err = r.repository.Read(ctx, p, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			logger.Error("failed to check if folder exists before writing", "error", err)
-			return nil, fmt.Errorf("failed to check if folder exists before writing: %w", err)
+			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
 		} else if err != nil { // ErrFileNotFound
-			err = r.repository.Create(ctx, fid.Path, ref, nil, "export of folder `"+fid.Path+"` in namespace "+ns)
+			err = r.repository.Create(ctx, p, ref, nil, "export of folder `"+p+"` in namespace "+ns)
 		} else {
 			logger.Info("folder already exists")
 		}
 
 		if err != nil {
 			logger.Error("failed to write a folder in repository", "error", err)
-			return nil, fmt.Errorf("failed to write folder in repo: %w", err)
+			return fmt.Errorf("failed to write folder in repo: %w", err)
 		}
 		logger.Debug("successfully exported folder")
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to write folders: %w", err)
 	}
 
 	err = progress(provisioning.JobStatus{
