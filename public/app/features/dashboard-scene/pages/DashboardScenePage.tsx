@@ -2,9 +2,10 @@
 import { useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
+import { debounce, isObjectLike } from 'lodash';
 
 import { PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -12,6 +13,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
+import store from 'app/core/store';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
@@ -33,13 +35,15 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   console.log('DashboardScenePage');
 
-  const handleFrameTasks = useCallback((event: any) => {
-    console.log('event.data:', event.data);
-    // store.dispatch(
-    //   this.updateLocation({
-    //     query: event.data,
-    //   })
-    // );
+  const updateLocation = debounce((query) => locationService.partial(query, true), 300);
+
+  const handleFrameTasks = useCallback(({ data }: any) => {
+    console.log('event.data:', data);
+
+    if (isObjectLike(data) && !!data?.['var-resample']) {
+      console.log('sent!');
+      store.dispatch(updateLocation({ query: data }));
+    }
   }, []);
 
   useEffect(() => {
