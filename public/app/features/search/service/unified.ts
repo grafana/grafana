@@ -4,6 +4,8 @@ import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataF
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { getAPINamespace } from '../../../api/utils';
+
 import {
   DashboardQueryResult,
   GrafanaSearcher,
@@ -18,7 +20,7 @@ import { replaceCurrentFolderQuery } from './utils';
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
+const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders

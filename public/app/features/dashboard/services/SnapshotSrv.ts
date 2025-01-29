@@ -4,6 +4,8 @@ import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
+import { getAPINamespace } from '../../../api/utils';
+
 // Used in the snapshot list
 export interface Snapshot {
   key: string;
@@ -91,7 +93,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   readonly url: string;
 
   constructor() {
-    this.url = `/apis/${this.apiVersion}/namespaces/${config.namespace}/dashboardsnapshots`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${getAPINamespace()}/dashboardsnapshots`;
   }
 
   async create(cmd: SnapshotCreateCommand) {

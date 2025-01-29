@@ -455,6 +455,7 @@
 playwright.config.ts @grafana/plugins-platform-frontend
 
 # public folder
+/public/app/api/ @grafana/grafana-frontend-platform
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
