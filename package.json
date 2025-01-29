@@ -18,8 +18,6 @@
     "e2e:enterprise": "./e2e/start-and-run-suite enterprise",
     "e2e:enterprise:dev": "./e2e/start-and-run-suite enterprise dev",
     "e2e:enterprise:debug": "./e2e/start-and-run-suite enterprise debug",
-    "build-benchmark": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js --env benchmark=1",
-    "e2e:playwright:benchmark": "yarn build-benchmark && ./e2e/plugin-e2e/start-and-benchmark",
     "e2e:playwright": "yarn playwright test",
     "e2e:playwright:server": "yarn e2e:plugin:build && ./e2e/plugin-e2e/start-and-run-suite",
     "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",

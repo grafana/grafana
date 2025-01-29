@@ -8934,9 +8934,9 @@ __metadata:
   linkType: hard
 
 "@types/babel__preset-env@npm:^7":
-  version: 7.9.7
-  resolution: "@types/babel__preset-env@npm:7.9.7"
-  checksum: 10/624425a84d9149aec04795fed6b1ac2f27dfd5d7976fde479bb1a4d754de34c92cdc28a1a373a5826382a68127b536420a0e090aa5fae522cb62724b7a571cb5
+  version: 7.10.0
+  resolution: "@types/babel__preset-env@npm:7.10.0"
+  checksum: 10/7d4d12758d89708afe327079d7d7580e8af3292295f087b8a9a48e12ac1d90aadc18ac3bc00f9b0cbc8778f3ce9fe778801d4d49b7691a75e3f13a901b69fd07
   languageName: node
   linkType: hard
 
@@ -26013,8 +26013,8 @@ __metadata:
   linkType: hard
 
 "react-i18next@npm:^15.0.0":
-  version: 15.2.0
-  resolution: "react-i18next@npm:15.2.0"
+  version: 15.4.0
+  resolution: "react-i18next@npm:15.4.0"
   dependencies:
     "@babel/runtime": "npm:^7.25.0"
     html-parse-stringify: "npm:^3.0.1"
@@ -26026,7 +26026,7 @@ __metadata:
       optional: true
     react-native:
       optional: true
-  checksum: 10/9b2937f7beab763c494d55a801f21bfdbfe98e9509994c350d24fa404ded573f41e8607eeba290c686d5877d34f0ddefe48e9d6876720d5ed0e1243bcdd5dda6
+  checksum: 10/4b3666d819f01cf96a256af4419b26938d314e33c6388eafccc29f67ad02994e5d53e7bf82eac656cade7f7bcd04f4a237f0b293165d7eda91d62e3fde605a38
   languageName: node
   linkType: hard
 
