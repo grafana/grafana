@@ -13,6 +13,7 @@ import { Icon, TextLink, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t, Trans } from 'app/core/internationalization';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../../utils/utils';
@@ -101,7 +102,11 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
       const vizPanel = gridItem.state.body;
       if (vizPanel instanceof VizPanel) {
         const runner = getQueryRunnerFor(vizPanel);
-        return runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
+        return (
+          runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY ||
+          (runner?.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+            runner?.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY))
+        );
       }
 
       return false;

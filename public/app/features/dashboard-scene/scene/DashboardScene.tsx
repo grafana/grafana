@@ -53,7 +53,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { containsCloneKey } from '../utils/clone';
+import { isInCloneChain } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
@@ -623,7 +623,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (containsCloneKey(panel.state.key)) {
+      if (isInCloneChain(panel.state.key)) {
         panelId = djb2Hash(panel?.state.key);
       } else {
         panelId = getPanelIdForVizPanel(panel);

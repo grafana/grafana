@@ -161,8 +161,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
             config.push({
               title: child.state.title,
               isCollapsed: !!child.state.isCollapsed,
-              isDraggable: child.state.isDraggable,
-              isResizable: child.state.isResizable,
+              isDraggable: child.state.isDraggable ?? layout.state.grid.state.isDraggable,
+              isResizable: child.state.isResizable ?? layout.state.grid.state.isResizable,
               children: child.state.children,
               repeat: behaviour?.state.variableName,
             });

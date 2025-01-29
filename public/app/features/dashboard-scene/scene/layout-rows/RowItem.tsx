@@ -20,6 +20,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { isClonedKey } from '../../utils/clone';
 import { getDashboardSceneFor, getDefaultVizPanel, getQueryRunnerFor } from '../../utils/utils';
@@ -281,7 +282,11 @@ export function RowRepeatSelect({ row, dashboard }: { row: RowItem; dashboard: D
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
-    return runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY;
+    return (
+      runner?.state.datasource?.uid === SHARED_DASHBOARD_QUERY ||
+      (runner?.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
+        runner?.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY))
+    );
   });
 
   return (

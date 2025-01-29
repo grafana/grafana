@@ -47,6 +47,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   private selectElement(element: ElementSelectionContextItem, multi?: boolean) {
+    // We should not select clones
     if (isInCloneChain(element.id)) {
       if (multi) {
         return;
