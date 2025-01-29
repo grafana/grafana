@@ -1725,6 +1725,36 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Page = query.Page
 	}
 
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var federate *resource.ResourceKey
+	switch query.Type {
+	case "":
+		// When no type specified, search for dashboards
+		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "dashboards")
+		// Currently a search query is across folders and dashboards
+		if query.Title != "" {
+			federate, err = resource.AsResourceKey(user.GetNamespace(), "folders")
+		}
+	case "dash-db":
+		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "dashboards")
+	case "dash-folder":
+		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "folders")
+	default:
+		err = fmt.Errorf("bad type request")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if federate != nil {
+		request.Federated = []*resource.ResourceKey{federate}
+	}
+
 	// technically, there exists the ability to register multiple ways of sorting using the legacy database
 	// see RegisterSortOption in pkg/services/search/sorting.go
 	// however, it doesn't look like we are taking advantage of that. And since by default the legacy

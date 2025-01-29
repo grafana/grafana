@@ -36,7 +36,6 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 	// TODO add missing support for the following query params:
 	// - folderIds (won't support, must use folderUIDs)
-	// - type (dash-db or dash-folder) this is handled in dosearch
 	// - permission
 	query := &dashboards.FindPersistedDashboardsQuery{
 		Title: req.Query,
@@ -45,6 +44,29 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		// FolderUIDs:   req.FolderUIDs,
 		SignedInUser: user,
 		IsDeleted:    req.IsDeleted,
+	}
+
+	var queryType string
+	if req.Options.Key.Resource == "dashboards" {
+		queryType = "dash-db"
+	} else if req.Options.Key.Resource == "folders" {
+		queryType = "dash-folder"
+	} else {
+		return nil, fmt.Errorf("bad type request")
+	}
+
+	if len(req.Federated) > 1 {
+		return nil, fmt.Errorf("bad type request")
+	}
+
+	for _, fed := range req.Federated {
+		if (fed.Resource == "dashboards" && queryType == "dash-folder") || (fed.Resource == "folders" && queryType == "dash-db") {
+			queryType = "" // makes the legacy store search across both
+		}
+	}
+
+	if queryType != "" {
+		query.Type = queryType
 	}
 
 	// technically, there exists the ability to register multiple ways of sorting using the legacy database
@@ -81,7 +103,18 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			query.DashboardUIDs = field.GetValues()
 			query.DashboardIds = nil
 		case resource.SEARCH_FIELD_FOLDER:
-			query.FolderUIDs = field.GetValues()
+			vals := field.GetValues()
+			folders := make([]string, len(vals))
+
+			for i, val := range vals {
+				if val == "" {
+					folders[i] = "general"
+				} else {
+					folders[i] = val
+				}
+			}
+
+			query.FolderUIDs = folders
 		}
 	}
 

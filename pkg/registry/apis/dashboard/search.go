@@ -424,30 +424,10 @@ func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 
 // Given a namespace and type convert it to a search key
 func asResourceKey(ns string, k string) (*resource.ResourceKey, error) {
-	if ns == "" {
-		return nil, apierrors.NewBadRequest("missing namespace")
+	key, err := resource.AsResourceKey(ns, k)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
-	switch k {
-	case "folders", "folder":
-		return &resource.ResourceKey{
-			Namespace: ns,
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-		}, nil
-	case "dashboards", "dashboard":
-		return &resource.ResourceKey{
-			Namespace: ns,
-			Group:     dashboardv0alpha1.GROUP,
-			Resource:  "dashboards",
-		}, nil
 
-	// NOT really supported in the dashboard search UI, but useful for manual testing
-	case "playlist", "playlists":
-		return &resource.ResourceKey{
-			Namespace: ns,
-			Group:     "playlist.grafana.app",
-			Resource:  "playlists",
-		}, nil
-	}
-	return nil, apierrors.NewBadRequest("unknown resource type")
+	return key, nil
 }
