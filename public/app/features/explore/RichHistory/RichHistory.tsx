@@ -17,7 +17,6 @@ import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { useListQueryTemplateQuery } from '../../query-library';
-import { getK8sNamespace } from '../../query-library/api/query';
 import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
 import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
@@ -99,9 +98,7 @@ export function RichHistory(props: RichHistoryProps) {
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
 
-  const { data } = useListQueryTemplateQuery({
-    namespace: getK8sNamespace(),
-  });
+  const { data } = useListQueryTemplateQuery({});
   const queryTemplatesCount = data?.items?.length ?? 0;
 
   const QueryLibraryTab: TabConfig = {
