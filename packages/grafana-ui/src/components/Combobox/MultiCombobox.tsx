@@ -303,7 +303,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 title={t('multicombobox.clear.title', 'Clear all')}
                 tabIndex={0}
                 role="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   reset();
                 }}
                 onKeyDown={(e) => {
