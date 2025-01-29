@@ -2,10 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
-import {
-  ComGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate,
-  ListQueryTemplateApiResponse,
-} from './endpoints.gen';
+import { ListQueryTemplateApiResponse, QueryTemplate as QT } from './endpoints.gen';
 import { API_VERSION, QueryTemplateKinds } from './query';
 import { CREATED_BY_KEY } from './types';
 
@@ -30,9 +27,7 @@ export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTempla
   });
 };
 
-export const convertAddQueryTemplateCommandToDataQuerySpec = (
-  addQueryTemplateCommand: AddQueryTemplateCommand
-): ComGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate => {
+export const convertAddQueryTemplateCommandToDataQuerySpec = (addQueryTemplateCommand: AddQueryTemplateCommand): QT => {
   const { title, targets } = addQueryTemplateCommand;
   return {
     apiVersion: API_VERSION,

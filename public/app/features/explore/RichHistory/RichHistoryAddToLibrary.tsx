@@ -5,7 +5,6 @@ import { Button, Modal } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { isQueryLibraryEnabled, useListQueryTemplateQuery } from 'app/features/query-library';
 
-import { getK8sNamespace } from '../../query-library/api/query';
 import {
   queryLibraryTrackAddFromQueryHistory,
   queryLibraryTrackAddFromQueryHistoryAddModalShown,
@@ -17,9 +16,7 @@ type Props = {
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
-  const { refetch } = useListQueryTemplateQuery({
-    namespace: getK8sNamespace(),
-  });
+  const { refetch } = useListQueryTemplateQuery({});
   const [isOpen, setIsOpen] = useState(false);
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
 
