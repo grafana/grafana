@@ -209,13 +209,13 @@ message ListOptions {
   ResourceKey key = 1;
 
   // (best effort) Match label
-  // Allowed to send more results than actually match because the filter will be appled
-  // to the resutls agin in the client.  That time with the full field selector
+  // Allowed to send more results than actually match because the filter will be applied
+  // to the results again in the client.  That time with the full field selector
   repeated Requirement labels = 2;
 
   // (best effort) fields matcher
-  // Allowed to send more results than actually match because the filter will be appled
-  // to the resutls agin in the client.  That time with the full field selector
+  // Allowed to send more results than actually match because the filter will be applied
+  // to the results again in the client.  That time with the full field selector
   repeated Requirement fields = 3;
 }
 
