@@ -19,7 +19,7 @@ import {
   Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { getK8sNamespace } from '../../../../../api/utils';
+import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi } from '../../api/onCallApi';
 import { useAsync } from '../../hooks/useAsync';
@@ -114,7 +114,7 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
  * or the `/notifications/receivers` endpoint
  */
 const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
-  const namespace = getK8sNamespace();
+  const namespace = getAPINamespace();
   const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
 
   const grafanaResponse = useGetContactPointsListQuery(undefined, {
@@ -236,7 +236,7 @@ const useGetGrafanaContactPoint = (
   { name }: { name: string },
   queryOptions?: Parameters<typeof useReadNamespacedReceiverQuery>[1]
 ) => {
-  const namespace = getK8sNamespace();
+  const namespace = getAPINamespace();
   const useK8sApi = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
 
   const k8sResponse = useReadNamespacedReceiverQuery(
@@ -311,7 +311,7 @@ export function useDeleteContactPoint({ alertmanager }: BaseAlertmanagerArgs) {
   const [deleteReceiver] = useDeleteNamespacedReceiverMutation();
 
   const deleteFromK8sAPI = useAsync(async ({ name, resourceVersion }: DeleteContactPointArgs) => {
-    const namespace = getK8sNamespace();
+    const namespace = getAPINamespace();
     await deleteReceiver({
       name,
       namespace,
@@ -404,7 +404,7 @@ export const useCreateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
       ? await createOnCallIntegrations(contactPoint)
       : contactPoint;
 
-    const namespace = getK8sNamespace();
+    const namespace = getAPINamespace();
     const contactPointToUse = grafanaContactPointToK8sReceiver(contactPointWithMaybeOnCall);
 
     return createGrafanaContactPoint({
@@ -452,7 +452,7 @@ export const useUpdateContactPoint = ({ alertmanager }: BaseAlertmanagerArgs) =>
         ? await createOnCallIntegrations(contactPoint)
         : contactPoint;
 
-      const namespace = getK8sNamespace();
+      const namespace = getAPINamespace();
       const contactPointToUse = grafanaContactPointToK8sReceiver(receiverWithPotentialOnCall, id, resourceVersion);
 
       return replaceGrafanaContactPoint({

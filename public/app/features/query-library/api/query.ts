@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
-import { getK8sNamespace } from '../../../api/utils';
+import { getAPINamespace } from '../../../api/utils';
 
 /**
  * @alpha
@@ -22,7 +22,7 @@ export enum QueryTemplateKinds {
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/${getK8sNamespace()}`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/${getAPINamespace()}`;
 
 interface QueryLibraryBackendRequest extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
