@@ -691,6 +691,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "Slack endpoint url",
 					PropertyName: "endpointUrl",
 				},
+				{
+					Label:        "Color",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Templated color of the slack message",
+					Placeholder:  alertingTemplates.DefaultMessageColor,
+					PropertyName: "color",
+				},
 				{ // New in 8.0.
 					Label:        "Title",
 					Element:      ElementTypeInput,
