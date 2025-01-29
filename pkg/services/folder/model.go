@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -181,18 +180,12 @@ type GetFoldersQuery struct {
 }
 
 type SearchFoldersQuery struct {
-	OrgID                   int64
-	UIDs                    []string
-	IDs                     []int64
-	Title                   string
-	Type                    string
-	Sort                    model.SortOption
-	SkipAccessControlFilter bool
-	Permission              dashboardaccess.PermissionType
-	Page                    int64
-	Limit                   int64
-	Filters                 []any
-	SignedInUser            identity.Requester `json:"-"`
+	OrgID        int64
+	UIDs         []string
+	IDs          []int64
+	Title        string
+	Limit        int64
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to

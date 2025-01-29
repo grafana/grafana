@@ -2,15 +2,12 @@ package folder
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 type fakeStore struct {
 	ExpectedChildFolders  []*Folder
 	ExpectedParentFolders []*Folder
 	ExpectedFolders       []*Folder
-	ExpectedHitList       model.HitList
 	ExpectedFolder        *Folder
 	ExpectedError         error
 	ExpectedFolderHeight  int

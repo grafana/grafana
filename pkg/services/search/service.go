@@ -121,11 +121,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 			UIDs:         query.FolderUIDs,
 			IDs:          query.FolderIds,
 			Title:        query.Title,
-			Sort:         dashboardQuery.Sort,
-			Type:         query.Type,
 			Limit:        query.Limit,
-			Page:         query.Page,
-			Permission:   query.Permission,
 			SignedInUser: query.SignedInUser,
 		})
 
