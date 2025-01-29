@@ -2,9 +2,7 @@ import { debounce, isEqual } from 'lodash';
 
 import { urlUtil } from '@grafana/data';
 import { SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
-import { dispatch } from 'app/store/store';
 
-import { notifyApp } from '../../../core/reducers/appNotification';
 import { DataTrail } from '../DataTrail';
 import { TrailStepType } from '../DataTrailsHistory';
 import { TRAIL_BOOKMARKS_KEY, RECENT_TRAILS_KEY } from '../shared';
@@ -221,7 +219,7 @@ export class TrailStore {
     this._bookmarks.unshift(bookmarkState);
     this._refreshBookmarkIndexMap();
     this._save();
-    dispatch(notifyApp(createBookmarkSavedNotification()));
+    createBookmarkSavedNotification();
   }
 
   removeBookmark(index: number) {
