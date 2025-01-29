@@ -2,11 +2,15 @@ package reststorage
 
 import (
 	"context"
+	"strconv"
 
+	"github.com/google/uuid"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func NewFakeSecureValueStore() contracts.SecureValueStorage {
@@ -21,6 +25,8 @@ type fakeSecureValueStorage struct {
 
 func (s *fakeSecureValueStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	v := *sv
+	v.SetUID(types.UID(uuid.NewString()))
+	v.ObjectMeta.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 	v.Spec.Value = ""
 	ns, ok := s.values[sv.Namespace]
 	if !ok {
@@ -48,6 +54,7 @@ func (s *fakeSecureValueStorage) Read(ctx context.Context, nn xkube.NameNamespac
 func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	v := *nsv
 	v.Spec.Value = ""
+	v.SetResourceVersion(strconv.FormatInt(metav1.Now().UnixMicro(), 10))
 	ns, ok := s.values[nsv.Namespace]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound
@@ -57,7 +64,7 @@ func (s *fakeSecureValueStorage) Update(ctx context.Context, nsv *secretv0alpha1
 		return nil, contracts.ErrSecureValueNotFound
 	}
 	ns[nsv.Name] = v
-
+	s.values[nsv.Namespace] = ns
 	return &v, nil
 }
 
