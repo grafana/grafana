@@ -232,19 +232,15 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
-	ready, err := am.amClient.IsReadyWithBackoff(ctx)
+	err := am.amClient.IsReadyWithBackoff(ctx)
 	if err != nil {
 		return err
 	}
 
-	if ready {
-		am.log.Debug("Alertmanager readiness check successful")
-		am.metrics.LastReadinessCheck.SetToCurrentTime()
-		am.ready = true
-		return nil
-	}
-
-	return notifier.ErrAlertmanagerNotReady
+	am.log.Debug("Alertmanager readiness check successful")
+	am.metrics.LastReadinessCheck.SetToCurrentTime()
+	am.ready = true
+	return nil
 }
 
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
