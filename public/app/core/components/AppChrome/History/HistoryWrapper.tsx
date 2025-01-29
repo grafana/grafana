@@ -112,7 +112,11 @@ function HistoryEntryAppView({ entry, isSelected, onClick }: ItemProps) {
     })?.time;
   const breadcrumbsToString = (breadcrumbs: NavModelItem[]) => {
     return breadcrumbs
-      .map((breadcrumb, index) => breadcrumb.text + (index !== breadcrumbs.length - 1 ? ' > ' : ''))
+      .map((breadcrumb, index) => {
+        const finalBreadcrumbText =
+          breadcrumb.text.length > 30 ? breadcrumb.text.slice(0, 27) + '...' : breadcrumb.text;
+        return finalBreadcrumbText + (index !== breadcrumbs.length - 1 ? ' > ' : '');
+      })
       .join('');
   };
   return (
