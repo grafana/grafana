@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Alert rules"
-      }
+      },
+      "rulerrule-loading-error": "Failed to load the rule"
     },
     "rule-state": {
       "creating": "Creating",
@@ -891,6 +892,9 @@
       "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
+    },
+    "errors": {
+      "failed-to-load": "Failed to load dashboard"
     },
     "inspect": {
       "data-tab": "Data",
@@ -1811,7 +1815,8 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "more"
+      "more": "more",
+      "see-details": "See log details"
     },
     "log-rows": {
       "disable-popover": {

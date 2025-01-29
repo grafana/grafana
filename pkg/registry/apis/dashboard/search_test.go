@@ -14,6 +14,169 @@ import (
 	"google.golang.org/grpc"
 )
 
+/*
+Search Fallback was returning both Folders and Dashboards which resulted
+in issues with rendering the Folder UI. Also, filters are not implemented
+yet. For those reasons, we will be disabling Search Fallback for now
+func TestSearchFallback(t *testing.T) {
+	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
+		mockClient := &MockClient{}
+		mockLegacyClient := &MockClient{}
+
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
+			},
+		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		if mockClient.LastSearchRequest != nil {
+			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+		if mockLegacyClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+	})
+
+	t.Run("should hit legacy search handler on mode 1", func(t *testing.T) {
+		mockClient := &MockClient{}
+		mockLegacyClient := &MockClient{}
+
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
+			},
+		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		if mockClient.LastSearchRequest != nil {
+			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+		if mockLegacyClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+	})
+
+	t.Run("should hit legacy search handler on mode 2", func(t *testing.T) {
+		mockClient := &MockClient{}
+		mockLegacyClient := &MockClient{}
+
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
+			},
+		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		if mockClient.LastSearchRequest != nil {
+			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+		if mockLegacyClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+	})
+
+	t.Run("should hit unified storage search handler on mode 3", func(t *testing.T) {
+		mockClient := &MockClient{}
+		mockLegacyClient := &MockClient{}
+
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
+			},
+		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		if mockClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+		if mockLegacyClient.LastSearchRequest != nil {
+			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+	})
+
+	t.Run("should hit unified storage search handler on mode 4", func(t *testing.T) {
+		mockClient := &MockClient{}
+		mockLegacyClient := &MockClient{}
+
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
+			},
+		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		if mockClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+		if mockLegacyClient.LastSearchRequest != nil {
+			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+	})
+
+	t.Run("should hit unified storage search handler on mode 5", func(t *testing.T) {
+		mockClient := &MockClient{}
+		mockLegacyClient := &MockClient{}
+
+		cfg := &setting.Cfg{
+			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			},
+		}
+		searchHandler := NewSearchHandler(mockClient, tracing.NewNoopTracerService(), cfg, mockLegacyClient)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+
+		if mockClient.LastSearchRequest == nil {
+			t.Fatalf("expected Search to be called, but it was not")
+		}
+		if mockLegacyClient.LastSearchRequest != nil {
+			t.Fatalf("expected Search NOT to be called, but it was")
+		}
+	})
+}
+*/
+
 func TestSearchHandlerFields(t *testing.T) {
 	// Create a mock client
 	mockClient := &MockClient{}
