@@ -16,11 +16,11 @@ import { QueryActionButton, QueryActionButtonProps } from './types';
 export type QueryLibraryContextType = {
   /**
    * Opens a drawer with query library.
-   * @param datasources Data sources that will be used for initial filter in the library.
+   * @param datasourceFilters Data source names that will be used for initial filter in the library.
    * @param queryActionButton Action button will be shown in the library next to the query and can implement context
    *   specific actions with the library, like running the query or updating some query in the current app.
    */
-  openDrawer: (datasources: string[] | undefined, queryActionButton?: QueryActionButton) => void;
+  openDrawer: (datasourceFilters: string[], queryActionButton: QueryActionButton) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
 
@@ -47,23 +47,20 @@ export function useQueryLibraryContext() {
 
 export function QueryLibraryContextProvider({ children }: PropsWithChildren) {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [activeDatasources, setActiveDatasources] = useState<string[] | undefined>(undefined);
+  const [activeDatasources, setActiveDatasources] = useState<string[]>([]);
   const [isAddQueryModalOpen, setIsAddQueryModalOpen] = useState<boolean>(false);
   const [activeQuery, setActiveQuery] = useState<DataQuery | undefined>(undefined);
   const [queryActionButton, setQueryActionButton] = useState<QueryActionButton | undefined>(undefined);
 
-  const openDrawer = useCallback(
-    (datasources: string[] | undefined, queryActionButton: QueryActionButton | undefined) => {
-      setActiveDatasources(datasources);
-      // Because the queryActionButton can be a function component it would be called as a callback if just passed in.
-      setQueryActionButton(() => queryActionButton);
-      setIsDrawerOpen(true);
-    },
-    []
-  );
+  const openDrawer = useCallback((datasourceFilters: string[], queryActionButton: QueryActionButton) => {
+    setActiveDatasources(datasourceFilters);
+    // Because the queryActionButton can be a function component it would be called as a callback if just passed in.
+    setQueryActionButton(() => queryActionButton);
+    setIsDrawerOpen(true);
+  }, []);
 
   const closeDrawer = useCallback(() => {
-    setActiveDatasources(undefined);
+    setActiveDatasources([]);
     setQueryActionButton(undefined);
     setIsDrawerOpen(false);
   }, []);

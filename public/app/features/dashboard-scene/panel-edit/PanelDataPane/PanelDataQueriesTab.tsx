@@ -1,5 +1,3 @@
-import { t } from 'i18next';
-
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -15,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -365,7 +364,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQuery}
               >
-                {t('dashboards.panel-queries.add-query-from-library', 'from library')}
+                <Trans i18nKey={'dashboards.panel-queries.add-query-from-library'}>from library</Trans>
               </Button>
             )}
           </>

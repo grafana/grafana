@@ -43,9 +43,7 @@ export function QueryLibraryDrawer({ isOpen, activeDatasources, close, queryActi
       <ExploreDrawer initialHeight={'75vh'}>
         <TabbedContainer
           tabs={tabs}
-          onClose={() => {
-            close();
-          }}
+          onClose={close}
           defaultTab={'Query library'}
           closeIconTooltip={t('explore.rich-history.close-tooltip', 'Close query history')}
           testId={selectors.pages.Explore.QueryHistory.container}
