@@ -39,13 +39,13 @@ import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/da
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
-  AnnoKeyDashboardId,
   AnnoKeyDashboardIsSnapshot,
   AnnoKeyDashboardSnapshotOriginalUrl,
   AnnoKeyFolder,
   AnnoKeySlug,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
+  DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
@@ -91,6 +91,7 @@ export function ensureV2Response(
 
   let accessMeta: DashboardWithAccessInfo<DashboardV2Spec>['access'];
   let annotationsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['annotations'];
+  let labelsMeta: DashboardWithAccessInfo<DashboardV2Spec>['metadata']['labels'];
   let creationTimestamp;
 
   if (isDashboardResource(dto)) {
@@ -101,11 +102,13 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
       [AnnoKeyFolder]: dto.metadata.annotations?.[AnnoKeyFolder],
       [AnnoKeySlug]: dto.metadata.annotations?.[AnnoKeySlug],
-      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
       [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
       [AnnoKeyDashboardIsSnapshot]: dto.metadata.annotations?.[AnnoKeyDashboardIsSnapshot],
     };
     creationTimestamp = dto.metadata.creationTimestamp;
+    labelsMeta = {
+      [DeprecatedInternalId]: dto.metadata.labels?.[DeprecatedInternalId],
+    };
   } else {
     accessMeta = {
       url: dto.meta.url,
@@ -124,11 +127,13 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
       [AnnoKeyFolder]: dto.meta.folderUid,
       [AnnoKeySlug]: dto.meta.slug,
-      [AnnoKeyDashboardId]: dashboard.id ?? undefined,
       [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
       [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
     creationTimestamp = dto.meta.created;
+    labelsMeta = {
+      [DeprecatedInternalId]: dashboard.id ?? undefined,
+    };
   }
 
   if (annotationsMeta?.[AnnoKeyDashboardIsSnapshot]) {
@@ -171,6 +176,7 @@ export function ensureV2Response(
       name: dashboard.uid,
       resourceVersion: dashboard.version?.toString() || '0',
       annotations: annotationsMeta,
+      labels: labelsMeta,
     },
     spec,
     access: accessMeta,

@@ -1,7 +1,6 @@
 import { DashboardV2Spec } from './types.gen';
 
 export const handyTestingSchema: DashboardV2Spec = {
-  id: 1,
   title: 'Default Dashboard',
   description: 'This is a default dashboard',
   cursorSync: 'Off',

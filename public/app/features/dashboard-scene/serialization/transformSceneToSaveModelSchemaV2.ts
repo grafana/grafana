@@ -76,7 +76,6 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
-    id: oldDash.id ? oldDash.id : undefined,
     title: oldDash.title,
     description: oldDash.description ?? '',
     cursorSync: getCursorSync(oldDash),
