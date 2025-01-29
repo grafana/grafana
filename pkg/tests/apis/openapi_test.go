@@ -63,7 +63,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 
 	dir := "openapi_snapshots"
 
-	for _, gv := range []schema.GroupVersion{{
+	var groups = []schema.GroupVersion{{
 		Group:   "dashboard.grafana.app",
 		Version: "v0alpha1",
 	}, {
@@ -75,7 +75,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "provisioning.grafana.app",
 		Version: "v0alpha1",
-	}} {
+	}}
+	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)
 	}
 }

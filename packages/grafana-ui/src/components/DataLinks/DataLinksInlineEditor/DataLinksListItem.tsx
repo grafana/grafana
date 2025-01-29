@@ -4,12 +4,10 @@ import { Draggable } from '@hello-pangea/dnd';
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { isCompactUrl } from '../../../utils';
 import { t } from '../../../utils/i18n';
 import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
-import { Tooltip } from '../../Tooltip/Tooltip';
 
 export interface DataLinksListItemProps {
   index: number;
@@ -29,8 +27,6 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
 
-  const isCompactExploreUrl = isCompactUrl(url);
-
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
       {(provided) => (
@@ -41,17 +37,12 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
           key={index}
         >
           <div className={styles.linkDetails}>
-            <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured)}>
               {hasTitle ? title : 'Data link title not provided'}
             </div>
-            <Tooltip content={'Explore data link may not work in the future. Please edit.'} show={isCompactExploreUrl}>
-              <div
-                className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
-                title={url}
-              >
-                {hasUrl ? url : 'Data link url not provided'}
-              </div>
-            </Tooltip>
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
+              {hasUrl ? url : 'Data link url not provided'}
+            </div>
           </div>
           <div className={styles.icons}>
             {oneClick && (
@@ -90,10 +81,6 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
       maxWidth: `calc(100% - 100px)`,
-    }),
-    errored: css({
-      color: theme.colors.error.text,
-      fontStyle: 'italic',
     }),
     notConfigured: css({
       fontStyle: 'italic',
