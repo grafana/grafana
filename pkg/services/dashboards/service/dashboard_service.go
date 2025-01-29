@@ -1739,9 +1739,9 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		if query.Title != "" {
 			federate, err = resource.AsResourceKey(user.GetNamespace(), "folders")
 		}
-	case "dash-db":
+	case "dash-db", "dash-annotation":
 		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "dashboards")
-	case "dash-folder":
+	case "dash-folder", "dash-folder-alerting":
 		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "folders")
 	default:
 		err = fmt.Errorf("bad type request")
