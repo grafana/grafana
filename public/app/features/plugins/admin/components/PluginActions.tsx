@@ -23,7 +23,7 @@ export const PluginActions = ({ plugin }: Props) => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
 
-  if (!plugin) {
+  if (!plugin || plugin.angularDetected) {
     return null;
   }
 
@@ -43,11 +43,7 @@ export const PluginActions = ({ plugin }: Props) => {
         {!isInstallControlsDisabled && (
           <>
             {isExternallyManaged && !hasInstallWarning && !configCore.featureToggles.managedPluginsInstall ? (
-              <ExternallyManagedButton
-                pluginId={plugin.id}
-                pluginStatus={pluginStatus}
-                angularDetected={plugin.angularDetected}
-              />
+              <ExternallyManagedButton pluginId={plugin.id} pluginStatus={pluginStatus} />
             ) : (
               <InstallControlsButton
                 plugin={plugin}

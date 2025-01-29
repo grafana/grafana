@@ -58,6 +58,7 @@ export function InstallControlsButton({
     creator_team: 'grafana_plugins_catalog',
     schema_version: '1.0.0',
   };
+  const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
 
   useEffect(() => {
     return () => {
@@ -172,7 +173,6 @@ export function InstallControlsButton({
       </Stack>
     );
   }
-  const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
       {isInstalling ? 'Installing' : 'Install'}
