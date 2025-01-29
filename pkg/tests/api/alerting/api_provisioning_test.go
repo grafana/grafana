@@ -903,6 +903,9 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 			require.Len(t, export.MuteTimings, 1)
 			require.YAMLEq(t, expectedYaml, exportRaw)
 		})
+		t.Run("reloading provisioning should not fail", func(t *testing.T) {
+			apiClient.ReloadAlertingFileProvisioning(t)
+		})
 	})
 }
 
@@ -1000,6 +1003,17 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 
 		t.Run("exported contact points should escape $ characters", func(t *testing.T) {
 			// call export endpoint
+			exportRaw := apiClient.ExportReceiver(t, "cp_1_$escaped", "yaml", true)
+			var export definitions.AlertingFileExport
+			require.NoError(t, yaml.Unmarshal([]byte(exportRaw), &export))
+
+			// verify the file exported matches the file provisioned thing
+			require.Len(t, export.ContactPoints, 1)
+			require.YAMLEq(t, string(expectedYaml), exportRaw)
+		})
+		t.Run("reloading provisioning should not change things", func(t *testing.T) {
+			apiClient.ReloadAlertingFileProvisioning(t)
+
 			exportRaw := apiClient.ExportReceiver(t, "cp_1_$escaped", "yaml", true)
 			var export definitions.AlertingFileExport
 			require.NoError(t, yaml.Unmarshal([]byte(exportRaw), &export))
