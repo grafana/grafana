@@ -1329,7 +1329,9 @@ func TestDeleteAllDashboards(t *testing.T) {
 func TestSearchDashboards(t *testing.T) {
 	fakeStore := dashboards.FakeDashboardStore{}
 	fakeFolders := foldertest.NewFakeService()
-	fakeFolders.ExpectedFolder = &folder.Folder{}
+	fakeFolders.ExpectedFolder = &folder.Folder{
+		Title: "testing-folder-1",
+	}
 	defer fakeStore.AssertExpectations(t)
 	service := &DashboardServiceImpl{
 		cfg:            setting.NewCfg(),
@@ -1349,15 +1351,17 @@ func TestSearchDashboards(t *testing.T) {
 				"tag1",
 				"tag2",
 			},
+			FolderTitle: "testing-folder-1",
 		},
 		{
-			UID:   "uid2",
-			OrgID: 1,
-			Title: "Dashboard 2",
-			Type:  "dash-db",
-			URI:   "db/dashboard-2",
-			URL:   "/d/uid2/dashboard-2",
-			Tags:  []string{},
+			UID:         "uid2",
+			OrgID:       1,
+			Title:       "Dashboard 2",
+			Type:        "dash-db",
+			URI:         "db/dashboard-2",
+			URL:         "/d/uid2/dashboard-2",
+			Tags:        []string{},
+			FolderTitle: "testing-folder-1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
@@ -1367,17 +1371,19 @@ func TestSearchDashboards(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
 		fakeStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{
 			{
-				UID:   "uid1",
-				Slug:  "dashboard-1",
-				OrgID: 1,
-				Title: "Dashboard 1",
-				Tags:  []string{"tag1", "tag2"},
+				UID:         "uid1",
+				Slug:        "dashboard-1",
+				OrgID:       1,
+				Title:       "Dashboard 1",
+				Tags:        []string{"tag1", "tag2"},
+				FolderTitle: "testing-folder-1",
 			},
 			{
-				UID:   "uid2",
-				Slug:  "dashboard-2",
-				OrgID: 1,
-				Title: "Dashboard 2",
+				UID:         "uid2",
+				Slug:        "dashboard-2",
+				OrgID:       1,
+				Title:       "Dashboard 2",
+				FolderTitle: "testing-folder-1",
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
