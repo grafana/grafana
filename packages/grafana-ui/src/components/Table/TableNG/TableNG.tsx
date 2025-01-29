@@ -137,6 +137,9 @@ export function TableNG(props: TableNGProps) {
   }, [isContextMenuOpen]);
 
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
+  // TODO: this ref using to persist sortColumns between renders;
+  // setSortColumns is still used to trigger re-render
+  const sortColumnsRef = useRef(sortColumns);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
 
   function getDefaultRowHeight(): number {
@@ -245,7 +248,7 @@ export function TableNG(props: TableNGProps) {
     return records;
   }, []);
   const calcsRef = useRef<string[]>([]);
-  const mapFrameToDataGrid = (main: DataFrame, subTable?: boolean) => {
+  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
     const columns: TableColumn[] = [];
 
     // Check for nestedFrames
@@ -295,7 +298,7 @@ export function TableNG(props: TableNGProps) {
           // If it's a child, render entire DataGrid at first column position
           let expandedColumns: TableColumn[] = [];
           let expandedRecords: Array<Record<string, string>> = [];
-          expandedColumns = mapFrameToDataGrid(row.data, true);
+          expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
           expandedRecords = frameToRecords(row.data);
           return <DataGrid rows={expandedRecords} columns={expandedColumns} rowHeight={defaultRowHeight} />;
         },
@@ -453,7 +456,7 @@ export function TableNG(props: TableNGProps) {
     });
   }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const columns = useMemo(() => mapFrameToDataGrid(props.data), [props.data, calcsRef, expandedRows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef, filter, expandedRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
