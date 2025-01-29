@@ -750,6 +750,7 @@ describe('ResponseTransformers', () => {
         name: 'Library Panel',
       });
       expect(dashboard.panels![2].type).toBe('row');
+      expect(dashboard.panels![2].id).toBe(4); // Row id should be assigned to unique number following the highest id of panels.
       expect(dashboard.panels![3].type).toBe('timeseries');
     });
 

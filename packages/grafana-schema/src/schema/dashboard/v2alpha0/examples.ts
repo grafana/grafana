@@ -285,7 +285,6 @@ export const handyTestingSchema: DashboardV2Spec = {
         {
           kind: 'GridLayoutRow',
           spec: {
-            id: 4,
             y: 20,
             collapsed: false,
             title: 'Row 1',

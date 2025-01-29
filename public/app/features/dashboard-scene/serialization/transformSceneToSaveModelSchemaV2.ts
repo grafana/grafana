@@ -270,7 +270,6 @@ function gridRowToLayoutRowKind(row: SceneGridRow, isSnapshot = false): GridLayo
   return {
     kind: 'GridLayoutRow',
     spec: {
-      id: getPanelIdForVizPanel(row),
       title: row.state.title,
       y: row.state.y ?? 0,
       collapsed: Boolean(row.state.isCollapsed),

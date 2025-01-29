@@ -752,8 +752,6 @@ export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
 });
 
 export interface GridLayoutRowSpec {
-	// This is only needed in order to cleanly transform between V2 and V1
-	id: number;
 	y: number;
 	collapsed: boolean;
 	title: string;
@@ -762,7 +760,6 @@ export interface GridLayoutRowSpec {
 }
 
 export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
-	id: 0,
 	y: 0,
 	collapsed: false,
 	title: "",

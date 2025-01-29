@@ -332,7 +332,6 @@ function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): GridLayoutRo
   return {
     kind: 'GridLayoutRow',
     spec: {
-      id: p.id,
       collapsed: p.collapsed,
       title: p.title ?? '',
       repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
@@ -847,14 +846,19 @@ function getPanelsV1(
 ): Array<Panel | LibraryPanelDTO> {
   const panelsV1: Array<Panel | LibraryPanelDTO | RowPanel> = [];
 
+  let maxPanelId = 0;
+
   for (const item of layout.spec.items) {
     if (item.kind === 'GridLayoutItem') {
       const panel = panels[item.spec.element.name];
       const v1Panel = transformV2PanelToV1Panel(panel, item);
       panelsV1.push(v1Panel);
+      if (v1Panel.id ?? 0 > maxPanelId) {
+        maxPanelId = v1Panel.id ?? 0;
+      }
     } else if (item.kind === 'GridLayoutRow') {
       const row: RowPanel = {
-        id: item.spec.id,
+        id: -1, // Temporarily set to -1, updated later to be unique
         type: 'row',
         title: item.spec.title,
         collapsed: item.spec.collapsed,
@@ -873,6 +877,9 @@ function getPanelsV1(
         const panelElement = panels[panel.spec.element.name];
         const v1Panel = transformV2PanelToV1Panel(panelElement, panel, item.spec.y + GRID_ROW_HEIGHT + panel.spec.y);
         rowPanels.push(v1Panel);
+        if (v1Panel.id ?? 0 > maxPanelId) {
+          maxPanelId = v1Panel.id ?? 0;
+        }
       }
       if (item.spec.collapsed) {
         // When a row is collapsed, panels inside it are stored in the panels property.
@@ -882,6 +889,13 @@ function getPanelsV1(
         panelsV1.push(row);
         panelsV1.push(...rowPanels);
       }
+    }
+  }
+
+  // Update row panel ids to be unique
+  for (const panel of panelsV1) {
+    if (panel.type === 'row' && panel.id === -1) {
+      panel.id = ++maxPanelId;
     }
   }
   return panelsV1;

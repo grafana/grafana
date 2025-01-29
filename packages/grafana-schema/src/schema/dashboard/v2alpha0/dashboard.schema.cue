@@ -512,7 +512,6 @@ GridLayoutRowKind: {
 }
 
 GridLayoutRowSpec: {
-  id: int // This is only needed in order to cleanly transform between V2 and V1
   y: int
   collapsed: bool
   title: string
