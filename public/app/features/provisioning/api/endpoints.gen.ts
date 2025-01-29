@@ -328,7 +328,16 @@ export type CreateRepositoryExportArg = {
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
-  body: any;
+  body: {
+    /** Target branch for export */
+    branch?: string;
+    /** The source folder (or empty) to export */
+    folder?: string;
+    /** Preserve history (if possible) */
+    history?: boolean;
+    /** File prefix */
+    prefix?: string;
+  };
 };
 export type GetRepositoryFilesResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -468,7 +477,10 @@ export type CreateRepositorySyncArg = {
   name: string;
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
-  body: any;
+  body: {
+    /** Complete forces the sync to overwrite */
+    complete?: boolean;
+  };
 };
 export type CreateRepositoryTestResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisProvisioningV0Alpha1TestResults;

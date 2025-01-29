@@ -1248,7 +1248,27 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {},
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "description": "Target branch for export",
+                    "type": "string"
+                  },
+                  "folder": {
+                    "description": "The source folder (or empty) to export",
+                    "type": "string"
+                  },
+                  "history": {
+                    "description": "Preserve history (if possible)",
+                    "type": "boolean"
+                  },
+                  "prefix": {
+                    "description": "File prefix",
+                    "type": "string"
+                  }
+                }
+              },
               "example": {
                 "folder": "grafan-folder-ref",
                 "history": true,
@@ -2216,7 +2236,15 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {},
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "complete": {
+                    "description": "Complete forces the sync to overwrite",
+                    "type": "boolean"
+                  }
+                }
+              },
               "example": {
                 "complete": true
               }

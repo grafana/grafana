@@ -281,7 +281,12 @@ export type DeleteRepositoryArg = {
 export type CreateRepositoryExportResponse = Job;
 export type CreateRepositoryExportArg = {
   name: string;
-  body: any;
+  body: {
+    branch?: string;
+    folder?: string;
+    history?: boolean;
+    prefix?: string;
+  };
 };
 export type GetRepositoryFilesResponse = {
   apiVersion?: string;
@@ -358,7 +363,9 @@ export type ReplaceRepositoryStatusArg = {
 export type CreateRepositorySyncResponse = Job;
 export type CreateRepositorySyncArg = {
   name: string;
-  body: any;
+  body: {
+    complete?: boolean;
+  };
 };
 export type CreateRepositoryTestResponse = TestResults;
 export type CreateRepositoryTestArg = {
