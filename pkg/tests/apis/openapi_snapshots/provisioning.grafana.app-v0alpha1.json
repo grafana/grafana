@@ -3626,7 +3626,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
         "type": "object",
         "properties": {
           "branch": {
@@ -3853,7 +3853,7 @@
             "description": "Required when the action is `export`",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions"
               }
             ]
           },
@@ -3861,7 +3861,7 @@
             "description": "Pull request options",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions"
               }
             ]
           },
@@ -3874,7 +3874,7 @@
             "description": "Required when the action is `sync`",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions"
               }
             ]
           }
@@ -3969,7 +3969,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.PullRequestJobOptions": {
         "type": "object",
         "properties": {
           "hash": {
@@ -4089,11 +4089,12 @@
         "required": [
           "title",
           "editing",
+          "sync",
           "type"
         ],
         "properties": {
           "description": {
-            "description": "Describe the feature toggle",
+            "description": "Repository description",
             "type": "string"
           },
           "editing": {
@@ -4105,12 +4106,8 @@
               }
             ]
           },
-          "folder": {
-            "description": "The folder that is backed by the repository. The value is a reference to the Kubernetes metadata name of the folder in the same namespace.",
-            "type": "string"
-          },
           "github": {
-            "description": "The repository on GitHub. Mutually exclusive with local and s3.",
+            "description": "The repository on GitHub. Mutually exclusive with local | s3 | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig"
@@ -4118,7 +4115,7 @@
             ]
           },
           "local": {
-            "description": "The repository on the local file system. Mutually exclusive with s3 and github.",
+            "description": "The repository on the local file system. Mutually exclusive with local | s3 | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LocalRepositoryConfig"
@@ -4126,15 +4123,24 @@
             ]
           },
           "s3": {
-            "description": "The repository in an S3 bucket. Mutually exclusive with local and github.",
+            "description": "The repository in an S3 bucket. Mutually exclusive with local | s3 | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.S3RepositoryConfig"
               }
             ]
           },
+          "sync": {
+            "description": "Sync settings -- how values are pulled from the repository into grafana",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions"
+              }
+            ]
+          },
           "title": {
-            "description": "Describe the feature toggle",
+            "description": "The repository display name (shown in the UI)",
             "type": "string",
             "default": ""
           },
@@ -4486,12 +4492,40 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions": {
         "type": "object",
         "properties": {
           "complete": {
             "description": "Complete forces the sync to overwrite",
             "type": "boolean"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "target"
+        ],
+        "properties": {
+          "enabled": {
+            "description": "Enabled must be saved as true before any sync job will run",
+            "type": "boolean",
+            "default": false
+          },
+          "intervalSeconds": {
+            "description": "When non-zero, the sync will run periodically",
+            "type": "integer",
+            "format": "int64"
+          },
+          "target": {
+            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository\n - `\"root\"` Resources should be saved into the root grafana directory currently, only one repository may specify `root` target",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "folder",
+              "root"
+            ]
           }
         }
       },
@@ -4505,6 +4539,10 @@
             "description": "When the sync job finished",
             "type": "integer",
             "format": "int64"
+          },
+          "folder": {
+            "description": "The target folder ID (or empty when root)",
+            "type": "string"
           },
           "hash": {
             "description": "The repository hash when the last sync ran",

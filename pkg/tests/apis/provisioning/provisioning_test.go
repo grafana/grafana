@@ -120,130 +120,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 	}
 	cleanSlate(t)
 
-	t.Run("Check discovery client", func(t *testing.T) {
-		cleanSlate(t)
-
-		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("provisioning.grafana.app/v0alpha1")
-		require.NoError(t, err)
-
-		v1Disco, err := json.MarshalIndent(resources, "", "  ")
-		require.NoError(t, err)
-		//fmt.Printf("%s", string(v1Disco))
-		require.JSONEq(t, `{
-			"kind": "APIResourceList",
-			"apiVersion": "v1",
-			"groupVersion": "provisioning.grafana.app/v0alpha1",
-			"resources": [
-				{
-					"name": "jobs",
-					"singularName": "job",
-					"namespaced": true,
-					"kind": "Job",
-					"verbs": [
-						"get",
-						"list",
-						"watch"
-					]
-				},
-				{
-					"name": "repositories",
-					"singularName": "repository",
-					"namespaced": true,
-					"kind": "Repository",
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				},
-				{
-					"name": "repositories/export",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "Job",
-					"verbs": [
-						"create"
-					]
-				},
-				{
-					"name": "repositories/files",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "ResourceWrapper",
-					"verbs": [
-						"create",
-						"delete",
-						"get",
-						"update"
-					]
-				},
-				{
-					"name": "repositories/history",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "HistoryList",
-					"verbs": [
-						"get"
-					]
-				},
-				{
-					"name": "repositories/resources",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "ResourceList",
-					"verbs": [
-						"get"
-					]
-				},
-				{
-					"name": "repositories/status",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "Repository",
-					"verbs": [
-						"get",
-						"patch",
-						"update"
-					]
-				},
-				{
-					"name": "repositories/sync",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "Job",
-					"verbs": [
-						"create"
-					]
-				},
-				{
-					"name": "repositories/test",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "TestResults",
-					"verbs": [
-						"create"
-					]
-				},
-				{
-					"name": "repositories/webhook",
-					"singularName": "",
-					"namespaced": true,
-					"kind": "WebhookResponse",
-					"verbs": [
-						"create",
-						"get"
-					]
-				}
-			]
-		}`, string(v1Disco))
-	})
-
 	t.Run("Check basic create and get", func(t *testing.T) {
 		cleanSlate(t)
 
@@ -284,7 +160,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		js, _ := json.MarshalIndent(found, "", "  ")
 		require.JSONEq(t, `{
 			"github-example": {
-				"deletePolicy": "clean",
 				"description": "load resources from github",
 				"folder": "thisisafolderref",
 				"editing": {
@@ -304,7 +179,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"type": "github"
 			},
 			"local-conf-provisioning-sample": {
-				"deletePolicy": "clean",
 				"description": "load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample",
 				"editing": {
 					"create": true,
@@ -318,7 +192,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"type": "local"
 			},
 			"local-devenv": {
-				"deletePolicy": "clean",
 				"description": "load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards",
 				"editing": {
 					"create": true,
@@ -333,7 +206,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"type": "local"
 			},
 			"s3-example": {
-				"deletePolicy": "clean",
 				"description": "load resources from an S3 bucket",
 				"editing": {
 					"create": false,

@@ -433,27 +433,27 @@ export type ObjectMeta = {
   selfLink?: string;
   uid?: string;
 };
-export type ExportOptions = {
+export type ExportJobOptions = {
   branch?: string;
   folder?: string;
   history?: boolean;
   prefix?: string;
 };
-export type PullRequestOptions = {
+export type PullRequestJobOptions = {
   hash?: string;
   pr?: number;
   ref?: string;
   url?: string;
 };
-export type SyncOptions = {
+export type SyncJobOptions = {
   complete?: boolean;
 };
 export type JobSpec = {
   action: 'export' | 'pr' | 'sync';
-  export?: ExportOptions;
-  pr?: PullRequestOptions;
+  export?: ExportJobOptions;
+  pr?: PullRequestJobOptions;
   repository: string;
-  sync?: SyncOptions;
+  sync?: SyncJobOptions;
 };
 export type JobResourceSummary = {
   create?: number;

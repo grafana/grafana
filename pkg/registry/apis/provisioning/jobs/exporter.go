@@ -9,11 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -29,6 +31,7 @@ type Exporter interface {
 
 type exporter struct {
 	client     *resources.DynamicClient
+	dashboards dynamic.ResourceInterface
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
 }
@@ -39,13 +42,21 @@ func NewExporter(
 ) (Exporter, error) {
 	dynamicClient := parser.Client()
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
+		Group:    folders.GROUP,
+		Version:  folders.VERSION,
+		Resource: folders.RESOURCE,
 	})
+
+	dashboards := dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    "dashboard.grafana.app",
+		Version:  "v1alpha1",
+		Resource: "dashboards",
+	})
+
 	return &exporter{
 		client:     dynamicClient,
 		folders:    folders,
+		dashboards: dashboards,
 		repository: repo,
 	}, nil
 }
@@ -56,12 +67,6 @@ func (r *exporter) Export(ctx context.Context,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx)
-	dashboardIface := r.client.Resource(schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v2alpha1",
-		Resource: "dashboards",
-	})
-
 	err := progress(provisioning.JobStatus{
 		State:   provisioning.JobStateWorking,
 		Message: "getting folder tree...",
@@ -69,10 +74,62 @@ func (r *exporter) Export(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	var ref string
+	if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
+		ref = r.repository.Config().Spec.GitHub.Branch
+	}
+	ns := r.repository.Config().GetNamespace()
+	logger = logger.With("ref", ref, "namespace", ns)
 
-	folders, err := resources.FetchRepoFolderTree(ctx, r.client)
+	err = progress(provisioning.JobStatus{
+		State:   provisioning.JobStateWorking,
+		Message: "exporting folders...",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: handle pagination
+	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
+	}
+
+	unprovisionedFolders := make([]unstructured.Unstructured, 0, len(rawFolders.Items))
+	for _, f := range rawFolders.Items {
+		repoName := f.GetAnnotations()[apiutils.AnnoKeyRepoName]
+		if repoName == repo.Config().GetName() {
+			logger.Info("skip as folder is already in repository", "folder", f.GetName())
+			continue
+		}
+
+		unprovisionedFolders = append(unprovisionedFolders, f)
+	}
+
+	folderTree := resources.NewFolderTreeFromUnstructure(ctx, unprovisionedFolders)
+	err = folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
+		p := folder.Path + "/"
+		logger := logger.With("path", p)
+
+		_, err = r.repository.Read(ctx, p, ref)
+		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			logger.Error("failed to check if folder exists before writing", "error", err)
+			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
+		} else if err == nil {
+			logger.Info("folder already exists")
+			return nil
+		}
+
+		// ErrFileNotFound
+		if err := r.repository.Create(ctx, p, ref, nil, "export of folder `"+p+"` in namespace "+ns); err != nil {
+			logger.Error("failed to write a folder in repository", "error", err)
+			return fmt.Errorf("failed to write folder in repo: %w", err)
+		}
+		logger.Debug("successfully exported folder")
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to write folders: %w", err)
 	}
 
 	err = progress(provisioning.JobStatus{
@@ -83,7 +140,7 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, err
 	}
 	// TODO: handle pagination
-	dashboardList, err := dashboardIface.List(ctx, metav1.ListOptions{Limit: 1000})
+	dashboardList, err := r.dashboards.List(ctx, metav1.ListOptions{Limit: 1000})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list dashboards: %w", err)
 	}
@@ -98,16 +155,25 @@ func (r *exporter) Export(ctx context.Context,
 		logger := logger.With("item", name)
 		ns := r.repository.Config().GetNamespace()
 		if item.GetNamespace() != ns {
-			logger.Debug("skipping dashboard item due to mismatching namespace", "got", ns)
+			// This case shouldn't happen
+			logger.Error("skipping dashboard item due to mismatching namespace", "got", ns)
+			continue
+		}
+
+		repoName := item.GetAnnotations()[apiutils.AnnoKeyRepoName]
+		if repoName == repo.Config().GetName() {
+			logger.Info("skip as dashboard is already in repository", "name", name)
 			continue
 		}
 
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 		logger = logger.With("folder", folder)
-		fid, ok := folders.DirPath(folder, "") // r.repository.Config().Spec.Folder)
+
+		// Get the absolute path of the folder
+		fid, ok := folderTree.DirPath(folder, "")
 		if !ok {
-			logger.Debug("folder of item was not in tree of repository")
-			continue
+			logger.Error("folder of item was not in tree of repository")
+			return nil, fmt.Errorf("folder of item was not in tree of repository")
 		}
 
 		delete(item.Object, "metadata")
@@ -117,12 +183,6 @@ func (r *exporter) Export(ctx context.Context,
 		}
 		fileName := path.Join(fid.Path, name+".yaml")
 		logger = logger.With("file", fileName)
-
-		var ref string
-		if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
-			ref = r.repository.Config().Spec.GitHub.Branch
-		}
-		logger = logger.With("ref", ref)
 
 		_, err = r.repository.Read(ctx, fileName, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {

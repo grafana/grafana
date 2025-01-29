@@ -3,11 +3,13 @@ package resources
 import (
 	"context"
 	"path"
+	"sort"
+	"strings"
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
@@ -60,22 +62,46 @@ func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	return fid, ok
 }
 
-func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTree, error) {
-	iface := client.Resource(schema.GroupVersionResource{
-		Group:    "folder.grafana.app",
-		Version:  "v0alpha1",
-		Resource: "folders",
-	})
+func (t *FolderTree) Add(folder Folder, parent string) {
+	t.tree[folder.ID] = parent
+	t.folders[folder.ID] = folder
+}
 
-	// TODO: handle pagination
-	rawFolders, err := iface.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
+type WalkFunc func(ctx context.Context, folder Folder) error
+
+func (t *FolderTree) Walk(ctx context.Context, fn WalkFunc) error {
+	toWalk := make([]Folder, 0, len(t.folders))
+	for _, folder := range t.folders {
+		folder, _ := t.DirPath(folder.ID, "")
+		toWalk = append(toWalk, folder)
 	}
 
-	tree := make(map[string]string, len(rawFolders.Items))
-	folders := make(map[string]Folder, len(rawFolders.Items))
-	for _, rf := range rawFolders.Items {
+	// sort by depth of the paths
+	sort.Slice(toWalk, func(i, j int) bool {
+		return len(strings.Split(toWalk[i].Path, "/")) < len(strings.Split(toWalk[j].Path, "/"))
+	})
+
+	for _, folder := range toWalk {
+		if err := fn(ctx, folder); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func NewEmptyFolderTree() *FolderTree {
+	return &FolderTree{
+		tree:    make(map[string]string, 0),
+		folders: make(map[string]Folder, 0),
+	}
+}
+
+func NewFolderTreeFromUnstructure(ctx context.Context, rawFolders []unstructured.Unstructured) *FolderTree {
+	tree := make(map[string]string, len(rawFolders))
+	folders := make(map[string]Folder, len(rawFolders))
+
+	for _, rf := range rawFolders {
 		name := rf.GetName()
 		// TODO: Can I use MetaAccessor here?
 		parent := rf.GetAnnotations()[apiutils.AnnoKeyFolder]
@@ -84,7 +110,8 @@ func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTre
 		id := Folder{
 			Title: name,
 			ID:    name,
-			Path:  "", // We'll set this later in the DirPath function :)
+			// TODO: should not this be be the annotation itself?
+			Path: "", // We'll set this later in the DirPath function :)
 		}
 		if title, ok, _ := unstructured.NestedString(rf.Object, "spec", "title"); ok {
 			// If the title doesn't exist (it should), we'll just use the K8s name.
@@ -96,5 +123,27 @@ func FetchRepoFolderTree(ctx context.Context, client *DynamicClient) (*FolderTre
 	return &FolderTree{
 		tree:    tree,
 		folders: folders,
-	}, nil
+	}
+}
+
+func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) *FolderTree {
+	tree := make(map[string]string, len(resources.Items))
+	folderIDs := make(map[string]Folder, len(resources.Items))
+	for _, rf := range resources.Items {
+		if rf.Group != folders.GROUP {
+			continue
+		}
+
+		tree[rf.Name] = rf.Folder
+		folderIDs[rf.Name] = Folder{
+			Title: rf.Title,
+			ID:    rf.Name,
+			Path:  rf.Path,
+		}
+	}
+
+	return &FolderTree{
+		tree,
+		folderIDs,
+	}
 }
