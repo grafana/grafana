@@ -245,7 +245,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	obj = obj.DeepCopy()
 	hooks, _ := repo.(repository.RepositoryHooks)
 	status := &obj.Status
-	var sync *provisioning.SyncOptions
+	var sync *provisioning.SyncJobOptions
 
 	switch {
 	// Delete (note this switch does not fallthrough to the health check)
@@ -275,7 +275,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if hooks != nil {
 			status, err = hooks.OnCreate(ctx)
 		}
-		sync = &provisioning.SyncOptions{Complete: true}
+		sync = &provisioning.SyncJobOptions{Complete: true}
 
 	// Update
 	default:
@@ -283,7 +283,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		if hooks != nil {
 			status, err = hooks.OnUpdate(ctx)
 		}
-		sync = &provisioning.SyncOptions{
+		sync = &provisioning.SyncJobOptions{
 			Complete: hasSpecChanged,
 		}
 	}

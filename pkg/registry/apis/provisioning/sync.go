@@ -54,7 +54,7 @@ func (c *syncConnector) Connect(
 	cfg := repo.Config()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var options provisioning.SyncOptions
+		var options provisioning.SyncJobOptions
 		err := json.NewDecoder(r.Body).Decode(&options)
 		if err != nil {
 			responder.Error(apierrors.NewBadRequest("error decoding request"))

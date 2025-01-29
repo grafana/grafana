@@ -686,7 +686,7 @@ spec:
 
 	sub = oas.Paths.Paths[repoprefix+"/sync"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"SyncOptions"].Schema
+		optionsSchema := defs[defsBase+"SyncJobOptions"].Schema
 		sub.Post.Description = "Sync from repository into Grafana"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
@@ -694,7 +694,7 @@ spec:
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
-							Example: &provisioning.SyncOptions{
+							Example: &provisioning.SyncJobOptions{
 								Complete: true,
 							},
 						},
@@ -706,7 +706,7 @@ spec:
 
 	sub = oas.Paths.Paths[repoprefix+"/export"]
 	if sub != nil {
-		optionsSchema := defs[defsBase+"ExportOptions"].Schema
+		optionsSchema := defs[defsBase+"ExportJobOptions"].Schema
 		sub.Post.Description = "Export from grafana into the remote repository"
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
@@ -714,7 +714,7 @@ spec:
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
-							Example: &provisioning.ExportOptions{
+							Example: &provisioning.ExportJobOptions{
 								Folder:  "grafan-folder-ref",
 								History: true,
 								Branch:  "target-branch",

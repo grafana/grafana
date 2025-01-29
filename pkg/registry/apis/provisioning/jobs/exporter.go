@@ -24,7 +24,7 @@ import (
 type Exporter interface {
 	Export(ctx context.Context,
 		repo repository.Repository,
-		options provisioning.ExportOptions,
+		options provisioning.ExportJobOptions,
 		progress func(provisioning.JobStatus) error,
 	) (*provisioning.JobStatus, error)
 }
@@ -63,7 +63,7 @@ func NewExporter(
 
 func (r *exporter) Export(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.ExportOptions,
+	options provisioning.ExportJobOptions,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx)
@@ -95,7 +95,7 @@ func (r *exporter) Export(ctx context.Context,
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
 
-	var unprovisionedFolders []unstructured.Unstructured
+	unprovisionedFolders := make([]unstructured.Unstructured, 0, len(rawFolders.Items))
 	for _, f := range rawFolders.Items {
 		repoName := f.GetAnnotations()[apiutils.AnnoKeyRepoName]
 		if repoName == repo.Config().GetName() {

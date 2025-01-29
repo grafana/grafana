@@ -19,7 +19,7 @@ import (
 type PullRequestWorker interface {
 	ProcessPullRequest(ctx context.Context,
 		repo repository.Repository,
-		options provisioning.PullRequestOptions,
+		options provisioning.PullRequestJobOptions,
 		progress func(provisioning.JobStatus) error,
 	) (*provisioning.JobStatus, error)
 }
@@ -110,7 +110,7 @@ func NewPullRequestCommenter(
 
 func (c *pullRequestCommenter) ProcessPullRequest(ctx context.Context,
 	repo repository.Repository,
-	options provisioning.PullRequestOptions,
+	options provisioning.PullRequestJobOptions,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	cfg := c.repo.Config().Spec
