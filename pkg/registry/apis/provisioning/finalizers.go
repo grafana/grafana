@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -40,8 +41,8 @@ func (f *finalizer) process(ctx context.Context,
 
 	for _, finalizer := range finalizers {
 		switch finalizer {
-		// Unless a finalizer is set, not callback will happen
 		case CLEANUP_FINALIZER:
+			// NOTE: the controller loop will never get run unless a finalizer is set
 			hooks, ok := repo.(repository.RepositoryHooks)
 			if ok {
 				if err := hooks.OnDelete(ctx); err != nil {
@@ -49,13 +50,29 @@ func (f *finalizer) process(ctx context.Context,
 				}
 			}
 
-		case RELEASE_ORPHAN_RESOURCE, REMOVE_ORPHAN_RESOURCE:
-			err := f.processOrphans(ctx, repo.Config(),
-				finalizer == REMOVE_ORPHAN_RESOURCE, // delete or update metadata
-			)
+		case RELEASE_ORPHAN_RESOURCE:
+			err := f.processExistingItems(ctx, repo.Config(),
+				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoName+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoPath+`" },
+						{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoHash+`" }
+					]`), v1.PatchOptions{})
+					return err
+				})
 			if err != nil {
 				return err
 			}
+
+		case REMOVE_ORPHAN_RESOURCE:
+			err := f.processExistingItems(ctx, repo.Config(),
+				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+					return client.Delete(ctx, item.Name, v1.DeleteOptions{})
+				})
+			if err != nil {
+				return err
+			}
+
 		default:
 			logger.Warn("skipping unknown finalizer", "finalizer", finalizer)
 		}
@@ -63,7 +80,12 @@ func (f *finalizer) process(ctx context.Context,
 	return nil
 }
 
-func (f *finalizer) processOrphans(ctx context.Context, repo *provisioning.Repository, delete bool) error {
+// internal iterator to walk the existing items
+func (f *finalizer) processExistingItems(
+	ctx context.Context,
+	repo *provisioning.Repository,
+	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
+) error {
 	logger := logging.FromContext(ctx)
 	client, _, err := f.client.New(repo.Namespace)
 	if err != nil {
@@ -98,26 +120,13 @@ func (f *finalizer) processOrphans(ctx context.Context, repo *provisioning.Repos
 			Resource: item.Resource,
 			Version:  version,
 		})
-		if delete {
-			err = res.Delete(ctx, item.Name, v1.DeleteOptions{})
-			if err != nil {
-				logger.Warn("error removing item", "name", item.Name, "error", err)
-				errors++
-			} else {
-				count++
-			}
+
+		err = cb(res, &item)
+		if err != nil {
+			logger.Warn("error processing item", "name", item.Name, "error", err)
+			errors++
 		} else {
-			_, err = res.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
-				{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoName+`" },
-				{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoPath+`" },
-				{"op": "remove", "path": "/metadata/annotations/`+utils.AnnoKeyRepoHash+`" }
-			]`), v1.PatchOptions{})
-			if err != nil {
-				logger.Warn("error updating item metadata", "name", item.Name, "error", err)
-				errors++
-			} else {
-				count++
-			}
+			count++
 		}
 	}
 	logger.Info("processed orphan items", "items", count, "errors", errors)
