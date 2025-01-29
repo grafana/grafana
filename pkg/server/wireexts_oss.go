@@ -115,7 +115,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,
 	sandbox.ProvideService,
-	wire.Bind(new(sandbox.SandboxCount), new(*sandbox.Service)),
+	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 )
 
 var wireExtsSet = wire.NewSet(
