@@ -6,7 +6,9 @@ spec:
   title: Github Example
   description: load resources from github
   type: github
-  folder: thisisafolderref
+  sync:
+    enabled: true
+    target: folder
   editing:
     create: true
     update: true
