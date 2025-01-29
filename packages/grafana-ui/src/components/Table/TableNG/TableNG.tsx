@@ -314,6 +314,12 @@ export function TableNG(props: TableNGProps) {
       }
       const key = field.name;
 
+      // get column width from overrides
+      const override = fieldConfig?.overrides?.find(
+        (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
+      );
+      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config?.custom?.width;
+
       const justifyColumnContent = getTextAlign(field);
       const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -370,7 +376,7 @@ export function TableNG(props: TableNGProps) {
           />
         ),
         // TODO these anys are making me sad
-        width: field.config?.custom?.width ?? columnWidth,
+        width: width ?? columnWidth,
         minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
       });
     });
