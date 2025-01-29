@@ -61,6 +61,17 @@ describe('MultiCombobox', () => {
     expect(screen.getByPlaceholderText('Select')).toBeInTheDocument();
   });
 
+  it('should not render with placeholder when options selected', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={['a']} onChange={jest.fn()} placeholder="Select" />);
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveAttribute('placeholder', '');
+  });
+
   it.each([
     ['a', 'b', 'c'],
     [1, 2, 3],
