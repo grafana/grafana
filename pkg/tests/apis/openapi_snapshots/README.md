@@ -17,7 +17,7 @@ To generate or update the RTK API clients:
    ```bash
    go test pkg/tests/apis/openapi_test.go
    ```
-   If the API is behind a feature toggle, add the toggle to `EnableFeatureToggles` in `pkg/tests/apis/openapi_test.go`.
+   _If generating an RTK client for a new API_, also add a new group/version of the API to the `gorups` slice. If the API is behind a feature toggle, add the toggle to `EnableFeatureToggles` in `pkg/tests/apis/openapi_test.go`.
 
 
 3. Run:
