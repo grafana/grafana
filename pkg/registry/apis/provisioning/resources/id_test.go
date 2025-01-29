@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSanitiseKubeName(t *testing.T) {
@@ -20,7 +19,7 @@ func TestSanitiseKubeName(t *testing.T) {
 		{"Five hyphens simplified", "ab-----c", "ab-c"},
 		{"Underscore converted", "ab_c", "ab-c"},
 		{"Slash converted", "ab/c", "ab-c"},
-		{"Stops at 253 characters", strings.Repeat("a", 300), strings.Repeat("a", 253)},
+		{"Stops at 40 characters", strings.Repeat("a", 300), strings.Repeat("a", 40)},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			assert.Equal(t, tc.Expected, sanitiseKubeName(tc.Input))
@@ -52,31 +51,34 @@ func TestAppendHashSuffix(t *testing.T) {
 	hasher := appendHashSuffix(hashKey, repoName)
 
 	for _, tc := range []struct{ Name, Input, Expected string }{
-		{"Simple, short prefix", "test", "test-ae2h65vh3ygoxmprmnludpyhhpr3d-5iosyhbdro-j0"},
-		{"Suffix requiring cutting hash to min", strings.Repeat("test", 200), "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest-8dogmh7bizi8"},
-		{"Suffix requiring partially cutting hash", strings.Repeat("test", 59), "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest-urg0-j8db5uuvpak"},
+		{"Simple, short prefix", "test", "test-ae2h65vh3ygoxmprmnludpyhhpr3d-5iosy"},
+		{"Suffix requiring cutting hash to min", strings.Repeat("test", 200), "testtesttesttesttesttesttesttes-8dogmh7b"},
+		{"Suffix requiring partially cutting hash", strings.Repeat("test", 7), "testtesttesttesttesttesttest-icauzj-i5j5"},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
 			hashed := hasher(tc.Input)
 			assert.Equal(t, tc.Expected, hashed, "hashed value must be as expected")
 
-			// These exist both because they're helpful to understand how something isn't equal above, and for programmer errors. (e.g. what if I manually input a 254 char expected value? or one with too few hash chars?)
-			assert.LessOrEqual(t, len(hashed), 253, "string after hashing needs to be <=253 chars long")
-			assert.GreaterOrEqual(t, len(strings.SplitAfterN(hashed, "-", 2)[1]), 12, "hash must be at least 12 characters long")
+			// These exist both because they're helpful to understand how something isn't equal above, and for programmer errors. (e.g. what if I manually input a 41 char expected value? or one with too few hash chars?)
+			// We only want 40 characters because UIDs support no more. When we get rid of legacy storage, we can extend the support to 253 character long strings.
+			assert.LessOrEqual(t, len(hashed), 40, "string after hashing needs to be <=40 chars long")
+			assert.GreaterOrEqual(t, len(strings.SplitAfterN(hashed, "-", 2)[1]), 8, "hash must be at least 8 characters long")
 		})
 	}
 }
 
 func TestNamesFromHashedRepoPath(t *testing.T) {
 	dashName, folderName := NamesFromHashedRepoPath("xyz", "path/to/folder/dashboard.json")
-	assert.Equal(t, "dashboard-fy2kflbmskvt6u-9uecoahd1ekwbb7omrzgmuqppymo", dashName, "dashboard name of dashboard.json")
-	assert.Equal(t, "path-to-folder-3ehfurpmbvs4yxfp7a0r2uskrrqxhevyyxzp2qnz1pm", folderName, "folder name of dashboard.json")
+	assert.Equal(t, "dashboard-fy2kflbmskvt6u-9uecoahd1ekwbb7", dashName, "dashboard name of dashboard.json")
+	assert.Equal(t, "path-to-folder-3ehfurpmbvs4yxfp7a0r2uskr", folderName, "folder name of dashboard.json")
+	// We only want 40 characters because UIDs support no more. When we get rid of legacy storage, we can extend the support to 253 character long strings.
+	assert.LessOrEqual(t, len(dashName), 40, "dashName after hashing needs to be <=40 chars long")
+	assert.LessOrEqual(t, len(folderName), 40, "folderName after hashing needs to be <=40 chars long")
 
 	name1, f1 := NamesFromHashedRepoPath("xyz", "path/to/folder.json")
 	name2, f2 := NamesFromHashedRepoPath("xyz", "path/to/folder")
-	require.Equal(t, folderName, name1, "folder.json should have same folder name as dashboard.json")
-	require.Equal(t, folderName, name2, "folder should have same folder name as dashboard.json")
-	require.Equal(t, f1, f2, "folder.json and folder should have same folder name as each other")
+	assert.Equal(t, name1, name2, "folder.json should have same object name as folder (no extension)")
+	assert.Equal(t, f1, f2, "folder.json and folder should have same folder name as each other")
 }
 
 func TestParseFolderID(t *testing.T) {
@@ -88,10 +90,10 @@ func TestParseFolderID(t *testing.T) {
 		Title       string
 		KubeName    string
 	}{
-		{"Short, simple path", "hello/world", "world", "world-wik-hjayboohlsvzzr2ob3he8cs7ffk0jdfmtlgnuxi"},
-		{"Capital letters and punctuation", "Hello, World!", "Hello, World!", "helloworld-sbcnvdmezf0jnvgfhpk5ewaoawbegk5uhmevqi3yp-0"},
-		{"Very long name", strings.Repeat("/hello/world", 200), "world", "world-hvogmduf-7llmahwaldpwlgfikarxzej5yuh4ikap4e"},
-		{"Leading, trailing, and unnecessary slashes", "/hello///world////", "world", "world-wik-hjayboohlsvzzr2ob3he8cs7ffk0jdfmtlgnuxi"},
+		{"Short, simple path", "hello/world", "world", "world-wik-hjayboohlsvzzr2ob3he8cs7ffk0jd"},
+		{"Capital letters and punctuation", "Hello, World!", "Hello, World!", "helloworld-sbcnvdmezf0jnvgfhpk5ewaoawbeg"},
+		{"Very long name", strings.Repeat("/hello/world", 200), "world", "world-hvogmduf-7llmahwaldpwlgfikarxzej5y"},
+		{"Leading, trailing, and unnecessary slashes", "/hello///world////", "world", "world-wik-hjayboohlsvzzr2ob3he8cs7ffk0jd"},
 	}
 
 	for _, c := range cases {
@@ -100,6 +102,9 @@ func TestParseFolderID(t *testing.T) {
 			assert.Equal(t, c.Path, id.Path)
 			assert.Equal(t, c.KubeName, id.ID)
 			assert.Equal(t, c.Title, id.Title)
+
+			// We only want 40 characters because UIDs support no more. When we get rid of legacy storage, we can extend the support to 253 character long strings.
+			assert.LessOrEqual(t, len(id.ID), 40, "ID after hashing needs to be <=40 chars long")
 		})
 	}
 }

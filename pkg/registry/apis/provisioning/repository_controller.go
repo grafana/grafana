@@ -45,7 +45,8 @@ type RepositoryController struct {
 	parsers        *resources.ParserFactory
 	logger         logging.Logger
 
-	jobs jobs.JobQueue
+	jobs      jobs.JobQueue
+	finalizer *finalizer
 
 	// Converts config to instance
 	repoGetter RepoGetter
@@ -68,6 +69,7 @@ func NewRepositoryController(
 	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
 	identities auth.BackgroundIdentityService,
+	lister resources.ResourceLister,
 	tester *RepositoryTester,
 	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
@@ -85,9 +87,13 @@ func NewRepositoryController(
 		repoGetter: repoGetter,
 		parsers:    parsers,
 		identities: identities,
-		tester:     tester,
-		jobs:       jobs,
-		logger:     logging.DefaultLogger.With("logger", loggerName),
+		finalizer: &finalizer{
+			lister: lister,
+			client: parsers.Client,
+		},
+		tester: tester,
+		jobs:   jobs,
+		logger: logging.DefaultLogger.With("logger", loggerName),
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -245,36 +251,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Delete (note this switch does not fallthrough to the health check)
 	case obj.DeletionTimestamp != nil:
 		logger.Info("handle repository delete")
-		if hooks != nil {
-			// FIXME... this should be converted to a "remove-webhook" finalizer
-			eee := hooks.OnDelete(ctx)
-			if eee != nil {
-				logger.Warn("Error running deletion hooks", "err", err)
-			}
-		}
 
 		// Process any finalizers
 		if len(obj.Finalizers) > 0 {
-			for _, finalizer := range obj.Finalizers {
-				switch finalizer {
-				case "cleanup":
-					logger.Info("handle cleanup")
-
-					parser, err := rc.parsers.GetParser(ctx, repo)
-					if err != nil {
-						return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
-					}
-					replicator, err := jobs.NewSyncer(repo, rc.resourceLister, parser)
-					if err != nil {
-						return fmt.Errorf("error creating replicator")
-					}
-					if err := replicator.DeleteAllProvisionedResources(ctx); err != nil {
-						return fmt.Errorf("unsync repository: %w", err)
-					}
-
-				default:
-					logger.Warn("unknown finalizer: " + finalizer)
-				}
+			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
+			if err != nil {
+				return fmt.Errorf("error running finalizers %w", err)
 			}
 
 			// remove the finalizers

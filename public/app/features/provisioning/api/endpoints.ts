@@ -502,7 +502,6 @@ export type GitHubRepositoryConfig = {
   branchWorkflow?: boolean;
   generateDashboardPreviews?: boolean;
   owner?: string;
-  pullRequestLinter?: boolean;
   repository?: string;
   token?: string;
 };
@@ -514,11 +513,11 @@ export type S3RepositoryConfig = {
   region?: string;
 };
 export type RepositorySpec = {
+  deletePolicy: string;
   description?: string;
   editing: EditingOptions;
   folder?: string;
   github?: GitHubRepositoryConfig;
-  linting?: boolean;
   local?: LocalRepositoryConfig;
   s3?: S3RepositoryConfig;
   title: string;

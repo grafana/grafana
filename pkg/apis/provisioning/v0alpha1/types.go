@@ -54,9 +54,6 @@ type GitHubRepositoryConfig struct {
 	// By default, this is false (i.e. we will not create previews).
 	// This option is a no-op if BranchWorkflow is `false` or default.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
-
-	// PullRequestLinter enables the dashboard linter for this repository in Pull Requests
-	PullRequestLinter bool `json:"pullRequestLinter,omitempty"`
 }
 
 // RepositoryType defines the types of Repository
@@ -87,9 +84,6 @@ type RepositorySpec struct {
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
-	// Linting enables linting for this repository
-	Linting bool `json:"linting,omitempty"`
-
 	// The repository on the local file system.
 	// Mutually exclusive with s3 and github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
@@ -103,15 +97,6 @@ type RepositorySpec struct {
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
-
-type DeletePolicy string
-
-const (
-	// DeletePolityRetain keep all provisioned resources on repository deletion
-	DeletePolityRetain DeletePolicy = "retain"
-	// DeletePolityClean delete all provisioned resources on repository deletion
-	DeletePolityClean DeletePolicy = "clean"
-)
 
 type EditingOptions struct {
 	// End users can create new files in the remote file system

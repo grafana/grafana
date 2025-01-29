@@ -8,12 +8,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,13 +20,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/version"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
-	apimachineryversion "k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
-	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -171,48 +166,6 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 	statusError, ok := err.(*errors.StatusError)
 	require.True(c.t, ok)
 	return statusError
-}
-
-func (c *K8sTestHelper) VerifyStaticOpenAPISpec(gv schema.GroupVersion, fpath string) {
-	c.t.Helper()
-
-	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
-	rsp := DoRequest(c, RequestParams{
-		Method: http.MethodGet,
-		Path:   path,
-		User:   c.Org1.Admin,
-	}, &AnyResource{})
-
-	require.NotNil(c.t, rsp.Response)
-	require.Equal(c.t, 200, rsp.Response.StatusCode)
-
-	spec := spec3.OpenAPI{}
-	err := spec.UnmarshalJSON(rsp.Body)
-	require.NoError(c.t, err)
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
-	body, err := os.ReadFile(fpath)
-	if err == nil {
-		specSaved := spec3.OpenAPI{}
-		err = specSaved.UnmarshalJSON(body)
-		assert.NoError(c.t, err, "error reading")
-
-		if !assert.Equal(c.t, specSaved, spec) {
-			err = fmt.Errorf("mismatch")
-		}
-	}
-
-	if err != nil {
-		pretty, _ := json.MarshalIndent(spec, "", "  ")
-		err = os.WriteFile(fpath, pretty, 0644)
-		if err != nil {
-			require.NoError(c.t, err)
-		}
-		abs, _ := filepath.Abs(fpath)
-		c.t.Errorf("openapi spec has changed: %s", abs)
-		c.t.Fail()
-	}
 }
 
 func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, replaceMeta ...string) string {
@@ -651,31 +604,6 @@ func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	client, err := discovery.NewDiscoveryClientForConfig(conf)
 	require.NoError(c.t, err)
 	return client
-}
-
-func (c *K8sTestHelper) GetVersionInfo() apimachineryversion.Info {
-	c.t.Helper()
-
-	disco := c.NewDiscoveryClient()
-	req := disco.RESTClient().Get().
-		Prefix("version").
-		SetHeader("Accept", "application/json")
-
-	result := req.Do(context.Background())
-	require.NoError(c.t, result.Error())
-
-	raw, err := result.Raw()
-	require.NoError(c.t, err)
-	info := apimachineryversion.Info{}
-	err = json.Unmarshal(raw, &info)
-	require.NoError(c.t, err)
-
-	// Make sure the gitVersion is parsable
-	v, err := version.Parse(info.GitVersion)
-	require.NoError(c.t, err)
-	require.Equal(c.t, info.Major, fmt.Sprintf("%d", v.Major()))
-	require.Equal(c.t, info.Minor, fmt.Sprintf("%d", v.Minor()))
-	return info
 }
 
 func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -600,7 +601,9 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 }
 
 func (r *githubRepository) shouldLintPullRequest() bool {
-	return r.config.Spec.GitHub.PullRequestLinter && r.config.Spec.Linting
+	// TODO: Figure out how we want to determine this in practice.
+	val, ok := os.LookupEnv("GRAFANA_LINTING")
+	return ok && val == "true"
 }
 
 // ClearAllPullRequestFileComments clears all comments on a pull request

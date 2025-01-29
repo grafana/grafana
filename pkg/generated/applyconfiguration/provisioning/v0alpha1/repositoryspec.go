@@ -16,7 +16,6 @@ type RepositorySpecApplyConfiguration struct {
 	Folder      *string                                   `json:"folder,omitempty"`
 	Editing     *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
 	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
-	Linting     *bool                                     `json:"linting,omitempty"`
 	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
 	S3          *S3RepositoryConfigApplyConfiguration     `json:"s3,omitempty"`
 	GitHub      *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
@@ -65,14 +64,6 @@ func (b *RepositorySpecApplyConfiguration) WithEditing(value *EditingOptionsAppl
 // If called multiple times, the Type field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.RepositoryType) *RepositorySpecApplyConfiguration {
 	b.Type = &value
-	return b
-}
-
-// WithLinting sets the Linting field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Linting field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithLinting(value bool) *RepositorySpecApplyConfiguration {
-	b.Linting = &value
 	return b
 }
 

@@ -154,33 +154,6 @@ func sortResourceListForDeletion(list *provisioning.ResourceList) {
 	})
 }
 
-const CLEANUP_FINALIZER = "cleanup"
-
-// Called by the cleanup finalizer
-func (r *Syncer) DeleteAllProvisionedResources(ctx context.Context) error {
-	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
-	if err != nil {
-		return fmt.Errorf("list resources to delete: %w", err)
-	}
-
-	sortResourceListForDeletion(list)
-
-	logger := logging.FromContext(ctx)
-	logger.Info("deleting resources", "count", len(list.Items))
-	for _, item := range list.Items {
-		logger := logger.With("group", item.Group, "resource", item.Resource, "name", item.Name)
-
-		if err := r.deleteListResource(ctx, item); err != nil {
-			logger.Error("failed to delete resource", "error", err)
-			return fmt.Errorf("delete resource: %w", err)
-		}
-		logger.Info("resource deleted")
-	}
-	logger.Info("finished deleting resources")
-
-	return nil
-}
-
 func (r *Syncer) deleteListResource(ctx context.Context, item provisioning.ResourceListItem) error {
 	// HACK: we need to find a better way to know the API version
 	var version string

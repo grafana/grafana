@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -159,6 +158,7 @@ func (g *JobWorker) doSync(ctx context.Context,
 	var err error
 	cfg := repo.Config()
 
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
 	status := job.Status.ToSyncStatus(job.Name)
 	patch, err := json.Marshal(map[string]any{
 		"status": map[string]any{

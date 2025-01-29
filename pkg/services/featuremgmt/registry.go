@@ -1028,6 +1028,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
+			Name:         "alertingSaveStateCompressed",
+			Description:  "Enables the compressed protobuf-based alert state storage",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:              "scopeApi",
 			Description:       "In-development feature flag for the scope api using the app platform.",
 			Stage:             FeatureStageExperimental,
@@ -1579,13 +1586,6 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
-		},
-		{
-			Name:        "zipkinBackendMigration",
-			Description: "Enables querying Zipkin data source without the proxy",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "enableSCIM",

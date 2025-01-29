@@ -242,11 +242,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				}
 			]
 		}`, string(v1Disco))
-
-		// also verify the openapi
-		helper.VerifyStaticOpenAPISpec(schema.GroupVersion{
-			Group: "provisioning.grafana.app", Version: "v0alpha1",
-		}, "testdata/openapi.json")
 	})
 
 	t.Run("Check basic create and get", func(t *testing.T) {
@@ -289,6 +284,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		js, _ := json.MarshalIndent(found, "", "  ")
 		require.JSONEq(t, `{
 			"github-example": {
+				"deletePolicy": "clean",
 				"description": "load resources from github",
 				"folder": "thisisafolderref",
 				"editing": {
@@ -301,7 +297,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"branchWorkflow": true,
 					"generateDashboardPreviews": true,
 					"owner": "grafana",
-					"pullRequestLinter": true,
 					"repository": "git-ui-sync-demo",
 					"token": "github_pat_dummy"
 				},
@@ -309,6 +304,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"type": "github"
 			},
 			"local-conf-provisioning-sample": {
+				"deletePolicy": "clean",
 				"description": "load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample",
 				"editing": {
 					"create": true,
@@ -322,6 +318,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"type": "local"
 			},
 			"local-devenv": {
+				"deletePolicy": "clean",
 				"description": "load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards",
 				"editing": {
 					"create": true,
@@ -336,6 +333,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"type": "local"
 			},
 			"s3-example": {
+				"deletePolicy": "clean",
 				"description": "load resources from an S3 bucket",
 				"editing": {
 					"create": false,

@@ -9,8 +9,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
-import { SaveProvisionedDashboard } from './SaveProvisionedDashboard';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
+import { SaveProvisionedDashboard } from './provisioned/SaveProvisionedDashboard';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;

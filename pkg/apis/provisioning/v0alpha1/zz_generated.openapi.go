@@ -302,13 +302,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
-					"pullRequestLinter": {
-						SchemaProps: spec.SchemaProps{
-							Description: "PullRequestLinter enables the dashboard linter for this repository in Pull Requests",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
 			},
 		},
@@ -1001,13 +994,6 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"github", "local", "s3"},
-						},
-					},
-					"linting": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Linting enables linting for this repository",
-							Type:        []string{"boolean"},
-							Format:      "",
 						},
 					},
 					"local": {

@@ -321,10 +321,9 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		return fmt.Errorf("expected repository configuration")
 	}
 
-	// Should adding this be explicit from the UI? delete or delete + cleanup
-	// Remember this is called on every update, so be careful to only add the finalizer for create
+	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
-		r.Finalizers = []string{jobs.CLEANUP_FINALIZER}
+		r.Finalizers = []string{REMOVE_ORPHAN_RESOURCE, CLEANUP_FINALIZER}
 	}
 
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
@@ -484,6 +483,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				b.lister,
 				b.parsers,
 				b.identities,
+				b.lister,
 				b.tester,
 				b.jobs,
 			)
