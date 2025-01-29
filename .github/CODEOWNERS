@@ -731,10 +731,6 @@ embed.go @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
 /cue.mod/ @grafana/grafana-as-code
 
-# Rendered OpenAPI from app platform
-# Eventually each file owned by the right team, OR a structure with the rendered value under /apis/{group}/openapi
-/openapi/ @grafana/grafana-app-platform-squad
-
 # GitHub Workflows and Templates
 /.github/CODEOWNERS @tolzhabayev
 /.github/ISSUE_TEMPLATE/ @torkelo @sympatheticmoose
