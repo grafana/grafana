@@ -179,6 +179,15 @@ type GetFoldersQuery struct {
 	SignedInUser identity.Requester `json:"-"`
 }
 
+type SearchFoldersQuery struct {
+	OrgID        int64
+	UIDs         []string
+	IDs          []int64
+	Title        string
+	Limit        int64
+	SignedInUser identity.Requester `json:"-"`
+}
+
 // GetParentsQuery captures the information required by the folder service to
 // return a list of all parent folders of a given folder.
 type GetParentsQuery struct {
