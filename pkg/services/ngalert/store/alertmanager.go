@@ -116,7 +116,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			// double check that the configuration with this hash is in the db
 			ok, err := sess.Table("alert_configuration").
 				Where("org_id = ? AND configuration_hash = ?", cmd.OrgID, cmd.FetchedConfigurationHash).
-				Get(&models.AlertConfiguration{})
+				Exist()
 			if err != nil {
 				return err
 			}
