@@ -73,13 +73,11 @@ func (am *Alertmanager) IsReadyWithBackoff(ctx context.Context) error {
 
 	c := make(chan error)
 	go am.exponentialReadinessCheck(ctx, c)
-	for {
-		select {
-		case err := <-c:
-			return err
-		case <-ctx.Done():
-			return fmt.Errorf("readiness check timed out")
-		}
+	select {
+	case err := <-c:
+		return err
+	case <-ctx.Done():
+		return fmt.Errorf("readiness check timed out")
 	}
 }
 
