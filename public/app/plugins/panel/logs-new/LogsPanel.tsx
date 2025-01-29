@@ -1,13 +1,17 @@
 import { css } from '@emotion/css';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2, LogsSortOrder, PanelProps } from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, DataFrame, GrafanaTheme2, LogsSortOrder, PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { ScrollToLogsEvent } from 'app/features/logs/components/panel/virtualization';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
+import { requestMoreLogs } from '../logs/LogsPanel';
+import { isOnNewLogsReceivedType } from '../logs/types';
+import { useDatasourcesFromTargets } from '../logs/useDatasourcesFromTargets';
 
 import { Options } from './panelcfg.gen';
 
@@ -17,15 +21,18 @@ export const LogsPanel = ({
   data,
   timeZone,
   fieldConfig,
-  options: { showTime, wrapLogMessage, sortOrder, dedupStrategy },
+  options: { dedupStrategy, enableInfiniteScrolling, onNewLogsReceived, showTime, sortOrder, wrapLogMessage },
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
   const [logsContainer, setLogsContainer] = useState<HTMLDivElement | null>(null);
   const [panelData, setPanelData] = useState(data);
+  const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   // Prevents the scroll position to change when new data from infinite scrolling is received
   const keepScrollPositionRef = useRef(false);
+  // Loading ref to prevent firing multiple requests
+  const loadingRef = useRef(false);
   const { eventBus } = usePanelContext();
 
   const logs = useMemo(() => {
@@ -57,6 +64,34 @@ export const LogsPanel = ({
     }
   }, [data.request?.app, eventBus, isAscending, logs]);
 
+  const loadMoreLogs = useCallback(
+    async (scrollRange: AbsoluteTimeRange) => {
+      if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
+        return;
+      }
+
+      loadingRef.current = true;
+
+      const onNewLogsReceivedCallback = isOnNewLogsReceivedType(onNewLogsReceived) ? onNewLogsReceived : undefined;
+
+      let newSeries: DataFrame[] = [];
+      try {
+        newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone, onNewLogsReceivedCallback);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        loadingRef.current = false;
+      }
+
+      keepScrollPositionRef.current = true;
+      setPanelData({
+        ...panelData,
+        series: newSeries,
+      });
+    },
+    [data.request, dataSourcesMap, onNewLogsReceived, panelData, timeZone]
+  );
+
   if (!logs.length) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -69,8 +104,10 @@ export const LogsPanel = ({
           containerElement={logsContainer}
           eventBus={eventBus}
           logs={logs}
+          loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
           showTime={showTime}
           sortOrder={sortOrder}
+          timeRange={data.timeRange}
           timeZone={timeZone}
           wrapLogMessage={wrapLogMessage}
         />
