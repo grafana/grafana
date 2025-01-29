@@ -49,7 +49,7 @@ func NewExporter(
 
 	dashboards := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "dashboard.grafana.app",
-		Version:  "v2alpha1",
+		Version:  "v1alpha1",
 		Resource: "dashboards",
 	})
 
