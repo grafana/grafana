@@ -74,12 +74,6 @@ export class ElementState implements LayerElement {
       options.name = newName ?? fallbackName;
     }
     scene?.byName.set(options.name, this);
-
-    if (this.options.links?.some((link) => link.oneClick === true)) {
-      this.oneClickMode = OneClickMode.Link;
-    } else if (this.options.actions?.some((action) => action.oneClick === true)) {
-      this.oneClickMode = OneClickMode.Action;
-    }
   }
 
   private getScene(): Scene | undefined {
@@ -385,6 +379,12 @@ export class ElementState implements LayerElement {
     const frames = scene?.data?.series;
 
     this.options.links = this.options.links?.filter((link) => link !== null);
+
+    if (this.options.links?.some((link) => link.oneClick === true)) {
+      this.oneClickMode = OneClickMode.Link;
+    } else if (this.options.actions?.some((action) => action.oneClick === true)) {
+      this.oneClickMode = OneClickMode.Action;
+    }
 
     if (frames) {
       const defaultField = {
