@@ -1,8 +1,8 @@
-import { t } from 'i18next';
 import { useState } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { isQueryLibraryEnabled, useListQueryTemplateQuery } from 'app/features/query-library';
 
 import { getK8sNamespace } from '../../query-library/api/query';
