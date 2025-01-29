@@ -8,11 +8,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import AzureMonitorDatasource from '../../azure_monitor/azure_monitor_datasource';
 import { AzureMonitorDataSourceJsonData, AzureMonitorQuery } from '../../types';
 
-type Props = QueryEditorProps<
-  AzureMonitorDatasource,
-  AzureMonitorQuery,
-  AzureMonitorDataSourceJsonData
->;;
+type Props = QueryEditorProps<AzureMonitorDatasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>;
 
 interface FilterSectionProps extends Props {
   columns?: [];
@@ -22,8 +18,8 @@ interface FilterSectionProps extends Props {
 export const FilterSection: React.FC<FilterSectionProps> = ({
   query,
   onChange,
-//   datasource,
-//   columns,
+  //   datasource,
+  //   columns,
 }) => {
   const [focus, setFocus] = useState(false);
   const styles = useStyles2(getStyles);
@@ -57,8 +53,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
               ) : null} */}
               <Button
                 variant="secondary"
-                onClick={
-                    () => {
+                onClick={() => {
                   onChange({
                     ...query,
                   });

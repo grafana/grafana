@@ -143,4 +143,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddReceiverCreateScopeMigration(mg)
 
 	ualert.AddAlertRuleUpdatedByMigration(mg)
+
+	ualert.AddAlertRuleStateTable(mg)
 }

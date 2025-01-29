@@ -37,10 +37,10 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             options={tableOptions}
             placeholder="Select a table"
             onChange={(selected) => {
-              const selectedTable = tables.find((t) => t.name === selected.value); 
+              const selectedTable = tables.find((t) => t.name === selected.value);
               if (selectedTable) {
                 onTableChange(selectedTable);
-              };
+              }
             }}
           />
         </EditorField>

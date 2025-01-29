@@ -61,7 +61,7 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
           mode: newMode,
-          query: ""
+          query: '',
         },
       };
       onQueryChange(updatedQuery);

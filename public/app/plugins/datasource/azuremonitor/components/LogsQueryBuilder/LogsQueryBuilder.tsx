@@ -5,7 +5,12 @@ import { EditorRows } from '@grafana/experimental';
 import { Alert } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable, AzureMonitorQuery, EngineSchema } from '../../types';
+import {
+  AzureLogAnalyticsMetadataColumn,
+  AzureLogAnalyticsMetadataTable,
+  AzureMonitorQuery,
+  EngineSchema,
+} from '../../types';
 
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
@@ -23,7 +28,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
   }, [schema?.database]);
-  console.log(tables)
+  console.log(tables);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<AzureLogAnalyticsMetadataColumn[]>([]);
   const [selectedColumns, setSelectedColumns] = useState<SelectableValue<string>>([]);
@@ -33,9 +38,9 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       const tableDetails = tables.find((table) => table.name === selectedTable);
       setSelectedColumns([]);
       if (tableDetails && tableDetails.columns) {
-        setColumns(tableDetails.columns || []); 
+        setColumns(tableDetails.columns || []);
       } else {
-        setColumns([]); 
+        setColumns([]);
       }
     }
   }, [selectedTable, tables]);
@@ -44,12 +49,12 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     setSelectedColumns(columns);
     const uniqueLabels = [...new Set(columns.map((c: SelectableValue<string>) => c.label!))];
     const baseQuery = selectedTable!.split(' | project')[0];
-    const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')}`
+    const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')}`;
     onQueryChange({
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        query: newQueryString, 
+        query: newQueryString,
       },
     });
   };
@@ -58,12 +63,12 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     if (newTable) {
       setSelectedTable(newTable.name);
       setColumns([]);
-  
+
       onQueryChange({
         ...query,
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
-          query: newTable.name || "", 
+          query: newTable.name || '',
         },
       });
     }
@@ -72,7 +77,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
       <EditorRows>
-        {(schema && tables.length === 0) && (
+        {schema && tables.length === 0 && (
           <Alert severity="warning" title="Resource loaded successfully but without any tables" />
         )}
         <TableSection
