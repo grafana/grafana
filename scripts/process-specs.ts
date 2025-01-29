@@ -2,6 +2,15 @@ import fs from 'fs';
 import { OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
+/**
+ * Process an OpenAPI spec to remove k8s metadata from names and paths:
+ * - Remove paths containing "/watch/" as they're deprecated.
+ * - Remove 'ForAllNamespaces' endpoints
+ * - Remove the prefix: "/apis/<group>/<version>/namespaces/{namespace}" from paths.
+ * - Filter out `namespace` from path parameters.
+ * - Update all $ref fields to remove k8s metadata from schema names.
+ * - Simplify schema names in "components.schemas".
+ */
 function processOpenAPISpec(spec: OpenAPIV3.Document) {
   // Create a deep copy of the spec to avoid mutating the original
   const newSpec = JSON.parse(JSON.stringify(spec));
