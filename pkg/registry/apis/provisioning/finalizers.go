@@ -20,13 +20,13 @@ import (
 )
 
 // Remove everything this repo created
-const REMOVE_ORPHAN_RESOURCE = "remove-orphan-resources"
+const finalizer_REMOVE_ORPHAN_RESOURCE = "remove-orphan-resources"
 
 // Remove the metadata for anything this repo created
-const RELEASE_ORPHAN_RESOURCE = "release-orphan-resources"
+const finalizer_RELEASE_ORPHAN_RESOURCE = "release-orphan-resources"
 
 // Calls the "OnDelete" function for resource
-const CLEANUP_FINALIZER = "cleanup"
+const finalizer_CLEANUP_FINALIZER = "cleanup"
 
 type finalizer struct {
 	lister resources.ResourceLister
@@ -41,7 +41,7 @@ func (f *finalizer) process(ctx context.Context,
 
 	for _, finalizer := range finalizers {
 		switch finalizer {
-		case CLEANUP_FINALIZER:
+		case finalizer_CLEANUP_FINALIZER:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			hooks, ok := repo.(repository.RepositoryHooks)
 			if ok {
@@ -50,7 +50,7 @@ func (f *finalizer) process(ctx context.Context,
 				}
 			}
 
-		case RELEASE_ORPHAN_RESOURCE:
+		case finalizer_RELEASE_ORPHAN_RESOURCE:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					_, err := client.Patch(ctx, item.Name, types.JSONPatchType, []byte(`[
@@ -64,7 +64,7 @@ func (f *finalizer) process(ctx context.Context,
 				return err
 			}
 
-		case REMOVE_ORPHAN_RESOURCE:
+		case finalizer_REMOVE_ORPHAN_RESOURCE:
 			err := f.processExistingItems(ctx, repo.Config(),
 				func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
 					return client.Delete(ctx, item.Name, v1.DeleteOptions{})

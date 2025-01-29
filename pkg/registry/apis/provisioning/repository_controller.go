@@ -254,7 +254,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 		// Process any finalizers
 		if len(obj.Finalizers) > 0 {
-			err := rc.finalizer.process(ctx, repo, obj.Finalizers)
+			err = rc.finalizer.process(ctx, repo, obj.Finalizers)
 			if err != nil {
 				return fmt.Errorf("error running finalizers %w", err)
 			}

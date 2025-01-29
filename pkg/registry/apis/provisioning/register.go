@@ -323,7 +323,10 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 
 	// This is called on every update, so be careful to only add the finalizer for create
 	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
-		r.Finalizers = []string{REMOVE_ORPHAN_RESOURCE, CLEANUP_FINALIZER}
+		r.Finalizers = []string{
+			finalizer_REMOVE_ORPHAN_RESOURCE,
+			finalizer_CLEANUP_FINALIZER,
+		}
 	}
 
 	if r.Spec.Type == provisioning.GitHubRepositoryType {
