@@ -15,8 +15,8 @@ import {
   queryLibraryTrackAddOrEditDescription,
   queryLibraryTrackRunQuery,
 } from '../QueryLibraryAnalyticsEvents';
-import { QueryActionButton, useQueryLibraryContext } from '../QueryLibraryContext';
 import { QueryTemplateForm } from '../QueryTemplateForm';
+import { QueryActionButton } from '../types';
 
 import { useQueryLibraryListStyles } from './styles';
 import { QueryTemplateRow } from './types';
@@ -31,7 +31,6 @@ interface ActionsCellProps {
 function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid, QueryActionButton }: ActionsCellProps) {
   const [deleteQueryTemplate] = useDeleteQueryTemplateMutation();
   const [editFormOpen, setEditFormOpen] = useState(false);
-  const { closeDrawer } = useQueryLibraryContext();
   const styles = useQueryLibraryListStyles();
 
   const onDeleteQuery = (queryUid: string) => {
@@ -89,7 +88,6 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid, QueryActionBu
           queries={queryTemplate.query ? [queryTemplate.query] : []}
           datasourceUid={rootDatasourceUid}
           onClick={() => {
-            closeDrawer();
             queryLibraryTrackRunQuery(queryTemplate.datasourceType || '');
           }}
         />

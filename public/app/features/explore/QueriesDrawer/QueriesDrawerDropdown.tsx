@@ -9,7 +9,8 @@ import { createDatasourcesList } from '../../../core/utils/richHistory';
 import { useSelector } from '../../../types';
 import ExploreRunQueryButton from '../ExploreRunQueryButton';
 import { queryLibraryTrackToggle } from '../QueryLibrary/QueryLibraryAnalyticsEvents';
-import { QueryActionButton, useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
+import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
+import { QueryActionButton } from '../QueryLibrary/types';
 import { selectExploreDSMaps } from '../state/selectors';
 
 import { useQueriesDrawerContext } from './QueriesDrawerContext';

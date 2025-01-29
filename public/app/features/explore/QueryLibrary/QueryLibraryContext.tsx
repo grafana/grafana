@@ -1,9 +1,10 @@
-import { PropsWithChildren, useState, createContext, useContext, useCallback, ComponentType } from 'react';
+import { PropsWithChildren, useState, createContext, useContext, useCallback, useMemo } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 
 import { AddToQueryLibraryModal } from './AddToQueryLibraryModal';
 import { QueryLibraryDrawer } from './QueryLibraryDrawer';
+import { QueryActionButton, QueryActionButtonProps } from './types';
 
 /**
  * Context with state and action to interact with Query Library. The Query Library feature consists of a drawer
@@ -12,7 +13,7 @@ import { QueryLibraryDrawer } from './QueryLibraryDrawer';
  *
  * Use this context to interact with those components, showing, hiding and setting initial state for them.
  */
-type QueryLibraryContextType = {
+export type QueryLibraryContextType = {
   /**
    * Opens a drawer with query library.
    * @param datasources Data sources that will be used for initial filter in the library.
@@ -22,7 +23,6 @@ type QueryLibraryContextType = {
   openDrawer: (datasources: string[] | undefined, queryActionButton?: QueryActionButton) => void;
   closeDrawer: () => void;
   isDrawerOpen: boolean;
-  queryActionButton: QueryActionButton | undefined;
 
   /**
    * Opens a modal for adding a query to the library.
@@ -32,19 +32,10 @@ type QueryLibraryContextType = {
   closeAddQueryModal: () => void;
 };
 
-export type QueryActionButtonProps = {
-  queries: DataQuery[];
-  datasourceUid?: string;
-  onClick: () => void;
-};
-
-export type QueryActionButton = ComponentType<QueryActionButtonProps>;
-
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   openDrawer: () => {},
   closeDrawer: () => {},
   isDrawerOpen: false,
-  queryActionButton: undefined,
 
   openAddQueryModal: () => {},
   closeAddQueryModal: () => {},
@@ -87,6 +78,26 @@ export function QueryLibraryContextProvider({ children }: PropsWithChildren) {
     setIsAddQueryModalOpen(false);
   }, []);
 
+  // We wrap the action button one time to add the closeDrawer behaviour. This way whoever injects the action button
+  // does not need to remember to do it nor the query table inside that renders it needs to know about the drawer.
+  const finalActionButton = useMemo(() => {
+    if (!queryActionButton) {
+      return queryActionButton;
+    }
+    return (props: QueryActionButtonProps) => {
+      const QButton = queryActionButton;
+      return (
+        <QButton
+          {...props}
+          onClick={() => {
+            props.onClick();
+            closeDrawer();
+          }}
+        />
+      );
+    };
+  }, [closeDrawer, queryActionButton]);
+
   return (
     <QueryLibraryContext.Provider
       value={{
@@ -95,12 +106,16 @@ export function QueryLibraryContextProvider({ children }: PropsWithChildren) {
         closeDrawer,
         openAddQueryModal,
         closeAddQueryModal,
-        queryActionButton,
       }}
     >
       {children}
-      <QueryLibraryDrawer close={closeDrawer} activeDatasources={activeDatasources} isOpen={isDrawerOpen} />
-      <AddToQueryLibraryModal isOpen={isAddQueryModalOpen} query={activeQuery} close={closeAddQueryModal} />
+      <QueryLibraryDrawer
+        isOpen={isDrawerOpen}
+        close={closeDrawer}
+        activeDatasources={activeDatasources}
+        queryActionButton={finalActionButton}
+      />
+      <AddToQueryLibraryModal isOpen={isAddQueryModalOpen} close={closeAddQueryModal} query={activeQuery} />
     </QueryLibraryContext.Provider>
   );
 }

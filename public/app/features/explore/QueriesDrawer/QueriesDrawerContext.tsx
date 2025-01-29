@@ -10,14 +10,14 @@ export enum Tabs {
   Settings = 'Settings',
 }
 
-type QueryLibraryContextType = {
+type RichHistoryContextType = {
   selectedTab: Tabs;
   setSelectedTab: (tab: Tabs) => void;
   drawerOpened: boolean;
   setDrawerOpened: (value: boolean) => void;
 };
 
-export const QueriesDrawerContext = createContext<QueryLibraryContextType>({
+export const QueriesDrawerContext = createContext<RichHistoryContextType>({
   selectedTab: Tabs.RichHistory,
   setSelectedTab: () => {},
   drawerOpened: false,

@@ -4,7 +4,7 @@ import { SortByFn } from 'react-table';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Column, InteractiveTable, useStyles2 } from '@grafana/ui';
 
-import { QueryActionButton, useQueryLibraryContext } from '../QueryLibraryContext';
+import { QueryActionButton } from '../types';
 
 import ActionsCell from './ActionsCell';
 import { AddedByCell } from './AddedByCell';
@@ -42,12 +42,11 @@ function createColumns(queryActionButton?: QueryActionButton): Array<Column<Quer
 
 type Props = {
   queryTemplateRows: QueryTemplateRow[];
+  queryActionButton?: QueryActionButton;
 };
 
-export default function QueryTemplatesTable({ queryTemplateRows }: Props) {
+export default function QueryTemplatesTable({ queryTemplateRows, queryActionButton }: Props) {
   const styles = useStyles2(getStyles);
-  const { queryActionButton } = useQueryLibraryContext();
-
   const columns = createColumns(queryActionButton);
 
   return (
