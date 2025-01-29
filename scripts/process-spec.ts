@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 interface OpenAPISpec {
   paths: Record<string, object>;
@@ -33,8 +33,13 @@ function processOpenAPISpec(spec: OpenAPISpec): OpenAPISpec {
 
       const operation = pathItem[method];
 
-      //@ts-expect-error
-      if ('operationId' in operation && operation.operationId.includes('ForAllNamespaces')) {
+      if (
+        typeof operation === 'object' &&
+        operation !== null &&
+        'operationId' in operation &&
+        //@ts-expect-error
+        operation.operationId.includes('ForAllNamespaces')
+      ) {
         continue;
       }
 

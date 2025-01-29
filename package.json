@@ -62,8 +62,8 @@
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "generate-icons": "nx run grafana-icons:generate",
-    "process-specs": "ts-node ./scripts/process-spec.ts",
-    "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
+    "process-specs": "npx tsx ./scripts/process-spec.ts",
+    "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v11-4/",
@@ -357,6 +357,7 @@
     "node-forge": "^1.3.1",
     "ol": "7.4.0",
     "ol-ext": "4.0.25",
+    "openapi-types": "^12.1.3",
     "pluralize": "^8.0.0",
     "prismjs": "1.29.0",
     "rc-slider": "11.1.8",
