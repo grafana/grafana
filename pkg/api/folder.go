@@ -412,6 +412,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		return dtos.Folder{
 			ID:            f.ID, // nolint:staticcheck
 			UID:           f.UID,
+			OrgID:         f.OrgID,
 			Title:         f.Title,
 			URL:           f.URL,
 			HasACL:        f.HasACL,
