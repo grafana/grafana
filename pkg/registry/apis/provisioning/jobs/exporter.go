@@ -115,13 +115,13 @@ func (r *exporter) Export(ctx context.Context,
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			logger.Error("failed to check if folder exists before writing", "error", err)
 			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
-		} else if err != nil { // ErrFileNotFound
-			err = r.repository.Create(ctx, p, ref, nil, "export of folder `"+p+"` in namespace "+ns)
-		} else {
+		} else if err == nil {
 			logger.Info("folder already exists")
+			return nil
 		}
 
-		if err != nil {
+		// ErrFileNotFound
+		if err := r.repository.Create(ctx, p, ref, nil, "export of folder `"+p+"` in namespace "+ns); err != nil {
 			logger.Error("failed to write a folder in repository", "error", err)
 			return fmt.Errorf("failed to write folder in repo: %w", err)
 		}

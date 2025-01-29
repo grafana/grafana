@@ -191,14 +191,14 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 
 	filePath, err := safepath.Join(r.path, filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("join path: %w", err)
 	}
 
 	info, err := os.Stat(filePath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrFileNotFound
 	} else if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("stat file: %w", err)
 	}
 
 	path := strings.TrimPrefix(filePath, safepath.Clean(r.path))
@@ -214,12 +214,12 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 	//nolint:gosec
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read file: %w", err)
 	}
 
 	hash, _, err := r.calculateFileHash(filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("calculate hash of file: %w", err)
 	}
 
 	return &FileInfo{
@@ -291,11 +291,13 @@ func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref 
 		return err
 	}
 
+	// before sanitizing, check if the path is a directory
+	isDir := strings.HasSuffix(sanitisedPath, "/")
 	inputUnsafePath := sanitisedPath // do NOT use in path operations, only for responses!
 
 	sanitisedPath, err := safepath.Join(r.path, sanitisedPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("join path: %w", err)
 	}
 
 	_, err = os.Stat(sanitisedPath)
@@ -306,7 +308,7 @@ func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref 
 		return apierrors.NewAlreadyExists(provisioning.RepositoryResourceInfo.GroupResource(), inputUnsafePath)
 	}
 
-	if strings.HasSuffix(sanitisedPath, "/") {
+	if isDir {
 		if data != nil {
 			return apierrors.NewBadRequest("data cannot be provided for a directory")
 		}
@@ -314,6 +316,8 @@ func (r *localRepository) Create(ctx context.Context, sanitisedPath string, ref 
 		if err := os.MkdirAll(sanitisedPath, 0700); err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to create path: %w", err))
 		}
+
+		return nil
 	}
 
 	if err := os.MkdirAll(path.Dir(sanitisedPath), 0700); err != nil {
@@ -330,7 +334,7 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 
 	path, err := safepath.Join(r.path, path)
 	if err != nil {
-		return err
+		return fmt.Errorf("join path: %w", err)
 	}
 
 	if strings.HasSuffix(path, "/") {
