@@ -478,7 +478,9 @@ func (r *Syncer) ensureFolderExists(ctx context.Context, folder resources.Folder
 		}
 
 		// Skip update if already present with right values
-		if existingInfo.Name == repoInfo.Name && existingInfo.Path == repoInfo.Path {
+		if existingInfo != nil &&
+			existingInfo.Name == repoInfo.Name &&
+			existingInfo.Path == repoInfo.Path {
 			return nil
 		}
 
