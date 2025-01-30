@@ -99,5 +99,5 @@ export const useFolderRepository = (folderUid?: string) => {
     return undefined;
   }
 
-  return items.find((repo) => repo.spec?.folder === folderUid);
+  return items.find((repo) => repo.metadata?.name === folderUid);
 };
