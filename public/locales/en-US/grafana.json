@@ -2430,7 +2430,8 @@
       "list-label": "Navigation",
       "open": "Open menu",
       "undock": "Undock menu"
-    }
+    },
+    "rss-button": "Latest from the blog"
   },
   "news": {
     "drawer": {
