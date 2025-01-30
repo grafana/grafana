@@ -472,7 +472,7 @@ async function addRepositoryData(data: FolderListItemDTO[] | FolderDTO): Promise
   }
 
   const enrichItem = <T extends FolderListItemDTO | FolderDTO>(item: T) => {
-    const repository = repositories.items?.find((repo) => repo.spec?.folder === item.uid);
+    const repository = repositories.items?.find((repo) => repo.metadata?.name === item.uid); // folder UID matches
     return repository ? { ...item, repository } : item;
   };
 
