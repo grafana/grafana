@@ -64,7 +64,7 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
-  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Resources;
+  const tab = queryParams['tab'] ?? TabSelection.Resources;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
