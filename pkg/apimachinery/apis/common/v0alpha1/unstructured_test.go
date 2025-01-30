@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestDeepCopyJSON(t *testing.T) {
@@ -17,10 +18,18 @@ func TestDeepCopyJSON(t *testing.T) {
 			"ref": &ObjectReference{
 				Resource: "x",
 			},
-			"string": map[string]any{
+			"array": []any{
+				int(1), int64(2), "hello",
+			},
+			"string": "hello",
+			"bool":   true,
+			"map": map[string]any{
 				"x": &ObjectReference{
 					Resource: "x",
 				},
+			},
+			"object": &v1.APIGroup{
+				Name: "HELLO",
 			},
 		},
 	}
