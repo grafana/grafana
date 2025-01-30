@@ -46,6 +46,7 @@ func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, ext
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (s *Service) Dispose() {
 	// Clean up datasource instance resources.
+	s.logger.Debug("Disposing the instance...")
 }
 
 func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendOptions ExtendOptions) datasource.InstanceFactoryFunc {
