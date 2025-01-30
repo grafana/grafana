@@ -662,7 +662,7 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	return team
 }
 
-// This function should be moved to oss (it is now a duplicate)
+// Compare the OpenAPI schema from one api against a cached snapshot
 func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
 	if gv.Group == "" {
 		return // skip invalid groups
