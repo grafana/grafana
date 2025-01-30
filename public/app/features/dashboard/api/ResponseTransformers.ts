@@ -5,6 +5,7 @@ import {
   DataQuery,
   DataSourceRef,
   Panel,
+  RowPanel,
   VariableModel,
   VariableType,
   FieldConfigSource as FieldConfigSourceV1,
@@ -34,6 +35,10 @@ import {
   IntervalVariableKind,
   TextVariableKind,
   GroupByVariableKind,
+  LibraryPanelKind,
+  PanelKind,
+  GridLayoutRowKind,
+  GridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
@@ -47,6 +52,7 @@ import {
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
+import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
@@ -268,8 +274,9 @@ export const ResponseTransformers = {
   ensureV1Response,
 };
 
-// TODO[schema v2]: handle rows
-function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
+function getElementsFromPanels(
+  panels: Array<Panel | RowPanel>
+): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
   const elements: DashboardV2Spec['elements'] = {};
   const layout: DashboardV2Spec['layout'] = {
     kind: 'GridLayout',
@@ -282,92 +289,154 @@ function getElementsFromPanels(panels: Panel[]): [DashboardV2Spec['elements'], D
     return [elements, layout];
   }
 
+  let currentRow: GridLayoutRowKind | null = null;
+
   // iterate over panels
   for (const p of panels) {
-    const elementName = p.id!.toString();
-
-    // LibraryPanelKind
-    if (p.libraryPanel) {
-      elements[elementName] = {
-        kind: 'LibraryPanel',
-        spec: {
-          libraryPanel: {
-            uid: p.libraryPanel.uid,
-            name: p.libraryPanel.name,
-          },
-          id: p.id!,
-          title: p.title ?? '',
-        },
-      };
-      // PanelKind
-    } else {
-      // FIXME: for now we should skip row panels
-      if (p.type === 'row') {
-        continue;
+    if (isRowPanel(p)) {
+      if (currentRow) {
+        // Flush current row to layout before we create a new one
+        layout.spec.items.push(currentRow);
       }
 
-      const queries = getPanelQueries(
-        (p.targets as unknown as DataQuery[]) || [],
-        p.datasource || getDefaultDatasource()
-      );
-      const transformations = getPanelTransformations(p.transformations || []);
+      const rowElements = [];
 
-      elements[elementName] = {
-        kind: 'Panel',
-        spec: {
-          title: p.title || '',
-          description: p.description || '',
-          vizConfig: {
-            kind: p.type,
-            spec: {
-              fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-              options: p.options as any,
-              pluginVersion: p.pluginVersion!,
-            },
-          },
-          links:
-            p.links?.map<DataLink>((l) => ({
-              title: l.title,
-              url: l.url || '',
-              targetBlank: l.targetBlank,
-            })) || [],
-          id: p.id!,
-          data: {
-            kind: 'QueryGroup',
-            spec: {
-              queries,
-              transformations, // TODO[schema v2]: handle transformations
-              queryOptions: {
-                cacheTimeout: p.cacheTimeout,
-                maxDataPoints: p.maxDataPoints,
-                interval: p.interval,
-                hideTimeOverride: p.hideTimeOverride,
-                queryCachingTTL: p.queryCachingTTL,
-                timeFrom: p.timeFrom,
-                timeShift: p.timeShift,
-              },
-            },
-          },
-        },
-      };
+      for (const panel of p.panels) {
+        const [element, name] = buildElement(panel);
+        elements[name] = element;
+        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, p.gridPos!.y)));
+      }
+
+      currentRow = buildRowKind(p, rowElements);
+    } else {
+      const [element, elementName] = buildElement(p);
+
+      elements[elementName] = element;
+
+      if (currentRow) {
+        // Collect panels to current layout row
+        currentRow.spec.elements.push(buildGridItemKind(p, elementName, yOffsetInRows(p, currentRow.spec.y)));
+      } else {
+        layout.spec.items.push(buildGridItemKind(p, elementName));
+      }
     }
+  }
 
-    layout.spec.items.push({
-      kind: 'GridLayoutItem',
-      spec: {
-        x: p.gridPos!.x,
-        y: p.gridPos!.y,
-        width: p.gridPos!.w,
-        height: p.gridPos!.h,
-        element: {
-          kind: 'ElementReference',
-          name: elementName,
-        },
-      },
-    });
+  if (currentRow) {
+    // Flush last row to layout
+    layout.spec.items.push(currentRow);
   }
 
   return [elements, layout];
+}
+
+function isRowPanel(panel: Panel | RowPanel): panel is RowPanel {
+  return panel.type === 'row';
+}
+
+function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): GridLayoutRowKind {
+  return {
+    kind: 'GridLayoutRow',
+    spec: {
+      collapsed: p.collapsed,
+      title: p.title ?? '',
+      repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
+      y: p.gridPos?.y ?? 0,
+      elements,
+    },
+  };
+}
+
+function buildGridItemKind(p: Panel, elementName: string, yOverride?: number): GridLayoutItemKind {
+  return {
+    kind: 'GridLayoutItem',
+    spec: {
+      x: p.gridPos!.x,
+      y: yOverride ?? p.gridPos!.y,
+      width: p.gridPos!.w,
+      height: p.gridPos!.h,
+      repeat: p.repeat
+        ? { value: p.repeat, mode: 'variable', direction: p.repeatDirection, maxPerRow: p.maxPerRow }
+        : undefined,
+      element: {
+        kind: 'ElementReference',
+        name: elementName!,
+      },
+    },
+  };
+}
+
+function yOffsetInRows(p: Panel, rowY: number): number {
+  return p.gridPos!.y - rowY - GRID_ROW_HEIGHT;
+}
+
+function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
+  if (p.libraryPanel) {
+    // LibraryPanelKind
+    const panelKind: LibraryPanelKind = {
+      kind: 'LibraryPanel',
+      spec: {
+        libraryPanel: {
+          uid: p.libraryPanel.uid,
+          name: p.libraryPanel.name,
+        },
+        id: p.id!,
+        title: p.title ?? '',
+      },
+    };
+
+    return [panelKind, p.id!.toString()];
+  } else {
+    // PanelKind
+
+    const queries = getPanelQueries(
+      (p.targets as unknown as DataQuery[]) || [],
+      p.datasource || getDefaultDatasource()
+    );
+
+    const transformations = getPanelTransformations(p.transformations || []);
+
+    const panelKind: PanelKind = {
+      kind: 'Panel',
+      spec: {
+        title: p.title || '',
+        description: p.description || '',
+        vizConfig: {
+          kind: p.type,
+          spec: {
+            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+            options: p.options as any,
+            pluginVersion: p.pluginVersion!,
+          },
+        },
+        links:
+          p.links?.map<DataLink>((l) => ({
+            title: l.title,
+            url: l.url || '',
+            targetBlank: l.targetBlank,
+          })) || [],
+        id: p.id!,
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries,
+            transformations,
+            queryOptions: {
+              cacheTimeout: p.cacheTimeout,
+              maxDataPoints: p.maxDataPoints,
+              interval: p.interval,
+              hideTimeOverride: p.hideTimeOverride,
+              queryCachingTTL: p.queryCachingTTL,
+              timeFrom: p.timeFrom,
+              timeShift: p.timeShift,
+            },
+          },
+        },
+      },
+    };
+
+    return [panelKind, p.id!.toString()];
+  }
 }
 
 function getDefaultDatasourceType() {
@@ -778,72 +847,130 @@ function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): Annotati
   });
 }
 
-interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos'> {}
+interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos' | 'type'> {}
 
 function getPanelsV1(
   panels: DashboardV2Spec['elements'],
   layout: DashboardV2Spec['layout']
 ): Array<Panel | LibraryPanelDTO> {
-  return Object.entries(panels).map(([key, p]) => {
-    const layoutElement = layout.spec.items.find(
-      (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === key
-    );
-    const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
-    const gridPos = { x, y, w: width, h: height };
-    if (p.kind === 'Panel') {
-      const panel = p.spec;
-      return {
-        id: panel.id,
-        type: panel.vizConfig.kind,
-        title: panel.title,
-        description: panel.description,
-        fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
-        options: panel.vizConfig.spec.options,
-        pluginVersion: panel.vizConfig.spec.pluginVersion,
-        links:
-          // @ts-expect-error - Panel link is wrongly typed as DashboardLink
-          panel.links?.map<DashboardLink>((l) => ({
-            title: l.title,
-            url: l.url,
-            ...(l.targetBlank && { targetBlank: l.targetBlank }),
-          })) || [],
-        targets: panel.data.spec.queries.map((q) => {
-          return {
-            refId: q.spec.refId,
-            hide: q.spec.hidden,
-            datasource: q.spec.datasource,
-            ...q.spec.query.spec,
-          };
-        }),
-        transformations: panel.data.spec.transformations.map((t) => t.spec),
-        gridPos,
-        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-        maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
-        interval: panel.data.spec.queryOptions.interval,
-        hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
-        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-        timeFrom: panel.data.spec.queryOptions.timeFrom,
-        timeShift: panel.data.spec.queryOptions.timeShift,
-        transparent: panel.transparent,
-        ...(repeat?.value && { repeat: repeat.value }),
-        ...(repeat?.direction && { repeatDirection: repeat.direction }),
-        ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
-      };
-    } else if (p.kind === 'LibraryPanel') {
-      const panel = p.spec;
-      return {
-        id: panel.id,
-        title: panel.title,
-        gridPos,
-        libraryPanel: {
-          uid: panel.libraryPanel.uid,
-          name: panel.libraryPanel.name,
+  const panelsV1: Array<Panel | LibraryPanelDTO | RowPanel> = [];
+
+  let maxPanelId = 0;
+
+  for (const item of layout.spec.items) {
+    if (item.kind === 'GridLayoutItem') {
+      const panel = panels[item.spec.element.name];
+      const v1Panel = transformV2PanelToV1Panel(panel, item);
+      panelsV1.push(v1Panel);
+      if (v1Panel.id ?? 0 > maxPanelId) {
+        maxPanelId = v1Panel.id ?? 0;
+      }
+    } else if (item.kind === 'GridLayoutRow') {
+      const row: RowPanel = {
+        id: -1, // Temporarily set to -1, updated later to be unique
+        type: 'row',
+        title: item.spec.title,
+        collapsed: item.spec.collapsed,
+        repeat: item.spec.repeat ? item.spec.repeat.value : undefined,
+        gridPos: {
+          x: 0,
+          y: item.spec.y,
+          w: 24,
+          h: GRID_ROW_HEIGHT,
         },
+        panels: [],
       };
-    } else {
-      throw new Error(`Unknown element kind: ${p}`);
+
+      const rowPanels = [];
+      for (const panel of item.spec.elements) {
+        const panelElement = panels[panel.spec.element.name];
+        const v1Panel = transformV2PanelToV1Panel(panelElement, panel, item.spec.y + GRID_ROW_HEIGHT + panel.spec.y);
+        rowPanels.push(v1Panel);
+        if (v1Panel.id ?? 0 > maxPanelId) {
+          maxPanelId = v1Panel.id ?? 0;
+        }
+      }
+      if (item.spec.collapsed) {
+        // When a row is collapsed, panels inside it are stored in the panels property.
+        row.panels = rowPanels;
+        panelsV1.push(row);
+      } else {
+        panelsV1.push(row);
+        panelsV1.push(...rowPanels);
+      }
     }
-  });
+  }
+
+  // Update row panel ids to be unique
+  for (const panel of panelsV1) {
+    if (panel.type === 'row' && panel.id === -1) {
+      panel.id = ++maxPanelId;
+    }
+  }
+  return panelsV1;
+}
+
+function transformV2PanelToV1Panel(
+  p: PanelKind | LibraryPanelKind,
+  layoutElement: GridLayoutItemKind,
+  yOverride?: number
+): Panel | LibraryPanelDTO {
+  const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
+  const gridPos = { x, y: yOverride ?? y, w: width, h: height };
+  if (p.kind === 'Panel') {
+    const panel = p.spec;
+    return {
+      id: panel.id,
+      type: panel.vizConfig.kind,
+      title: panel.title,
+      description: panel.description,
+      fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
+      options: panel.vizConfig.spec.options,
+      pluginVersion: panel.vizConfig.spec.pluginVersion,
+      links:
+        // @ts-expect-error - Panel link is wrongly typed as DashboardLink
+        panel.links?.map<DashboardLink>((l) => ({
+          title: l.title,
+          url: l.url,
+          ...(l.targetBlank && { targetBlank: l.targetBlank }),
+        })) || [],
+      targets: panel.data.spec.queries.map((q) => {
+        return {
+          refId: q.spec.refId,
+          hide: q.spec.hidden,
+          datasource: q.spec.datasource,
+          ...q.spec.query.spec,
+        };
+      }),
+      transformations: panel.data.spec.transformations.map((t) => t.spec),
+      gridPos,
+      cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+      maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
+      interval: panel.data.spec.queryOptions.interval,
+      hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
+      queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+      timeFrom: panel.data.spec.queryOptions.timeFrom,
+      timeShift: panel.data.spec.queryOptions.timeShift,
+      transparent: panel.transparent,
+      ...(repeat?.value && { repeat: repeat.value }),
+      ...(repeat?.direction && { repeatDirection: repeat.direction }),
+      ...(repeat?.maxPerRow && { maxPerRow: repeat.maxPerRow }),
+    };
+  } else if (p.kind === 'LibraryPanel') {
+    const panel = p.spec;
+    return {
+      id: panel.id,
+      title: panel.title,
+      gridPos,
+      libraryPanel: {
+        uid: panel.libraryPanel.uid,
+        name: panel.libraryPanel.name,
+      },
+      type: 'library-panel-ref',
+    };
+  } else {
+    throw new Error(`Unknown element kind: ${p}`);
+  }
 }
 
 export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {

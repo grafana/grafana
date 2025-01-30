@@ -16,6 +16,7 @@ import {
   SceneDataTransformer,
   SceneGridItemLike,
   SceneGridLayout,
+  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   SceneRefreshPicker,
@@ -44,6 +45,7 @@ import {
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
+  GridLayoutItemSpec,
   GroupByVariableKind,
   IntervalVariableKind,
   LibraryPanelKind,
@@ -79,13 +81,16 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { GRID_ROW_HEIGHT } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -228,6 +233,22 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   return dashboardScene;
 }
 
+function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride?: number): DashboardGridItem {
+  const vizPanel = buildVizPanel(panel);
+  return new DashboardGridItem({
+    key: `grid-item-${panel.spec.id}`,
+    x: gridItem.x,
+    y: yOverride ?? gridItem.y,
+    width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
+    height: gridItem.height,
+    itemHeight: gridItem.height,
+    body: vizPanel,
+    variableName: gridItem.repeat?.value,
+    repeatDirection: gridItem.repeat?.direction,
+    maxPerRow: gridItem.repeat?.maxPerRow,
+  });
+}
+
 function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridItemLike[] {
   const gridElements = dashboard.layout.spec.items;
 
@@ -240,20 +261,7 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       }
 
       if (panel.kind === 'Panel') {
-        const vizPanel = buildVizPanel(panel);
-
-        return new DashboardGridItem({
-          key: `grid-item-${panel.spec.id}`,
-          x: element.spec.x,
-          y: element.spec.y,
-          width: element.spec.repeat?.direction === 'h' ? 24 : element.spec.width,
-          height: element.spec.height,
-          itemHeight: element.spec.height,
-          body: vizPanel,
-          variableName: element.spec.repeat?.value,
-          repeatDirection: element.spec.repeat?.direction,
-          maxPerRow: element.spec.repeat?.maxPerRow,
-        });
+        return buildGridItem(element.spec, panel);
       } else if (panel.kind === 'LibraryPanel') {
         const libraryPanel = buildLibraryPanel(panel);
 
@@ -269,7 +277,30 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       } else {
         throw new Error(`Unknown element kind: ${element.kind}`);
       }
+    } else if (element.kind === 'GridLayoutRow') {
+      const children = element.spec.elements.map((gridElement) => {
+        const panel = dashboard.elements[gridElement.spec.element.name];
+        if (panel.kind === 'Panel') {
+          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
+        } else {
+          throw new Error(`Unknown element kind: ${gridElement.kind}`);
+        }
+      });
+      let behaviors: SceneObject[] | undefined;
+      if (element.spec.repeat) {
+        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat.value })];
+      }
+      return new SceneGridRow({
+        y: element.spec.y,
+        isCollapsed: element.spec.collapsed,
+        title: element.spec.title,
+        $behaviors: behaviors,
+        actions: new RowActions({}),
+        children,
+      });
     } else {
+      // If this has been validated by the schema we should never reach this point, which is why TS is telling us this is an error.
+      //@ts-expect-error
       throw new Error(`Unknown layout element kind: ${element.kind}`);
     }
   });
