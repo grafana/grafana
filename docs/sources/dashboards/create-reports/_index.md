@@ -19,6 +19,11 @@ title: Create and manage reports
 description: Generate and share PDF reports from your Grafana dashboards
 weight: 600
 refs:
+  change-ui-theme:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/#change-grafana-ui-theme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/#change-grafana-ui-theme
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
@@ -91,16 +96,14 @@ For Grafana Enterprise, using the Reporting feature has the following requiremen
 
 ### Rendering configuration
 
-
-
-By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
+By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email.
+You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
 
 These options are available in the [reporting configuration](ref:reporting-configuration) of the `ini` file for Enterprise Grafana.
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.
 You can configure how long a file should be stored before being removed by configuring the [`temp_data_lifetime`](ref:temp-data-lifetime) setting.
-
 
 ## Access control
 
@@ -112,7 +115,9 @@ Refer to specific guides to understand what permissions are required.
 
 ## Create a report
 
-The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page. You can also save the report as a draft at any step in the process:
+The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page.
+
+You can also save the report as a draft at any step in the process:
 
 ![Reporting wizard](/media/docs/grafana/dashboards/screenshot-reporting-wizard-v11.5.png)
 
@@ -341,5 +346,5 @@ Refer to the [log filters configuration documentation](ref:log-filters) for more
 
 ```bash
 [log]
-filters = report:debug
+filters = rendering:debug,report.api:debug,report.render:debug,report.scheduler:debug,report.sender:debug,report.service:debug
 ```
