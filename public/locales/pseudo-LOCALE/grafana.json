@@ -1077,6 +1077,12 @@
       "angular-deprecation-description": "Åŉģūľäř päŉęľş őpŧįőŉş čäŉ őŉľy þę ęđįŧęđ ūşįŉģ ŧĥę ĴŜØŃ ęđįŧőř.",
       "angular-deprecation-heading": "Päŉęľ őpŧįőŉş"
     },
+    "panel-queries": {
+      "add-query-from-library": "Åđđ qūęřy ƒřőm ľįþřäřy"
+    },
+    "query-library": {
+      "add-query-button": "Åđđ qūęřy"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1188,6 +1194,7 @@
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",
       "datasource-z-a": "Đäŧä şőūřčę Ż-Å",
+      "library-history-dropdown": "Øpęŉ qūęřy ľįþřäřy őř qūęřy ĥįşŧőřy",
       "newest-first": "Ńęŵęşŧ ƒįřşŧ",
       "oldest-first": "Øľđęşŧ ƒįřşŧ",
       "query-history": "Qūęřy ĥįşŧőřy",
@@ -2796,7 +2803,7 @@
   "query-library": {
     "datasource-names": "Đäŧäşőūřčę ŉämę(ş):",
     "delete-query-button": "Đęľęŧę qūęřy",
-    "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ qūęřy ŧęmpľäŧę ƒřőm ŧĥę ľįþřäřy: {{error}}",
+    "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ľőäđ qūęřy ŧęmpľäŧę męŧäđäŧä: {{error}}",
     "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ",
     "user-info-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ ūşęř įŉƒő ƒřőm ŧĥę ľįþřäřy: {{error}}",
     "user-names": "Ůşęř ŉämę(ş):"
@@ -2811,6 +2818,7 @@
       "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
       "save-to-query-library": "Ŝävę ŧő qūęřy ľįþřäřy",
+      "save-to-query-library-new": "Ńęŵ: Ŝävę ŧő qūęřy ľįþřäřy",
       "show-response": "Ŝĥőŵ řęşpőŉşę",
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },
