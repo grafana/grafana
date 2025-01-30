@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -344,6 +345,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
+	}
+
+	if len(searchRequest.SortBy) == 0 {
+		// default sort by resource descending ( folders then dashboards ) then title
+		sort.Slice(parsedResults.Hits, func(i, j int) bool {
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
+				(parsedResults.Hits[i].Resource == parsedResults.Hits[j].Resource && strings.ToLower(parsedResults.Hits[i].Title) < strings.ToLower(parsedResults.Hits[j].Title))
+		})
 	}
 
 	s.write(w, parsedResults)
