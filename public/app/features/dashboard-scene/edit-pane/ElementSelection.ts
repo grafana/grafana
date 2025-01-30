@@ -14,21 +14,29 @@ import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsE
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 
 export class ElementSelection {
-  public selectedObjects?: Map<string, SceneObjectRef<SceneObject>>;
+  private selectedObjects?: Map<string, SceneObjectRef<SceneObject>>;
+  private sameType?: boolean;
 
-  private isMultiSelection: boolean;
-  private sameType: boolean;
+  private _isMultiSelection: boolean;
 
   constructor(values: Array<[string, SceneObjectRef<SceneObject>]>) {
     this.selectedObjects = new Map(values);
-    this.isMultiSelection = values.length > 1;
-    this.sameType = this.isMultiSelection && this.checkSameType();
+    this._isMultiSelection = values.length > 1;
+
+    if (this.isMultiSelection) {
+      this.sameType = this.checkSameType();
+    }
   }
 
   private checkSameType() {
-    let firstType = this.selectedObjects?.values().next().value?.resolve()?.constructor.name;
+    const values = this.selectedObjects?.values();
+    const firstType = values?.next().value?.resolve()?.constructor.name;
 
-    for (let obj of this.selectedObjects?.values() ?? []) {
+    if (!firstType) {
+      return false;
+    }
+
+    for (let obj of values ?? []) {
       if (obj.resolve()?.constructor.name !== firstType) {
         return false;
       }
@@ -42,11 +50,19 @@ export class ElementSelection {
       return this.getSceneObjects();
     }
 
-    return this.selectedObjects?.values().next().value?.resolve();
+    return this.getFirstObject();
+  }
+
+  public getSelectionEntries(): Array<[string, SceneObjectRef<SceneObject>]> {
+    return Array.from(this.selectedObjects?.entries() ?? []);
   }
 
   public getFirstObject(): SceneObject | undefined {
     return this.selectedObjects?.values().next().value?.resolve();
+  }
+
+  public get isMultiSelection(): boolean {
+    return this._isMultiSelection;
   }
 
   private getSceneObjects(): SceneObject[] {

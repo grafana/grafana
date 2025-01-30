@@ -65,7 +65,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     let selectionArray: Array<[string, SceneObjectRef<SceneObject>]> = [[id, ref]];
 
     if (multi) {
-      selectionArray = [[id, ref], ...(this.state.selection?.selectedObjects?.entries() ?? [])];
+      selectionArray = [[id, ref], ...(this.state.selection?.getSelectionEntries() ?? [])];
       selected = [{ id }, ...this.state.selectionContext.selected];
     }
 
