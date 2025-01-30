@@ -23,6 +23,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -1248,16 +1249,31 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		}
 
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
+		// Create a small runtime cache for folders to avoid extra calls to the folder service
+		foldersMap := make(map[string]*folder.Folder)
 		for i, hit := range response.Hits {
+			f, ok := foldersMap[hit.Folder]
+			if !ok {
+				f, err = dr.folderService.Get(ctx, &folder.GetFolderQuery{
+					UID:          &hit.Folder,
+					OrgID:        query.OrgId,
+					SignedInUser: query.SignedInUser,
+				})
+				if err != nil {
+					return nil, err
+				}
+				foldersMap[hit.Folder] = f
+			}
 			finalResults[i] = dashboards.DashboardSearchProjection{
-				ID:        hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
-				UID:       hit.Name,
-				OrgID:     query.OrgId,
-				Title:     hit.Title,
-				Slug:      slugify.Slugify(hit.Title),
-				IsFolder:  false,
-				FolderUID: hit.Folder,
-				Tags:      hit.Tags,
+				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+				UID:         hit.Name,
+				OrgID:       query.OrgId,
+				Title:       hit.Title,
+				Slug:        slugify.Slugify(hit.Title),
+				IsFolder:    false,
+				FolderUID:   hit.Folder,
+				FolderTitle: f.Title,
+				Tags:        hit.Tags,
 			}
 		}
 
@@ -1683,17 +1699,11 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Options.Fields = append(request.Options.Fields, req...)
 	}
 
-	// note: this does not allow for partial matching
-	//
-	// partial matching will be allowed through the api layer for the frontend,
-	// but is currently not needed by other services in the backend
 	if query.Title != "" {
-		req := []*resource.Requirement{{
-			Key:      resource.SEARCH_FIELD_TITLE_SORT, // use title sort to prevent issues with `-` in the title & how bleve searches
-			Operator: string(selection.In),
-			Values:   []string{strings.ToLower(query.Title)},
-		}}
-		request.Options.Fields = append(request.Options.Fields, req...)
+		// allow wildcard search
+		request.Query = "*" + strings.ToLower(query.Title) + "*"
+		// if using query, you need to specify the fields you want
+		request.Fields = dashboardsearch.IncludeFields
 	}
 
 	if len(query.Tags) > 0 {

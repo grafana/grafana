@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Checkbox } from '../Forms/Checkbox';
+import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
@@ -46,6 +47,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     disabled,
     minWidth,
     maxWidth,
+    isClearable,
     createCustomValue = false,
   } = props;
 
@@ -99,7 +101,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     [selectedItems]
   );
 
-  const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem } =
+  const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
       selectedItems, // initally selected items,
       onStateChange: ({ type, selectedItems: newSelectedItems }) => {
@@ -110,6 +112,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
           case useMultipleSelection.stateChangeTypes.FunctionAddSelectedItem:
           case useMultipleSelection.stateChangeTypes.FunctionSetSelectedItems:
+          case useMultipleSelection.stateChangeTypes.FunctionReset:
             // Unclear why newSelectedItems would be undefined, but this seems logical
             onChange(newSelectedItems ?? []);
             break;
@@ -238,7 +241,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
-  const multiStyles = useStyles2(getMultiComboboxStyles, isOpen, invalid, disabled, width, minWidth, maxWidth);
+  const multiStyles = useStyles2(
+    getMultiComboboxStyles,
+    isOpen,
+    invalid,
+    disabled,
+    width,
+    minWidth,
+    maxWidth,
+    isClearable
+  );
 
   const virtualizerOptions = {
     count: options.length,
@@ -294,7 +306,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               getDropdownProps({
                 disabled,
                 preventKeyAction: isOpen,
-                placeholder,
+                placeholder: visibleItems.length === 0 ? placeholder : '',
                 ref: inputRef,
                 style: { width: inputWidth },
               })
@@ -302,6 +314,24 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           />
 
           <div className={multiStyles.suffix} ref={suffixMeasureRef} {...getToggleButtonProps()}>
+            {isClearable && selectedItems.length > 0 && (
+              <Icon
+                name="times"
+                className={styles.clear}
+                title={t('multicombobox.clear.title', 'Clear all')}
+                tabIndex={0}
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  reset();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    reset();
+                  }
+                }}
+              />
+            )}
             <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
           </div>
         </span>

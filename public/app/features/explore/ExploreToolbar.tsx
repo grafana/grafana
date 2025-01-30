@@ -5,7 +5,7 @@ import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -91,7 +91,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
-  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
+  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
@@ -206,7 +206,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
 
   const navBarActions = [<ShortLinkButtonMenu key="share" />];
 
-  if (queryLibraryAvailable) {
+  if (config.featureToggles.queryLibrary) {
     navBarActions.unshift(<QueriesDrawerDropdown key="queryLibrary" variant="full" />);
   } else {
     navBarActions.unshift(

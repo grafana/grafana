@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Validate } from 'react-hook-form';
 
+import { getAPINamespace } from '../../../../../api/utils';
 import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { templatesApi } from '../../api/templateApi';
@@ -16,7 +17,7 @@ import {
   updateNotificationTemplateAction,
 } from '../../reducers/alertmanager/notificationTemplates';
 import { K8sAnnotations, PROVENANCE_NONE } from '../../utils/k8s/constants';
-import { getAnnotation, getK8sNamespace, shouldUseK8sApi } from '../../utils/k8s/utils';
+import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 
@@ -46,7 +47,7 @@ export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs)
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
   const k8sApiTemplatesRequestState = useListNamespacedTemplateGroupQuery(
-    { namespace: getK8sNamespace() },
+    { namespace: getAPINamespace() },
     {
       skip: !k8sApiSupported,
       selectFromResult: (state) => ({
@@ -131,7 +132,7 @@ export function useGetNotificationTemplate({ alertmanager, uid }: GetTemplatePar
   // What are pros and cons of each?
   useEffect(() => {
     if (k8sApiSupported) {
-      fetchTemplate({ namespace: getK8sNamespace(), name: uid });
+      fetchTemplate({ namespace: getAPINamespace(), name: uid });
     } else {
       fetchAmConfig(alertmanager);
     }
@@ -164,7 +165,7 @@ export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanager
     const content = ensureDefine(templateValues.title, templateValues.content);
 
     return createNamespacedTemplateGroup({
-      namespace: getK8sNamespace(),
+      namespace: getAPINamespace(),
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
         spec: { title: templateValues.title, content },
         metadata: {},
@@ -195,7 +196,7 @@ export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanager
     const content = ensureDefine(patch.title, patch.content);
 
     return replaceNamespacedTemplateGroup({
-      namespace: getK8sNamespace(),
+      namespace: getAPINamespace(),
       name: template.uid,
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
         spec: { title: patch.title, content },
@@ -218,7 +219,7 @@ export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanager
 
   const deleteUsingK8sApi = useAsync(({ uid }: { uid: string }) => {
     return deleteNamespacedTemplateGroup({
-      namespace: getK8sNamespace(),
+      namespace: getAPINamespace(),
       name: uid,
       ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
     }).unwrap();

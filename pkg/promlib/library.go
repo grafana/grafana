@@ -41,6 +41,14 @@ func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, ext
 	}
 }
 
+// Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
+// created. As soon as datasource settings change detected by SDK old datasource instance will
+// be disposed and a new one will be created using NewSampleDatasource factory function.
+func (s *Service) Dispose() {
+	// Clean up datasource instance resources.
+	s.logger.Debug("Disposing the instance...")
+}
+
 func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Logger, extendOptions ExtendOptions) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.

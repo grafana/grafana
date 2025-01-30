@@ -143,11 +143,6 @@ func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 	delete(oas.Paths.Paths, root+templategroup.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+routingtree.ResourceInfo.GroupResource().Resource)
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }
 
