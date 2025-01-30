@@ -1,5 +1,5 @@
 const CLONE_KEY = '-clone-';
-const CLONE_SEPARATOR = '|';
+const CLONE_SEPARATOR = '/';
 
 const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}[1-9]+$`);
 const ORIGINAL_REGEX = new RegExp(`${CLONE_KEY}\\d+$`);
