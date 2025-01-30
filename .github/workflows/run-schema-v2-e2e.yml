@@ -14,7 +14,7 @@ env:
   ARCH: linux-amd64
 
 jobs:
-  dashboard-scenes-e2e:
+  dashboard-schema-v2-e2e:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
