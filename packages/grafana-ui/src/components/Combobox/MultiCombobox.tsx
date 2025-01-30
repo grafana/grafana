@@ -72,6 +72,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [baseOptions, enableAllOption, allOptionItem]);
   const loading = props.loading || asyncLoading;
 
+  const cleanInput = () => {
+    const lastOption = options[options.length - 1];
+    const lastOptionDescription = lastOption && lastOption.description;
+    if (lastOptionDescription && lastOptionDescription === 'Custom') {
+      setInputValue('');
+    }
+  };
+
   const selectedItems = useMemo(() => {
     if (!value) {
       return [];
@@ -210,14 +218,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               const filteredSet = new Set(realOptions.map((item) => item.value));
               newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
             }
-
             setSelectedItems(newSelectedItems);
           } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
             removeSelectedItem(newSelectedItem);
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
+            cleanInput();
           }
-
           break;
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
