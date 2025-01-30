@@ -49,42 +49,36 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome, layout]);
 
+  // PR TODO: I removed:
+  // - `divId="page-scrollbar"` which is apparently used by the image renderer to scroll through the dashboard
+  // - NativeScrollbar which is used for a page scroll api
+  // - Canvas page background
+
+  if (layout === PageLayoutType.Custom) {
+    return (
+      <div className={cx(styles.wrapper, className)} {...otherProps}>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
-      {layout === PageLayoutType.Standard && (
-        <NativeScrollbar
-          // This id is used by the image renderer to scroll through the dashboard
-          divId="page-scrollbar"
-          onSetScrollRef={onSetScrollRef}
-        >
-          <div className={styles.pageInner}>
-            {pageHeaderNav && (
-              <PageHeader
-                actions={actions}
-                onEditTitle={onEditTitle}
-                navItem={pageHeaderNav}
-                renderTitle={renderTitle}
-                info={info}
-                subTitle={subTitle}
-              />
-            )}
-            {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-            <div className={styles.pageContent}>{children}</div>
-          </div>
-        </NativeScrollbar>
+      {pageHeaderNav && (
+        <PageHeader
+          actions={actions}
+          onEditTitle={onEditTitle}
+          navItem={pageHeaderNav}
+          renderTitle={renderTitle}
+          info={info}
+          subTitle={subTitle}
+        />
       )}
 
-      {layout === PageLayoutType.Canvas && (
-        <NativeScrollbar
-          // This id is used by the image renderer to scroll through the dashboard
-          divId="page-scrollbar"
-          onSetScrollRef={onSetScrollRef}
-        >
-          <div className={styles.canvasContent}>{children}</div>
-        </NativeScrollbar>
-      )}
+      {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
 
-      {layout === PageLayoutType.Custom && children}
+      {/* PR TODO: will probably put a .pageContent div around this */}
+      {children}
     </div>
   );
 };
@@ -94,40 +88,19 @@ Page.Contents = PageContents;
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
-      label: 'page-wrapper',
+      label: 'Page-wrapper',
       display: 'flex',
       flex: '1 1 0',
       flexDirection: 'column',
       position: 'relative',
-    }),
-    pageContent: css({
-      label: 'page-content',
-      flexGrow: 1,
-    }),
-    primaryBg: css({
+
+      // originally from pageInner
       background: theme.colors.background.primary,
-    }),
-    pageInner: css({
-      label: 'page-inner',
       padding: theme.spacing(2),
-      borderBottom: 'none',
-      background: theme.colors.background.primary,
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      margin: theme.spacing(0, 0, 0, 0),
 
       [theme.breakpoints.up('md')]: {
         padding: theme.spacing(4),
       },
-    }),
-    canvasContent: css({
-      label: 'canvas-content',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: theme.spacing(2),
-      flexBasis: '100%',
-      flexGrow: 1,
     }),
   };
 };

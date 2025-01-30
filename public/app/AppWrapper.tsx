@@ -118,15 +118,13 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <div className="grafana-app">
-                          {config.featureToggles.appSidecar ? (
-                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                          ) : (
-                            <RouterWrapper {...routerWrapperProps} />
-                          )}
-                          <LiveConnectionWarning />
-                          <PortalContainer />
-                        </div>
+                        {config.featureToggles.appSidecar ? (
+                          <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                        ) : (
+                          <RouterWrapper {...routerWrapperProps} />
+                        )}
+                        <LiveConnectionWarning />
+                        <PortalContainer />
                       </ExtensionRegistriesProvider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>

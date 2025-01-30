@@ -7,26 +7,8 @@ export function getPageStyles(theme: GrafanaTheme2) {
     theme.breakpoints.values.xxl + theme.spacing.gridSize * 2 + theme.components.sidemenu.width;
 
   return css({
-    '.grafana-app': {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-    },
-
     '.main-view': {
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
       position: 'relative',
-      minWidth: 0,
-    },
-
-    '.page-scrollbar-content': {
-      display: 'flex',
-      minHeight: '100%',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
     },
 
     '.page-container': {
