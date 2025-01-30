@@ -11,6 +11,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -28,6 +29,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -66,7 +68,8 @@ type APIBuilder struct {
 	identities        auth.BackgroundIdentityService
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
-	lister            resources.ResourceLister
+	resourceLister    resources.ResourceLister
+	repositoryLister  listers.RepositoryLister
 }
 
 // NewAPIBuilder creates an API builder.
@@ -96,10 +99,10 @@ func NewAPIBuilder(
 		parsers: &resources.ParserFactory{
 			Client: clientFactory,
 		},
-		render:    render,
-		lister:    resources.NewResourceLister(index),
-		blobstore: blobstore,
-		jobs:      jobs.NewJobQueue(50), // in memory for now
+		render:         render,
+		resourceLister: resources.NewResourceLister(index),
+		blobstore:      blobstore,
+		jobs:           jobs.NewJobQueue(50), // in memory for now
 	}
 }
 
@@ -203,7 +206,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
-		lister: b.lister,
+		lister: b.resourceLister,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
@@ -355,9 +358,9 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	list := ValidateRepository(repo)
+	cfg := repo.Config()
 
 	if a.GetOperation() == admission.Update {
-		cfg := repo.Config()
 		oldRepo, err := b.asRepository(ctx, a.GetOldObject())
 		if err != nil {
 			return fmt.Errorf("get old repository for update: %w", err)
@@ -376,10 +379,33 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		}
 	}
 
+	// Make sure there is only one
+	targetError := b.verifySingleInstanceTarget(cfg)
+	if targetError != nil {
+		list = append(list, targetError)
+	}
+
 	if len(list) > 0 {
 		return apierrors.NewInvalid(
 			provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
 			a.GetName(), list)
+	}
+	return nil
+}
+
+func (b *APIBuilder) verifySingleInstanceTarget(cfg *provisioning.Repository) *field.Error {
+	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeRoot {
+		all, err := b.repositoryLister.Repositories(cfg.Namespace).List(labels.Everything())
+		if err != nil {
+			return field.Forbidden(field.NewPath("spec", "sync", "target"),
+				"Unable to verify root target // "+err.Error())
+		}
+		for _, v := range all {
+			if v.Name != cfg.Name && v.Spec.Sync.Target == provisioning.SyncTargetTypeRoot {
+				return field.Forbidden(field.NewPath("spec", "sync", "target"),
+					"Another repository is already targeting root: "+v.Name)
+			}
+		}
 	}
 	return nil
 }
@@ -442,7 +468,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						_, _ = w.Write([]byte("expected user"))
 						return
 					}
-					stats, err := b.lister.Stats(r.Context(), u.GetNamespace(), "")
+					stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), "")
 					if err != nil {
 						errhttp.Write(r.Context(), err, w)
 						return
@@ -475,6 +501,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				clientFactory: b.client,
 				client:        c.ProvisioningV0alpha1(),
 			}
+			b.repositoryLister = repoInformer.Lister()
 
 			b.jobs.Register(jobs.NewJobWorker(
 				b,
@@ -482,7 +509,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				c.ProvisioningV0alpha1(),
 				b.identities,
 				b.render,
-				b.lister,
+				b.resourceLister,
 				b.blobstore,
 				b.urlProvider,
 			))
@@ -491,10 +518,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				c.ProvisioningV0alpha1(),
 				repoInformer,
 				b, // repoGetter
-				b.lister,
+				b.resourceLister,
 				b.parsers,
 				b.identities,
-				b.lister,
 				b.tester,
 				b.jobs,
 			)

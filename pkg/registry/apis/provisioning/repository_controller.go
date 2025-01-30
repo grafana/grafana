@@ -8,7 +8,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -70,7 +69,6 @@ func NewRepositoryController(
 	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
 	identities auth.BackgroundIdentityService,
-	lister resources.ResourceLister,
 	tester *RepositoryTester,
 	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
@@ -89,7 +87,7 @@ func NewRepositoryController(
 		parsers:    parsers,
 		identities: identities,
 		finalizer: &finalizer{
-			lister: lister,
+			lister: resourceLister,
 			client: parsers.Client,
 		},
 		tester: tester,
@@ -302,23 +300,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 					"error running test repository",
 					err.Error(),
 				},
-			}
-		}
-
-		// Make sure only one repository is targeting the root folder
-		if res.Success && obj.Spec.Sync.Target == provisioning.SyncTargetTypeRoot {
-			all, err := rc.repoLister.Repositories(obj.Namespace).List(labels.Everything())
-			if err != nil {
-				res.Success = false
-				res.Errors = append(res.Errors, "failed to list other repositories")
-			} else {
-				for _, v := range all {
-					if v != nil && v.Name != obj.Name &&
-						v.Spec.Sync.Target == provisioning.SyncTargetTypeRoot {
-						res.Success = false
-						res.Errors = append(res.Errors, "multiple repositories are targeting root")
-					}
-				}
 			}
 		}
 
