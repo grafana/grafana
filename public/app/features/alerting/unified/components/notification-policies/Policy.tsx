@@ -511,10 +511,7 @@ function MetadataRow({
             <TimeIntervals timings={activeTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
         )}
-        {timingOptions && (
-          // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
-          <TimingOptionsMeta timingOptions={timingOptions} />
-        )}
+        {timingOptions && <TimingOptionsMeta timingOptions={timingOptions} />}
         {hasInheritedProperties && (
           <>
             <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">
