@@ -100,6 +100,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     editPane.enableSelection();
 
     return () => {
+      console.log('ASD');
       editPane.disableSelection();
     };
   }, [editPane]);

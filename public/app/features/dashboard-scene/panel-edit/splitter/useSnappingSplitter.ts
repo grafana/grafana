@@ -14,6 +14,7 @@ export interface UseSnappingSplitterOptions {
   // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
   // pushing the left pane content left.
   handleSize?: ComponentSize;
+  isOverlay?: boolean;
 }
 
 interface PaneOptions {

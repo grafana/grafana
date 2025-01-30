@@ -12,6 +12,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPane';
+import { EditPaneDrawer } from './EditPaneDrawer';
 import { useEditPaneCollapsed } from './shared';
 
 interface Props {
@@ -71,10 +72,8 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
 
   useEffect(() => {
     if (selectionContext.selected.length && splitterState.collapsed && !overrideEditPaneToggle) {
-      onOpen();
       setOverrideEditPanelToggle(true);
-    } else if (!selectionContext.selected.length && !splitterState.collapsed && overrideEditPaneToggle) {
-      onClose();
+    } else if (!selectionContext.selected.length && overrideEditPaneToggle) {
       setOverrideEditPanelToggle(false);
     }
   }, [onClose, onOpen, overrideEditPaneToggle, selectionContext.selected.length, splitterState.collapsed]);
@@ -115,6 +114,12 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
               onToggleCollapse={onToggleCollapse}
             />
           </div>
+
+          {overrideEditPaneToggle && (
+            <EditPaneDrawer>
+              <DashboardEditPaneRenderer editPane={editPane} isCollapsed={false} onToggleCollapse={() => {}} />
+            </EditPaneDrawer>
+          )}
         </>
       )}
     </div>
