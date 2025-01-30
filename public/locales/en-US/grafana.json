@@ -882,6 +882,25 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "edit-pane": {
+      "objects": {
+        "multi-select": {
+          "selection-number": "{`No. of objects selected: ${this.items?.length}`}"
+        }
+      },
+      "panels": {
+        "multi-select": {
+          "selection-number": "{`No. of panels selected: ${this.items?.length}`}"
+        }
+      },
+      "row": {
+        "hide": "Hide row header",
+        "multi-select": {
+          "options-header": "Multi-selected Row options",
+          "selection-number": "{`No. of rows selected: ${this.items?.length}`}"
+        }
+      }
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",

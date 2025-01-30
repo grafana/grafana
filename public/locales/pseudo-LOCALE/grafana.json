@@ -882,6 +882,25 @@
       "redirect-link": "Ŀįşŧ įŉ Ğřäƒäŉä Åľęřŧįŉģ",
       "subtitle": "Åľęřŧ řūľęş řęľäŧęđ ŧő ŧĥįş đäşĥþőäřđ"
     },
+    "edit-pane": {
+      "objects": {
+        "multi-select": {
+          "selection-number": "{`Ńő. őƒ őþĵęčŧş şęľęčŧęđ: ${ŧĥįş.įŧęmş?.ľęŉģŧĥ}`}"
+        }
+      },
+      "panels": {
+        "multi-select": {
+          "selection-number": "{`Ńő. őƒ päŉęľş şęľęčŧęđ: ${ŧĥįş.įŧęmş?.ľęŉģŧĥ}`}"
+        }
+      },
+      "row": {
+        "hide": "Ħįđę řőŵ ĥęäđęř",
+        "multi-select": {
+          "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
+          "selection-number": "{`Ńő. őƒ řőŵş şęľęčŧęđ: ${ŧĥįş.įŧęmş?.ľęŉģŧĥ}`}"
+        }
+      }
+    },
     "empty": {
       "add-library-panel-body": "Åđđ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
       "add-library-panel-button": "Åđđ ľįþřäřy päŉęľ",
