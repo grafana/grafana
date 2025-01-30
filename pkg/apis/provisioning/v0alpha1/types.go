@@ -112,10 +112,7 @@ const (
 	// Resources will be saved into a folder managed by this repository
 	// The folder k8s name will be the same as the repository k8s name
 	// It will contain a copy of everything from the remote
-	SyncTargetTypeMirror SyncTargetType = "mirror"
-
-	// Pick an explicit folder where we can save resources, not managed by provisioning
-	// SyncTargetTypeFolder SyncTargetType = "folder"
+	SyncTargetTypeFolder SyncTargetType = "folder"
 )
 
 type SyncOptions struct {

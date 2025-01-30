@@ -150,7 +150,7 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
   if (stats.resource === 'playlists') {
     return '/playlists';
   }
-  if (repo.spec?.sync.target === 'mirror') {
+  if (repo.spec?.sync.target === 'folder') {
     return `/dashboards/f/${repo.metadata?.name}`;
   }
   return '/dashboards';

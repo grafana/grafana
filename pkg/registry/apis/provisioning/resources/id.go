@@ -134,7 +134,7 @@ func ParseFolder(dirPath, repositoryName string) Folder {
 }
 
 func RootFolder(repository *provisioning.Repository) string {
-	if repository.Spec.Sync.Target == provisioning.SyncTargetTypeMirror {
+	if repository.Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
 		return repository.Name // a folder with the same identifier as the repository
 	}
 	return ""

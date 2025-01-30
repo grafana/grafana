@@ -27,7 +27,7 @@ import { dataToSpec, specToData } from './utils/data';
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
   { value: 'instance', label: 'Entire instance' },
-  { value: 'mirror', label: 'Managed folder' },
+  { value: 'folder', label: 'Managed folder' },
 ];
 
 const appEvents = getAppEvents();

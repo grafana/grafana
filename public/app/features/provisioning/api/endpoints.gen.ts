@@ -767,9 +767,9 @@ export type SyncOptions = {
   /** Where values should be saved
     
     Possible enum values:
-     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)
-     - `"mirror"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote */
-  target: 'instance' | 'mirror';
+     - `"folder"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote
+     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
+  target: 'folder' | 'instance';
 };
 export type RepositorySpec = {
   /** Repository description */
