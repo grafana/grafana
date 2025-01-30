@@ -38,6 +38,12 @@ interface TableColumn extends Column<TableRow> {
   field: Field;
 }
 
+interface SummaryRow {
+  id: string;
+  title: string;
+  count: string;
+}
+
 interface HeaderCellProps {
   column: Column<any>;
   field: Field;
@@ -303,6 +309,15 @@ export function TableNG(props: TableNGProps) {
 
   const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
     const columns: TableColumn[] = [];
+    let bottomSummaryRows: SummaryRow[] = [];
+
+    bottomSummaryRows = [
+      {
+        id: calcsRef.current[0],
+        title: calcsRef.current[0],
+        count: calcsRef.current[1],
+      },
+    ];
 
     main.fields.map((field, fieldIndex) => {
       const key = field.name;
@@ -353,19 +368,9 @@ export function TableNG(props: TableNGProps) {
             />
           );
         },
-        ...(footerOptions?.show && {
-          renderSummaryCell() {
-            if (isCountRowsSet && fieldIndex === 0) {
-              return (
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Count</span>
-                  <span>{calcsRef.current[fieldIndex]}</span>
-                </div>
-              );
-            }
-            return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
-          },
-        }),
+        renderSummaryCell() {
+          return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
+        },
         renderHeaderCell: ({ column, sortDirection }) => (
           <HeaderCell
             column={column}
@@ -382,7 +387,7 @@ export function TableNG(props: TableNGProps) {
       });
     });
 
-    return columns;
+    return { columns, bottomSummaryRows };
   };
 
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
@@ -490,7 +495,10 @@ export function TableNG(props: TableNGProps) {
     });
   }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef, filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { columns, bottomSummaryRows } = useMemo(
+    () => mapFrameToDataGrid(props.data, calcsRef),
+    [props.data, calcsRef.current, filter]
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
@@ -554,8 +562,7 @@ export function TableNG(props: TableNGProps) {
         // sorting
         sortColumns={sortColumns}
         // footer
-        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
+        bottomSummaryRows={footerOptions?.show ? bottomSummaryRows : undefined}
         onColumnResize={() => {
           // NOTE: This method is called continuously during the column resize drag operation,
           // providing the current column width. There is no separate event for the end of the drag operation.
