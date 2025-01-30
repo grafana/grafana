@@ -12,7 +12,8 @@ export const getMultiComboboxStyles = (
   disabled?: boolean,
   width?: number | 'auto',
   minWidth?: number,
-  maxWidth?: number
+  maxWidth?: number,
+  isClearable?: boolean
 ) => {
   const inputStyles = getInputStyles({ theme, invalid });
   const focusStyles = getFocusStyles(theme);
@@ -35,7 +36,7 @@ export const getMultiComboboxStyles = (
         width: '100%',
         gap: theme.spacing(0.5),
         padding: theme.spacing(0.5),
-        paddingRight: 28, // Account for suffix
+        paddingRight: isClearable ? theme.spacing(5) : 28, // Account for suffix
         '&:focus-within': {
           ...focusStyles,
         },
