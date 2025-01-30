@@ -19,6 +19,8 @@ import {
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob(endpoint) {
+      // Do not end 'watch' in the first query, so we can get the initial list of jobs
+      // and then start watching for changes
       endpoint.query = ({ watch, ...queryArg }) => ({
         url: `/jobs`,
         params: getListParams(queryArg),
