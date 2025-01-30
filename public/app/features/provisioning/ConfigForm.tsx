@@ -14,6 +14,7 @@ import {
   TextLink,
   ControlledCollapse,
   FieldSet,
+  RadioButtonGroup,
   Stack,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -25,9 +26,8 @@ import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
-  { value: 'instance', label: 'Instance (everything)' },
-  { value: 'mirror', label: 'A managed folder' },
-  //  { value: 'folder', label: 'Selected shared folder' }
+  { value: 'instance', label: 'Entire instance' },
+  { value: 'mirror', label: 'Managed folder' },
 ];
 
 const appEvents = getAppEvents();
@@ -209,10 +209,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
           control={control}
           render={({ field: { ref, onChange, ...field } }) => {
             return (
-              <Combobox
+              <RadioButtonGroup
                 options={targetOptions}
-                onChange={(value) => onChange(value?.value)}
-                placeholder={'Select target type'}
+                onChange={onChange}
                 //  disabled={!!data?.spec}
                 {...field}
               />
