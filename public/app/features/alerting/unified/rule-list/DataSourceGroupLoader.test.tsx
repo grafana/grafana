@@ -36,12 +36,12 @@ describe('DataSourceGroupLoader', () => {
   const mimirRuleSource = getDataSourceIdentifier(mimirDs);
 
   describe('Vanilla Prometheus', () => {
-    const promGroup = alertingFactory.group.build({
+    const promGroup = alertingFactory.prometheus.group.build({
       file: 'test-namespace',
       rules: [
-        alertingFactory.rule.build({ name: 'prom-only-rule-1' }),
-        alertingFactory.rule.build({ name: 'prom-only-rule-2' }),
-        alertingFactory.rule.build({ name: 'prom-only-rule-3' }),
+        alertingFactory.prometheus.rule.build({ name: 'prom-only-rule-1' }),
+        alertingFactory.prometheus.rule.build({ name: 'prom-only-rule-2' }),
+        alertingFactory.prometheus.rule.build({ name: 'prom-only-rule-3' }),
       ],
     });
     const groupIdentifier = getPromGroupIdentifier(promRuleSource, promGroup);
@@ -74,18 +74,18 @@ describe('DataSourceGroupLoader', () => {
   });
 
   describe('Ruler-enabled data sources', () => {
-    const rulerRule = alertingFactory.ruler.rule.build({ alert: 'mimir-rule-1' });
-    const rulerOnlyRule = alertingFactory.ruler.rule.build({ alert: 'mimir-only-rule' });
+    const rulerRule = alertingFactory.ruler.alertingRule.build({ alert: 'mimir-rule-1' });
+    const rulerOnlyRule = alertingFactory.ruler.alertingRule.build({ alert: 'mimir-only-rule' });
     alertingFactory.ruler.group.build(
       { name: 'mimir-group', rules: [rulerRule, rulerOnlyRule] },
       { transient: { addToNamespace: 'mimir-namespace' } }
     );
-    const promGroup = alertingFactory.group.build({
+    const promGroup = alertingFactory.prometheus.group.build({
       name: 'mimir-group',
       file: 'mimir-namespace',
       rules: [
-        alertingFactory.rule.fromRuler(rulerRule).build(),
-        alertingFactory.rule.build({ name: 'prom-only-rule' }),
+        alertingFactory.prometheus.rule.fromRuler(rulerRule).build(),
+        alertingFactory.prometheus.rule.build({ name: 'prom-only-rule' }),
       ],
     });
     const groupIdentifier = getPromGroupIdentifier(mimirRuleSource, promGroup);

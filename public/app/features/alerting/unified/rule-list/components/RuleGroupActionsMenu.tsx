@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { ConfirmModal, Dropdown, IconButton, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier, GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -14,6 +14,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { useFolder } from '../../hooks/useFolder';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSourceByUID } from '../../utils/datasource';
+import { ruleGroupIdentifierV2toV1 } from '../../utils/groupIdentifier';
 import { isFederatedRuleGroup } from '../../utils/rules';
 
 const { useGetGrafanaRulerGroupQuery, useGetRuleGroupForNamespaceQuery } = alertRuleApi;
@@ -116,12 +117,8 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
       </Dropdown>
       {actionState === 'edit' && rulerRuleGroup && (
         <EditRuleGroupModal
-          namespace={{
-            name: groupIdentifier.namespace.name,
-            groups: [],
-            rulesSource,
-          }}
-          group={rulerRuleGroup}
+          ruleGroupIdentifier={ruleGroupIdentifierV2toV1(groupIdentifier)}
+          rulerConfig={dataSourceInfo.rulerConfig}
           onClose={() => setActionState(undefined)}
         />
       )}
@@ -136,11 +133,17 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
       {rulerRuleGroup && (
         <ConfirmModal
           isOpen={actionState === 'delete'}
-          title="Delete group"
-          body={<div>Are you sure you want to delete this group?</div>}
+          title={t('alerting.group-actions.delete-group-modal.title', 'Delete group')}
+          body={
+            <div>
+              <Trans i18nKey="alerting.group-actions.delete-group-modal.body">
+                Are you sure you want to delete this group?
+              </Trans>
+            </div>
+          }
           onConfirm={deleteGroup}
           onDismiss={() => setActionState(undefined)}
-          confirmText="Delete"
+          confirmText={t('alerting.group-actions.delete-group-modal.confirm-button', 'Delete')}
         />
       )}
     </>
@@ -198,14 +201,9 @@ function GrafanaGroupsActionMenu({ groupIdentifier }: GrafanaGroupsActionMenuPro
       </Dropdown>
       {actionState === 'edit' && rulerRuleGroup && (
         <EditRuleGroupModal
-          namespace={{
-            rulesSource: GRAFANA_RULES_SOURCE_NAME,
-            name: folder?.title ?? '',
-            groups: [],
-          }}
-          group={rulerRuleGroup}
+          ruleGroupIdentifier={ruleGroupIdentifierV2toV1(groupIdentifier)}
+          rulerConfig={GRAFANA_RULER_CONFIG}
           onClose={() => setActionState(undefined)}
-          folderUid={groupIdentifier.namespace.uid}
         />
       )}
       {actionState === 'reorder' && rulerRuleGroup && (
