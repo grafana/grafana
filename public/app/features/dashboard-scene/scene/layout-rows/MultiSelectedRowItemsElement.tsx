@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 
 import { SceneObject } from '@grafana/scenes';
 import { Button, Stack, Switch, Text } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -29,12 +30,12 @@ export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashbo
 
     const rowOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({
-        title: 'Multi-selected Row options',
+        title: t('dashboard.edit-pane.row.multi-select.options-header', 'Multi-selected Row options'),
         id: 'ms-row-options',
         isOpenDefault: true,
       }).addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Hide row header',
+          title: t('dashboard.edit-pane.row.hide', 'Hide row header'),
           render: () => <RowHeaderSwitch rows={rows} />,
         })
       );
@@ -53,17 +54,17 @@ export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashbo
     }
   };
 
-  renderActions(): React.ReactNode {
+  renderActions(): ReactNode {
     return (
-      <>
-        <Stack direction={'column'}>
-          <Text>{`No. of rows selected: ${this.items?.length}`}</Text>
-          <Stack direction={'row'}>
-            <Button size="sm" variant="secondary" icon="copy" />
-            <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
-          </Stack>
+      <Stack direction="column">
+        <Text>
+          <Trans i18nKey="dashboard.edit-pane.row.multi-select.selection-number">{`No. of rows selected: ${this.items?.length}`}</Trans>
+        </Text>
+        <Stack direction="row">
+          <Button size="sm" variant="secondary" icon="copy" />
+          <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
         </Stack>
-      </>
+      </Stack>
     );
   }
 }
@@ -81,7 +82,7 @@ export function RowHeaderSwitch({ rows }: { rows: RowItem[] | undefined }) {
       onChange={() => {
         for (const row of rows) {
           row.setState({
-            isHeaderHidden: !row.state.isHeaderHidden,
+            isHeaderHidden: !isHeaderHidden,
           });
         }
       }}

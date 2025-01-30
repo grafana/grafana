@@ -1,5 +1,8 @@
+import { ReactNode } from 'react';
+
 import { SceneObject, VizPanel } from '@grafana/scenes';
 import { Button, Stack, Text } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { MultiSelectedEditableDashboardElement } from '../scene/types';
@@ -35,17 +38,17 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
     return 'Panels';
   }
 
-  renderActions(): React.ReactNode {
+  renderActions(): ReactNode {
     return (
-      <>
-        <Stack direction={'column'}>
-          <Text>{`No. of panels selected: ${this.items?.length}`}</Text>
-          <Stack direction={'row'}>
-            <Button size="sm" variant="secondary" icon="copy" />
-            <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
-          </Stack>
+      <Stack direction="column">
+        <Text>
+          <Trans i18nKey="dashboard.edit-pane.panels.multi-select.selection-number">{`No. of panels selected: ${this.items?.length}`}</Trans>
+        </Text>
+        <Stack direction="row">
+          <Button size="sm" variant="secondary" icon="copy" />
+          <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
         </Stack>
-      </>
+      </Stack>
     );
   }
 }

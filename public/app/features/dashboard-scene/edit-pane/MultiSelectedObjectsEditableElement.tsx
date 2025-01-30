@@ -1,18 +1,21 @@
+import { ReactNode } from 'react';
+
 import { Stack, Text, Button } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { BulkActionElement, MultiSelectedEditableDashboardElement } from '../scene/types';
 
 export class MultiSelectedObjectsEditableElement implements MultiSelectedEditableDashboardElement {
   public isMultiSelectedEditableDashboardElement: true = true;
-  private objects?: BulkActionElement[];
+  private items?: BulkActionElement[];
 
-  constructor(objects: BulkActionElement[]) {
-    this.objects = objects;
+  constructor(items: BulkActionElement[]) {
+    this.items = items;
   }
 
   public onDelete = () => {
-    for (const object of this.objects || []) {
-      object.onDelete();
+    for (const item of this.items || []) {
+      item.onDelete();
     }
   };
 
@@ -20,17 +23,17 @@ export class MultiSelectedObjectsEditableElement implements MultiSelectedEditabl
     return 'Objects';
   }
 
-  renderActions(): React.ReactNode {
+  renderActions(): ReactNode {
     return (
-      <>
-        <Stack direction={'column'}>
-          <Text>{`No. of objects selected: ${this.objects?.length}`}</Text>
-          <Stack direction={'row'}>
-            <Button size="sm" variant="secondary" icon="copy" />
-            <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
-          </Stack>
+      <Stack direction="column">
+        <Text>
+          <Trans i18nKey="dashboard.edit-pane.objects.multi-select.selection-number">{`No. of objects selected: ${this.items?.length}`}</Trans>
+        </Text>
+        <Stack direction="row">
+          <Button size="sm" variant="secondary" icon="copy" />
+          <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
         </Stack>
-      </>
+      </Stack>
     );
   }
 }
