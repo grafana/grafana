@@ -12,6 +12,12 @@ export interface CellNGProps {
   shouldTextOverflow?: () => boolean;
 }
 
+export interface RowExpanderNGProps {
+  height: number;
+  onCellExpand: () => void;
+  isExpanded?: boolean;
+}
+
 export interface BarGaugeCellProps extends CellNGProps {
   height: number;
   timeRange: TimeRange;

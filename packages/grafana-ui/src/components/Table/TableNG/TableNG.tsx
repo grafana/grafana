@@ -23,12 +23,14 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { TableNGProps } from '../types';
 import { getTextAlign } from '../utils';
 
+import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
 import { Filter } from './Filter/Filter';
 import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
+const EXPANDER_WIDTH = 50;
 
 type TableRow = Record<string, unknown>;
 
@@ -142,6 +144,7 @@ export function TableNG(props: TableNGProps) {
   // TODO: this ref using to persist sortColumns between renders;
   // setSortColumns is still used to trigger re-render
   const sortColumnsRef = useRef(sortColumns);
+  const [expandedRows, setExpandedRows] = useState<number[]>([]);
 
   function getDefaultRowHeight(): number {
     const bodyFontSize = theme.typography.fontSize;
@@ -166,8 +169,8 @@ export function TableNG(props: TableNGProps) {
     const headerRef = useRef<HTMLDivElement>(null);
 
     let isColumnFilterable = filterable;
-    if (field.config.custom.filterable !== filterable) {
-      isColumnFilterable = field.config.custom.filterable || false;
+    if (field.config.custom?.filterable !== filterable) {
+      isColumnFilterable = field.config.custom?.filterable || false;
     }
     // we have to remove/reset the filter if the column is not filterable
     if (!isColumnFilterable && filter[field.name]) {
@@ -286,32 +289,105 @@ export function TableNG(props: TableNGProps) {
     const fnBody = `
       const rows = Array(frame.length);
       const values = frame.fields.map(f => f.values);
-
+      let rowCount = 0;
       for (let i = 0; i < frame.length; i++) {
-        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+        rows[rowCount] = {__depth: 0, __index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+        rowCount += 1;
+        if (rows[rowCount-1]['Nested frames']){
+          const childFrame = rows[rowCount-1]['Nested frames'];
+          rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
+          rowCount += 1;
+        }
       }
-
       return rows;
     `;
 
     const convert = new Function('frame', fnBody);
 
     const records = convert(frame);
-
     return records;
   }, []);
-
-  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
+  const calcsRef = useRef<string[]>([]);
+  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
     const columns: TableColumn[] = [];
 
+    // Check for nestedFrames
+    const nestedDataField = main.fields.find((f) => f.type === FieldType.nestedFrames);
+    const hasNestedData = nestedDataField !== undefined;
+
+    // If nested frames, add expansion control column
+    if (hasNestedData) {
+      const expanderField: Field = {
+        name: '',
+        type: FieldType.other,
+        config: {},
+        values: [],
+      };
+      columns.push({
+        key: 'expanded',
+        name: '',
+        field: expanderField,
+        cellClass: styles.cell,
+        colSpan(args) {
+          return args.type === 'ROW' && Number(args.row.__depth) === 1 ? main.fields.length : 1;
+        },
+        renderCell: ({ row }) => {
+          // TODO add TableRow type extension to include row depth and optional data
+          if (Number(row.__depth) === 0) {
+            const rowIdx = Number(row.__index);
+            return (
+              <RowExpander
+                height={defaultRowHeight}
+                onCellExpand={() => {
+                  if (!expandedRows.includes(rowIdx)) {
+                    setExpandedRows([...expandedRows, rowIdx]);
+                  } else {
+                    const currentExpandedRows = expandedRows;
+                    const indexToRemove = currentExpandedRows.indexOf(rowIdx);
+                    if (indexToRemove > -1) {
+                      currentExpandedRows.splice(indexToRemove, 1);
+                      setExpandedRows(currentExpandedRows);
+                    }
+                  }
+                  setResizeTrigger((prev) => prev + 1);
+                }}
+                isExpanded={expandedRows.includes(rowIdx)}
+              />
+            );
+          }
+          // If it's a child, render entire DataGrid at first column position
+          let expandedColumns: TableColumn[] = [];
+          let expandedRecords: Array<Record<string, string>> = [];
+          expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
+          expandedRecords = frameToRecords(row.data);
+          // TODO add renderHeaderCell HeaderCell's here and handle all features
+          return (
+            <DataGrid
+              rows={expandedRecords}
+              columns={expandedColumns}
+              rowHeight={defaultRowHeight}
+              style={{ height: '100%', overflow: 'visible' }}
+              headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
+            />
+          );
+        },
+        width: EXPANDER_WIDTH,
+        minWidth: EXPANDER_WIDTH,
+      });
+    }
+
     main.fields.map((field, fieldIndex) => {
+      if (field.type === FieldType.nestedFrames) {
+        // Don't render nestedFrames type field
+        return;
+      }
       const key = field.name;
 
       // get column width from overrides
       const override = fieldConfig?.overrides?.find(
         (o) => o.matcher.id === 'byName' && o.matcher.options === field.name
       );
-      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config.custom.width;
+      const width = override?.properties?.find((p) => p.id === 'width')?.value || field.config?.custom?.width;
 
       const justifyColumnContent = getTextAlign(field);
       const footerStyles = getFooterStyles(justifyColumnContent);
@@ -322,37 +398,38 @@ export function TableNG(props: TableNGProps) {
         name: field.name,
         field,
         cellClass: styles.cell,
-        renderCell: (props: any) => {
-          const { row, rowIdx } = props;
-          const value = row[key];
-
-          // Cell level rendering here
-          return (
-            <TableCellNG
-              key={key}
-              value={value}
-              field={field}
-              theme={theme}
-              timeRange={timeRange}
-              height={defaultRowHeight}
-              justifyContent={justifyColumnContent}
-              rowIdx={rowIdx}
-              shouldTextOverflow={() =>
-                shouldTextOverflow(
-                  key,
-                  row,
-                  columnTypes,
-                  headerCellRefs,
-                  osContext,
-                  defaultLineHeight,
-                  defaultRowHeight,
-                  DEFAULT_CELL_PADDING,
-                  textWrap
-                )
-              }
-            />
-          );
-        },
+        renderCell: subTable
+          ? undefined
+          : (props: any) => {
+              const { row, rowIdx } = props;
+              const value = row[key];
+              // Cell level rendering here
+              return (
+                <TableCellNG
+                  key={key}
+                  value={value}
+                  field={field}
+                  theme={theme}
+                  timeRange={timeRange}
+                  height={defaultRowHeight}
+                  justifyContent={justifyColumnContent}
+                  rowIdx={rowIdx}
+                  shouldTextOverflow={() =>
+                    shouldTextOverflow(
+                      key,
+                      row,
+                      columnTypes,
+                      headerCellRefs,
+                      osContext,
+                      defaultLineHeight,
+                      defaultRowHeight,
+                      DEFAULT_CELL_PADDING,
+                      textWrap
+                    )
+                  }
+                />
+              );
+            },
         ...(footerOptions?.show && {
           renderSummaryCell() {
             if (isCountRowsSet && fieldIndex === 0) {
@@ -378,12 +455,23 @@ export function TableNG(props: TableNGProps) {
         ),
         // TODO these anys are making me sad
         width: width ?? columnWidth,
-        minWidth: field.config.custom.minWidth ?? columnMinWidth,
+        minWidth: field.config?.custom?.minWidth ?? columnMinWidth,
       });
     });
 
     return columns;
   };
+
+  function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
+    // Let's render row level things here!
+    // i.e. we can look at row styles and such here
+    const { row } = props;
+    // Don't render non expanded child rows
+    if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
+      return null;
+    }
+    return <Row key={key} {...props} />;
+  }
 
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
@@ -473,7 +561,6 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const calcsRef = useRef<string[]>([]);
   useMemo(() => {
     calcsRef.current = props.data.fields.map((field, index) => {
       if (field.state?.calcs) {
@@ -490,7 +577,7 @@ export function TableNG(props: TableNGProps) {
     });
   }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef, filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef, filter, expandedRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
@@ -524,8 +611,14 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           resizable: true,
         }}
-        rowHeight={(row) =>
-          getRowHeight(
+        rowHeight={(row) => {
+          if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
+            return 0;
+          } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
+            const headerCount = row.data.meta?.custom?.noHeader ? 0 : 1;
+            return defaultRowHeight * (row.data.length + headerCount); // TODO this probably isn't very robust
+          }
+          return getRowHeight(
             row,
             columnTypes,
             headerCellRefs,
@@ -534,8 +627,8 @@ export function TableNG(props: TableNGProps) {
             defaultRowHeight,
             DEFAULT_CELL_PADDING,
             textWrap
-          )
-        }
+          );
+        }}
         // TODO: This doesn't follow current table behavior
         style={{ width, height }}
         renderers={{ renderRow: myRowRenderer }}
@@ -588,12 +681,6 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
-}
-
-function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
-  // Let's render row level things here!
-  // i.e. we can look at row styles and such here
-  return <Row key={key} {...props} />;
 }
 
 type Comparator = (a: any, b: any) => number;
