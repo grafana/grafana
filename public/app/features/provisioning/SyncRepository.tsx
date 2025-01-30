@@ -8,13 +8,14 @@ import { Button, ConfirmModal } from '@grafana/ui';
 import { Loader } from '../plugins/admin/components/Loader';
 
 import { Repository, useCreateRepositorySyncMutation, useListRepositoryQuery } from './api';
+import { PROVISIONING_URL } from './constants';
 
 interface Props {
   repository: Repository;
 }
 
 export function SyncRepository({ repository }: Props) {
-  const query = useListRepositoryQuery();
+  const query = useListRepositoryQuery({});
   const [syncResource, syncQuery] = useCreateRepositorySyncMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -59,14 +60,25 @@ export function SyncRepository({ repository }: Props) {
       >
         Sync
       </Button>
-      <ConfirmModal
-        isOpen={isModalOpen}
-        title={'Synchronize resources from repository'}
-        body={`This will pull all resources from the repository into your instance into the target folder. Existing dashboards with the same UID will be overwritten. Proceed?`}
-        confirmText={syncQuery.isLoading ? 'Importing...' : 'Import'}
-        onConfirm={onClick}
-        onDismiss={() => setIsModalOpen(false)}
-      />
+      {repository.spec?.sync.enabled ? (
+        <ConfirmModal
+          isOpen={isModalOpen}
+          title={'Synchronize resources from repository'}
+          body={`This will trigger a job that will import everything from the repository into grafana. Proceed?`}
+          confirmText={syncQuery.isLoading ? 'Importing...' : 'Import'}
+          onConfirm={onClick}
+          onDismiss={() => setIsModalOpen(false)}
+        />
+      ) : (
+        <ConfirmModal
+          isOpen={isModalOpen}
+          title={'Sync is not enabled'}
+          body={`Edit the configuration`}
+          confirmText={'Edit'}
+          onConfirm={() => navigate(`${PROVISIONING_URL}/${name}/edit`)}
+          onDismiss={() => setIsModalOpen(false)}
+        />
+      )}
     </>
   );
 }

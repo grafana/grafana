@@ -161,7 +161,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.JSONEq(t, `{
 			"github-example": {
 				"description": "load resources from github",
-				"folder": "thisisafolderref",
 				"editing": {
 					"create": true,
 					"delete": true,
@@ -174,6 +173,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"owner": "grafana",
 					"repository": "git-ui-sync-demo",
 					"token": "github_pat_dummy"
+				},
+				"sync": {
+					"enabled": true,
+					"target": "mirror"
 				},
 				"title": "Github Example",
 				"type": "github"
@@ -188,6 +191,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"local": {
 					"path": "provisioning/sample"
 				},
+				"sync": {
+					"enabled": false,
+					"target": ""
+				},
 				"title": "Config provisioning files",
 				"type": "local"
 			},
@@ -201,8 +208,11 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"local": {
 					"path": "devenv/dev-dashboards"
 				},
+				"sync": {
+					"enabled": false,
+					"target": "mirror"
+				},
 				"title": "Load devenv dashboards",
-				"folder": "testingtesting",
 				"type": "local"
 			},
 			"s3-example": {
@@ -215,6 +225,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"s3": {
 					"bucket": "my-bucket",
 					"region": "us-west-1"
+				},
+				"sync": {
+					"enabled": false,
+					"target": "mirror"
 				},
 				"title": "S3 Example",
 				"type": "s3"
@@ -232,9 +246,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.NoError(t, err)
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
+			resp, err := folderClient.Resource.Get(ctx, "github-example", metav1.GetOptions{})
 			if assert.NoError(collect, err) {
-				assert.Equal(collect, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
+				assert.Equal(collect, "github-example", mustNestedString(resp.Object, "metadata", "name"))
 			}
 		}, time.Second*2, time.Millisecond*20)
 	})

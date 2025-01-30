@@ -9,8 +9,8 @@ import (
 type FrontendSettings struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// When the instance is configured so everything should be saved to one repository
-	Global string `json:"global,omitempty"`
+	// When a repository is configured to save everything in instance
+	Instance string `json:"instance,omitempty"`
 
 	// Sanitized repository settings
 	Repository map[string]RepositoryView `json:"repository"`

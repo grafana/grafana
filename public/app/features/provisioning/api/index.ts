@@ -6,32 +6,46 @@ import { RootState } from 'app/store/configureStore';
 import { parseListOptionsSelector, ScopedResourceClient } from '../../apiserver/client';
 import { ListOptions } from '../../apiserver/types';
 
-export * from './endpoints';
-
-import { generatedAPI, JobSpec, JobStatus, RepositoryList, RepositorySpec, RepositoryStatus } from './endpoints';
+import {
+  generatedAPI,
+  JobSpec,
+  JobStatus,
+  ListRepositoryArg,
+  RepositoryList,
+  RepositorySpec,
+  RepositoryStatus,
+} from './endpoints.gen';
 
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob(endpoint) {
-      endpoint.query = (queryArg) => ({
+      // Do not include 'watch' in the first query, so we can get the initial list of jobs
+      // and then start watching for changes
+      endpoint.query = ({ watch, ...queryArg }) => ({
         url: `/jobs`,
-        params: getListParams(queryArg),
+        params: queryArg,
       });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus>('jobs');
     },
     listRepository(endpoint) {
-      endpoint.query = (queryArg) => ({
+      endpoint.query = ({ watch, ...queryArg }) => ({
         url: `/repositories`,
-        params: getListParams(queryArg),
+        params: queryArg,
       });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories');
     },
   },
 });
 
-function getListParams<T extends ListOptions>(queryArg: T | void) {
+type ListParams = Omit<ListRepositoryArg, 'fieldSelector' | 'labelSelector'> &
+  Pick<ListOptions, 'labelSelector' | 'fieldSelector'>;
+
+/**
+ * A helper function to remove the watch argument from the queryArg and convert field- and labelSelectors to strings
+ */
+export function getListParams(queryArg: ListParams) {
   if (!queryArg) {
-    return undefined;
+    return {};
   }
   const { fieldSelector, labelSelector, watch, ...params } = queryArg;
   return {
@@ -43,7 +57,7 @@ function getListParams<T extends ListOptions>(queryArg: T | void) {
 
 const emptyRepos: RepositoryList['items'] = [];
 
-const repositoriesResult = provisioningAPI.endpoints.listRepository.select();
+const repositoriesResult = provisioningAPI.endpoints.listRepository.select({});
 export const selectAllRepos = createSelector(repositoriesResult, (repos) => repos.data?.items || emptyRepos);
 export const selectFolderRepository = createSelector(
   selectAllRepos,
@@ -52,7 +66,7 @@ export const selectFolderRepository = createSelector(
     if (!folderUid) {
       return undefined;
     }
-    return repositories.find((repo) => repo.spec?.folder === folderUid);
+    return repositories.find((repo) => repo.metadata?.name === folderUid);
   }
 );
 
@@ -119,3 +133,4 @@ function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
     subscription?.unsubscribe();
   };
 }
+export * from './endpoints.gen';

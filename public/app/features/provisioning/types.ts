@@ -1,4 +1,4 @@
-import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec, S3RepositoryConfig } from './api/types';
+import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec, S3RepositoryConfig } from './api';
 
 export type RepositoryFormData = GitHubRepositoryConfig &
   S3RepositoryConfig &

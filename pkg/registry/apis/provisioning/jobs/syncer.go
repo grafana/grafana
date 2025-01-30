@@ -59,20 +59,20 @@ func NewSyncer(
 func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
 	// FIXME: how to handle the scenario in which folder changes?
 	cfg := r.repository.Config()
+	if !cfg.Spec.Sync.Enabled {
+		return "", fmt.Errorf("sync is not enabled")
+	}
+
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
 	// Ensure the configured folder exists and it's managed by the repository
-	if cfg.Spec.Folder != "" {
-		title := cfg.Spec.Title
-		if title == "" {
-			title = cfg.Spec.Folder
-		}
-
+	rootFolder := resources.RootFolder(cfg)
+	if rootFolder != "" {
 		folder := resources.Folder{
 			Path:  "",
-			ID:    cfg.Spec.Folder,
-			Title: title,
+			ID:    rootFolder,
+			Title: cfg.Spec.Title,
 		}
 
 		// If the folder already exists, the parent won't be changed
@@ -455,8 +455,7 @@ func (r *Syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent str
 
 // ensureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
-// - it will update the repository info.
-// - it will keep the parent folder already set
+// - it will error if the folder is not owned by this repository
 func (r *Syncer) ensureFolderExists(ctx context.Context, folder resources.Folder, parent string) error {
 	cfg := r.repository.Config()
 	repoInfo := &utils.ResourceRepositoryInfo{
@@ -467,30 +466,13 @@ func (r *Syncer) ensureFolderExists(ctx context.Context, folder resources.Folder
 	}
 	obj, err := r.folders.Get(ctx, folder.ID, metav1.GetOptions{})
 	if err == nil {
-		meta, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return fmt.Errorf("create meta accessor for the object: %w", err)
+		current, ok := obj.GetAnnotations()[utils.AnnoKeyRepoName]
+		if !ok {
+			return fmt.Errorf("target folder is not managed by a repository")
 		}
-
-		existingInfo, err := meta.GetRepositoryInfo()
-		if err != nil {
-			return fmt.Errorf("get repository info: %w", err)
+		if current != cfg.Name {
+			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
-
-		// Skip update if already present with right values
-		if existingInfo != nil &&
-			existingInfo.Name == repoInfo.Name &&
-			existingInfo.Path == repoInfo.Path {
-			return nil
-		}
-
-		meta.SetRepositoryInfo(repoInfo)
-
-		// TODO: should we keep the parent?
-		if _, err := r.folders.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-			return fmt.Errorf("failed to add repo info to configured folder: %w", err)
-		}
-
 		return nil
 	} else if !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if folder exists: %w", err)

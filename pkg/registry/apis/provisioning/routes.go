@@ -11,8 +11,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -66,7 +64,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: b.routes.handleStats,
+				Handler: b.handleStats,
 			},
 			{
 				Path: "settings",
@@ -108,18 +106,13 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: b.routes.handleSettings,
+				Handler: b.handleSettings,
 			},
 		},
 	}
 }
 
-type routeHandler struct {
-	resourceLister   resources.ResourceLister
-	repositoryLister listers.RepositoryLister
-}
-
-func (b *routeHandler) handleStats(w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 	u, ok := authlib.AuthInfoFrom(r.Context())
 	if !ok {
 		w.WriteHeader(400)
@@ -135,7 +128,7 @@ func (b *routeHandler) handleStats(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(stats)
 }
 
-func (b *routeHandler) handleSettings(w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	u, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
@@ -157,10 +150,10 @@ func (b *routeHandler) handleSettings(w http.ResponseWriter, r *http.Request) {
 			Title:       val.Spec.Title,
 			Description: val.Spec.Description,
 			Type:        val.Spec.Type,
-			Folder:      val.Spec.Folder,
+			Editing:     val.Spec.Editing,
 		}
-		if val.Spec.Folder == "" {
-			settings.Global = val.Name
+		if val.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
+			settings.Instance = val.Name
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
