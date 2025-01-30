@@ -58,7 +58,8 @@ export class MultiSelectedRowItemsElement implements MultiSelectedEditableDashbo
     return (
       <Stack direction="column">
         <Text>
-          <Trans i18nKey="dashboard.edit-pane.row.multi-select.selection-number">{`No. of rows selected: ${this.items?.length}`}</Trans>
+          <Trans i18nKey="dashboard.edit-pane.row.multi-select.selection-number">No. of rows selected: </Trans>
+          {this.items?.length}
         </Text>
         <Stack direction="row">
           <Button size="sm" variant="secondary" icon="copy" />

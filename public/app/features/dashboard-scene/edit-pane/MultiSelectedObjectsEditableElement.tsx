@@ -27,7 +27,8 @@ export class MultiSelectedObjectsEditableElement implements MultiSelectedEditabl
     return (
       <Stack direction="column">
         <Text>
-          <Trans i18nKey="dashboard.edit-pane.objects.multi-select.selection-number">{`No. of objects selected: ${this.items?.length}`}</Trans>
+          <Trans i18nKey="dashboard.edit-pane.objects.multi-select.selection-number">No. of objects selected: </Trans>
+          {this.items?.length}
         </Text>
         <Stack direction="row">
           <Button size="sm" variant="secondary" icon="copy" />

@@ -42,7 +42,8 @@ export class MultiSelectedVizPanelsEditableElement implements MultiSelectedEdita
     return (
       <Stack direction="column">
         <Text>
-          <Trans i18nKey="dashboard.edit-pane.panels.multi-select.selection-number">{`No. of panels selected: ${this.items?.length}`}</Trans>
+          <Trans i18nKey="dashboard.edit-pane.panels.multi-select.selection-number">No. of panels selected: </Trans>
+          {this.items?.length}
         </Text>
         <Stack direction="row">
           <Button size="sm" variant="secondary" icon="copy" />

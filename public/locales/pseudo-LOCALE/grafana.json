@@ -885,19 +885,19 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "{`Ńő. őƒ őþĵęčŧş şęľęčŧęđ: ${ŧĥįş.įŧęmş?.ľęŉģŧĥ}`}"
+          "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: "
         }
       },
       "panels": {
         "multi-select": {
-          "selection-number": "{`Ńő. őƒ päŉęľş şęľęčŧęđ: ${ŧĥįş.įŧęmş?.ľęŉģŧĥ}`}"
+          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: "
         }
       },
       "row": {
         "hide": "Ħįđę řőŵ ĥęäđęř",
         "multi-select": {
           "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
-          "selection-number": "{`Ńő. őƒ řőŵş şęľęčŧęđ: ${ŧĥįş.įŧęmş?.ľęŉģŧĥ}`}"
+          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: "
         }
       }
     },

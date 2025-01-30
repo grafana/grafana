@@ -885,19 +885,19 @@
     "edit-pane": {
       "objects": {
         "multi-select": {
-          "selection-number": "{`No. of objects selected: ${this.items?.length}`}"
+          "selection-number": "No. of objects selected: "
         }
       },
       "panels": {
         "multi-select": {
-          "selection-number": "{`No. of panels selected: ${this.items?.length}`}"
+          "selection-number": "No. of panels selected: "
         }
       },
       "row": {
         "hide": "Hide row header",
         "multi-select": {
           "options-header": "Multi-selected Row options",
-          "selection-number": "{`No. of rows selected: ${this.items?.length}`}"
+          "selection-number": "No. of rows selected: "
         }
       }
     },
