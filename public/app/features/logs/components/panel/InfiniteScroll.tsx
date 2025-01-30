@@ -1,4 +1,5 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { usePrevious } from 'react-use';
 import { ListChildComponentProps } from 'react-window';
 
 import { AbsoluteTimeRange, CoreApp, EventBus, LogsSortOrder, TimeRange } from '@grafana/data';
@@ -10,7 +11,6 @@ import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } fro
 import { LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { ProcessedLogModel } from './processing';
-import { ScrollToLogsEvent } from './virtualization';
 
 interface ChildrenProps {
   itemCount: number;
@@ -19,9 +19,7 @@ interface ChildrenProps {
 }
 
 interface Props {
-  app: CoreApp;
   children: (props: ChildrenProps) => ReactNode;
-  eventBus: EventBus;
   handleOverflow: (index: number, id: string, height: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: ProcessedLogModel[];
@@ -36,9 +34,7 @@ interface Props {
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'loading';
 
 export const InfiniteScroll = ({
-  app,
   children,
-  eventBus,
   handleOverflow,
   loadMore,
   logs,
@@ -50,41 +46,24 @@ export const InfiniteScroll = ({
   wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
-  const prevLogsRef = useRef(logs);
+  const prevLogs = usePrevious(logs);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
-    if (prevLogsRef.current === logs) {
+    if (!prevLogs || prevLogs === logs) {
       return;
     }
-    const prevLogs = prevLogsRef.current;
-    prevLogsRef.current = logs;
 
     // New logs are from infinite scrolling
     if (infiniteLoaderState === 'loading') {
-      // No new logs returned
-      if (logs.length === prevLogs.length) {
-        setInfiniteLoaderState('out-of-bounds');
-      } else {
-        setInfiniteLoaderState('idle');
-      }
-      return;
+      // out-of-bounds if no new logs returned
+      setInfiniteLoaderState(logs.length === prevLogs.length ? 'out-of-bounds' : 'idle');
     }
-
-    /**
-     * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
-     * when new data is received. See https://github.com/grafana/grafana/pull/37634
-     */
-    const isDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor;
-    eventBus.publish(
-      new ScrollToLogsEvent({
-        scrollTo: isDashboard && sortOrder === LogsSortOrder.Ascending ? 'bottom' : 'top',
-      })
-    );
-  }, [app, eventBus, infiniteLoaderState, logs, sortOrder]);
+    console.log('really logs were updated');
+  }, [infiniteLoaderState, logs, prevLogs]);
 
   useEffect(() => {
     if (!scrollElement || !loadMore || !config.featureToggles.logsInfiniteScrolling) {
