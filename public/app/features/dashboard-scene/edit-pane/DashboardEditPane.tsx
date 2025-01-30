@@ -55,14 +55,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
     const prevItem = this.state.selection?.getFirstObject();
-    if (prevItem === obj) {
-      if (!multi) {
-        this.clearSelection();
-        return;
-      } else {
-        this.removeLastMultiSelectedObject();
-        return;
-      }
+    if (prevItem === obj && !multi) {
+      this.clearSelection();
+      return;
+    }
+
+    if (multi && this.state.selection?.hasValue(id)) {
+      this.removeMultiSelectedObject(id);
+      return;
     }
 
     const ref = obj.getRef();
@@ -83,12 +83,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     });
   }
 
-  private removeLastMultiSelectedObject() {
+  private removeMultiSelectedObject(id: string) {
+    this.state.selection?.removeValue(id);
+    const entries = this.state.selection?.getSelectionEntries();
     this.setState({
-      selection: new ElementSelection([...(this.state.selection?.getSelectionEntries().slice(1) ?? [])]),
+      selection: new ElementSelection([...(entries ?? [])]),
       selectionContext: {
         ...this.state.selectionContext,
-        selected: [...this.state.selectionContext.selected.slice(1)],
+        selected: [...(entries?.map((tuple) => ({ id: tuple[0] })) ?? [])],
       },
     });
   }

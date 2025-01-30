@@ -45,6 +45,19 @@ export class ElementSelection {
     return true;
   }
 
+  public hasValue(id: string) {
+    return this.selectedObjects?.has(id);
+  }
+
+  public removeValue(id: string) {
+    this.selectedObjects?.delete(id);
+
+    if (this.selectedObjects && this.selectedObjects.size < 2) {
+      this.sameType = undefined;
+      this._isMultiSelection = false;
+    }
+  }
+
   public getSelection(): SceneObject | SceneObject[] | undefined {
     if (this.isMultiSelection) {
       return this.getSceneObjects();

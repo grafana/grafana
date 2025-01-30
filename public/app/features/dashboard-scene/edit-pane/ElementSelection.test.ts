@@ -37,6 +37,17 @@ describe('ElementSelection', () => {
     expect(selection.getSelection()).toEqual([panel1, panel2]);
   });
 
+  it('delete element', () => {
+    const selection = new ElementSelection([
+      ['id1', panel1.getRef()],
+      ['id2', panel2.getRef()],
+    ]);
+
+    selection.removeValue('id1');
+    expect(selection.isMultiSelection).toBe(false);
+    expect(selection.getSelection()).toEqual(panel2);
+  });
+
   it('returns entries', () => {
     const ref1 = panel1.getRef();
     const ref2 = panel2.getRef();
