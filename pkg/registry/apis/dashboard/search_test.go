@@ -255,7 +255,11 @@ func TestSearchHandler(t *testing.T) {
 		}
 
 		resp := rr.Result()
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
 
 		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
