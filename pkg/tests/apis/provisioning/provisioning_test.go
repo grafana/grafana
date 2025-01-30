@@ -158,7 +158,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		}
 
 		js, _ := json.MarshalIndent(found, "", "  ")
-		// fmt.Printf("%s\n", string(js))
 		require.JSONEq(t, `{
 			"github-example": {
 				"description": "load resources from github",
@@ -177,7 +176,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				},
 				"sync": {
 					"enabled": true,
-					"target": "folder"
+					"target": "mirror"
 				},
 				"title": "Github Example",
 				"type": "github"
@@ -211,7 +210,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				},
 				"sync": {
 					"enabled": false,
-					"target": "folder"
+					"target": "mirror"
 				},
 				"title": "Load devenv dashboards",
 				"type": "local"
@@ -229,7 +228,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 				},
 				"sync": {
 					"enabled": false,
-					"target": "folder"
+					"target": "mirror"
 				},
 				"title": "S3 Example",
 				"type": "s3"

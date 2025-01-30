@@ -8,7 +8,7 @@ spec:
   type: local 
   sync:
     enabled: false
-    target: folder
+    target: mirror
   editing:
     create: true
     update: true

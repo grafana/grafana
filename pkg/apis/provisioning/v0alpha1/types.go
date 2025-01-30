@@ -103,16 +103,19 @@ type SyncTargetType string
 
 // RepositoryType values
 const (
-	// Resources should be saved into the root grafana directory
-	// Only one repository may specify the `root` target
-	SyncTargetTypeRoot SyncTargetType = "root"
+	// Resources are saved in the global context
+	// Only one repository may specify the `instance` target
+	// When this exists, the UI will promote writing to the instance repo
+	// rather than the grafana database (where possible)
+	SyncTargetTypeInstance SyncTargetType = "instance"
 
 	// Resources will be saved into a folder managed by this repository
 	// The folder k8s name will be the same as the repository k8s name
-	SyncTargetTypeFolder SyncTargetType = "folder"
+	// It will contain a copy of everything from the remote
+	SyncTargetTypeMirror SyncTargetType = "mirror"
 
 	// Pick an explicit folder where we can save resources, not managed by provisioning
-	// SyncTargetTypeShared SyncTargetType = "shared"
+	// SyncTargetTypeFolder SyncTargetType = "folder"
 )
 
 type SyncOptions struct {

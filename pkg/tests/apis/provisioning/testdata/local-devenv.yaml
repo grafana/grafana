@@ -7,7 +7,7 @@ spec:
   description: load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards
   sync:
     enabled: false
-    target: folder
+    target: mirror
   editing:
     create: true
     update: true

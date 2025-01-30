@@ -4,7 +4,7 @@ import { RepositoryFormData } from '../types';
 export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
-    folder: data.folder,
+    sync: data.sync,
     title: data.title || '',
     editing: data.editing,
   };

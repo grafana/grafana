@@ -759,20 +759,32 @@ export type S3RepositoryConfig = {
   bucket?: string;
   region?: string;
 };
+export type SyncOptions = {
+  /** Enabled must be saved as true before any sync job will run */
+  enabled: boolean;
+  /** When non-zero, the sync will run periodically */
+  intervalSeconds?: number;
+  /** Where values should be saved
+    
+    Possible enum values:
+     - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)
+     - `"mirror"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote */
+  target: 'instance' | 'mirror';
+};
 export type RepositorySpec = {
-  /** Describe the feature toggle */
+  /** Repository description */
   description?: string;
   /** Edit options within the repository */
   editing: EditingOptions;
-  /** The folder that is backed by the repository. The value is a reference to the Kubernetes metadata name of the folder in the same namespace. */
-  folder?: string;
-  /** The repository on GitHub. Mutually exclusive with local and s3. */
+  /** The repository on GitHub. Mutually exclusive with local | s3 | github. */
   github?: GitHubRepositoryConfig;
-  /** The repository on the local file system. Mutually exclusive with s3 and github. */
+  /** The repository on the local file system. Mutually exclusive with local | s3 | github. */
   local?: LocalRepositoryConfig;
-  /** The repository in an S3 bucket. Mutually exclusive with local and github. */
+  /** The repository in an S3 bucket. Mutually exclusive with local | s3 | github. */
   s3?: S3RepositoryConfig;
-  /** Describe the feature toggle */
+  /** Sync settings -- how values are pulled from the repository into grafana */
+  sync: SyncOptions;
+  /** The repository display name (shown in the UI) */
   title: string;
   /** The repository type.  When selected oneOf the values below should be non-nil
     

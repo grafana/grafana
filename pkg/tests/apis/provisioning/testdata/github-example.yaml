@@ -8,7 +8,7 @@ spec:
   type: github
   sync:
     enabled: true
-    target: folder
+    target: mirror
   editing:
     create: true
     update: true

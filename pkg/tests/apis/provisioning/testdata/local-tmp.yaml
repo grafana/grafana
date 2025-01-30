@@ -7,7 +7,7 @@ spec:
   description: load a /tmp directory
   sync:
     enabled: false
-    target: folder
+    target: mirror
   editing:
     create: true
     update: true

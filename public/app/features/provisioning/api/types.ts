@@ -2,6 +2,8 @@ import { AlertVariant } from '@grafana/ui';
 
 import { ListOptions, Resource, ResourceForCreate, ResourceList } from '../../apiserver/types';
 
+import { SyncOptions } from './endpoints.gen';
+
 export type GitHubRepositoryConfig = {
   branchWorkflow?: boolean;
   generateDashboardPreviews?: boolean;
@@ -24,13 +26,14 @@ export type S3RepositoryConfig = {
 export type RepositorySpec = {
   title?: string;
   description?: string;
-  folder?: string;
+  sync: SyncOptions;
+  editing: EditingOptions;
+
+  type: 'github' | 'local' | 's3';
+
   github?: GitHubRepositoryConfig;
   local?: LocalRepositoryConfig;
   s3?: S3RepositoryConfig;
-  type: 'github' | 'local' | 's3';
-  editing: EditingOptions;
-  linting?: boolean;
 };
 
 export type RepositoryStatus = {

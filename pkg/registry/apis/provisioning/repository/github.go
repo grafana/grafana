@@ -499,6 +499,12 @@ func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisionin
 	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository) {
 		return nil, fmt.Errorf("repository mismatch")
 	}
+
+	// No need to sync if not enabled
+	if !r.config.Spec.Sync.Enabled {
+		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
+	}
+
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
 	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {

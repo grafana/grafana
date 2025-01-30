@@ -368,14 +368,14 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 		oldCfg := oldRepo.Config()
 
 		if cfg.Spec.Type != oldCfg.Spec.Type {
-			list = append(list, field.Invalid(field.NewPath("spec", "type"),
-				cfg.Spec.Type, "Changing repository type is not supported"))
+			list = append(list, field.Forbidden(field.NewPath("spec", "type"),
+				"Changing repository type is not supported"))
 		}
 
-		// Do not allow changing the sync target after running
+		// Do not allow changing the sync target once anything has synced successfully
 		if cfg.Spec.Sync.Target != oldCfg.Spec.Sync.Target && len(cfg.Status.Stats) > 0 {
-			list = append(list, field.Invalid(field.NewPath("spec", "sync", "target"),
-				cfg.Spec.Type, "Changing sync target after running sync is not supported"))
+			list = append(list, field.Forbidden(field.NewPath("spec", "sync", "target"),
+				"Changing sync target after running sync is not supported"))
 		}
 	}
 
@@ -394,14 +394,14 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) verifySingleInstanceTarget(cfg *provisioning.Repository) *field.Error {
-	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeRoot {
+	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
 		all, err := b.repositoryLister.Repositories(cfg.Namespace).List(labels.Everything())
 		if err != nil {
 			return field.Forbidden(field.NewPath("spec", "sync", "target"),
 				"Unable to verify root target // "+err.Error())
 		}
 		for _, v := range all {
-			if v.Name != cfg.Name && v.Spec.Sync.Target == provisioning.SyncTargetTypeRoot {
+			if v.Name != cfg.Name && v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
 				return field.Forbidden(field.NewPath("spec", "sync", "target"),
 					"Another repository is already targeting root: "+v.Name)
 			}
