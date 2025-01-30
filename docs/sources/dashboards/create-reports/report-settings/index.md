@@ -38,7 +38,7 @@ The options in this section control the branding and theming of the report attac
 ### Embedded Image
 
 - **Theme** - Theme of the dashboard image embedded in the email.
-  If **Current** is selected, the image in the report is in the instance theme of the organization Admin.
+  If **Current** is selected, the image in the report is in the instance theme of the report creator. If the report creator doesn't have a theme set, then the team, organization, or server theme is used. For more information refer to [Change Grafana UI theme](ref:change-ui-theme).
   Defaults to **Dark**.
 
 <!-- vale Grafana.WordList = NO -->
