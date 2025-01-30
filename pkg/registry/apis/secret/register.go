@@ -51,6 +51,14 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
+	// Check if dev mode is enabled and replace the provided stores with an in-memory stores if so.
+	// TODO: Remove before launch
+	if cfg.SecretsManagement.IsDeveloperMode {
+		fmt.Println("developer mode enabled")
+		secureValueStorage = reststorage.NewFakeSecureValueStore(cfg.SecretsManagement.DeveloperStubLatency)
+		keeperStorage = reststorage.NewFakeKeeperStore(cfg.SecretsManagement.DeveloperStubLatency)
+	}
+
 	builder := NewSecretAPIBuilder(tracer, secureValueStorage, keeperStorage)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
