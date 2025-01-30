@@ -287,7 +287,7 @@ You may have customized the [configuration](https://grafana.com/docs/grafana/lat
 The following customizations are available via support:
 
 - Enabling [feature toggles](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles).
-- [Single sign-on and team sync using SAML, LDAP, or Oauth](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication).
+- [Single sign-on and team sync using SAML, LDAP, or OAuth](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication).
 - Enable [embedding Grafana dashboards in other applications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#allow_embedding) for Grafana Cloud contracted customers.
 - [Audit logging](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/audit-grafana/) ([Usage insights logs and dashboards](https://grafana.com/docs/grafana-cloud/account-management/usage-insights/) are available in Grafana Cloud Pro and Advanced by default).
 
