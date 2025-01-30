@@ -81,7 +81,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}
 }
 
-// This function should be moved to oss (it is now a duplicate)
+// Check the requested api against a saved snapshot
 func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
 	if gv.Group == "" {
 		return // skip invalid groups
