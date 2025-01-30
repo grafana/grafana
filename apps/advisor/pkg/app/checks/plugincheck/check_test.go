@@ -61,7 +61,7 @@ func TestRun(t *testing.T) {
 			expectedErrors: []advisor.CheckReportError{
 				{
 					Severity: advisor.CheckReportErrorSeverityLow,
-					Reason:   "New version available: plugin2",
+					Reason:   "New version available for plugin2",
 					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 				},
 			},
@@ -80,7 +80,7 @@ func TestRun(t *testing.T) {
 			expectedErrors: []advisor.CheckReportError{
 				{
 					Severity: advisor.CheckReportErrorSeverityLow,
-					Reason:   "New version available: plugin2",
+					Reason:   "New version available for plugin2",
 					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 				},
 			},

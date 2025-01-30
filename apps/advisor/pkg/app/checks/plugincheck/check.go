@@ -75,7 +75,7 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 		if hasUpdate(p, info) {
 			errs = append(errs, advisor.CheckReportError{
 				Severity: advisor.CheckReportErrorSeverityLow,
-				Reason:   fmt.Sprintf("New version available: %s", p.ID),
+				Reason:   fmt.Sprintf("New version available for %s", p.ID),
 				Action: fmt.Sprintf(
 					"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+
 						" and upgrade to the latest version.", p.ID),
