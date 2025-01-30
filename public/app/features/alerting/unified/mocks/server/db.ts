@@ -160,13 +160,9 @@ export const alertingFactory = {
     rule: prometheusRuleFactory,
   },
   ruler: {
-    group: rulerRuleGroupFactory,
+    group: rulerGroupFactory,
     alertingRule: rulerAlertingRuleFactory,
     recordingRule: rulerRecordingRuleFactory,
   },
   dataSource: dataSourceFactory,
-  ruler: {
-    group: rulerGroupFactory,
-    rule: rulerAlertingRuleFactory,
-  },
 };
