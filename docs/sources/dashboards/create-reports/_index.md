@@ -95,6 +95,8 @@ For Grafana Enterprise, using the Reporting feature has the following requiremen
 
 By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
 
+These options are available in the [reporting configuration](ref:reporting-configuration) of the `ini` file for Enterprise Grafana.
+
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.
 You can configure how long a file should be stored before being removed by configuring the [temp_data_lifetime](ref:temp-data-lifetime) setting.
@@ -111,7 +113,7 @@ Refer to specific guides to understand what permissions are required.
 
 ## Create a report
 
-The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page:
+The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page. You can also save the report as a draft at any step in the process:
 
 ![Reporting wizard](/media/docs/grafana/dashboards/screenshot-reporting-wizard-v11.5.png)
 
@@ -175,6 +177,7 @@ Note that this affects the display of the dashboard for all users.
 
 If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server.
 As a result, this time zone might not match the time zone of users creating or receiving the report.
+If you want to use a specific time zone, save the dashboard with a fixed time zone instead of **Browser Time**
 
 Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
 
@@ -329,6 +332,8 @@ To delete a report, follow these steps:
 1. In the main menu, click **Dashboards > Reporting**.
 1. On the row of the report you want to update, click the trash can icon.
 1. Click **Delete** to confirm.
+
+Deleting a report is irreversible.
 
 ## Troubleshoot Reporting
 
