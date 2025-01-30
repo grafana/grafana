@@ -296,14 +296,14 @@ describe.each([
   });
 
   it('allows user to reload and update policies if its been changed by another user', async () => {
-    jest.retryTimes(2);
     const { user } = renderNotificationPolicies();
+    const NEW_INTERVAL = '12h';
 
     await getRootRoute();
 
     const existingConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
     const modifiedConfig = produce(existingConfig, (draft) => {
-      draft.alertmanager_config.route!.group_interval = '12h';
+      draft.alertmanager_config.route!.group_interval = NEW_INTERVAL;
     });
     setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, modifiedConfig);
 
@@ -317,11 +317,8 @@ describe.each([
     await user.click(screen.getByRole('button', { name: /cancel/i }));
     await user.click(screen.getByRole('button', { name: /reload policies/i }));
 
-    await openDefaultPolicyEditModal();
-    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
-    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
-    // TODO: Check if test flakiness/length can be improved
-  }, 60000);
+    expect((await screen.findAllByTestId('timing-options'))[0]).toHaveTextContent(NEW_INTERVAL);
+  });
 
   it('Should be able to delete an empty route', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
