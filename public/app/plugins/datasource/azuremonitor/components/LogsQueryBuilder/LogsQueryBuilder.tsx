@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
+import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -12,6 +12,7 @@ import {
   EngineSchema,
 } from '../../types';
 
+import { FilterSection } from './FilterSection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
 
@@ -28,10 +29,9 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
     return schema?.database?.tables || [];
   }, [schema?.database]);
-  console.log(tables);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<AzureLogAnalyticsMetadataColumn[]>([]);
-  const [selectedColumns, setSelectedColumns] = useState<SelectableValue<string>>([]);
+  const [selectedColumns, setSelectedColumns] = useState<Array<SelectableValue<string>>>([]);
 
   useEffect(() => {
     if (selectedTable) {
@@ -45,16 +45,17 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     }
   }, [selectedTable, tables]);
 
-  const handleColumnChange = (columns: SelectableValue<string>) => {
+  const handleColumnChange = (columns: Array<SelectableValue<string>>) => {
     setSelectedColumns(columns);
     const uniqueLabels = [...new Set(columns.map((c: SelectableValue<string>) => c.label!))];
     const baseQuery = selectedTable!.split(' | project')[0];
     const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')}`;
+
     onQueryChange({
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        query: newQueryString,
+        query: columns.length > 0 ? newQueryString : baseQuery,
       },
     });
   };
@@ -89,8 +90,14 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           table={selectedTable}
           tables={tables}
         />
-        {/* <FilterSection {...props} columns={columns} />
-        <AggregateSection {...props} columns={columns} />
+        <FilterSection 
+          {...props}
+          query={query}
+          onChange={onQueryChange}
+          columns={columns} 
+          selectedColumns={selectedColumns}
+        />
+        {/* <AggregateSection {...props} columns={columns} />
         <GroupBySection {...props} columns={columns} /> */}
         <KQLPreview query={query.azureLogAnalytics?.query || ''} />
       </EditorRows>

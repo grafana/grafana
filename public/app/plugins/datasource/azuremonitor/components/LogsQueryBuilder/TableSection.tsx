@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';
@@ -9,7 +9,7 @@ import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from 
 interface TableSectionProps {
   columns: AzureLogAnalyticsMetadataColumn[];
   onTableChange: (newTable: AzureLogAnalyticsMetadataTable) => void;
-  onColumnChange: (columns: SelectableValue<string>) => void;
+  onColumnChange: (columns: Array<SelectableValue<string>>) => void;
   selectedColumns: SelectableValue<string>;
   table?: string | null;
   tables: AzureLogAnalyticsMetadataTable[];
@@ -51,8 +51,9 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
             value={selectedColumns}
             options={columnOptions}
             placeholder="Select columns"
-            onChange={(selected) => {
-              onColumnChange(selected);
+            onChange={(selected: SelectableValue<string> | Array<SelectableValue<string>>) => {
+              const selectedArray = Array.isArray(selected) ? selected : [selected];
+              onColumnChange(selectedArray);
             }}
             isDisabled={!table}
           />

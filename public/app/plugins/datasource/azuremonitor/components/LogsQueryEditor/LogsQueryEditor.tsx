@@ -218,7 +218,6 @@ const LogsQueryEditor = ({
           />
         )}
         {dataIngestedWarning}
-        {!query.azureLogAnalytics?.mode && (
           <EditorRow>
             <EditorFieldGroup>
               {!hideFormatAs && (
@@ -245,7 +244,6 @@ const LogsQueryEditor = ({
               {migrationError && <Alert title={migrationError.title}>{migrationError.message}</Alert>}
             </EditorFieldGroup>
           </EditorRow>
-        )}
       </EditorRows>
     </span>
   );
