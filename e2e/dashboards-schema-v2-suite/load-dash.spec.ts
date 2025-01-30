@@ -13,7 +13,7 @@ describe('Dashboards', () => {
   });
 
   // temporary test to check that we are loading schema V2 JSON in the UI
-  it('should open up dashboard editor by clicking Edit dashboard v2 schema button', () => {
+  it('should open dev dashboard JSON editor by clicking: Edit dashboard v2 schema button', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
 
     cy.get('button[aria-label="Edit dashboard v2 schema"]').click();
