@@ -41,16 +41,16 @@ When you decide to migrate, set aside a day of cutover during which users should
 
 Ensure you have the following:
 
-- A [Grafana Cloud Stack]({{< relref "../get-started" >}}) and access to a Linux Machine (or a working WSL2 installation) to run the code snippets in this guide.
+- A [Grafana Cloud Stack](https://grafana.com/docs/grafana-cloud/get-started/) and access to a Linux Machine (or a working WSL2 installation) to run the code snippets in this guide.
 - Administrator access to a Grafana Cloud stack. To check you access level, Go to `https://grafana.com/orgs/<your-org-name>/members`
 - Administrator access to your existing Grafana OSS/Enterprise instance. To check your access level, Go to `https://<grafana-onprem-url>/admin/users`
 - Access to the credentials used to connect to your data sources. For example, API keys or usernames and passwords. Since this information is encrypted, it cannot be copied from one instance to the other.
-- If some of your data sources are only available from inside your network, refer to the requirements for [Private Data Source Connect]({{< relref "../connect-externally-hosted/private-data-source-connect" >}})
+- If some of your data sources are only available from inside your network, refer to the requirements for [Private Data Source Connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)
 - For Plugins, Reports and Playlists only: The [curl](https://github.com/curl/curl) and [jq](https://jqlang.github.io/jq/download/) command line tools
 
 ## Upgrade Grafana OSS/Enterprise to the latest version
 
-Grafana Cloud stacks generally run the latest version of Grafana. In order to avoid issues during migration, upgrade Grafana by following our guides [here]({{< relref "../../grafana/latest/upgrade-guide" >}}).
+Grafana Cloud stacks generally run the latest version of Grafana. In order to avoid issues during migration, upgrade Grafana by following our guides [here](https://grafana.com/docs/grafana/latest/upgrade-guide/).
 
 ## Migrate Grafana resources
 
@@ -104,7 +104,7 @@ Migration of plugins is the first step when transitioning from Grafana OSS/Enter
    done
    ```
 
-   Replace `<GRAFANA_CLOUD_ACCESS_TOKEN>` with your Grafana Cloud Access Policy Token. To create a new one, refer Grafana Cloud [Access Policies Documentation]({{< relref "./authentication-and-permissions/access-policies" >}})
+   Replace `<GRAFANA_CLOUD_ACCESS_TOKEN>` with your Grafana Cloud Access Policy Token. To create a new one, refer to Grafana Cloud [access policies documentation](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/)
 
    This script iterates through each plugin listed in the `plugins.json` file:
 
@@ -113,7 +113,7 @@ Migration of plugins is the first step when transitioning from Grafana OSS/Enter
 
 ### Migrate resources that are already provisioned as-code
 
-If you already use tools like [Terraform]({{< relref "../developer-resources/infrastructure-as-code/terraform" >}}), [Ansible]({{< relref "../developer-resources/infrastructure-as-code/ansible" >}}), or [Grafana’s HTTP API]({{< relref "../developer-resources/api-reference/http-api" >}}) to provision resources to Grafana, redirect those to the new Grafana Cloud instance by replacing the Grafana URL and credentials.
+If you already use tools like [Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/), [Ansible](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/ansible/), or [Grafana’s HTTP API](https://grafana.com/docs/grafana-cloud/developer-resources/api-reference/http-api/) to provision resources to Grafana, redirect those to the new Grafana Cloud instance by replacing the Grafana URL and credentials.
 
 ### Migrate dashboards, folders, data sources, library panels, and alert rules using Grizzly
 
@@ -137,7 +137,7 @@ mkdir grafana-migration
 cd grafana-migration
 ```
 
-To give grizzly access to your Grafana OSS/Enterprise instance and the Grafana Cloud Instance, you need to create a [service account](/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/) and a corresponding [access token](/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#service-account-tokens) on each instance. You can use these tokens to authenticate requests to pull and push resources. Follow these steps on your Grafana OSS/Enterprise instance:
+To give grizzly access to your Grafana OSS/Enterprise instance and the Grafana Cloud Instance, you need to create a [service account](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/) and a corresponding [access token](https://www.grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#service-account-tokens) on each instance. You can use these tokens to authenticate requests to pull and push resources. Follow these steps on your Grafana OSS/Enterprise instance:
 
 - Navigate to the **Administration -> Users and access -> Service Accounts** Page within the Grafana OSS/Enterprise instance.
 - Click on **Add Service Account**
@@ -207,7 +207,7 @@ After migrating your data sources, you must fill in their credentials, like toke
 
 To fill in the missing authentication information, go to the **Connections -> Datasources** page in your new Grafana Cloud instance and verify that credentials for all data sources are set. You can skip data sources starting with `grafanacloud` - These are managed by Grafana Cloud directly and provide access to Grafana Cloud databases.
 
-If one of your data sources can only be accessed from your internal network, take a look at the [Private Data Source Connect documentation]({{< relref "../connect-externally-hosted/private-data-source-connect" >}}).
+If one of your data sources can only be accessed from your internal network, take a look at the [Private Data Source Connect documentation](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
 After you have configured the data sources, all your dashboards should be available as they were before.
 
@@ -215,9 +215,9 @@ After you have configured the data sources, all your dashboards should be availa
 
 This step only applies if you use Grafana OSS/Enterprise to access network-secured data sources.
 
-Some data sources, like Prometheus or SQL databases, live on private networks or behind firewalls that are not accessible by Grafana Cloud. If your Grafana OSS/Enterprise instance was hosted on the same network as your data source, you might find that Grafana Cloud cannot connect to all of the same data sources that Grafana OSS/Enterprise could access.
+Some data sources, like Prometheus or SQL databases, live on private networks or behind fire wall rules that are not accessible by Grafana Cloud. If your Grafana OSS/Enterprise instance was hosted on the same network as your data source, you might find that Grafana Cloud cannot connect to all of the same data sources that Grafana OSS/Enterprise could access.
 
-To access these data sources from Grafana Cloud, follow our guide to [configure PDC in your network]({{< relref "../connect-externally-hosted/private-data-source-connect/configure-pdc" >}}), and then configure the applicable Grafana data sources to [connect using PDC]({{< relref "../connect-externally-hosted/private-data-source-connect/configure-pdc#configure-a-data-source-to-use-private-data-source-connect-pdc" >}}). Note that PDC is only needed for your network-secured data sources, not for data sources like Splunk or CloudWatch that are accessible over the public internet.
+To access these data sources from Grafana Cloud, follow our guide to [configure PDC in your network](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/), and then configure the applicable Grafana data sources to [connect using PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-a-data-source-to-use-private-data-source-connect-pdc). Note that PDC is only needed for your network-secured data sources, not for data sources like Splunk or CloudWatch that are accessible over the public internet.
 
 For more information on how PDC works, see our [overview document]({{< relref "../connect-externally-hosted/private-data-source-connect" >}}).
 
@@ -274,28 +274,28 @@ Grizzly does not currently support Reports and Playlists as a resource, so you c
 
 ### Migrate single sign-on configuration
 
-Grafana Cloud stacks support all of the same authentication and authorization options as Grafana OSS/Enterprise, except for [anonymous authentication])({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-authentication" >}}) and use of the [Auth proxy]({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-authentication/auth-proxy" >}}). However, single sign-on settings cannot be exported and imported like dashboards, alerts, and other resources.
+Grafana Cloud stacks support all of the same authentication and authorization options as Grafana OSS/Enterprise, except for [anonymous authentication](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/anonymous-auth/) and use of the [Auth proxy](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/auth-proxy/). However, single sign-on settings cannot be exported and imported like dashboards, alerts, and other resources.
 
-To set up SAML authentication from scratch using Grafana’s UI or API, follow [these instructions]({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-authentication/saml-ui#configure-saml-authentication-using-the-grafana-user-interface" >}}) to Configure SAML authentication in Grafana.
+To set up SAML authentication from scratch using Grafana’s UI or API, follow [these instructions](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml-ui/) to Configure SAML authentication in Grafana.
 
-LDAP and OIDC/OAuth2 can only be configured in Grafana Cloud by the Grafana Labs support team. Follow [these instructions]({{< relref "./authentication-and-permissions" >}}) to request SSO configuration from the support team.
+LDAP and OIDC/OAuth2 can only be configured in Grafana Cloud by the Grafana Labs support team. Follow [these instructions](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/) to request SSO configuration from the support team.
 
 ### Migrate custom Grafana configuration
 
-You may have customized the [configuration]({{< relref "../../grafana/latest/setup-grafana/configure-grafana" >}}) of your Grafana OSS/Enterprise instance, for example with feature toggles, custom auth, or embedding options. Since Grafana configuration is stored in environment variables or the filesystem where Grafana runs, Grafana Cloud users do not have access to it. However, you can open a support ticket to ask a Grafana Labs support engineer for customizations.
+You may have customized the [configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) of your Grafana OSS/Enterprise instance, for example with feature toggles, custom auth, or embedding options. Since Grafana configuration is stored in environment variables or the filesystem where Grafana runs, Grafana Cloud users do not have access to it. However, you can open a support ticket to ask a Grafana Labs support engineer for customizations.
 
 The following customizations are available via support:
 
-- Enabling [feature toggles]({{< relref "../../grafana/latest/setup-grafana/configure-grafana/feature-toggles" >}}).
-- [Single sign-on and team sync using SAML, LDAP, or Oauth]({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-authentication" >}}).
-- Enable [embedding Grafana dashboards in other applications]({{< relref "../../grafana/latest/setup-grafana/configure-grafana#allow_embedding" >}}) for Grafana Cloud contracted customers.
-- [Audit logging]({{< relref "../../grafana/latest/setup-grafana/configure-security/audit-grafana" >}}) ([Usage insights logs and dashboards]({{< relref "./usage-insights" >}}) are available in Grafana Cloud Pro and Advanced by default).
+- Enabling [feature toggles](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles).
+- [Single sign-on and team sync using SAML, LDAP, or Oauth](http://www.grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication).
+- Enable [embedding Grafana dashboards in other applications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#allow_embedding) for Grafana Cloud contracted customers.
+- [Audit logging](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/audit-grafana/) ([Usage insights logs and dashboards](https://grafana.com/docs/grafana-cloud/account-management/usage-insights/) are available in Grafana Cloud Pro and Advanced by default).
 
 Note that the following custom configurations are not supported in Grafana Cloud:
 
-- [Anonymous user access]({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-authentication/grafana#anonymous-authentication" >}}).
-- [Auth proxy]({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-authentication/auth-proxy" >}}).
-- [Third-party database encryption]({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-database-encryption" >}}) and the [Hashicorp Vault]({{< relref "../../grafana/latest/setup-grafana/configure-security/configure-database-encryption/integrate-with-hashicorp-vault" >}}) integration.
+- [Anonymous user access](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/anonymous-auth/).
+- [Auth proxy](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/auth-proxy/).
+- [Third-party database encryption](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/) and the [Hashicorp Vault](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/) integration.
 - Running self-signed plugins, like custom-built data sources or visualizations. For more information on plugin signing, refer to our [developer documentation](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin).
 
 If you have a custom configuration in Grafana OSS/Enterprise that is not listed here, reach out to our support team to find out whether they can help you set it up.
@@ -304,9 +304,9 @@ If you have a custom configuration in Grafana OSS/Enterprise that is not listed 
 
 After you have successfully migrated resources and configuration from Grafana OSS/Enterprise, consider the following steps to enhance your monitoring experience:
 
-- **Get started with Grafana Cloud**: learn more about the functionality available in Grafana Cloud, which is not available in the open source or Enterprise editions. Read more in [Get started with Grafana Cloud]({{< relref "../get-started" >}})
+- **Get started with Grafana Cloud**: learn more about the functionality available in Grafana Cloud, which is not available in the open source or Enterprise editions. Read more in [Get started with Grafana Cloud](https://grafana.com/docs/grafana-cloud/get-started/)
 - **AWS PrivateLink for Grafana Cloud**: securely transmit telemetry data from your AWS Virtual Private Cloud (VPC) to Grafana Cloud, entirely within the AWS network.
-  Learn how to set this up with [AWS PrivateLink Integration]({{< relref "../send-data/aws-privatelink" >}}).
+  Learn how to set this up with [AWS PrivateLink Integration](https://grafana.com/docs/grafana-cloud/send-data/aws-privatelink/).
 - **Azure PrivateLink for Grafana Cloud**, securely transmit telemetry from your Azure Virtual Network to Grafana Cloud while staying on the Azure network, and avoid exposing your traffic to the public internet.
-  Learn how to set this up with [AWS PrivateLink Integration]({{< relref "../send-data/azure-privatelink" >}}).
-- **[Grafana Integrations]({{< relref "../monitor-infrastructure/integrations" >}})**: ready-made integrations to make monitoring your infrastructure and applications more straightforward.
+  Learn how to set this up with [AWS PrivateLink Integration](https://grafana.com/docs/grafana-cloud/send-data/azure-privatelink/).
+- **[Grafana Integrations](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/integrations/)**: ready-made integrations to make monitoring your infrastructure and applications more straightforward.
