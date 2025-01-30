@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
@@ -263,9 +264,7 @@ func TestSearchHandler(t *testing.T) {
 
 		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
-		if err != nil {
-			t.Fail()
-		}
+		require.NoError(t, err)
 		assert.Equal(t, len(mockResults), len(p.Hits))
 		assert.Equal(t, mockResults[3].Value, p.Hits[0].Title)
 		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
