@@ -23,24 +23,24 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
   configure-postgres-data-source:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/
   postgres-query-editor:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
   alerting:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
   transformations:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/  
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/  
 ---
 
 # PostgreSQL data source
@@ -53,8 +53,8 @@ Grafana offers several configuration options for this data source as well as a v
 
 The following documents will help you get started with the PostgreSQL data source in Grafana:
 
-- [Configure the MySQL data source](ref:configure-postgresql-data-source)
-- [MySQL query editor](ref:postgresql-query-editor)
+- [Configure the MySQL data source](ref:configure-postgres-data-source)
+- [MySQL query editor](ref:postgres-query-editor)
 
 Once you have configured the data source you can:
 

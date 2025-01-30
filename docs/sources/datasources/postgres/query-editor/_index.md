@@ -21,51 +21,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  add-template-variables-interval-ms:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
   add-template-variables-interval:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  variable-syntax-advanced-variable-format-options:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
   explore:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   query-transform-data:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
   query-editor:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
   alert-rules:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
   template-annotations-and-labels:
     - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
     - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
 
 ---
 
@@ -81,9 +66,6 @@ The PostgreSQL query editor is located on the [Explore page](ref:explore). You c
 Ensure the database user you specify has only SELECT permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could potentially get executed. To minimize this risk, Grafana strongly recommends creating a dedicated PostgreSQL user with restricted permissions.
 {{< /admonition >}}
 
-
-The database user you specify when you add the data source should only be granted SELECT permissions on the specified database and tables you want to query. Grafana does not validate that the query is safe. The query could include any SQL statement. For example, statements like DELETE FROM user; and DROP TABLE user; would be executed. To protect against this we highly recommend you create a specific PostgreSQL user with restricted permissions.
-
 Example:
 
 ```sql
@@ -91,7 +73,6 @@ Example:
  GRANT USAGE ON SCHEMA schema TO grafanareader;
  GRANT SELECT ON schema.table TO grafanareader;
 ```
-<!-- Make sure the user does not get any unwanted privileges from the public role. -->
 Ensure the user does not inherit any unintended privileges from the `public` role.
 
 ## PostgreSQL query editor components
@@ -100,7 +81,7 @@ The PostgreSQL query editor has two modes: **Builder** and **Code**.
 
 Builder mode helps you build a query using a visual interface. Code mode allows for advanced querying and offers support for complex SQL query writing.
 
-## ## PostgreSQL Builder mode
+### PostgreSQL Builder mode
 
 The following components will help you build a PostgreSQL query:
 
@@ -121,10 +102,9 @@ The following components will help you build a PostgreSQL query:
 
 ## PostgreSQL Code mode
 
-
 To create advanced queries, switch to **Code mode** by clicking **Code** in the upper right of the editor window. Code mode supports the auto-completion of tables, columns, SQL keywords, standard SQL functions, Grafana template variables, and Grafana macros. Columns cannot be completed before a table has been specified.
 
-<!-- {{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}} -->
+{{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
 Select **Table** or **Time Series** as the format. Click the **{}** in the bottom right to format the query. Click the **downward caret** to expand the Code mode editor. **CTRL/CMD + Return** serves as a keyboard shortcut to execute the query.
 
@@ -132,70 +112,9 @@ Select **Table** or **Time Series** as the format. Click the **{}** in the botto
 Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
 {{% /admonition %}}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Format
-
-The response from PostgreSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
-
-### Dataset and table selection
-
-The dataset dropdown will be populated with the configured database to which the user has access.
-The table dropdown is populated with the tables that are available within that database.
-
-### Columns and Aggregation functions (SELECT)
-
-Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
-
-Add further value columns by clicking the plus button and another column dropdown appears.
+FIND this screenshot
 
 {{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
-
-### Filter data (WHERE)
-
-To add a filter, toggle the **Filter** switch at the top of the editor.
-This reveals a **Filter by column value** section with two dropdown selectors.
-
-Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
-Use the second dropdown to choose a filter.
-
-To filter on more columns, click the plus (`+`) button to the right of the condition dropdown.
-
-To remove a filter, click the `x` button next to that filter's dropdown.
-
-After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
-
-### Group By
-
-To group the results by column, flip the group switch at the top of the editor. You can then choose which column to group the results by. The group by clause can be removed by pressing the X button.
-
-### Preview
-
-By flipping the preview switch at the top of the editor, you can get a preview of the SQL query generated by the query builder.
-
-
-
-## Code editor
-
-
-
-To make advanced queries, switch to the code editor by clicking `code` in the top right corner of the editor. The code editor support autocompletion of tables, columns, SQL keywords, standard sql functions, Grafana template variables and Grafana macros. Columns cannot be completed before a table has been specified.
-
-You can expand the code editor by pressing the `chevron` pointing downwards in the lower right corner of the code editor.
-
-`CTRL/CMD + Return` works as a keyboard shortcut to run the query.
-
 
 ## Macros
 
@@ -255,7 +174,7 @@ For backward compatibility, an exception to the aforementioned rule applies to q
 {{% /admonition %}}
 
 
-## Time series queries
+
 <!-- 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result. -->
 
