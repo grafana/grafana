@@ -1,6 +1,14 @@
 import { config } from '@grafana/runtime';
 
-import { checkEvaluationIntervalGlobalLimit } from './config';
+import { pluginMeta, pluginMetaToPluginConfig } from '../testSetup/plugins';
+import { SupportedPlugin } from '../types/pluginBridges';
+
+import {
+  checkEvaluationIntervalGlobalLimit,
+  getIrmIfPresentOrIncidentPluginId,
+  getIrmIfPresentOrOnCallPluginId,
+  getIsIrmPluginPresent,
+} from './config';
 
 describe('checkEvaluationIntervalGlobalLimit', () => {
   it('should NOT exceed limit if evaluate every is not valid duration', () => {
@@ -49,5 +57,50 @@ describe('checkEvaluationIntervalGlobalLimit', () => {
 
     expect(globalLimit).toBeGreaterThan(0);
     expect(exceedsLimit).toBe(false);
+  });
+});
+
+describe('getIsIrmPluginPresent', () => {
+  it('should return true when IRM plugin is present in config.apps', () => {
+    config.apps = { [SupportedPlugin.Irm]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Irm]) };
+    expect(getIsIrmPluginPresent()).toBe(true);
+  });
+
+  it('should return false when IRM plugin is not present in config.apps', () => {
+    config.apps = {
+      [SupportedPlugin.OnCall]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.OnCall]),
+      [SupportedPlugin.Incident]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Incident]),
+    };
+    expect(getIsIrmPluginPresent()).toBe(false);
+  });
+});
+
+describe('getIrmIfPresentOrIncidentPluginId', () => {
+  it('should return IRM plugin ID when IRM plugin is present', () => {
+    config.apps = { [SupportedPlugin.Irm]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Irm]) };
+    expect(getIrmIfPresentOrIncidentPluginId()).toBe(SupportedPlugin.Irm);
+  });
+
+  it('should return Incident plugin ID when IRM plugin is not present', () => {
+    config.apps = {
+      [SupportedPlugin.OnCall]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.OnCall]),
+      [SupportedPlugin.Incident]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Incident]),
+    };
+    expect(getIrmIfPresentOrIncidentPluginId()).toBe(SupportedPlugin.Incident);
+  });
+});
+
+describe('getIrmIfPresentOrOnCallPluginId', () => {
+  it('should return IRM plugin ID when IRM plugin is present', () => {
+    config.apps = { [SupportedPlugin.Irm]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Irm]) };
+    expect(getIrmIfPresentOrOnCallPluginId()).toBe(SupportedPlugin.Irm);
+  });
+
+  it('should return OnCall plugin ID when IRM plugin is not present', () => {
+    config.apps = {
+      [SupportedPlugin.OnCall]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.OnCall]),
+      [SupportedPlugin.Incident]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Incident]),
+    };
+    expect(getIrmIfPresentOrOnCallPluginId()).toBe(SupportedPlugin.OnCall);
   });
 });
