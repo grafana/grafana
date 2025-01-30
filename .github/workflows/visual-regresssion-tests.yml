@@ -21,7 +21,7 @@ jobs:
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
       - name: Run local server
-        run: yarn start
+        run: yarn start &
       - name: Run Playwright tests
         run: |
           yarn e2e:playwright:vizregression | tee output.log
