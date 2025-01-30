@@ -10,6 +10,7 @@ import {
   LinkButton,
   Stack,
   TextLink,
+  Text,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -66,9 +67,7 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
             const name = item.metadata?.name ?? '';
 
             let icon: IconName = 'database'; // based on type
-            let meta: ReactNode[] = [
-              // TODO... add counts? and sync info
-            ];
+            let meta: ReactNode[] = [];
             switch (item.spec?.type) {
               case 'github':
                 icon = 'github';
@@ -95,7 +94,11 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 break;
 
               case 'local':
-                meta.push(<span key={'path'}>{item.spec.local?.path}</span>);
+                meta.push(
+                  <Text element={'p'} key={'path'}>
+                    {item.spec.local?.path ?? ''}
+                  </Text>
+                );
                 break;
             }
 
@@ -106,7 +109,12 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title} <StatusBadge state={item.status?.sync?.state} name={name} />
+                    {item.spec?.title}{' '}
+                    <StatusBadge
+                      enabled={Boolean(item.spec?.sync?.enabled)}
+                      state={item.status?.sync?.state}
+                      name={name}
+                    />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>
