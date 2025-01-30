@@ -19,18 +19,18 @@ import {
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob(endpoint) {
-      // Do not end 'watch' in the first query, so we can get the initial list of jobs
+      // Do not include 'watch' in the first query, so we can get the initial list of jobs
       // and then start watching for changes
       endpoint.query = ({ watch, ...queryArg }) => ({
         url: `/jobs`,
-        params: getListParams(queryArg),
+        params: queryArg,
       });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus>('jobs');
     },
     listRepository(endpoint) {
       endpoint.query = ({ watch, ...queryArg }) => ({
         url: `/repositories`,
-        params: getListParams(queryArg),
+        params: queryArg,
       });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories');
     },
@@ -39,6 +39,10 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
 
 type ListParams = Omit<ListRepositoryArg, 'fieldSelector' | 'labelSelector'> &
   Pick<ListOptions, 'labelSelector' | 'fieldSelector'>;
+
+/**
+ * A helper function to remove the watch argument from the queryArg and convert field- and labelSelectors to strings
+ */
 export function getListParams(queryArg: ListParams) {
   if (!queryArg) {
     return {};
