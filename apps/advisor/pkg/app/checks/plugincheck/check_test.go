@@ -21,12 +21,12 @@ func TestRun(t *testing.T) {
 		pluginArchives     map[string]*repo.PluginArchiveInfo
 		pluginPreinstalled []string
 		pluginManaged      []string
-		expectedErrors     []advisor.CheckV0alpha1StatusReportErrors
+		expectedErrors     []advisor.CheckReportError
 	}{
 		{
 			name:           "No plugins",
 			plugins:        []pluginstore.Plugin{},
-			expectedErrors: []advisor.CheckV0alpha1StatusReportErrors{},
+			expectedErrors: []advisor.CheckReportError{},
 		},
 		{
 			name: "Deprecated plugin",
@@ -39,9 +39,9 @@ func TestRun(t *testing.T) {
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin1": {Version: "1.0.0"},
 			},
-			expectedErrors: []advisor.CheckV0alpha1StatusReportErrors{
+			expectedErrors: []advisor.CheckReportError{
 				{
-					Severity: advisor.CheckStatusSeverityHigh,
+					Severity: advisor.CheckReportErrorSeverityHigh,
 					Reason:   "Plugin deprecated: plugin1",
 					Action:   "Look for alternatives",
 				},
@@ -58,9 +58,9 @@ func TestRun(t *testing.T) {
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin2": {Version: "1.1.0"},
 			},
-			expectedErrors: []advisor.CheckV0alpha1StatusReportErrors{
+			expectedErrors: []advisor.CheckReportError{
 				{
-					Severity: advisor.CheckStatusSeverityLow,
+					Severity: advisor.CheckReportErrorSeverityLow,
 					Reason:   "New version available: plugin2",
 					Action:   "Update plugin",
 				},
@@ -77,9 +77,9 @@ func TestRun(t *testing.T) {
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin2": {Version: "beta"},
 			},
-			expectedErrors: []advisor.CheckV0alpha1StatusReportErrors{
+			expectedErrors: []advisor.CheckReportError{
 				{
-					Severity: advisor.CheckStatusSeverityLow,
+					Severity: advisor.CheckReportErrorSeverityLow,
 					Reason:   "New version available: plugin2",
 					Action:   "Update plugin",
 				},
@@ -97,7 +97,7 @@ func TestRun(t *testing.T) {
 				"plugin3": {Version: "1.1.0"},
 			},
 			pluginPreinstalled: []string{"plugin3"},
-			expectedErrors:     []advisor.CheckV0alpha1StatusReportErrors{},
+			expectedErrors:     []advisor.CheckReportError{},
 		},
 		{
 			name: "Managed plugin",
@@ -111,7 +111,7 @@ func TestRun(t *testing.T) {
 				"plugin4": {Version: "1.1.0"},
 			},
 			pluginManaged:  []string{"plugin4"},
-			expectedErrors: []advisor.CheckV0alpha1StatusReportErrors{},
+			expectedErrors: []advisor.CheckReportError{},
 		},
 	}
 

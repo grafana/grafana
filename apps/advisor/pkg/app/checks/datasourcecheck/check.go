@@ -49,13 +49,13 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 		return nil, err
 	}
 
-	dsErrs := []advisor.CheckV0alpha1StatusReportErrors{}
+	dsErrs := []advisor.CheckReportError{}
 	for _, ds := range dss {
 		// Data source UID validation
 		err := util.ValidateUID(ds.UID)
 		if err != nil {
-			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
-				Severity: advisor.CheckStatusSeverityLow,
+			dsErrs = append(dsErrs, advisor.CheckReportError{
+				Severity: advisor.CheckReportErrorSeverityLow,
 				Reason:   fmt.Sprintf("Invalid UID: %s", ds.UID),
 				Action:   "Change UID",
 			})
@@ -81,8 +81,8 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 			continue
 		}
 		if resp.Status != backend.HealthStatusOk {
-			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
-				Severity: advisor.CheckStatusSeverityHigh,
+			dsErrs = append(dsErrs, advisor.CheckReportError{
+				Severity: advisor.CheckReportErrorSeverityHigh,
 				Reason:   fmt.Sprintf("Health check failed: %s", ds.Name),
 				Action:   "Check datasource",
 			})
