@@ -60,7 +60,10 @@ export const grafanaRulerRule: RulerGrafanaRuleDTO = {
     notification_settings: undefined,
     version: 2,
     updated: '2025-01-17T09:35:17.000Z',
-    updated_by: 'user2',
+    updated_by: {
+      uid: '1',
+      name: 'user2',
+    },
   },
 };
 

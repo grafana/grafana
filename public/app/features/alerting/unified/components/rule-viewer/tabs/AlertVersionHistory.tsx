@@ -131,13 +131,13 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           <VersionHistoryComparison
             oldInfo={{
               created: oldVersion.grafana_alert.updated || 'unknown',
-              createdBy: oldVersion.grafana_alert.updated_by || 'unknown',
+              createdBy: oldVersion.grafana_alert.updated_by?.name || 'unknown',
               version: oldVersion.grafana_alert.version || 'unknown',
             }}
             oldVersion={oldVersion}
             newInfo={{
               created: newVersion.grafana_alert.updated || 'unknown',
-              createdBy: newVersion.grafana_alert.updated_by || 'unknown',
+              createdBy: newVersion.grafana_alert.updated_by?.name || 'unknown',
               version: newVersion.grafana_alert.version || 'unknown',
             }}
             newVersion={newVersion}
@@ -194,7 +194,7 @@ function VersionHistoryTable({
     id: String(rule.grafana_alert.version),
     version: rule.grafana_alert.version || `unknown-rule-${index}`,
     created: rule.grafana_alert.updated || 'unknown',
-    createdBy: rule.grafana_alert.updated_by || 'unknown',
+    createdBy: rule.grafana_alert.updated_by?.name || 'unknown',
   }));
 
   const columns: Array<Column<RevisionModel>> = [
@@ -270,7 +270,12 @@ function VersionHistoryTable({
 
   return (
     <>
-      <InteractiveTable pageSize={VERSIONS_PAGE_SIZE} columns={columns} data={rows} getRowId={(row) => row.id} />
+      <InteractiveTable
+        pageSize={VERSIONS_PAGE_SIZE}
+        columns={columns}
+        data={rows}
+        getRowId={(row) => `${row.version}`}
+      />
       <ConfirmModal
         isOpen={confirmRestore}
         title={t('alerting.alertVersionHistory.restore-modal.title', 'Restore Version')}
@@ -280,7 +285,11 @@ function VersionHistoryTable({
               Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be
               lost.
             </Trans>
-            <Text variant="h6">Summary of changes to be applied:</Text>
+            <Text variant="h6">
+              <Trans i18nKey="alerting.alertVersionHistory.restore-modal.summary">
+                Summary of changes to be applied:
+              </Trans>
+            </Text>
             <div>
               {restoreDiff && (
                 <>

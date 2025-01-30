@@ -144,11 +144,14 @@ export const rulerRuleVersionHistoryHandler = () => {
       draft.grafana_alert.version = 1;
       draft.grafana_alert.title = 'Updated alert';
       draft.grafana_alert.updated = '2025-01-17T09:35:17.000Z';
-      draft.grafana_alert.updated_by = 'user1';
+      draft.grafana_alert.updated_by = {
+        uid: '1',
+        name: 'user1',
+      };
     }),
   ];
 
-  return http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/history`, ({ params: { uid } }) => {
+  return http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/versions`, ({ params: { uid } }) => {
     return HttpResponse.json(grafanaRuleVersions);
   });
 };

@@ -242,11 +242,16 @@ export interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
   simplified_notifications_section: boolean;
 }
+
+interface UpdatedBy {
+  uid: string;
+  name: string;
+}
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
   version?: number;
   updated?: string;
-  updated_by?: string;
+  updated_by?: UpdatedBy;
   title: string;
   condition: string;
   no_data_state?: GrafanaAlertStateDecision;
