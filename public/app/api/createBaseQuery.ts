@@ -1,17 +1,14 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
   showErrorAlert?: boolean;
-
-  // rtk codegen sets this
   body?: BackendSrvRequest['data'];
 }
 
-export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
+export function createBaseQuery({ baseURL }: { baseURL: string }) {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
@@ -24,7 +21,13 @@ export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<R
       );
       return { data: responseData, meta };
     } catch (error) {
-      return requestOptions.manageError ? requestOptions.manageError(error) : { error };
+      if (isFetchError(error)) {
+        return { error: new Error(error.data.message) };
+      } else if (error instanceof Error) {
+        return { error };
+      } else {
+        return { error: new Error('Unknown error') };
+      }
     }
   }
 
