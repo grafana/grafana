@@ -41,7 +41,7 @@
     "@grafana/data": "11.5.0-pre",
     "@grafana/faro-web-sdk": "1.12.3",
     "@grafana/llm": "0.12.0",
-    "@grafana/plugin-ui": "0.9.6",
+    "@grafana/plugin-ui": "0.10.1",
     "@grafana/runtime": "11.5.0-pre",
     "@grafana/schema": "11.5.0-pre",
     "@grafana/ui": "11.5.0-pre",
