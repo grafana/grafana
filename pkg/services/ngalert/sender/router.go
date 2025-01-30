@@ -318,8 +318,12 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 	}
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
+	d.adminConfigMtx.RLock()
+	amChoice := d.sendAlertsTo[key.OrgID]
+	d.adminConfigMtx.RUnlock()
+
 	var localNotifierExist, externalNotifierExist bool
-	if d.sendAlertsTo[key.OrgID] == models.ExternalAlertmanagers && len(d.AlertmanagersFor(key.OrgID)) > 0 {
+	if amChoice == models.ExternalAlertmanagers && len(d.AlertmanagersFor(key.OrgID)) > 0 {
 		logger.Debug("All alerts for the given org should be routed to external notifiers only. skipping the internal notifier.")
 	} else {
 		logger.Info("Sending alerts to local notifier", "count", len(alerts.PostableAlerts))
