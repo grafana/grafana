@@ -52,6 +52,10 @@ export function ExportToRepository({ repo }: Props) {
             <Input placeholder="Prefix in the remote system" {...register('prefix')} />
           </Field>
 
+          <Field label="Identifier" description="Include the current identifier in exported metadata">
+            <Switch {...register('identifier')} />
+          </Field>
+
           <Field label="History" description="Include commits for each historical value">
             <Switch {...register('history')} />
           </Field>

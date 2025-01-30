@@ -90,17 +90,6 @@ type SyncJobOptions struct {
 	Complete bool `json:"complete,omitempty"`
 }
 
-// +enum
-type ExportJobLayout string
-
-const (
-	// Export files into a nested structure matching title slugs
-	ExportJobLayoutNested ExportJobLayout = "nested"
-
-	// Export everything into the target directory
-	ExportJobLayoutFlat ExportJobLayout = "flat"
-)
-
 type ExportJobOptions struct {
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
@@ -113,9 +102,6 @@ type ExportJobOptions struct {
 
 	// Target file prefix
 	Prefix string `json:"prefix,omitempty"`
-
-	// The export layout (nested|flat)
-	Layout ExportJobLayout `json:"layout"`
 
 	// Include the identifier in the exported metadata
 	Identifier bool `json:"identifier"`
