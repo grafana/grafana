@@ -360,12 +360,14 @@ export function TableNG(props: TableNGProps) {
           let expandedRecords: Array<Record<string, string>> = [];
           expandedColumns = mapFrameToDataGrid(row.data, calcsRef, true);
           expandedRecords = frameToRecords(row.data);
+          // TODO add renderHeaderCell HeaderCell's here and handle all features
           return (
             <DataGrid
               rows={expandedRecords}
               columns={expandedColumns}
               rowHeight={defaultRowHeight}
               style={{ height: '100%', overflow: 'visible' }}
+              headerRowHeight={row.data.meta?.custom?.noHeader ? 0 : undefined}
             />
           );
         },
@@ -613,7 +615,8 @@ export function TableNG(props: TableNGProps) {
           if (Number(row.__depth) === 1 && !expandedRows.includes(Number(row.__index))) {
             return 0;
           } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
-            return defaultRowHeight * (row.data.length + 1); // TODO this probably isn't very robust
+            const headerCount = row.data.meta?.custom?.noHeader ? 0 : 1;
+            return defaultRowHeight * (row.data.length + headerCount); // TODO this probably isn't very robust
           }
           return getRowHeight(
             row,
