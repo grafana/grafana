@@ -80,13 +80,13 @@ export const SingleTopBar = memo(function SingleTopBar({
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        {!contextSrv.user.isSignedIn && <SignInLink />}
         <ToolbarButton
           icon="monitor"
           className={styles.kioskToggle}
           onClick={onToggleKioskMode}
           tooltip="Enable kiosk mode"
         />
+        {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && <ProfileButton profileNode={profileNode} />}
       </Stack>
     </div>

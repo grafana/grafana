@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -27,12 +28,16 @@ export function ProfileButton({ profileNode }: Props) {
 
   const renderMenu = () => (
     <TopNavBarMenu node={profileNode}>
-      <Menu.Divider />
-      <MenuItem
-        icon="rss"
-        onClick={onToggleShowNewsDrawer}
-        label={t('navigation.rss-button', 'Latest from the blog')}
-      />
+      {config.newsFeedEnabled && (
+        <>
+          <Menu.Divider />
+          <MenuItem
+            icon="rss"
+            onClick={onToggleShowNewsDrawer}
+            label={t('navigation.rss-button', 'Latest from the blog')}
+          />
+        </>
+      )}
     </TopNavBarMenu>
   );
 
