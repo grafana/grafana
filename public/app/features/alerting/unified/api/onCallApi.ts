@@ -38,7 +38,9 @@ export interface OnCallConfigChecks {
   is_integration_chatops_connected: boolean;
 }
 
-const getProxyApiUrl = (path: string) => `/api/plugins/${getIrmIfPresentOrOnCallPluginId()}/resources${path}`;
+export function getProxyApiUrl(path: string) {
+  return `/api/plugins/${getIrmIfPresentOrOnCallPluginId()}/resources${path}`;
+}
 
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
