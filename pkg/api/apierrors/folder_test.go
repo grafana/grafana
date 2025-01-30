@@ -13,9 +13,6 @@ import (
 )
 
 func TestToFolderErrorResponse(t *testing.T) {
-	type args struct {
-		err error
-	}
 	tests := []struct {
 		name  string
 		input error
