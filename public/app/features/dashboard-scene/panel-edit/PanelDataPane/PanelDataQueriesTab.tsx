@@ -364,7 +364,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQuery}
               >
-                <Trans i18nKey={'dashboards.panel-queries.add-query-from-library'}>from library</Trans>
+                <Trans i18nKey={'dashboards.panel-queries.add-query-from-library'}>Add query from library</Trans>
               </Button>
             )}
           </>
