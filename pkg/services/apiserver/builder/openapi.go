@@ -66,6 +66,20 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 					Paths:        s.Paths,
 				}
 
+				for k := range copy.Paths.Paths {
+					// Remove the deprecated watch URL -- can use list with ?watch=true
+					if strings.HasPrefix(k, prefix+"watch/") {
+						delete(copy.Paths.Paths, k)
+						continue
+					}
+				}
+
+				sub := copy.Paths.Paths[prefix]
+				if sub != nil && sub.Get != nil {
+					sub.Get.Tags = []string{"API Discovery"}
+					sub.Get.Description = "Describe the available kubernetes resources"
+				}
+
 				// Remove the growing list of kinds
 				for k, v := range copy.Components.Schemas {
 					if strings.HasPrefix(k, "io.k8s.apimachinery.pkg.apis.meta.v1") && v.Extensions != nil {
