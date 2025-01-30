@@ -10,6 +10,7 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
+  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -29,6 +30,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
@@ -140,6 +142,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           isLazy: false,
           children: [
             new DashboardGridItem({
+              y: 0,
+              height: 10,
               body: new VizPanel({
                 key: 'panel-1',
                 pluginId: 'timeseries',
@@ -171,6 +175,31 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // itemHeight?: number,
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
+            }),
+            new SceneGridRow({
+              key: 'panel-4',
+              title: 'Test Row',
+              y: 10,
+              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
+              children: [
+                new DashboardGridItem({
+                  y: 11,
+                  body: new VizPanel({
+                    key: 'panel-2',
+                    pluginId: 'graph',
+                    title: 'Test Panel 2',
+                    description: 'Test Description 2',
+                    fieldConfig: { defaults: {}, overrides: [] },
+                    displayMode: 'transparent',
+                    pluginVersion: '7.0.0',
+                    $timeRange: new SceneTimeRange({
+                      timeZone: 'UTC',
+                      from: 'now-3h',
+                      to: 'now',
+                    }),
+                  }),
+                }),
+              ],
             }),
           ],
         }),
