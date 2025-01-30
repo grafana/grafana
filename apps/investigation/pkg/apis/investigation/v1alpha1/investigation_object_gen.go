@@ -16,10 +16,10 @@ import (
 
 // +k8s:openapi-gen=true
 type Investigation struct {
-	metav1.TypeMeta     `json:",inline"`
-	metav1.ObjectMeta   `json:"metadata"`
-	Spec                InvestigationSpec   `json:"spec"`
-	InvestigationStatus InvestigationStatus `json:"status"`
+	metav1.TypeMeta     `json:",inline" yaml:",inline"`
+	metav1.ObjectMeta   `json:"metadata" yaml:"metadata"`
+	Spec                InvestigationSpec   `json:"spec" yaml:"spec"`
+	InvestigationStatus InvestigationStatus `json:"status" yaml:"status"`
 }
 
 func (o *Investigation) GetSpec() any {
@@ -224,9 +224,9 @@ var _ resource.Object = &Investigation{}
 
 // +k8s:openapi-gen=true
 type InvestigationList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata"`
-	Items           []Investigation `json:"items"`
+	metav1.TypeMeta `json:",inline" yaml:",inline"`
+	metav1.ListMeta `json:"metadata" yaml:"metadata"`
+	Items           []Investigation `json:"items" yaml:"items"`
 }
 
 func (o *InvestigationList) DeepCopyObject() runtime.Object {
