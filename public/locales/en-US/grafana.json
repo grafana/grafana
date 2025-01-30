@@ -2072,6 +2072,9 @@
     "all": {
       "title": "All",
       "title-filtered": "All (filtered)"
+    },
+    "clear": {
+      "title": "Clear all"
     }
   },
   "nav": {
