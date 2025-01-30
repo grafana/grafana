@@ -14,6 +14,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types';
 import store from 'app/core/store';
+import { useDispatch } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
@@ -24,6 +25,8 @@ export interface Props
 
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
+  const dispatch = useDispatch();
+
   const { type, slug, uid } = params;
   const prevMatch = usePrevious({ params });
   const stateManager = config.featureToggles.useV2DashboardsAPI
@@ -35,14 +38,17 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   console.log('DashboardScenePage');
 
-  const updateLocation = debounce((query) => locationService.partial(query, true), 300);
+  const updateLocation = debounce((query) => locationService.partial(query), 300);
 
   const handleFrameTasks = useCallback(({ data }: any) => {
     console.log('event.data:', data);
 
     if (isObjectLike(data) && !!data?.['var-resample']) {
       console.log('sent!');
-      updateLocation({ query: data });
+      console.log(store);
+      const urlParams = locationService.getSearchObject();
+      console.log({ urlParams });
+      dispatch(updateLocation({ query: data }));
     }
   }, []);
 
