@@ -1,5 +1,4 @@
 import { isFunction } from 'lodash';
-import { useEffect, useRef, useState } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
@@ -23,16 +22,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCellProps) => {
-  const innerDivRef = useRef<HTMLDivElement>(null);
-  const [innerDivWidth, setInnerDivWidth] = useState(0);
-
-  useEffect(() => {
-    if (innerDivRef.current) {
-      setInnerDivWidth(innerDivRef.current.clientWidth);
-    }
-  }, []);
-
+export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
 
@@ -72,7 +62,7 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
 
     return (
       <BarGauge
-        width={innerDivWidth}
+        width={width}
         height={height}
         field={config}
         display={field.display}
@@ -92,7 +82,7 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
 
   // @TODO: Actions
   return (
-    <div ref={innerDivRef}>
+    <>
       {hasLinks ? (
         <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
@@ -100,6 +90,6 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
       ) : (
         renderComponent({})
       )}
-    </div>
+    </>
   );
 };

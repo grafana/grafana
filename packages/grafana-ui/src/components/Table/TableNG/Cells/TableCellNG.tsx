@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { TableCellDisplayMode } from '@grafana/schema';
 
@@ -16,6 +16,15 @@ export function TableCellNG(props: any) {
   const { config: fieldConfig } = field;
   const { type: cellType } = fieldConfig.custom.cellOptions;
 
+  const divRef = useRef<HTMLDivElement>(null);
+  const [divWidth, seDivWidth] = useState(0);
+
+  useEffect(() => {
+    if (divRef.current) {
+      seDivWidth(divRef.current.clientWidth);
+    }
+  }, []);
+
   // Get the correct cell type
   let cell: ReactNode = null;
   switch (cellType) {
@@ -28,6 +37,7 @@ export function TableCellNG(props: any) {
           theme={theme}
           timeRange={timeRange}
           height={height}
+          width={divWidth}
           rowIdx={rowIdx}
           justifyContent={justifyContent}
         />
@@ -37,7 +47,16 @@ export function TableCellNG(props: any) {
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
     case TableCellDisplayMode.LcdGauge:
-      cell = <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} />;
+      cell = (
+        <BarGaugeCell
+          value={value}
+          field={field}
+          theme={theme}
+          timeRange={timeRange}
+          height={height}
+          width={divWidth}
+        />
+      );
       break;
     case TableCellDisplayMode.Auto:
     default:
@@ -52,5 +71,5 @@ export function TableCellNG(props: any) {
       );
   }
 
-  return cell;
+  return <div ref={divRef}>{cell}</div>;
 }
