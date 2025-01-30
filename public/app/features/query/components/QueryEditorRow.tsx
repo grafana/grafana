@@ -24,7 +24,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, config, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -39,6 +39,8 @@ import { Trans, t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
+import { SaveQueryButton as SaveQueryToQueryLibraryButton } from '../../explore/QueryLibrary/SaveQueryButton';
 
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -487,6 +489,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
+        {config.featureToggles.queryLibrary && <SaveQueryToQueryLibraryButton query={query} />}
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"

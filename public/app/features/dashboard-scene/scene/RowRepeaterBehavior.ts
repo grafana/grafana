@@ -9,13 +9,12 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
-  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
 } from '@grafana/scenes';
 
-import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
+import { getMultiVariableValues } from '../utils/utils';
 
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DashboardRepeatsProcessedEvent } from './types';
@@ -31,10 +30,9 @@ interface RowRepeaterBehaviorState extends SceneObjectState {
 export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
-    onVariableUpdateCompleted: () => {},
+    onVariableUpdateCompleted: () => this.performRepeat(),
   });
 
-  public isWaitingForVariables = false;
   private _prevRepeatValues?: VariableValueSingle[];
   private _clonedRows?: SceneGridRow[];
 
@@ -42,23 +40,6 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());
-  }
-
-  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
-    const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
-
-    for (const row of allRows) {
-      for (const gridItem of row.state.children) {
-        if (!(gridItem instanceof DashboardGridItem)) {
-          continue;
-        }
-
-        const queryRunner = getQueryRunnerFor(gridItem.state.body);
-        if (queryRunner) {
-          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
-        }
-      }
-    }
   }
 
   private _activationHandler() {
@@ -126,9 +107,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
   }
 
   public performRepeat(force = false) {
-    this.isWaitingForVariables = this._variableDependency.hasDependencyInLoadingState();
-
-    if (this.isWaitingForVariables) {
+    if (this._variableDependency.hasDependencyInLoadingState()) {
       return;
     }
 

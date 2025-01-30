@@ -39,7 +39,7 @@ func TestDashboardVersionService(t *testing.T) {
 		require.Equal(t, dashboard.ToDTO("uid"), dashboardVersion)
 	})
 
-	t.Run("Get dashboard version through k8s", func(t *testing.T) {
+	t.Run("Get dashboard versions through k8s", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
 		mockCli := new(client.MockK8sHandler)
@@ -47,7 +47,7 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionService.features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesCliDashboards)
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 
-		mockCli.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
+		mockCli.On("GetUserFromMeta", mock.Anything, "user:1").Return(&user.User{ID: 1}, nil)
 		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "10"}, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]any{
 				"metadata": map[string]any{
@@ -55,6 +55,9 @@ func TestDashboardVersionService(t *testing.T) {
 					"resourceVersion": "12",
 					"labels": map[string]any{
 						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+					},
+					"annotations": map[string]any{
+						utils.AnnoKeyCreatedBy: "user:1",
 					},
 				},
 				"spec": map[string]any{
@@ -73,7 +76,42 @@ func TestDashboardVersionService(t *testing.T) {
 			ParentVersion: 9,
 			DashboardID:   42,
 			DashboardUID:  "uid",
+			CreatedBy:     1,
 			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10)}),
+		})
+
+		mockCli.On("GetUserFromMeta", mock.Anything, "user:2").Return(&user.User{ID: 2}, nil)
+		mockCli.On("Get", mock.Anything, "uid", int64(1), v1.GetOptions{ResourceVersion: "11"}, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name":            "uid",
+					"resourceVersion": "11",
+					"labels": map[string]any{
+						utils.LabelKeyDeprecatedInternalID: "42", // nolint:staticcheck
+					},
+					"annotations": map[string]any{
+						utils.AnnoKeyCreatedBy: "user:1",
+						utils.AnnoKeyUpdatedBy: "user:2", // if updated by is set, that is the version creator
+					},
+				},
+				"spec": map[string]any{
+					"version": int64(11),
+				},
+			}}, nil).Once()
+		res, err = dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{
+			DashboardID: 42,
+			OrgID:       1,
+			Version:     11,
+		})
+		require.Nil(t, err)
+		require.Equal(t, res, &dashver.DashboardVersionDTO{
+			ID:            11, // RV should be used
+			Version:       11,
+			ParentVersion: 10,
+			DashboardID:   42,
+			DashboardUID:  "uid",
+			CreatedBy:     2,
+			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(11)}),
 		})
 	})
 }

@@ -251,10 +251,5 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return oas, nil
 	}
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }
