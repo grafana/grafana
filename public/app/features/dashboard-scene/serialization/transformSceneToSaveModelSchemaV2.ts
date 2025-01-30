@@ -50,6 +50,7 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { isClonedKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getLibraryPanelBehavior,
@@ -174,7 +175,7 @@ function getGridLayoutItems(
           elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
         }
       } else if (child instanceof SceneGridRow) {
-        if (isClonedKey(getLastKeyFromClone(child.state.key!)) && !isSnapshot) {
+        if (isClonedKey(child.state.key!) && !isSnapshot) {
           // Skip repeat rows
           continue;
         }
