@@ -17,14 +17,13 @@ import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
-import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableNGProps } from '../types';
 import { getTextAlign } from '../utils';
 
+import { HeaderCell } from './Cells/HeaderCell';
 import { TableCellNG } from './Cells/TableCellNG';
-import { Filter } from './Filter/Filter';
 import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
@@ -36,15 +35,6 @@ interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   field: Field;
-}
-
-interface HeaderCellProps {
-  column: Column<any>;
-  field: Field;
-  onSort: (columnKey: string, direction: SortDirection, isMultiSort: boolean) => void;
-  direction: SortDirection | undefined;
-  justifyContent?: Property.JustifyContent;
-  filter: any;
 }
 
 export type FilterType = {
@@ -161,100 +151,6 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
-  // TODO: move this component to a separate file
-  const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent, filter }) => {
-    const headerRef = useRef<HTMLDivElement>(null);
-
-    let isColumnFilterable = filterable;
-    if (field.config.custom.filterable !== filterable) {
-      isColumnFilterable = field.config.custom.filterable || false;
-    }
-    // we have to remove/reset the filter if the column is not filterable
-    if (!isColumnFilterable && filter[field.name]) {
-      setFilter((filter: FilterType) => {
-        const newFilter = { ...filter };
-        delete newFilter[field.name];
-        return newFilter;
-      });
-    }
-
-    const handleSort = (event: React.MouseEvent<HTMLButtonElement>) => {
-      const isMultiSort = event.shiftKey;
-      onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
-    };
-
-    // collecting header cell refs to handle manual column resize
-    useLayoutEffect(() => {
-      if (headerRef.current) {
-        headerCellRefs.current[column.key] = headerRef.current;
-      }
-    }, [headerRef, column.key]);
-
-    // TODO: this is a workaround to handle manual column resize;
-    useEffect(() => {
-      const headerCellParent = headerRef.current?.parentElement;
-      if (headerCellParent) {
-        // `lastElement` is an HTML element added by react-data-grid for resizing columns.
-        // We add a click event listener to `lastElement` to handle the end of the resize operation.
-        const lastElement = headerCellParent.lastElementChild;
-        if (lastElement) {
-          const handleMouseUp = () => {
-            let newWidth = headerCellParent.clientWidth;
-            const columnMinWidth = column.minWidth;
-            if (columnMinWidth && newWidth < columnMinWidth) {
-              newWidth = columnMinWidth;
-            }
-            onColumnResize?.(column.key as string, newWidth);
-          };
-
-          lastElement.addEventListener('click', handleMouseUp);
-
-          return () => {
-            lastElement.removeEventListener('click', handleMouseUp);
-          };
-        }
-      }
-      // to handle "Not all code paths return a value." error
-      return;
-    }, [column]);
-
-    return (
-      <div
-        ref={headerRef}
-        style={{ display: 'flex', justifyContent }}
-        // TODO find a better solution to this issue, see: https://github.com/adazzle/react-data-grid/issues/3535
-        // Unblock spacebar event
-        onKeyDown={(event) => {
-          if (event.key === ' ') {
-            event.stopPropagation();
-          }
-        }}
-      >
-        <button className={styles.headerCellLabel} onClick={handleSort}>
-          <div>{column.name}</div>
-          {direction &&
-            (direction === 'ASC' ? (
-              <Icon name="arrow-up" size="lg" className={styles.sortIcon} />
-            ) : (
-              <Icon name="arrow-down" size="lg" className={styles.sortIcon} />
-            ))}
-        </button>
-
-        {isColumnFilterable && (
-          <Filter
-            name={column.key}
-            rows={rows}
-            filter={filter}
-            setFilter={setFilter}
-            field={field}
-            crossFilterOrder={crossFilterOrder.current}
-            crossFilterRows={crossFilterRows.current}
-          />
-        )}
-      </div>
-    );
-  };
-
   const handleSort = (columnKey: string, direction: SortDirection, isMultiSort: boolean) => {
     let currentSortColumn: SortColumn | undefined;
 
@@ -369,11 +265,18 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }) => (
           <HeaderCell
             column={column}
+            rows={rows}
             field={field}
             onSort={handleSort}
             direction={sortDirection}
             justifyContent={justifyColumnContent}
             filter={filter}
+            setFilter={setFilter}
+            filterable={filterable}
+            onColumnResize={onColumnResize}
+            headerCellRefs={headerCellRefs}
+            crossFilterOrder={crossFilterOrder}
+            crossFilterRows={crossFilterRows}
           />
         ),
         // TODO these anys are making me sad
@@ -632,30 +535,9 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
   menuItem: css({
     maxWidth: '200px',
   }),
-  headerCellLabel: css({
-    border: 'none',
-    padding: 0,
-    background: 'inherit',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    fontWeight: theme.typography.fontWeightMedium,
-    display: 'flex',
-    alignItems: 'center',
-    marginRight: theme.spacing(0.5),
-
-    '&:hover': {
-      textDecoration: 'underline',
-      color: theme.colors.text.link,
-    },
-  }),
-  sortIcon: css({
-    marginLeft: theme.spacing(0.5),
-  }),
   cell: css({
     '--rdg-border-color': theme.colors.border.medium,
-    'border-left': 'none',
+    borderLeft: 'none',
     whiteSpace: `${textWrap ? 'break-spaces' : 'nowrap'}`,
     wordWrap: 'break-word',
     overflow: 'hidden',
