@@ -187,5 +187,15 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    // Run only visual regression tests
+    {
+      name: 'visual_regression',
+      testDir: 'e2e/visual-regression',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
   ],
 });

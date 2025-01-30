@@ -862,7 +862,7 @@ steps:
   - commands:
       - npx wait-on@7.0.1 http://$HOST:$PORT
       - yarn playwright install --with-deps chromium
-      - yarn e2e:playwright --ignore e2e/plugin-e2e/plugin-e2e-api-tests/as-admin-user/visualRegressionTesting.test.ts
+      - yarn e2e:playwright
     depends_on:
       - grafana-server
       - build-test-plugins
