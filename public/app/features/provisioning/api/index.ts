@@ -6,8 +6,6 @@ import { RootState } from 'app/store/configureStore';
 import { parseListOptionsSelector, ScopedResourceClient } from '../../apiserver/client';
 import { ListOptions } from '../../apiserver/types';
 
-export * from './endpoints.gen';
-
 import {
   generatedAPI,
   JobSpec,
@@ -21,9 +19,17 @@ import {
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob(endpoint) {
+      endpoint.query = ({ watch, ...queryArg }) => ({
+        url: `/jobs`,
+        params: getListParams(queryArg),
+      });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus>('jobs');
     },
     listRepository(endpoint) {
+      endpoint.query = ({ watch, ...queryArg }) => ({
+        url: `/repositories`,
+        params: getListParams(queryArg),
+      });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories');
     },
   },
@@ -121,3 +127,4 @@ function createOnCacheEntryAdded<Spec, Status>(resourceName: string) {
     subscription?.unsubscribe();
   };
 }
+export * from './endpoints.gen';
