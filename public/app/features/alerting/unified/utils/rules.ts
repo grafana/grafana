@@ -437,6 +437,10 @@ export function isRecordingRuleByType(type?: RuleFormType) {
   return isGrafanaRecordingRuleByType(type) || isCloudRecordingRuleByType(type);
 }
 
+export function isAlertingRuleByType(type?: RuleFormType) {
+  return isGrafanaAlertingRuleByType(type) || isCloudAlertingRuleByType(type);
+}
+
 export function isDataSourceManagedRuleByType(type?: RuleFormType) {
   return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
 }

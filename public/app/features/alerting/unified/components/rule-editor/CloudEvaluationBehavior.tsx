@@ -1,18 +1,15 @@
-import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, Select, useStyles2 } from '@grafana/ui';
+import { Field, Input, Select, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
 
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
-import { PreviewRule } from './PreviewRule';
-import { RuleEditorSection } from './RuleEditorSection';
+import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 
 export const CloudEvaluationBehavior = () => {
-  const styles = useStyles2(getStyles);
   const {
     register,
     control,
@@ -25,13 +22,16 @@ export const CloudEvaluationBehavior = () => {
 
   // @TODO convert to RuleEditorSubSection(s)
   return (
-    <RuleEditorSection stepNo={3} title="Set evaluation behavior">
-      <Field
-        label="Pending period"
-        description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
-      >
-        <div className={styles.flexRow}>
-          <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior" description="Define how the alert rule is evaluated.">
+      <RuleEditorSubSection title="Namespace and group">
+        {type === RuleFormType.cloudAlerting && dataSourceName && (
+          <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
+        )}
+      </RuleEditorSubSection>
+
+      <RuleEditorSubSection title={t('alerting.rule-form.evaluation-behaviour.pending-period', 'Pending period')}>
+        <Stack direction="row" gap={0.5}>
+          <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} style={{ marginBottom: 0 }}>
             <Input
               {...register('forTime', { pattern: { value: /^\d+$/, message: 'Must be a positive integer.' } })}
               width={8}
@@ -40,38 +40,12 @@ export const CloudEvaluationBehavior = () => {
           <Controller
             name="forTimeUnit"
             render={({ field: { onChange, ref, ...field } }) => (
-              <Select
-                {...field}
-                options={timeOptions}
-                onChange={(value) => onChange(value?.value)}
-                width={15}
-                className={styles.timeUnit}
-              />
+              <Select {...field} options={timeOptions} onChange={(value) => onChange(value?.value)} width={15} />
             )}
             control={control}
           />
-        </div>
-      </Field>
-      {type === RuleFormType.cloudAlerting && dataSourceName && (
-        <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
-      )}
-
-      <PreviewRule />
+        </Stack>
+      </RuleEditorSubSection>
     </RuleEditorSection>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  inlineField: css({
-    marginBottom: 0,
-  }),
-  flexRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  }),
-  timeUnit: css({
-    marginLeft: theme.spacing(0.5),
-  }),
-});

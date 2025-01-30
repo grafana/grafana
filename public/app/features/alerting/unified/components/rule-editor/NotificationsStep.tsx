@@ -45,6 +45,8 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
     return null;
   }
 
+  const isRecordingRule = isRecordingRuleByType(type);
+
   const step = !isGrafanaManaged ? 4 : 5;
 
   const switchMode =
@@ -58,13 +60,13 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         }
       : undefined;
 
-  const title = isRecordingRuleByType(type)
+  const title = isRecordingRule
     ? 'Add labels'
     : isGrafanaManaged
       ? 'Configure notifications'
       : 'Configure labels and notifications';
 
-  let description = isRecordingRuleByType(type)
+  let description = isRecordingRule
     ? 'Add labels to help you better manage your recording rules.'
     : 'Select who should receive a notification when an alert rule fires.';
 
@@ -100,6 +102,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           <PreviewNotificationPolicyRouting alertUid={alertUid} />
         </RuleEditorSubSection>
       )}
+
+      {/* show only label configuration for data source managed rule (alerting and recording) */}
+      {/* @TODO */}
     </RuleEditorSection>
   );
 };

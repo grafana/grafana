@@ -1,12 +1,12 @@
-import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, DataSourcePluginContextProvider, LoadingState } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { DataQuery } from '@grafana/schema';
+import { Alert, Button, Stack } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { CloudAlertPreview } from './CloudAlertPreview';
@@ -16,17 +16,10 @@ export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
   dataSourceName: string; // will be a prometheus or loki datasource
-  showPreviewAlertsButton: boolean;
+  showPreview: boolean;
 }
 
-export const ExpressionEditor = ({
-  value,
-  onChange,
-  dataSourceName,
-  showPreviewAlertsButton = true,
-}: ExpressionEditorProps) => {
-  const styles = useStyles2(getStyles);
-
+export const ExpressionEditor = ({ value, onChange, dataSourceName, showPreview = true }: ExpressionEditorProps) => {
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
   const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
 
@@ -72,7 +65,7 @@ export const ExpressionEditor = ({
   const previewHasAlerts = previewDataFrame && previewDataFrame.fields.some((field) => field.values.length > 0);
 
   return (
-    <>
+    <Stack direction="column" gap={1}>
       <DataSourcePluginContextProvider instanceSettings={dsi}>
         <QueryEditor
           query={dataQuery}
@@ -83,36 +76,26 @@ export const ExpressionEditor = ({
           datasource={dataSource}
         />
       </DataSourcePluginContextProvider>
-      {showPreviewAlertsButton && (
-        <div className={styles.preview}>
+      {showPreview && (
+        <Stack direction="column" gap={1} alignItems="flex-start">
           <Button
             type="button"
             onClick={onRunQueriesClick}
-            disabled={alertPreview?.data.state === LoadingState.Loading}
+            disabled={alertPreview?.data.state === LoadingState.Loading || !value}
           >
             Preview alerts
           </Button>
           {previewLoaded && !previewHasAlerts && (
-            <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
+            <Alert title="Alerts preview" severity="info">
               There are no firing alerts for your query.
             </Alert>
           )}
           {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
-        </div>
+        </Stack>
       )}
-    </>
+    </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  preview: css({
-    padding: theme.spacing(2, 0),
-    maxWidth: `${theme.breakpoints.values.xl}px`,
-  }),
-  previewAlert: css({
-    margin: theme.spacing(1, 0),
-  }),
-});
 
 type QueryMappers<T extends DataQuery = DataQuery> = {
   mapToValue: (query: T) => string;

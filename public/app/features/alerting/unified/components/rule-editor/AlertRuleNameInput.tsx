@@ -47,8 +47,7 @@ export const AlertRuleNameAndMetric = () => {
       description={`Enter a name to identify your ${entityName}.`}
     >
       <RuleEditorSubSection>
-        {/* no gap, the Field components add margins (sigh) */}
-        <Stack direction="column" gap={0}>
+        <Stack direction="column" gap={1}>
           <Field label="Name" error={nameError} invalid={Boolean(nameError)} style={{ marginBottom: 0 }}>
             <Input
               data-testid={selectors.components.AlertRules.ruleNameField}
@@ -69,7 +68,7 @@ export const AlertRuleNameAndMetric = () => {
             />
           </Field>
           {isGrafanaRecordingRule && (
-            <Field label="Metric" error={metricError} invalid={Boolean(metricError)}>
+            <Field label="Metric" error={metricError} invalid={Boolean(metricError)} style={{ marginBottom: 0 }}>
               <Input
                 id="metric"
                 width={38}

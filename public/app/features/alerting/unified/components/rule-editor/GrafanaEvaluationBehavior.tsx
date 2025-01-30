@@ -6,18 +6,18 @@ import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } fr
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
-  Button,
-  Field,
-  Icon,
-  Input,
-  Label,
-  Modal,
-  Select,
-  Stack,
-  Switch,
-  Text,
-  Tooltip,
-  useStyles2,
+    Button,
+    Field,
+    Icon,
+    Input,
+    Label,
+    Modal,
+    Select,
+    Stack,
+    Switch,
+    Text,
+    Tooltip,
+    useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -27,10 +27,10 @@ import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
-  isGrafanaAlertingRuleByType,
-  isGrafanaManagedRuleByType,
-  isGrafanaRecordingRuleByType,
-  isGrafanaRulerRule,
+    isGrafanaAlertingRuleByType,
+    isGrafanaManagedRuleByType,
+    isGrafanaRecordingRuleByType,
+    isGrafanaRulerRule,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { ProvisioningBadge } from '../Provisioning';
@@ -299,40 +299,42 @@ export function GrafanaEvaluationBehaviorStep({
       </RuleEditorSubSection>
 
       {/* Show the pending period input only for Grafana alerting rules */}
-      <RuleEditorSubSection
-        title={<Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>}
-        description={
-          'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
-        }
-        helpInfo={pendingPeriodHelpInfo}
-      >
-        {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
+      {isGrafanaAlertingRule && (
+        <RuleEditorSubSection
+          title={<Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>}
+          description={
+            'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+          }
+          helpInfo={pendingPeriodHelpInfo}
+        >
+          <ForInput evaluateEvery={evaluateEvery} />
 
-        {existing && (
-          <Field htmlFor="pause-alert-switch" style={{ marginBottom: 0 }}>
-            <Controller
-              render={() => (
-                <Stack gap={1} direction="row" alignItems="center">
-                  <Switch
-                    id="pause-alert"
-                    onChange={(value) => {
-                      setValue('isPaused', value.currentTarget.checked);
-                    }}
-                    value={Boolean(isPaused)}
-                  />
-                  <label htmlFor="pause-alert" className={styles.switchLabel}>
-                    <Trans i18nKey="alerting.rule-form.pause.label">Pause evaluation</Trans>
-                    <Tooltip placement="top" content={pauseContentText} theme={'info'}>
-                      <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
-                    </Tooltip>
-                  </label>
-                </Stack>
-              )}
-              name="isPaused"
-            />
-          </Field>
-        )}
-      </RuleEditorSubSection>
+          {existing && (
+            <Field htmlFor="pause-alert-switch" style={{ marginBottom: 0 }}>
+              <Controller
+                render={() => (
+                  <Stack gap={1} direction="row" alignItems="center">
+                    <Switch
+                      id="pause-alert"
+                      onChange={(value) => {
+                        setValue('isPaused', value.currentTarget.checked);
+                      }}
+                      value={Boolean(isPaused)}
+                    />
+                    <label htmlFor="pause-alert" className={styles.switchLabel}>
+                      <Trans i18nKey="alerting.rule-form.pause.label">Pause evaluation</Trans>
+                      <Tooltip placement="top" content={pauseContentText} theme={'info'}>
+                        <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
+                      </Tooltip>
+                    </label>
+                  </Stack>
+                )}
+                name="isPaused"
+              />
+            </Field>
+          )}
+        </RuleEditorSubSection>
+      )}
 
       {isGrafanaAlertingRule && (
         <RuleEditorSubSection

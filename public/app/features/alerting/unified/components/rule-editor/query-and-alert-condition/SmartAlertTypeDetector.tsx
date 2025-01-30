@@ -79,8 +79,9 @@ export function SmartAlertTypeDetector({
   queries,
   onClickSwitch,
 }: SmartAlertTypeDetectorProps) {
-  const { getValues } = useFormContext<RuleFormValues>();
-  const [ruleFormType] = getValues(['type']);
+  const { watch } = useFormContext<RuleFormValues>();
+  const ruleFormType = watch('type');
+
   const canSwitch = getCanSwitch({ queries, ruleFormType, rulesSourcesWithRuler });
 
   const options = [

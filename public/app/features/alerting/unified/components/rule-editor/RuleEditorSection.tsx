@@ -115,7 +115,7 @@ export const RuleEditorSubSection = ({
 
   return (
     <div className={styles.subSection}>
-      <Stack direction="column" gap={2} alignItems={fullWidth ? 'stretch' : 'flex-start'}>
+      <Stack direction="column" gap={1} alignItems={fullWidth ? 'stretch' : 'flex-start'}>
         {showHeader && (
           <>
             <Stack direction="column" gap={0}>
