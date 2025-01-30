@@ -9,7 +9,7 @@ interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions, unknown, Error> {
+export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
@@ -22,7 +22,11 @@ export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<R
       );
       return { data: responseData, meta };
     } catch (error) {
-      return handleRequestError(error);
+      if (requestOptions.manageError) {
+        return requestOptions.manageError(error);
+      } else {
+        return handleRequestError(error);
+      }
     }
   }
 

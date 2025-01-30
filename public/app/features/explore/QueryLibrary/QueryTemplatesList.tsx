@@ -141,7 +141,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
     return uniqBy(allQueryTemplateRows, 'datasourceName').map((row) => row.datasourceName);
   }, [allQueryTemplateRows]);
 
-  if (error) {
+  if (error instanceof Error) {
     return (
       <EmptyState variant="not-found" message={`Something went wrong`}>
         {error.message}
