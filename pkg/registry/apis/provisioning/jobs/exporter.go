@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -16,8 +16,10 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 // Export reads from grafana and writes to a a repository
@@ -77,9 +79,10 @@ func (r *exporter) Export(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	ref := options.Branch // only valid for git
-	ns := r.repository.Config().GetNamespace()
-	logger = logger.With("ref", ref, "namespace", ns)
+	ref := options.Branch // only valid for git (defaults to the configured repo)
+	if options.Prefix != "" {
+		options.Prefix = safepath.Clean(options.Prefix)
+	}
 
 	// TODO: handle pagination
 	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{Limit: 10000})
@@ -108,6 +111,9 @@ func (r *exporter) Export(ctx context.Context,
 	}
 	err = folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
+		if options.Prefix != "" {
+			p = options.Prefix + "/" + p
+		}
 		logger := logger.With("path", p)
 
 		_, err = r.repository.Read(ctx, p, ref)
@@ -122,7 +128,7 @@ func (r *exporter) Export(ctx context.Context,
 		}
 
 		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := r.repository.Create(ctx, p, ref, nil, "export of folder `"+p+"` in namespace "+ns); err != nil {
+		if err := r.repository.Create(ctx, p, ref, nil, "export folder `"+p+"`"); err != nil {
 			logger.Error("failed to write a folder in repository", "error", err)
 			summary.Error++
 			return fmt.Errorf("failed to write folder in repo: %w", err)
@@ -160,6 +166,10 @@ func (r *exporter) Export(ctx context.Context,
 		}
 
 		name := item.GetName()
+		title, _, _ := unstructured.NestedString(item.Object, "spec", "title")
+		if title == "" {
+			title = name
+		}
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
 
 		// Get the absolute path of the folder
@@ -178,7 +188,20 @@ func (r *exporter) Export(ctx context.Context,
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
 		}
-		fileName := path.Join(fid.Path, name+".json")
+
+		fileName := slugify.Slugify(title) + ".json"
+		if fid.Path != "" {
+			fileName, err = safepath.Join(fid.Path, fileName)
+			if err != nil {
+				return nil, fmt.Errorf("error adding file path %s: %w", title, err)
+			}
+		}
+		if options.Prefix != "" {
+			fileName, err = safepath.Join(options.Prefix, fileName)
+			if err != nil {
+				return nil, fmt.Errorf("error adding path prefix %s: %w", options.Prefix, err)
+			}
+		}
 
 		// Write the file
 		err = r.repository.Write(ctx, fileName, ref, body, commitMessage)
