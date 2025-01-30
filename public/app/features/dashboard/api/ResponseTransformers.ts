@@ -349,6 +349,9 @@ function buildGridItemKind(p: Panel, elementName: string, yOverride?: number): G
       y: yOverride ?? p.gridPos!.y,
       width: p.gridPos!.w,
       height: p.gridPos!.h,
+      repeat: p.repeat
+        ? { value: p.repeat, mode: 'variable', direction: p.repeatDirection, maxPerRow: p.maxPerRow }
+        : undefined,
       element: {
         kind: 'ElementReference',
         name: elementName!,

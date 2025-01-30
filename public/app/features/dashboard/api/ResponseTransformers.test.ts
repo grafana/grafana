@@ -317,6 +317,8 @@ describe('ResponseTransformers', () => {
             transparent: false,
             links: [],
             transformations: [],
+            repeat: 'var1',
+            repeatDirection: 'h',
           },
           {
             id: 2,
@@ -473,6 +475,7 @@ describe('ResponseTransformers', () => {
         y: 0,
         width: 12,
         height: 8,
+        repeat: { value: 'var1', direction: 'h', mode: 'variable', maxPerRow: undefined },
       });
       expect(spec.elements['1']).toEqual({
         kind: 'Panel',
