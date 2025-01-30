@@ -128,6 +128,32 @@ describe('MultiCombobox', () => {
     expect(await screen.findByText('d')).toBeInTheDocument();
   });
 
+  it('should remove value when clicking on the close icon of the pill', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    const onChange = jest.fn();
+    render(<MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} />);
+    const fistPillRemoveButton = await screen.findByRole('button', { name: 'Remove A' });
+    await user.click(fistPillRemoveButton);
+    expect(onChange).toHaveBeenCalledWith(options.filter((o) => o.value !== 'a'));
+  });
+
+  it('should remove all selected items when clicking on clear all button', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    const onChange = jest.fn();
+    render(<MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} isClearable />);
+    const clearAllButton = await screen.findByTitle('Clear all');
+    await user.click(clearAllButton);
+    expect(onChange).toHaveBeenCalledWith([]);
+  });
+
   describe('all option', () => {
     it('should render all option', async () => {
       const options = [
