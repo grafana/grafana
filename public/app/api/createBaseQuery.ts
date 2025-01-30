@@ -16,21 +16,25 @@ export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<R
         getBackendSrv().fetch({
           ...requestOptions,
           url: baseURL + requestOptions.url,
-          showErrorAlert: requestOptions.showErrorAlert,
+          showErrorAlert: requestOptions.showErrorAlert ?? false,
           data: requestOptions.body,
         })
       );
       return { data: responseData, meta };
     } catch (error) {
-      if (isFetchError(error)) {
-        return { error: new Error(error.data.message) };
-      } else if (error instanceof Error) {
-        return { error };
-      } else {
-        return { error: new Error('Unknown error') };
-      }
+      return handleRequestError(error);
     }
   }
 
   return backendSrvBaseQuery;
+}
+
+export function handleRequestError(error: unknown) {
+  if (isFetchError(error)) {
+    return { error: new Error(error.data.message) };
+  } else if (error instanceof Error) {
+    return { error };
+  } else {
+    return { error: new Error('Unknown error') };
+  }
 }

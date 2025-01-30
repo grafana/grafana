@@ -1,8 +1,7 @@
-import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
-import { lastValueFrom } from 'rxjs';
+import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { BackendSrvRequest, config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import appEvents from 'app/core/app_events';
@@ -22,16 +21,12 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
+import { createBaseQuery, handleRequestError } from '../../../api/createBaseQuery';
 import { t } from '../../../core/internationalization';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
 import { PAGE_SIZE } from './services';
-
-interface RequestOptions extends BackendSrvRequest {
-  manageError?: (err: unknown) => { error: unknown };
-  showErrorAlert?: boolean;
-}
 
 interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
@@ -64,28 +59,6 @@ interface HardDeleteDashboardArgs {
   dashboardUID: string;
 }
 
-function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
-  async function backendSrvBaseQuery(requestOptions: RequestOptions) {
-    // Suppress error pop-up for root (aka 'general') folder
-    const isGeneralFolder = requestOptions.url === `/folders/general`;
-    requestOptions = isGeneralFolder ? { ...requestOptions, showErrorAlert: false } : requestOptions;
-
-    try {
-      const { data: responseData, ...meta } = await lastValueFrom(
-        getBackendSrv().fetch({
-          ...requestOptions,
-          url: baseURL + requestOptions.url,
-        })
-      );
-      return { data: responseData, meta };
-    } catch (error) {
-      return requestOptions.manageError ? requestOptions.manageError(error) : { error };
-    }
-  }
-
-  return backendSrvBaseQuery;
-}
-
 export interface ListFolderQueryArgs {
   page: number;
   parentUid: string | undefined;
@@ -96,7 +69,7 @@ export interface ListFolderQueryArgs {
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
-  baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
+  baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
@@ -352,7 +325,7 @@ export const browseDashboardsAPI = createApi({
           }
           throw new Error('Invalid dashboard version');
         } catch (error) {
-          return { error };
+          return handleRequestError(error);
         }
       },
 

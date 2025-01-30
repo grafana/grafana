@@ -1,8 +1,9 @@
 import { BaseQueryFn, EndpointDefinition } from '@reduxjs/toolkit/query';
 
-import { isFetchError } from '@grafana/runtime';
 import { getLocalPlugins } from 'app/features/plugins/admin/api';
 import { LocalPlugin } from 'app/features/plugins/admin/types';
+
+import { handleRequestError } from '../../../api/createBaseQuery';
 
 import { generatedAPI } from './endpoints.gen';
 
@@ -18,13 +19,7 @@ export const cloudMigrationAPI = generatedAPI
             const list = await getLocalPlugins();
             return { data: list };
           } catch (error) {
-            if (isFetchError(error)) {
-              return { error: new Error(error.data.message) };
-            } else if (error instanceof Error) {
-              return { error };
-            } else {
-              return { error: new Error('Unknown error') };
-            }
+            return handleRequestError(error);
           }
         },
       }),
