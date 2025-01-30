@@ -14,10 +14,10 @@ import {
   TextLink,
   ControlledCollapse,
   FieldSet,
+  RadioButtonGroup,
   Stack,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
@@ -25,6 +25,10 @@ import { RepositoryFormData } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
+const targetOptions = [
+  { value: 'instance', label: 'Entire instance' },
+  { value: 'folder', label: 'Managed folder' },
+];
 
 const appEvents = getAppEvents();
 
@@ -37,11 +41,15 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       owner: '',
       repository: '',
       branch: '',
-      branchWorkflow: false,
+      branchWorkflow: true,
+      sync: {
+        enabled: false, // we should explicitly enabled!
+        target: 'instance', // 'instance' | 'mirror';
+      },
       editing: {
-        create: false,
-        delete: false,
-        update: false,
+        create: true,
+        delete: true,
+        update: true,
       },
     };
   }
@@ -195,12 +203,24 @@ export function ConfigForm({ data }: ConfigFormProps) {
           </Field>
         </>
       )}
-      <Field label={'Target folder'}>
+      <Field label={'Sync target'}>
         <Controller
+          name={'sync.target'}
           control={control}
-          name={'folder'}
-          render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
+          render={({ field: { ref, onChange, ...field } }) => {
+            return (
+              <RadioButtonGroup
+                options={targetOptions}
+                onChange={onChange}
+                //  disabled={!!data?.spec}
+                {...field}
+              />
+            );
+          }}
         />
+      </Field>
+      <Field label={'Sync enabled'}>
+        <Switch {...register('sync.enabled')} id={'sync.enabled'} />
       </Field>
       <FieldSet label={'Editing options'}>
         <Field label={'Create'} description={'Enable creating files on repository'}>

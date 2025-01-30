@@ -6,6 +6,9 @@ spec:
   title: Config provisioning files
   description: load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample
   type: local 
+  sync:
+    enabled: false
+    target: mirror
   editing:
     create: true
     update: true

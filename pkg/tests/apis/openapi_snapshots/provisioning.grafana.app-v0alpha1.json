@@ -4089,11 +4089,12 @@
         "required": [
           "title",
           "editing",
+          "sync",
           "type"
         ],
         "properties": {
           "description": {
-            "description": "Describe the feature toggle",
+            "description": "Repository description",
             "type": "string"
           },
           "editing": {
@@ -4105,12 +4106,8 @@
               }
             ]
           },
-          "folder": {
-            "description": "The folder that is backed by the repository. The value is a reference to the Kubernetes metadata name of the folder in the same namespace.",
-            "type": "string"
-          },
           "github": {
-            "description": "The repository on GitHub. Mutually exclusive with local and s3.",
+            "description": "The repository on GitHub. Mutually exclusive with local | s3 | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.GitHubRepositoryConfig"
@@ -4118,7 +4115,7 @@
             ]
           },
           "local": {
-            "description": "The repository on the local file system. Mutually exclusive with s3 and github.",
+            "description": "The repository on the local file system. Mutually exclusive with local | s3 | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LocalRepositoryConfig"
@@ -4126,15 +4123,24 @@
             ]
           },
           "s3": {
-            "description": "The repository in an S3 bucket. Mutually exclusive with local and github.",
+            "description": "The repository in an S3 bucket. Mutually exclusive with local | s3 | github.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.S3RepositoryConfig"
               }
             ]
           },
+          "sync": {
+            "description": "Sync settings -- how values are pulled from the repository into grafana",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions"
+              }
+            ]
+          },
           "title": {
-            "description": "Describe the feature toggle",
+            "description": "The repository display name (shown in the UI)",
             "type": "string",
             "default": ""
           },
@@ -4492,6 +4498,34 @@
           "complete": {
             "description": "Complete forces the sync to overwrite",
             "type": "boolean"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncOptions": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "target"
+        ],
+        "properties": {
+          "enabled": {
+            "description": "Enabled must be saved as true before any sync job will run",
+            "type": "boolean",
+            "default": false
+          },
+          "intervalSeconds": {
+            "description": "When non-zero, the sync will run periodically",
+            "type": "integer",
+            "format": "int64"
+          },
+          "target": {
+            "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository The folder k8s name will be the same as the repository k8s name It will contain a copy of everything from the remote\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "folder",
+              "instance"
+            ]
           }
         }
       },

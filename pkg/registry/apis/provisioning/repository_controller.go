@@ -69,7 +69,6 @@ func NewRepositoryController(
 	resourceLister resources.ResourceLister,
 	parsers *resources.ParserFactory,
 	identities auth.BackgroundIdentityService,
-	lister resources.ResourceLister,
 	tester *RepositoryTester,
 	jobs jobs.JobQueue,
 ) (*RepositoryController, error) {
@@ -88,7 +87,7 @@ func NewRepositoryController(
 		parsers:    parsers,
 		identities: identities,
 		finalizer: &finalizer{
-			lister: lister,
+			lister: resourceLister,
 			client: parsers.Client,
 		},
 		tester: tester,
@@ -329,7 +328,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Maybe add a new sync job
-	if status.Health.Healthy && sync != nil && status.Sync.State != provisioning.JobStateWorking {
+	if status.Health.Healthy &&
+		obj.Spec.Sync.Enabled && sync != nil &&
+		status.ObservedGeneration > 0 &&
+		status.Sync.State != provisioning.JobStateWorking {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,

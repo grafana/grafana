@@ -1,3 +1,5 @@
+// TODO: This file should be removed when the swagger docs match the real payloads
+
 export type FileDetails = {
   path: string;
   size: string;

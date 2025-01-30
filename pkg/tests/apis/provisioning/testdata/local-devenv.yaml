@@ -5,7 +5,9 @@ metadata:
 spec:
   title: Load devenv dashboards
   description: load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards
-  folder: testingtesting
+  sync:
+    enabled: false
+    target: mirror
   editing:
     create: true
     update: true

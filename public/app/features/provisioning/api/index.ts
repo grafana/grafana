@@ -66,7 +66,7 @@ export const selectFolderRepository = createSelector(
     if (!folderUid) {
       return undefined;
     }
-    return repositories.find((repo) => repo.spec?.folder === folderUid);
+    return repositories.find((repo) => repo.metadata?.name === folderUid);
   }
 );
 
