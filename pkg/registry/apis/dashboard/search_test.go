@@ -262,7 +262,7 @@ func TestSearchHandler(t *testing.T) {
 		if err != nil {
 			t.Fail()
 		}
-		assert.Equal(t, 4, len(p.Hits))
+		assert.Equal(t, len(mockResults), len(p.Hits))
 		assert.Equal(t, mockResults[3].Value, p.Hits[0].Title)
 		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
 	})
