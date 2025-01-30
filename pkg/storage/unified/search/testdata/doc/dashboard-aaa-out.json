@@ -8,7 +8,7 @@
   "name": "aaa",
   "rv": 1234,
   "title": "Test title",
-  "title_sort": "test title",
+  "title_phrase": "test title",
   "description": "test description",
   "tags": [
     "a",
@@ -16,6 +16,7 @@
     "c"
   ],
   "labels": {
+    "grafana.app/deprecatedInternalID": "141",
     "host": "abc",
     "region": "xyz"
   },

@@ -69,7 +69,7 @@ func ParseResultFormat(queryResultFormat *dataquery.ResultFormat, queryType data
 	if queryResultFormat != nil && *queryResultFormat != "" {
 		return *queryResultFormat
 	}
-	if queryType == dataquery.AzureQueryTypeAzureLogAnalytics {
+	if queryType == dataquery.AzureQueryTypeLogAnalytics {
 		// Default to time series format for logs queries. It was time series before this change
 		return dataquery.ResultFormatTimeSeries
 	}

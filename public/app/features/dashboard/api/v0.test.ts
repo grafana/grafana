@@ -133,6 +133,13 @@ describe('v0 dashboard API', () => {
     expect(result.meta.folderUid).toBe('new-folder');
   });
 
+  it('throws an error if folder is not found', async () => {
+    jest.spyOn(backendSrv, 'getFolderByUid').mockRejectedValue({ message: 'folder not found', status: 'not-found' });
+
+    const api = new K8sDashboardAPI();
+    await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
+  });
+
   describe('saveDashboard', () => {
     beforeEach(() => {
       locationUtil.initialize({

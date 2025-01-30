@@ -4,7 +4,7 @@ import { useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Button, Icon, Input, RadioButtonGroup, Switch, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, RadioButtonGroup, Switch, useElementSelection, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -72,15 +72,8 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   public renderActions(): React.ReactNode {
     return (
       <>
-        <Button size="sm" variant="secondary">
-          Copy
-        </Button>
-        <Button size="sm" variant="primary" onClick={this.onAddPanel} fill="outline">
-          Add panel
-        </Button>
-        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
-          Delete
-        </Button>
+        <Button size="sm" variant="secondary" icon="copy" />
+        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete} icon="trash-alt" />
       </>
     );
   }
@@ -97,43 +90,47 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     this.setState({ isCollapsed: !this.state.isCollapsed });
   };
 
-  public onAddPanel = () => {
-    const vizPanel = getDefaultVizPanel();
+  public onAddPanel = (vizPanel = getDefaultVizPanel()) => {
     this.state.layout.addPanel(vizPanel);
   };
 
-  public onEdit = () => {
-    const dashboard = getDashboardSceneFor(this);
-    dashboard.state.editPane.selectObject(this);
-  };
-
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, title, isCollapsed, height = 'expand' } = model.useState();
-    const { isEditing } = getDashboardSceneFor(model).useState();
+    const { layout, title, isCollapsed, height = 'expand', isHeaderHidden, key } = model.useState();
+    const { isEditing, showHiddenElements } = getDashboardSceneFor(model).useState();
     const styles = useStyles2(getStyles);
     const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
     const ref = useRef<HTMLDivElement>(null);
     const shouldGrow = !isCollapsed && height === 'expand';
+    const { isSelected, onSelect } = useElementSelection(key);
 
     return (
       <div
-        className={cx(styles.wrapper, isCollapsed && styles.wrapperCollapsed, shouldGrow && styles.wrapperGrow)}
+        className={cx(
+          styles.wrapper,
+          isCollapsed && styles.wrapperCollapsed,
+          shouldGrow && styles.wrapperGrow,
+          isSelected && 'dashboard-selected-element'
+        )}
         ref={ref}
       >
-        <div className={styles.rowHeader}>
-          <button
-            onClick={model.onCollapseToggle}
-            className={styles.rowTitleButton}
-            aria-label={isCollapsed ? 'Expand row' : 'Collapse row'}
-            data-testid={selectors.components.DashboardRow.title(titleInterpolated)}
-          >
-            <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-            <span className={styles.rowTitle} role="heading">
-              {titleInterpolated}
-            </span>
-          </button>
-          {isEditing && <Button icon="pen" variant="secondary" size="sm" fill="text" onClick={() => model.onEdit()} />}
-        </div>
+        {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
+          <div className={styles.rowHeader}>
+            <button
+              onClick={model.onCollapseToggle}
+              className={styles.rowTitleButton}
+              aria-label={isCollapsed ? 'Expand row' : 'Collapse row'}
+              data-testid={selectors.components.DashboardRow.title(titleInterpolated)}
+            >
+              <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
+              <span className={styles.rowTitle} role="heading">
+                {titleInterpolated}
+              </span>
+            </button>
+            {isEditing && (
+              <Button icon="pen" variant="secondary" size="sm" fill="text" onPointerDown={(evt) => onSelect?.(evt)} />
+            )}
+          </div>
+        )}
         {!isCollapsed && <layout.Component model={layout} />}
       </div>
     );
@@ -206,7 +203,7 @@ export function RowTitleInput({ row }: { row: RowItem }) {
 }
 
 export function RowHeaderSwitch({ row }: { row: RowItem }) {
-  const { isHeaderHidden } = row.useState();
+  const { isHeaderHidden = false } = row.useState();
 
   return (
     <Switch

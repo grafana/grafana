@@ -456,12 +456,13 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService(features)
 	fStore := folderimpl.ProvideStore(sc.db)
-	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	folderServiceWithFlagOn := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(), nil, folderServiceWithFlagOn,
@@ -469,16 +470,15 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
-
-	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
-	require.NoError(b, err)
-
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn, fStore, nil, zanzana.NewNoopClient(), nil, nil, nil, quotaSrv, nil,
+		features, folderPermissions, ac,
+		folderServiceWithFlagOn, fStore, nil, nil, nil, nil, quotaSrv, nil, nil,
 	)
+	require.NoError(b, err)
+
+	_, err = ossaccesscontrol.ProvideDashboardPermissions(
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc)
 	require.NoError(b, err)
 
 	starSvc := startest.NewStarServiceFake()
@@ -490,13 +490,13 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SQLStore:         sc.db,
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc, folderServiceWithFlagOn, features),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}
 
-	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 
 	m.Get("/api/folders", hs.GetFolders)
 	m.Get("/api/search", hs.Search)

@@ -1,10 +1,9 @@
 import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { config } from '@grafana/runtime';
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
-import { DataQuerySpecResponse } from './types';
+import { getAPINamespace } from '../../../api/utils';
 
 /**
  * @alpha
@@ -23,26 +22,20 @@ export enum QueryTemplateKinds {
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/querytemplates`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/${getAPINamespace()}`;
 
-// URL is optional for these requests
-interface QueryLibraryBackendRequest extends Pick<BackendSrvRequest, 'data' | 'method'> {
-  url?: string;
-  headers?: { [key: string]: string };
+interface QueryLibraryBackendRequest extends BackendSrvRequest {
+  body?: BackendSrvRequest['data'];
 }
 
-/**
- * TODO: similar code is duplicated in many places. To be unified in #86960
- */
-export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecResponse, Error> = async (
-  requestOptions
-) => {
+export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, unknown, Error> = async (requestOptions) => {
   try {
-    const responseObservable = getBackendSrv().fetch<DataQuerySpecResponse>({
-      url: `${BASE_URL}${requestOptions.url ?? ''}`,
+    const responseObservable = getBackendSrv().fetch({
+      url: `${BASE_URL}/${requestOptions.url ?? ''}`,
       showErrorAlert: true,
       method: requestOptions.method || 'GET',
-      data: requestOptions.data,
+      data: requestOptions.body,
+      params: requestOptions.params,
       headers: { ...requestOptions.headers },
     });
     return await lastValueFrom(responseObservable);

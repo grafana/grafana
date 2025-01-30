@@ -125,56 +125,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
-			name:        "Load a Bundled plugin",
-			class:       plugins.ClassBundled,
-			cfg:         &config.PluginManagementCfg{},
-			pluginPaths: []string{filepath.Join(testDataDir(t), "valid-v2-signature")},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Will Browne",
-								URL:  "https://willbrowne.com",
-							},
-							Version: "1.0.0",
-							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
-							},
-							Description: "Test",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
-						},
-						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
-						Executable: "test",
-						Backend:    true,
-						State:      "alpha",
-					},
-					Module:        "public/plugins/test-datasource/module.js",
-					BaseURL:       "public/plugins/test-datasource",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-signature/plugin/")),
-					Signature:     "valid",
-					SignatureType: plugins.SignatureTypeGrafana,
-					SignatureOrg:  "Grafana Labs",
-					Class:         plugins.ClassBundled,
-				},
-			},
-		},
-		{
 			name:        "Load plugin with symbolic links",
 			class:       plugins.ClassExternal,
 			cfg:         &config.PluginManagementCfg{},
@@ -672,7 +622,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 				},
 			},
 			FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
-			Class:     plugins.ClassBundled,
+			Class:     plugins.ClassExternal,
 			Signature: plugins.SignatureStatusValid,
 			BaseURL:   "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
 			Module:    "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
@@ -681,7 +631,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.ClassBundled
+				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return pluginPaths
@@ -1168,11 +1118,6 @@ func TestLoader_AngularClass(t *testing.T) {
 		{
 			name:                   "core plugin should skip angular detection",
 			class:                  plugins.ClassCore,
-			expAngularDetectionRun: false,
-		},
-		{
-			name:                   "bundled plugin should skip angular detection",
-			class:                  plugins.ClassBundled,
 			expAngularDetectionRun: false,
 		},
 		{

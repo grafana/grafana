@@ -35,7 +35,10 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
 
   const onDeleteQuery = (queryUid: string) => {
     const performDelete = (queryUid: string) => {
-      deleteQueryTemplate({ uid: queryUid });
+      deleteQueryTemplate({
+        name: queryUid,
+        deleteOptions: {},
+      });
       dispatch(notifyApp(createSuccessNotification(t('explore.query-library.query-deleted', 'Query deleted'))));
       queryLibaryTrackDeleteQuery();
     };
