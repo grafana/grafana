@@ -45,12 +45,10 @@ import (
 const repoControllerWorkers = 1
 
 var (
-	_ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
-	_ RepoGetter              = (*ProvisioningAPIBuilder)(nil)
+	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
 )
 
-// This is used just so wire has something unique to return
-type ProvisioningAPIBuilder struct {
+type APIBuilder struct {
 	urlProvider      func(namespace string) string
 	webhookSecretKey string
 
@@ -66,12 +64,13 @@ type ProvisioningAPIBuilder struct {
 	jobs              jobs.JobQueue
 	tester            *RepositoryTester
 	lister            resources.ResourceLister
+	routes            *routeHandler
 }
 
-// This constructor will be called when building a multi-tenant apiserveer
-// Avoid adding anything that secretly requires additional hidden dependencies
-// like *settings.Cfg or core grafana services that depend on database connections
-func NewProvisioningAPIBuilder(
+// NewAPIBuilder creates an API builder.
+// It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
+// This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
+func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
 	urlProvider func(namespace string) string,
 	webhookSecretKey string,
@@ -82,9 +81,10 @@ func NewProvisioningAPIBuilder(
 	blobstore blob.PublicBlobStore,
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
-) *ProvisioningAPIBuilder {
+) *APIBuilder {
 	clientFactory := resources.NewFactory(identities)
-	builder := &ProvisioningAPIBuilder{
+	resourceLister := resources.NewResourceLister(index)
+	return &APIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		webhookSecretKey:  webhookSecretKey,
@@ -96,14 +96,17 @@ func NewProvisioningAPIBuilder(
 			Client: clientFactory,
 		},
 		render:    render,
-		lister:    resources.NewResourceLister(index),
+		lister:    resourceLister,
 		blobstore: blobstore,
 		jobs:      jobs.NewJobQueue(50), // in memory for now
+		routes: &routeHandler{
+			resourceLister: resourceLister,
+		},
 	}
-
-	return builder
 }
 
+// RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
+// This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
 	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
@@ -115,9 +118,9 @@ func RegisterAPIService(
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory github.ClientFactory,
-) (*ProvisioningAPIBuilder, error) {
-	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+) (*APIBuilder, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
+		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 
@@ -127,19 +130,23 @@ func RegisterAPIService(
 		return nil, err
 	}
 
-	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
+	folderResolver := &repository.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
-	}, func(namespace string) string {
+	}
+	urlProvider := func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
+	}
+
+	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, identities, features, render, client, store, configProvider, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
 
-func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+			// TODO: Implement a better webhook authoriser somehow.
 			if a.GetSubresource() == "webhook" {
 				// for now????
 				return authorizer.DecisionAllow, "", nil
@@ -150,11 +157,11 @@ func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		})
 }
 
-func (b *ProvisioningAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return provisioning.SchemeGroupVersion
 }
 
-func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := provisioning.AddToScheme(scheme)
 	if err != nil {
 		return err
@@ -171,19 +178,18 @@ func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
 }
 
-func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+	b.getter = repositoryStorage
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.getter = repositoryStorage
 
 	storage := map[string]rest.Storage{}
 	storage[provisioning.JobResourceInfo.StoragePath()] = b.jobs
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
-	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
@@ -216,7 +222,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	return nil
 }
 
-func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
+func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
 	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -228,7 +234,7 @@ func timeSince(when int64) time.Duration {
 	return time.Duration(time.Now().UnixMilli()-when) * time.Millisecond
 }
 
-func (b *ProvisioningAPIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
+func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
 	repo, err := b.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
@@ -271,7 +277,7 @@ func (b *ProvisioningAPIBuilder) GetHealthyRepository(ctx context.Context, name 
 	return repo, err
 }
 
-func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
+func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
 	}
@@ -282,7 +288,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 	return b.AsRepository(ctx, r)
 }
 
-func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
@@ -306,7 +312,7 @@ func (b *ProvisioningAPIBuilder) AsRepository(ctx context.Context, r *provisioni
 	}
 }
 
-func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
 	if obj == nil || a.GetOperation() == admission.Connect {
@@ -339,7 +345,7 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 	return nil
 }
 
-func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
 	if obj == nil || a.GetOperation() == admission.Connect {
 		return nil // This is normal for sub-resource
@@ -373,11 +379,11 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 	return nil
 }
 
-func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return provisioning.GetOpenAPIDefinitions
 }
 
-func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
@@ -397,6 +403,9 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 				clientFactory: b.client,
 				client:        c.ProvisioningV0alpha1(),
 			}
+
+			// Use fast local lookup
+			b.routes.repositoryLister = repoInformer.Lister()
 
 			b.jobs.Register(jobs.NewJobWorker(
 				b,
@@ -431,7 +440,7 @@ func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserve
 	return postStartHooks, nil
 }
 
-func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Provisioning"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"

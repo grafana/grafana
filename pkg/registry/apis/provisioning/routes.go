@@ -18,10 +18,11 @@ import (
 )
 
 // GetAPIRoutes implements the direct HTTP handlers that bypass k8s
-func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	statsResult := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats"].Schema
+	schemaStats := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats"].Schema
+	schemaSettigns := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FrontendSettings"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -31,7 +32,7 @@ func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							OperationId: "getResourceStats", // used for RTK client
-							Tags:        []string{"Repository"},
+							Tags:        []string{"Provisioning"},
 							Description: "Get resource stats for this namespace",
 							Parameters: []*spec3.Parameter{
 								{
@@ -53,7 +54,7 @@ func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &statsResult,
+															Schema: &schemaStats,
 														},
 													},
 												},
@@ -65,7 +66,49 @@ func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: b.handleStats,
+				Handler: b.routes.handleStats,
+			},
+			{
+				Path: "settings",
+				Spec: &spec3.PathProps{
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							OperationId: "getFrontendSettings", // used for RTK client
+							Tags:        []string{"Provisioning"},
+							Description: "Get the frontend settings for this namespace",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &schemaSettigns,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.routes.handleSettings,
 			},
 		},
 	}
