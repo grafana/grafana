@@ -2,6 +2,8 @@ module github.com/grafana/grafana
 
 go 1.23.5
 
+replace github.com/grafana/authlib => /Users/charandas/go/src/github.com/grafana/authlib
+
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.34.2-20240902100956-02fd72488966.2 // @grafana/observability-traces-and-profiling

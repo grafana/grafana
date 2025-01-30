@@ -151,9 +151,6 @@ func (i *Identity) GetExtra() map[string][]string {
 	if i.IDToken != "" {
 		extra["id-token"] = []string{i.IDToken}
 	}
-	if i.GetOrgRole().IsValid() {
-		extra["user-instance-role"] = []string{string(i.GetOrgRole())}
-	}
 	return extra
 }
 
