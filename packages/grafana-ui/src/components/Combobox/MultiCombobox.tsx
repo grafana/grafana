@@ -36,7 +36,18 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { placeholder, onChange, value, width, enableAllOption, invalid, disabled, minWidth, maxWidth } = props;
+  const {
+    placeholder,
+    onChange,
+    value,
+    width,
+    enableAllOption,
+    invalid,
+    disabled,
+    minWidth,
+    maxWidth,
+    createCustomValue = false,
+  } = props;
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
@@ -53,7 +64,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [inputValue]);
 
   // Handle async options and the 'All' option
-  const { options: baseOptions, updateOptions, asyncLoading } = useOptions(props.options);
+  const { options: baseOptions, updateOptions, asyncLoading } = useOptions(props.options, createCustomValue);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;
