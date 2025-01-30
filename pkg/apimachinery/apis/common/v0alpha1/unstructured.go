@@ -2,7 +2,7 @@ package v0alpha1
 
 import (
 	"encoding/json"
-	"fmt"
+	"reflect"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -111,16 +111,16 @@ func deepCopyJSONValue(x interface{}) interface{} {
 		return x.DeepCopyObject()
 
 	default:
-		raw, err := json.Marshal(x)
-		if err != nil {
-			panic(fmt.Errorf("cannot deep copy %T %w", x, err))
+		// fallback to reflection
+		val := reflect.ValueOf(x).Elem()
+		cpy := reflect.New(val.Type())
+		cpy.Elem().Set(val)
+
+		// Using the <obj>, <ok> for the type conversion ensures that it doesn't panic if it can't be converted
+		if obj, ok := cpy.Interface().(runtime.Object); ok {
+			return obj
 		}
-		obj := map[string]interface{}{}
-		err = json.Unmarshal(raw, &obj)
-		if err != nil {
-			panic(fmt.Errorf("cannot deep copy %T %w", x, err))
-		}
-		return obj
+		return x
 	}
 }
 

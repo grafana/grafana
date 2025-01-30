@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidate(t *testing.T) {
+func TestDeepCopyJSON(t *testing.T) {
 	obj := &Unstructured{
 		Object: map[string]interface{}{
 			"int":    int(2),
@@ -16,6 +16,11 @@ func TestValidate(t *testing.T) {
 			"uint64": uint64(2),
 			"ref": &ObjectReference{
 				Resource: "x",
+			},
+			"string": map[string]any{
+				"x": &ObjectReference{
+					Resource: "x",
+				},
 			},
 		},
 	}
