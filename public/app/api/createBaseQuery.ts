@@ -1,3 +1,4 @@
+import { BaseQueryFn } from '@reduxjs/toolkit/query';
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime';
@@ -8,7 +9,7 @@ interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export function createBaseQuery({ baseURL }: { baseURL: string }) {
+export function createBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions, unknown, Error> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
