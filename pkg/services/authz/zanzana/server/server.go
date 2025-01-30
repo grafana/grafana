@@ -75,10 +75,7 @@ func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
 	_, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
 		PageSize: wrapperspb.Int32(1),
 	})
-	if err != nil {
-		return false, nil
-	}
-	return true, nil
+	return err == nil, nil
 }
 
 func (s *Server) getContextuals(ctx context.Context, subject string) (*openfgav1.ContextualTupleKeys, error) {
