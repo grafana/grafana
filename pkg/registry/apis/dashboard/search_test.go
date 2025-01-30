@@ -2,15 +2,18 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
 
@@ -237,6 +240,18 @@ func TestSearchHandlerFields(t *testing.T) {
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
+
+		resp := rr.Result()
+		defer resp.Body.Close()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		if err != nil {
+			t.Fail()
+		}
+		assert.Equal(t, 4, len(p.Hits))
+		assert.Equal(t, mockResults[3].Value, p.Hits[0].Title)
+		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
 	})
 }
 
@@ -248,10 +263,59 @@ type MockClient struct {
 	LastSearchRequest *resource.ResourceSearchRequest
 }
 
+type MockResult struct {
+	Name     string
+	Resource string
+	Value    string
+}
+
+var mockResults = []MockResult{
+	{
+		Name:     "d1",
+		Resource: "dashboard",
+		Value:    "Dashboard 1",
+	},
+	{
+		Name:     "d2",
+		Resource: "dashboard",
+		Value:    "Dashboard 2",
+	},
+	{
+		Name:     "f2",
+		Resource: "folder",
+		Value:    "Folder 2",
+	},
+	{
+		Name:     "f1",
+		Resource: "folder",
+		Value:    "Folder 1",
+	},
+}
+
 func (m *MockClient) Search(ctx context.Context, in *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
 	m.LastSearchRequest = in
 
-	return &resource.ResourceSearchResponse{}, nil
+	rows := make([]*resource.ResourceTableRow, len(mockResults))
+	for i, r := range mockResults {
+		rows[i] = &resource.ResourceTableRow{
+			Key: &resource.ResourceKey{
+				Name:     r.Name,
+				Resource: r.Resource,
+			},
+			Cells: [][]byte{
+				[]byte(r.Value),
+			},
+		}
+	}
+
+	return &resource.ResourceSearchResponse{
+		Results: &resource.ResourceTable{
+			Columns: []*resource.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_TITLE},
+			},
+			Rows: rows,
+		},
+	}, nil
 }
 
 func (m *MockClient) GetStats(ctx context.Context, in *resource.ResourceStatsRequest, opts ...grpc.CallOption) (*resource.ResourceStatsResponse, error) {
