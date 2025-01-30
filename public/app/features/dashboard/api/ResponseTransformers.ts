@@ -411,7 +411,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
           kind: 'QueryGroup',
           spec: {
             queries,
-            transformations, // TODO[schema v2]: handle transformations
+            transformations,
             queryOptions: {
               cacheTimeout: p.cacheTimeout,
               maxDataPoints: p.maxDataPoints,
