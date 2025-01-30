@@ -43,8 +43,8 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       branch: '',
       branchWorkflow: true,
       sync: {
-        enabled: false, // we should explicitly enabled!
-        target: 'instance', // 'instance' | 'mirror';
+        enabled: false,
+        target: 'instance',
       },
       editing: {
         create: true,
@@ -203,19 +203,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
           </Field>
         </>
       )}
-      <Field label={'Sync target'}>
+      <Field label={'Sync target'} required error={errors?.sync?.target?.message} invalid={!!errors?.sync?.target}>
         <Controller
           name={'sync.target'}
           control={control}
+          rules={{ required: 'This field is required.' }}
           render={({ field: { ref, onChange, ...field } }) => {
-            return (
-              <RadioButtonGroup
-                options={targetOptions}
-                onChange={onChange}
-                //  disabled={!!data?.spec}
-                {...field}
-              />
-            );
+            return <RadioButtonGroup options={targetOptions} onChange={onChange} disabled={!!data?.spec} {...field} />;
           }}
         />
       </Field>
