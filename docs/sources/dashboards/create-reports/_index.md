@@ -84,25 +84,20 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
+For Grafana Enterprise, using the Reporting feature has the following requirements:
+
 - SMTP must be configured for reports to be sent. Refer to [SMTP configuration documentation](ref:smtp) for more information.
 - The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.0+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
 
 ### Rendering configuration
 
-When generating reports, each panel renders separately before being collected in a PDF.
-You can configure the per-panel rendering timeout and number of concurrently rendered panels.
 
-To make a panel more legible, you can set a scale factor for the rendered images.
-However, a higher scale factor increases the file size of the generated PDF.
-
-You can also specify custom fonts that support different Unicode scripts.
-The DejaVu font is the default used for PDF rendering.
 
 By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.
-You can configure how long a file should be stored before being removed by configuring the [temp-data-lifetime](ref:temp-data-lifetime) setting.
+You can configure how long a file should be stored before being removed by configuring the [temp_data_lifetime](ref:temp-data-lifetime) setting.
 
 These options are available in the [reporting configuration](ref:reporting-configuration) of the `ini` file for Enterprise Grafana.
 
@@ -181,8 +176,6 @@ Note that this affects the display of the dashboard for all users.
 If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server.
 As a result, this time zone might not match the time zone of users creating or receiving the report.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels.
-To avoid this, set the time zone to UTC for dashboards when using a remote renderer.
 Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
 
 ### 2. Format report

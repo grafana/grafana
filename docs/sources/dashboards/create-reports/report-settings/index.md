@@ -32,7 +32,7 @@ The options in this section control the branding and theming of the report attac
 - **Theme** - Theme of the PDF attached to the report.
   The selected theme is also applied to the PDFs generated when you click **Preview PDF** during report creation or select the **Export as PDF** option on a dashboard.
 
-  If **Current** is selected, the PDF in the report is in the instance theme of the organization Admin, but the preview and exported PDFs are in the user's instance theme.
+  If **Current** is selected, the PDF in the report is in the instance theme of the report creator, but the preview and exported PDFs are in the user's instance theme.
   Defaults to **Light**.
 
 ### Embedded Image
