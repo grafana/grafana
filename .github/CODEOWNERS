@@ -455,6 +455,7 @@
 playwright.config.ts @grafana/plugins-platform-frontend
 
 # public folder
+/public/app/api/ @grafana/grafana-frontend-platform
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
@@ -617,6 +618,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
 /scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
+/scripts/process-specs.ts @grafana/grafana-frontend-platform
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
