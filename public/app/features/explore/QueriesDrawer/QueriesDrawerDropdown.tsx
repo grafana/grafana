@@ -1,68 +1,114 @@
 import { css } from '@emotion/css';
+import { ComponentProps, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
+import { t } from 'app/core/internationalization';
 
+import { createDatasourcesList } from '../../../core/utils/richHistory';
+import { useSelector } from '../../../types';
+import ExploreRunQueryButton from '../ExploreRunQueryButton';
 import { queryLibraryTrackToggle } from '../QueryLibrary/QueryLibraryAnalyticsEvents';
+import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
+import { QueryActionButton } from '../QueryLibrary/types';
+import { selectExploreDSMaps } from '../state/selectors';
 
-import { Tabs, useQueriesDrawerContext } from './QueriesDrawerContext';
+import { useQueriesDrawerContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
+
+// This makes TS happy as ExploreRunQueryButton has optional onClick prop while QueryActionButton doesn't
+// in addition to map the rootDatasourceUid prop.
+function ExploreRunQueryButtonWrapper(props: ComponentProps<QueryActionButton>) {
+  return <ExploreRunQueryButton {...props} rootDatasourceUid={props.datasourceUid} />;
+}
 
 type Props = {
   variant: 'compact' | 'full';
 };
 
+/**
+ * Dropdown button that can either open a Query History drawer or a Query Library drawer.
+ * @param variant
+ * @constructor
+ */
 export function QueriesDrawerDropdown({ variant }: Props) {
-  const { selectedTab, setSelectedTab, queryLibraryAvailable, drawerOpened, setDrawerOpened } =
-    useQueriesDrawerContext();
+  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
+
+  const {
+    openDrawer: openQueryLibraryDrawer,
+    closeDrawer: closeQueryLibraryDrawer,
+    isDrawerOpen: isQueryLibraryDrawerOpen,
+  } = useQueryLibraryContext();
+
+  const [queryOption, setQueryOption] = useState<'library' | 'history'>('library');
+
+  const exploreActiveDS = useSelector(selectExploreDSMaps);
 
   const styles = useStyles2(getStyles);
 
-  if (!queryLibraryAvailable) {
+  // In case query library is not enabled we show only simple button for query history in the parent.
+  if (!config.featureToggles.queryLibrary) {
     return undefined;
   }
 
-  function toggle(tab: Tabs) {
-    tab === Tabs.QueryLibrary && queryLibraryTrackToggle(!drawerOpened);
+  function toggleRichHistory() {
+    setQueryOption('history');
+    setDrawerOpened(!drawerOpened);
+  }
 
-    setSelectedTab(tab);
-    setDrawerOpened(false);
-    setDrawerOpened(true);
+  function toggleQueryLibrary() {
+    setQueryOption('library');
+    if (isQueryLibraryDrawerOpen) {
+      closeQueryLibraryDrawer();
+    } else {
+      // Prefill the query library filter with the dataSource.
+      // Get current dataSource that is open. As this is only used in Explore we get it from Explore state.
+      const listOfDatasources = createDatasourcesList();
+      const activeDatasources = exploreActiveDS.dsToExplore
+        .map((eDs) => {
+          return listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name;
+        })
+        .filter((name): name is string => !!name);
+
+      openQueryLibraryDrawer(activeDatasources, ExploreRunQueryButtonWrapper);
+    }
+    queryLibraryTrackToggle(!isQueryLibraryDrawerOpen);
   }
 
   const menu = (
     <Menu>
-      <Menu.Item label={i18n.queryLibrary} onClick={() => toggle(Tabs.QueryLibrary)} />
-      <Menu.Item label={i18n.queryHistory} onClick={() => toggle(Tabs.RichHistory)} />
+      <Menu.Item label={i18n.queryLibrary} onClick={() => toggleQueryLibrary()} />
+      <Menu.Item label={i18n.queryHistory} onClick={() => toggleRichHistory()} />
     </Menu>
   );
+
+  const buttonLabel = queryOption === 'library' ? i18n.queryLibrary : i18n.queryHistory;
+  const toggle = queryOption === 'library' ? toggleQueryLibrary : toggleRichHistory;
 
   return (
     <ButtonGroup>
       <ToolbarButton
         icon="book"
-        variant={drawerOpened ? 'active' : 'canvas'}
-        onClick={() => {
-          setDrawerOpened(!drawerOpened);
-          selectedTab === Tabs.QueryLibrary && queryLibraryTrackToggle(!drawerOpened);
-        }}
-        aria-label={selectedTab}
+        variant={drawerOpened || isQueryLibraryDrawerOpen ? 'active' : 'canvas'}
+        onClick={() => toggle()}
+        aria-label={buttonLabel}
       >
-        {variant === 'full' ? selectedTab : undefined}
+        {variant === 'full' ? buttonLabel : undefined}
       </ToolbarButton>
-      {drawerOpened ? (
-        <Button
-          className={styles.close}
-          variant="secondary"
-          icon="times"
-          onClick={() => {
-            setDrawerOpened(false);
-            selectedTab === Tabs.QueryLibrary && queryLibraryTrackToggle(false);
-          }}
-        ></Button>
+
+      {/* Show either a drops down button so that user can select QL or QH, or show a close button if one of them is
+          already open.*/}
+      {drawerOpened || isQueryLibraryDrawerOpen ? (
+        <Button className={styles.close} variant="secondary" icon="times" onClick={() => toggle()}></Button>
       ) : (
         <Dropdown overlay={menu}>
-          <ToolbarButton className={styles.toggle} variant="canvas" icon="angle-down" />
+          <ToolbarButton
+            className={styles.toggle}
+            variant="canvas"
+            icon="angle-down"
+            aria-label={t('explore.rich-history.library-history-dropdown', 'Open query library or query history')}
+          />
         </Dropdown>
       )}
     </ButtonGroup>

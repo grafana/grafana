@@ -9,14 +9,13 @@ import { useDeleteQueryTemplateMutation } from 'app/features/query-library';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import ExploreRunQueryButton from '../../ExploreRunQueryButton';
-import { useQueriesDrawerContext } from '../../QueriesDrawer/QueriesDrawerContext';
 import {
   queryLibaryTrackDeleteQuery,
   queryLibraryTrackAddOrEditDescription,
   queryLibraryTrackRunQuery,
 } from '../QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from '../QueryTemplateForm';
+import { QueryActionButton } from '../types';
 
 import { useQueryLibraryListStyles } from './styles';
 import { QueryTemplateRow } from './types';
@@ -25,12 +24,12 @@ interface ActionsCellProps {
   queryUid?: string;
   queryTemplate: QueryTemplateRow;
   rootDatasourceUid?: string;
+  QueryActionButton?: QueryActionButton;
 }
 
-function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCellProps) {
+function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid, QueryActionButton }: ActionsCellProps) {
   const [deleteQueryTemplate] = useDeleteQueryTemplateMutation();
   const [editFormOpen, setEditFormOpen] = useState(false);
-  const { setDrawerOpened } = useQueriesDrawerContext();
   const styles = useQueryLibraryListStyles();
 
   const onDeleteQuery = (queryUid: string) => {
@@ -82,15 +81,15 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
           queryLibraryTrackAddOrEditDescription();
         }}
       />
-      <ExploreRunQueryButton
-        queries={queryTemplate.query ? [queryTemplate.query] : []}
-        rootDatasourceUid={rootDatasourceUid}
-        variant="primary"
-        onClick={() => {
-          setDrawerOpened(false);
-          queryLibraryTrackRunQuery(queryTemplate.datasourceType || '');
-        }}
-      />
+      {QueryActionButton && (
+        <QueryActionButton
+          queries={queryTemplate.query ? [queryTemplate.query] : []}
+          datasourceUid={rootDatasourceUid}
+          onClick={() => {
+            queryLibraryTrackRunQuery(queryTemplate.datasourceType || '');
+          }}
+        />
+      )}
       <Modal
         title={t('explore.query-template-modal.edit-title', 'Edit query')}
         isOpen={editFormOpen}

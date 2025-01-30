@@ -1077,6 +1077,12 @@
       "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
       "angular-deprecation-heading": "Panel options"
     },
+    "panel-queries": {
+      "add-query-from-library": "Add query from library"
+    },
+    "query-library": {
+      "add-query-button": "Add query"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1188,6 +1194,7 @@
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
       "datasource-z-a": "Data source Z-A",
+      "library-history-dropdown": "Open query library or query history",
       "newest-first": "Newest first",
       "oldest-first": "Oldest first",
       "query-history": "Query history",
@@ -2796,7 +2803,7 @@
   "query-library": {
     "datasource-names": "Datasource name(s):",
     "delete-query-button": "Delete query",
-    "query-template-get-error": "Error attempting to get query template from the library: {{error}}",
+    "query-template-get-error": "Error attempting to load query template metadata: {{error}}",
     "search": "Search by data source, query content or description",
     "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
     "user-names": "User name(s):"
@@ -2811,6 +2818,7 @@
       "hide-response": "Hide response",
       "remove-query": "Remove query",
       "save-to-query-library": "Save to query library",
+      "save-to-query-library-new": "New: Save to query library",
       "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },

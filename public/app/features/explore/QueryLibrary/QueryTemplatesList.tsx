@@ -1,24 +1,22 @@
 import { css } from '@emotion/css';
-import { compact, uniq, uniqBy } from 'lodash';
+import { uniqBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack, Badge } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { createQueryText } from 'app/core/utils/richHistory';
 import { useListQueryTemplateQuery } from 'app/features/query-library';
-import { getUserInfo } from 'app/features/query-library/api/user';
 import { QueryTemplate } from 'app/features/query-library/types';
 
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
+import { UserDataQueryResponse } from '../../query-library/api/types';
 
 import { QueryLibraryProps } from './QueryLibrary';
 import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
 import { QueryLibraryExpmInfo } from './QueryLibraryExpmInfo';
 import QueryTemplatesTable from './QueryTemplatesTable';
-import { QueryTemplateRow } from './QueryTemplatesTable/types';
+import { useLoadQueryMetadata, useLoadUsers } from './utils/dataFetching';
 import { searchQueryLibrary } from './utils/search';
 
 interface QueryTemplatesListProps extends QueryLibraryProps {}
@@ -31,115 +29,29 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
   const [datasourceFilters, setDatasourceFilters] = useState<Array<SelectableValue<string>>>(
     props.activeDatasources?.map((ds) => ({ value: ds, label: ds })) || []
   );
-  const [userData, setUserData] = useState<string[]>([]);
   const [userFilters, setUserFilters] = useState<Array<SelectableValue<string>>>([]);
-
-  const [allQueryTemplateRows, setAllQueryTemplateRows] = useState<QueryTemplateRow[]>([]);
-  const [isRowsLoading, setIsRowsLoading] = useState(true);
   const styles = useStyles2(getStyles);
 
-  useEffect(() => {
-    let shouldCancel = true;
+  const loadUsersResult = useLoadUsersWithError(data);
+  const userNames = loadUsersResult.value ? loadUsersResult.value.display.map((user) => user.displayName) : [];
 
-    const fetchRows = async () => {
-      if (!data) {
-        setIsRowsLoading(false);
-        return;
-      }
+  const loadQueryMetadataResult = useLoadQueryMetadataWithError(data, loadUsersResult.value);
 
-      let userDataList;
-      const userQtList = uniq(compact(data.map((qt) => qt.user?.uid)));
-      const usersParam = userQtList.map((userUid) => `key=${encodeURIComponent(userUid)}`).join('&');
-      try {
-        userDataList = await getUserInfo(`?${usersParam}`);
-      } catch (error) {
-        getAppEvents().publish({
-          type: AppEvents.alertError.name,
-          payload: [
-            t('query-library.user-info-get-error', 'Error attempting to get user info from the library: {{error}}', {
-              error: JSON.stringify(error),
-            }),
-          ],
-        });
-        setIsRowsLoading(false);
-        return;
-      }
-
-      setUserData(userDataList.display.map((user) => user.displayName));
-
-      const rowsPromises = data.map(async (queryTemplate: QueryTemplate, index: number) => {
-        try {
-          const datasourceRef = queryTemplate.targets[0]?.datasource;
-          const datasourceApi = await getDataSourceSrv().get(datasourceRef);
-          const datasourceType = getDatasourceSrv().getInstanceSettings(datasourceRef)?.meta.name || '';
-          const query = queryTemplate.targets[0];
-          const queryText = createQueryText(query, datasourceApi);
-          const datasourceName = datasourceApi?.name || '';
-          const extendedUserData = userDataList.display.find(
-            (user) => `${user?.identity.type}:${user?.identity.name}` === queryTemplate.user?.uid
-          );
-
-          return {
-            index: index.toString(),
-            uid: queryTemplate.uid,
-            datasourceName,
-            datasourceRef,
-            datasourceType,
-            createdAtTimestamp: queryTemplate?.createdAtTimestamp || 0,
-            query,
-            queryText,
-            description: queryTemplate.title,
-            user: {
-              uid: queryTemplate.user?.uid || '',
-              displayName: extendedUserData?.displayName || '',
-              avatarUrl: extendedUserData?.avatarUrl || '',
-            },
-          };
-        } catch (error) {
-          getAppEvents().publish({
-            type: AppEvents.alertError.name,
-            payload: [
-              t(
-                'query-library.query-template-get-error',
-                'Error attempting to get query template from the library: {{error}}',
-                { error: JSON.stringify(error) }
-              ),
-            ],
-          });
-          return { index: index.toString(), error };
-        }
-      });
-
-      const results = await Promise.allSettled(rowsPromises);
-      const rows = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
-
-      if (shouldCancel) {
-        setAllQueryTemplateRows(rows);
-        setIsRowsLoading(false);
-      }
-    };
-
-    fetchRows();
-
-    return () => {
-      shouldCancel = false;
-    };
-  }, [data]);
-
-  const queryTemplateRows = useMemo(
+  // Filtering right now is done just on the frontend until there is better backend support for this.
+  const filteredRows = useMemo(
     () =>
       searchQueryLibrary(
-        allQueryTemplateRows,
+        loadQueryMetadataResult.value || [],
         searchQuery,
         datasourceFilters.map((f) => f.value || ''),
         userFilters.map((f) => f.value || '')
       ),
-    [allQueryTemplateRows, searchQuery, datasourceFilters, userFilters]
+    [loadQueryMetadataResult.value, searchQuery, datasourceFilters, userFilters]
   );
 
   const datasourceNames = useMemo(() => {
-    return uniqBy(allQueryTemplateRows, 'datasourceName').map((row) => row.datasourceName);
-  }, [allQueryTemplateRows]);
+    return uniqBy(loadQueryMetadataResult.value, 'datasourceName').map((row) => row.datasourceName);
+  }, [loadQueryMetadataResult.value]);
 
   if (error) {
     return (
@@ -149,7 +61,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
     );
   }
 
-  if (isLoading || isRowsLoading) {
+  if (isLoading || loadUsersResult.loading || loadQueryMetadataResult.loading) {
     return <Spinner />;
   }
 
@@ -197,13 +109,14 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
           <Trans i18nKey="query-library.user-names">User name(s):</Trans>
         </InlineLabel>
         <MultiSelect
+          isLoading={loadUsersResult.loading}
           className={styles.multiSelect}
           onChange={(items, actionMeta) => {
             setUserFilters(items);
             actionMeta.action === 'select-option' && queryLibraryTrackFilterDatasource();
           }}
           value={userFilters}
-          options={userData.map((r) => {
+          options={userNames.map((r) => {
             return { value: r, label: r };
           })}
           placeholder={'Filter queries for user name(s)'}
@@ -219,9 +132,81 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
           onClick={() => setIsModalOpen(true)}
         />
       </Stack>
-      <QueryTemplatesTable queryTemplateRows={queryTemplateRows} />
+      <QueryTemplatesTable queryTemplateRows={filteredRows} queryActionButton={props.queryActionButton} />
     </>
   );
+}
+
+/**
+ * Wrap useLoadUsers with error handling.
+ * @param data
+ */
+function useLoadUsersWithError(data: QueryTemplate[] | undefined) {
+  const userUIDs = useMemo(() => data?.map((qt) => qt.user?.uid).filter((uid) => uid !== undefined), [data]);
+  const loadUsersResult = useLoadUsers(userUIDs);
+  useEffect(() => {
+    if (loadUsersResult.error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t('query-library.user-info-get-error', 'Error attempting to get user info from the library: {{error}}', {
+            error: JSON.stringify(loadUsersResult.error),
+          }),
+        ],
+      });
+    }
+  }, [loadUsersResult.error]);
+  return loadUsersResult;
+}
+
+/**
+ * Wrap useLoadQueryMetadata with error handling.
+ * @param queryTemplates
+ * @param userDataList
+ */
+function useLoadQueryMetadataWithError(
+  queryTemplates: QueryTemplate[] | undefined,
+  userDataList: UserDataQueryResponse | undefined
+) {
+  const result = useLoadQueryMetadata(queryTemplates, userDataList);
+
+  // useLoadQueryMetadata returns errors in the values so we filter and group them and later alert only one time for
+  // all the errors. This way we show data that is loaded even if some rows errored out.
+  // TODO: maybe we could show the rows with incomplete data to see exactly which ones errored out. I assume this
+  //  can happen for example when data source for saved query was deleted. Would be nice if user would still be able
+  //  to delete such row or decide what to do.
+  const [values, errors] = useMemo(() => {
+    let errors: Error[] = [];
+    let values = [];
+    if (!result.loading) {
+      for (const value of result.value!) {
+        if (value.error) {
+          errors.push(value.error);
+        } else {
+          values.push(value);
+        }
+      }
+    }
+    return [values, errors];
+  }, [result]);
+
+  useEffect(() => {
+    if (errors.length) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t('query-library.query-template-get-error', 'Error attempting to load query template metadata: {{error}}', {
+            error: JSON.stringify(errors),
+          }),
+        ],
+      });
+    }
+  }, [errors]);
+
+  return {
+    loading: result.loading,
+    value: values,
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
