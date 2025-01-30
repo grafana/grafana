@@ -23,7 +23,7 @@ COPY e2e e2e
 
 RUN apk add --no-cache make build-base python3
 
-RUN yarn install
+RUN yarn install --immutable
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
