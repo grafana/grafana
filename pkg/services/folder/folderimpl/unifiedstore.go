@@ -6,33 +6,38 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type FolderUnifiedStoreImpl struct {
-	log       log.Logger
-	k8sclient folderK8sHandler
+	log         log.Logger
+	k8sclient   folderK8sHandler
+	userService user.Service
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(k8sHandler *foldk8sHandler) *FolderUnifiedStoreImpl {
+func ProvideUnifiedStore(k8sHandler *foldk8sHandler, userService user.Service) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
-		k8sclient: k8sHandler,
-		log:       log.New("folder-store"),
+		k8sclient:   k8sHandler,
+		log:         log.New("folder-store"),
+		userService: userService,
 	}
 }
 
@@ -58,7 +63,7 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 		return nil, err
 	}
 
-	folder, _ := internalfolders.UnstructuredToLegacyFolder(*out, cmd.SignedInUser.GetOrgID())
+	folder, err := ss.UnstructuredToLegacyFolder(ctx, out)
 	if err != nil {
 		return nil, err
 	}
@@ -106,10 +111,26 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	if err != nil {
 		return nil, err
 	}
+	updated := obj.DeepCopy()
 
-	updated, err := internalfolders.LegacyUpdateCommandToUnstructured(obj, &cmd)
-	if err != nil {
-		return nil, err
+	if cmd.NewTitle != nil {
+		err = unstructured.SetNestedField(updated.Object, *cmd.NewTitle, "spec", "title")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cmd.NewDescription != nil {
+		err = unstructured.SetNestedField(updated.Object, *cmd.NewDescription, "spec", "description")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cmd.NewParentUID != nil {
+		meta, err := utils.MetaAccessor(updated)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetFolder(*cmd.NewParentUID)
 	}
 
 	out, err := client.Update(ctx, updated, v1.UpdateOptions{})
@@ -117,12 +138,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		return nil, err
 	}
 
-	folder, _ := internalfolders.UnstructuredToLegacyFolder(*out, cmd.SignedInUser.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-
-	return folder, err
+	return ss.UnstructuredToLegacyFolder(ctx, out)
 }
 
 // If WithFullpath is true it computes also the full path of a folder.
@@ -164,8 +180,8 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	} else if err != nil || out == nil {
 		return nil, dashboards.ErrFolderNotFound
 	}
-	dashFolder, _ := internalfolders.UnstructuredToLegacyFolder(*out, q.SignedInUser.GetOrgID())
-	return dashFolder, nil
+
+	return ss.UnstructuredToLegacyFolder(ctx, out)
 }
 
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -193,7 +209,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 			return nil, err
 		}
 
-		folder, _ := internalfolders.UnstructuredToLegacyFolder(*out, q.OrgID)
+		folder, err := ss.UnstructuredToLegacyFolder(ctx, out)
 		if err != nil {
 			return nil, err
 		}
@@ -232,9 +248,9 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	hits := make([]*folder.Folder, 0)
 	for _, item := range out.Items {
 		// convert item to legacy folder format
-		f, _ := internalfolders.UnstructuredToLegacyFolder(item, q.OrgID)
+		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
-			return nil, fmt.Errorf("unable covert unstructured item to legacy folder")
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 
 		// it we are at root level, skip subfolder
@@ -332,9 +348,17 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	m := map[string]*folder.Folder{}
 	for _, item := range out.Items {
 		// convert item to legacy folder format
-		f, _ := internalfolders.UnstructuredToLegacyFolder(item, q.SignedInUser.GetOrgID())
+		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
-			return nil, fmt.Errorf("unable covert unstructured item to legacy folder")
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
+		}
+		if q.WithFullpath || q.WithFullpathUIDs {
+			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
+			if err != nil {
+				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
+			}
+			// If we don't have a parent, we just return the current folder as the full path
+			f.Fullpath, f.FullpathUIDs = computeFullPath(append(parents, f))
 		}
 
 		m[f.UID] = f
@@ -392,9 +416,9 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 	nodes := map[string]*folder.Folder{}
 	for _, item := range out.Items {
 		// convert item to legacy folder format
-		f, _ := internalfolders.UnstructuredToLegacyFolder(item, orgID)
+		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
 		if f == nil {
-			return nil, fmt.Errorf("unable covert unstructured item to legacy folder")
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 
 		nodes[f.UID] = f
@@ -512,4 +536,14 @@ func (ss *FolderUnifiedStoreImpl) getK8sContext(ctx context.Context) (context.Co
 	}
 
 	return newCtx, nil, nil
+}
+
+func computeFullPath(parents []*folder.Folder) (string, string) {
+	fullpath := make([]string, len(parents))
+	fullpathUIDs := make([]string, len(parents))
+	for i, p := range parents {
+		fullpath[i] = p.Title
+		fullpathUIDs[i] = p.UID
+	}
+	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
 }

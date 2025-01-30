@@ -341,6 +341,21 @@
     },
     {
       "metadata": {
+        "name": "alertingSaveStateCompressed",
+        "resourceVersion": "1737472824047",
+        "creationTimestamp": "2025-01-17T18:17:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-21 15:20:24.047499 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the compressed protobuf-based alert state storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingSaveStatePeriodic",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-23T16:03:30Z"
@@ -1641,6 +1656,20 @@
         "description": "Enables a button to send feedback from the Grafana UI",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "fetchRulesUsingPost",
+        "resourceVersion": "1738148593383",
+        "creationTimestamp": "2025-01-29T11:03:13Z"
+      },
+      "spec": {
+        "description": "Use a POST request to list rules by passing down the namespaces user has access to",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
         "hideFromDocs": true
       }
     },
@@ -4047,6 +4076,7 @@
         "name": "zipkinBackendMigration",
         "resourceVersion": "1733846643829",
         "creationTimestamp": "2024-11-07T09:35:53Z",
+        "deletionTimestamp": "2025-01-27T11:47:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-10 16:04:03.82919 +0000 UTC"
         }
