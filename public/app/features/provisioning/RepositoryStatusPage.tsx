@@ -269,15 +269,7 @@ function ResourcesView({ repo }: RepoProps) {
 
 function JobsView({ repo }: RepoProps) {
   const name = repo.metadata?.name;
-  const query = useListJobQuery({
-    labelSelector: [
-      {
-        key: 'repository',
-        operator: '=',
-        value: name,
-      },
-    ],
-  });
+  const query = useListJobQuery({ labelSelector: `repository=${name}` });
   const items = query?.data?.items ?? [];
 
   if (query.isLoading) {

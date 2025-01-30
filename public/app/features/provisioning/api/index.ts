@@ -8,7 +8,15 @@ import { ListOptions } from '../../apiserver/types';
 
 export * from './endpoints.gen';
 
-import { generatedAPI, JobSpec, JobStatus, RepositoryList, RepositorySpec, RepositoryStatus } from './endpoints.gen';
+import {
+  generatedAPI,
+  JobSpec,
+  JobStatus,
+  ListRepositoryArg,
+  RepositoryList,
+  RepositorySpec,
+  RepositoryStatus,
+} from './endpoints.gen';
 
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -21,9 +29,11 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
   },
 });
 
-export function getListParams<T extends ListOptions>(queryArg: T) {
+type ListParams = Omit<ListRepositoryArg, 'fieldSelector' | 'labelSelector'> &
+  Pick<ListOptions, 'labelSelector' | 'fieldSelector'>;
+export function getListParams(queryArg: ListParams) {
   if (!queryArg) {
-    return undefined;
+    return {};
   }
   const { fieldSelector, labelSelector, watch, ...params } = queryArg;
   return {

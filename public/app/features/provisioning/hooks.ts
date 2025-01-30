@@ -2,8 +2,6 @@ import { useCallback } from 'react';
 
 import { useUrlParams } from 'app/core/navigation/hooks';
 
-import { ListOptions } from '../apiserver/types';
-
 import {
   Repository,
   useCreateRepositoryFilesWithPathMutation,
@@ -13,6 +11,7 @@ import {
   RepositorySpec,
   ReplaceRepositoryFilesWithPathArg,
   useReplaceRepositoryMutation,
+  ListRepositoryArg,
 } from './api';
 
 export function useCreateOrUpdateRepository(name?: string) {
@@ -42,9 +41,9 @@ export function useCreateOrUpdateRepository(name?: string) {
   const updateOrCreate = useCallback(
     (data: RepositorySpec) => {
       if (name) {
-        return update({ name, body: { metadata: { name }, spec: data } });
+        return update({ name, repository: { metadata: { name }, spec: data } });
       }
-      return create({ body: { metadata: generateRepositoryMetadata(data), spec: data } });
+      return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data } });
     },
     [create, name, update]
   );
@@ -53,7 +52,7 @@ export function useCreateOrUpdateRepository(name?: string) {
 }
 
 // Sort repositories by resourceVersion to show the last modified
-export function useRepositoryList(options: ListOptions = {}): [Repository[] | undefined, boolean] {
+export function useRepositoryList(options: ListRepositoryArg = {}): [Repository[] | undefined, boolean] {
   const query = useListRepositoryQuery(options);
 
   const sortedItems = query.data?.items?.slice().sort((a, b) => {
