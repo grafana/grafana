@@ -57,7 +57,7 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 			dsErrs = append(dsErrs, advisor.CheckReportError{
 				Severity: advisor.CheckReportErrorSeverityLow,
 				Reason:   fmt.Sprintf("Invalid UID: %s", ds.UID),
-				Action:   "Change UID",
+				Action:   "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
 			})
 		}
 
@@ -84,7 +84,9 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 			dsErrs = append(dsErrs, advisor.CheckReportError{
 				Severity: advisor.CheckReportErrorSeverityHigh,
 				Reason:   fmt.Sprintf("Health check failed: %s", ds.Name),
-				Action:   "Check datasource",
+				Action: fmt.Sprintf(
+					"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
+						" and address the issues reported.", ds.UID),
 			})
 		}
 	}

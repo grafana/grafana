@@ -43,7 +43,7 @@ func TestRun(t *testing.T) {
 				{
 					Severity: advisor.CheckReportErrorSeverityHigh,
 					Reason:   "Plugin deprecated: plugin1",
-					Action:   "Look for alternatives",
+					Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 				},
 			},
 		},
@@ -62,7 +62,7 @@ func TestRun(t *testing.T) {
 				{
 					Severity: advisor.CheckReportErrorSeverityLow,
 					Reason:   "New version available: plugin2",
-					Action:   "Update plugin",
+					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 				},
 			},
 		},
@@ -81,7 +81,7 @@ func TestRun(t *testing.T) {
 				{
 					Severity: advisor.CheckReportErrorSeverityLow,
 					Reason:   "New version available: plugin2",
-					Action:   "Update plugin",
+					Action:   "Go to the <a href='/plugins/plugin2?page=version-history'>plugin admin page</a> and upgrade to the latest version.",
 				},
 			},
 		},
