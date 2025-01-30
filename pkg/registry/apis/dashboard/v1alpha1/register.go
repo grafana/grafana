@@ -209,11 +209,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	delete(oas.Paths.Paths, root+dashboardv1alpha1.DashboardResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+"watch/"+dashboardv1alpha1.DashboardResourceInfo.GroupResource().Resource)
 
-	// The root API discovery list
-	sub := oas.Paths.Paths[root]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
 	return oas, nil
 }
 
