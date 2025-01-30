@@ -214,6 +214,7 @@ export interface Build {
 export interface Version {
   version: string;
   createdAt: string;
+  updatedAt?: string;
   isCompatible: boolean;
   grafanaDependency: string | null;
   angularDetected?: boolean;
