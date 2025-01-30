@@ -106,7 +106,12 @@ function RepositoryListPageContent({ items }: { items?: Repository[] }) {
                 </Card.Figure>
                 <Card.Heading>
                   <Stack>
-                    {item.spec?.title} <StatusBadge state={item.status?.sync?.state} name={name} />
+                    {item.spec?.title}{' '}
+                    <StatusBadge
+                      enabled={Boolean(item.spec?.sync?.enabled)}
+                      state={item.status?.sync?.state}
+                      name={name}
+                    />
                   </Stack>
                 </Card.Heading>
                 <Card.Description>

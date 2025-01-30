@@ -385,7 +385,7 @@ export function RepositoryHealth({ repo }: { repo: Repository }) {
       )}
 
       <Text element={'h2'}>Sync Status</Text>
-      <StatusBadge state={status?.sync?.state} name={name} />
+      <StatusBadge enabled={Boolean(repo.spec?.sync?.enabled)} state={status?.sync?.state} name={name} />
       <ul style={{ listStyle: 'none' }}>
         <li>
           Job ID: <b>{status?.sync.job ?? 'N/A'}</b>
