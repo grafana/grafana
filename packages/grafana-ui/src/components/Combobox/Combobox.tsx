@@ -138,7 +138,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
             label: inputValue,
             // Type casting needed to make this work when T is a number
             value: inputValue as unknown as T,
-            description: t('combobox.custom-value.create', 'Custom'),
+            description: t('combobox.custom-value.description', 'Custom'),
           };
 
           itemsToSet = items.slice(0);

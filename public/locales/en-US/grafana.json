@@ -709,7 +709,7 @@
       "title": "Clear value"
     },
     "custom-value": {
-      "create": "Custom"
+      "description": "Custom"
     },
     "options": {
       "no-found": "No options found."
