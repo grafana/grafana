@@ -99,7 +99,7 @@ These options are available in the [reporting configuration](ref:reporting-confi
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.
-You can configure how long a file should be stored before being removed by configuring the [temp_data_lifetime](ref:temp-data-lifetime) setting.
+You can configure how long a file should be stored before being removed by configuring the [`temp_data_lifetime`](ref:temp-data-lifetime) setting.
 
 These options are available in the [reporting configuration](ref:reporting-configuration) of the `ini` file for Enterprise Grafana.
 
