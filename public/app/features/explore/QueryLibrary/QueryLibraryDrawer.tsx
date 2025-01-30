@@ -1,3 +1,5 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
 
@@ -21,7 +23,7 @@ type Props = {
  * Drawer with query library feature. Handles its own state and should be included in some top level component.
  */
 export function QueryLibraryDrawer({ isOpen, activeDatasources, close, queryActionButton }: Props) {
-  const { data } = useListQueryTemplateQuery({});
+  const { data } = useListQueryTemplateQuery(isOpen ? {} : skipToken);
   const queryTemplatesCount = data?.items?.length ?? 0;
 
   // TODO: the tabbed container is here mainly for close button and some margins maybe make sense to use something
