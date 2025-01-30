@@ -89,7 +89,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-For Grafana Enterprise, using the Reporting feature has the following requirements:
+For Grafana Enterprise, the Reporting feature has the following requirements:
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP configuration documentation](ref:smtp) for more information.
 - The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.0+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
