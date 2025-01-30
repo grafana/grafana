@@ -65,13 +65,21 @@ This document provides instructions for configuring the PostgreSSQL data source 
 ## Before you begin
 
 You must have the `Organization administrator` role to configure the Postgres data source.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
 Grafana comes with a built-in PostgreSQL data source plugin, eliminating the need to install a plugin.
 
 {{< admonition type="note" >}}
 When adding a data source, the database user you specify should have only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, that could be executed. To mitigate this risk, Grafana strongly recommends creating a dedicated PostgreSQL user with restricted permissions.
 {{< /admonition >}}
+
+Example:
+
+```sql
+ CREATE USER grafanareader WITH PASSWORD 'password';
+ GRANT USAGE ON SCHEMA schema TO grafanareader;
+ GRANT SELECT ON schema.table TO grafanareader;
+ ```
 
 ## Add the PostgreSQL data source
 
@@ -90,7 +98,7 @@ You are taken to the **Settings** tab where you will configure the data source.
 Following is a list of PostgreSQL configuration options:
 
 - **Name** - Sets the name you use to refer to the data source in panels and queries. Examples: `PostgreSQL-DB-1`.
-- **Default** - Toggle to set as the default data source.
+- **Default** - Toggle to set this specific PostgreSQL data source as the default pre-selected data source in panels and visualizations.
 
 **Connection section:**
 
@@ -116,7 +124,7 @@ If you select the TLS/SSL Mode options **require**, **verify-ca** or **verify-fu
 - **TLS/SSL Client Certificate** - Specify the path to the client certificate and ensure the file is accessible to the user running the Grafana process.
 - **TLS/SSL Client Key** - Specify the path to the client key file and ensure the file is accessible to the user running the Grafana process.
 
-If you select the TLS/SSL Mode option **require** and  TLS/SSL Method certificate content the following are required:
+If you select the TLS/SSL Mode option **require** and TLS/SSL Method certificate content the following are required:
 
  - **TLS/SSL Client Certificate** - Provide the client certificate.
  - **TLS/SSL Client Key** - Provide the client key.
@@ -130,15 +138,15 @@ If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the
 **PostgreSQL Options:**
 
 - **Version** - Determines which functions are available in the query builder. The default is the current version.
-- **Min time interval** - Defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables. Grafana recommends aligning this setting with the data write frequency. For example, set it to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.
+- **Min time interval** - Defines a lower limit for the auto group by by time interval. Grafana recommends aligning this setting with the data write frequency. For example, set it to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.
 - **TimescaleDB** - A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder. For more information, refer to [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana).
 
 **Connection limits:**
 
 - **Max open** - The maximum number of open connections to the database. The default `100`.
-- **Auto (max idle)** - Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default.
--  **Max idle** - The maximum number of connections in the idle connection pool. The default `100`.
--  **Max lifetime** - The maximum amount of time in seconds a connection may be reused. The default is `14400`, or 4 hours.
+- **Auto max idle** - Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default.
+- **Max idle** - The maximum number of connections in the idle connection pool. The default `100`.
+- **Max lifetime** - The maximum amount of time in seconds a connection may be reused. The default is `14400`, or 4 hours.
 
 **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
@@ -146,35 +154,11 @@ Click **Manage private data source connect** to be taken to your PDC connection 
 
 Once you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
 
-<!-- 
-
-
-
-
-
-
-
-| Name                        | Description                                                                                                                                                                                                                                                                                                                                                                            |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                  |
-| **Default**                 | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                 |
-| **Host**                    | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.                                                                                                                                                                               |
-| **Database**                | Name of your PostgreSQL database.                                                                                                                                                                                                                                                                                                                                                      |
-| **User**                    | Database user's login/username                                                                                                                                                                                                                                                                                                                                                         |
-| **Password**                | Database user's password                                                                                                                                                                                                                                                                                                                                                               |
-| **SSL Mode**                | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.                                                                                                                                                                                               |
-| **SSL Auth Details Method** | Determines whether the SSL Auth details will be configured as a file path or file content.                                                                                                                                                                                                                                                                                             |
-| **SSL Auth Details Value**  | File path or file content of SSL root certificate, client certificate and client key                                                                                                                                                                                                                                                                                                   |
-| **Max open**                | The maximum number of open connections to the database, default `100`.                                                                                                                                                                                                                                                                                                                 |
-| **Max idle**                | The maximum number of connections in the idle connection pool, default `100`.                                                                                                                                                                                                                                                                                                          |
-| **Auto (max idle)**         | If set will set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                                                   |
-| **Max lifetime**            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                                                                                                                                                                                                                                                                             |
-| **Version**                 | Determines which functions are available in the query builder.                                                                                                                                                                                                                                                                                                                         |
-| **TimescaleDB**             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder. For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). | -->
-
 ### Min time interval
 
 The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
+
+This option can also be configured or overridden in the dashboard panel under the data source settings. 
 
 This value must be formatted as a number followed by a valid time identifier:
 
@@ -188,10 +172,6 @@ This value must be formatted as a number followed by a valid time identifier:
 | `m`        | minute      |
 | `s`        | second      |
 | `ms`       | millisecond |
-
-
-
-You can override this setting in a dashboard panel under its data source options.
 
 ## Provision the data source
 
@@ -222,38 +202,12 @@ datasources:
 ```
 
 {{% admonition type="note" %}}
-<!-- In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above. -->
 In the preceding example, the `postgresVersion` value of `10` indicates PostgreSQL version 10 or later.
 {{% /admonition %}}
 
 #### Troubleshoot provisioning issues
 
-<!-- If you encounter metric request errors or other issues:
-
-- Make sure your data source YAML file parameters exactly match the example. This includes parameter names and use of quotation marks.
-- Make sure the `database` name is not included in the `url`. -->
-
 If you encounter metric request errors or other issues:
 
 - Ensure that the parameters in your data source YAML file precisely match the example provided, including parameter names and the correct use of quotation marks.
-- Verify that the database name is not included in the URL.
-
-
-
-<!-- ### Min time interval
-
-A lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
-Recommended to be set to write frequency, for example `1m` if your data is written every minute.
-This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
-number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
-
-| Identifier | Description |
-| ---------- | ----------- |
-| `y`        | year        |
-| `M`        | month       |
-| `w`        | week        |
-| `d`        | day         |
-| `h`        | hour        |
-| `m`        | minute      |
-| `s`        | second      |
-| `ms`       | millisecond | -->
+- Verify that the database name **isn't** included in the URL.

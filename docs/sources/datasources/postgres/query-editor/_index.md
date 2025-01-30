@@ -16,11 +16,6 @@ menuTitle: PostgreSQL query editor
 title: PostgreSQL query editor
 weight: 20
 refs:
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
   variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
@@ -36,16 +31,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-  annotate-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  configure-standard-options-display-name:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
   data-source-management:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
@@ -56,6 +41,32 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
+  explore:
+    - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  query-transform-data:
+    - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+  query-editor:
+    - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
+    - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
+  alert-rules:
+    - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
+    - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
+  template-annotations-and-labels:
+    - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
+    - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
+
 ---
 
 # PostgreSQL query editor
@@ -476,7 +487,6 @@ WHERE
 | `text`    | Event description field.                                                                                              |
 | `tags`    | Optional field name to use for event tags as a comma-separated string.                                                |
 
-
 ## Alerting
 
 Use time series queries to create alerts. Table formatted queries aren't yet supported in alert rule conditions.
@@ -484,4 +494,4 @@ Use time series queries to create alerts. Table formatted queries aren't yet sup
 For more information regarding alerting refer to the following:
 
 - [Alert rules](ref:alert-rules)
-- [Template annotations and labels](ref:template-annotations-and-labels)
+- [Template annotations and labels](ref:(ref:template-annotations-and-labels)
