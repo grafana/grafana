@@ -6,30 +6,22 @@ import { RootState } from 'app/store/configureStore';
 import { parseListOptionsSelector, ScopedResourceClient } from '../../apiserver/client';
 import { ListOptions } from '../../apiserver/types';
 
-export * from './endpoints';
+export * from './endpoints.gen';
 
-import { generatedAPI, JobSpec, JobStatus, RepositoryList, RepositorySpec, RepositoryStatus } from './endpoints';
+import { generatedAPI, JobSpec, JobStatus, RepositoryList, RepositorySpec, RepositoryStatus } from './endpoints.gen';
 
 export const provisioningAPI = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob(endpoint) {
-      endpoint.query = (queryArg) => ({
-        url: `/jobs`,
-        params: getListParams(queryArg),
-      });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<JobSpec, JobStatus>('jobs');
     },
     listRepository(endpoint) {
-      endpoint.query = (queryArg) => ({
-        url: `/repositories`,
-        params: getListParams(queryArg),
-      });
       endpoint.onCacheEntryAdded = createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories');
     },
   },
 });
 
-function getListParams<T extends ListOptions>(queryArg: T | void) {
+export function getListParams<T extends ListOptions>(queryArg: T) {
   if (!queryArg) {
     return undefined;
   }
@@ -43,7 +35,7 @@ function getListParams<T extends ListOptions>(queryArg: T | void) {
 
 const emptyRepos: RepositoryList['items'] = [];
 
-const repositoriesResult = provisioningAPI.endpoints.listRepository.select();
+const repositoriesResult = provisioningAPI.endpoints.listRepository.select({});
 export const selectAllRepos = createSelector(repositoriesResult, (repos) => repos.data?.items || emptyRepos);
 export const selectFolderRepository = createSelector(
   selectAllRepos,
