@@ -162,6 +162,11 @@ func ValidateRepository(repo repository.Repository) field.ErrorList {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
 	}
 
+	if cfg.Spec.Sync.Enabled && cfg.Spec.Sync.Target == "" {
+		list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
+			"The target type is required when sync is enabled"))
+	}
+
 	// Reserved names (for now)
 	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file", "new", "create", "update", "delete"}
 	if slices.Contains(reserved, cfg.Name) {
