@@ -347,6 +347,23 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	return os.WriteFile(path, data, 0600)
 }
 
+func (r *localRepository) Write(ctx context.Context, path, ref string, data []byte, comment string) error {
+	if err := r.validateRequest(ref); err != nil {
+		return err
+	}
+
+	path, err := safepath.Join(r.path, path)
+	if err != nil {
+		return fmt.Errorf("join path: %w", err)
+	}
+
+	if strings.HasSuffix(path, "/") {
+		return os.MkdirAll(path, 0600)
+	}
+
+	return os.WriteFile(path, data, 0600)
+}
+
 func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
 	if err := r.validateRequest(ref); err != nil {
 		return err

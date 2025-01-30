@@ -2,14 +2,13 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
 
-	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// Export reads from grafana and writes to a a repository
 type Exporter interface {
 	Export(ctx context.Context,
 		repo repository.Repository,
@@ -30,7 +30,7 @@ type Exporter interface {
 }
 
 type exporter struct {
-	client     *resources.DynamicClient
+	client     *resources.DynamicClient // namespaced!
 	dashboards dynamic.ResourceInterface
 	folders    dynamic.ResourceInterface
 	repository repository.Repository
@@ -38,9 +38,11 @@ type exporter struct {
 
 func NewExporter(
 	repo repository.Repository,
-	parser *resources.Parser,
+	dynamicClient *resources.DynamicClient,
 ) (Exporter, error) {
-	dynamicClient := parser.Client()
+	if dynamicClient.GetNamespace() != repo.Config().Namespace {
+		return nil, fmt.Errorf("bad setup, exporter needs a namespaced client matching the repository")
+	}
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
 		Version:  folders.VERSION,
@@ -67,46 +69,43 @@ func (r *exporter) Export(ctx context.Context,
 	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	logger := logging.FromContext(ctx)
-	err := progress(provisioning.JobStatus{
+	status := provisioning.JobStatus{
 		State:   provisioning.JobStateWorking,
-		Message: "getting folder tree...",
-	})
+		Message: "reading folder tree...",
+	}
+	err := progress(status)
 	if err != nil {
 		return nil, err
 	}
-	var ref string
-	if r.repository.Config().Spec.Type == provisioning.GitHubRepositoryType {
-		ref = r.repository.Config().Spec.GitHub.Branch
-	}
+	ref := options.Branch // only valid for git
 	ns := r.repository.Config().GetNamespace()
 	logger = logger.With("ref", ref, "namespace", ns)
 
-	err = progress(provisioning.JobStatus{
-		State:   provisioning.JobStateWorking,
-		Message: "exporting folders...",
-	})
+	// TODO: handle pagination
+	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{Limit: 10000})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list folders: %w", err)
+	}
+	if rawFolders.GetContinue() != "" {
+		return nil, fmt.Errorf("unable to list all folders in one request: %s", rawFolders.GetContinue())
+	}
+
+	status.Message = fmt.Sprintf("exporting folders (%d)...", len(rawFolders.Items))
+	err = progress(status)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: handle pagination
-	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list folders: %w", err)
+	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders.Items)
+	if options.Folder != "" {
+		return nil, fmt.Errorf("non-root folder not yet supported")
 	}
 
-	unprovisionedFolders := make([]unstructured.Unstructured, 0, len(rawFolders.Items))
-	for _, f := range rawFolders.Items {
-		repoName := f.GetAnnotations()[apiutils.AnnoKeyRepoName]
-		if repoName == repo.Config().GetName() {
-			logger.Info("skip as folder is already in repository", "folder", f.GetName())
-			continue
-		}
-
-		unprovisionedFolders = append(unprovisionedFolders, f)
+	// first create folders
+	summary := provisioning.JobResourceSummary{
+		Group:    folders.GROUP,
+		Resource: folders.RESOURCE,
 	}
-
-	folderTree := resources.NewFolderTreeFromUnstructure(ctx, unprovisionedFolders)
 	err = folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
 		p := folder.Path + "/"
 		logger := logger.With("path", p)
@@ -114,37 +113,46 @@ func (r *exporter) Export(ctx context.Context,
 		_, err = r.repository.Read(ctx, p, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			logger.Error("failed to check if folder exists before writing", "error", err)
+			summary.Error++
 			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
 		} else if err == nil {
 			logger.Info("folder already exists")
+			summary.Noop++
 			return nil
 		}
 
-		// ErrFileNotFound
+		// Create with an empty body will make a folder (or .keep file if unsupported)
 		if err := r.repository.Create(ctx, p, ref, nil, "export of folder `"+p+"` in namespace "+ns); err != nil {
 			logger.Error("failed to write a folder in repository", "error", err)
+			summary.Error++
 			return fmt.Errorf("failed to write folder in repo: %w", err)
 		}
+		summary.Create++
 		logger.Debug("successfully exported folder")
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to write folders: %w", err)
 	}
+	status.Summary = append(status.Summary, summary)
+	status.Message = "writing dashboards..."
 
-	err = progress(provisioning.JobStatus{
-		State:   provisioning.JobStateWorking,
-		Message: "writing dashboards...",
-	})
+	err = progress(status)
 	if err != nil {
 		return nil, err
 	}
+
 	// TODO: handle pagination
 	dashboardList, err := r.dashboards.List(ctx, metav1.ListOptions{Limit: 1000})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list dashboards: %w", err)
 	}
 
+	commitMessage := fmt.Sprintf("grafana export to: %s", repo.Config().Name)
+	summary = provisioning.JobResourceSummary{
+		Group:    "dashboard.grafana.app",
+		Resource: "dashboards",
+	}
 	for _, item := range dashboardList.Items {
 		if ctx.Err() != nil {
 			logger.Debug("cancelling replication process due to ctx error", "error", err)
@@ -152,22 +160,7 @@ func (r *exporter) Export(ctx context.Context,
 		}
 
 		name := item.GetName()
-		logger := logger.With("item", name)
-		ns := r.repository.Config().GetNamespace()
-		if item.GetNamespace() != ns {
-			// This case shouldn't happen
-			logger.Error("skipping dashboard item due to mismatching namespace", "got", ns)
-			continue
-		}
-
-		repoName := item.GetAnnotations()[apiutils.AnnoKeyRepoName]
-		if repoName == repo.Config().GetName() {
-			logger.Info("skip as dashboard is already in repository", "name", name)
-			continue
-		}
-
 		folder := item.GetAnnotations()[apiutils.AnnoKeyFolder]
-		logger = logger.With("folder", folder)
 
 		// Get the absolute path of the folder
 		fid, ok := folderTree.DirPath(folder, "")
@@ -177,30 +170,30 @@ func (r *exporter) Export(ctx context.Context,
 		}
 
 		delete(item.Object, "metadata")
-		marshalledBody, err := yaml.Marshal(item.Object)
+		if options.Identifier {
+			item.SetName(name) // keep the identifier in the metadata
+		}
+
+		body, err := json.MarshalIndent(item.Object, "", "  ")
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal dashboard %s: %w", name, err)
 		}
-		fileName := path.Join(fid.Path, name+".yaml")
-		logger = logger.With("file", fileName)
+		fileName := path.Join(fid.Path, name+".json")
 
-		_, err = r.repository.Read(ctx, fileName, ref)
-		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.Error("failed to check if file exists before writing", "error", err)
-			return nil, fmt.Errorf("failed to check if file exists before writing: %w", err)
-		} else if err != nil { // ErrFileNotFound
-			err = r.repository.Create(ctx, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
-		} else {
-			err = r.repository.Update(ctx, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
-		}
+		// Write the file
+		err = r.repository.Write(ctx, fileName, ref, body, commitMessage)
 		if err != nil {
+			summary.Error++
 			logger.Error("failed to write a file in repository", "error", err)
-			return nil, fmt.Errorf("failed to write file in repo: %w", err)
+			if len(summary.Errors) < 20 {
+				summary.Errors = append(summary.Errors, fmt.Sprintf("error writing: %s", fileName))
+			}
+		} else {
+			summary.Write++
 		}
-		logger.Debug("successfully exported item")
 	}
-
-	return &provisioning.JobStatus{
-		State: provisioning.JobStateSuccess,
-	}, nil
+	status.Summary = append(status.Summary, summary)
+	status.State = provisioning.JobStateSuccess
+	status.Message = ""
+	return &status, nil
 }

@@ -285,6 +285,17 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 	return nil
 }
 
+func (r *githubRepository) Write(ctx context.Context, path, ref string, data []byte, comment string) error {
+	_, err := r.Read(ctx, path, ref)
+	if err != nil && !(errors.Is(err, ErrFileNotFound) || apierrors.IsNotFound(err)) {
+		return fmt.Errorf("failed to check if file exists before writing: %w", err)
+	}
+	if err == nil {
+		return r.Update(ctx, path, ref, data, comment)
+	}
+	return r.Create(ctx, path, ref, data, comment)
+}
+
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch

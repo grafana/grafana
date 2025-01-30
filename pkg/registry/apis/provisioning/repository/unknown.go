@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -39,7 +41,7 @@ func (r *unknownRepository) Validate() (fields field.ErrorList) {
 
 // Test implements provisioning.Repository.
 func (r *unknownRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	return nil, &errors.StatusError{
+	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -49,7 +51,7 @@ func (r *unknownRepository) Test(ctx context.Context) (*provisioning.TestResults
 
 // ReadResource implements provisioning.Repository.
 func (r *unknownRepository) Read(ctx context.Context, path, ref string) (*FileInfo, error) {
-	return nil, &errors.StatusError{
+	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -58,7 +60,7 @@ func (r *unknownRepository) Read(ctx context.Context, path, ref string) (*FileIn
 }
 
 func (r *unknownRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
-	return nil, &errors.StatusError{
+	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read file tree resource is not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -67,7 +69,7 @@ func (r *unknownRepository) ReadTree(ctx context.Context, ref string) ([]FileTre
 }
 
 func (r *unknownRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
-	return &errors.StatusError{
+	return &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -76,7 +78,7 @@ func (r *unknownRepository) Create(ctx context.Context, path, ref string, data [
 }
 
 func (r *unknownRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
-	return &errors.StatusError{
+	return &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -84,8 +86,19 @@ func (r *unknownRepository) Update(ctx context.Context, path, ref string, data [
 	}
 }
 
+func (r *unknownRepository) Write(ctx context.Context, path, ref string, data []byte, comment string) error {
+	_, err := r.Read(ctx, path, ref)
+	if err != nil && !(errors.Is(err, ErrFileNotFound) || apierrors.IsNotFound(err)) {
+		return fmt.Errorf("failed to check if file exists before writing: %w", err)
+	}
+	if err == nil {
+		return r.Update(ctx, path, ref, data, comment)
+	}
+	return r.Create(ctx, path, ref, data, comment)
+}
+
 func (r *unknownRepository) Delete(ctx context.Context, path, ref, comment string) error {
-	return &errors.StatusError{
+	return &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "delete file not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -94,7 +107,7 @@ func (r *unknownRepository) Delete(ctx context.Context, path, ref, comment strin
 }
 
 func (r *unknownRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
-	return nil, &errors.StatusError{
+	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "history is not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -104,7 +117,7 @@ func (r *unknownRepository) History(ctx context.Context, path, ref string) ([]pr
 
 // Webhook implements Repository.
 func (r *unknownRepository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	return nil, &errors.StatusError{
+	return nil, &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Code:    http.StatusNotImplemented,
 			Message: "webhook not implemented",

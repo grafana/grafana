@@ -90,6 +90,17 @@ type SyncJobOptions struct {
 	Complete bool `json:"complete,omitempty"`
 }
 
+// +enum
+type ExportJobLayout string
+
+const (
+	// Export files into a nested structure matching title slugs
+	ExportJobLayoutNested ExportJobLayout = "nested"
+
+	// Export everything into the target directory
+	ExportJobLayoutFlat ExportJobLayout = "flat"
+)
+
 type ExportJobOptions struct {
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
@@ -97,11 +108,17 @@ type ExportJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
 
-	// Target branch for export
+	// Target branch for export (only git)
 	Branch string `json:"branch,omitempty"`
 
-	// File prefix
+	// Target file prefix
 	Prefix string `json:"prefix,omitempty"`
+
+	// The export layout (nested|flat)
+	Layout ExportJobLayout `json:"layout"`
+
+	// Include the identifier in the exported metadata
+	Identifier bool `json:"identifier"`
 }
 
 // The job status
@@ -137,6 +154,8 @@ type JobResourceSummary struct {
 	Create int64 `json:"create,omitempty"`
 	Update int64 `json:"update,omitempty"`
 	Delete int64 `json:"delete,omitempty"`
+	Write  int64 `json:"write,omitempty"` // Create or update (export)
+	Error  int64 `json:"error,omitempty"` // The error count
 
 	// No action required (useful for sync)
 	Noop int64 `json:"noop,omitempty"`

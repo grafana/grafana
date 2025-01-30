@@ -92,6 +92,10 @@ type Repository interface {
 	// The data has already been validated and is ready for save
 	Update(ctx context.Context, path, ref string, data []byte, message string) error
 
+	// Write a file to the repository.
+	// Functionally the same as Read then Create or Update, but more efficient depending on the backend
+	Write(ctx context.Context, path, ref string, data []byte, message string) error
+
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
 
