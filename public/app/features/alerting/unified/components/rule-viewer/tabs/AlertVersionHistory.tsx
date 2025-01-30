@@ -127,7 +127,10 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         )} */}
       </Stack>
       {showDrawer && oldVersion && newVersion && (
-        <Drawer onClose={() => setShowDrawer(false)} title={`Comparing versions`}>
+        <Drawer
+          onClose={() => setShowDrawer(false)}
+          title={t('alerting.alertVersionHistory.comparing-versions', 'Comparing versions')}
+        >
           <VersionHistoryComparison
             oldInfo={{
               created: oldVersion.grafana_alert.updated || 'unknown',
@@ -145,7 +148,9 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
           <Box paddingTop={2}>
             <Stack justifyContent="flex-end">
               <Button variant="destructive" onClick={() => {}}>
-                Reset to version {oldVersion.grafana_alert.version}
+                <Trans i18nKey="alerting.alertVersionHistory.reset">
+                  Reset to version {oldVersion.grafana_alert.version}
+                </Trans>
               </Button>
             </Stack>
           </Box>

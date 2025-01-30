@@ -193,6 +193,21 @@
         "recording": "Add labels to your rule."
       }
     },
+    "alertVersionHistory": {
+      "compareVersions": "Compare versions",
+      "comparing-versions": "Comparing versions",
+      "description": "Each time you edit the alert rule a new version is created. You can restore an older version. Select two versions below and compare their differences.",
+      "errorloading": "Failed to load alert rule history",
+      "latest": "Latest",
+      "noVersionsFound": "No versions found for this rule",
+      "reset": "Reset to version {oldVersion.grafana_alert.version}",
+      "restore": "Restore",
+      "restore-modal": {
+        "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
+        "summary": "Summary of changes to be applied:",
+        "title": "Restore Version"
+      }
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
