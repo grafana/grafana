@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -22,7 +21,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -42,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/blob"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 const repoControllerWorkers = 1
@@ -378,73 +375,6 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 
 func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return provisioning.GetOpenAPIDefinitions
-}
-
-func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-
-	statsResult := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats"].Schema
-
-	return &builder.APIRoutes{
-		Namespace: []builder.APIRouteHandler{
-			{
-				Path: "stats",
-				Spec: &spec3.PathProps{
-					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							OperationId: "getResourceStats", // used for RTK client
-							Tags:        []string{"Repository"},
-							Description: "Get resource stats for this namespace",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &statsResult,
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					u, ok := authlib.AuthInfoFrom(r.Context())
-					if !ok {
-						w.WriteHeader(400)
-						_, _ = w.Write([]byte("expected user"))
-						return
-					}
-					stats, err := b.lister.Stats(r.Context(), u.GetNamespace(), "")
-					if err != nil {
-						errhttp.Write(r.Context(), err, w)
-						return
-					}
-					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(stats)
-				},
-			},
-		},
-	}
 }
 
 func (b *ProvisioningAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
