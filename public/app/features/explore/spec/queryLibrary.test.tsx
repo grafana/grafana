@@ -16,7 +16,6 @@ import {
   openQueryHistory,
   openQueryLibrary,
   submitAddToQueryLibrary,
-  switchToQueryHistory,
 } from './helper/interactions';
 import { setupExplore, waitForExplore } from './helper/setup';
 
@@ -115,8 +114,7 @@ describe('QueryLibrary', () => {
   it('Shows add to query library button only when the toggle is enabled', async () => {
     setupQueryLibrary();
     await waitForExplore();
-    await openQueryLibrary();
-    await switchToQueryHistory();
+    await openQueryHistory();
     await assertQueryHistory(['{"expr":"TEST"}']);
     await assertAddToQueryLibraryButtonExists(true);
   });
@@ -134,8 +132,7 @@ describe('QueryLibrary', () => {
   it('Shows a notification when a template is added and hides the add button', async () => {
     setupQueryLibrary();
     await waitForExplore();
-    await openQueryLibrary();
-    await switchToQueryHistory();
+    await openQueryHistory();
     await assertQueryHistory(['{"expr":"TEST"}']);
     await addQueryHistoryToQueryLibrary();
     await submitAddToQueryLibrary({ description: 'Test' });
