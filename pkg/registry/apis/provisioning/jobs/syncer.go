@@ -66,6 +66,21 @@ func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
 	lastCommit := cfg.Status.Sync.Hash
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
+	// Ensure the configured folder exists and it's managed by the repository
+	rootFolder := resources.RootFolder(cfg)
+	if rootFolder != "" {
+		folder := resources.Folder{
+			Path:  "",
+			ID:    rootFolder,
+			Title: cfg.Spec.Title,
+		}
+
+		// If the folder already exists, the parent won't be changed
+		if err := r.ensureFolderExists(ctx, folder, ""); err != nil {
+			return "", fmt.Errorf("ensure repository folder exists: %w", err)
+		}
+	}
+
 	logger := logging.FromContext(ctx)
 
 	if !isVersioned {

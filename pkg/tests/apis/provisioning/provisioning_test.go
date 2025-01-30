@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"os"
 	"path"
@@ -159,7 +158,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		}
 
 		js, _ := json.MarshalIndent(found, "", "  ")
-		fmt.Printf("%s\n", string(js))
+		// fmt.Printf("%s\n", string(js))
 		require.JSONEq(t, `{
 			"github-example": {
 				"description": "load resources from github",
