@@ -37,7 +37,6 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       owner: '',
       repository: '',
       branch: '',
-      linting: false,
       branchWorkflow: false,
       editing: {
         create: false,
