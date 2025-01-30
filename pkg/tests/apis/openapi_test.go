@@ -1,21 +1,15 @@
 package apis
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
-	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/version"
 	apimachineryversion "k8s.io/apimachinery/pkg/version"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -36,6 +30,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagKubernetesFoldersServiceV2, // Will be default on by G12
 			featuremgmt.FlagQueryService,               // Query Library
+			featuremgmt.FlagProvisioning,
 		},
 	})
 
@@ -76,51 +71,4 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)
 	}
-}
-
-// This function should be moved to oss (it is now a duplicate)
-func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
-	if gv.Group == "" {
-		return // skip invalid groups
-	}
-	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
-	t.Run(path, func(t *testing.T) {
-		rsp := DoRequest(h, RequestParams{
-			Method: http.MethodGet,
-			Path:   path,
-			User:   h.Org1.Admin,
-		}, &AnyResource{})
-
-		require.NotNil(t, rsp.Response)
-		require.Equal(t, 200, rsp.Response.StatusCode, path)
-
-		var prettyJSON bytes.Buffer
-		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
-		require.NoError(t, err)
-		pretty := prettyJSON.String()
-
-		write := false
-		fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
-
-		// nolint:gosec
-		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
-		body, err := os.ReadFile(fpath)
-		if err == nil {
-			if !assert.JSONEq(t, string(body), pretty) {
-				t.Logf("openapi spec has changed: %s", path)
-				t.Fail()
-				write = true
-			}
-		} else {
-			t.Errorf("missing openapi spec for: %s", path)
-			write = true
-		}
-
-		if write {
-			e2 := os.WriteFile(fpath, []byte(pretty), 0644)
-			if e2 != nil {
-				t.Errorf("error writing file: %s", e2.Error())
-			}
-		}
-	})
 }
