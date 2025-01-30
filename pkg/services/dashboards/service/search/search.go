@@ -19,6 +19,21 @@ var (
 		resource.SEARCH_FIELD_FOLDER:  "",
 		resource.SEARCH_FIELD_TAGS:    "",
 	}
+
+	IncludeFields = []string{
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_TAGS,
+		resource.SEARCH_FIELD_LABELS,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_CREATED,
+		resource.SEARCH_FIELD_CREATED_BY,
+		resource.SEARCH_FIELD_UPDATED,
+		resource.SEARCH_FIELD_UPDATED_BY,
+		resource.SEARCH_FIELD_REPOSITORY_NAME,
+		resource.SEARCH_FIELD_REPOSITORY_PATH,
+		resource.SEARCH_FIELD_REPOSITORY_HASH,
+		resource.SEARCH_FIELD_REPOSITORY_TIME,
+	}
 )
 
 func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alpha1.SearchResults, error) {
