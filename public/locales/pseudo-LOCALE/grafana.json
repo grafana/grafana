@@ -709,7 +709,7 @@
       "title": "Cľęäř väľūę"
     },
     "custom-value": {
-      "label": "Cūşŧőm väľūę: "
+      "create": "Cūşŧőm"
     },
     "options": {
       "no-found": "Ńő őpŧįőŉş ƒőūŉđ."
@@ -2073,7 +2073,7 @@
       "title-filtered": "Åľľ (ƒįľŧęřęđ)"
     },
     "custom-value": {
-      "description": "Cūşŧőm väľūę"
+      "description": "Cūşŧőm"
     }
   },
   "nav": {

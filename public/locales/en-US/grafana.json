@@ -709,7 +709,7 @@
       "title": "Clear value"
     },
     "custom-value": {
-      "label": "Custom value: "
+      "create": "Custom"
     },
     "options": {
       "no-found": "No options found."
@@ -2073,7 +2073,7 @@
       "title-filtered": "All (filtered)"
     },
     "custom-value": {
-      "description": "Custom value"
+      "description": "Custom"
     }
   },
   "nav": {
