@@ -57,10 +57,10 @@ export const LogList = ({
 
   useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
-      handleScrollToEvent(e, processedLogs.length, listRef.current)
+      handleScrollToEvent(e, logs.length, listRef.current)
     );
     return () => subscription.unsubscribe();
-  }, [eventBus, processedLogs.length]);
+  }, [eventBus, logs.length]);
 
   useEffect(() => {
     setProcessedLogs(preProcessLogs(logs, { wrap: wrapLogMessage, escape: forceEscape, order: sortOrder, timeZone }));
