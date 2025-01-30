@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -63,13 +64,64 @@ func (u *Unstructured) DeepCopy() *Unstructured {
 	}
 	out := new(Unstructured)
 	*out = *u
-	out.Object = runtime.DeepCopyJSON(u.Object)
+	out.Object = deepCopyJSONValue(u.Object).(map[string]interface{})
 	return out
 }
 
 func (u *Unstructured) DeepCopyInto(out *Unstructured) {
 	clone := u.DeepCopy()
 	*out = *clone
+}
+
+// Copied from:
+//
+//	runtime.DeepCopyJSON(u.Object)
+//
+// BUT this avoids panic on int
+func deepCopyJSONValue(x interface{}) interface{} {
+	switch x := x.(type) {
+	case map[string]interface{}:
+		if x == nil {
+			// Typed nil - an interface{} that contains a type map[string]interface{} with a value of nil
+			return x
+		}
+		clone := make(map[string]interface{}, len(x))
+		for k, v := range x {
+			clone[k] = deepCopyJSONValue(v)
+		}
+		return clone
+	case []interface{}:
+		if x == nil {
+			// Typed nil - an interface{} that contains a type []interface{} with a value of nil
+			return x
+		}
+		clone := make([]interface{}, len(x))
+		for i, v := range x {
+			clone[i] = deepCopyJSONValue(v)
+		}
+		return clone
+	case string, int64, bool, float64, nil, json.Number:
+		return x
+
+	// Keep more numbers
+	case int, int8, int16, int32, float32, uint, uint16, uint32, uint64, uint8:
+		return x
+
+	case runtime.Object:
+		return x.DeepCopyObject()
+
+	default:
+		raw, err := json.Marshal(x)
+		if err != nil {
+			panic(fmt.Errorf("cannot deep copy %T %w", x, err))
+		}
+		obj := map[string]interface{}{}
+		err = json.Unmarshal(raw, &obj)
+		if err != nil {
+			panic(fmt.Errorf("cannot deep copy %T %w", x, err))
+		}
+		return obj
+	}
 }
 
 func (u *Unstructured) Set(field string, value interface{}) {
