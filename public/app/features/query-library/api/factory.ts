@@ -8,5 +8,6 @@ export const QUERY_LIBRARY_GET_LIMIT = 1000;
 
 export const queryLibraryApi = createApi({
   baseQuery,
+  reducerPath: 'queryLibraryAPI',
   endpoints: () => ({}),
 });

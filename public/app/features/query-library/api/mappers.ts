@@ -4,7 +4,8 @@ import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { ListQueryTemplateApiResponse, QueryTemplate as QT } from './endpoints.gen';
 import { API_VERSION, QueryTemplateKinds } from './query';
-import { CREATED_BY_KEY } from './types';
+
+export const CREATED_BY_KEY = 'grafana.app/createdBy';
 
 export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTemplateApiResponse): QueryTemplate[] => {
   if (!result.items) {

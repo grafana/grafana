@@ -1,7 +1,7 @@
 import { render, waitFor, screen } from '@testing-library/react';
 
 import { ListQueryTemplateApiResponse } from '../../query-library/api/endpoints.gen';
-import { CREATED_BY_KEY } from '../../query-library/api/types';
+import { CREATED_BY_KEY } from '../../query-library/api/mappers';
 
 import { QueryTemplatesList } from './QueryTemplatesList';
 import { QueryActionButtonProps } from './types';
