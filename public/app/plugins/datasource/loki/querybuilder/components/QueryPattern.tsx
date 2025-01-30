@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { RawQuery } from '@grafana/experimental';
+import { RawQuery } from '@grafana/plugin-ui';
 import { Button, Card, useStyles2 } from '@grafana/ui';
 
 import logqlGrammar from '../../syntax';

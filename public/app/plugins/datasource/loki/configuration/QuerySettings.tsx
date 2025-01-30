@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Badge, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
