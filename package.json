@@ -269,7 +269,7 @@
     "@grafana/lezer-logql": "0.2.7",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "0.9.6",
+    "@grafana/plugin-ui": "0.10.1",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",

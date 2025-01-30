@@ -2707,7 +2707,7 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -2751,7 +2751,7 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -2863,7 +2863,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -2904,7 +2904,7 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -2935,7 +2935,7 @@ __metadata:
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/sql": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -2999,7 +2999,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/plugin-configs": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -3105,7 +3105,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "workspace:*"
     "@grafana/ui": "workspace:*"
     "@testing-library/dom": "npm:10.4.0"
@@ -3497,7 +3497,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -3561,7 +3561,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.9.6, @grafana/plugin-ui@npm:^0.9.3":
+"@grafana/plugin-ui@npm:0.10.1":
+  version: 0.10.1
+  resolution: "@grafana/plugin-ui@npm:0.10.1"
+  dependencies:
+    "@emotion/css": "npm:^11.11.2"
+    "@hello-pangea/dnd": "npm:^17.0.0"
+    "@types/prismjs": "npm:^1.26.4"
+    lodash: "npm:^4.17.21"
+    prismjs: "npm:^1.29.0"
+    react-awesome-query-builder: "npm:^5.3.1"
+    react-calendar: "npm:^4.8.0"
+    react-popper-tooltip: "npm:^4.4.2"
+    react-use: "npm:^17.3.1"
+    react-virtualized-auto-sizer: "npm:^1.0.6"
+    sql-formatter-plus: "npm:^1.3.6"
+    uuid: "npm:^11.0.0"
+  peerDependencies:
+    "@grafana/data": ^10.4.0 || ^11.0.0
+    "@grafana/e2e-selectors": ^10.4.0 || ^11.0.0
+    "@grafana/runtime": ^10.4.0 || ^11.0.0
+    "@grafana/ui": ^10.4.0 || ^11.0.0
+    react: ^18.2.0
+    react-dom: ^18.2.0
+    rxjs: ^7.8.1
+  checksum: 10/9b152c751b90ab414366d1f0ad6687862fcc1d72e4ecaab99f84d7a020ecbb31ce06267f621aaee70944037c3c3f01d9ff63040cd3964a6d957b9aab4ba114f4
+  languageName: node
+  linkType: hard
+
+"@grafana/plugin-ui@npm:^0.9.3":
   version: 0.9.6
   resolution: "@grafana/plugin-ui@npm:0.9.6"
   dependencies:
@@ -3602,7 +3630,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
     "@grafana/faro-web-sdk": "npm:1.12.3"
     "@grafana/llm": "npm:0.12.0"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/schema": "npm:11.5.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -3875,7 +3903,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:11.5.0-pre"
     "@grafana/e2e-selectors": "npm:11.5.0-pre"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/runtime": "npm:11.5.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:11.5.0-pre"
@@ -9867,7 +9895,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:1.26.5":
+"@types/prismjs@npm:1.26.5, @types/prismjs@npm:^1.26.4":
   version: 1.26.5
   resolution: "@types/prismjs@npm:1.26.5"
   checksum: 10/617099479db9550119d0f84272dc79d64b2cf3e0d7a17167fe740d55fdf0f155697d935409464392d164e62080c2c88d649cf4bc4fdd30a87127337536657277
@@ -17790,7 +17818,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:1.17.0"
-    "@grafana/plugin-ui": "npm:0.9.6"
+    "@grafana/plugin-ui": "npm:0.10.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
@@ -25712,6 +25740,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-calendar@npm:^4.8.0":
+  version: 4.8.0
+  resolution: "react-calendar@npm:4.8.0"
+  dependencies:
+    "@wojtekmaj/date-utils": "npm:^1.1.3"
+    clsx: "npm:^2.0.0"
+    get-user-locale: "npm:^2.2.1"
+    prop-types: "npm:^15.6.0"
+    warning: "npm:^4.0.0"
+  peerDependencies:
+    "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10/26a58d9bbe9b1bbe1201612628d0f6bdeec0355ed3730013d066b9e87adbbee4b6f3f1c83352978c0e2f317d8d32ac31ac2cbb3c6f83833bef0ba047c5bb6907
+  languageName: node
+  linkType: hard
+
 "react-calendar@npm:^5.1.0":
   version: 5.1.0
   resolution: "react-calendar@npm:5.1.0"
@@ -26566,7 +26614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.6.0, react-use@npm:^17.4.0, react-use@npm:^17.4.2, react-use@npm:^17.5.0":
+"react-use@npm:17.6.0, react-use@npm:^17.3.1, react-use@npm:^17.4.0, react-use@npm:^17.4.2, react-use@npm:^17.5.0":
   version: 17.6.0
   resolution: "react-use@npm:17.6.0"
   dependencies:
@@ -30792,7 +30840,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.0.5, uuid@npm:^11.0.2":
+"uuid@npm:11.0.5, uuid@npm:^11.0.0, uuid@npm:^11.0.2":
   version: 11.0.5
   resolution: "uuid@npm:11.0.5"
   bin:
