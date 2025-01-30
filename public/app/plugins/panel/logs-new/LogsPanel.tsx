@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, DataFrame, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, DataFrame, GrafanaTheme2, LoadingState, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
@@ -35,13 +35,15 @@ export const LogsPanel = ({
 
   const logs = useMemo(() => {
     const logsModel = panelData
-      ? dataFrameToLogsModel(panelData.series, data.request?.intervalMs, undefined, data.request?.targets)
+      ? dataFrameToLogsModel(panelData.series, panelData.request?.intervalMs, undefined, panelData.request?.targets)
       : null;
     return logsModel ? dedupLogRows(logsModel.rows, dedupStrategy) : [];
-  }, [data.request?.intervalMs, data.request?.targets, dedupStrategy, panelData]);
+  }, [dedupStrategy, panelData]);
 
   useEffect(() => {
-    setPanelData(data);
+    if (data.state !== LoadingState.Loading) {
+      setPanelData(data);
+    }
   }, [data]);
 
   const loadMoreLogs = useCallback(

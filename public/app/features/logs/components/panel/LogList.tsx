@@ -104,8 +104,6 @@ export const LogList = ({
 
   return (
     <InfiniteScroll
-      app={app}
-      eventBus={eventBus}
       handleOverflow={handleOverflow}
       scrollElement={scrollRef.current}
       logs={processedLogs}

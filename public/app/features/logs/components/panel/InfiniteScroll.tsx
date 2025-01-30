@@ -56,13 +56,11 @@ export const InfiniteScroll = ({
     if (!prevLogs || prevLogs === logs) {
       return;
     }
-
     // New logs are from infinite scrolling
     if (infiniteLoaderState === 'loading') {
       // out-of-bounds if no new logs returned
       setInfiniteLoaderState(logs.length === prevLogs.length ? 'out-of-bounds' : 'idle');
     }
-    console.log('really logs were updated');
   }, [infiniteLoaderState, logs, prevLogs]);
 
   useEffect(() => {
