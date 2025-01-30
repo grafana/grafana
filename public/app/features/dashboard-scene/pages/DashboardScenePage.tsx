@@ -38,17 +38,17 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   console.log('DashboardScenePage');
 
-  const updateLocation = debounce((query) => locationService.partial(query), 300);
+  // const updateLocation = debounce((query) => locationService.partial(query), 300);
 
   const handleFrameTasks = useCallback(({ data }: any) => {
     console.log('event.data:', data);
 
     if (isObjectLike(data) && !!data?.['var-resample']) {
       console.log('sent!');
-      console.log(store);
       const urlParams = locationService.getSearchObject();
-      console.log({ urlParams });
-      dispatch(updateLocation({ query: data }));
+      console.log({ ...urlParams, ...data });
+      locationService.partial({ ...urlParams, ...data });
+      // updateLocation(urlParams);
     }
   }, []);
 
