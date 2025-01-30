@@ -64,7 +64,7 @@ export default function RepositoryStatusPage() {
   const data = query.data?.items?.[0];
   const location = useLocation();
   const [queryParams] = useQueryParams();
-  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Resources;
+  const tab = queryParams['tab'] ?? TabSelection.Resources;
 
   const notFound = query.isError && isNotFoundError(query.error);
   return (
@@ -269,15 +269,7 @@ function ResourcesView({ repo }: RepoProps) {
 
 function JobsView({ repo }: RepoProps) {
   const name = repo.metadata?.name;
-  const query = useListJobQuery({
-    labelSelector: [
-      {
-        key: 'repository',
-        operator: '=',
-        value: name,
-      },
-    ],
-  });
+  const query = useListJobQuery({ labelSelector: `repository=${name}` });
   const items = query?.data?.items ?? [];
 
   if (query.isLoading) {

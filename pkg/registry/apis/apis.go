@@ -37,7 +37,7 @@ func ProvideRegistryServiceSink(
 	_ *query.QueryAPIBuilder,
 	_ *notifications.NotificationsAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
-	_ *provisioning.ProvisioningAPIBuilder,
+	_ *provisioning.APIBuilder,
 ) *Service {
 	return &Service{}
 }

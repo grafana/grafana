@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function SyncRepository({ repository }: Props) {
-  const query = useListRepositoryQuery();
+  const query = useListRepositoryQuery({});
   const [syncResource, syncQuery] = useCreateRepositorySyncMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
