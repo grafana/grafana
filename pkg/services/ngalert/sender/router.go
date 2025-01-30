@@ -93,6 +93,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	d.adminConfigMtx.Lock()
+	defer d.adminConfigMtx.Unlock()
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := d.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
@@ -190,7 +191,6 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 			delete(d.externalAlertmanagersCfgHash, orgID)
 		}
 	}
-	d.adminConfigMtx.Unlock()
 
 	// We can now stop these external Alertmanagers w/o having to hold a lock.
 	for orgID, s := range sendersToStop {
