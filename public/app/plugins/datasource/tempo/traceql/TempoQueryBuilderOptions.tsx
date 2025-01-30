@@ -7,7 +7,7 @@ import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
-import { SearchTableType } from '../dataquery.gen';
+import { SearchTableType, MetricsQueryType } from '../dataquery.gen';
 import { DEFAULT_LIMIT, DEFAULT_SPSS } from '../datasource';
 import { TempoQuery } from '../types';
 
@@ -43,6 +43,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, se
     query.tableType = SearchTableType.Traces;
   }
 
+  if (!query.hasOwnProperty('metricsQueryType')) {
+    query.metricsQueryType = MetricsQueryType.Range;
+  }
+
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, limit: parseIntWithFallback(e.currentTarget.value, DEFAULT_LIMIT) });
   };
@@ -51,6 +55,9 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, se
   };
   const onTableTypeChange = (val: SearchTableType) => {
     onChange({ ...query, tableType: val });
+  };
+  const onMetricsQueryTypeChange = (val: MetricsQueryType) => {
+    onChange({ ...query, metricsQueryType: val });
   };
   const onStepChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, step: e.currentTarget.value });
@@ -77,6 +84,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, se
 
   const collapsedMetricsOptions = [
     `Step: ${query.step || 'auto'}`,
+    `Type: ${query.metricsQueryType === MetricsQueryType.Range ? 'Range' : 'Instant'}`,
     `Streaming: ${metricsStreaming ? 'Enabled' : 'Disabled'}`,
     // `Exemplars: ${query.exemplars !== undefined ? query.exemplars : 'auto'}`,
   ];
@@ -144,6 +152,16 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query, se
               defaultValue={query.step}
               onCommitChange={onStepChange}
               value={query.step}
+            />
+          </EditorField>
+          <EditorField label="Type" tooltip="Type of metrics query to run">
+            <RadioButtonGroup
+              options={[
+                { label: 'Range', value: MetricsQueryType.Range },
+                { label: 'Instant', value: MetricsQueryType.Instant },
+              ]}
+              value={query.metricsQueryType}
+              onChange={onMetricsQueryTypeChange}
             />
           </EditorField>
 
