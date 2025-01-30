@@ -16,46 +16,31 @@ menuTitle: PostgreSQL
 title: PostgreSQL data source
 weight: 1200
 refs:
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
-  variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  add-template-variables-interval-ms:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms
-  add-template-variables-interval:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
   annotate-visualizations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-  configure-standard-options-display-name:
+  configure-postgres-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name
-  data-source-management:
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/configure/
+  postgres-query-editor:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-  variable-syntax-advanced-variable-format-options:
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/
+  alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
+     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options
+     destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  transformations:
+    - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/  
 ---
 
 # PostgreSQL data source
