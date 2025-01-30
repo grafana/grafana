@@ -254,4 +254,6 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   datasourceConnectionsTab?: boolean;
   fetchRulesUsingPost?: boolean;
+  alertingAlertmanagerExtraDedupStage?: boolean;
+  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
 }
