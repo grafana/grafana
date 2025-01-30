@@ -1,10 +1,18 @@
 #!/bin/sh
+# shellcheck disable=SC2034
+#
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs.
 # # `make-docs` procedure changelog
 #
 # Updates should conform to the guidelines in https://keepachangelog.com/en/1.1.0/.
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
+#
+# ## 8.4.0 (2025-01-27)
+#
+# ### Fixed
+#
+# - Correct mount for the /docs/grafana-cloud/send-data/fleet-management/ project.
 #
 # ## 8.3.0 (2024-12-27)
 #
@@ -304,6 +312,7 @@ PODMAN="$(if command -v podman >/dev/null 2>&1; then echo podman; else echo dock
 
 if ! command -v curl >/dev/null 2>&1; then
   if ! command -v wget >/dev/null 2>&1; then
+    # shellcheck disable=SC2016
     errr 'either `curl` or `wget` must be installed for this script to work.'
 
     exit 1
@@ -311,6 +320,7 @@ if ! command -v curl >/dev/null 2>&1; then
 fi
 
 if ! command -v "${PODMAN}" >/dev/null 2>&1; then
+  # shellcheck disable=SC2016
   errr 'either `podman` or `docker` must be installed for this script to work.'
 
   exit 1
@@ -357,6 +367,10 @@ EOF
   exit 1
 fi
 
+# The following variables comprise a pseudo associative array of project names to source repositories.
+# You only need to set a SOURCES variable if the project name does not match the source repository name.
+# You can get a key identifier using the `identifier` function.
+# To look up the value of any pseudo associative array, use the `aget` function.
 SOURCES_as_code='as-code-docs'
 SOURCES_enterprise_metrics='backend-enterprise'
 SOURCES_enterprise_metrics_='backend-enterprise'
@@ -366,11 +380,16 @@ SOURCES_grafana_cloud_alerting_and_irm_slo='slo'
 SOURCES_grafana_cloud_k6='k6-docs'
 SOURCES_grafana_cloud_data_configuration_integrations='cloud-onboarding'
 SOURCES_grafana_cloud_frontend_observability_faro_web_sdk='faro-web-sdk'
+SOURCES_grafana_cloud_send_data_fleet_management='fleet-management'
 SOURCES_helm_charts_mimir_distributed='mimir'
 SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
 SOURCES_resources='website'
 
+# The following variables comprise a pseudo associative array of project names to versions.
+# You only need to set a VERSIONS variable if it is not the default of 'latest'.
+# You can get a key identifier using the `identifier` function.
+# To look up the value of any pseudo associative array, use the `aget` function.
 VERSIONS_as_code='UNVERSIONED'
 VERSIONS_grafana_cloud='UNVERSIONED'
 VERSIONS_grafana_cloud_alerting_and_irm_machine_learning='UNVERSIONED'
@@ -378,12 +397,17 @@ VERSIONS_grafana_cloud_alerting_and_irm_slo='UNVERSIONED'
 VERSIONS_grafana_cloud_k6='UNVERSIONED'
 VERSIONS_grafana_cloud_data_configuration_integrations='UNVERSIONED'
 VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
+VERSIONS_grafana_cloud_send_data_fleet_management='UNVERSIONED'
 VERSIONS_opentelemetry='UNVERSIONED'
 VERSIONS_resources='UNVERSIONED'
 VERSIONS_technical_documentation='UNVERSIONED'
 VERSIONS_website='UNVERSIONED'
 VERSIONS_writers_toolkit='UNVERSIONED'
 
+# The following variables comprise a pseudo associative array of project names to source repository paths.
+# You only need to set a PATHS variable if it is not the default of 'docs/sources'.
+# You can get a key identifier using the `identifier` function.
+# To look up the value of any pseudo associative array, use the `aget` function.
 PATHS_grafana_cloud='content/docs/grafana-cloud'
 PATHS_helm_charts_mimir_distributed='docs/sources/helm-charts/mimir-distributed'
 PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
@@ -816,7 +840,9 @@ EOF
     case "${OUTPUT_FORMAT}" in
       human)
         if ! command -v jq >/dev/null 2>&1; then
+          # shellcheck disable=SC2016
           errr '`jq` must be installed for the `doc-validator` target to work.'
+          # shellcheck disable=SC2016
           note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
 
           exit 1
