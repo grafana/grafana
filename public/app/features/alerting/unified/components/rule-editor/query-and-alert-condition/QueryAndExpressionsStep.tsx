@@ -470,8 +470,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           )}
 
           {/* This is the PromQL Editor for recording rules */}
-          {isRecordingRuleType && dataSourceName && (
-            <Field error={expressionError} invalid={Boolean(expressionError)}>
+          {isRecordingRuleType && isDataSourceManagedRule && dataSourceName && (
+            <Field error={expressionError} invalid={Boolean(expressionError)} style={{ marginBottom: 0 }}>
               <RecordingRuleEditor
                 dataSourceName={dataSourceName}
                 queries={queries}
@@ -483,8 +483,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           )}
 
           {/* This is the PromQL Editor for Cloud rules */}
-          {isDataSourceManagedRule && dataSourceName && (
-            <Field error={expressionError} invalid={Boolean(expressionError)}>
+          {/* @TODO why is dataSourceName "grafana" when creating a data source managed recording rule? */}
+          {isDataSourceManagedRule && dataSourceName && dataSourceName !== 'grafana' && (
+            <Field error={expressionError} invalid={Boolean(expressionError)} style={{ marginBottom: 0 }}>
               <Controller
                 name="expression"
                 render={({ field: { ref, ...field } }) => {
