@@ -95,7 +95,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
 
       if (!panel) {
-        // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
+        // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
+        // Here we check if the key contains the clone key so we force the repeat processing
+        // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
         if (containsCloneKey(values.viewPanel)) {
           this._handleViewRepeatClone(values.viewPanel);
           return;
