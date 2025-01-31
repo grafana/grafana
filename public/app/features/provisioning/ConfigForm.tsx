@@ -13,7 +13,6 @@ import {
   Switch,
   TextLink,
   ControlledCollapse,
-  FieldSet,
   RadioButtonGroup,
   Stack,
 } from '@grafana/ui';
@@ -46,11 +45,7 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
         enabled: false,
         target: 'instance',
       },
-      editing: {
-        create: true,
-        delete: true,
-        update: true,
-      },
+      readOnly: false,
     };
   }
   return specToData(repository);
@@ -216,17 +211,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
       <Field label={'Sync enabled'}>
         <Switch {...register('sync.enabled')} id={'sync.enabled'} />
       </Field>
-      <FieldSet label={'Editing options'}>
-        <Field label={'Create'} description={'Enable creating files on repository'}>
-          <Switch {...register('editing.create')} id={'editing.create'} />
-        </Field>
-        <Field label={'Update'} description={'Enable updating files on repository'}>
-          <Switch {...register('editing.update')} id={'editing.update'} />
-        </Field>
-        <Field label={'Delete'} description={'Enable deleting files on repository'}>
-          <Switch {...register('editing.delete')} id={'editing.delete'} />
-        </Field>
-      </FieldSet>
+      <Field label={'Read Only'} description={'Disable writing to this repository'}>
+        <Switch {...register('readOnly')} id={'readOnly'} />
+      </Field>
       <Stack gap={2}>
         <Button type={'submit'} disabled={request.isLoading}>
           {request.isLoading ? 'Saving...' : 'Save'}

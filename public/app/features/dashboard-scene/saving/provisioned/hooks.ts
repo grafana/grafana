@@ -21,6 +21,8 @@ function generatePath(timestamp: number, pathFromAnnotation?: string, slug?: str
 }
 
 export function useDefaultValues({ meta, defaultTitle, defaultDescription }: UseDefaultValuesParams) {
+  // ???? why is this getting the repository from the folder, not the file???
+  // Should we only get it from the folder when new?
   const folderRepository = useFolderRepository(meta.folderUid);
   const timestamp = Date.now();
   const annotations = meta.k8s?.annotations;
