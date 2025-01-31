@@ -58,8 +58,8 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
   // told it for async options loading anyway.
   const [userTypedSearch, setUserTypedSearch] = useState('');
 
-  const addCustomValue = useMemo(
-    () => (opts: Array<ComboboxOption<T>>) => {
+  const addCustomValue = useCallback(
+    (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
         const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
