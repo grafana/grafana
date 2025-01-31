@@ -12,6 +12,43 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
+func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, f *data.Frame) error {
+	// Create fields based on the schema
+	for _, col := range schema {
+		fT, err := MySQLColToFieldType(col)
+		if err != nil {
+			return err
+		}
+
+		field := data.NewFieldFromFieldType(fT, 0)
+		field.Name = col.Name
+		f.Fields = append(f.Fields, field)
+	}
+
+	// Iterate through the rows and append data to fields
+	for {
+		// TODO: Use a more appropriate context
+		row, err := iter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("error reading row: %v", err)
+		}
+
+		for i, val := range row {
+			v, err := fieldValFromRowVal(f.Fields[i].Type(), val)
+			if err != nil {
+				return fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
+			}
+			f.Fields[i].Append(v)
+		}
+	}
+
+	return nil
+}
+
 // MySQLColToFieldType converts a MySQL column to a data.FieldType
 func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 	var fT data.FieldType
@@ -367,39 +404,64 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	}
 }
 
-// TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, f *data.Frame) error {
-	// Create fields based on the schema
-	for _, col := range schema {
-		fT, err := MySQLColToFieldType(col)
-		if err != nil {
-			return err
-		}
-
-		field := data.NewFieldFromFieldType(fT, 0)
-		field.Name = col.Name
-		f.Fields = append(f.Fields, field)
+// Is the field nilAt the index. Can panic if out of range.
+// TODO: Maybe this should be a method on data.Field?
+func nilAt(field data.Field, at int) bool {
+	if !field.Nullable() {
+		return false
 	}
 
-	// Iterate through the rows and append data to fields
-	for {
-		// TODO: Use a more appropriate context
-		row, err := iter.Next(ctx)
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("error reading row: %v", err)
-		}
+	switch field.Type() {
+	case data.FieldTypeNullableInt8:
+		v := field.At(at).(*int8)
+		return v == nil
 
-		for i, val := range row {
-			v, err := fieldValFromRowVal(f.Fields[i].Type(), val)
-			if err != nil {
-				return fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
-			}
-			f.Fields[i].Append(v)
-		}
+	case data.FieldTypeNullableUint8:
+		v := field.At(at).(*uint8)
+		return v == nil
+
+	case data.FieldTypeNullableInt16:
+		v := field.At(at).(*int16)
+		return v == nil
+
+	case data.FieldTypeNullableUint16:
+		v := field.At(at).(*uint16)
+		return v == nil
+
+	case data.FieldTypeNullableInt32:
+		v := field.At(at).(*int32)
+		return v == nil
+
+	case data.FieldTypeNullableUint32:
+		v := field.At(at).(*uint32)
+		return v == nil
+
+	case data.FieldTypeNullableInt64:
+		v := field.At(at).(*int64)
+		return v == nil
+
+	case data.FieldTypeNullableUint64:
+		v := field.At(at).(*uint64)
+		return v == nil
+
+	case data.FieldTypeNullableFloat64:
+		v := field.At(at).(*float64)
+		return v == nil
+
+	case data.FieldTypeNullableString:
+		v := field.At(at).(*string)
+		return v == nil
+
+	case data.FieldTypeNullableTime:
+		v := field.At(at).(*time.Time)
+		return v == nil
+
+	case data.FieldTypeNullableBool:
+		v := field.At(at).(*bool)
+		return v == nil
+
+	default:
+		// Either it's not a nullable type or it's unsupported
+		return false
 	}
-
-	return nil
 }

@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"errors"
 
 	sqle "github.com/dolthub/go-mysql-server"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -14,10 +13,6 @@ import (
 var dbName = "mydb"
 
 type DB struct {
-}
-
-func (db *DB) RunCommands(commands []string) (string, error) {
-	return "", errors.New("not implemented")
 }
 
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {

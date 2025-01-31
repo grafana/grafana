@@ -3,30 +3,12 @@ package sql
 import (
 	"io"
 	"strings"
-	"time"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-/*
-This is the interface I'm going for ... I think
-it lives in in https://github.com/dolthub/go-mysql-server/sql package
-
-type Table interface {
-	Nameable
-	fmt.Stringer
-	// Schema returns the table's schema.
-	Schema() Schema
-	// Collation returns the table's collation.
-	Collation() CollationID
-	// Partitions returns the table's partitions in an iterator.
-	Partitions(*Context) (PartitionIter, error)
-	// PartitionRows returns the rows in the given partition, which was returned by Partitions.
-	PartitionRows(*Context, Partition) (RowIter, error)
-}
-*/
-
+// FrameTable fulfills the mysql.Table interface for a data.Frame.
 type FrameTable struct {
 	Frame  *data.Frame
 	schema mysql.Schema
@@ -142,66 +124,4 @@ type partition []byte
 
 func (p partition) Key() []byte {
 	return p
-}
-
-// Is the field nilAt the index. Can panic if out of range.
-// TODO: Maybe this should be a method on data.Field?
-func nilAt(field data.Field, at int) bool {
-	if !field.Nullable() {
-		return false
-	}
-
-	switch field.Type() {
-	case data.FieldTypeNullableInt8:
-		v := field.At(at).(*int8)
-		return v == nil
-
-	case data.FieldTypeNullableUint8:
-		v := field.At(at).(*uint8)
-		return v == nil
-
-	case data.FieldTypeNullableInt16:
-		v := field.At(at).(*int16)
-		return v == nil
-
-	case data.FieldTypeNullableUint16:
-		v := field.At(at).(*uint16)
-		return v == nil
-
-	case data.FieldTypeNullableInt32:
-		v := field.At(at).(*int32)
-		return v == nil
-
-	case data.FieldTypeNullableUint32:
-		v := field.At(at).(*uint32)
-		return v == nil
-
-	case data.FieldTypeNullableInt64:
-		v := field.At(at).(*int64)
-		return v == nil
-
-	case data.FieldTypeNullableUint64:
-		v := field.At(at).(*uint64)
-		return v == nil
-
-	case data.FieldTypeNullableFloat64:
-		v := field.At(at).(*float64)
-		return v == nil
-
-	case data.FieldTypeNullableString:
-		v := field.At(at).(*string)
-		return v == nil
-
-	case data.FieldTypeNullableTime:
-		v := field.At(at).(*time.Time)
-		return v == nil
-
-	case data.FieldTypeNullableBool:
-		v := field.At(at).(*bool)
-		return v == nil
-
-	default:
-		// Either it's not a nullable type or it's unsupported
-		return false
-	}
 }
