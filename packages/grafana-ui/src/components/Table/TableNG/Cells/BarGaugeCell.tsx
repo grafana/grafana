@@ -22,7 +22,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCellProps) => {
+export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
 
@@ -62,7 +62,7 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
 
     return (
       <BarGauge
-        width={innerWidth}
+        width={width}
         height={height}
         field={config}
         display={field.display}
@@ -82,7 +82,7 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
 
   // @TODO: Actions
   return (
-    <div>
+    <>
       {hasLinks ? (
         <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
@@ -90,6 +90,6 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
       ) : (
         renderComponent({})
       )}
-    </div>
+    </>
   );
 };

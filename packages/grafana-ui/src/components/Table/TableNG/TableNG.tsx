@@ -326,19 +326,17 @@ export function TableNG(props: TableNGProps) {
                 />
               );
             },
-        ...(footerOptions?.show && {
-          renderSummaryCell() {
-            if (isCountRowsSet && fieldIndex === 0) {
-              return (
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Count</span>
-                  <span>{calcsRef.current[fieldIndex]}</span>
-                </div>
-              );
-            }
-            return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
-          },
-        }),
+        renderSummaryCell: () => {
+          if (isCountRowsSet && fieldIndex === 0) {
+            return (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Count</span>
+                <span>{calcsRef.current[fieldIndex]}</span>
+              </div>
+            );
+          }
+          return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
+        },
         renderHeaderCell: ({ column, sortDirection }) => (
           <HeaderCell
             column={column}
@@ -480,7 +478,10 @@ export function TableNG(props: TableNGProps) {
     });
   }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef, filter, expandedRows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columns = useMemo(
+    () => mapFrameToDataGrid(props.data, calcsRef),
+    [props.data, calcsRef, filter, expandedRows, footerOptions] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
