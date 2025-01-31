@@ -2,9 +2,9 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -98,14 +98,19 @@ func ProvideFolderPermissions(
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
 			defer span.End()
 
-			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-			queryResult, err := dashboardStore.GetDashboard(ctx, query)
+			ident, err := identity.GetRequester(ctx)
 			if err != nil {
 				return err
 			}
 
-			if !queryResult.IsFolder {
-				return errors.New("not found")
+			_, err = folderService.Get(ctx, &folder.GetFolderQuery{
+				UID:          &resourceID,
+				OrgID:        orgID,
+				SignedInUser: ident,
+			})
+
+			if err != nil {
+				return err
 			}
 
 			return nil

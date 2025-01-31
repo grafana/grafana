@@ -137,7 +137,6 @@ func ProvideDashboardPermissions(
 				return nil, err
 			}
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
-			// nolint:staticcheck
 			if dashboard.FolderUID != "" {
 				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderService)
 				if err != nil {
@@ -148,6 +147,7 @@ func ProvideDashboardPermissions(
 				scopes = append(scopes, nestedScopes...)
 				return scopes, nil
 			}
+
 			return append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)), nil
 		},
 		Assignments: resourcepermissions.Assignments{
