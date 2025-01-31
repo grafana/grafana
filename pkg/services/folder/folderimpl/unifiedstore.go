@@ -352,6 +352,14 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		if f == nil {
 			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
+		if q.WithFullpath || q.WithFullpathUIDs {
+			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
+			if err != nil {
+				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
+			}
+			// If we don't have a parent, we just return the current folder as the full path
+			f.Fullpath, f.FullpathUIDs = computeFullPath(append(parents, f))
+		}
 
 		m[f.UID] = f
 	}
@@ -528,4 +536,14 @@ func (ss *FolderUnifiedStoreImpl) getK8sContext(ctx context.Context) (context.Co
 	}
 
 	return newCtx, nil, nil
+}
+
+func computeFullPath(parents []*folder.Folder) (string, string) {
+	fullpath := make([]string, len(parents))
+	fullpathUIDs := make([]string, len(parents))
+	for i, p := range parents {
+		fullpath[i] = p.Title
+		fullpathUIDs[i] = p.UID
+	}
+	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
 }

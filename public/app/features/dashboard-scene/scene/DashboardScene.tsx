@@ -13,7 +13,6 @@ import {
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
-  SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
@@ -72,7 +71,6 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -763,31 +761,6 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       if (typeof panelsPerRow === 'string') {
         const perRow = Number.parseInt(panelsPerRow, 10);
         this._dashboard.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
-      }
-    }
-
-    /**
-     * Propagate variable changes to repeat row behavior as it does not get it when it's nested under local value
-     * The first repeated row has the row repeater behavior but it also has a local SceneVariableSet with a local variable value
-     */
-    const layout = this._dashboard.state.body;
-    if (!(layout instanceof DefaultGridLayoutManager)) {
-      return;
-    }
-
-    for (const child of layout.state.grid.state.children) {
-      if (!(child instanceof SceneGridRow) || !child.state.$behaviors) {
-        continue;
-      }
-
-      for (const behavior of child.state.$behaviors) {
-        if (behavior instanceof RowRepeaterBehavior) {
-          if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
-            behavior.performRepeat(true);
-          } else if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
-            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
-          }
-        }
       }
     }
   }

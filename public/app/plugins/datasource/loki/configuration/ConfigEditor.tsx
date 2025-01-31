@@ -8,7 +8,7 @@ import {
   Auth,
   convertLegacyAuthProps,
   AdvancedHttpSettings,
-} from '@grafana/experimental';
+} from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
 

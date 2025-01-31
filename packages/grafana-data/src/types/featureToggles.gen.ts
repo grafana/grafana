@@ -248,9 +248,13 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   teamHttpHeadersMimir?: boolean;
   ABTestFeatureToggleA?: boolean;
+  templateVariablesUsesCombobox?: boolean;
   ABTestFeatureToggleB?: boolean;
   queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
   datasourceConnectionsTab?: boolean;
+  fetchRulesUsingPost?: boolean;
+  alertingAlertmanagerExtraDedupStage?: boolean;
+  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
 }

@@ -56,8 +56,8 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 		if err != nil {
 			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
 				Severity: advisor.CheckStatusSeverityLow,
-				Reason:   fmt.Sprintf("Invalid UID: %s", ds.UID),
-				Action:   "Change UID",
+				Reason:   fmt.Sprintf("Invalid UID '%s' for data source %s", ds.UID, ds.Name),
+				Action:   "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement' target=_blank>documentation</a> for more information.",
 			})
 		}
 
@@ -83,8 +83,10 @@ func (c *check) Run(ctx context.Context, obj *advisor.CheckSpec) (*advisor.Check
 		if resp.Status != backend.HealthStatusOk {
 			dsErrs = append(dsErrs, advisor.CheckV0alpha1StatusReportErrors{
 				Severity: advisor.CheckStatusSeverityHigh,
-				Reason:   fmt.Sprintf("Health check failed: %s", ds.Name),
-				Action:   "Check datasource",
+				Reason:   fmt.Sprintf("Health check failed for %s", ds.Name),
+				Action: fmt.Sprintf(
+					"Go to the <a href='/connections/datasources/edit/%s'>data source configuration</a>"+
+						" and address the issues reported.", ds.UID),
 			})
 		}
 	}
