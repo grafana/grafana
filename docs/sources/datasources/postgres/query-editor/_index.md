@@ -112,10 +112,6 @@ Select **Table** or **Time Series** as the format. Click the **{}** in the botto
 Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
 {{% /admonition %}}
 
-FIND this screenshot
-
-{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
-
 ## Macros
 
 You can add macros to your queries to simplify the syntax and enable dynamic elements, such as date range filters.
@@ -167,22 +163,9 @@ Set the **Format** option to **Time series** to create and run time series queri
 To run a time series query you must include a column named `time` that returns either a SQL datetime value or a numeric datatype representing the UNIX epoch time in seconds. Additionally, the query results must be sorted by the `time` column for proper visualization in panels.
 {{% /admonition %}}
 
-A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+Time series query results are returned in [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). In the data frame query result, any column, except for time or string-type columns, transforms into value fields. String columns, on the other hand, become field labels.
 
-{{% admonition type="note" %}}
-For backward compatibility, an exception to the aforementioned rule applies to queries returning three columns, including a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, and the series name is set to the value of the metric column. Refer to the following example with a metric column.
-{{% /admonition %}}
-
-
-
-<!-- 
-If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result. -->
-
-<!-- A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result. -->
-
-<!-- > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below. -->
-
-To customize default series name formatting, refer to [Standard options definitions](ref:configure-standard-options-display-name).
+For backward compatibility, an exception to this rule applies to queries that return three columns, one of which is a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, while the series name is set to its value. See the following example for reference.
 
 **Example with `metric` column:**
 
@@ -209,6 +192,9 @@ Data frame result:
 | 2020-01-02 03:10:00 | 6               |
 +---------------------+-----------------+
 ```
+To customize default series name formatting, refer to [Standard options definitions](ref:configure-standard-options-display-name).
+
+Following are time series query examples.
 
 **Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
 
@@ -224,7 +210,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions](ref:configure-standard-options-display-name) display value of `${__field.labels.hostname}`.
+Based on the data frame result in the following example, the graph panel will generate two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](ref:configure-standard-options-display-name) display value `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -264,6 +250,12 @@ Data frame result:
 | 2020-01-02 03:05:00 | 6               | 7               |
 +---------------------+-----------------+-----------------+
 ```
+
+### Macros and time series queries
+
+You can enable macro support in the `SELECT` clause to create time-series queries. Use the **Data operations** drop-down to select a macro such as `$__timeGroup` or `$__timeGroupAlias`. Select a time column from the **Column** drop-down and a time interval from the **Interval** drop-down to create a time-series query.
+
+You can also add custom value under **Data operations**, such as a function that’s not in the drop-down list. This allows you to add any number of parameters.
 
 ## Templating
 
