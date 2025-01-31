@@ -234,8 +234,11 @@ func TestInitInstanceStore(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			instanceStore := initInstanceStore(sqlStore, logger, tt.ft)
+			instanceStore, instanceReader := initInstanceStore(sqlStore, logger, tt.ft)
 			assert.IsType(t, tt.expectedInstanceStoreType, instanceStore)
+			assert.IsType(t, &state.MultiInstanceReader{}, instanceReader)
+			assert.IsType(t, store.ProtoInstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).ProtoDBReader)
+			assert.IsType(t, store.InstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).DBReader)
 		})
 	}
 }
