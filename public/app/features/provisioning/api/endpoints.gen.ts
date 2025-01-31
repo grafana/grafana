@@ -737,14 +737,6 @@ export type JobList = {
   kind?: string;
   metadata?: ListMeta;
 };
-export type EditingOptions = {
-  /** End users can create new files in the remote file system */
-  create: boolean;
-  /** End users can delete existing files in the remote file system */
-  delete: boolean;
-  /** End users can update existing files in the remote file system */
-  update: boolean;
-};
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. By default, this is the main branch. */
   branch?: string;
@@ -781,12 +773,12 @@ export type SyncOptions = {
 export type RepositorySpec = {
   /** Repository description */
   description?: string;
-  /** Edit options within the repository */
-  editing: EditingOptions;
   /** The repository on GitHub. Mutually exclusive with local | s3 | github. */
   github?: GitHubRepositoryConfig;
   /** The repository on the local file system. Mutually exclusive with local | s3 | github. */
   local?: LocalRepositoryConfig;
+  /** ReadOnly  repository does not allow any write commands */
+  readOnly: boolean;
   /** The repository in an S3 bucket. Mutually exclusive with local | s3 | github. */
   s3?: S3RepositoryConfig;
   /** Sync settings -- how values are pulled from the repository into grafana */

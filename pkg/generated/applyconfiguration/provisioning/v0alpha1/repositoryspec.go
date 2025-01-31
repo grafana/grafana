@@ -13,7 +13,7 @@ import (
 type RepositorySpecApplyConfiguration struct {
 	Title       *string                                   `json:"title,omitempty"`
 	Description *string                                   `json:"description,omitempty"`
-	Editing     *EditingOptionsApplyConfiguration         `json:"editing,omitempty"`
+	ReadOnly    *bool                                     `json:"readOnly,omitempty"`
 	Sync        *SyncOptionsApplyConfiguration            `json:"sync,omitempty"`
 	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
 	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
@@ -43,11 +43,11 @@ func (b *RepositorySpecApplyConfiguration) WithDescription(value string) *Reposi
 	return b
 }
 
-// WithEditing sets the Editing field in the declarative configuration to the given value
+// WithReadOnly sets the ReadOnly field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Editing field is set to the value of the last call.
-func (b *RepositorySpecApplyConfiguration) WithEditing(value *EditingOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
-	b.Editing = value
+// If called multiple times, the ReadOnly field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithReadOnly(value bool) *RepositorySpecApplyConfiguration {
+	b.ReadOnly = &value
 	return b
 }
 

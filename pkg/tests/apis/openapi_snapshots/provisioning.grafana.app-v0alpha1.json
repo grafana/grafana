@@ -2662,31 +2662,6 @@
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.EditingOptions": {
-        "type": "object",
-        "required": [
-          "create",
-          "update",
-          "delete"
-        ],
-        "properties": {
-          "create": {
-            "description": "End users can create new files in the remote file system",
-            "type": "boolean",
-            "default": false
-          },
-          "delete": {
-            "description": "End users can delete existing files in the remote file system",
-            "type": "boolean",
-            "default": false
-          },
-          "update": {
-            "description": "End users can update existing files in the remote file system",
-            "type": "boolean",
-            "default": false
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
         "type": "object",
         "required": [
@@ -3166,7 +3141,7 @@
         "type": "object",
         "required": [
           "title",
-          "editing",
+          "readOnly",
           "sync",
           "type"
         ],
@@ -3174,15 +3149,6 @@
           "description": {
             "description": "Repository description",
             "type": "string"
-          },
-          "editing": {
-            "description": "Edit options within the repository",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.EditingOptions"
-              }
-            ]
           },
           "github": {
             "description": "The repository on GitHub. Mutually exclusive with local | s3 | github.",
@@ -3199,6 +3165,11 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LocalRepositoryConfig"
               }
             ]
+          },
+          "readOnly": {
+            "description": "ReadOnly  repository does not allow any write commands",
+            "type": "boolean",
+            "default": false
           },
           "s3": {
             "description": "The repository in an S3 bucket. Mutually exclusive with local | s3 | github.",
