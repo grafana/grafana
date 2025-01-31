@@ -782,6 +782,17 @@
       "placeholder": "Search all"
     }
   },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "diff": "JSON diff",
+          "new": "Version {{newVersionInfo}} updated by {{newUpdatedBy}} ({newVersionAgeString}){{newMessage}}",
+          "old": "Version {{oldVersionInfo}} updated by {{oldUpdatedBy}} ({oldVersionAgeString}){{oldMessage}}"
+        }
+      }
+    }
+  },
   "correlations": {
     "add-new": "Add new",
     "alert": {

@@ -782,6 +782,17 @@
       "placeholder": "Ŝęäřčĥ äľľ"
     }
   },
+  "core": {
+    "versionHistory": {
+      "comparison": {
+        "header": {
+          "diff": "ĴŜØŃ đįƒƒ",
+          "new": "Vęřşįőŉ {{newVersionInfo}} ūpđäŧęđ þy {{newUpdatedBy}} ({ŉęŵVęřşįőŉÅģęŜŧřįŉģ}){{newMessage}}",
+          "old": "Vęřşįőŉ {{oldVersionInfo}} ūpđäŧęđ þy {{oldUpdatedBy}} ({őľđVęřşįőŉÅģęŜŧřįŉģ}){{oldMessage}}"
+        }
+      }
+    }
+  },
   "correlations": {
     "add-new": "Åđđ ŉęŵ",
     "alert": {

@@ -1,5 +1,6 @@
 import { dateTimeFormatTimeAgo } from '@grafana/data';
-import { Stack, Icon, Box, Divider, Text } from '@grafana/ui';
+import { Box, Divider, Icon, Stack, Text } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
@@ -34,17 +35,33 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
   const oldVersionAgeString = dateTimeFormatTimeAgo(oldInfo.created);
   const newVersionAgeString = dateTimeFormatTimeAgo(newInfo.created);
 
+  const oldVersionInfo = oldInfo.version;
+  const oldUpdatedBy = oldInfo.createdBy;
+  const oldMessage = oldInfo.message;
+
+  const newVersionInfo = newInfo.version;
+  const newUpdatedBy = newInfo.createdBy;
+  const newMessage = newInfo.message;
+
   return (
     <Stack gap={2} direction="column">
       <Box>
         <Text>
-          Version {oldInfo.version} updated by {oldInfo.createdBy} ({oldVersionAgeString}){oldInfo.message}
+          <Trans
+            i18nKey="core.versionHistory.comparison.header.old"
+            values={{ oldVersionInfo, oldUpdatedBy, oldVersionAgeString, oldMessage }}
+          >
+            Version {{ oldVersionInfo }} updated by {{ oldUpdatedBy }} ({oldVersionAgeString}){{ oldMessage }}
+          </Trans>
         </Text>
-
         <Icon name="arrow-right" />
-
         <Text>
-          Version {newInfo.version} updated by {newInfo.createdBy} ({newVersionAgeString}){newInfo.message}
+          <Trans
+            i18nKey="core.versionHistory.comparison.header.new"
+            values={{ newVersionInfo, newUpdatedBy, newVersionAgeString, newMessage }}
+          >
+            Version {{ newVersionInfo }} updated by {{ newUpdatedBy }} ({newVersionAgeString}){{ newMessage }}
+          </Trans>
         </Text>
       </Box>
       <Box>
@@ -53,7 +70,9 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
         ))}
         <Divider />
       </Box>
-      <Text variant="h2">JSON diff</Text>
+      <Text variant="h2">
+        <Trans i18nKey="core.versionHistory.comparison.header.diff">JSON diff</Trans>
+      </Text>
       <DiffViewer oldValue={JSON.stringify(oldVersion, null, 2)} newValue={JSON.stringify(newVersion, null, 2)} />
     </Stack>
   );
