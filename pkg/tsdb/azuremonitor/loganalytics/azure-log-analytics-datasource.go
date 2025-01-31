@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -267,8 +268,23 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
-	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, backend.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
+	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok {
+		sameAsValue, ok := sameAs.(bool)
+		if !ok {
+			stringVal, ok := sameAs.(string)
+			if !ok {
+				return nil, backend.DownstreamError(fmt.Errorf("unknown value for Log Analytics credentials. Go to the data source configuration to update Azure Monitor credentials"))
+			}
+
+			var err error
+			sameAsValue, err = strconv.ParseBool(stringVal)
+			if err != nil {
+				return nil, backend.DownstreamError(fmt.Errorf("unknown value for Log Analytics credentials. Go to the data source configuration to update Azure Monitor credentials"))
+			}
+		}
+		if !sameAsValue {
+			return nil, backend.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
+		}
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -512,7 +528,12 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 	}
 
 	if query.AppInsightsQuery {
-		body["applications"] = []string{query.Resources[0]}
+		// If the query type is traces then we only need the first resource as the rest are specified in the query
+		if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+			body["applications"] = []string{query.Resources[0]}
+		} else {
+			body["applications"] = query.Resources
+		}
 	}
 
 	jsonValue, err := json.Marshal(body)

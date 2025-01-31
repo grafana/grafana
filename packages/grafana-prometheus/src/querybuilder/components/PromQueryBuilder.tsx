@@ -4,7 +4,7 @@ import { memo, useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorRow } from '@grafana/experimental';
+import { EditorRow } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Drawer } from '@grafana/ui';
 
@@ -93,7 +93,7 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
-          title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+          title={<RawQuery query={`${promQueryModeller.renderQuery(query)}`} lang={lang} />}
         >
           {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>

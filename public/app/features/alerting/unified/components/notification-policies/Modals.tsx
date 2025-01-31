@@ -7,7 +7,6 @@ import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/p
 
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFormatter } from '../../utils/matchers';
-import { stringifyErrorLike } from '../../utils/misc';
 import { InsertPosition } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 
@@ -20,9 +19,8 @@ import { NotificationPoliciesErrorAlert } from './PolicyUpdateErrorAlert';
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosition) => void, () => void];
 type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean) => void, () => void];
-
 const useAddPolicyModal = (
-  handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => void,
+  handleAdd: (route: Partial<FormAmRoute>, referenceRoute: RouteWithID, position: InsertPosition) => Promise<void>,
   loading: boolean
 ): AddModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
@@ -32,6 +30,7 @@ const useAddPolicyModal = (
   const handleDismiss = useCallback(() => {
     setReferenceRoute(undefined);
     setInsertPosition(undefined);
+    setError(undefined);
     setShowModal(false);
   }, []);
 
@@ -40,6 +39,8 @@ const useAddPolicyModal = (
     setInsertPosition(position);
     setShowModal(true);
   }, []);
+
+  const [error, setError] = useState<Error | undefined>(undefined);
 
   const modalElement = useMemo(
     () =>
@@ -53,13 +54,14 @@ const useAddPolicyModal = (
           closeOnEscape={true}
           title="Add notification policy"
         >
+          {error && <NotificationPoliciesErrorAlert error={error} />}
           <AmRoutesExpandedForm
             defaults={{
               groupBy: referenceRoute?.group_by,
             }}
             onSubmit={(newRoute) => {
               if (referenceRoute && insertPosition) {
-                handleAdd(newRoute, referenceRoute, insertPosition);
+                handleAdd(newRoute, referenceRoute, insertPosition).catch(setError);
               }
             }}
             actionButtons={
@@ -75,7 +77,7 @@ const useAddPolicyModal = (
           />
         </Modal>
       ),
-    [handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal]
+    [error, handleAdd, handleDismiss, insertPosition, loading, referenceRoute, showModal, setError]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -83,17 +85,19 @@ const useAddPolicyModal = (
 
 const useEditPolicyModal = (
   alertManagerSourceName: string,
-  handleSave: (route: Partial<FormAmRoute>) => void,
-  loading: boolean,
-  error?: Error
+  handleUpdate: (route: Partial<FormAmRoute>) => Promise<void>,
+  loading: boolean
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
 
+  const [error, setError] = useState<Error | undefined>(undefined);
+
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
     setShowModal(false);
+    setError(undefined);
   }, []);
 
   const handleShow = useCallback((route: RouteWithID, isDefaultPolicy?: boolean) => {
@@ -114,13 +118,13 @@ const useEditPolicyModal = (
           closeOnEscape={true}
           title="Edit notification policy"
         >
-          {error && <NotificationPoliciesErrorAlert error={stringifyErrorLike(error)} />}
+          {error && <NotificationPoliciesErrorAlert error={error} />}
           {isDefaultPolicy && route && (
             <AmRootRouteForm
               // TODO *sigh* this alertmanagersourcename should come from context or something
               // passing it down all the way here is a code smell
               alertManagerSourceName={alertManagerSourceName}
-              onSubmit={handleSave}
+              onSubmit={(values) => handleUpdate(values).catch(setError)}
               route={route}
               actionButtons={
                 <Modal.ButtonRow>
@@ -137,7 +141,7 @@ const useEditPolicyModal = (
           {!isDefaultPolicy && (
             <AmRoutesExpandedForm
               route={route}
-              onSubmit={handleSave}
+              onSubmit={(values) => handleUpdate(values).catch(setError)}
               actionButtons={
                 <Modal.ButtonRow>
                   <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
@@ -152,31 +156,30 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [alertManagerSourceName, error, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
+    [loading, showModal, handleDismiss, error, isDefaultPolicy, route, alertManagerSourceName, handleUpdate, setError]
   );
 
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loading: boolean): ModalHook<RouteWithID> => {
+const useDeletePolicyModal = (
+  handleDelete: (route: RouteWithID) => Promise<void>,
+  loading: boolean
+): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
+  const [error, setError] = useState<Error | undefined>(undefined);
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
     setShowModal(false);
+    setError(undefined);
   }, [setRoute]);
 
   const handleShow = useCallback((route: RouteWithID) => {
     setRoute(route);
     setShowModal(true);
   }, []);
-
-  const handleSubmit = useCallback(() => {
-    if (route) {
-      handleDelete(route);
-    }
-  }, [handleDelete, route]);
 
   const modalElement = useMemo(
     () =>
@@ -190,13 +193,13 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
           closeOnEscape={true}
           title="Delete notification policy"
         >
+          {error && <NotificationPoliciesErrorAlert error={error} />}
           <Trans i18nKey="alerting.policies.delete.warning-1">
             Deleting this notification policy will permanently remove it.
-          </Trans>
+          </Trans>{' '}
           <Trans i18nKey="alerting.policies.delete.warning-2">Are you sure you want to delete this policy?</Trans>
-
           <Modal.ButtonRow>
-            <Button type="button" variant="destructive" onClick={handleSubmit}>
+            <Button type="button" variant="destructive" onClick={() => route && handleDelete(route).catch(setError)}>
               <Trans i18nKey="alerting.policies.delete.confirm">Yes, delete policy</Trans>
             </Button>
             <Button type="button" variant="secondary" onClick={handleDismiss}>
@@ -205,7 +208,7 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
           </Modal.ButtonRow>
         </Modal>
       ),
-    [handleDismiss, handleSubmit, loading, showModal]
+    [handleDismiss, loading, showModal, error, route, handleDelete]
   );
 
   return [modalElement, handleShow, handleDismiss];

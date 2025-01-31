@@ -16,7 +16,7 @@ import {
 } from '@grafana/scenes';
 import { Icon, Text, Tooltip } from '@grafana/ui';
 
-import { config } from '../../../../core/config';
+import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getActiveGrafanaAlertsScene } from '../insights/grafana/Active';
@@ -95,7 +95,7 @@ export const PANEL_STYLES = { minHeight: 300 };
 
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 
-const namespace = config.namespace;
+const namespace = getAPINamespace();
 
 export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 

@@ -1,8 +1,10 @@
 import { lastValueFrom } from 'rxjs';
 
 import type { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
+import { getBackendSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { getLogQueryFromMetricsQuery } from 'app/plugins/datasource/loki/queryUtils';
+
+import { findHealthyLokiDataSources } from '../../RelatedLogs/RelatedLogsScene';
 
 import { createMetricsLogsConnector, type FoundLokiDataSource } from './base';
 
@@ -36,13 +38,18 @@ export interface ExtractedRecordingRules {
 async function fetchRecordingRuleGroups(datasourceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
   const recordingRuleUrl = `api/prometheus/${datasourceSettings.uid}/api/v1/rules`;
   const recordingRules: BackendSrvRequest = { url: recordingRuleUrl, showErrorAlert: false, showSuccessAlert: false };
-  const { data } = await lastValueFrom<
+  const res = await lastValueFrom<
     FetchResponse<{
       data: { groups: RecordingRuleGroup[] };
     }>
   >(getBackendSrv().fetch(recordingRules));
 
-  return data.data.groups;
+  if (!res.ok) {
+    console.warn(`Failed to fetch recording rules from Loki data source: ${datasourceSettings.name}`);
+    return [];
+  }
+
+  return res.data.data.groups;
 }
 
 /**
@@ -150,9 +157,7 @@ export function getLokiQueryForRelatedMetric(
  * @throws Will log an error to the console if fetching or extracting rules fails for any data source.
  */
 export async function fetchAndExtractLokiRecordingRules() {
-  const lokiDataSources = getDataSourceSrv()
-    .getList({ logs: true })
-    .filter((ds) => ds.type === 'loki');
+  const lokiDataSources = await findHealthyLokiDataSources();
   const extractedRecordingRules: ExtractedRecordingRules = {};
   await Promise.all(
     lokiDataSources.map(async (dataSource) => {
@@ -161,7 +166,7 @@ export async function fetchAndExtractLokiRecordingRules() {
         const extractedRules = extractRecordingRulesFromRuleGroups(ruleGroups, dataSource);
         extractedRecordingRules[dataSource.uid] = extractedRules;
       } catch (err) {
-        console.error(err);
+        console.warn(err);
       }
     })
   );
@@ -173,6 +178,7 @@ const createLokiRecordingRulesConnector = () => {
   let lokiRecordingRules: ExtractedRecordingRules = {};
 
   return createMetricsLogsConnector({
+    name: 'lokiRecordingRules',
     async getDataSources(selectedMetric: string): Promise<FoundLokiDataSource[]> {
       lokiRecordingRules = await fetchAndExtractLokiRecordingRules();
       const lokiDataSources = getDataSourcesWithRecordingRulesContainingMetric(selectedMetric, lokiRecordingRules);

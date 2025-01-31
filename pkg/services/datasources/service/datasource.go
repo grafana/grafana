@@ -745,7 +745,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		}
 	}
 
-	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+	if ds.IsSecureSocksDSProxyEnabled() {
 		proxyOpts := &sdkproxy.Options{
 			Enabled: true,
 			Auth: &sdkproxy.AuthOptions{

@@ -16,7 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
 )
 
 type NamespacedResource struct {
@@ -42,7 +42,7 @@ type ResourceIndex interface {
 
 	// Search within a namespaced resource
 	// When working with federated queries, the additional indexes will be passed in explicitly
-	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
+	Search(ctx context.Context, access types.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
 
 	// List within an response
 	ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error)
@@ -89,7 +89,7 @@ type searchSupport struct {
 	log         *slog.Logger
 	storage     StorageBackend
 	search      SearchBackend
-	access      authz.AccessClient
+	access      types.AccessClient
 	builders    *builderCache
 	initWorkers int
 	initMinSize int
@@ -100,7 +100,7 @@ var (
 	_ RepositoryIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -131,11 +131,6 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.A
 	}
 
 	return support, err
-}
-
-// History implements ResourceIndexServer.
-func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
-	return nil, fmt.Errorf("not implemented yet... likely should not be the search server")
 }
 
 func (s *searchSupport) ListRepositoryObjects(ctx context.Context, req *ListRepositoryObjectsRequest) (*ListRepositoryObjectsResponse, error) {
@@ -235,6 +230,9 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 
 // Search implements ResourceIndexServer.
 func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
+	defer span.End()
+
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
 		Namespace: req.Options.Key.Namespace,
@@ -399,10 +397,19 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 // Async event
 func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"HandleEvent")
 	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
 		s.log.Info("ignoring watch event", "type", evt.Type)
 		return
 	}
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("event_type", evt.Type.String()),
+		attribute.String("namespace", evt.Key.Namespace),
+		attribute.String("group", evt.Key.Group),
+		attribute.String("resource", evt.Key.Resource),
+		attribute.String("name", evt.Key.Name),
+	)
 
 	nsr := NamespacedResource{
 		Namespace: evt.Key.Namespace,
@@ -452,7 +459,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
+	span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
 	if latencySeconds > 5 {
+		s.log.Debug("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace)
 		s.log.Warn("high index latency", "latency", latencySeconds)
 	}
 	if IndexMetrics != nil {
@@ -464,6 +473,9 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
+
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
+	defer span.End()
 
 	// TODO???
 	// We want to block while building the index and return the same index for the key
@@ -495,7 +507,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 	fields := s.builders.GetFields(nsr)
 
-	s.log.Debug(fmt.Sprintf("TODO, build %+v (size:%d, rv:%d) // builder:%+v\n", nsr, size, rv, builder))
+	s.log.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
 	key := &ResourceKey{
 		Group:     nsr.Group,
