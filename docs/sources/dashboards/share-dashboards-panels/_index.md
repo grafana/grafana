@@ -44,9 +44,9 @@ refs:
       destination: /docs/grafana/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
   configure-report:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-or-update-a-report
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-a-report
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-or-update-a-report
+      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-a-report
   image-rendering-config:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
