@@ -83,14 +83,6 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     setState({ collapsed: !state.collapsed });
   }, [state.collapsed]);
 
-  const onOpen = useCallback(() => {
-    setState({ collapsed: false, snapSize: 1 - (options.initialSize ?? 0.5) });
-  }, [options.initialSize]);
-
-  const onClose = useCallback(() => {
-    setState({ collapsed: true, snapSize: 0 });
-  }, []);
-
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: options.direction,
     dragPosition: options.dragPosition,
@@ -126,7 +118,5 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     splitterProps,
     splitterState: state,
     onToggleCollapse,
-    onOpen,
-    onClose,
   };
 }

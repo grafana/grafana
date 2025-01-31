@@ -12,7 +12,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPane';
-import { EditPaneDrawer } from './EditPaneDrawer';
 import { useEditPaneCollapsed } from './shared';
 
 interface Props {
@@ -27,7 +26,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
-  const [overrideEditPaneToggle, setOverrideEditPanelToggle] = useState(false);
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
@@ -41,27 +39,19 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     );
   }
 
-  const {
-    containerProps,
-    primaryProps,
-    secondaryProps,
-    splitterProps,
-    splitterState,
-    onToggleCollapse,
-    onOpen,
-    onClose,
-  } = useSnappingSplitter({
-    direction: 'row',
-    dragPosition: 'end',
-    initialSize: 0.8,
-    handleSize: 'sm',
-    collapsed: isCollapsed,
+  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
+    useSnappingSplitter({
+      direction: 'row',
+      dragPosition: 'end',
+      initialSize: 0.8,
+      handleSize: 'sm',
+      collapsed: isCollapsed,
 
-    paneOptions: {
-      collapseBelowPixels: 250,
-      snapOpenToPixels: 50,
-    },
-  });
+      paneOptions: {
+        collapseBelowPixels: 250,
+        snapOpenToPixels: 50,
+      },
+    });
 
   useEffect(() => {
     setIsCollapsed(splitterState.collapsed);
@@ -69,14 +59,6 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
 
   const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const containerStyle: CSSProperties = {};
-
-  useEffect(() => {
-    if (selectionContext.selected.length && splitterState.collapsed && !overrideEditPaneToggle) {
-      setOverrideEditPanelToggle(true);
-    } else if (!selectionContext.selected.length && overrideEditPaneToggle) {
-      setOverrideEditPanelToggle(false);
-    }
-  }, [onClose, onOpen, overrideEditPaneToggle, selectionContext.selected.length, splitterState.collapsed]);
 
   if (!isEditing) {
     primaryProps.style.flexGrow = 1;
@@ -112,14 +94,9 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
               editPane={editPane}
               isCollapsed={splitterState.collapsed}
               onToggleCollapse={onToggleCollapse}
+              openOverlay={selectionContext.selected.length > 0}
             />
           </div>
-
-          {overrideEditPaneToggle && (
-            <EditPaneDrawer>
-              <DashboardEditPaneRenderer editPane={editPane} isCollapsed={false} onToggleCollapse={() => {}} />
-            </EditPaneDrawer>
-          )}
         </>
       )}
     </div>
