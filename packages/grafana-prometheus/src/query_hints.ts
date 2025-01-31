@@ -175,10 +175,19 @@ export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
   return hints;
 }
 
+export function isRuleInQuery(query: string, ruleName: string) {
+  if (!query || !ruleName) {
+    return false;
+  }
+
+  const getRuleRegex = new RegExp(`(?<![\\w:])${ruleName}(?=[\\[{(\\s\\)]|$)`);
+  return getRuleRegex.test(query);
+}
+
 export function getExpandRulesHints(query: string, mapping: RuleQueryMapping): QueryHint[] {
   const hints: QueryHint[] = [];
   const mappingForQuery = Object.keys(mapping).reduce((acc, ruleName) => {
-    if (query.search(ruleName) === -1) {
+    if (!isRuleInQuery(query, ruleName)) {
       return acc;
     }
 
