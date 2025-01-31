@@ -1,10 +1,10 @@
-import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
-import { lastValueFrom } from 'rxjs';
+import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
-import { BackendSrvRequest, config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -27,11 +27,6 @@ import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
 import { PAGE_SIZE } from './services';
-
-interface RequestOptions extends BackendSrvRequest {
-  manageError?: (err: unknown) => { error: unknown };
-  showErrorAlert?: boolean;
-}
 
 interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
@@ -64,28 +59,6 @@ interface HardDeleteDashboardArgs {
   dashboardUID: string;
 }
 
-function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
-  async function backendSrvBaseQuery(requestOptions: RequestOptions) {
-    // Suppress error pop-up for root (aka 'general') folder
-    const isGeneralFolder = requestOptions.url === `/folders/general`;
-    requestOptions = isGeneralFolder ? { ...requestOptions, showErrorAlert: false } : requestOptions;
-
-    try {
-      const { data: responseData, ...meta } = await lastValueFrom(
-        getBackendSrv().fetch({
-          ...requestOptions,
-          url: baseURL + requestOptions.url,
-        })
-      );
-      return { data: responseData, meta };
-    } catch (error) {
-      return requestOptions.manageError ? requestOptions.manageError(error) : { error };
-    }
-  }
-
-  return backendSrvBaseQuery;
-}
-
 export interface ListFolderQueryArgs {
   page: number;
   parentUid: string | undefined;
@@ -96,7 +69,7 @@ export interface ListFolderQueryArgs {
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
-  baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
+  baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
@@ -117,7 +90,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ title, parentUid }) => ({
         method: 'POST',
         url: '/folders',
-        data: {
+        body: {
           title,
           parentUid,
         },
@@ -144,7 +117,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ uid, title, version }) => ({
         method: 'PUT',
         url: `/folders/${uid}`,
-        data: {
+        body: {
           title,
           version,
         },
@@ -167,7 +140,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ folder, destinationUID }) => ({
         url: `/folders/${folder.uid}/move`,
         method: 'POST',
-        data: { parentUID: destinationUID },
+        body: { parentUID: destinationUID },
       }),
       onQueryStarted: ({ folder, destinationUID }, { queryFulfilled, dispatch }) => {
         const { parentUid } = folder;
@@ -256,7 +229,7 @@ export const browseDashboardsAPI = createApi({
           await baseQuery({
             url: `/folders/${folderUID}/move`,
             method: 'POST',
-            data: { parentUID: destinationUID },
+            body: { parentUID: destinationUID },
           });
         }
 
@@ -363,7 +336,7 @@ export const browseDashboardsAPI = createApi({
           }
           throw new Error('Invalid dashboard version');
         } catch (error) {
-          return { error };
+          return handleRequestError(error);
         }
       },
 
@@ -385,7 +358,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ dashboard, overwrite, inputs, folderUid }) => ({
         method: 'POST',
         url: '/dashboards/import',
-        data: {
+        body: {
           dashboard,
           overwrite,
           inputs,
@@ -410,7 +383,7 @@ export const browseDashboardsAPI = createApi({
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
       query: ({ dashboardUID, targetFolderUID }) => ({
         url: `/dashboards/uid/${dashboardUID}/trash`,
-        data: {
+        body: {
           folderUid: targetFolderUID,
         },
         method: 'PATCH',
