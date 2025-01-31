@@ -2,7 +2,6 @@ package promlib
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
 	"github.com/grafana/grafana/pkg/promlib/instrumentation"
@@ -137,19 +135,4 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 	}
 	in := i.(instance)
 	return &in, nil
-}
-
-// IsAPIError returns whether err is or wraps a Prometheus error.
-func IsAPIError(err error) bool {
-	// Check if the right error type is in err's chain.
-	var e *apiv1.Error
-	return errors.As(err, &e)
-}
-
-func ConvertAPIError(err error) error {
-	var e *apiv1.Error
-	if errors.As(err, &e) {
-		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
-	}
-	return err
 }
