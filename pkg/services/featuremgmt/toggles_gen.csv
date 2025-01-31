@@ -236,3 +236,5 @@ grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
+alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
+alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-squad,false,true,false
