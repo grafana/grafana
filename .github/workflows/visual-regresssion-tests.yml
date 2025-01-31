@@ -20,13 +20,10 @@ jobs:
         run: yarn install
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
-      - name: Run local server
-        run: yarn start &
-      - name: Wait for server to be ready
+      - name: Run local server & playwright tests
         run: |
-          timeout 1m bash -c "until curl -s http://localhost:3000 > /dev/null; do sleep 2; done"
-      - name: Run Playwright tests
-        run: |
+          yarn start &
+          sleep 10
           yarn e2e:playwright:vizregression | tee output.log
           if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
             echo "Playwright tests failed due to a snapshot issue."
