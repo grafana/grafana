@@ -67,9 +67,8 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
           currentOptions = [
             {
               label: userTypedSearch,
-              // @ts-expect-error
-              value: userTypedSearch,
-              description: t('multicombobox.custom-value.description', 'Custom'),
+              value: userTypedSearch as T,
+              description: t('combobox.custom-value.description', 'Use custom value'),
             },
             ...currentOptions,
           ];
