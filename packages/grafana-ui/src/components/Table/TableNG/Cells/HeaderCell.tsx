@@ -48,8 +48,8 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
 
   let isColumnFilterable = filterable;
-  if (field.config.custom.filterable !== filterable) {
-    isColumnFilterable = field.config.custom.filterable || false;
+  if (field.config.custom?.filterable !== filterable) {
+    isColumnFilterable = field.config.custom?.filterable || false;
   }
   // we have to remove/reset the filter if the column is not filterable
   if (!isColumnFilterable && filter[field.name]) {
