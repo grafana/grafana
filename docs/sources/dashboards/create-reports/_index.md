@@ -92,14 +92,13 @@ Any changes you make to a dashboard used in a report are reflected the next time
 For Grafana Enterprise, the Reporting feature has the following requirements:
 
 - SMTP must be configured for reports to be sent. Refer to [SMTP configuration documentation](ref:smtp) for more information.
-- The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.0+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
+- The [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) (v3.10+) must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
 
 ### Rendering configuration
 
 By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email.
 You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
 
-These options are available in the [reporting configuration](ref:reporting-configuration) of the `ini` file for Enterprise Grafana.
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.
