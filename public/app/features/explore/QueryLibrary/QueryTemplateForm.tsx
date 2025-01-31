@@ -9,9 +9,10 @@ import { Field } from '@grafana/ui/';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { Trans, t } from 'app/core/internationalization';
 import { getQueryDisplayText } from 'app/core/utils/richHistory';
-import { useAddQueryTemplateMutation, useEditQueryTemplateMutation } from 'app/features/query-library';
+import { useCreateQueryTemplateMutation, useUpdateQueryTemplateMutation } from 'app/features/query-library';
 import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
 
+import { convertAddQueryTemplateCommandToDataQuerySpec } from '../../query-library/api/mappers';
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
@@ -26,11 +27,6 @@ type Props = {
 export type QueryDetails = {
   description: string;
 };
-
-const VisibilityOptions = [
-  { value: 'Public', label: t('explore.query-library.public', 'Public') },
-  { value: 'Private', label: t('explore.query-library.private', 'Private') },
-];
 
 const getInstuctions = (isAdd: boolean) => {
   return isAdd
@@ -51,8 +47,8 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     },
   });
 
-  const [addQueryTemplate] = useAddQueryTemplateMutation();
-  const [editQueryTemplate] = useEditQueryTemplateMutation();
+  const [addQueryTemplate] = useCreateQueryTemplateMutation();
+  const [editQueryTemplate] = useUpdateQueryTemplateMutation();
 
   const datasource = useDatasource(queryToAdd?.datasource);
 
@@ -61,7 +57,9 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
     queryToAdd !== undefined ? [queryToAdd] : templateData?.query !== undefined ? [templateData?.query] : [];
 
   const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
-    return addQueryTemplate(addQueryTemplateCommand)
+    return addQueryTemplate({
+      queryTemplate: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
+    })
       .unwrap()
       .then(() => {
         getAppEvents().publish({
@@ -82,7 +80,12 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
   };
 
   const handleEditQueryTemplate = async (editQueryTemplateCommand: EditQueryTemplateCommand) => {
-    return editQueryTemplate(editQueryTemplateCommand)
+    return editQueryTemplate({
+      name: editQueryTemplateCommand.uid,
+      patch: {
+        spec: editQueryTemplateCommand.partialSpec,
+      },
+    })
       .unwrap()
       .then(() => {
         getAppEvents().publish({
@@ -147,7 +150,14 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
         <Input id="query-template-description" autoFocus={true} {...register('description')}></Input>
       </Field>
       <Field label={t('explore.query-template-modal.visibility', 'Visibility')}>
-        <RadioButtonGroup options={VisibilityOptions} value={'Public'} disabled={true} />
+        <RadioButtonGroup
+          options={[
+            { value: 'Public', label: t('explore.query-library.public', 'Public') },
+            { value: 'Private', label: t('explore.query-library.private', 'Private') },
+          ]}
+          value={'Public'}
+          disabled={true}
+        />
       </Field>
       <InlineSwitch
         showLabel={true}

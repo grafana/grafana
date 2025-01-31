@@ -149,6 +149,11 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(),
 }));
 
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  setWeekStart: jest.fn(),
+}));
+
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 jest.mock('@grafana/scenes', () => ({
@@ -350,7 +355,6 @@ describe('transformSceneToSaveModel', () => {
         $behaviors: [
           new LibraryPanelBehavior({
             name: 'Some lib panel panel',
-            title: 'A panel',
             uid: 'lib-panel-uid',
           }),
         ],
@@ -394,7 +398,7 @@ describe('transformSceneToSaveModel', () => {
         x: 0,
         y: 0,
       });
-      expect(result.title).toBe('A panel');
+      expect(result.title).toBe('Panel blahh blah');
       expect(result.transformations).toBeUndefined();
       expect(result.fieldConfig).toBeUndefined();
       expect(result.options).toBeUndefined();
@@ -846,7 +850,6 @@ describe('transformSceneToSaveModel', () => {
             $behaviors: [
               new LibraryPanelBehavior({
                 name: 'Some lib panel panel',
-                title: 'A panel',
                 uid: 'lib-panel-uid',
               }),
             ],
@@ -860,7 +863,7 @@ describe('transformSceneToSaveModel', () => {
 
         expect(result[0]).toMatchObject({
           id: 4,
-          title: 'A panel',
+          title: 'Panel blahh blah',
           libraryPanel: {
             name: 'Some lib panel panel',
             uid: 'lib-panel-uid',

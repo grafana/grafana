@@ -13,6 +13,7 @@ import {
   parseQueryParamMatchers,
   quoteWithEscape,
   quoteWithEscapeIfRequired,
+  unquoteIfRequired,
   unquoteWithUnescape,
 } from './matchers';
 
@@ -126,6 +127,16 @@ describe('unquoteWithUnescape', () => {
   it('should not unescape unquoted string', () => {
     const unquoted = unquoteWithUnescape('un\\"quo\\\\ted');
     expect(unquoted).toBe('un\\"quo\\\\ted');
+  });
+});
+
+describe('unquoteIfRequired', () => {
+  it('should unquote strings with no special character', () => {
+    expect(unquoteIfRequired('"test"')).toBe('test');
+  });
+
+  it('should not unquote strings with special character', () => {
+    expect(unquoteIfRequired('"test this"')).toBe('"test this"');
   });
 });
 

@@ -5,10 +5,10 @@
 package v0alpha1
 
 import (
-	"context"
+	context "context"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
-	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/generated/applyconfiguration/aggregation/v0alpha1"
+	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
+	applyconfigurationaggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/generated/applyconfiguration/aggregation/v0alpha1"
 	scheme "github.com/grafana/grafana/pkg/aggregator/generated/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
@@ -24,36 +24,37 @@ type DataPlaneServicesGetter interface {
 
 // DataPlaneServiceInterface has methods to work with DataPlaneService resources.
 type DataPlaneServiceInterface interface {
-	Create(ctx context.Context, dataPlaneService *v0alpha1.DataPlaneService, opts v1.CreateOptions) (*v0alpha1.DataPlaneService, error)
-	Update(ctx context.Context, dataPlaneService *v0alpha1.DataPlaneService, opts v1.UpdateOptions) (*v0alpha1.DataPlaneService, error)
+	Create(ctx context.Context, dataPlaneService *aggregationv0alpha1.DataPlaneService, opts v1.CreateOptions) (*aggregationv0alpha1.DataPlaneService, error)
+	Update(ctx context.Context, dataPlaneService *aggregationv0alpha1.DataPlaneService, opts v1.UpdateOptions) (*aggregationv0alpha1.DataPlaneService, error)
 	// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-	UpdateStatus(ctx context.Context, dataPlaneService *v0alpha1.DataPlaneService, opts v1.UpdateOptions) (*v0alpha1.DataPlaneService, error)
+	UpdateStatus(ctx context.Context, dataPlaneService *aggregationv0alpha1.DataPlaneService, opts v1.UpdateOptions) (*aggregationv0alpha1.DataPlaneService, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
-	Get(ctx context.Context, name string, opts v1.GetOptions) (*v0alpha1.DataPlaneService, error)
-	List(ctx context.Context, opts v1.ListOptions) (*v0alpha1.DataPlaneServiceList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*aggregationv0alpha1.DataPlaneService, error)
+	List(ctx context.Context, opts v1.ListOptions) (*aggregationv0alpha1.DataPlaneServiceList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
-	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.DataPlaneService, err error)
-	Apply(ctx context.Context, dataPlaneService *aggregationv0alpha1.DataPlaneServiceApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.DataPlaneService, err error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *aggregationv0alpha1.DataPlaneService, err error)
+	Apply(ctx context.Context, dataPlaneService *applyconfigurationaggregationv0alpha1.DataPlaneServiceApplyConfiguration, opts v1.ApplyOptions) (result *aggregationv0alpha1.DataPlaneService, err error)
 	// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-	ApplyStatus(ctx context.Context, dataPlaneService *aggregationv0alpha1.DataPlaneServiceApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.DataPlaneService, err error)
+	ApplyStatus(ctx context.Context, dataPlaneService *applyconfigurationaggregationv0alpha1.DataPlaneServiceApplyConfiguration, opts v1.ApplyOptions) (result *aggregationv0alpha1.DataPlaneService, err error)
 	DataPlaneServiceExpansion
 }
 
 // dataPlaneServices implements DataPlaneServiceInterface
 type dataPlaneServices struct {
-	*gentype.ClientWithListAndApply[*v0alpha1.DataPlaneService, *v0alpha1.DataPlaneServiceList, *aggregationv0alpha1.DataPlaneServiceApplyConfiguration]
+	*gentype.ClientWithListAndApply[*aggregationv0alpha1.DataPlaneService, *aggregationv0alpha1.DataPlaneServiceList, *applyconfigurationaggregationv0alpha1.DataPlaneServiceApplyConfiguration]
 }
 
 // newDataPlaneServices returns a DataPlaneServices
 func newDataPlaneServices(c *AggregationV0alpha1Client) *dataPlaneServices {
 	return &dataPlaneServices{
-		gentype.NewClientWithListAndApply[*v0alpha1.DataPlaneService, *v0alpha1.DataPlaneServiceList, *aggregationv0alpha1.DataPlaneServiceApplyConfiguration](
+		gentype.NewClientWithListAndApply[*aggregationv0alpha1.DataPlaneService, *aggregationv0alpha1.DataPlaneServiceList, *applyconfigurationaggregationv0alpha1.DataPlaneServiceApplyConfiguration](
 			"dataplaneservices",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			"",
-			func() *v0alpha1.DataPlaneService { return &v0alpha1.DataPlaneService{} },
-			func() *v0alpha1.DataPlaneServiceList { return &v0alpha1.DataPlaneServiceList{} }),
+			func() *aggregationv0alpha1.DataPlaneService { return &aggregationv0alpha1.DataPlaneService{} },
+			func() *aggregationv0alpha1.DataPlaneServiceList { return &aggregationv0alpha1.DataPlaneServiceList{} },
+		),
 	}
 }

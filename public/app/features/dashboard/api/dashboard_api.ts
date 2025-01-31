@@ -1,17 +1,18 @@
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { Dashboard } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { DashboardDTO } from 'app/types';
 
 import { LegacyDashboardAPI } from './legacy';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 import { getDashboardsApiVersion } from './utils';
 import { K8sDashboardAPI } from './v0';
-import { K8sDashboardV2APIStub } from './v2';
+import { K8sDashboardV2API } from './v2';
 
 type DashboardAPIClients = {
-  legacy: DashboardAPI<DashboardDTO>;
-  v0: DashboardAPI<DashboardDTO>;
+  legacy: DashboardAPI<DashboardDTO, Dashboard>;
+  v0: DashboardAPI<DashboardDTO, Dashboard>;
   // v1: DashboardDTO; TODO[schema]: enable v1 when available
-  v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>;
+  v2: DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>;
 };
 
 type DashboardReturnTypes = DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>;
@@ -26,9 +27,13 @@ export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefin
 }
 
 // Overloads
-export function getDashboardAPI(): DashboardAPI<DashboardDTO>;
-export function getDashboardAPI(requestV2Response: 'v2'): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>>;
-export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<DashboardReturnTypes> {
+export function getDashboardAPI(): DashboardAPI<DashboardDTO, Dashboard>;
+export function getDashboardAPI(
+  requestV2Response: 'v2'
+): DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>, DashboardV2Spec>;
+export function getDashboardAPI(
+  requestV2Response?: 'v2'
+): DashboardAPI<DashboardReturnTypes, Dashboard | DashboardV2Spec> {
   const v = getDashboardsApiVersion();
   const isConvertingToV1 = !requestV2Response;
 
@@ -36,12 +41,12 @@ export function getDashboardAPI(requestV2Response?: 'v2'): DashboardAPI<Dashboar
     clients = {
       legacy: new LegacyDashboardAPI(),
       v0: new K8sDashboardAPI(),
-      v2: new K8sDashboardV2APIStub(isConvertingToV1),
+      v2: new K8sDashboardV2API(isConvertingToV1),
     };
   }
 
   if (v === 'v2' && requestV2Response === 'v2') {
-    return new K8sDashboardV2APIStub(false);
+    return new K8sDashboardV2API(false);
   }
 
   if (!clients[v]) {

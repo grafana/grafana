@@ -16,6 +16,7 @@ import {
   SceneDataTransformer,
   SceneGridItemLike,
   SceneGridLayout,
+  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   SceneRefreshPicker,
@@ -44,15 +45,27 @@ import {
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
+  GridLayoutItemSpec,
   GroupByVariableKind,
   IntervalVariableKind,
+  LibraryPanelKind,
   PanelKind,
   PanelQueryKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/src/schema/dashboard/v2alpha0';
+import { contextSrv } from 'app/core/core';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyFolder,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+  AnnoKeyDashboardIsSnapshot,
+  DeprecatedInternalId,
+} from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -63,17 +76,21 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getDashboardSceneFor, getIntervalsFromQueryString, getVizPanelKeyForPanelId } from '../utils/utils';
 
+import { GRID_ROW_HEIGHT } from './const';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -112,22 +129,57 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     });
   });
 
+  const isDashboardEditable = Boolean(dashboard.editable);
+  const canSave = dto.access.canSave !== false;
+  const dashboardId = metadata.labels?.[DeprecatedInternalId];
+
+  const meta: DashboardMeta = {
+    canShare: dto.access.canShare !== false,
+    canSave,
+    canStar: dto.access.canStar !== false,
+    canEdit: dto.access.canEdit !== false,
+    canDelete: dto.access.canDelete !== false,
+    canAdmin: dto.access.canAdmin !== false,
+    url: dto.access.url,
+    slug: dto.access.slug,
+    annotationsPermissions: dto.access.annotationsPermissions,
+    created: metadata.creationTimestamp,
+    createdBy: metadata.annotations?.[AnnoKeyCreatedBy],
+    updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
+    updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
+    folderUid: metadata.annotations?.[AnnoKeyFolder],
+    isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
+
+    // UI-only metadata, ref: DashboardModel.initMeta
+    showSettings: Boolean(dto.access.canEdit),
+    canMakeEditable: canSave && !isDashboardEditable,
+    hasUnsavedFolderChange: false,
+    version: parseInt(metadata.resourceVersion, 10),
+    k8s: metadata,
+  };
+
+  // Ref: DashboardModel.initMeta
+  if (!isDashboardEditable) {
+    meta.canEdit = false;
+    meta.canDelete = false;
+    meta.canSave = false;
+  }
+
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
     editable: dashboard.editable,
     preload: dashboard.preload,
-    id: dashboard.id,
+    id: dashboardId,
     isDirty: false,
     links: dashboard.links,
-    // TODO: Combine access and metadata to compose the V1 meta object
-    meta: {},
+    meta,
     tags: dashboard.tags,
     title: dashboard.title,
     uid: metadata.name,
-    version: dashboard.schemaVersion,
+    version: parseInt(metadata.resourceVersion, 10),
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: dashboard.preload ? false : true,
+        isLazy: !(dashboard.preload || contextSrv.user.authenticatedBy === 'render'),
         children: createSceneGridLayoutForItems(dashboard),
         $behaviors: [trackIfEmpty],
       }),
@@ -140,7 +192,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       weekStart: dashboard.timeSettings.weekStart,
       UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
     }),
-    $variables: getVariables(dashboard),
+    $variables: getVariables(dashboard, meta.isSnapshot ?? false),
     $behaviors: [
       new behaviors.CursorSync({
         sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
@@ -153,11 +205,11 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboard.id?.toString(),
+        uid: dashboardId?.toString(),
       }),
       new DashboardReloadBehavior({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboard.id?.toString(),
+        uid: dashboardId?.toString(),
         version: 1,
       }),
     ],
@@ -176,7 +228,25 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     }),
   });
 
+  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
+
   return dashboardScene;
+}
+
+function buildGridItem(gridItem: GridLayoutItemSpec, panel: PanelKind, yOverride?: number): DashboardGridItem {
+  const vizPanel = buildVizPanel(panel);
+  return new DashboardGridItem({
+    key: `grid-item-${panel.spec.id}`,
+    x: gridItem.x,
+    y: yOverride ?? gridItem.y,
+    width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
+    height: gridItem.height,
+    itemHeight: gridItem.height,
+    body: vizPanel,
+    variableName: gridItem.repeat?.value,
+    repeatDirection: gridItem.repeat?.direction,
+    maxPerRow: gridItem.repeat?.maxPerRow,
+  });
 }
 
 function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridItemLike[] {
@@ -191,7 +261,9 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
       }
 
       if (panel.kind === 'Panel') {
-        const vizPanel = buildVizPanel(panel);
+        return buildGridItem(element.spec, panel);
+      } else if (panel.kind === 'LibraryPanel') {
+        const libraryPanel = buildLibraryPanel(panel);
 
         return new DashboardGridItem({
           key: `grid-item-${panel.spec.id}`,
@@ -200,15 +272,82 @@ function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridIte
           width: element.spec.width,
           height: element.spec.height,
           itemHeight: element.spec.height,
-          body: vizPanel,
+          body: libraryPanel,
         });
       } else {
         throw new Error(`Unknown element kind: ${element.kind}`);
       }
+    } else if (element.kind === 'GridLayoutRow') {
+      const children = element.spec.elements.map((gridElement) => {
+        const panel = dashboard.elements[gridElement.spec.element.name];
+        if (panel.kind === 'Panel') {
+          return buildGridItem(gridElement.spec, panel, element.spec.y + GRID_ROW_HEIGHT + gridElement.spec.y);
+        } else {
+          throw new Error(`Unknown element kind: ${gridElement.kind}`);
+        }
+      });
+      let behaviors: SceneObject[] | undefined;
+      if (element.spec.repeat) {
+        behaviors = [new RowRepeaterBehavior({ variableName: element.spec.repeat.value })];
+      }
+      return new SceneGridRow({
+        y: element.spec.y,
+        isCollapsed: element.spec.collapsed,
+        title: element.spec.title,
+        $behaviors: behaviors,
+        actions: new RowActions({}),
+        children,
+      });
     } else {
+      // If this has been validated by the schema we should never reach this point, which is why TS is telling us this is an error.
+      //@ts-expect-error
       throw new Error(`Unknown layout element kind: ${element.kind}`);
     }
   });
+}
+
+function buildLibraryPanel(panel: LibraryPanelKind): VizPanel {
+  const titleItems: SceneObject[] = [];
+
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
+
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: [],
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
+
+  titleItems.push(new PanelNotices());
+
+  const vizPanelState: VizPanelState = {
+    key: getVizPanelKeyForPanelId(panel.spec.id),
+    titleItems,
+    $behaviors: [
+      new LibraryPanelBehavior({
+        uid: panel.spec.libraryPanel.uid,
+        name: panel.spec.libraryPanel.name,
+      }),
+    ],
+    extendPanelContext: setDashboardPanelContext,
+    pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
+    title: panel.spec.title,
+    options: {},
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+  };
+
+  if (!config.publicDashboardAccessToken) {
+    vizPanelState.menu = new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    });
+  }
+
+  return new VizPanel(vizPanelState);
 }
 
 function buildVizPanel(panel: PanelKind): VizPanel {
@@ -247,15 +386,6 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     extendPanelContext: setDashboardPanelContext,
     // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
   };
-
-  // FIXME: Library Panel
-  // if (panel.spec.libraryPanel) {
-  //   vizPanelState.$behaviors!.push(
-  //     new LibraryPanelBehavior({ uid: panel.spec.libraryPanel.uid, name: panel.spec.libraryPanel.name })
-  //   );
-  //   vizPanelState.pluginId = LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID;
-  //   vizPanelState.$data = undefined;
-  // }
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({
@@ -353,15 +483,12 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   });
 }
 
-function getVariables(dashboard: DashboardV2Spec): SceneVariableSet | undefined {
+function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
   if (dashboard.variables.length) {
-    if (false) {
-      // FIXME: isSnapshot is not added to the schema yet
-      //if (dashboard.meta?.isSnapshot) {
-      // in the old model we use .meta.isSnapshot but meta is not persisted
-      // variables = createVariablesForSnapshot(dashboard);
+    if (isSnapshot) {
+      variables = createVariablesForSnapshot(dashboard);
     } else {
       variables = createVariablesForDashboard(dashboard);
     }
@@ -512,6 +639,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
+      isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       // @ts-expect-error
       defaultOptions: variable.options,
@@ -629,4 +757,12 @@ export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVar
     hide: transformVariableHideToEnumV1(variable.spec.hide),
   });
   return snapshotVariable;
+}
+
+export function getPanelElement(dashboard: DashboardV2Spec, elementName: string): PanelKind | undefined {
+  return dashboard.elements[elementName].kind === 'Panel' ? dashboard.elements[elementName] : undefined;
+}
+
+export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
+  return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
 }

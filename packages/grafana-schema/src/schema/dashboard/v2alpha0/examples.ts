@@ -1,14 +1,12 @@
-import { DashboardV2Spec } from './dashboard.gen';
+import { DashboardV2Spec } from './types.gen';
 
 export const handyTestingSchema: DashboardV2Spec = {
-  id: 1,
   title: 'Default Dashboard',
   description: 'This is a default dashboard',
   cursorSync: 'Off',
   liveNow: false,
   preload: false,
   editable: true,
-  schemaVersion: 40,
   tags: ['tag1', 'tag2'],
   timeSettings: {
     autoRefresh: '5s',
@@ -26,7 +24,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
-        builtIn: true,
+        builtIn: false,
         query: {
           kind: 'prometheus',
           spec: {
@@ -37,7 +35,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           type: 'prometheus',
           uid: 'uid',
         },
-        filter: { ids: [] },
+        filter: { ids: [1] },
         enable: true,
         hide: false,
         iconColor: 'rgba(0, 211, 255, 1)',
@@ -47,6 +45,7 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
@@ -62,18 +61,17 @@ export const handyTestingSchema: DashboardV2Spec = {
             scenarioId: 'annotations',
           },
         },
-        filter: { ids: [] },
         hide: true,
       },
     },
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: false,
         iconColor: 'yellow',
         name: 'Disabled',
@@ -87,11 +85,11 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'AnnotationQuery',
       spec: {
+        builtIn: false,
         datasource: {
           type: 'grafana-testdata-datasource',
           uid: 'uid',
         },
-        filter: { ids: [] },
         enable: true,
         hide: true,
         iconColor: 'dark-purple',
@@ -182,6 +180,71 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
+    'panel-2': {
+      kind: 'LibraryPanel',
+      spec: {
+        id: 2,
+        title: 'Test Library Panel',
+        libraryPanel: {
+          uid: 'uid-for-library-panel',
+          name: 'Library Panel',
+        },
+      },
+    },
+    'panel-3': {
+      kind: 'Panel',
+      spec: {
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [
+              {
+                kind: 'PanelQuery',
+                spec: {
+                  refId: 'A',
+                  datasource: {
+                    type: 'prometheus',
+                    uid: 'datasource1',
+                  },
+                  query: {
+                    kind: 'prometheus',
+                    spec: {
+                      expr: 'test-query',
+                    },
+                  },
+                  hidden: false,
+                },
+              },
+            ],
+            queryOptions: {
+              timeFrom: '1h',
+              maxDataPoints: 100,
+              timeShift: '1h',
+              queryCachingTTL: 60,
+              interval: '1m',
+              cacheTimeout: '1m',
+              hideTimeOverride: false,
+            },
+            transformations: [],
+          },
+        },
+        description: 'Test Description',
+        links: [],
+        title: 'Test Panel 3',
+        id: 3,
+        vizConfig: {
+          kind: 'timeseries',
+          spec: {
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+            options: {},
+            pluginVersion: '7.0.0',
+          },
+        },
+      },
+    },
   },
   layout: {
     kind: 'GridLayout',
@@ -194,10 +257,52 @@ export const handyTestingSchema: DashboardV2Spec = {
               kind: 'ElementReference',
               name: 'panel-1',
             },
-            height: 100,
-            width: 200,
+            height: 10,
+            width: 10,
             x: 0,
             y: 0,
+            repeat: {
+              mode: 'variable',
+              value: 'customVar',
+              maxPerRow: 3,
+            },
+          },
+        },
+        {
+          kind: 'GridLayoutItem',
+          spec: {
+            element: {
+              kind: 'ElementReference',
+              name: 'panel-2',
+            },
+            height: 10,
+            width: 200,
+            x: 0,
+            y: 2,
+          },
+        },
+        {
+          kind: 'GridLayoutRow',
+          spec: {
+            y: 20,
+            collapsed: false,
+            title: 'Row 1',
+            repeat: { value: 'customVar', mode: 'variable' },
+            elements: [
+              {
+                kind: 'GridLayoutItem',
+                spec: {
+                  element: {
+                    kind: 'ElementReference',
+                    name: 'panel-3',
+                  },
+                  height: 10,
+                  width: 10,
+                  x: 0,
+                  y: 0,
+                },
+              },
+            ],
           },
         },
       ],
@@ -205,7 +310,7 @@ export const handyTestingSchema: DashboardV2Spec = {
   },
   links: [
     {
-      asDropdown: false,
+      asDropdown: true,
       icon: '',
       includeVars: false,
       keepTime: false,
@@ -279,12 +384,10 @@ export const handyTestingSchema: DashboardV2Spec = {
     {
       kind: 'DatasourceVariable',
       spec: {
-        allValue: undefined,
         current: {
           text: 'text1',
           value: 'value1',
         },
-        defaultOptionEnabled: true,
         description: 'A datasource variable',
         hide: 'dontHide',
         includeAll: false,
@@ -345,7 +448,7 @@ export const handyTestingSchema: DashboardV2Spec = {
           },
         ],
         query: '1m,5m,10m',
-        refresh: 'onDashboardLoad',
+        refresh: 'onTimeRangeChanged',
         skipUrlSync: false,
       },
     },
@@ -377,7 +480,6 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
         description: 'A group by variable',
         hide: 'dontHide',
-        includeAll: false,
         label: 'Group By Variable',
         multi: false,
         name: 'groupByVar',

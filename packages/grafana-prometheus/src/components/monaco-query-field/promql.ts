@@ -81,6 +81,7 @@ const functions = [
   'days_in_month',
   'delta',
   'deriv',
+  'double_exponential_smoothing',
   'exp',
   'floor',
   'histogram_quantile',
@@ -90,6 +91,8 @@ const functions = [
   'histogram_fraction',
   'histogram_stddev',
   'histogram_stdvar',
+  // Renamed as DoubleExponentialSmoothing with Prometheus v3.x
+  // https://github.com/prometheus/prometheus/pull/14930
   'holt_winters',
   'hour',
   'idelta',

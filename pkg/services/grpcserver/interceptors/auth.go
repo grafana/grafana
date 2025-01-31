@@ -21,6 +21,12 @@ type Authenticator interface {
 	Authenticate(ctx context.Context) (context.Context, error)
 }
 
+type AuthenticatorFunc func(context.Context) (context.Context, error)
+
+func (fn AuthenticatorFunc) Authenticate(ctx context.Context) (context.Context, error) {
+	return fn(ctx)
+}
+
 // authenticator can authenticate GRPC requests.
 type authenticator struct {
 	contextHandler grpccontext.ContextHandler

@@ -2,28 +2,23 @@ import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
-import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { logOptions } from '../../utils';
-import { t, Trans } from '../../utils/i18n';
+import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
-import { Box } from '../Layout/Box/Box';
-import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { AsyncError, NotFoundError } from './MessageRows';
+import { fuzzyFind, itemToString } from './filter';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
-
-export type ComboboxOption<T extends string | number = string> = {
-  label?: string;
-  value: T;
-  description?: string;
-};
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -84,32 +79,14 @@ export type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
-
-export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
-  if (!item) {
-    return '';
-  }
-  if (item.label?.includes('Custom value: ')) {
-    return item.value.toString();
-  }
-  return item.label ?? item.value.toString();
-}
-
-function itemFilter<T extends string | number>(inputValue: string) {
-  const lowerCasedInputValue = inputValue.toLowerCase();
-
-  return (item: ComboboxOption<T>) => {
-    return (
-      !inputValue ||
-      item.label?.toLowerCase().includes(lowerCasedInputValue) ||
-      item.value?.toString().toLowerCase().includes(lowerCasedInputValue)
-    );
-  };
-}
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
+  AutoSizeConditionals &
+  ClearableConditionals<T>;
 
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
+
+export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 /**
  * A performant Select replacement.
@@ -176,6 +153,12 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     [createCustomValue, id, ariaLabelledBy]
   );
 
+  // Memoize for using in fuzzy search
+  const stringifiedItems = useMemo(
+    () => (isAsync ? [] : options.map((item) => itemToString(item))),
+    [options, isAsync]
+  );
+
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
       return null;
@@ -213,8 +196,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => MENU_OPTION_HEIGHT,
-    overscan: 4,
+    estimateSize: (index: number) => (items[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT),
+    overscan: VIRTUAL_OVERSCAN_ITEMS,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
@@ -280,7 +263,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
 
       if (!isAsync) {
-        const filteredItems = options.filter(itemFilter(inputValue));
+        const filteredItems = fuzzyFind(options, stringifiedItems, inputValue);
         setItems(filteredItems, inputValue);
       } else {
         if (inputValue && createCustomValue) {
@@ -354,7 +337,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, isOpen);
 
   const isAutoSize = width === 'auto';
 
@@ -462,32 +445,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
                 </ul>
               )}
               <div aria-live="polite">
-                {asyncError && (
-                  <MessageRow>
-                    <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-                    <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
-                  </MessageRow>
-                )}
-                {items.length === 0 && !asyncError && (
-                  <MessageRow>
-                    <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
-                  </MessageRow>
-                )}
+                {asyncError && <AsyncError />}
+                {items.length === 0 && !asyncError && <NotFoundError />}
               </div>
             </ScrollContainer>
           )}
         </div>
       </Portal>
     </div>
-  );
-};
-
-const MessageRow = ({ children }: { children: ReactNode }) => {
-  return (
-    <Box padding={2} color="secondary">
-      <Stack justifyContent="center" alignItems="center">
-        {children}
-      </Stack>
-    </Box>
   );
 };

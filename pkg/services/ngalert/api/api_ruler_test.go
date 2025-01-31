@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -33,7 +32,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -358,6 +359,72 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
 		require.True(t, result.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection)
+
+		t.Run("should resolve Updated_by with user service", func(t *testing.T) {
+			testcases := []struct {
+				desc             string
+				UpdatedBy        *models.UserUID
+				User             *user.User
+				UserServiceError error
+				Expected         *apimodels.UserInfo
+			}{
+				{
+					desc:             "nil if UpdatedBy is nil",
+					UpdatedBy:        nil,
+					User:             nil,
+					UserServiceError: nil,
+					Expected:         nil,
+				},
+				{
+					desc:             "just UID if user is not found",
+					UpdatedBy:        util.Pointer(models.UserUID("test-uid")),
+					User:             nil,
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID: "test-uid",
+					},
+				},
+				{
+					desc:             "just UID if error",
+					UpdatedBy:        util.Pointer(models.UserUID("test-uid")),
+					UserServiceError: errors.New("error"),
+					Expected: &apimodels.UserInfo{
+						UID: "test-uid",
+					},
+				},
+				{
+					desc:      "login if it's known user",
+					UpdatedBy: util.Pointer(models.UserUID("test-uid")),
+					User: &user.User{
+						Login: "Test",
+					},
+					UserServiceError: nil,
+					Expected: &apimodels.UserInfo{
+						UID:  "test-uid",
+						Name: "Test",
+					},
+				},
+			}
+			for _, tc := range testcases {
+				t.Run(tc.desc, func(t *testing.T) {
+					expectedRule.UpdatedBy = tc.UpdatedBy
+					svc := createService(ruleStore)
+					usvc := usertest.NewUserServiceFake()
+					usvc.ExpectedUser = tc.User
+					usvc.ExpectedError = tc.UserServiceError
+					svc.userService = usvc
+
+					response := svc.RouteGetRuleByUID(req, expectedRule.UID)
+
+					require.Equal(t, http.StatusOK, response.Status())
+					result := &apimodels.GettableExtendedRuleNode{}
+					require.NoError(t, json.Unmarshal(response.Body(), result))
+					require.NotNil(t, result)
+
+					require.Equal(t, tc.Expected, result.GrafanaManagedAlert.UpdatedBy)
+				})
+			}
+		})
 	})
 
 	t.Run("error when fetching rule with non-existent UID", func(t *testing.T) {
@@ -656,10 +723,11 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		amConfigStore:  &fakeAMRefresher{},
 		amRefresher:    &fakeAMRefresher{},
 		featureManager: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
+		userService:    usertest.NewUserServiceFake(),
 	}
 }
 

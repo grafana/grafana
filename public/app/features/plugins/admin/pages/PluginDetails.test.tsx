@@ -182,7 +182,8 @@ describe('Plugin details page', () => {
 
     it('should display the installed version if a plugin is installed', async () => {
       const installedVersion = '1.3.443';
-      const { queryByText } = renderPluginDetails({ id, installedVersion });
+      const isInstalled = true;
+      const { queryByText } = renderPluginDetails({ id, isInstalled, installedVersion });
 
       expect(await queryByText(`${installedVersion}`)).toBeInTheDocument();
     });
@@ -200,7 +201,7 @@ describe('Plugin details page', () => {
       };
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
-      expect(await findByText('1.1.1')).toBeInTheDocument();
+      expect(await findByText('4.2.2')).toBeInTheDocument();
       expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
     });
 

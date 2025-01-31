@@ -1,22 +1,29 @@
 import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
-import { getV1SchemaPanelCounts, getV1SchemaVariables } from 'app/features/dashboard/utils/tracking';
-import { SaveDashboardResponseDTO } from 'app/types';
+import {
+  getPanelPluginCounts,
+  getV1SchemaVariables,
+  getV2SchemaVariables,
+} from 'app/features/dashboard/utils/tracking';
+import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 
-import { getRawDashboardChanges } from '../saving/getDashboardChanges';
+import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-export interface DashboardSceneSerializerLike<T> {
+export interface DashboardSceneSerializerLike<T, M> {
   /**
    * The save model which the dashboard scene was originally created from
    */
   initialSaveModel?: T;
+  metadata?: M;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -28,21 +35,22 @@ export interface DashboardSceneSerializerLike<T> {
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
-  getTrackingInformation: () => DashboardTrackingInfo | undefined;
+  getTrackingInformation: (s: DashboardScene) => DashboardTrackingInfo | undefined;
+  getSnapshotUrl: () => string | undefined;
 }
 
 interface DashboardTrackingInfo {
   uid?: string;
   title?: string;
   schemaVersion: number;
-  version_before_migration?: number;
   panels_count: number;
   settings_nowdelay?: number;
   settings_livenow?: boolean;
 }
 
-export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard> {
+export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
   initialSaveModel?: Dashboard;
+  metadata?: DashboardMeta;
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModel(s);
@@ -93,7 +101,8 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   }
 
   getTrackingInformation(): DashboardTrackingInfo | undefined {
-    const panels = getV1SchemaPanelCounts(this.initialSaveModel?.panels || []);
+    const panelTypes = this.initialSaveModel?.panels?.map((p) => p.type) || [];
+    const panels = getPanelPluginCounts(panelTypes);
     const variables = getV1SchemaVariables(this.initialSaveModel?.templating?.list || []);
 
     if (this.initialSaveModel) {
@@ -101,7 +110,6 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
         uid: this.initialSaveModel.uid,
         title: this.initialSaveModel.title,
         schemaVersion: this.initialSaveModel.schemaVersion,
-        version_before_migration: this.initialSaveModel.version,
         panels_count: this.initialSaveModel.panels?.length || 0,
         settings_nowdelay: undefined,
         settings_livenow: !!this.initialSaveModel.liveNow,
@@ -111,46 +119,96 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
     }
     return undefined;
   }
+
+  getSnapshotUrl() {
+    return this.initialSaveModel?.snapshot?.originalUrl;
+  }
 }
 
-export class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2Spec> {
+export class V2DashboardSerializer
+  implements DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>
+{
   initialSaveModel?: DashboardV2Spec;
+  metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
 
   getSaveModel(s: DashboardScene) {
     return transformSceneToSaveModelSchemaV2(s);
   }
 
   getSaveAsModel(s: DashboardScene, options: SaveDashboardAsOptions) {
-    throw new Error('Method not implemented.');
-    // eslint-disable-next-line
-    return {} as DashboardV2Spec;
+    const saveModel = this.getSaveModel(s);
+    return {
+      ...saveModel,
+      title: options.title || '',
+      description: options.description || '',
+      tags: options.isNew || options.copyTags ? saveModel.tags : [],
+    };
   }
 
-  getDashboardChangesFromScene(scene: DashboardScene) {
-    throw new Error('v2 schema: Method not implemented.');
-    // eslint-disable-next-line
-    return {} as DashboardChangeInfo;
+  getDashboardChangesFromScene(
+    scene: DashboardScene,
+    options: { saveTimeRange?: boolean; saveVariables?: boolean; saveRefresh?: boolean }
+  ) {
+    const changedSaveModel = this.getSaveModel(scene);
+    const changeInfo = getRawDashboardV2Changes(
+      this.initialSaveModel!,
+      changedSaveModel,
+      options.saveTimeRange,
+      options.saveVariables,
+      options.saveRefresh
+    );
+
+    const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
+    const isNew = !Boolean(scene.getInitialState()?.uid);
+
+    return {
+      ...changeInfo,
+      hasFolderChanges,
+      hasChanges: changeInfo.hasChanges || hasFolderChanges,
+      isNew,
+    };
   }
 
   onSaveComplete(saveModel: DashboardV2Spec, result: SaveDashboardResponseDTO): void {
-    throw new Error('v2 schema: Method not implemented.');
+    this.initialSaveModel = {
+      ...saveModel,
+    };
   }
 
-  getTrackingInformation() {
-    throw new Error('v2 schema: Method not implemented.');
+  getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
+    const panelPluginIds =
+      Object.values(this.initialSaveModel?.elements ?? [])
+        .filter((e) => e.kind === 'Panel')
+        .map((p) => p.spec.vizConfig.kind) || [];
+    const panels = getPanelPluginCounts(panelPluginIds);
+    const variables = getV2SchemaVariables(this.initialSaveModel?.variables || []);
+
+    if (this.initialSaveModel) {
+      return {
+        schemaVersion: 40,
+        uid: s.state.uid,
+        title: this.initialSaveModel.title,
+        panels_count: panelPluginIds.length || 0,
+        settings_nowdelay: undefined,
+        settings_livenow: !!this.initialSaveModel.liveNow,
+        ...panels,
+        ...variables,
+      };
+    }
+
     return undefined;
+  }
+
+  getSnapshotUrl() {
+    return this.metadata?.annotations?.[AnnoKeyDashboardSnapshotOriginalUrl];
   }
 }
 
-export function getDashboardSceneSerializer(
-  forceLegacy?: boolean
-): DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> {
-  // When we have end-to-end v2 API integration, this will be controlled by a feature toggle, no need for forceLegacy
-  if (forceLegacy) {
-    return new V1DashboardSerializer();
-  }
-
-  if (config.featureToggles.dashboardSchemaV2) {
+export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<
+  Dashboard | DashboardV2Spec,
+  DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+> {
+  if (config.featureToggles.useV2DashboardsAPI) {
     return new V2DashboardSerializer();
   }
 

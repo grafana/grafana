@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 import { getDashboardAPI, setDashboardAPI } from './dashboard_api';
 import { LegacyDashboardAPI } from './legacy';
 import { K8sDashboardAPI } from './v0';
-import { K8sDashboardV2APIStub } from './v2';
+import { K8sDashboardV2API } from './v2';
 
 describe('DashboardApi', () => {
   it('should use legacy api by default', () => {
@@ -36,7 +36,7 @@ describe('DashboardApi', () => {
 
     it('should use v2 api when and useV2DashboardsAPI toggle is enabled', () => {
       config.featureToggles.useV2DashboardsAPI = true;
-      expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardV2APIStub);
+      expect(getDashboardAPI()).toBeInstanceOf(K8sDashboardV2API);
     });
   });
 

@@ -247,6 +247,39 @@ describe('utils', () => {
       expect(rows.length).toBe(1);
       expect(rows[0].value).toBe('70');
     });
+
+    it('filters out values when specified', () => {
+      const aField = { ...fields[1], values: [0, 3, 5] };
+      const bField = { ...fields[2], values: [5, 0, 7] };
+
+      let rows = getContentItems(
+        [fields[0], aField, bField],
+        xField,
+        dataIdxs,
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.Ascending,
+        undefined,
+        true
+      );
+
+      expect(rows.length).toBe(1);
+      expect(rows[0].value).toBe('3');
+
+      rows = getContentItems(
+        [fields[0], aField, bField],
+        xField,
+        [0, 0, 0],
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.Ascending,
+        undefined,
+        true
+      );
+
+      expect(rows.length).toBe(1);
+      expect(rows[0].value).toBe('5');
+    });
   });
 
   describe('it tests getContentItems with string values', () => {
