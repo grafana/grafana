@@ -20,21 +20,14 @@ jobs:
         run: yarn install
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
-      - name: Start server
+      - name: Start backend server
         run: |
-          echo "Starting server..."
+          echo "Starting backend server..."
+          make run &
+      - name: Start frontend server
+        run: |
+          echo "Starting frontend server..."
           yarn start &
-      - name: Wait for server to be ready
-        run: |
-          echo "Waiting for server to be ready..."
-          for i in {1..30}; do
-            if curl -s http://localhost:3000 > /dev/null; then
-              echo "Server is ready!"
-              break
-            fi
-            echo "Server not yet ready, retrying in 2 seconds..."
-            sleep 2
-          done
       - name: Run Playwright tests
         run: |
           yarn e2e:playwright:vizregression | tee output.log
