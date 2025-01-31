@@ -131,7 +131,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		} else {
 			action = stages.LogOnly
 		}
-		l.Info("Initializing Alertmanager", "extraDedupStage", action)
+		l.Info("Initializing Alertmanager", "extra_dedup_stage", action)
 	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
