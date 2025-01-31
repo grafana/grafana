@@ -469,6 +469,16 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
     }
   }
 
+  bannerHasBeenShown() {
+    return localStorage.getItem('nativeHistogramBanner') ?? false;
+  }
+
+  setBannerHasBeenShown() {
+    if (this.state.histogramsLoaded && this.state.nativeHistograms.length > 0) {
+      localStorage.setItem('nativeHistogramBanner', 'true');
+    }
+  }
+
   resetOtelExperience(hasOtelResources?: boolean, nonPromotedResources?: string[]) {
     const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
     const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
@@ -598,9 +608,16 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       reportOtelExperience.current = true;
     }
 
+    // do not show the native histogram banner more than once
+    useEffect(() => {
+      return () => {
+        model.setBannerHasBeenShown();
+      };
+    }, [model]);
+
     return (
       <div className={styles.container}>
-        {NativeHistogramBanner({ histogramsLoaded, nativeHistograms, trail: model })}
+        {!model.bannerHasBeenShown() && NativeHistogramBanner({ histogramsLoaded, nativeHistograms, trail: model })}
         {showHeaderForFirstTimeUsers && <MetricsHeader />}
         <history.Component model={history} />
         {controls && (
