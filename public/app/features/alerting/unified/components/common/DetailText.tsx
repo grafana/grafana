@@ -1,0 +1,45 @@
+import { Box, ClipboardButton, Stack, Text, Tooltip } from '@grafana/ui';
+
+import ConditionalWrap from '../ConditionalWrap';
+
+type DetailTextProps = {
+  label: string;
+  value: string | JSX.Element | null;
+  /** Should the value be displayed using monospace font family? */
+  monospace?: boolean;
+  /** Optional string to display in a tooltip on hover of the value */
+  tooltipValue?: string;
+} & (
+  | {
+      // Require either both copy props or neither
+      /** Should we show a button for copying the value to clipboard? */
+      showCopyButton: boolean;
+      /**
+       * Value to use for copying to clipboard, when enabled.
+       * Needed as the value could be an element
+       */
+      copyValue: string;
+    }
+  | { showCopyButton?: never; copyValue?: never }
+);
+
+export const DetailText = ({ label, value, monospace, showCopyButton, copyValue, tooltipValue }: DetailTextProps) => {
+  return (
+    <Box paddingBottom={2}>
+      <Stack direction="column" gap={0}>
+        <Text color="secondary">{label}</Text>
+        <Text color="primary" variant={monospace ? 'code' : 'body'}>
+          <ConditionalWrap
+            shouldWrap={Boolean(tooltipValue)}
+            wrap={(children) => <Tooltip content={tooltipValue!}>{children}</Tooltip>}
+          >
+            <span>{value}</span>
+          </ConditionalWrap>
+          {showCopyButton && (
+            <ClipboardButton fill="text" variant="secondary" icon="copy" size="sm" getText={() => copyValue} />
+          )}
+        </Text>
+      </Stack>
+    </Box>
+  );
+};
