@@ -23,7 +23,11 @@ jobs:
       - name: Start backend server
         run: |
           echo "Starting backend server..."
-          make run &
+          make run
+      - name: Start frontend server
+        run: |
+          echo "Starting frontend server..."
+          yarn start
       - name: Run Playwright tests
         run: |
           yarn e2e:playwright:vizregression | tee output.log
