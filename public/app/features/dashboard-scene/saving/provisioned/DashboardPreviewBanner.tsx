@@ -5,69 +5,39 @@ import { DashboardRoutes } from 'app/types';
 interface DashboardPreviewBannerProps {
   queryParams: DashboardPageRouteSearchParams;
   route?: string;
-  slug?: string;
   path?: string;
 }
-export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  // Do not show a banner when rendering the previews
-  if ('kiosk' in queryParams) {
+
+export function DashboardPreviewBanner({ queryParams, route, path }: DashboardPreviewBannerProps) {
+  if ('kiosk' in queryParams || !queryParams.isPreview) {
     return null;
   }
+
   const hasPrLink = Boolean(queryParams.prLink);
-
-  if (route === DashboardRoutes.Provisioning && path) {
-    return (
-      <Alert
-        title={'This dashboard is loaded from an external repository'}
-        severity={'info'}
-        style={{ flex: 0 }}
-        buttonContent={
-          hasPrLink && (
-            <Stack alignItems={'center'}>
-              <span>View pull request in GitHub</span>
-              <Icon name="external-link-alt" />
-            </Stack>
-          )
-        }
-        onRemove={
-          hasPrLink
-            ? () => {
-                window.open(queryParams.prLink, '_blank');
-              }
-            : undefined
-        }
-      >
-        The value is <b>not</b> saved in the grafana database.
-      </Alert>
-    );
-  }
-
-  if (!queryParams.isPreview) {
-    return null;
-  }
+  const isProvisioned = route === DashboardRoutes.Provisioning && path;
 
   return (
     <Alert
-      title={'Dashboard preview'}
-      severity={'success'}
+      title={isProvisioned ? 'This dashboard is loaded from an external repository' : 'Dashboard preview'}
+      severity={isProvisioned ? 'info' : 'success'}
       style={{ flex: 0 }}
       buttonContent={
         hasPrLink && (
           <Stack alignItems={'center'}>
-            <span>Open pull request in GitHub</span>
+            <span>{isProvisioned ? 'View' : 'Open'} pull request in GitHub</span>
             <Icon name="external-link-alt" />
           </Stack>
         )
       }
-      onRemove={
-        hasPrLink
-          ? () => {
-              window.open(queryParams.prLink, '_blank');
-            }
-          : undefined
-      }
+      onRemove={hasPrLink ? () => window.open(queryParams.prLink, '_blank') : undefined}
     >
-      {queryParams.prLink && <>Branch successfully created.</>}
+      {isProvisioned ? (
+        <>
+          The value is <strong>not</strong> saved in the grafana database.
+        </>
+      ) : (
+        queryParams.prLink && <>Branch successfully created.</>
+      )}
     </Alert>
   );
 }
