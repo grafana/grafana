@@ -50,9 +50,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       const urlParams = { ...params, ...data };
       const currentPath = locationService.getLocation();
       console.log({ currentPath });
-      locationService.partial(urlParams);
-
-      dispatch(locationService.partial(urlParams));
+      locationService.partial(urlParams, true);
 
       // dispatch(updateLocation({
       //   query: data,
