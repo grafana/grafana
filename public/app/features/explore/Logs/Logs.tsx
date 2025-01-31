@@ -710,10 +710,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [absoluteRange, displayedFields, exploreId, logRows, panelState, visualisationType]
   );
 
-  const logsPanelV2 = true;
-
   const scrollToTopLogs = useCallback(() => {
-    if (logsPanelV2) {
+    if (config.featureToggles.newLogsPanel) {
       eventBus.publish(
         new ScrollToLogsEvent({
           scrollTo: 'top',
@@ -728,10 +726,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
     }
     topLogsRef.current?.scrollIntoView();
-  }, [eventBus, logsPanelV2]);
+  }, [eventBus]);
 
   const scrollToBottomLogs = useCallback(() => {
-    if (logsPanelV2) {
+    if (config.featureToggles.newLogsPanel) {
       eventBus.publish(
         new ScrollToLogsEvent({
           scrollTo: 'bottom',
@@ -746,7 +744,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
     }
     topLogsRef.current?.scrollTo(0, topLogsRef.current.scrollHeight);
-  }, [eventBus, logsPanelV2]);
+  }, [eventBus]);
 
   const onPinToContentOutlineClick = useCallback(
     (row: LogRowModel, allowUnPin = true) => {
@@ -996,7 +994,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </div>
           )}
-          {visualisationType === 'logs' && hasData && !logsPanelV2 && (
+          {visualisationType === 'logs' && hasData && !config.featureToggles.newLogsPanel && (
             <>
               <div
                 className={config.featureToggles.logsInfiniteScrolling ? styles.scrollableLogRows : styles.logRows}
@@ -1065,7 +1063,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               />
             </>
           )}
-          {visualisationType === 'logs' && logsPanelV2 && (
+          {visualisationType === 'logs' && config.featureToggles.newLogsPanel && (
             <>
               <div data-testid="logRows" ref={logsContainerRef} className={styles.logRows}>
                 {logsContainerRef.current && (
