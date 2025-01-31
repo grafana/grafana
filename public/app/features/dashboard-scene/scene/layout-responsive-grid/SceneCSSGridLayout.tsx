@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ComponentType, CSSProperties, useLayoutEffect, useRef } from 'react';
+import { ComponentType, CSSProperties, useLayoutEffect, PointerEvent, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneLayout, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
@@ -61,16 +61,16 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
       ...state,
     });
 
-    this.onPointerDown = this.onPointerDown.bind(this);
-    this.getDragHooks = this.getDragHooks.bind(this);
-    this.addActivationHandler(() => {
-      const dragManager = findDragManager(this);
-      if (dragManager) {
-        this.dragManager = dragManager;
-        this.dragManager.registerLayout(this);
-      }
-    });
+    this.addActivationHandler(this.activationHandler);
   }
+
+  private activationHandler = () => {
+    const dragManager = findDragManager(this);
+    if (dragManager) {
+      this.dragManager = dragManager;
+      this.dragManager.registerLayout(this);
+    }
+  };
 
   public isDraggable(): boolean {
     return true;
@@ -84,11 +84,11 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     return 'grid-drag-cancel';
   }
 
-  public getDragHooks() {
+  public getDragHooks = () => {
     return { onDragStart: this.onPointerDown };
-  }
+  };
 
-  public onPointerDown(e: React.PointerEvent, panel: VizPanel) {
+  public onPointerDown = (e: PointerEvent, panel: VizPanel) => {
     if (!this.container || this.cannotDrag(e.target) || !this.dragManager) {
       return;
     }
@@ -97,21 +97,15 @@ export class SceneCSSGridLayout extends SceneObjectBase<SceneCSSGridLayoutState>
     e.stopPropagation();
 
     this.dragManager.onDragStart(e.nativeEvent, this, panel);
-  }
+  };
 
   private cannotDrag(el: EventTarget) {
-    const dragCancelClass = this.getDragClassCancel();
     const dragClass = this.getDragClass();
+    const dragCancelClass = this.getDragClassCancel();
 
     // cancel dragging if the element being interacted with has an ancestor with the drag cancel class set
     // or if the drag class isn't set on an ancestor
-    const cannotDrag =
-      el instanceof Element &&
-      (el.classList.contains(dragCancelClass) ||
-        el.matches(`.${dragCancelClass} *`) ||
-        (!el.matches(`.${dragClass} *`) && !el.classList.contains(dragClass)));
-
-    return cannotDrag;
+    return el instanceof Element && (el.closest(`.${dragCancelClass}`) || !el.closest(`.${dragClass}`));
   }
 
   private container: HTMLElement | undefined;

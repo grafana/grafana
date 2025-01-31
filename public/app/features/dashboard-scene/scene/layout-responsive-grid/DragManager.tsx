@@ -1,4 +1,4 @@
-import React from 'react';
+import { createRef } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
 import { sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
@@ -20,23 +20,15 @@ export class DragManager extends SceneObjectBase<DragManagerState> {
   public dropZones: DropZone[] = [];
 
   private portalRoot!: Root;
-  private portal = React.createRef<HTMLDivElement>();
-  private preview = React.createRef<HTMLDivElement>();
+  private portal = createRef<HTMLDivElement>();
+  private preview = createRef<HTMLDivElement>();
   private originLayout: SceneCSSGridLayout | undefined;
-
-  public constructor(state: DragManagerState) {
-    super(state);
-
-    this.onDrag = this.onDrag.bind(this);
-    this.onDragStart = this.onDragStart.bind(this);
-    this.onDragEnd = this.onDragEnd.bind(this);
-  }
 
   public registerLayout(layout: SceneCSSGridLayout) {
     this.layouts[layout.state.key!] = layout;
   }
 
-  public onDragStart(e: PointerEvent, layout: SceneCSSGridLayout, item: SceneObject) {
+  public onDragStart = (e: PointerEvent, layout: SceneCSSGridLayout, item: SceneObject) => {
     // find closest layout item
     const layoutItem = sceneGraph.getAncestor(item, ResponsiveGridItem);
     this.originLayout = layout;
@@ -96,7 +88,7 @@ export class DragManager extends SceneObjectBase<DragManagerState> {
       activeItem: layoutItem,
       dropZone: closest,
     });
-  }
+  };
 
   public refreshDropZones() {
     const dropZones = [];
@@ -107,7 +99,7 @@ export class DragManager extends SceneObjectBase<DragManagerState> {
     this.dropZones = dropZones;
   }
 
-  public onDrag(e: PointerEvent) {
+  public onDrag = (e: PointerEvent) => {
     const localDropZones = this.dropZones.filter((v) => v.layoutKey === this.state.activeLayout!.state.key);
     let cell = this.closestCell(localDropZones, { x: e.clientX, y: e.clientY });
     let state: Partial<DragManagerState> = {};
@@ -135,9 +127,9 @@ export class DragManager extends SceneObjectBase<DragManagerState> {
     if (this.portal.current) {
       this.portal.current.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
     }
-  }
+  };
 
-  public onDragEnd(e: PointerEvent) {
+  public onDragEnd = (e: PointerEvent) => {
     document.removeEventListener('pointermove', this.onDrag);
     document.removeEventListener('pointerup', this.onDragEnd);
 
@@ -164,7 +156,7 @@ export class DragManager extends SceneObjectBase<DragManagerState> {
     this.setState({ activeItem: undefined, dropZone: undefined });
     this.portalRoot.unmount();
     document.body.classList.remove('dragging-active');
-  }
+  };
 
   /** Given an array of rectangles and a point, calculate the rectangle closest to the point */
   private closestCell(rects: DropZone[], point: Point) {
