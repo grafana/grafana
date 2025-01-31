@@ -16,6 +16,10 @@ export function TableCellNG(props: any) {
   const { config: fieldConfig } = field;
   const { type: cellType } = fieldConfig.custom.cellOptions;
 
+  // TODO
+  // TableNG provides either an overridden cell width or 'auto' as the cell width value.
+  // While the overridden value gives the exact cell width, 'auto' does not.
+  // Therefore, we need to determine the actual cell width from the DOM.
   const divRef = useRef<HTMLDivElement>(null);
   const [divWidth, seDivWidth] = useState(0);
 
