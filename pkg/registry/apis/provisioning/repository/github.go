@@ -285,6 +285,10 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 	return nil
 }
 
+func (r *githubRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
+	return writeWithReadThenCreateOrUpdate(ctx, r, path, ref, data, message)
+}
+
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch

@@ -97,6 +97,10 @@ func (r *s3Repository) Delete(ctx context.Context, path string, ref string, comm
 	}
 }
 
+func (r *s3Repository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
+	return writeWithReadThenCreateOrUpdate(ctx, r, path, ref, data, message)
+}
+
 func (r *s3Repository) History(ctx context.Context, path string, ref string) ([]provisioning.HistoryItem, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{

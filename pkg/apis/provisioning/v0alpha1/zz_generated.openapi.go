@@ -109,19 +109,28 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 					},
 					"branch": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Target branch for export",
+							Description: "Target branch for export (only git)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"prefix": {
 						SchemaProps: spec.SchemaProps{
-							Description: "File prefix",
+							Description: "Target file prefix",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
+					"identifier": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Include the identifier in the exported metadata",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
+				Required: []string{"identifier"},
 			},
 		},
 	}
@@ -574,6 +583,19 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
 							Format: "int64",
+						},
+					},
+					"write": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Create or update (export)",
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 					"noop": {

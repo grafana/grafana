@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io/fs"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -92,6 +95,10 @@ type Repository interface {
 	// The data has already been validated and is ready for save
 	Update(ctx context.Context, path, ref string, data []byte, message string) error
 
+	// Write a file to the repository.
+	// Functionally the same as Read then Create or Update, but more efficient depending on the backend
+	Write(ctx context.Context, path, ref string, data []byte, message string) error
+
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
 
@@ -115,4 +122,15 @@ type RepositoryHooks interface {
 type VersionedRepository interface {
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]FileChange, error)
+}
+
+func writeWithReadThenCreateOrUpdate(ctx context.Context, r Repository, path, ref string, data []byte, comment string) error {
+	_, err := r.Read(ctx, path, ref)
+	if err != nil && !(errors.Is(err, ErrFileNotFound) || apierrors.IsNotFound(err)) {
+		return fmt.Errorf("failed to check if file exists before writing: %w", err)
+	}
+	if err == nil {
+		return r.Update(ctx, path, ref, data, comment)
+	}
+	return r.Create(ctx, path, ref, data, comment)
 }

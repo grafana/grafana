@@ -401,13 +401,15 @@ export type CreateRepositoryExportArg = {
   /** name of the Job */
   name: string;
   body: {
-    /** Target branch for export */
+    /** Target branch for export (only git) */
     branch?: string;
     /** The source folder (or empty) to export */
     folder?: string;
     /** Preserve history (if possible) */
     history?: boolean;
-    /** File prefix */
+    /** Include the identifier in the exported metadata */
+    identifier: boolean;
+    /** Target file prefix */
     prefix?: string;
   };
 };
@@ -659,13 +661,15 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type ExportJobOptions = {
-  /** Target branch for export */
+  /** Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
   /** Preserve history (if possible) */
   history?: boolean;
-  /** File prefix */
+  /** Include the identifier in the exported metadata */
+  identifier: boolean;
+  /** Target file prefix */
   prefix?: string;
 };
 export type PullRequestJobOptions = {
@@ -699,6 +703,8 @@ export type JobSpec = {
 export type JobResourceSummary = {
   create?: number;
   delete?: number;
+  /** Create or update (export) */
+  error?: number;
   /** Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
   errors?: string[];
   group?: string;
@@ -706,6 +712,7 @@ export type JobResourceSummary = {
   noop?: number;
   resource?: string;
   update?: number;
+  write?: number;
 };
 export type JobStatus = {
   errors?: string[];

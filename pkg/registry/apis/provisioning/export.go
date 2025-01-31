@@ -52,7 +52,7 @@ func (c *exportConnector) Connect(
 		return nil, err
 	}
 	cfg := repo.Config()
-	if !cfg.Spec.ReadOnly {
+	if cfg.Spec.ReadOnly {
 		return nil, &apierrors.StatusError{ErrStatus: v1.Status{
 			Code:    http.StatusPreconditionFailed,
 			Message: "Repository is read only",

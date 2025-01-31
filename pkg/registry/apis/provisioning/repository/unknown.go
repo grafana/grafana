@@ -84,6 +84,10 @@ func (r *unknownRepository) Update(ctx context.Context, path, ref string, data [
 	}
 }
 
+func (r *unknownRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
+	return writeWithReadThenCreateOrUpdate(ctx, r, path, ref, data, message)
+}
+
 func (r *unknownRepository) Delete(ctx context.Context, path, ref, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{

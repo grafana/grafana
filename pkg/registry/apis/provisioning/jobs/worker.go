@@ -144,7 +144,7 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 		if job.Spec.Export.Branch == "*dummy*" {
 			exporter = &dummyExporter{}
 		} else {
-			exporter, err = NewExporter(repo, parser)
+			exporter, err = NewExporter(repo, parser.Client())
 			if err != nil {
 				return nil, err
 			}

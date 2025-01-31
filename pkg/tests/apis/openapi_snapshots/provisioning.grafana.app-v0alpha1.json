@@ -1250,9 +1250,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "identifier"
+                ],
                 "properties": {
                   "branch": {
-                    "description": "Target branch for export",
+                    "description": "Target branch for export (only git)",
                     "type": "string"
                   },
                   "folder": {
@@ -1263,8 +1266,13 @@
                     "description": "Preserve history (if possible)",
                     "type": "boolean"
                   },
+                  "identifier": {
+                    "description": "Include the identifier in the exported metadata",
+                    "type": "boolean",
+                    "default": false
+                  },
                   "prefix": {
-                    "description": "File prefix",
+                    "description": "Target file prefix",
                     "type": "string"
                   }
                 }
@@ -1273,7 +1281,8 @@
                 "folder": "grafan-folder-ref",
                 "history": true,
                 "branch": "target-branch",
-                "prefix": "prefix/in/repo/tree"
+                "prefix": "prefix/in/repo/tree",
+                "identifier": false
               }
             }
           }
@@ -2712,9 +2721,12 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
         "type": "object",
+        "required": [
+          "identifier"
+        ],
         "properties": {
           "branch": {
-            "description": "Target branch for export",
+            "description": "Target branch for export (only git)",
             "type": "string"
           },
           "folder": {
@@ -2725,8 +2737,13 @@
             "description": "Preserve history (if possible)",
             "type": "boolean"
           },
+          "identifier": {
+            "description": "Include the identifier in the exported metadata",
+            "type": "boolean",
+            "default": false
+          },
           "prefix": {
-            "description": "File prefix",
+            "description": "Target file prefix",
             "type": "string"
           }
         }
@@ -2891,6 +2908,11 @@
             "type": "integer",
             "format": "int64"
           },
+          "error": {
+            "description": "Create or update (export)",
+            "type": "integer",
+            "format": "int64"
+          },
           "errors": {
             "description": "Report errors for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
             "type": "array",
@@ -2911,6 +2933,10 @@
             "type": "string"
           },
           "update": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "write": {
             "type": "integer",
             "format": "int64"
           }
