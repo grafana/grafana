@@ -2,14 +2,20 @@ package sql
 
 import (
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 )
 
-func TestFrameDB(t *testing.T) {
+func TestFrameDBInOut(t *testing.T) {
 	frameA := &data.Frame{
 		RefID: "a",
+		Name:  "a",
 		Fields: []*data.Field{
+			data.NewField("time", nil, []time.Time{time.Now(), time.Now(), time.Now(), time.Now()}),
+			data.NewField("ntime", nil, []*time.Time{p(time.Now()), nil, p(time.Now()), p(time.Now())}),
 			data.NewField("animal", nil, []string{"cat", "dog", "cat", "dog"}),
 			data.NewField("nanimal", nil, []*string{p("cat"), nil, p("cat"), p("dog")}),
 			data.NewField("fcount", nil, []float64{1, 3, 4, 7}),
@@ -24,20 +30,53 @@ func TestFrameDB(t *testing.T) {
 
 	db := DB{}
 	qry := `SELECT * from A`
-	// qry := "SELECT load_file('/etc/passwd')"
-	// qry := "SELECT sloth()"
-	// qry := "SELECT 2.35, -128, -32768, -8388608, -2147483648, 255, 65535, 16777215, 4294967295"
-	// qry := "SELECT animal, sum(fcount), sum(nfcount), sum(nfcountnn) FROM a GROUP BY animal"
 
-	f := data.NewFrame("")
+	f, err := db.QueryFrames("a", qry, []*data.Frame{frameA})
+	require.NoError(t, err)
 
-	err := db.QueryFramesInto("a", qry, []*data.Frame{frameA}, f)
-	if err != nil {
-		t.Log(err)
-		t.FailNow()
+	if diff := cmp.Diff(frameA, f, data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+	}
+}
+
+func TestFrameDBNumericSelect(t *testing.T) {
+	expectedFrame := &data.Frame{
+		RefID: "a",
+		Name:  "a",
+		Fields: []*data.Field{
+			data.NewField("decimal", nil, []float64{2.35}),
+			data.NewField("tinySigned", nil, []int8{-128}),
+			data.NewField("smallSigned", nil, []int16{-32768}),
+			data.NewField("mediumSigned", nil, []int32{-8388608}),
+			data.NewField("intSigned", nil, []int32{-2147483648}),
+			data.NewField("bigSigned", nil, []int64{-9223372036854775808}),
+			data.NewField("tinyUnsigned", nil, []uint8{255}),
+			data.NewField("smallUnsigned", nil, []uint16{65535}),
+			data.NewField("mediumUnsigned", nil, []int32{16777215}),
+			data.NewField("intUnsigned", nil, []uint32{4294967295}),
+			data.NewField("bigUnsigned", nil, []uint64{18446744073709551615}),
+		},
 	}
 
-	t.Log(f.StringTable(-1, -1))
+	db := DB{}
+	qry := `SELECT 2.35 AS 'decimal', 
+	-128 AS 'tinySigned', 
+	-32768 AS 'smallSigned', 
+	-8388608 AS 'mediumSigned', 
+	-2147483648 AS 'intSigned',
+	-9223372036854775808 AS 'bigSigned',
+	255 AS 'tinyUnsigned', 
+	65535 AS 'smallUnsigned', 
+	16777215 AS 'mediumUnsigned', 
+	4294967295 AS 'intUnsigned',
+	18446744073709551615 AS 'bigUnsigned'`
+
+	f, err := db.QueryFrames("a", qry, []*data.Frame{})
+	require.NoError(t, err)
+
+	if diff := cmp.Diff(expectedFrame, f, data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+	}
 }
 
 func p[T any](v T) *T {

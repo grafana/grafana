@@ -13,7 +13,11 @@ import (
 // DB is a database that can execute SQL queries against a set of Frames.
 type DB struct{}
 
-func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
+// QueryFrames runs the sql query query against a database created from frames, and returns the frame.
+// The RefID of each frame becomes a table in the database.
+// It is expected that there is only one frame per RefID.
+// The name becomes the name and RefID of the returned frame.
+func (db *DB) QueryFrames(name string, query string, frames []*data.Frame) (*data.Frame, error) {
 	pro := NewFramesDBProvider(frames)
 	session := mysql.NewBaseSession()
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
@@ -33,14 +37,15 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 
 	schema, iter, _, err := engine.Query(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	f.RefID = tableName
-	err = convertToDataFrame(ctx, iter, schema, f)
+	f, err := convertToDataFrame(ctx, iter, schema)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	f.Name = name
+	f.RefID = name
 
-	return nil
+	return f, nil
 }

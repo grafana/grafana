@@ -97,15 +97,13 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	var frame = &data.Frame{}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
-	err := db.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
+	frame, err := db.QueryFrames(gr.refID, gr.query, allFrames)
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
 		return rsp, nil
 	}
 	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
-
-	frame.RefID = gr.refID
 
 	if frame.Rows() == 0 {
 		rsp.Values = mathexp.Values{

@@ -13,12 +13,13 @@ import (
 )
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, f *data.Frame) error {
+func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema) (*data.Frame, error) {
+	f := &data.Frame{}
 	// Create fields based on the schema
 	for _, col := range schema {
 		fT, err := MySQLColToFieldType(col)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		field := data.NewFieldFromFieldType(fT, 0)
@@ -34,19 +35,19 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("error reading row: %v", err)
+			return nil, fmt.Errorf("error reading row: %v", err)
 		}
 
 		for i, val := range row {
 			v, err := fieldValFromRowVal(f.Fields[i].Type(), val)
 			if err != nil {
-				return fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
+				return nil, fmt.Errorf("unexpected type for column %s: %w", schema[i].Name, err)
 			}
 			f.Fields[i].Append(v)
 		}
 	}
 
-	return nil
+	return f, nil
 }
 
 // MySQLColToFieldType converts a MySQL column to a data.FieldType
