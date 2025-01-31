@@ -67,19 +67,25 @@ export const Details = ({ rule }: DetailsProps) => {
     <div className={styles.metadata}>
       <Box>
         <DetailHeading label={t('alerting.alert.rule', 'Rule')} />
-        <DetailText label={t('alerting.alert.rule-type', 'Rule type')} value={ruleType} />
+        <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={ruleType} />
         {isGrafanaRulerRule(rule.rulerRule) && (
           <>
             <DetailText
+              id="rule-type"
               label={t('alerting.alert.rule-identifier', 'Rule identifier')}
               value={rule.rulerRule.grafana_alert.uid}
               monospace
               showCopyButton
               copyValue={rule.rulerRule.grafana_alert.uid}
             />
-            <DetailText label={t('alerting.alert.last-updated-by', 'Last updated by')} value={lastUpdatedBy} />
+            <DetailText
+              id="last-updated-by"
+              label={t('alerting.alert.last-updated-by', 'Last updated by')}
+              value={lastUpdatedBy}
+            />
             {updated && (
               <DetailText
+                id="date-of-last-update"
                 label={t('alerting.alert.last-updated-date', 'Date of last update')}
                 value={dateTimeFormat(updated) + ` (${dateTimeFormatTimeAgo(updated)})`}
               />
@@ -92,6 +98,7 @@ export const Details = ({ rule }: DetailsProps) => {
         <DetailHeading label={t('alerting.alert.evaluation', 'Evaluation')} />
         {evaluationTimestamp && (
           <DetailText
+            id="last-evaluated"
             label={t('alerting.alert.last-evaluated', 'Last evaluated')}
             value={formatDistanceToNowStrict(new Date(evaluationTimestamp), { addSuffix: true })}
             tooltipValue={dateTimeFormat(evaluationTimestamp)}
@@ -99,12 +106,17 @@ export const Details = ({ rule }: DetailsProps) => {
         )}
         {hasEvaluationDuration && (
           <DetailText
+            id="last-evaluation-duration"
             label={t('alerting.alert.last-evaluation-duration', 'Last evaluation duration')}
             value={`${evaluationDuration} ms`}
           />
         )}
         {pendingPeriod && (
-          <DetailText label={t('alerting.alert.pending-period', 'Pending period')} value={pendingPeriod} />
+          <DetailText
+            id="pending-period"
+            label={t('alerting.alert.pending-period', 'Pending period')}
+            value={pendingPeriod}
+          />
         )}
       </Box>
 
@@ -116,12 +128,14 @@ export const Details = ({ rule }: DetailsProps) => {
             <DetailHeading label={t('alerting.alert.alert-state', 'Alert state')} />
             {hasEvaluationDuration && (
               <DetailText
+                id="alert-state-no-data"
                 label={t('alerting.alert.state-no-data', 'Alert state if no data or all values are null')}
                 value={rule.rulerRule.grafana_alert.no_data_state}
               />
             )}
             {pendingPeriod && (
               <DetailText
+                id="alert-state-exec-err"
                 label={t('alerting.alert.state-error-timeout', 'Alert state if execution error or timeout')}
                 value={rule.rulerRule.grafana_alert.exec_err_state}
               />
@@ -139,9 +153,10 @@ export const Details = ({ rule }: DetailsProps) => {
               </Text>
             </div>
           ) : (
-            Object.entries(annotations).map(([name, value]) => (
-              <DetailText key={name} label={name} value={<AnnotationValue value={value} />} />
-            ))
+            Object.entries(annotations).map(([name, value]) => {
+              const id = `annotation-${name.replace(/\s/g, '-')}`;
+              return <DetailText id={id} key={name} label={name} value={<AnnotationValue value={value} />} />;
+            })
           )}
         </Box>
       )}
