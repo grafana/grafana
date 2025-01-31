@@ -194,12 +194,20 @@
       }
     },
     "alertVersionHistory": {
+      "annotations": "Annotations",
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
+      "contactPoint": "Contact point",
+      "contactPointRouting": "Contact point routing",
       "description": "Each time you edit the alert rule a new version is created. You can restore an older version. Select two versions below and compare their differences.",
       "errorloading": "Failed to load alert rule history",
+      "labels": "Labels",
       "latest": "Latest",
+      "name": "Name",
+      "namespace_uid": "Folder UID",
       "noVersionsFound": "No versions found for this rule",
+      "pendingPeriod": "Pending period",
+      "queryAndAlertCondition": "Query/alert condition",
       "reset": "Reset to version {oldVersion.grafana_alert.version}",
       "restore": "Restore",
       "restore-modal": {
@@ -787,8 +795,8 @@
       "comparison": {
         "header": {
           "diff": "JSON diff",
-          "new": "Version {{newVersionInfo}} updated by {{newUpdatedBy}} ({newVersionAgeString}){{newMessage}}",
-          "old": "Version {{oldVersionInfo}} updated by {{oldUpdatedBy}} ({oldVersionAgeString}){{oldMessage}}"
+          "new": "Version {{newVersionInfo}} updated by {{newUpdatedBy}} ({{newVersionAgeString}}) {{newMessage}}",
+          "old": "Version {{oldVersionInfo}} updated by {{oldUpdatedBy}} ({{oldVersionAgeString}}) {{oldMessage}}"
         }
       }
     }

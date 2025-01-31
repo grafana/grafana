@@ -24,6 +24,7 @@ import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history
 import { Diffs, jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { trackRuleVersionsComparisonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -34,6 +35,59 @@ export interface AlertVersionHistoryProps {
 }
 
 const VERSIONS_PAGE_SIZE = 20;
+
+const propertiesToIgnore = ['id', 'uid', 'updated', 'updated_by', 'created', 'created_by', 'version'];
+
+function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) {
+  const { grafana_alert, ...rest } = rulerRule;
+
+  // translations for properties not in `grafana_alert`
+  const translationMap: Record<string, string> = {
+    for: t('alerting.alertVersionHistory.pendingPeriod', 'Pending period'),
+    annotations: t('alerting.alertVersionHistory.annotations', 'Annotations'),
+    labels: t('alerting.alertVersionHistory.labels', 'Labels'),
+  };
+
+  // translations for properties in `grafana_alert`
+  const grafanaAlertTranslationMap: Partial<Record<keyof GrafanaRuleDefinition, string>> = {
+    title: t('alerting.alertVersionHistory.name', 'Name'),
+    namespace_uid: t('alerting.alertVersionHistory.namespace_uid', 'Folder UID'),
+    data: t('alerting.alertVersionHistory.queryAndAlertCondition', 'Query/alert condition'),
+    notification_settings: t('alerting.alertVersionHistory.contactPointRouting', 'Contact point routing'),
+  };
+
+  // const contactPoint = {
+  //   conactPoint: t('alerting.alertVersionHistory.contactPoint', 'Contact point')
+  // }
+
+  const processedTopLevel = Object.entries(rest).reduce((acc, [key, value]) => {
+    const translation = translationMap[key] || key;
+    return {
+      ...acc,
+      [translation]: value,
+    };
+  }, {});
+
+  const processedGrafanaAlert = Object.entries(grafana_alert).reduce((acc, [key, value]) => {
+    if (propertiesToIgnore.includes(key)) {
+      return acc;
+    }
+    // eslint-disable-next-line
+    const translation = grafanaAlertTranslationMap[key as keyof GrafanaRuleDefinition] || key;
+    return {
+      ...acc,
+      [translation]: value,
+    };
+  }, {});
+
+  return {
+    ...processedTopLevel,
+    ...processedGrafanaAlert,
+    // ...rulerRule.grafana_alert,
+    // 'Name': rulerRule.grafana_alert.title,
+    // 'Pending period': rulerRule.for
+  };
+}
 
 /**
  * Render the version history of a given Grafana managed alert rule, showing different edits
@@ -90,6 +144,12 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
         return aVersion - bVersion;
       });
 
+    trackRuleVersionsComparisonClick({
+      latest: newer === ruleVersions[0],
+      oldVersion: older?.grafana_alert.version || 0,
+      newVersion: newer?.grafana_alert.version || 0,
+    });
+
     setOldVersion(older);
     setNewVersion(newer);
     setShowDrawer(true);
@@ -145,6 +205,7 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
               version: newVersion.grafana_alert.version || 'unknown',
             }}
             newVersion={newVersion}
+            preprocessVersion={preprocessRuleForDiffDisplay}
           />
           {config.featureToggles.alertingRuleVersionHistory && (
             <Box paddingTop={2}>

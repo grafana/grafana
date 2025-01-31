@@ -194,12 +194,20 @@
       }
     },
     "alertVersionHistory": {
+      "annotations": "Åŉŉőŧäŧįőŉş",
       "compareVersions": "Cőmpäřę vęřşįőŉş",
       "comparing-versions": "Cőmpäřįŉģ vęřşįőŉş",
+      "contactPoint": "Cőŉŧäčŧ pőįŉŧ",
+      "contactPointRouting": "Cőŉŧäčŧ pőįŉŧ řőūŧįŉģ",
       "description": "Ēäčĥ ŧįmę yőū ęđįŧ ŧĥę äľęřŧ řūľę ä ŉęŵ vęřşįőŉ įş čřęäŧęđ. Ÿőū čäŉ řęşŧőřę äŉ őľđęř vęřşįőŉ. Ŝęľęčŧ ŧŵő vęřşįőŉş þęľőŵ äŉđ čőmpäřę ŧĥęįř đįƒƒęřęŉčęş.",
       "errorloading": "Fäįľęđ ŧő ľőäđ äľęřŧ řūľę ĥįşŧőřy",
+      "labels": "Ŀäþęľş",
       "latest": "Ŀäŧęşŧ",
+      "name": "Ńämę",
+      "namespace_uid": "Főľđęř ŮĨĐ",
       "noVersionsFound": "Ńő vęřşįőŉş ƒőūŉđ ƒőř ŧĥįş řūľę",
+      "pendingPeriod": "Pęŉđįŉģ pęřįőđ",
+      "queryAndAlertCondition": "Qūęřy/äľęřŧ čőŉđįŧįőŉ",
       "reset": "Ŗęşęŧ ŧő vęřşįőŉ {őľđVęřşįőŉ.ģřäƒäŉä_äľęřŧ.vęřşįőŉ}",
       "restore": "Ŗęşŧőřę",
       "restore-modal": {
@@ -787,8 +795,8 @@
       "comparison": {
         "header": {
           "diff": "ĴŜØŃ đįƒƒ",
-          "new": "Vęřşįőŉ {{newVersionInfo}} ūpđäŧęđ þy {{newUpdatedBy}} ({ŉęŵVęřşįőŉÅģęŜŧřįŉģ}){{newMessage}}",
-          "old": "Vęřşįőŉ {{oldVersionInfo}} ūpđäŧęđ þy {{oldUpdatedBy}} ({őľđVęřşįőŉÅģęŜŧřįŉģ}){{oldMessage}}"
+          "new": "Vęřşįőŉ {{newVersionInfo}} ūpđäŧęđ þy {{newUpdatedBy}} ({{newVersionAgeString}}) {{newMessage}}",
+          "old": "Vęřşįőŉ {{oldVersionInfo}} ūpđäŧęđ þy {{oldUpdatedBy}} ({{oldVersionAgeString}}) {{oldMessage}}"
         }
       }
     }

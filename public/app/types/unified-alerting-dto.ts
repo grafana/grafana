@@ -249,7 +249,6 @@ interface UpdatedBy {
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
-  version?: number;
   updated?: string;
   updated_by?: UpdatedBy;
   title: string;
@@ -270,6 +269,7 @@ export interface PostableGrafanaRuleDefinition {
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
+  version: number;
   namespace_uid: string;
   rule_group: string;
   provenance?: string;

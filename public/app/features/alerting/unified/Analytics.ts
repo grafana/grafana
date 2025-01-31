@@ -214,6 +214,16 @@ export const trackInsightsFeedback = async (props: { useful: boolean; panel: str
   reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
 };
 
+interface RuleVersionComparisonProps {
+  latest: boolean;
+  oldVersion: number;
+  newVersion: number;
+}
+
+export const trackRuleVersionsComparisonClick = async (payload: RuleVersionComparisonProps) => {
+  reportInteraction('grafana_alerting_rule_versions_comparison_click', { ...payload });
+};
+
 interface RulesSearchInteractionPayload {
   filter: string;
   triggeredBy: 'typing' | 'component';

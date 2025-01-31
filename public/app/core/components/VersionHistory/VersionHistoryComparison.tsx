@@ -1,3 +1,5 @@
+import { identity } from 'lodash';
+
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { Box, Divider, Icon, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -23,15 +25,26 @@ type DiffViewProps<T extends DiffArgument> = {
   oldInfo: RevisionModel;
   oldVersion: T;
   newVersion: T;
+  /**
+   * Helper method to tweak the calculated diff for the human readable output.
+   *
+   * e.g. mapping machine IDs to translated names, removing fields that the user can't control anyway etc.
+   */
+  preprocessVersion?: (version: T) => DiffArgument;
 };
+
+// remove id, version etc
+// map names to human readable names
 
 export const VersionHistoryComparison = <T extends DiffArgument>({
   oldInfo,
   newInfo,
   oldVersion,
   newVersion,
+  preprocessVersion = identity,
 }: DiffViewProps<T>) => {
-  const diff = jsonDiff(oldVersion, newVersion);
+  const diff = jsonDiff(preprocessVersion(oldVersion), preprocessVersion(newVersion));
+
   const oldVersionAgeString = dateTimeFormatTimeAgo(oldInfo.created);
   const newVersionAgeString = dateTimeFormatTimeAgo(newInfo.created);
 
@@ -51,7 +64,7 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
             i18nKey="core.versionHistory.comparison.header.old"
             values={{ oldVersionInfo, oldUpdatedBy, oldVersionAgeString, oldMessage }}
           >
-            Version {{ oldVersionInfo }} updated by {{ oldUpdatedBy }} ({oldVersionAgeString}){{ oldMessage }}
+            Version {{ oldVersionInfo }} updated by {{ oldUpdatedBy }} ({{ oldVersionAgeString }}) {{ oldMessage }}
           </Trans>
         </Text>
         <Icon name="arrow-right" />
@@ -60,7 +73,7 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
             i18nKey="core.versionHistory.comparison.header.new"
             values={{ newVersionInfo, newUpdatedBy, newVersionAgeString, newMessage }}
           >
-            Version {{ newVersionInfo }} updated by {{ newUpdatedBy }} ({newVersionAgeString}){{ newMessage }}
+            Version {{ newVersionInfo }} updated by {{ newUpdatedBy }} ({{ newVersionAgeString }}) {{ newMessage }}
           </Trans>
         </Text>
       </Box>

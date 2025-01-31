@@ -122,6 +122,7 @@ export const mockRulerGrafanaRule = (
     for: '1m',
     grafana_alert: {
       uid: '123',
+      version: 2,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -153,6 +154,7 @@ export const mockRulerGrafanaRecordingRule = (
 ): RulerGrafanaRuleDTO => {
   return {
     grafana_alert: {
+      version: 2,
       uid: '123',
       title: 'myalert',
       namespace_uid: '123',
@@ -238,6 +240,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
     annotations: {},
     labels: {},
     grafana_alert: {
+      version: 2,
       uid: 'mock-rule-uid-123',
       title: 'my rule',
       namespace_uid: 'NAMESPACE_UID',
