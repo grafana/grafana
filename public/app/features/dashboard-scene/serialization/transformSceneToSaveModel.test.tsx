@@ -7,6 +7,7 @@ import {
   DataSourceApi,
   dateTime,
   FieldType,
+  GrafanaConfig,
   PanelData,
   standardTransformersRegistry,
   StandardVariableQuery,
@@ -14,9 +15,10 @@ import {
   VariableSupportType,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
+import { getPluginLinkExtensions, setPluginImportUtils, config } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
+import { render } from '@testing-library/react';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
@@ -27,13 +29,17 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import {
+  DefaultGridLayoutManager,
+  DefaultGridLayoutManagerState,
+} from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
+import dashboard_manyseries_panel from './testfiles/dashboard_manyseries_panel.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
@@ -76,6 +82,18 @@ const CFrame = toDataFrame({
   ],
 });
 
+const ManySeriesFrames = Array(20)
+  .fill(0)
+  .map((_, i) =>
+    toDataFrame({
+      name: 'ManySeries' + i,
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+        { name: 'values', type: FieldType.number, values: [100, 200, 300] },
+      ],
+    })
+  );
+
 const AnnoFrame = toDataFrame({
   fields: [
     { name: 'time', values: [1, 2, 2, 5, 5] },
@@ -88,12 +106,13 @@ const VariableQueryFrame = toDataFrame({
   fields: [{ name: 'text', type: FieldType.string, values: ['val1', 'val2', 'val11'] }],
 });
 
-const testSeries: Record<string, DataFrame> = {
-  A: AFrame,
-  B: BFrame,
-  C: CFrame,
-  Anno: AnnoFrame,
-  VariableQuery: VariableQueryFrame,
+const testSeries: Record<string, DataFrame[]> = {
+  A: [AFrame],
+  B: [BFrame],
+  C: [CFrame],
+  ManySeries: ManySeriesFrames,
+  Anno: [AnnoFrame],
+  VariableQuery: [VariableQueryFrame],
 };
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
@@ -108,12 +127,24 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
       result.state = LoadingState.Done;
 
       const refId = request.targets[0].refId;
-      result.series = [testSeries[refId]];
+      result.series = testSeries[refId];
 
       return result;
     })
   );
 });
+
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useLocation: () => ({
+    pathname: 'localhost:3000/example/path',
+  }),
+}));
+
+jest.mock('app/types', () => ({
+  ...jest.requireActual('app/types'),
+  useSelector: () => 1,
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -154,6 +185,7 @@ jest.mock('@grafana/data', () => ({
   setWeekStart: jest.fn(),
 }));
 
+const runtimeConfig: GrafanaConfig = jest.mocked(config);
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 jest.mock('@grafana/scenes', () => ({
@@ -203,6 +235,38 @@ describe('transformSceneToSaveModel', () => {
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
+    });
+  });
+
+  describe('Given a scene with a panel with many series data', () => {
+    it('it truncates the series data on render when seriesLimit set', async () => {
+      runtimeConfig.seriesLimit = 10;
+      const scene = transformSaveModelToScene({ dashboard: dashboard_manyseries_panel as DashboardDataDTO, meta: {} });
+      activateFullSceneTree(scene);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const vizPanel = (scene.state.body.state as DefaultGridLayoutManagerState).grid.state.children[0].state.body;
+      expect(vizPanel.state.seriesLimit).toBe(10);
+
+      render(<vizPanel.Component model={vizPanel} />);
+      expect(vizPanel._dataWithFieldConfig.series.length).toBe(10);
+      expect(vizPanel.state.$data.state.data.series.length).toBe(20);
+    });
+
+    it("it doesn't truncate the series data on render when seriesLimit is not set", async () => {
+      runtimeConfig.seriesLimit = undefined;
+      const scene = transformSaveModelToScene({ dashboard: dashboard_manyseries_panel as DashboardDataDTO, meta: {} });
+      activateFullSceneTree(scene);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const vizPanel = (scene.state.body.state as DefaultGridLayoutManagerState).grid.state.children[0].state.body;
+      expect(vizPanel.state.seriesLimit).toBe(undefined);
+
+      render(<vizPanel.Component model={vizPanel} />);
+      expect(vizPanel._dataWithFieldConfig.series.length).toBe(20);
+      expect(vizPanel.state.$data.state.data.series.length).toBe(20);
     });
   });
 

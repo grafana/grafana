@@ -162,6 +162,7 @@ export interface GrafanaConfig {
   panels: { [key: string]: PanelPluginMeta };
   auth: AuthSettings;
   minRefreshInterval: string;
+  seriesLimit: number | undefined;
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;

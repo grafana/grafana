@@ -332,6 +332,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
+    seriesLimit: config.seriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],

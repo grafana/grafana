@@ -63,6 +63,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   apps: Record<string, AppPluginConfig> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
+  seriesLimit = undefined;
   appUrl = '';
   appSubUrl = '';
   namespace = 'default';

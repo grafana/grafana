@@ -156,6 +156,7 @@ type FrontendSettingsDTO struct {
 	DefaultDatasource  string                           `json:"defaultDatasource"`
 	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
 	MinRefreshInterval string                           `json:"minRefreshInterval"`
+	SeriesLimit        int                              `json:"seriesLimit,omitempty"`
 	Panels             map[string]plugins.PanelDTO      `json:"panels"`
 	Apps               map[string]*plugins.AppDTO       `json:"apps"`
 	AppUrl             string                           `json:"appUrl"`
