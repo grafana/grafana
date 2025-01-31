@@ -15,6 +15,7 @@ import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/fe
 import { DashboardRoutes } from 'app/types';
 import store from 'app/core/store';
 import { useDispatch } from 'app/types';
+import { dispatch } from 'app/store/store';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 
@@ -25,7 +26,7 @@ export interface Props
 
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   const { type, slug, uid } = params;
   const prevMatch = usePrevious({ params });
@@ -38,17 +39,22 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   console.log('DashboardScenePage');
 
-  // const updateLocation = debounce((query) => locationService.partial(query), 300);
+  const updateLocation = debounce((query) => locationService.partial(query), 300);
 
   const handleFrameTasks = useCallback(({ data }: any) => {
     console.log('event.data:', data);
 
-    if (isObjectLike(data) && !!data?.['var-resample']) {
+    if (isObjectLike(data) && !data?.['source']) {
       console.log('sent!');
       const urlParams = locationService.getSearchObject();
       console.log({ ...urlParams, ...data });
-      locationService.partial({ ...urlParams, ...data });
-      // updateLocation(urlParams);
+      const currentPath = locationService.getLocation();
+      console.log({ currentPath });
+      // locationService.partial({ ...urlParams, ...data });
+
+      dispatch(updateLocation({
+        query: data,
+      }));
     }
   }, []);
 
