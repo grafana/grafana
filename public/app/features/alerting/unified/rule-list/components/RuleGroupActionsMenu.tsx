@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { ConfirmModal, Dropdown, IconButton, Menu } from '@grafana/ui';
+import { isFetchError } from '@grafana/runtime';
+import { ConfirmModal, Dropdown, Icon, IconButton, Menu } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier, GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
@@ -16,6 +17,9 @@ import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSourceByUID } from '../../utils/datasource';
 import { ruleGroupIdentifierV2toV1 } from '../../utils/groupIdentifier';
 import { isFederatedRuleGroup } from '../../utils/rules';
+
+import { GroupStatus } from './GroupStatus';
+import { RuleActionsSkeleton } from './RuleActionsSkeleton';
 
 const { useGetGrafanaRulerGroupQuery, useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -50,7 +54,11 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
   const [actionState, setActionState] = useState<DataSourceActionState | undefined>(undefined);
 
   const [deleteRuleGroup] = useDeleteRuleGroup();
-  const { data: rulerRuleGroup } = useGetRuleGroupForNamespaceQuery(
+  const {
+    data: rulerRuleGroup,
+    error: rulerGroupError,
+    isLoading: isRulerGroupLoading,
+  } = useGetRuleGroupForNamespaceQuery(
     {
       namespace: groupIdentifier.namespace.name,
       group: groupIdentifier.groupName,
@@ -60,10 +68,6 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
   );
 
   const isFederated = rulerRuleGroup ? isFederatedRuleGroup(rulerRuleGroup) : false;
-
-  if (!dataSourceInfo?.rulerConfig) {
-    return null;
-  }
 
   const [{ execute: deleteGroup }] = useAsync(async () => {
     await deleteRuleGroup.execute({
@@ -79,6 +83,33 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
   if (!rulesSource) {
     // This should never happen
     return null;
+  }
+
+  // We don't provide any actions if the data source doesn't support ruler
+  if (!dataSourceInfo?.rulerConfig) {
+    return null;
+  }
+
+  if (isRulerGroupLoading) {
+    return <RuleActionsSkeleton />;
+  }
+
+  if (rulerGroupError) {
+    if (isFetchError(rulerGroupError) && rulerGroupError.status === 404) {
+      return <GroupStatus status="deleting" />;
+    }
+
+    return (
+      <Icon
+        name="exclamation-triangle"
+        title={t('alerting.group-actions-menu.group-load-failed', 'Failed to load group details')}
+      />
+    );
+  }
+
+  // This should never happen. Loading and error states are handled above
+  if (!rulerRuleGroup) {
+    return <Icon name="exclamation-triangle" title={t('alerting.group-actions-menu.unknown-error', 'Unknown error')} />;
   }
 
   return (
@@ -115,14 +146,14 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
       >
         <IconButton name="ellipsis-h" aria-label={t('alerting.group-actions.actions-trigger', 'Rule group actions')} />
       </Dropdown>
-      {actionState === 'edit' && rulerRuleGroup && (
+      {actionState === 'edit' && (
         <EditRuleGroupModal
           ruleGroupIdentifier={ruleGroupIdentifierV2toV1(groupIdentifier)}
           rulerConfig={dataSourceInfo.rulerConfig}
           onClose={() => setActionState(undefined)}
         />
       )}
-      {actionState === 'reorder' && rulerRuleGroup && (
+      {actionState === 'reorder' && (
         <ReorderCloudGroupModal
           group={rulerRuleGroup}
           groupIdentifier={groupIdentifier}
@@ -130,22 +161,21 @@ function DataSourceGroupsActionMenu({ groupIdentifier }: DataSourceGroupsActionM
           rulerConfig={dataSourceInfo.rulerConfig}
         />
       )}
-      {rulerRuleGroup && (
-        <ConfirmModal
-          isOpen={actionState === 'delete'}
-          title={t('alerting.group-actions.delete-group-modal.title', 'Delete group')}
-          body={
-            <div>
-              <Trans i18nKey="alerting.group-actions.delete-group-modal.body">
-                Are you sure you want to delete this group?
-              </Trans>
-            </div>
-          }
-          onConfirm={deleteGroup}
-          onDismiss={() => setActionState(undefined)}
-          confirmText={t('alerting.group-actions.delete-group-modal.confirm-button', 'Delete')}
-        />
-      )}
+
+      <ConfirmModal
+        isOpen={actionState === 'delete'}
+        title={t('alerting.group-actions.delete-group-modal.title', 'Delete group')}
+        body={
+          <div>
+            <Trans i18nKey="alerting.group-actions.delete-group-modal.body">
+              Are you sure you want to delete this group?
+            </Trans>
+          </div>
+        }
+        onConfirm={deleteGroup}
+        onDismiss={() => setActionState(undefined)}
+        confirmText={t('alerting.group-actions.delete-group-modal.confirm-button', 'Delete')}
+      />
     </>
   );
 }

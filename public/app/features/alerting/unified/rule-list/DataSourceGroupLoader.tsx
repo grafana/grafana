@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
@@ -61,6 +62,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
 
   const {
     data: rulerGroup,
+    error: rulerGroupError,
     isFetching: isRulerGroupFetching,
     isError: isRulerGroupError,
   } = useGetRuleGroupForNamespaceQuery(
@@ -85,6 +87,12 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
 
   const isError = isPromResponseError || isDsFeaturesError || isRulerGroupError;
   if (isError) {
+    if (isFetchError(rulerGroupError) && rulerGroupError.status === 404) {
+      return (
+        <Alert severity="warning" title={t('alerting.ds-group-loader.group-deleting', 'The group is being deleted')} />
+      );
+    }
+
     return (
       <Alert
         title={t(
@@ -97,16 +105,14 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
     );
   }
 
+  // There should be always only one group in the response but some Prometheus-compatible data sources
+  // implement different filter parameters
   const promGroup = promResponse?.data.groups.find((g) => g.file === namespaceName && g.name === groupName);
   if (dsFeatures?.rulerConfig && rulerGroup && isCloudRulerGroup(rulerGroup) && promGroup) {
-    // There should be always only one group in the response but some Prometheus-compatible data sources
-    // implement different filter parameters
     return (
-      <RulerBasedRuleGroup
+      <RulerBasedGroupRules
         groupIdentifier={groupIdentifier}
         promGroup={promGroup}
-        // Filter is just for typescript. We should never have other rule type in this component
-        // Grafana rules are handled in a different component
         rulerGroup={rulerGroup}
         application={dsFeatures.application}
       />
@@ -142,14 +148,19 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
   );
 }
 
-interface RulerBasedRuleGroupProps {
+interface RulerBasedGroupRulesProps {
   groupIdentifier: DataSourceRuleGroupIdentifier;
   promGroup: PromRuleGroupDTO<PromRuleDTO>;
   rulerGroup: RulerRuleGroupDTO<RulerCloudRuleDTO>;
   application: RulesSourceApplication;
 }
 
-export function RulerBasedRuleGroup({ groupIdentifier, application, promGroup, rulerGroup }: RulerBasedRuleGroupProps) {
+export function RulerBasedGroupRules({
+  groupIdentifier,
+  application,
+  promGroup,
+  rulerGroup,
+}: RulerBasedGroupRulesProps) {
   const { namespace, groupName } = groupIdentifier;
 
   const { matches, promOnlyRules } = useMemo(() => {
