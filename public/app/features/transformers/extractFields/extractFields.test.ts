@@ -186,9 +186,9 @@ describe('Fields from JSON', () => {
           {
             "config": {},
             "name": "invalid.path",
-            "type": "string",
+            "type": "other",
             "values": [
-              "Not Found",
+              undefined,
             ],
           },
         ],
