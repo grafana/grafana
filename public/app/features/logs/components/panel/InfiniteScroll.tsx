@@ -51,6 +51,7 @@ export const InfiniteScroll = ({
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
   const [autoScroll, setAutoScroll] = useState(false);
   const prevLogs = usePrevious(logs);
+  const prevSortOrder = usePrevious(sortOrder);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
@@ -64,10 +65,16 @@ export const InfiniteScroll = ({
     if (infiniteLoaderState === 'loading') {
       // out-of-bounds if no new logs returned
       setInfiniteLoaderState(logs.length === prevLogs.length ? 'out-of-bounds' : 'idle');
-    } else if (infiniteLoaderState === 'idle') {
+    } else {
       setAutoScroll(true);
     }
   }, [infiniteLoaderState, logs, prevLogs]);
+
+  useEffect(() => {
+    if (prevSortOrder && prevSortOrder !== sortOrder) {
+      setInfiniteLoaderState('idle');
+    }
+  }, [prevSortOrder, sortOrder]);
 
   useEffect(() => {
     if (autoScroll) {
@@ -82,7 +89,7 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMore || !logs.length || infiniteLoaderState === 'loading') {
+      if (!scrollElement || !loadMore || !logs.length || infiniteLoaderState !== 'pre-scroll') {
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
@@ -142,7 +149,10 @@ export const InfiniteScroll = ({
 
   const onItemsRendered = useCallback(
     (props: ListOnItemsRenderedProps) => {
-      if (infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+      if (!scrollElement || infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+        return;
+      }
+      if (scrollElement.scrollHeight <= scrollElement.clientHeight) {
         return;
       }
       const lastLogIndex = logs.length - 1;
@@ -153,7 +163,7 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, logs.length]
+    [infiniteLoaderState, logs.length, scrollElement]
   );
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uid : index.toString()), [logs]);
