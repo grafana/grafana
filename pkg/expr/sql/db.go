@@ -29,11 +29,6 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 	// TODO: Check if it's wise to reuse the existing provider, rather than creating a new one
 	a := analyzer.NewDefault(pro)
 
-	a.Catalog.RegisterFunction(ctx, mysql.FunctionN{
-		Name: "sloth",
-		Fn:   NewSlothFunction(),
-	})
-
 	engine := sqle.New(a, &sqle.Config{
 		IsReadOnly: true,
 	})
