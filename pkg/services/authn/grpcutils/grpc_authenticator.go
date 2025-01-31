@@ -48,8 +48,14 @@ func NewAuthenticator(cfg *GrpcServerConfig, tracer tracing.Tracer) interceptors
 }
 
 func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer tracing.Tracer, fallback interceptors.Authenticator) interceptors.Authenticator {
+	authCfg := ReadGrpcServerConfig(cfg)
+	authenticator := NewAuthenticator(authCfg, tracer)
+	if !authCfg.LegacyFallback {
+		return authenticator
+	}
+
 	return &authenticatorWithFallback{
-		authenticator: NewAuthenticator(ReadGrpcServerConfig(cfg), tracer),
+		authenticator: authenticator,
 		fallback:      fallback,
 		tracer:        tracer,
 		metrics:       newMetrics(reg),
@@ -72,6 +78,7 @@ func newAuthenticator(auth authn.Authenticator, tracer tracing.Tracer) intercept
 			return ctx, err
 		}
 
+		// FIXME: Add attribute with service subject once https://github.com/grafana/authlib/issues/139 is closed.
 		span.SetAttributes(attribute.String("subject", info.GetUID()))
 		span.SetAttributes(attribute.Bool("service", types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy)))
 		return types.WithAuthInfo(ctx, info), nil
