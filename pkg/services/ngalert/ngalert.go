@@ -414,7 +414,6 @@ func (ng *AlertNG) init() error {
 		Images:                         ng.ImageService,
 		Clock:                          clk,
 		Historian:                      history,
-		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		StatePeriodicSaveBatchSize:     ng.Cfg.UnifiedAlerting.StatePeriodicSaveBatchSize,
@@ -539,9 +538,8 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	} else {
 		logger.Info("Using simple database alert instance store")
 		instanceStore = store.InstanceDBStore{
-			SQLStore:       sqlStore,
-			Logger:         logger,
-			FeatureToggles: featureToggles,
+			SQLStore: sqlStore,
+			Logger:   logger,
 		}
 	}
 
