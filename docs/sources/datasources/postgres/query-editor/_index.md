@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/postgres/
   - ../features/datasources/postgres/
-description: Guide for using PostgreSQL in Grafana
+description: This document describes the PostgreSQL query editor in Grafana.
 keywords:
   - grafana
   - postgresql
@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: PostgreSQL query editor
+menuTitle: Query editor
 title: PostgreSQL query editor
 weight: 20
 refs:

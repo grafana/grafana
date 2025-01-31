@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/postgres/
   - ../features/datasources/postgres/
-description: Guide for using PostgreSQL in Grafana
+description: This document provides instructions for configuring the PostgreSSQL data source.
 keywords:
   - grafana
   - postgresql
@@ -104,8 +104,6 @@ Following is a list of PostgreSQL configuration options:
   - **File system path** - This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.
   - **Certificate content** - This option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem. 
 
-<!-- Selecting the **File system path** option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process. Selecting the **Certificate content** option allows you to configure certificate by specifying their content. The content is stored and encrypted in Grafana's database. When connecting to the database, the certificates are saved as files in Grafana's configured data path on the local filesystem.  -->
-
 **TLS/SSL Auth Details**
 
 If you select the TLS/SSL Mode options **require**, **verify-ca** or **verify-full** and **file system path** the following are required:
@@ -142,7 +140,7 @@ If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
-Once you have added your MySQL connection settings, click **Save & test** to test and save the data source connection.
+Once you have added your PostgreSQL connection settings, click **Save & test** to test and save the data source connection.
 
 ### Min time interval
 

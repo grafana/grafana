@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/postgres/
   - ../features/datasources/postgres/
-description: Guide for using PostgreSQL in Grafana
+description: Introduction to the PostgreSQL data source in Grafana.
 keywords:
   - grafana
   - postgresql
@@ -45,7 +45,7 @@ refs:
 
 # PostgreSQL data source
 
-Grafana includes a built-in PostgreSQL data source plugin, enabling you to query and visualize data from any PostgreSQL-compatible database. You don't need to install a plugin to add the MySQL data source to your Grafana instance.
+Grafana includes a built-in PostgreSQL data source plugin, enabling you to query and visualize data from any PostgreSQL-compatible database. You don't need to install a plugin to add the PostgreSQL data source to your Grafana instance.
 
 Grafana offers several configuration options for this data source as well as a visual and code-based query editor.
 
@@ -53,8 +53,8 @@ Grafana offers several configuration options for this data source as well as a v
 
 The following documents will help you get started with the PostgreSQL data source in Grafana:
 
-- [Configure the MySQL data source](ref:configure-postgres-data-source)
-- [MySQL query editor](ref:postgres-query-editor)
+- [Configure the PostgreSQL data source](ref:configure-postgres-data-source)
+- [PostgreSQL query editor](ref:postgres-query-editor)
 
 Once you have configured the data source you can:
 
