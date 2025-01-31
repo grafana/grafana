@@ -53,7 +53,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
       latestVersionValue = latestVersion;
     }
 
-    // latest versions of core plugins shown by gcom are not consistent
+    // latest versions of core plugins are not consistent
     if (!plugin.isCore) {
       addInfo('latestVersion', latestVersionValue);
     }

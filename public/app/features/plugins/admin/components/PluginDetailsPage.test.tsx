@@ -156,7 +156,7 @@ describe('PluginDetailsPage', () => {
     expect(screen.getByRole('tab', { name: 'Data source connections' })).toBeVisible();
   });
 
-  it('should not show version and changelog when plugin is core', () => {
+  it('should not show version and changelog tabs when plugin is core', () => {
     mockUseGetSingle.mockReturnValue({ ...plugin, isCore: true });
     render(<PluginDetailsPage pluginId={plugin.id} />);
     expect(screen.queryByRole('tab', { name: 'Version history' })).not.toBeInTheDocument();
