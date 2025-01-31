@@ -37,6 +37,9 @@ const (
 	QueryEditorModeCode    QueryEditorMode = "code"
 )
 
+// DD splits time range into ~300
+const numDDTargetParts = 300
+
 // PrometheusQueryProperties defines the specific properties used for prometheus
 type PrometheusQueryProperties struct {
 	// The response format
@@ -118,6 +121,7 @@ const (
 	varRangeMs        = "$__range_ms"
 	varRateInterval   = "$__rate_interval"
 	varRateIntervalMs = "$__rate_interval_ms"
+	varDDInterval     = "$__dd_interval"
 )
 
 // Internal interval and range variables with {} syntax
@@ -365,6 +369,46 @@ func calculateRateInterval(
 	return rateInterval
 }
 
+func roundIntervalUp(
+	interval time.Duration,
+	roundTo time.Duration,
+) time.Duration {
+	balance := interval % roundTo
+	if balance == 0 {
+		return interval
+	}
+
+	return interval + roundTo - balance
+}
+
+func CalculateDDInterval(
+	timeRange time.Duration,
+	promRateInterval time.Duration,
+) time.Duration {
+	// Round up to number of minutes.
+	ddInterval := (timeRange / numDDTargetParts / time.Minute) * time.Minute
+	if ddInterval < promRateInterval {
+		return promRateInterval
+	}
+
+	if ddInterval < 5*time.Minute {
+		// Already rounded to the nearest minute.
+		return ddInterval
+	}
+
+	if ddInterval < 30*time.Minute {
+		// Round up to the nearest 5 minutes.
+		return roundIntervalUp(ddInterval, 5*time.Minute)
+	}
+
+	if ddInterval < 2*time.Hour {
+		// Round up to the nearest 10 minutes.
+		return roundIntervalUp(ddInterval, 30*time.Minute)
+	}
+
+	return roundIntervalUp(ddInterval, time.Hour)
+}
+
 // InterpolateVariables interpolates built-in variables
 // expr                         PromQL query
 // queryInterval                Requested interval in milliseconds. This value may be overridden by MinStep in query options
@@ -403,6 +447,7 @@ func InterpolateVariables(
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
 	expr = strings.ReplaceAll(expr, varRateIntervalMs, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
+	expr = strings.ReplaceAll(expr, varDDInterval, CalculateDDInterval(timeRange, rateInterval).String())
 
 	// Repetitive code, we should have functionality to unify these
 	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
