@@ -53,7 +53,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
     return uniqBy(loadQueryMetadataResult.value, 'datasourceName').map((row) => row.datasourceName);
   }, [loadQueryMetadataResult.value]);
 
-  if (error) {
+  if (error instanceof Error) {
     return (
       <EmptyState variant="not-found" message={`Something went wrong`}>
         {error.message}
