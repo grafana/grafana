@@ -27,13 +27,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'yarn'
       - name: Install dependencies
         run: yarn install --immutable
       - name: Build grafana
         run: make build
-      - name: Install Cypress dependencies
+      - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
-          runTests: false
-      - name: Run dashboard scenes e2e
-        run: yarn e2e:schema-v2
+          start: yarn e2e:schema-v2
