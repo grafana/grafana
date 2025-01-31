@@ -16876,11 +16876,11 @@ __metadata:
   linkType: hard
 
 "fishery@npm:^2.2.2":
-  version: 2.2.2
-  resolution: "fishery@npm:2.2.2"
+  version: 2.2.3
+  resolution: "fishery@npm:2.2.3"
   dependencies:
     lodash.mergewith: "npm:^4.6.2"
-  checksum: 10/68120995b0cd7827f0d50ef3b552a74289c99fa6195cafb6e5d376aa14421f12873274e1fc5aa101073fdae35ad6543cb5b04687bb295d8c37ff3b99dbdeb9ae
+  checksum: 10/a8855c1949524996d2ba3b84cf6fe13f2a8ade8296e090bedbc58d2879dc481d85a0aced1e33f80b1a1ec9cb1a2eb7562494c2ae514915730d14285694f595bf
   languageName: node
   linkType: hard
 
