@@ -26,6 +26,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
   const path = params['*'];
+
   const prevMatch = usePrevious({ params });
   const stateManager = config.featureToggles.useV2DashboardsAPI
     ? getDashboardScenePageStateManager('v2')
@@ -78,7 +79,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner queryParams={queryParams} />
+      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </UrlSyncContextProvider>
