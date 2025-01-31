@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { config, FetchError, isFetchError } from '@grafana/runtime/src';
+import { createBaseQuery } from 'app/api/createBaseQuery';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
@@ -18,13 +19,11 @@ import {
   PublicDashboardListWithPaginationResponse,
 } from 'app/features/manage-dashboards/types';
 
-import { createBaseQuery } from '../../../api/createBaseQuery';
-
 function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
   return typeof error === 'object' && error != null && 'error' in error;
 }
 
-const getConfigError = (err: unknown) => ({
+export const getConfigError = (err: unknown) => ({
   error: isFetchError(err) && err.data.messageId !== 'publicdashboards.notFound' ? err : null,
 });
 
