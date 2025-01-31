@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/plugin-ui';
 import { Alert, HorizontalGroup, InputActionMeta, Select, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';

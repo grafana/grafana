@@ -28,11 +28,6 @@ export type QueryDetails = {
   description: string;
 };
 
-const VisibilityOptions = [
-  { value: 'Public', label: t('explore.query-library.public', 'Public') },
-  { value: 'Private', label: t('explore.query-library.private', 'Private') },
-];
-
 const getInstuctions = (isAdd: boolean) => {
   return isAdd
     ? t(
@@ -155,7 +150,14 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
         <Input id="query-template-description" autoFocus={true} {...register('description')}></Input>
       </Field>
       <Field label={t('explore.query-template-modal.visibility', 'Visibility')}>
-        <RadioButtonGroup options={VisibilityOptions} value={'Public'} disabled={true} />
+        <RadioButtonGroup
+          options={[
+            { value: 'Public', label: t('explore.query-library.public', 'Public') },
+            { value: 'Private', label: t('explore.query-library.private', 'Private') },
+          ]}
+          value={'Public'}
+          disabled={true}
+        />
       </Field>
       <InlineSwitch
         showLabel={true}

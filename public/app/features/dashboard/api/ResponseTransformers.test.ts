@@ -1,5 +1,12 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
-import { DashboardV2Spec, PanelKind, VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  DashboardV2Spec,
+  GridLayoutItemKind,
+  GridLayoutItemSpec,
+  GridLayoutRowSpec,
+  PanelKind,
+  VariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import {
   AnnoKeyCreatedBy,
@@ -310,6 +317,8 @@ describe('ResponseTransformers', () => {
             transparent: false,
             links: [],
             transformations: [],
+            repeat: 'var1',
+            repeatDirection: 'h',
           },
           {
             id: 2,
@@ -320,6 +329,69 @@ describe('ResponseTransformers', () => {
               name: 'Table Panel as Library Panel',
             },
             gridPos: { x: 0, y: 8, w: 12, h: 8 },
+          },
+          {
+            id: 3,
+            type: 'row',
+            title: 'Row test title',
+            gridPos: { x: 0, y: 16, w: 12, h: 1 },
+            panels: [],
+            collapsed: false,
+          },
+          {
+            id: 4,
+            type: 'timeseries',
+            title: 'Panel in row',
+            gridPos: { x: 0, y: 17, w: 16, h: 8 },
+            targets: [
+              {
+                refId: 'A',
+                datasource: 'datasource1',
+                expr: 'test-query',
+                hide: false,
+              },
+            ],
+            datasource: {
+              type: 'prometheus',
+              uid: 'datasource1',
+            },
+            fieldConfig: { defaults: {}, overrides: [] },
+            options: {},
+            transparent: false,
+            links: [],
+            transformations: [],
+          },
+          {
+            id: 5,
+            type: 'row',
+            title: 'Collapsed row title',
+            gridPos: { x: 0, y: 25, w: 12, h: 1 },
+            panels: [
+              {
+                id: 5,
+                type: 'timeseries',
+                title: 'Panel in collapsed row',
+                gridPos: { x: 0, y: 26, w: 16, h: 8 },
+                targets: [
+                  {
+                    refId: 'A',
+                    datasource: 'datasource1',
+                    expr: 'test-query',
+                    hide: false,
+                  },
+                ],
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'datasource1',
+                },
+                fieldConfig: { defaults: {}, overrides: [] },
+                options: {},
+                transparent: false,
+                links: [],
+                transformations: [],
+              },
+            ],
+            collapsed: true,
           },
         ],
       };
@@ -396,7 +468,7 @@ describe('ResponseTransformers', () => {
       expect(spec.annotations).toEqual([]);
 
       // Panel
-      expect(spec.layout.spec.items).toHaveLength(2);
+      expect(spec.layout.spec.items).toHaveLength(4);
       expect(spec.layout.spec.items[0].spec).toEqual({
         element: {
           kind: 'ElementReference',
@@ -406,6 +478,7 @@ describe('ResponseTransformers', () => {
         y: 0,
         width: 12,
         height: 8,
+        repeat: { value: 'var1', direction: 'h', mode: 'variable', maxPerRow: undefined },
       });
       expect(spec.elements['1']).toEqual({
         kind: 'Panel',
@@ -479,6 +552,43 @@ describe('ResponseTransformers', () => {
           id: 2,
           title: 'Just a shared table',
         },
+      });
+
+      const rowSpec = spec.layout.spec.items[2].spec as GridLayoutRowSpec;
+
+      expect(rowSpec.collapsed).toBe(false);
+      expect(rowSpec.title).toBe('Row test title');
+      expect(rowSpec.repeat).toBeUndefined();
+
+      const panelInRow = rowSpec.elements[0].spec as GridLayoutItemSpec;
+
+      expect(panelInRow).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: '4',
+        },
+        x: 0,
+        y: 0,
+        width: 16,
+        height: 8,
+      });
+
+      const collapsedRowSpec = spec.layout.spec.items[3].spec as GridLayoutRowSpec;
+      expect(collapsedRowSpec.collapsed).toBe(true);
+      expect(collapsedRowSpec.title).toBe('Collapsed row title');
+      expect(collapsedRowSpec.repeat).toBeUndefined();
+
+      const panelInCollapsedRow = collapsedRowSpec.elements[0].spec as GridLayoutItemSpec;
+
+      expect(panelInCollapsedRow).toEqual({
+        element: {
+          kind: 'ElementReference',
+          name: '5',
+        },
+        x: 0,
+        y: 0,
+        width: 16,
+        height: 8,
       });
 
       // Variables
@@ -645,6 +755,9 @@ describe('ResponseTransformers', () => {
         uid: 'uid-for-library-panel',
         name: 'Library Panel',
       });
+      expect(dashboard.panels![2].type).toBe('row');
+      expect(dashboard.panels![2].id).toBe(4); // Row id should be assigned to unique number following the highest id of panels.
+      expect(dashboard.panels![3].type).toBe('timeseries');
     });
 
     describe('getPanelQueries', () => {
@@ -756,7 +869,7 @@ describe('ResponseTransformers', () => {
     expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => t.spec));
     const layoutElement = layoutV2.spec.items.find(
       (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
-    );
+    ) as GridLayoutItemKind;
     expect(v1.gridPos?.x).toEqual(layoutElement?.spec.x);
     expect(v1.gridPos?.y).toEqual(layoutElement?.spec.y);
     expect(v1.gridPos?.w).toEqual(layoutElement?.spec.width);
