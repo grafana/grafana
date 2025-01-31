@@ -5777,9 +5777,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
-    "public/app/features/query-library/api/query.ts:5381": [
-      [0, 0, 0, "\'@grafana/runtime/src/services/backendSrv\' import is restricted from being used by a pattern. Import from the public export instead.", "0"]
-    ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],

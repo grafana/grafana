@@ -10,7 +10,6 @@ import { useListQueryTemplateQuery } from 'app/features/query-library';
 import { QueryTemplate } from 'app/features/query-library/types';
 
 import { convertDataQueryResponseToQueryTemplates } from '../../query-library/api/mappers';
-import { UserDataQueryResponse } from '../../query-library/api/types';
 
 import { QueryLibraryProps } from './QueryLibrary';
 import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
@@ -33,9 +32,9 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
   const styles = useStyles2(getStyles);
 
   const loadUsersResult = useLoadUsersWithError(data);
-  const userNames = loadUsersResult.value ? loadUsersResult.value.display.map((user) => user.displayName) : [];
+  const userNames = loadUsersResult.data ? loadUsersResult.data.display.map((user) => user.displayName) : [];
 
-  const loadQueryMetadataResult = useLoadQueryMetadataWithError(data, loadUsersResult.value);
+  const loadQueryMetadataResult = useLoadQueryMetadataWithError(data, loadUsersResult.data);
 
   // Filtering right now is done just on the frontend until there is better backend support for this.
   const filteredRows = useMemo(
@@ -61,7 +60,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
     );
   }
 
-  if (isLoading || loadUsersResult.loading || loadQueryMetadataResult.loading) {
+  if (isLoading || loadUsersResult.isLoading || loadQueryMetadataResult.loading) {
     return <Spinner />;
   }
 
@@ -109,7 +108,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
           <Trans i18nKey="query-library.user-names">User name(s):</Trans>
         </InlineLabel>
         <MultiSelect
-          isLoading={loadUsersResult.loading}
+          isLoading={loadUsersResult.isLoading}
           className={styles.multiSelect}
           onChange={(items, actionMeta) => {
             setUserFilters(items);
@@ -166,7 +165,7 @@ function useLoadUsersWithError(data: QueryTemplate[] | undefined) {
  */
 function useLoadQueryMetadataWithError(
   queryTemplates: QueryTemplate[] | undefined,
-  userDataList: UserDataQueryResponse | undefined
+  userDataList: ReturnType<typeof useLoadUsers>['data']
 ) {
   const result = useLoadQueryMetadata(queryTemplates, userDataList);
 
