@@ -14,7 +14,6 @@ export interface UseSnappingSplitterOptions {
   // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
   // pushing the left pane content left.
   handleSize?: ComponentSize;
-  isOverlay?: boolean;
 }
 
 interface PaneOptions {
@@ -111,12 +110,5 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     secondaryProps.style.overflow = 'unset';
   }
 
-  return {
-    containerProps,
-    primaryProps,
-    secondaryProps,
-    splitterProps,
-    splitterState: state,
-    onToggleCollapse,
-  };
+  return { containerProps, primaryProps, secondaryProps, splitterProps, splitterState: state, onToggleCollapse };
 }

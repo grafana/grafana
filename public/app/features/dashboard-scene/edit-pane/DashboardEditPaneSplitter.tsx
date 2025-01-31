@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useEffect, useState } from 'react';
+import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
@@ -49,7 +49,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
 
       paneOptions: {
         collapseBelowPixels: 250,
-        snapOpenToPixels: 50,
+        snapOpenToPixels: 400,
       },
     });
 
