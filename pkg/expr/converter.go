@@ -79,7 +79,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 			continue
 		}
 
-		if schema.Type != data.TimeSeriesTypeWide { // && !allowLongFrames {
+		if schema.Type != data.TimeSeriesTypeWide {
 			return "", mathexp.Results{}, fmt.Errorf("%w but got type %s (input refid)", ErrSeriesMustBeWide, schema.Type)
 		}
 		filtered = append(filtered, frame)
