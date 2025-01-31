@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { AnnoKeyCreatedBy } from '../../apiserver/types';
 import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { ListQueryTemplateApiResponse, QueryTemplate as QT } from './endpoints.gen';
 import { API_VERSION, QueryTemplateKinds } from './query';
-import { CREATED_BY_KEY } from './types';
 
 export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTemplateApiResponse): QueryTemplate[] => {
   if (!result.items) {
@@ -21,7 +21,7 @@ export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTempla
         })) ?? [],
       createdAtTimestamp: new Date(spec.metadata?.creationTimestamp ?? '').getTime(),
       user: {
-        uid: spec.metadata?.annotations?.[CREATED_BY_KEY] ?? '',
+        uid: spec.metadata?.annotations?.[AnnoKeyCreatedBy] ?? '',
       },
     };
   });

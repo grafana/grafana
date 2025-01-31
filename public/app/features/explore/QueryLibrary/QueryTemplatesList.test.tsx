@@ -1,7 +1,7 @@
 import { render, waitFor, screen } from '@testing-library/react';
 
+import { AnnoKeyCreatedBy } from '../../apiserver/types';
 import { ListQueryTemplateApiResponse } from '../../query-library/api/endpoints.gen';
-import { CREATED_BY_KEY } from '../../query-library/api/types';
 
 import { QueryTemplatesList } from './QueryTemplatesList';
 import { QueryActionButtonProps } from './types';
@@ -117,7 +117,7 @@ const testItems = [
       name: 'TEST_QUERY',
       creationTimestamp: '2025-01-01T11:11:11.00Z',
       annotations: {
-        [CREATED_BY_KEY]: 'viewer:JohnDoe',
+        [AnnoKeyCreatedBy]: 'viewer:JohnDoe',
       },
     },
     spec: {
