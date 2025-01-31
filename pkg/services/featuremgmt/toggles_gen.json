@@ -145,6 +145,36 @@
     },
     {
       "metadata": {
+        "name": "alertingAlertmanagerExtraDedupStage",
+        "resourceVersion": "1738251165994",
+        "creationTimestamp": "2025-01-30T15:32:45Z"
+      },
+      "spec": {
+        "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
+        "resourceVersion": "1738251165994",
+        "creationTimestamp": "2025-01-30T15:32:45Z"
+      },
+      "spec": {
+        "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingApiServer",
         "resourceVersion": "1734627512749",
         "creationTimestamp": "2024-06-20T20:52:03Z",
