@@ -3,6 +3,7 @@ import { Box, ClipboardButton, Stack, Text, Tooltip } from '@grafana/ui';
 import ConditionalWrap from '../ConditionalWrap';
 
 type DetailTextProps = {
+  id: string;
   label: string;
   value: string | JSX.Element | null;
   /** Should the value be displayed using monospace font family? */
@@ -23,12 +24,22 @@ type DetailTextProps = {
   | { showCopyButton?: never; copyValue?: never }
 );
 
-export const DetailText = ({ label, value, monospace, showCopyButton, copyValue, tooltipValue }: DetailTextProps) => {
+export const DetailText = ({
+  id,
+  label,
+  value,
+  monospace,
+  showCopyButton,
+  copyValue,
+  tooltipValue,
+}: DetailTextProps) => {
   return (
     <Box paddingBottom={2}>
       <Stack direction="column" gap={0}>
-        <Text color="secondary">{label}</Text>
-        <Text color="primary" variant={monospace ? 'code' : 'body'}>
+        <Text color="secondary" id={id}>
+          {label}
+        </Text>
+        <Text aria-labelledby={id} color="primary" variant={monospace ? 'code' : 'body'}>
           <ConditionalWrap
             shouldWrap={Boolean(tooltipValue)}
             wrap={(children) => <Tooltip content={tooltipValue!}>{children}</Tooltip>}
