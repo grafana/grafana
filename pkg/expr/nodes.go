@@ -335,7 +335,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames) //, s.allowLongFrames)
+				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
