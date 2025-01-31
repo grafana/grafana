@@ -146,7 +146,7 @@
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.5",
     "@types/slate-react": "0.22.9",
-    "@types/swagger-ui-react": "4.19.0",
+    "@types/swagger-ui-react": "5.18.0",
     "@types/systemjs": "6.15.1",
     "@types/tinycolor2": "1.4.6",
     "@types/uuid": "10.0.0",
