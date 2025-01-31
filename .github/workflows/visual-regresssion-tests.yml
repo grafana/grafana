@@ -36,16 +36,16 @@ jobs:
             sleep 2
           done
       - name: Run Playwright tests
-          run: |
-            yarn e2e:playwright:vizregression | tee output.log
-            if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
-              echo "Playwright tests failed due to a snapshot issue."
-              echo "SNAPSHOT_DIFFERENCES=true" >> $GITHUB_ENV
-              exit 1
-            elif grep -q "failed" output.log; then
-              echo "Playwright tests failed due to a non-snapshot issue."
-              exit 1
-            fi
+        run: |
+          yarn e2e:playwright:vizregression | tee output.log
+          if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
+            echo "Playwright tests failed due to a snapshot issue."
+            echo "SNAPSHOT_DIFFERENCES=true" >> $GITHUB_ENV
+            exit 1
+          elif grep -q "failed" output.log; then
+            echo "Playwright tests failed due to a non-snapshot issue."
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         id: artifact-upload
         if: always()
