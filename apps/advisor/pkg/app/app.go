@@ -11,6 +11,8 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 )
@@ -33,11 +35,17 @@ func New(cfg app.Config) (app.App, error) {
 	if err != nil {
 		return nil, err
 	}
+	typesClient, err := clientGenerator.ClientFor(advisorv0alpha1.CheckTypeKind())
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize checks
 	checkMap := map[string]checks.Check{}
+	types := []string{}
 	for _, c := range checkRegistry.Checks() {
 		checkMap[c.Type()] = c
+		types = append(types, c.Type())
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -69,6 +77,23 @@ func New(cfg app.Config) (app.App, error) {
 						return processCheck(ctx, client, obj, check)
 					},
 				},
+				// This does not expose an HTTP endpoint so we cannot use it from the frontend
+				// CustomRoutes: simple.AppCustomRouteHandlers{
+				// 	simple.AppCustomRoute{Method: "GET", Path: "types"}: func(ctx context.Context, req *app.ResourceCustomRouteRequest) (*app.ResourceCustomRouteResponse, error) {
+				// 		typesBytes, err := json.Marshal(types)
+				// 		if err != nil {
+				// 			return nil, err
+				// 		}
+				// 		return &app.ResourceCustomRouteResponse{
+				// 			Headers:    map[string][]string{"Content-Type": {"application/json"}},
+				// 			Body:       typesBytes,
+				// 			StatusCode: http.StatusOK,
+				// 		}, nil
+				// 	},
+				// },
+			},
+			{
+				Kind: advisorv0alpha1.CheckTypeKind(),
 			},
 		},
 	}
@@ -83,6 +108,12 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	pr := &postRun{
+		types:       types,
+		typesClient: typesClient,
+	}
+	a.AddRunnable(pr)
+
 	return a, nil
 }
 
@@ -95,6 +126,31 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	return map[schema.GroupVersion][]resource.Kind{
 		gv: {
 			advisorv0alpha1.CheckKind(),
+			advisorv0alpha1.CheckTypeKind(),
 		},
 	}
+}
+
+type postRun struct {
+	types       []string
+	typesClient resource.Client
+}
+
+func (r *postRun) Run(ctx context.Context) error {
+	for _, t := range r.types {
+		obj := &advisorv0alpha1.CheckType{
+			ObjectMeta: metav1.ObjectMeta{Name: t, Namespace: metav1.NamespaceDefault},
+			Spec:       advisorv0alpha1.CheckTypeSpec{Name: t},
+		}
+		id := obj.GetStaticMetadata().Identifier()
+		_, err := r.typesClient.Create(ctx, id, obj, resource.CreateOptions{})
+		if err != nil {
+			if errors.IsAlreadyExists(err) {
+				// Already exists, ignore
+				continue
+			}
+			return err
+		}
+	}
+	return nil
 }
