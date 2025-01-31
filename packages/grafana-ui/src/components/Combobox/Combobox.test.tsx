@@ -237,10 +237,10 @@ describe('Combobox', () => {
       const onChangeHandler = jest.fn();
       render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
       const input = screen.getByRole('combobox');
-      await userEvent.type(input, 'custom value');
+      await userEvent.type(input, 'Use custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Use custom value')).toBeInTheDocument();
       expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'Use custom value' }));
     });
 
@@ -411,9 +411,12 @@ describe('Combobox', () => {
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
-      const customItem = screen.queryByRole('option', { name: 'Custom value: fir' });
-
+      const customItem = screen.getByRole('option');
+      const customValue = customItem.getElementsByTagName('span')[0].textContent;
+      const customDescription = customItem.getElementsByTagName('span')[1].textContent;
       expect(customItem).toBeInTheDocument();
+      expect(customValue).toBe('fir');
+      expect(customDescription).toBe('Use custom value');
     });
 
     it('should display message when there is an error loading async options', async () => {
