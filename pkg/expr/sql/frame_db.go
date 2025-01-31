@@ -5,6 +5,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+var dbName = "frames"
+
 // FramesDBProvider is a go-mysql-server DatabaseProvider that provides access to a set of Frames.
 type FramesDBProvider struct {
 	db mysql.Database
@@ -57,5 +59,5 @@ func (db *framesDB) GetTableNames(_ *mysql.Context) ([]string, error) {
 }
 
 func (db *framesDB) Name() string {
-	return "frames"
+	return dbName
 }

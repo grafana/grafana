@@ -10,10 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-var dbName = "mydb"
-
-type DB struct {
-}
+// DB is a database that can execute SQL queries against a set of Frames.
+type DB struct{}
 
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
 	pro := NewFramesDBProvider(frames)
@@ -38,16 +36,6 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 		return err
 	}
 
-	// TODO: Implement row limit and converters, as per sqlutil.FrameFromRows
-	// rowLimit := int64(1000) // TODO - set the row limit
-	// // converters := sqlutil.ConvertersFromSchema(f.RefID, f.Fields)
-	// // Use nil converters for now
-	// var converters []sqlutil.Converter
-	// rows := sqlutil.NewRowIter(mysqlRows, nil)
-	// frame, err := sqlutil.FrameFromRows(rows, rowLimit, converters...)
-
-	// TODO: Consider if this should be moved outside of this function
-	// or indeed into convertToDataFrame
 	f.RefID = tableName
 	err = convertToDataFrame(ctx, iter, schema, f)
 	if err != nil {

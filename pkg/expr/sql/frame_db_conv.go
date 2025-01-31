@@ -129,7 +129,9 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	}
 }
 
- // nolint:gocycl
+// fieldValFromRowVal converts a go-mysql-server row value to a data.field value
+//
+//nolint:gocyclo
 func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{}, error) {
 	// the input val may be nil, it also may not be a pointer even if the fieldtype is a nullable pointer type
 	if val == nil {
