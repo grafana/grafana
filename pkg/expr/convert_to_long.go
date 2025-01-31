@@ -154,7 +154,6 @@ func convertNumericWideToNumericLong(frames data.Frames) (data.Frames, error) {
 
 	// Create new Frame
 	return data.Frames{longFrame}, nil
-
 }
 
 func convertTimeSeriesMultiToTimeSeriesLong(frames data.Frames) (data.Frames, error) {
@@ -285,8 +284,13 @@ func getToLongConversionFunc(inputType data.FrameType) func(data.Frames) (data.F
 		return convertTimeSeriesMultiToTimeSeriesLong
 	case data.FrameTypeTimeSeriesWide:
 		return convertTimeSeriesWideToTimeSeriesLong
+	default:
+		return convertErr
 	}
-	return nil
+}
+
+func convertErr(_ data.Frames) (data.Frames, error) {
+	return nil, fmt.Errorf("unsupported input type for SQL expression")
 }
 
 func supportedToLongConversion(inputType data.FrameType) bool {
@@ -299,6 +303,7 @@ func supportedToLongConversion(inputType data.FrameType) bool {
 		return true
 	case data.FrameTypeTimeSeriesWide:
 		return true
+	default:
+		return false
 	}
-	return false
 }

@@ -381,37 +381,3 @@ func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
 	}
 	return results
 }
-
-func hasSqlExpression(dp DataPipeline) bool {
-	for _, node := range dp {
-		if node.NodeType() == TypeCMDNode {
-			cmdNode := node.(*CMDNode)
-			_, ok := cmdNode.Command.(*SQLCommand)
-			if ok {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// func graphHasSqlExpresssion(dp *simple.DirectedGraph) bool {
-// 	node := dp.Nodes()
-// 	for node.Next() {
-// 		if cmdNode, ok := node.Node().(*CMDNode); ok {
-// 			// res[dpNode.RefID()] = dpNode
-// 			_, ok := cmdNode.Command.(*SQLCommand)
-// 			if ok {
-// 				return true
-// 			}
-// 		}
-// 		// if node.NodeType() == TypeCMDNode {
-// 		// 	cmdNode := node.(*CMDNode)
-// 		// 	_, ok := cmdNode.Command.(*SQLCommand)
-// 		// 	if ok {
-// 		// 		return true
-// 		// 	}
-// 		// }
-// 	}
-// 	return false
-// }
