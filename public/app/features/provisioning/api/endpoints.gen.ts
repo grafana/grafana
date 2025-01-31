@@ -1,5 +1,5 @@
 import { baseAPI as api } from './baseAPI';
-export const addTagTypes = ['Job', 'Repository'] as const;
+export const addTagTypes = ['Job', 'Repository', 'Provisioning'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -233,9 +233,13 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook`, method: 'POST' }),
         invalidatesTags: ['Repository'],
       }),
+      getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
+        query: (queryArg) => ({ url: `/settings` }),
+        providesTags: ['Provisioning'],
+      }),
       getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
         query: (queryArg) => ({ url: `/stats` }),
-        providesTags: ['Repository'],
+        providesTags: ['Provisioning'],
       }),
     }),
     overrideExisting: false,
@@ -543,6 +547,22 @@ export type CreateRepositoryWebhookResponse = /** status 200 OK */ WebhookRespon
 export type CreateRepositoryWebhookArg = {
   /** name of the WebhookResponse */
   name: string;
+};
+export type GetFrontendSettingsResponse = /** status 200 undefined */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** When a repository is configured to save everything in instance */
+  instance?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** The basic repository settings */
+  repository: {
+    [key: string]: any;
+  };
+};
+export type GetFrontendSettingsArg = {
+  /** workspace */
+  namespace: string;
 };
 export type GetResourceStatsResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1058,5 +1078,6 @@ export const {
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,
+  useGetFrontendSettingsQuery,
   useGetResourceStatsQuery,
 } = injectedRtkApi;

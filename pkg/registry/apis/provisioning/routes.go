@@ -20,7 +20,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
 	schemaStats := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceStats"].Schema
-	schemaSettigns := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FrontendSettings"].Schema
+	schemaSettings := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Settings"].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -94,7 +94,7 @@ func (b *APIBuilder) GetAPIRoutes() *builder.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &schemaSettigns,
+															Schema: &schemaSettings,
 														},
 													},
 												},
@@ -142,15 +142,15 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	settings := provisioning.FrontendSettings{
+	settings := provisioning.Settings{
 		Repository: make(map[string]provisioning.RepositoryView, len(all)+2),
 	}
 	for _, val := range all {
 		settings.Repository[val.Name] = provisioning.RepositoryView{
-			Title:       val.Spec.Title,
-			Description: val.Spec.Description,
-			Type:        val.Spec.Type,
-			Editing:     val.Spec.Editing,
+			Title:    val.Spec.Title,
+			Type:     val.Spec.Type,
+			ReadOnly: val.Spec.ReadOnly,
+			Target:   val.Spec.Sync.Target,
 		}
 		if val.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
 			settings.Instance = val.Name

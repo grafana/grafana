@@ -2469,7 +2469,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "description": "FrontendSettings shows a view of the configuration that is sanitized and is OK for logged in users to see",
+                  "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
                   "type": "object",
                   "required": [
                     "repository"
@@ -2479,8 +2479,8 @@
                       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
                       "type": "string"
                     },
-                    "global": {
-                      "description": "When the instance is configured so everything should be saved to one repository",
+                    "instance": {
+                      "description": "When a repository is configured to save everything in instance",
                       "type": "string"
                     },
                     "kind": {
@@ -2488,7 +2488,7 @@
                       "type": "string"
                     },
                     "repository": {
-                      "description": "Sanitized repository settings",
+                      "description": "The basic repository settings",
                       "type": "object",
                       "additionalProperties": {
                         "default": {}
