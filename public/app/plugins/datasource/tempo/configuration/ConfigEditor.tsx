@@ -2,6 +2,13 @@ import { css } from '@emotion/css';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import {
+  NodeGraphSection,
+  SpanBarSection,
+  TraceToLogsSection,
+  TraceToMetricsSection,
+  TraceToProfilesSection,
+} from '@grafana/o11y-ds-frontend';
+import {
   AdvancedHttpSettings,
   Auth,
   ConfigSection,
@@ -10,14 +17,7 @@ import {
   ConnectionSettings,
   convertLegacyAuthProps,
   DataSourceDescription,
-} from '@grafana/experimental';
-import {
-  NodeGraphSection,
-  SpanBarSection,
-  TraceToLogsSection,
-  TraceToMetricsSection,
-  TraceToProfilesSection,
-} from '@grafana/o11y-ds-frontend';
+} from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 

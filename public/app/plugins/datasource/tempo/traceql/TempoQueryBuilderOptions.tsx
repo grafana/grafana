@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { AutoSizeInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
