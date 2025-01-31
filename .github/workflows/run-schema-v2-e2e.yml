@@ -32,7 +32,9 @@ jobs:
         run: yarn install --immutable
       - name: Build grafana
         run: make build
-      - name: Run Cypress tests
+      - name: Install Cypress dependencies
         uses: cypress-io/github-action@v6
         with:
-          start: yarn e2e:schema-v2
+          runTests: false
+      - name: Run dashboard scenes e2e
+        run: yarn e2e:schema-v2
