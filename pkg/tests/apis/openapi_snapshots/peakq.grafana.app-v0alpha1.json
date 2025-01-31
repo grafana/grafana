@@ -6,7 +6,10 @@
   "paths": {
     "/apis/peakq.grafana.app/v0alpha1/": {
       "get": {
-        "description": "get available resources",
+        "tags": [
+          "API Discovery"
+        ],
+        "description": "Describe the available kubernetes resources",
         "operationId": "getAPIResources",
         "responses": {
           "200": {
@@ -34,7 +37,9 @@
     },
     "/apis/peakq.grafana.app/v0alpha1/namespaces/{namespace}/querytemplates": {
       "get": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "list or watch objects of kind QueryTemplate",
         "operationId": "listQueryTemplate",
         "parameters": [
@@ -169,7 +174,9 @@
         }
       },
       "post": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "create a QueryTemplate",
         "operationId": "createQueryTemplate",
         "parameters": [
@@ -281,7 +288,9 @@
         }
       },
       "delete": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "delete collection of QueryTemplate",
         "operationId": "deletecollectionQueryTemplate",
         "parameters": [
@@ -465,7 +474,9 @@
     },
     "/apis/peakq.grafana.app/v0alpha1/namespaces/{namespace}/querytemplates/{name}": {
       "get": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "read the specified QueryTemplate",
         "operationId": "getQueryTemplate",
         "responses": {
@@ -498,7 +509,9 @@
         }
       },
       "put": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "replace the specified QueryTemplate",
         "operationId": "replaceQueryTemplate",
         "parameters": [
@@ -590,7 +603,9 @@
         }
       },
       "delete": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "delete a QueryTemplate",
         "operationId": "deleteQueryTemplate",
         "parameters": [
@@ -699,7 +714,9 @@
         }
       },
       "patch": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "partially update the specified QueryTemplate",
         "operationId": "updateQueryTemplate",
         "parameters": [
@@ -848,7 +865,9 @@
     },
     "/apis/peakq.grafana.app/v0alpha1/namespaces/{namespace}/querytemplates/{name}/render": {
       "get": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "connect GET requests to render of QueryTemplate",
         "operationId": "getQueryTemplateRender",
         "responses": {
@@ -895,7 +914,9 @@
     },
     "/apis/peakq.grafana.app/v0alpha1/querytemplates": {
       "get": {
-        "tags": ["QueryTemplate"],
+        "tags": [
+          "QueryTemplate"
+        ],
         "description": "list or watch objects of kind QueryTemplate",
         "operationId": "listQueryTemplateForAllNamespaces",
         "responses": {
@@ -1060,8 +1081,13 @@
               }
             },
             "example": {
-              "var-another": ["first", "second"],
-              "var-metricName": ["up"]
+              "var-another": [
+                "first",
+                "second"
+              ],
+              "var-metricName": [
+                "up"
+              ]
             }
           }
         ],
@@ -1077,53 +1103,9 @@
                     "vars": [
                       {
                         "key": "metricName",
-                        "defaultValues": ["down"]
-                      }
-                    ],
-                    "targets": [
-                      {
-                        "variables": {
-                          "metricName": [
-                            {
-                              "path": "$.expr",
-                              "position": {
-                                "start": 0,
-                                "end": 10
-                              }
-                            },
-                            {
-                              "path": "$.expr",
-                              "position": {
-                                "start": 13,
-                                "end": 23
-                              }
-                            }
-                          ]
-                        },
-                        "properties": {
-                          "refId": "A",
-                          "datasource": {
-                            "type": "prometheus",
-                            "uid": "foo"
-                          },
-                          "editorMode": "builder",
-                          "expr": "metricName + metricName + 42",
-                          "instant": true,
-                          "range": false,
-                          "exemplar": false
-                        }
-                      }
-                    ]
-                  }
-                },
-                "test2": {
-                  "summary": "hello2",
-                  "value": {
-                    "title": "Test",
-                    "vars": [
-                      {
-                        "key": "metricName",
-                        "defaultValues": ["down"]
+                        "defaultValues": [
+                          "down"
+                        ]
                       }
                     ],
                     "targets": [
@@ -1157,6 +1139,54 @@
                           "exemplar": false,
                           "editorMode": "builder",
                           "expr": "metricName + metricName + 42"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "test2": {
+                  "summary": "hello2",
+                  "value": {
+                    "title": "Test",
+                    "vars": [
+                      {
+                        "key": "metricName",
+                        "defaultValues": [
+                          "down"
+                        ]
+                      }
+                    ],
+                    "targets": [
+                      {
+                        "variables": {
+                          "metricName": [
+                            {
+                              "path": "$.expr",
+                              "position": {
+                                "start": 0,
+                                "end": 10
+                              }
+                            },
+                            {
+                              "path": "$.expr",
+                              "position": {
+                                "start": 13,
+                                "end": 23
+                              }
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "refId": "A",
+                          "datasource": {
+                            "type": "prometheus",
+                            "uid": "foo"
+                          },
+                          "editorMode": "builder",
+                          "expr": "metricName + metricName + 42",
+                          "instant": true,
+                          "range": false,
+                          "exemplar": false
                         }
                       }
                     ]
@@ -1197,474 +1227,6 @@
           }
         }
       }
-    },
-    "/apis/peakq.grafana.app/v0alpha1/watch/namespaces/{namespace}/querytemplates": {
-      "get": {
-        "tags": ["QueryTemplate"],
-        "description": "watch individual changes to a list of QueryTemplate. deprecated: use the 'watch' parameter with a list operation instead.",
-        "operationId": "watchQueryTemplateList",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "watchlist",
-        "x-kubernetes-group-version-kind": {
-          "group": "peakq.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryTemplate"
-        }
-      },
-      "parameters": [
-        {
-          "name": "allowWatchBookmarks",
-          "in": "query",
-          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "continue",
-          "in": "query",
-          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "fieldSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labelSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersion",
-          "in": "query",
-          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersionMatch",
-          "in": "query",
-          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sendInitialEvents",
-          "in": "query",
-          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "timeoutSeconds",
-          "in": "query",
-          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "watch",
-          "in": "query",
-          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/peakq.grafana.app/v0alpha1/watch/namespaces/{namespace}/querytemplates/{name}": {
-      "get": {
-        "tags": ["QueryTemplate"],
-        "description": "watch changes to an object of kind QueryTemplate. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
-        "operationId": "watchQueryTemplate",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "watch",
-        "x-kubernetes-group-version-kind": {
-          "group": "peakq.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryTemplate"
-        }
-      },
-      "parameters": [
-        {
-          "name": "allowWatchBookmarks",
-          "in": "query",
-          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "continue",
-          "in": "query",
-          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "fieldSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labelSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the QueryTemplate",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersion",
-          "in": "query",
-          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersionMatch",
-          "in": "query",
-          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sendInitialEvents",
-          "in": "query",
-          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "timeoutSeconds",
-          "in": "query",
-          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "watch",
-          "in": "query",
-          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/peakq.grafana.app/v0alpha1/watch/querytemplates": {
-      "get": {
-        "tags": ["QueryTemplate"],
-        "description": "watch individual changes to a list of QueryTemplate. deprecated: use the 'watch' parameter with a list operation instead.",
-        "operationId": "watchQueryTemplateListForAllNamespaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "watchlist",
-        "x-kubernetes-group-version-kind": {
-          "group": "peakq.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryTemplate"
-        }
-      },
-      "parameters": [
-        {
-          "name": "allowWatchBookmarks",
-          "in": "query",
-          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "continue",
-          "in": "query",
-          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "fieldSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labelSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersion",
-          "in": "query",
-          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersionMatch",
-          "in": "query",
-          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sendInitialEvents",
-          "in": "query",
-          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "timeoutSeconds",
-          "in": "query",
-          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "watch",
-          "in": "query",
-          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
     }
   },
   "components": {
@@ -1676,7 +1238,9 @@
           "datasource": {
             "description": "The datasource",
             "type": "object",
-            "required": ["type"],
+            "required": [
+              "type"
+            ],
             "properties": {
               "apiVersion": {
                 "description": "The apiserver version",
@@ -1716,7 +1280,9 @@
           "resultAssertions": {
             "description": "Optionally define expected query result behavior",
             "type": "object",
-            "required": ["typeVersion"],
+            "required": [
+              "typeVersion"
+            ],
             "properties": {
               "maxFrames": {
                 "description": "Maximum frame count",
@@ -1755,19 +1321,26 @@
           "timeRange": {
             "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
             "type": "object",
-            "required": ["from", "to"],
+            "required": [
+              "from",
+              "to"
+            ],
             "properties": {
               "from": {
                 "description": "From is the start time of the query.",
                 "type": "string",
                 "default": "now-6h",
-                "examples": ["now-1h"]
+                "examples": [
+                  "now-1h"
+                ]
               },
               "to": {
                 "description": "To is the end time of the query.",
                 "type": "string",
                 "default": "now",
-                "examples": ["now"]
+                "examples": [
+                  "now"
+                ]
               }
             },
             "additionalProperties": false
@@ -1859,7 +1432,10 @@
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.template.Position": {
         "description": "Position is where to do replacement in the targets during render.",
         "type": "object",
-        "required": ["start", "end"],
+        "required": [
+          "start",
+          "end"
+        ],
         "properties": {
           "end": {
             "description": "End is the byte offset of the end of the variable.",
@@ -1877,7 +1453,9 @@
       },
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.template.QueryTemplate": {
         "type": "object",
-        "required": ["targets"],
+        "required": [
+          "targets"
+        ],
         "properties": {
           "description": {
             "description": "Longer description for why it is interesting",
@@ -1911,14 +1489,19 @@
                 }
               ]
             },
-            "x-kubernetes-list-map-keys": ["key"],
+            "x-kubernetes-list-map-keys": [
+              "key"
+            ],
             "x-kubernetes-list-type": "map"
           }
         }
       },
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.template.Target": {
         "type": "object",
-        "required": ["variables", "properties"],
+        "required": [
+          "variables",
+          "properties"
+        ],
         "properties": {
           "dataType": {
             "description": "DataType is the returned Dataplane type from the query.",
@@ -1952,7 +1535,9 @@
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.template.TemplateVariable": {
         "description": "TemplateVariable is the definition of a variable that will be interpolated in targets.",
         "type": "object",
-        "required": ["key"],
+        "required": [
+          "key"
+        ],
         "properties": {
           "defaultValues": {
             "description": "DefaultValue is the value to be used when there is no selected value during render.",
@@ -1981,12 +1566,21 @@
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.template.VariableReplacement": {
         "description": "QueryVariable is the definition of a variable that will be interpolated in targets.",
         "type": "object",
-        "required": ["path"],
+        "required": [
+          "path"
+        ],
         "properties": {
           "format": {
             "description": "How values should be interpolated\n\nPossible enum values:\n - `\"csv\"` Formats variables with multiple values as a comma-separated string.\n - `\"doublequote\"` Formats single- and multi-valued variables into a comma-separated string\n - `\"json\"` Formats variables with multiple values as a comma-separated string.\n - `\"pipe\"` Formats variables with multiple values into a pipe-separated string.\n - `\"raw\"` Formats variables with multiple values into comma-separated string. This is the default behavior when no format is specified\n - `\"singlequote\"` Formats single- and multi-valued variables into a comma-separated string",
             "type": "string",
-            "enum": ["csv", "doublequote", "json", "pipe", "raw", "singlequote"]
+            "enum": [
+              "csv",
+              "doublequote",
+              "json",
+              "pipe",
+              "raw",
+              "singlequote"
+            ]
           },
           "path": {
             "description": "Path is the location of the property within a target. The format for this is not figured out yet (Maybe JSONPath?). Idea: [\"string\", int, \"string\"] where int indicates array offset",
@@ -2006,7 +1600,13 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
-        "required": ["name", "singularName", "namespaced", "kind", "verbs"],
+        "required": [
+          "name",
+          "singularName",
+          "namespaced",
+          "kind",
+          "verbs"
+        ],
         "properties": {
           "categories": {
             "description": "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
@@ -2071,7 +1671,10 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
         "description": "APIResourceList is a list of APIResource, it is used to expose the name of the resources supported in a specific group and version, and if the resource is namespaced.",
         "type": "object",
-        "required": ["groupVersion", "resources"],
+        "required": [
+          "groupVersion",
+          "resources"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2310,7 +1913,9 @@
                 }
               ]
             },
-            "x-kubernetes-list-map-keys": ["uid"],
+            "x-kubernetes-list-map-keys": [
+              "uid"
+            ],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -2332,7 +1937,12 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference": {
         "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
         "type": "object",
-        "required": ["apiVersion", "kind", "name", "uid"],
+        "required": [
+          "apiVersion",
+          "kind",
+          "name",
+          "uid"
+        ],
         "properties": {
           "apiVersion": {
             "description": "API version of the referent.",
@@ -2498,7 +2108,10 @@
       "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
         "description": "Event represents a single event to a watched resource.",
         "type": "object",
-        "required": ["type", "object"],
+        "required": [
+          "type",
+          "object"
+        ],
         "properties": {
           "object": {
             "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
