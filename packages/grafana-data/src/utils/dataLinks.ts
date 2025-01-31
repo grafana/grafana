@@ -78,7 +78,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 /**
  * Generates href for internal derived field link.
  */
-export function generateInternalHref<T extends DataQuery>(
+function generateInternalHref<T extends DataQuery>(
   datasourceUid: string,
   query: T,
   range?: TimeRange,
