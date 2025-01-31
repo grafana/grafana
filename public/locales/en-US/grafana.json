@@ -299,6 +299,7 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
+    "copy-to-clipboard": "Copy {{label}} to clipboard",
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
