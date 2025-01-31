@@ -1,4 +1,5 @@
 import { Box, ClipboardButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import ConditionalWrap from '../ConditionalWrap';
 
@@ -33,6 +34,7 @@ export const DetailText = ({
   copyValue,
   tooltipValue,
 }: DetailTextProps) => {
+  const copyToClipboardLabel = t('alerting.copy-to-clipboard', 'Copy "{{label}}" to clipboard', { label });
   return (
     <Box paddingBottom={2}>
       <Stack direction="column" gap={0}>
@@ -47,7 +49,14 @@ export const DetailText = ({
             <span>{value}</span>
           </ConditionalWrap>
           {showCopyButton && (
-            <ClipboardButton fill="text" variant="secondary" icon="copy" size="sm" getText={() => copyValue} />
+            <ClipboardButton
+              aria-label={copyToClipboardLabel}
+              fill="text"
+              variant="secondary"
+              icon="copy"
+              size="sm"
+              getText={() => copyValue}
+            />
           )}
         </Text>
       </Stack>
