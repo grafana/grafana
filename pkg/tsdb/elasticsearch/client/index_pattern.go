@@ -71,7 +71,7 @@ var datePatternReplacements = map[string]string{
 
 type IndexPattern interface {
 	GetIndices(timeRange backend.TimeRange) ([]string, error)
-	GetIndexForToday(interval string , pattern string)([]string, error)
+	GetIndexForToday(interval string, pattern string) ([]string, error)
 }
 
 var NewIndexPattern = func(interval string, pattern string) (IndexPattern, error) {
@@ -147,13 +147,13 @@ func (ip *dynamicIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string
 }
 
 func (ip *dynamicIndexPattern) GetIndexForToday(interval string, pattern string) ([]string, error) {
-    if interval != "" {
+	if interval != "" {
 		now := time.Now().UTC()
 		return []string{formatDate(now, pattern)}, nil
 	} else {
-		return []string{pattern}, nil;
+		return []string{pattern}, nil
 	}
-  }
+}
 
 type hourlyInterval struct{}
 

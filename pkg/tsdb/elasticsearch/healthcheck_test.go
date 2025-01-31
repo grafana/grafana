@@ -68,7 +68,7 @@ func Test_validateIndex_Warning_WrongTimestampType(t *testing.T) {
 	assert.Equal(t, "Elasticsearch data source is healthy. Warning: Could not find time field timestamp with type date in index", res.Message)
 }
 func Test_validateIndex_Error_FailedToUnmarshalValidateResponse(t *testing.T) {
-	service := GetMockService(http.StatusOK, "200 OK", `{"status":"green"}`, `\\\///{"fields":null}"`,)
+	service := GetMockService(http.StatusOK, "200 OK", `{"status":"green"}`, `\\\///{"fields":null}"`)
 	res, _ := service.CheckHealth(mockedCfg, &backend.CheckHealthRequest{
 		PluginContext: backend.PluginContext{},
 		Headers:       nil,
@@ -85,31 +85,30 @@ func Test_validateIndex_Success_SuccessValidatingIndex(t *testing.T) {
 	assert.Equal(t, backend.HealthStatusOk, res.Status)
 	assert.Equal(t, "Elasticsearch data source is healthy.", res.Message)
 }
+
 type FakeRoundTripper struct {
-	statusCode int
-	status     string
-	body       string
-	index int
+	statusCode            int
+	status                string
+	body                  string
+	index                 int
 	elasticSearchResponse string
-	fieldCapsResponse string
+	fieldCapsResponse     string
 }
 
 func (fakeRoundTripper *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var res *http.Response
-	if(fakeRoundTripper.index == 0) {
+	if fakeRoundTripper.index == 0 {
 		if fakeRoundTripper.statusCode == http.StatusOK {
 			res = &http.Response{
 				StatusCode: http.StatusOK,
 				Status:     "200 OK",
 				Body:       io.NopCloser(bytes.NewBufferString(fakeRoundTripper.elasticSearchResponse)),
-	
 			}
 		} else {
 			res = &http.Response{
 				StatusCode: fakeRoundTripper.statusCode,
 				Status:     fakeRoundTripper.status,
 				Body:       io.NopCloser(bytes.NewBufferString(fakeRoundTripper.elasticSearchResponse)),
-	
 			}
 		}
 		fakeRoundTripper.index++
@@ -124,10 +123,10 @@ func (fakeRoundTripper *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Re
 }
 
 type FakeInstanceManager struct {
-	statusCode int
-	status     string
+	statusCode            int
+	status                string
 	elasticSearchResponse string
-	fieldCapsResponse string
+	fieldCapsResponse     string
 }
 
 func (fakeInstanceManager *FakeInstanceManager) Get(tx context.Context, pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
@@ -152,4 +151,3 @@ func GetMockService(statusCode int, status string, elasticSearchResponse string,
 		logger: log.New(),
 	}
 }
-

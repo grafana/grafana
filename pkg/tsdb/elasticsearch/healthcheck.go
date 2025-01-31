@@ -29,10 +29,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	healthStatusUrl, err := url.Parse(ds.URL)
 	if err != nil {
-		logger.Error("Failed to parse datasource URL", "error", err)
+		logger.Error("Failed to parse data source URL", "error", err)
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
-			Message: "Failed to parse datasource URL",
+			Message: "Failed to parse data source URL",
 		}, nil
 	}
 

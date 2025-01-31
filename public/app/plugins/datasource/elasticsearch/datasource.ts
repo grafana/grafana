@@ -441,7 +441,6 @@ export class ElasticDatasource
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
-
   // Private method used in `getTerms` to get the header for the Elasticsearch query
   private getQueryHeader(searchType: string, timeFrom?: DateTime, timeTo?: DateTime): string {
     const queryHeader = {
@@ -802,7 +801,7 @@ export class ElasticDatasource
     );
   }
 
-   getFieldsCrossCluster(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
+  getFieldsCrossCluster(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
     const typeMap: Record<string, string> = {
       float: 'number',
       double: 'number',
