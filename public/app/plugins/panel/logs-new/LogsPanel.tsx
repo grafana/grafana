@@ -96,8 +96,6 @@ export const LogsPanel = ({
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 
-  console.log(initialScrollPosition);
-
   return (
     <div className={style.container} ref={(element: HTMLDivElement) => setLogsContainer(element)}>
       {logs.length > 0 && logsContainer && (
