@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 import { TableCellDisplayMode } from '@grafana/schema';
 
@@ -20,14 +20,14 @@ export function TableCellNG(props: any) {
   // TableNG provides either an overridden cell width or 'auto' as the cell width value.
   // While the overridden value gives the exact cell width, 'auto' does not.
   // Therefore, we need to determine the actual cell width from the DOM.
-  const divRef = useRef<HTMLDivElement>(null);
-  const [divWidth, seDivWidth] = useState(0);
+  const divWidthRef = useRef<HTMLDivElement>(null);
+  const [divWidth, setDivWidth] = useState(0);
 
-  useEffect(() => {
-    if (divRef.current) {
-      seDivWidth(divRef.current.clientWidth);
+  useLayoutEffect(() => {
+    if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
+      setDivWidth(divWidthRef.current.clientWidth);
     }
-  }, []);
+  }, [divWidthRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Get the correct cell type
   let cell: ReactNode = null;
@@ -75,5 +75,5 @@ export function TableCellNG(props: any) {
       );
   }
 
-  return <div ref={divRef}>{cell}</div>;
+  return <div ref={divWidthRef}>{cell}</div>;
 }
