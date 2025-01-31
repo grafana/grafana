@@ -460,8 +460,9 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService(features)
 	fStore := folderimpl.ProvideStore(sc.db)
-	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), cfg, nil, tracing.InitializeTracerForTest())
+	folderServiceWithFlagOn := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(), nil, folderServiceWithFlagOn,
@@ -472,7 +473,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
 		features, folderPermissions, ac,
-		folderServiceWithFlagOn, fStore, nil, nil, nil, nil, quotaSrv, nil,
+		folderServiceWithFlagOn, fStore, nil, nil, nil, nil, quotaSrv, nil, nil,
 	)
 	require.NoError(b, err)
 
@@ -489,13 +490,13 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SQLStore:         sc.db,
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc, folderServiceWithFlagOn, features),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}
 
 	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 
 	m.Get("/api/folders", hs.GetFolders)
 	m.Get("/api/search", hs.Search)

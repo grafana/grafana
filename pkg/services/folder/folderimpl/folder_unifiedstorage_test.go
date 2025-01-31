@@ -10,8 +10,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,8 +33,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -179,7 +184,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		recourceClientProvider: f,
 	}
 
-	unifiedStore := ProvideUnifiedStore(k8sHandler)
+	userService := &usertest.FakeUserService{
+		ExpectedUser: &user.User{},
+	}
+
+	unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -200,21 +209,23 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	featuresArr := []any{
-		featuremgmt.FlagKubernetesFolders,
 		featuremgmt.FlagKubernetesFoldersServiceV2}
 	features := featuremgmt.WithFeatures(featuresArr...)
+	dashboardStore := dashboards.NewFakeDashboardStore(t)
+	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 
 	folderService := &Service{
-		log:          slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
-		unifiedStore: unifiedStore,
-		features:     features,
-		bus:          bus.ProvideBus(tracing.InitializeTracerForTest()),
-		// db:            db,
-		accessControl: acimpl.ProvideAccessControl(features),
-		registry:      make(map[string]folder.RegistryService),
-		metrics:       newFoldersMetrics(nil),
-		tracer:        tracing.InitializeTracerForTest(),
-		k8sclient:     k8sHandler,
+		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		unifiedStore:           unifiedStore,
+		features:               features,
+		bus:                    bus.ProvideBus(tracing.InitializeTracerForTest()),
+		accessControl:          acimpl.ProvideAccessControl(features),
+		registry:               make(map[string]folder.RegistryService),
+		metrics:                newFoldersMetrics(nil),
+		tracer:                 tracing.InitializeTracerForTest(),
+		k8sclient:              k8sHandler,
+		dashboardStore:         dashboardStore,
+		publicDashboardService: publicDashboardService,
 	}
 
 	require.NoError(t, folderService.RegisterService(alertingStore))
@@ -346,6 +357,9 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
+				dashboardStore.On("FindDashboards", mock.Anything, mock.Anything).Return([]dashboards.DashboardSearchProjection{}, nil)
+				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
 					UID:              "deletefolder",
 					OrgID:            orgID,
@@ -412,9 +426,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			t.Run("When get folder by ID should return folder", func(t *testing.T) {
+			t.Run("When get folder by ID and uid is an empty string should return folder by id", func(t *testing.T) {
 				id := int64(123)
+				emptyString := ""
 				query := &folder.GetFolderQuery{
+					UID:          &emptyString,
 					ID:           &id,
 					OrgID:        1,
 					SignedInUser: usr,
@@ -438,16 +454,31 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 
-			// TODO!!
-			/*
-				t.Run("When get folder by title should return folder", func(t *testing.T) {
-					expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
+			t.Run("When get folder by Title should return folder", func(t *testing.T) {
+				title := "foo"
+				query := &folder.GetFolderQuery{
+					Title:        &title,
+					OrgID:        1,
+					SignedInUser: usr,
+				}
 
-					actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title, nil)
-					require.Equal(t, expected, actual)
-					require.NoError(t, err)
-				})
-			*/
+				actual, err := folderService.Get(context.Background(), query)
+				require.Equal(t, fooFolder, actual)
+				require.NoError(t, err)
+			})
+
+			t.Run("When get folder by non existing Title should return not found error", func(t *testing.T) {
+				title := "does not exists"
+				query := &folder.GetFolderQuery{
+					Title:        &title,
+					OrgID:        1,
+					SignedInUser: usr,
+				}
+
+				actual, err := folderService.Get(context.Background(), query)
+				require.Nil(t, actual)
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			})
 
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
@@ -455,10 +486,13 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		})
 
 		t.Run("Returns root folder", func(t *testing.T) {
-			t.Run("When the folder UID is blank should return the root folder", func(t *testing.T) {
+			t.Run("When the folder UID and title are blank, and id is 0, should return the root folder", func(t *testing.T) {
 				emptyString := ""
+				idZero := int64(0)
 				actual, err := folderService.Get(ctx, &folder.GetFolderQuery{
 					UID:          &emptyString,
+					ID:           &idZero,
+					Title:        &emptyString,
 					OrgID:        1,
 					SignedInUser: usr,
 				})
@@ -534,6 +568,120 @@ func (r resourceClientMock) Search(ctx context.Context, in *resource.ResourceSea
 		}, nil
 	}
 
+	if len(in.Options.Fields) > 0 &&
+		in.Options.Fields[0].Key == resource.SEARCH_FIELD_TITLE_PHRASE &&
+		in.Options.Fields[0].Operator == "in" &&
+		len(in.Options.Fields[0].Values) > 0 &&
+		in.Options.Fields[0].Values[0] == "foo" {
+		return &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "_id",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "foo",
+							Resource: "folders",
+						},
+						Cells: [][]byte{
+							[]byte("123"),
+							[]byte("folder1"),
+							[]byte(""),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil
+	}
+
+	if in.Query == "*test*" {
+		return &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "_id",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key: &resource.ResourceKey{
+							Name:     "uid",
+							Resource: "folders",
+						},
+						Cells: [][]byte{
+							[]byte("123"),
+							[]byte("testing-123"),
+							[]byte("parent-uid"),
+						},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil
+	}
+
+	if len(in.Options.Fields) > 0 &&
+		in.Options.Fields[0].Key == resource.SEARCH_FIELD_NAME &&
+		in.Options.Fields[0].Operator == "in" &&
+		len(in.Options.Fields[0].Values) > 0 {
+		rows := []*resource.ResourceTableRow{}
+		for i, row := range in.Options.Fields[0].Values {
+			rows = append(rows, &resource.ResourceTableRow{
+				Key: &resource.ResourceKey{
+					Name:     row,
+					Resource: "folders",
+				},
+				Cells: [][]byte{
+					[]byte(fmt.Sprintf("%d", i)),       // set legacy id as the row id
+					[]byte(fmt.Sprintf("folder%d", i)), // set title as folder + row id
+					[]byte(""),
+				},
+			})
+		}
+		return &resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{
+						Name: "_id",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "title",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+					{
+						Name: "folder",
+						Type: resource.ResourceTableColumnDefinition_STRING,
+					},
+				},
+				Rows: rows,
+			},
+			TotalHits: int64(len(rows)),
+		}, nil
+	}
+
 	// not found
 	return &resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{},
@@ -556,4 +704,133 @@ func (r resourceClientMock) GetBlob(ctx context.Context, in *resource.GetBlobReq
 }
 func (r resourceClientMock) IsHealthy(ctx context.Context, in *resource.HealthCheckRequest, opts ...grpc.CallOption) (*resource.HealthCheckResponse, error) {
 	return nil, nil
+}
+
+type mockFoldersK8sCli struct {
+	mock.Mock
+	searcher resourceClientMock
+}
+
+func (m *mockFoldersK8sCli) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
+	args := m.Called(ctx, orgID)
+	return args.Get(0).(dynamic.ResourceInterface), args.Bool(1)
+}
+
+func (m *mockFoldersK8sCli) getNamespace(orgID int64) string {
+	if orgID == 1 {
+		return "default"
+	}
+	return fmt.Sprintf("orgs-%d", orgID)
+}
+
+func (m *mockFoldersK8sCli) getSearcher(ctx context.Context) resource.ResourceClient {
+	return m.searcher
+}
+
+func TestSearchFoldersFromApiServer(t *testing.T) {
+	fakeK8sClient := new(mockFoldersK8sCli)
+	service := Service{
+		k8sclient: fakeK8sClient,
+		features:  featuremgmt.WithFeatures(featuremgmt.FlagKubernetesFoldersServiceV2),
+	}
+	fakeK8sClient.On("getSearcher", mock.Anything).Return(fakeK8sClient)
+	user := &user.SignedInUser{OrgID: 1}
+	ctx := identity.WithRequester(context.Background(), user)
+
+	t.Run("Should search by uids if provided", func(t *testing.T) {
+		query := folder.SearchFoldersQuery{
+			UIDs:         []string{"uid1", "uid2"},
+			IDs:          []int64{1, 2}, // will ignore these because uid is passed in
+			SignedInUser: user,
+		}
+		result, err := service.searchFoldersFromApiServer(ctx, query)
+		require.NoError(t, err)
+
+		expectedResult := model.HitList{
+			{
+				UID: "uid1",
+				// no parent folder is returned, so the general folder should be set
+				FolderID:    0,
+				FolderTitle: "General",
+				// orgID should be taken from signed in user
+				OrgID: 1,
+				// the rest should be automatically set when parsing the hit results from search
+				Type:  model.DashHitFolder,
+				URI:   "db/folder0",
+				Title: "folder0",
+				URL:   "/dashboards/f/uid1/folder0",
+			},
+			{
+				UID:         "uid2",
+				FolderID:    0,
+				FolderTitle: "General",
+				OrgID:       1,
+				Type:        model.DashHitFolder,
+				URI:         "db/folder1",
+				Title:       "folder1",
+				URL:         "/dashboards/f/uid2/folder1",
+			},
+		}
+		require.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Search by ID if uids are not provided", func(t *testing.T) {
+		query := folder.SearchFoldersQuery{
+			IDs:          []int64{123},
+			SignedInUser: user,
+		}
+		result, err := service.searchFoldersFromApiServer(ctx, query)
+		require.NoError(t, err)
+
+		expectedResult := model.HitList{
+			{
+				UID:         "foo",
+				FolderID:    0,
+				FolderTitle: "General",
+				OrgID:       1,
+				Type:        model.DashHitFolder,
+				URI:         "db/folder1",
+				Title:       "folder1",
+				URL:         "/dashboards/f/foo/folder1",
+			},
+		}
+		require.Equal(t, expectedResult, result)
+	})
+
+	t.Run("Search by title, wildcard should be added to search request (won't match in search mock if not)", func(t *testing.T) {
+		// the search here will return a parent, this will be the parent folder returned when we query for it to add to the hit info
+		fakeFolderStore := folder.NewFakeStore()
+		fakeFolderStore.ExpectedFolder = &folder.Folder{
+			UID:   "parent-uid",
+			ID:    2,
+			Title: "parent title",
+		}
+		service.unifiedStore = fakeFolderStore
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+			CanSaveValue: true,
+			CanViewValue: true,
+		})
+
+		query := folder.SearchFoldersQuery{
+			Title:        "test",
+			SignedInUser: user,
+		}
+		result, err := service.searchFoldersFromApiServer(ctx, query)
+		require.NoError(t, err)
+
+		expectedResult := model.HitList{
+			{
+				UID:         "uid",
+				FolderID:    2,
+				FolderTitle: "parent title",
+				FolderUID:   "parent-uid",
+				OrgID:       1,
+				Type:        model.DashHitFolder,
+				URI:         "db/testing-123",
+				Title:       "testing-123",
+				URL:         "/dashboards/f/uid/testing-123",
+			},
+		}
+		require.Equal(t, expectedResult, result)
+	})
 }

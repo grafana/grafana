@@ -34,10 +34,9 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider        db.DBProvider
-	Tracer            trace.Tracer
-	PollingInterval   time.Duration
-	SkipDataMigration bool
+	DBProvider      db.DBProvider
+	Tracer          trace.Tracer
+	PollingInterval time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -54,13 +53,12 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		pollingInterval = defaultPollingInterval
 	}
 	return &backend{
-		done:              ctx.Done(),
-		cancel:            cancel,
-		log:               log.New("sql-resource-server"),
-		tracer:            opts.Tracer,
-		dbProvider:        opts.DBProvider,
-		pollingInterval:   pollingInterval,
-		skipDataMigration: opts.SkipDataMigration,
+		done:            ctx.Done(),
+		cancel:          cancel,
+		log:             log.New("sql-resource-server"),
+		tracer:          opts.Tracer,
+		dbProvider:      opts.DBProvider,
+		pollingInterval: pollingInterval,
 	}, nil
 }
 
@@ -76,10 +74,9 @@ type backend struct {
 	tracer trace.Tracer
 
 	// database
-	dbProvider        db.DBProvider
-	db                db.DB
-	dialect           sqltemplate.Dialect
-	skipDataMigration bool
+	dbProvider db.DBProvider
+	db         db.DB
+	dialect    sqltemplate.Dialect
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -522,6 +519,10 @@ func (l *listIter) ContinueToken() string {
 	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
+func (l *listIter) ContinueTokenWithCurrentRV() string {
+	return ContinueToken{ResourceVersion: l.rv, StartOffset: l.offset}.String()
+}
+
 func (l *listIter) Error() error {
 	return l.err
 }
@@ -804,6 +805,8 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
+
+	start := time.Now()
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -819,6 +822,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
+	end := time.Now()
+	resource.NewStorageMetrics().PollerLatency.Observe(end.Sub(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {
@@ -846,6 +851,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}
+		b.log.Debug("poller sent event to stream", "namespace", rec.Key.Namespace, "group", rec.Key.Group, "resource", rec.Key.Resource, "name", rec.Key.Name, "action", rec.Action, "rv", rec.ResourceVersion)
 	}
 
 	return nextRV, nil
