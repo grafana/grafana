@@ -111,6 +111,12 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
+        {repositoryConfig?.readOnly && (
+          <Alert title="This repository is read only">
+            If you have direct access to the target, copy the JSON and paste it there.
+          </Alert>
+        )}
+
         {isNew && (
           <>
             <Field label={'Title'} invalid={!!errors.title} error={errors.title?.message}>

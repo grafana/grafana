@@ -131,6 +131,13 @@ func (g *JobWorker) Process(ctx context.Context, job provisioning.Job, progress 
 			}, nil
 		}
 
+		if repo.Config().Spec.ReadOnly {
+			return &provisioning.JobStatus{
+				State:  provisioning.JobStateError,
+				Errors: []string{"Exporting to a read only repository is not supported"},
+			}, nil
+		}
+
 		var exporter Exporter
 
 		// Test for now... so we have something with long spinners for UI testing!!!

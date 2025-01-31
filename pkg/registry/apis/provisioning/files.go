@@ -183,11 +183,9 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository,
 }
 
 func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
-	settings := repo.Config().Spec.Editing
-	if update && !settings.Update {
-		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
-	} else if !settings.Create {
-		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "creating files not enabled", nil)
+	if repo.Config().Spec.ReadOnly {
+		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(),
+			"this repository is read only", nil)
 	}
 
 	defer func() { _ = req.Body.Close() }()
@@ -270,9 +268,9 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 }
 
 func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
-	settings := repo.Config().Spec.Editing
-	if !settings.Delete {
-		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
+	if repo.Config().Spec.ReadOnly {
+		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(),
+			"this repository is read only", nil)
 	}
 
 	err := repo.Delete(ctx, path, ref, message)
