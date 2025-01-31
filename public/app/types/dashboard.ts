@@ -4,8 +4,11 @@ import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
 
+export interface HomeDashboardRedirectDTO {
+  redirectUri: string;
+}
+
 export interface DashboardDTO {
-  redirectUri?: string;
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
 }
@@ -145,3 +148,7 @@ export interface DashboardState {
 }
 
 export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+
+export function isRedirectResponse(dto: DashboardDTO | HomeDashboardRedirectDTO): dto is HomeDashboardRedirectDTO {
+  return 'redirectUri' in dto;
+}
