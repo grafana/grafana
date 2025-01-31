@@ -245,10 +245,12 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 	}
 
 	// Permission check currently only checks user, anonymous user, service account and renderer permissions
-	if !(identityType == types.TypeUser || identityType == types.TypeServiceAccount || identityType == types.TypeAnonymous || identityType == types.TypeRenderService) {
+	if !types.IsIdentityType(identityType, types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous, types.TypeRenderService) {
 		ctxLogger.Error("unsupported identity type", "type", identityType)
 		return "", "", status.Error(codes.PermissionDenied, "unsupported identity type")
+
 	}
+
 	return userUID, identityType, nil
 }
 
@@ -277,8 +279,7 @@ func (s *Service) getIdentityPermissions(ctx context.Context, ns types.Namespace
 	// When checking folder creation permissions, also check edit and admin action sets for folder, as the scoped folder create actions aren't stored in the DB separately
 	var actionSets []string
 	if action == "folders:create" {
-		actionSets = append(actionSets, "folders:edit")
-		actionSets = append(actionSets, "folders:admin")
+		actionSets = append(actionSets, "folders:edit", "folders:admin")
 	}
 
 	switch idType {
@@ -403,7 +404,7 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo
 		userIDQuery = store.UserIdentifierQuery{UserUID: userUID}
 	}
 	userIdentifiers, err := s.store.GetUserIdentifiers(ctx, userIDQuery)
-	if err != nil || userIdentifiers == nil {
+	if err != nil {
 		return nil, fmt.Errorf("could not get user internal id: %w", err)
 	}
 
