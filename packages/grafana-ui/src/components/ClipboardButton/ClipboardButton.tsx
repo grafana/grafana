@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { Trans } from '../../../src/utils/i18n';
+import { t } from '../../../src/utils/i18n';
 import { useStyles2 } from '../../themes';
 import { Button, ButtonProps } from '../Button';
 import { Icon } from '../Icon/Icon';
@@ -28,6 +28,7 @@ export function ClipboardButton({
   getText,
   icon,
   variant,
+  'aria-label': ariaLabel,
   ...buttonProps
 }: Props) {
   const styles = useStyles2(getStyles);
@@ -60,11 +61,12 @@ export function ClipboardButton({
     }
   }, [getText, onClipboardCopy, onClipboardError]);
 
+  const copiedText = t('clipboard-button.inline-toast.success', 'Copied');
   return (
     <>
       {showCopySuccess && (
         <InlineToast placement="top" referenceElement={buttonRef.current}>
-          <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+          {copiedText}
         </InlineToast>
       )}
 
@@ -72,7 +74,7 @@ export function ClipboardButton({
         onClick={copyTextCallback}
         icon={icon}
         variant={showCopySuccess ? 'success' : variant}
-        aria-label={showCopySuccess ? 'Copied' : undefined}
+        aria-label={showCopySuccess ? copiedText : ariaLabel}
         {...buttonProps}
         className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
         ref={buttonRef}
