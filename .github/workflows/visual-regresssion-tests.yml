@@ -20,19 +20,32 @@ jobs:
         run: yarn install
       - name: Install Playwright Browsers
         run: yarn exec playwright install --with-deps
-      - name: Run local server & playwright tests
+      - name: Start server
         run: |
+          echo "Starting server..."
           yarn start &
-          sleep 10
-          yarn e2e:playwright:vizregression | tee output.log
-          if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
-            echo "Playwright tests failed due to a snapshot issue."
-            echo "SNAPSHOT_DIFFERENCES=true" >> $GITHUB_ENV
-            exit 1
-          elif grep -q "failed" output.log; then
-            echo "Playwright tests failed due to a non-snapshot issue."
-            exit 1
-          fi
+      - name: Wait for server to be ready
+        run: |
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000 > /dev/null; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Server not yet ready, retrying in 2 seconds..."
+            sleep 2
+          done
+      - name: Run Playwright tests
+          run: |
+            yarn e2e:playwright:vizregression | tee output.log
+            if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
+              echo "Playwright tests failed due to a snapshot issue."
+              echo "SNAPSHOT_DIFFERENCES=true" >> $GITHUB_ENV
+              exit 1
+            elif grep -q "failed" output.log; then
+              echo "Playwright tests failed due to a non-snapshot issue."
+              exit 1
+            fi
       - uses: actions/upload-artifact@v4
         id: artifact-upload
         if: always()
