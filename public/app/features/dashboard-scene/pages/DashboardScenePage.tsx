@@ -26,7 +26,6 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
   const path = params['*'];
-
   const prevMatch = usePrevious({ params });
   const stateManager = config.featureToggles.useV2DashboardsAPI
     ? getDashboardScenePageStateManager('v2')
