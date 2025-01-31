@@ -5,7 +5,6 @@ import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
-  showErrorAlert?: boolean;
   body?: BackendSrvRequest['data'];
 }
 
