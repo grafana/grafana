@@ -230,7 +230,7 @@
     "sass-loader": "16.0.4",
     "smtp-tester": "^2.1.0",
     "style-loader": "4.0.0",
-    "stylelint": "16.13.2",
+    "stylelint": "16.14.1",
     "stylelint-config-sass-guidelines": "12.1.0",
     "terser-webpack-plugin": "5.3.11",
     "testing-library-selector": "0.3.1",
