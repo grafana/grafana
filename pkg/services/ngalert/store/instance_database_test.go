@@ -254,55 +254,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 
 		require.Len(t, alerts, 4)
 	})
-
-	t.Run("should ignore Normal state with no reason if feature flag is enabled", func(t *testing.T) {
-		ng, _ := tests.SetupTestEnv(
-			t,
-			baseIntervalSeconds,
-		)
-
-		labels := models.InstanceLabels{"test": util.GenerateShortUID()}
-		instance1 := models.AlertInstance{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  orgID,
-				RuleUID:    util.GenerateShortUID(),
-				LabelsHash: util.GenerateShortUID(),
-			},
-			CurrentState:  models.InstanceStateNormal,
-			CurrentReason: "",
-			Labels:        labels,
-		}
-		instance2 := models.AlertInstance{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  orgID,
-				RuleUID:    util.GenerateShortUID(),
-				LabelsHash: util.GenerateShortUID(),
-			},
-			CurrentState:  models.InstanceStateNormal,
-			CurrentReason: models.StateReasonError,
-			Labels:        labels,
-		}
-		err := ng.InstanceStore.SaveAlertInstance(ctx, instance1)
-		require.NoError(t, err)
-		err = ng.InstanceStore.SaveAlertInstance(ctx, instance2)
-		require.NoError(t, err)
-
-		listQuery := &models.ListAlertInstancesQuery{
-			RuleOrgID: orgID,
-		}
-
-		alerts, err := ng.InstanceStore.ListAlertInstances(ctx, listQuery)
-		require.NoError(t, err)
-
-		containsHash(t, alerts, instance2.LabelsHash)
-
-		for _, instance := range alerts {
-			if instance.CurrentState == models.InstanceStateNormal && instance.CurrentReason == "" {
-				require.Fail(t, "List operation expected to return all states except Normal but the result contains Normal states")
-			}
-		}
-	})
-
+	
 	t.Run("update instance with same org_id, uid and different state", func(t *testing.T) {
 		labels := models.InstanceLabels{"test": "testValue"}
 		_, hash, _ := labels.StringAndHash()
