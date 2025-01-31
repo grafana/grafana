@@ -85,21 +85,32 @@ func (r *exporter) Export(ctx context.Context,
 	}
 
 	// TODO: handle pagination
-	rawFolders, err := r.folders.List(ctx, metav1.ListOptions{Limit: 10000})
+	rawList, err := r.folders.List(ctx, metav1.ListOptions{Limit: 10000})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
-	if rawFolders.GetContinue() != "" {
-		return nil, fmt.Errorf("unable to list all folders in one request: %s", rawFolders.GetContinue())
+	if rawList.GetContinue() != "" {
+		return nil, fmt.Errorf("unable to list all folders in one request: %s", rawList.GetContinue())
 	}
 
-	status.Message = fmt.Sprintf("exporting folders (%d)...", len(rawFolders.Items))
+	// filter out the folders we already own
+	rawFolders := make([]unstructured.Unstructured, 0, len(rawList.Items))
+	for _, f := range rawList.Items {
+		repoName := f.GetAnnotations()[apiutils.AnnoKeyRepoName]
+		if repoName == repo.Config().GetName() {
+			logger.Info("skip as folder is already in repository", "folder", f.GetName())
+			continue
+		}
+		rawFolders = append(rawFolders, f)
+	}
+
+	status.Message = fmt.Sprintf("exporting folders (%d)...", len(rawFolders))
 	err = progress(status)
 	if err != nil {
 		return nil, err
 	}
 
-	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders.Items)
+	folderTree := resources.NewFolderTreeFromUnstructure(ctx, rawFolders)
 	if options.Folder != "" {
 		return nil, fmt.Errorf("non-root folder not yet supported")
 	}
@@ -119,7 +130,6 @@ func (r *exporter) Export(ctx context.Context,
 		_, err = r.repository.Read(ctx, p, ref)
 		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			logger.Error("failed to check if folder exists before writing", "error", err)
-			summary.Error++
 			return fmt.Errorf("failed to check if folder exists before writing: %w", err)
 		} else if err == nil {
 			logger.Info("folder already exists")
@@ -130,7 +140,6 @@ func (r *exporter) Export(ctx context.Context,
 		// Create with an empty body will make a folder (or .keep file if unsupported)
 		if err := r.repository.Create(ctx, p, ref, nil, "export folder `"+p+"`"); err != nil {
 			logger.Error("failed to write a folder in repository", "error", err)
-			summary.Error++
 			return fmt.Errorf("failed to write folder in repo: %w", err)
 		}
 		summary.Create++
@@ -166,6 +175,12 @@ func (r *exporter) Export(ctx context.Context,
 		}
 
 		name := item.GetName()
+		repoName := item.GetAnnotations()[apiutils.AnnoKeyRepoName]
+		if repoName == repo.Config().GetName() {
+			logger.Info("skip dashboard since it is already in repository", "dashboard", name)
+			continue
+		}
+
 		title, _, _ := unstructured.NestedString(item.Object, "spec", "title")
 		if title == "" {
 			title = name
