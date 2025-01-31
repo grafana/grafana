@@ -2,6 +2,7 @@ import moment from 'moment';
 import { ComponentProps, useMemo, useState } from 'react';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Badge,
@@ -145,15 +146,17 @@ export function AlertVersionHistory({ ruleUid }: AlertVersionHistoryProps) {
             }}
             newVersion={newVersion}
           />
-          <Box paddingTop={2}>
-            <Stack justifyContent="flex-end">
-              <Button variant="destructive" onClick={() => {}}>
-                <Trans i18nKey="alerting.alertVersionHistory.reset">
-                  Reset to version {oldVersion.grafana_alert.version}
-                </Trans>
-              </Button>
-            </Stack>
-          </Box>
+          {config.featureToggles.alertingRuleVersionHistory && (
+            <Box paddingTop={2}>
+              <Stack justifyContent="flex-end">
+                <Button variant="destructive" onClick={() => {}}>
+                  <Trans i18nKey="alerting.alertVersionHistory.reset">
+                    Reset to version {oldVersion.grafana_alert.version}
+                  </Trans>
+                </Button>
+              </Stack>
+            </Box>
+          )}
         </Drawer>
       )}
 
@@ -255,7 +258,7 @@ function VersionHistoryTable({
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {isFirstItem ? (
               <Badge text={t('alerting.alertVersionHistory.latest', 'Latest')} color="blue" />
-            ) : (
+            ) : config.featureToggles.alertingRuleVersionHistory ? (
               <Button
                 variant="secondary"
                 size="sm"
@@ -266,7 +269,7 @@ function VersionHistoryTable({
               >
                 <Trans i18nKey="alerting.alertVersionHistory.restore">Restore</Trans>
               </Button>
-            )}
+            ) : null}
           </Stack>
         );
       },
