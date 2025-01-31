@@ -186,7 +186,7 @@ type DSNode struct {
 	maxDP      int64
 	request    Request
 
-	noConvert bool
+	isSQLInput bool
 }
 
 func (dn *DSNode) String() string {
@@ -405,7 +405,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 	// TODO: Don't run Datasource Node Results through converter if input is SQL expression
 	// Also for now, must be one frame and not of the fields may have labels
-	if dn.noConvert {
+	if dn.isSQLInput {
 		var convertForSQL bool
 		if len(dataFrames) > 1 {
 			convertForSQL = true
@@ -440,7 +440,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return result, nil
 	}
 
-	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames) //, s.allowLongFrames)
+	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 	if err != nil {
 		err = makeConversionError(dn.refID, err)
 	}

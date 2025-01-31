@@ -334,7 +334,7 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			// If the input is SQL, mark for no conversion
 			if _, ok := cmdNode.Command.(*SQLCommand); ok {
 				if dsNode, ok := neededNode.(*DSNode); ok {
-					dsNode.noConvert = true
+					dsNode.isSQLInput = true
 				}
 			}
 
