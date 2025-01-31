@@ -90,10 +90,11 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 	d.logger.Debug("Attempting to sync admin configs", "count", len(cfgs))
 
 	disableExternal := d.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingDisableSendAlertsExternal)
-
 	orgsFound := make(map[int64]struct{}, len(cfgs))
+
+	// We're holding this lock either until we return an error or right before we stop the senders.
 	d.adminConfigMtx.Lock()
-	defer d.adminConfigMtx.Unlock()
+
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := d.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
@@ -168,6 +169,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 		senderLogger := log.New("ngalert.sender.external-alertmanager")
 		s, err := NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry())
 		if err != nil {
+			d.adminConfigMtx.Unlock()
 			return err
 		}
 		d.externalAlertmanagers[cfg.OrgID] = s
@@ -192,7 +194,8 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 		}
 	}
 
-	// We can now stop these external Alertmanagers w/o having to hold a lock.
+	// We can now stop these senders w/o having to hold a lock.
+	d.adminConfigMtx.Unlock()
 	for orgID, s := range sendersToStop {
 		d.logger.Info("Stopping sender", "org", orgID)
 		s.Stop()
