@@ -197,24 +197,29 @@
       "annotations": "Åŉŉőŧäŧįőŉş",
       "compareVersions": "Cőmpäřę vęřşįőŉş",
       "comparing-versions": "Cőmpäřįŉģ vęřşįőŉş",
+      "condition": "Åľęřŧ čőŉđįŧįőŉ",
       "contactPoint": "Cőŉŧäčŧ pőįŉŧ",
       "contactPointRouting": "Cőŉŧäčŧ pőįŉŧ řőūŧįŉģ",
       "description": "Ēäčĥ ŧįmę yőū ęđįŧ ŧĥę äľęřŧ řūľę ä ŉęŵ vęřşįőŉ įş čřęäŧęđ. Ÿőū čäŉ řęşŧőřę äŉ őľđęř vęřşįőŉ. Ŝęľęčŧ ŧŵő vęřşįőŉş þęľőŵ äŉđ čőmpäřę ŧĥęįř đįƒƒęřęŉčęş.",
       "errorloading": "Fäįľęđ ŧő ľőäđ äľęřŧ řūľę ĥįşŧőřy",
+      "execErrorState": "Åľęřŧ şŧäŧę ŵĥęŉ ęχęčūŧįőŉ ęřřőř",
       "labels": "Ŀäþęľş",
       "latest": "Ŀäŧęşŧ",
       "name": "Ńämę",
       "namespace_uid": "Főľđęř ŮĨĐ",
+      "noDataState": "Åľęřŧ şŧäŧę ŵĥęŉ ŉő đäŧä",
       "noVersionsFound": "Ńő vęřşįőŉş ƒőūŉđ ƒőř ŧĥįş řūľę",
+      "paused": "Päūşęđ şŧäŧę",
       "pendingPeriod": "Pęŉđįŉģ pęřįőđ",
-      "queryAndAlertCondition": "Qūęřy/äľęřŧ čőŉđįŧįőŉ",
+      "queryAndAlertCondition": "Qūęřy äŉđ äľęřŧ čőŉđįŧįőŉ",
       "reset": "Ŗęşęŧ ŧő vęřşįőŉ {őľđVęřşįőŉ.ģřäƒäŉä_äľęřŧ.vęřşįőŉ}",
       "restore": "Ŗęşŧőřę",
       "restore-modal": {
         "body": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęşŧőřę ŧĥę äľęřŧ řūľę đęƒįŉįŧįőŉ ŧő ŧĥįş vęřşįőŉ? Åľľ ūŉşävęđ čĥäŉģęş ŵįľľ þę ľőşŧ.",
         "summary": "Ŝūmmäřy őƒ čĥäŉģęş ŧő þę äppľįęđ:",
         "title": "Ŗęşŧőřę Vęřşįőŉ"
-      }
+      },
+      "rule_group": "Ŗūľę ģřőūp"
     },
     "annotations": {
       "description": "Åđđ mőřę čőŉŧęχŧ ŧő yőūř äľęřŧ ŉőŧįƒįčäŧįőŉş.",
@@ -795,8 +800,7 @@
       "comparison": {
         "header": {
           "diff": "ĴŜØŃ đįƒƒ",
-          "new": "Vęřşįőŉ {{newVersionInfo}} ūpđäŧęđ þy {{newUpdatedBy}} ({{newVersionAgeString}}) {{newMessage}}",
-          "old": "Vęřşįőŉ {{oldVersionInfo}} ūpđäŧęđ þy {{oldUpdatedBy}} ({{oldVersionAgeString}}) {{oldMessage}}"
+          "text": "Vęřşįőŉ {{version}} ūpđäŧęđ þy {{updatedBy}} ({{ageString}}) {{message}}"
         }
       }
     }

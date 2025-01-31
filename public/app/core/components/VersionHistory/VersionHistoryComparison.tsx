@@ -48,32 +48,20 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
   const oldVersionAgeString = dateTimeFormatTimeAgo(oldInfo.created);
   const newVersionAgeString = dateTimeFormatTimeAgo(newInfo.created);
 
-  const oldVersionInfo = oldInfo.version;
-  const oldUpdatedBy = oldInfo.createdBy;
-  const oldMessage = oldInfo.message;
-
-  const newVersionInfo = newInfo.version;
-  const newUpdatedBy = newInfo.createdBy;
-  const newMessage = newInfo.message;
-
   return (
     <Stack gap={2} direction="column">
       <Box>
         <Text>
-          <Trans
-            i18nKey="core.versionHistory.comparison.header.old"
-            values={{ oldVersionInfo, oldUpdatedBy, oldVersionAgeString, oldMessage }}
-          >
-            Version {{ oldVersionInfo }} updated by {{ oldUpdatedBy }} ({{ oldVersionAgeString }}) {{ oldMessage }}
+          <Trans i18nKey="core.versionHistory.comparison.header.text">
+            Version {{ version: oldInfo.version }} updated by {{ updatedBy: oldInfo.createdBy }} (
+            {{ ageString: oldVersionAgeString }}) {{ message: oldInfo.message || '' }}
           </Trans>
         </Text>
         <Icon name="arrow-right" />
         <Text>
-          <Trans
-            i18nKey="core.versionHistory.comparison.header.new"
-            values={{ newVersionInfo, newUpdatedBy, newVersionAgeString, newMessage }}
-          >
-            Version {{ newVersionInfo }} updated by {{ newUpdatedBy }} ({{ newVersionAgeString }}) {{ newMessage }}
+          <Trans i18nKey="core.versionHistory.comparison.header.text">
+            Version {{ version: newInfo.version }} updated by {{ updatedBy: newInfo.createdBy }} (
+            {{ ageString: newVersionAgeString }}) {{ message: newInfo.message || '' }}
           </Trans>
         </Text>
       </Box>

@@ -36,7 +36,13 @@ export interface AlertVersionHistoryProps {
 
 const VERSIONS_PAGE_SIZE = 20;
 
-const propertiesToIgnore = ['id', 'uid', 'updated', 'updated_by', 'created', 'created_by', 'version'];
+const grafanaAlertPropertiesToIgnore: Array<keyof GrafanaRuleDefinition> = [
+  'id',
+  'uid',
+  'updated',
+  'updated_by',
+  'version',
+];
 
 function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) {
   const { grafana_alert, ...rest } = rulerRule;
@@ -52,13 +58,14 @@ function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRule
   const grafanaAlertTranslationMap: Partial<Record<keyof GrafanaRuleDefinition, string>> = {
     title: t('alerting.alertVersionHistory.name', 'Name'),
     namespace_uid: t('alerting.alertVersionHistory.namespace_uid', 'Folder UID'),
-    data: t('alerting.alertVersionHistory.queryAndAlertCondition', 'Query/alert condition'),
+    data: t('alerting.alertVersionHistory.queryAndAlertCondition', 'Query and alert condition'),
     notification_settings: t('alerting.alertVersionHistory.contactPointRouting', 'Contact point routing'),
+    no_data_state: t('alerting.alertVersionHistory.noDataState', 'Alert state when no data'),
+    exec_err_state: t('alerting.alertVersionHistory.execErrorState', 'Alert state when execution error'),
+    is_paused: t('alerting.alertVersionHistory.paused', 'Paused state'),
+    rule_group: t('alerting.alertVersionHistory.rule_group', 'Rule group'),
+    condition: t('alerting.alertVersionHistory.condition', 'Alert condition'),
   };
-
-  // const contactPoint = {
-  //   conactPoint: t('alerting.alertVersionHistory.contactPoint', 'Contact point')
-  // }
 
   const processedTopLevel = Object.entries(rest).reduce((acc, [key, value]) => {
     const translation = translationMap[key] || key;
@@ -69,23 +76,23 @@ function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRule
   }, {});
 
   const processedGrafanaAlert = Object.entries(grafana_alert).reduce((acc, [key, value]) => {
-    if (propertiesToIgnore.includes(key)) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const grafanaRuleKey = key as keyof GrafanaRuleDefinition;
+
+    if (grafanaAlertPropertiesToIgnore.includes(grafanaRuleKey)) {
       return acc;
     }
-    // eslint-disable-next-line
-    const translation = grafanaAlertTranslationMap[key as keyof GrafanaRuleDefinition] || key;
+
+    const potentiallyTranslatedKey = grafanaAlertTranslationMap[grafanaRuleKey] || key;
     return {
       ...acc,
-      [translation]: value,
+      [potentiallyTranslatedKey]: value,
     };
   }, {});
 
   return {
     ...processedTopLevel,
     ...processedGrafanaAlert,
-    // ...rulerRule.grafana_alert,
-    // 'Name': rulerRule.grafana_alert.title,
-    // 'Pending period': rulerRule.for
   };
 }
 

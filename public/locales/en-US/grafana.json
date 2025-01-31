@@ -197,24 +197,29 @@
       "annotations": "Annotations",
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
+      "condition": "Alert condition",
       "contactPoint": "Contact point",
       "contactPointRouting": "Contact point routing",
       "description": "Each time you edit the alert rule a new version is created. You can restore an older version. Select two versions below and compare their differences.",
       "errorloading": "Failed to load alert rule history",
+      "execErrorState": "Alert state when execution error",
       "labels": "Labels",
       "latest": "Latest",
       "name": "Name",
       "namespace_uid": "Folder UID",
+      "noDataState": "Alert state when no data",
       "noVersionsFound": "No versions found for this rule",
+      "paused": "Paused state",
       "pendingPeriod": "Pending period",
-      "queryAndAlertCondition": "Query/alert condition",
+      "queryAndAlertCondition": "Query and alert condition",
       "reset": "Reset to version {oldVersion.grafana_alert.version}",
       "restore": "Restore",
       "restore-modal": {
         "body": "Are you sure you want to restore the alert rule definition to this version? All unsaved changes will be lost.",
         "summary": "Summary of changes to be applied:",
         "title": "Restore Version"
-      }
+      },
+      "rule_group": "Rule group"
     },
     "annotations": {
       "description": "Add more context to your alert notifications.",
@@ -795,8 +800,7 @@
       "comparison": {
         "header": {
           "diff": "JSON diff",
-          "new": "Version {{newVersionInfo}} updated by {{newUpdatedBy}} ({{newVersionAgeString}}) {{newMessage}}",
-          "old": "Version {{oldVersionInfo}} updated by {{oldUpdatedBy}} ({{oldVersionAgeString}}) {{oldMessage}}"
+          "text": "Version {{version}} updated by {{updatedBy}} ({{ageString}}) {{message}}"
         }
       }
     }
