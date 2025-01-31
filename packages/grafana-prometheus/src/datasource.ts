@@ -456,13 +456,15 @@ export class PrometheusDatasource
       return Promise.resolve([]);
     }
 
+    const timeRange = options?.range ?? this.languageProvider.timeRange ?? getDefaultTimeRange();
+
     const scopedVars = {
       ...this.getIntervalVars(),
-      ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
+      ...this.getRangeScopedVars(timeRange),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-    return metricFindQuery.process(options?.range ?? getDefaultTimeRange());
+    return metricFindQuery.process(timeRange);
   }
 
   getIntervalVars() {
