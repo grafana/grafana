@@ -6,7 +6,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     type: data.type,
     sync: data.sync,
     title: data.title || '',
-    editing: data.editing,
+    readOnly: data.readOnly,
   };
   switch (data.type) {
     case 'github':
@@ -40,7 +40,6 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     ...spec,
     owner: spec?.github?.owner || '',
     repository: spec?.github?.repository || '',
-    editing: spec.editing,
     ...spec.github,
     ...spec.local,
     ...spec.s3,
