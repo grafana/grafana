@@ -44,7 +44,7 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 
-	// folder errors are wrapped in an errot util, so this is the only way of comparing errors
+	// folder errors are wrapped in an error util, so this is the only way of comparing errors
 	if err.Error() == folder.ErrMaximumDepthReached.Error() {
 		return response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": "Maximum nested folder depth reached"})
 	}
