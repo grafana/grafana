@@ -9,8 +9,6 @@ interface DashboardPreviewBannerProps {
   path?: string;
 }
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  console.log('DashboardScenePage X', { queryParams, route, slug, path });
-
   // Do not show a banner when rendering the previews
   if ('kiosk' in queryParams) {
     return null;
