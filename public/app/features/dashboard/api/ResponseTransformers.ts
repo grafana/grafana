@@ -103,13 +103,8 @@ export function ensureV2Response(
   if (isDashboardResource(dto)) {
     accessMeta = dto.access;
     annotationsMeta = {
-      [AnnoKeyCreatedBy]: dto.metadata.annotations?.[AnnoKeyCreatedBy],
-      [AnnoKeyUpdatedBy]: dto.metadata.annotations?.[AnnoKeyUpdatedBy],
-      [AnnoKeyUpdatedTimestamp]: dto.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
-      [AnnoKeyFolder]: dto.metadata.annotations?.[AnnoKeyFolder],
-      [AnnoKeySlug]: dto.metadata.annotations?.[AnnoKeySlug],
+      ...dto.metadata.annotations,
       [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      [AnnoKeyDashboardIsSnapshot]: dto.metadata.annotations?.[AnnoKeyDashboardIsSnapshot],
     };
     creationTimestamp = dto.metadata.creationTimestamp;
     labelsMeta = {
