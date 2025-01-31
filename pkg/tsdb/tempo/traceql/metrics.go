@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 )
