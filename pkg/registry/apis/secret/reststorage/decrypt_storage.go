@@ -54,7 +54,7 @@ func (s *DecryptStorage) ConnectMethods() []string {
 }
 
 // NewConnectOptions returns some custom options that is passed in the `opts` field used by `Connect`.
-func (r *DecryptStorage) NewConnectOptions() (runtime.Object, bool, string) {
+func (s *DecryptStorage) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
