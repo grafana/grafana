@@ -550,12 +550,27 @@ describe('Tempo service graph view', () => {
       (link: DataLink) => link.title === 'View traces'
     );
     expect(viewServicesLink).toBeDefined();
-    expect(viewServicesLink.onBuildUrl({ replaceVariables: replaceVariablesInstrumented })).toEqual(
-      '/explore?left=%7B%22datasource%22%3A%22gdev-tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22queryType%22%3A%22traceqlSearch%22%2C%22filters%22%3A%5B%7B%22id%22%3A%22service-name%22%2C%22scope%22%3A%22resource%22%2C%22tag%22%3A%22service.name%22%2C%22value%22%3A%22my-service%22%2C%22operator%22%3A%22%3D%22%2C%22valueType%22%3A%22string%22%7D%5D%7D%5D%7D'
-    );
-    expect(viewServicesLink.onBuildUrl({ replaceVariables: replaceVariablesUninstrumented })).toEqual(
-      '/explore?left=%7B%22datasource%22%3A%22gdev-tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22queryType%22%3A%22traceql%22%2C%22filters%22%3A%5B%5D%2C%22query%22%3A%22%7Bspan.db.name%3D%5C%22my-service%5C%22%20%7C%7C%20span.db.system%3D%5C%22my-service%5C%22%20%7C%7C%20span.peer.service%3D%5C%22my-service%5C%22%20%7C%7C%20span.messaging.system%3D%5C%22my-service%5C%22%20%7C%7C%20span.net.peer.name%3D%5C%22my-service%5C%22%7D%22%7D%5D%7D'
-    );
+    expect(viewServicesLink.internal.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-service',
+          valueType: 'string',
+        },
+      ],
+    });
+    expect(viewServicesLink.internal.query({ replaceVariables: replaceVariablesUninstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceql',
+      filters: [],
+      query:
+        '{span.db.name="my-service" || span.db.system="my-service" || span.peer.service="my-service" || span.messaging.system="my-service" || span.net.peer.name="my-service"}',
+    });
 
     expect(response.data[2].name).toBe('Edges');
     expect(response.data[2].fields[0].values.length).toBe(2);
@@ -839,8 +854,11 @@ describe('Tempo service graph view', () => {
         {
           url: '',
           title: 'View traces',
-          targetBlank: false,
-          onBuildUrl: expect.any(Function),
+          internal: {
+            datasourceName: '',
+            datasourceUid: 'EbPO1fYnz',
+            query: expect.any(Function),
+          },
         },
       ],
     };
@@ -850,9 +868,20 @@ describe('Tempo service graph view', () => {
       (link: DataLink) => link.title === 'View traces'
     );
     expect(viewServicesLink).toBeDefined();
-    expect(viewServicesLink?.onBuildUrl?.({ origin: {}, replaceVariables: replaceVariablesInstrumented })).toEqual(
-      '/explore?left=%7B%22datasource%22%3A%22EbPO1fYnz%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22queryType%22%3A%22traceqlSearch%22%2C%22filters%22%3A%5B%7B%22id%22%3A%22service-name%22%2C%22scope%22%3A%22resource%22%2C%22tag%22%3A%22service.name%22%2C%22value%22%3A%22my-service%22%2C%22operator%22%3A%22%3D%22%2C%22valueType%22%3A%22string%22%7D%5D%7D%5D%7D'
-    );
+    expect(viewServicesLink!.internal!.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-service',
+          valueType: 'string',
+        },
+      ],
+    });
   });
 
   it('should get field config correctly when namespaces are present', () => {
@@ -922,8 +951,11 @@ describe('Tempo service graph view', () => {
         {
           url: '',
           title: 'View traces',
-          targetBlank: false,
-          onBuildUrl: expect.any(Function),
+          internal: {
+            datasourceName: '',
+            datasourceUid: 'EbPO1fYnz',
+            query: expect.any(Function),
+          },
         },
       ],
     };
@@ -933,9 +965,28 @@ describe('Tempo service graph view', () => {
       (link: DataLink) => link.title === 'View traces'
     );
     expect(viewServicesLink).toBeDefined();
-    expect(viewServicesLink?.onBuildUrl?.({ origin: {}, replaceVariables: replaceVariablesInstrumented })).toEqual(
-      '/explore?left=%7B%22datasource%22%3A%22EbPO1fYnz%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22queryType%22%3A%22traceqlSearch%22%2C%22filters%22%3A%5B%7B%22id%22%3A%22service-namespace%22%2C%22scope%22%3A%22resource%22%2C%22tag%22%3A%22service.namespace%22%2C%22value%22%3A%22my-namespace%22%2C%22operator%22%3A%22%3D%22%2C%22valueType%22%3A%22string%22%7D%2C%7B%22id%22%3A%22service-name%22%2C%22scope%22%3A%22resource%22%2C%22tag%22%3A%22service.name%22%2C%22value%22%3A%22my-service%22%2C%22operator%22%3A%22%3D%22%2C%22valueType%22%3A%22string%22%7D%5D%7D%5D%7D'
-    );
+    expect(viewServicesLink!.internal!.query({ replaceVariables: replaceVariablesInstrumented })).toEqual({
+      refId: 'A',
+      queryType: 'traceqlSearch',
+      filters: [
+        {
+          id: 'service-namespace',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.namespace',
+          value: 'my-namespace',
+          valueType: 'string',
+        },
+        {
+          id: 'service-name',
+          operator: '=',
+          scope: 'resource',
+          tag: 'service.name',
+          value: 'my-service',
+          valueType: 'string',
+        },
+      ],
+    });
   });
 
   it('should get rate aligned values correctly', () => {
@@ -1447,8 +1498,11 @@ const serviceGraphLinks = [
   {
     url: '',
     title: 'View traces',
-    targetBlank: false,
-    onBuildUrl: expect.any(Function),
+    internal: {
+      query: expect.any(Function),
+      datasourceUid: 'gdev-tempo',
+      datasourceName: 'Tempo',
+    },
   },
 ];
 
