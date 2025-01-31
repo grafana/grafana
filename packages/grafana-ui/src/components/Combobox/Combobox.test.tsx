@@ -241,7 +241,7 @@ describe('Combobox', () => {
       await userEvent.keyboard('{Enter}');
 
       expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
-      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'Use custom value' }));
     });
 
     it('should provide custom string when all options are numbers', async () => {
@@ -256,10 +256,10 @@ describe('Combobox', () => {
       render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
       const input = screen.getByRole('combobox');
 
-      await userEvent.type(input, 'custom value');
+      await userEvent.type(input, 'Use custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Use custom value')).toBeInTheDocument();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'string').toBeTruthy();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'number').toBeFalsy();
 
