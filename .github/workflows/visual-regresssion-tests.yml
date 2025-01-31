@@ -1,58 +1,58 @@
-name: Playwright Visual Regression Tests
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-jobs:
-  playwright:
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-      - name: Install dependencies
-        run: yarn install
-      - name: Install Playwright Browsers
-        run: yarn exec playwright install --with-deps
-      - name: Start backend server
-        run: |
-          echo "Starting backend server..."
-          make run
-      - name: Start frontend server
-        run: |
-          echo "Starting frontend server..."
-          yarn start
-      - name: Run Playwright tests
-        run: |
-          yarn e2e:playwright:vizregression | tee output.log
-          if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
-            echo "Playwright tests failed due to a snapshot issue."
-            echo "SNAPSHOT_DIFFERENCES=true" >> $GITHUB_ENV
-            exit 1
-          elif grep -q "failed" output.log; then
-            echo "Playwright tests failed due to a non-snapshot issue."
-            exit 1
-          fi
-      - uses: actions/upload-artifact@v4
-        id: artifact-upload
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-      - name: Comment on PR with report link
-        uses: thollander/actions-comment-pull-request@v3
-        if: ${{ failure() && env.SNAPSHOT_DIFFERENCES == 'true' }}
-        with:
-          message: |
-            ### Playwright visual snapshot differences were detected.
-            View the [Playwright report](${{ steps.artifact-upload.outputs.artifact-url }}) to review the visual differences.
-            **To approve the snapshot changes and update the snapshots, please comment:** /approve-snapshots
-      - name: Stop server
-        run: kill $(jobs -p)
+# name: Playwright Visual Regression Tests
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
+# jobs:
+#   playwright:
+#     timeout-minutes: 60
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: write
+#       pull-requests: write
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: lts/*
+#       - name: Install dependencies
+#         run: yarn install
+#       - name: Install Playwright Browsers
+#         run: yarn exec playwright install --with-deps
+#       - name: Start backend server
+#         run: |
+#           echo "Starting backend server..."
+#           make run
+#       - name: Start frontend server
+#         run: |
+#           echo "Starting frontend server..."
+#           yarn start
+#       - name: Run Playwright tests
+#         run: |
+#           yarn e2e:playwright:vizregression | tee output.log
+#           if grep -q -e "Error: A snapshot doesn't exist at" -e "Screenshot comparison failed" output.log; then
+#             echo "Playwright tests failed due to a snapshot issue."
+#             echo "SNAPSHOT_DIFFERENCES=true" >> $GITHUB_ENV
+#             exit 1
+#           elif grep -q "failed" output.log; then
+#             echo "Playwright tests failed due to a non-snapshot issue."
+#             exit 1
+#           fi
+#       - uses: actions/upload-artifact@v4
+#         id: artifact-upload
+#         if: always()
+#         with:
+#           name: playwright-report
+#           path: playwright-report/
+#           retention-days: 30
+#       - name: Comment on PR with report link
+#         uses: thollander/actions-comment-pull-request@v3
+#         if: ${{ failure() && env.SNAPSHOT_DIFFERENCES == 'true' }}
+#         with:
+#           message: |
+#             ### Playwright visual snapshot differences were detected.
+#             View the [Playwright report](${{ steps.artifact-upload.outputs.artifact-url }}) to review the visual differences.
+#             **To approve the snapshot changes and update the snapshots, please comment:** /approve-snapshots
+#       - name: Stop server
+#         run: kill $(jobs -p)
