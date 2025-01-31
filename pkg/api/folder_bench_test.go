@@ -460,8 +460,9 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService(features)
 	fStore := folderimpl.ProvideStore(sc.db)
-	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+	folderServiceWithFlagOn := folderimpl.ProvideService(
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(), nil, folderServiceWithFlagOn,
@@ -489,7 +490,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SQLStore:         sc.db,
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc, folderServiceWithFlagOn, features),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}

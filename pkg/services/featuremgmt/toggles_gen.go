@@ -551,6 +551,10 @@ const (
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
+	// FlagAlertingSaveStateCompressed
+	// Enables the compressed protobuf-based alert state storage
+	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
+
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
 	FlagScopeApi = "scopeApi"
@@ -847,10 +851,6 @@ const (
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
 
-	// FlagZipkinBackendMigration
-	// Enables querying Zipkin data source without the proxy
-	FlagZipkinBackendMigration = "zipkinBackendMigration"
-
 	// FlagEnableSCIM
 	// Enables SCIM support for user and group management
 	FlagEnableSCIM = "enableSCIM"
@@ -927,6 +927,10 @@ const (
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleA = "ABTestFeatureToggleA"
 
+	// FlagTemplateVariablesUsesCombobox
+	// Use new combobox component for template variables
+	FlagTemplateVariablesUsesCombobox = "templateVariablesUsesCombobox"
+
 	// FlagABTestFeatureToggleB
 	// Test feature toggle to see how cohorts could be set up AB testing
 	FlagABTestFeatureToggleB = "ABTestFeatureToggleB"
@@ -946,4 +950,8 @@ const (
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page
 	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"
+
+	// FlagFetchRulesUsingPost
+	// Use a POST request to list rules by passing down the namespaces user has access to
+	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
 )

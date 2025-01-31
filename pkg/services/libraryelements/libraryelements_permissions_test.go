@@ -145,7 +145,7 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 		{
 			desc: "can create library elements when granted write access to the correct folder",
 			permissions: map[string][]string{
-				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Folder")},
+				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid_for_Folder")},
 				dashboards.ActionFoldersRead:  {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
 			status: http.StatusOK,
@@ -161,7 +161,7 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 		{
 			desc: "can't create library elements when granted write access to the wrong folder",
 			permissions: map[string][]string{
-				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Other_folder")},
+				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid_for_Other_folder")},
 				dashboards.ActionFoldersRead:  {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
 			status: http.StatusForbidden,
@@ -169,7 +169,7 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 		{
 			desc: "can't create library elements when granted read access to the right folder",
 			permissions: map[string][]string{
-				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Folder")},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid_for_Folder")},
 			},
 			status: http.StatusForbidden,
 		},
@@ -201,7 +201,7 @@ func TestLibraryElementPatchPermissions(t *testing.T) {
 		{
 			desc: "can move library elements when granted write access to the source and destination folders",
 			permissions: map[string][]string{
-				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("FromFolder"), dashboards.ScopeFoldersProvider.GetResourceScopeUID("ToFolder")},
+				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid_for_FromFolder"), dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid_for_ToFolder")},
 				dashboards.ActionFoldersRead:  {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
 			status: http.StatusOK,
@@ -267,8 +267,8 @@ func TestLibraryElementDeletePermissions(t *testing.T) {
 		{
 			desc: "can delete library elements when granted write access to the correct folder",
 			permissions: map[string][]string{
-				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Folder")},
-				dashboards.ActionFoldersRead:  {dashboards.ScopeFoldersProvider.GetResourceScopeUID("Folder")},
+				dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid_for_Folder")},
+				dashboards.ActionFoldersRead:  {dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid_for_Folder")},
 			},
 			status: http.StatusOK,
 		},
