@@ -9,14 +9,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+type InstanceDBStore struct {
+	SQLStore       db.DB
+	Logger         log.Logger
+	FeatureToggles featuremgmt.FeatureToggles
+}
+
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
-func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) (result []*models.AlertInstance, err error) {
+func (st InstanceDBStore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) (result []*models.AlertInstance, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertInstances := make([]*models.AlertInstance, 0)
 
@@ -51,7 +58,7 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 }
 
 // SaveAlertInstance is a handler for saving a new alert instance.
-func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
+func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		if err := models.ValidateAlertInstance(alertInstance); err != nil {
 			return err
@@ -89,7 +96,7 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.Al
 	})
 }
 
-func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
+func (st InstanceDBStore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 	orgIds := []int64{}
 
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -113,7 +120,7 @@ func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 }
 
 // DeleteAlertInstances deletes instances with the provided keys in a single transaction.
-func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
+func (st InstanceDBStore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
 	if len(keys) == 0 {
 		return nil
 	}
@@ -212,12 +219,13 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 }
 
 // SaveAlertInstancesForRule is not implemented for instance database store.
-func (st DBstore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
+func (st InstanceDBStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
 	st.Logger.Error("SaveAlertInstancesForRule is not implemented for instance database store.")
 	return errors.New("method SaveAlertInstancesForRule is not implemented for instance database store")
 }
 
-func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
+// DeleteAlertInstancesByRule deletes all instances for a given rule.
+func (st InstanceDBStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
 		return err
@@ -230,7 +238,7 @@ func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.Ale
 //
 // The batchSize parameter controls how many instances are inserted per batch. Increasing batchSize can improve
 // performance for large datasets, but can also increase load on the database.
-func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
+func (st InstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error {
 	if len(instances) == 0 {
 		return nil
 	}
@@ -267,7 +275,7 @@ func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance
 	})
 }
 
-func (st DBstore) insertInstancesBatch(sess *sqlstore.DBSession, batch []models.AlertInstance) error {
+func (st InstanceDBStore) insertInstancesBatch(sess *sqlstore.DBSession, batch []models.AlertInstance) error {
 	// If the batch is empty, nothing to insert.
 	if len(batch) == 0 {
 		return nil

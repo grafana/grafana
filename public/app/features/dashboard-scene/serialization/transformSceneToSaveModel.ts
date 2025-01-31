@@ -140,6 +140,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     liveNow,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
     refresh: refreshPicker?.state.refresh,
+    // @ts-expect-error not in dashboard schema because it's experimental
+    scopeMeta: state.scopeMeta,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -186,12 +188,13 @@ export function vizPanelToPanel(
 
     panel = {
       id: getPanelIdForVizPanel(vizPanel),
-      title: libPanel!.state.title,
+      title: vizPanel.state.title,
       gridPos: gridPos,
       libraryPanel: {
         name: libPanel!.state.name,
         uid: libPanel!.state.uid,
       },
+      type: 'library-panel-ref',
     } as Panel;
 
     return panel;

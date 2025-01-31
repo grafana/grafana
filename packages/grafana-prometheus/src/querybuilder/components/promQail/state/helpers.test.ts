@@ -1,24 +1,22 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/state/helpers.test.ts
-import { llms } from '@grafana/experimental';
+import { openai, vector } from '@grafana/llm';
 
 import { guessMetricType, isLLMPluginEnabled } from './helpers';
 
-// Mock the grafana-experimental llms module
-jest.mock('@grafana/experimental', () => ({
-  llms: {
-    openai: {
-      health: jest.fn(),
-    },
-    vector: {
-      health: jest.fn(),
-    },
+// Mock the grafana llms module
+jest.mock('@grafana/llm', () => ({
+  openai: {
+    health: jest.fn(),
+  },
+  vector: {
+    health: jest.fn(),
   },
 }));
 
 describe('isLLMPluginEnabled', () => {
   it('should return true if LLM plugin is enabled', async () => {
-    jest.mocked(llms.openai.health).mockResolvedValue({ ok: true, configured: true });
-    jest.mocked(llms.vector.health).mockResolvedValue({ ok: true, enabled: true });
+    jest.mocked(openai.health).mockResolvedValue({ ok: true, configured: true });
+    jest.mocked(vector.health).mockResolvedValue({ ok: true, enabled: true });
 
     const enabled = await isLLMPluginEnabled();
 
@@ -26,8 +24,8 @@ describe('isLLMPluginEnabled', () => {
   });
 
   it('should return false if LLM plugin is not enabled', async () => {
-    jest.mocked(llms.openai.health).mockResolvedValue({ ok: false, configured: false });
-    jest.mocked(llms.vector.health).mockResolvedValue({ ok: false, enabled: false });
+    jest.mocked(openai.health).mockResolvedValue({ ok: false, configured: false });
+    jest.mocked(vector.health).mockResolvedValue({ ok: false, enabled: false });
 
     const enabled = await isLLMPluginEnabled();
 
@@ -35,8 +33,8 @@ describe('isLLMPluginEnabled', () => {
   });
 
   it('should return false if LLM plugin is enabled but health check fails', async () => {
-    jest.mocked(llms.openai.health).mockResolvedValue({ ok: false, configured: true });
-    jest.mocked(llms.vector.health).mockResolvedValue({ ok: false, enabled: true });
+    jest.mocked(openai.health).mockResolvedValue({ ok: false, configured: true });
+    jest.mocked(vector.health).mockResolvedValue({ ok: false, enabled: true });
 
     const enabled = await isLLMPluginEnabled();
 

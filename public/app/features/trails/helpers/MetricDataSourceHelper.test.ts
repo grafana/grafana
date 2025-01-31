@@ -41,5 +41,21 @@ describe('MetricDatasourceHelper', () => {
       const result = await metricDatasourceHelper.isNativeHistogram('non_histogram_metric');
       expect(result).toBe(false);
     });
+
+    it('should return false if metric is a classic histogram', async () => {
+      const result = await metricDatasourceHelper.isNativeHistogram('test_metric_bucket');
+      expect(result).toBe(false);
+    });
+
+    it('should return true if metric is a native histogram and has metadata but does not have a classic histogram to compare to', async () => {
+      metricDatasourceHelper._metricsMetadata = {
+        solo_native_histogram: {
+          type: 'histogram',
+          help: 'test',
+        },
+      };
+      const result = await metricDatasourceHelper.isNativeHistogram('solo_native_histogram');
+      expect(result).toBe(true);
+    });
   });
 });

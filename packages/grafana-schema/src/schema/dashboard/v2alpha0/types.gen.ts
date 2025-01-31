@@ -4,9 +4,6 @@ import * as common from '@grafana/schema';
 
 
 export interface DashboardV2Spec {
-	// Unique numeric identifier for the dashboard.
-	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	id?: number;
 	// Title of dashboard.
 	title: string;
 	// Description of dashboard.
@@ -70,13 +67,30 @@ export const defaultLibraryPanelKind = (): LibraryPanelKind => ({
 });
 
 export interface LibraryPanelSpec {
-	// Library panel name
-	name: string;
-	// Library panel UID
-	uid: string;
+	// Panel ID for the library panel in the dashboard
+	id: number;
+	// Title for the library panel in the dashboard
+	title: string;
+	libraryPanel: LibraryPanelRef;
 }
 
 export const defaultLibraryPanelSpec = (): LibraryPanelSpec => ({
+	id: 0,
+	title: "",
+	libraryPanel: defaultLibraryPanelRef(),
+});
+
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
+export interface LibraryPanelRef {
+	// Library panel name
+	name: string;
+	// Library panel uid
+	uid: string;
+}
+
+export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	name: "",
 	uid: "",
 });
@@ -686,6 +700,16 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 	value: "",
 });
 
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -714,8 +738,33 @@ export const defaultGridLayoutItemKind = (): GridLayoutItemKind => ({
 	spec: defaultGridLayoutItemSpec(),
 });
 
+export interface GridLayoutRowKind {
+	kind: "GridLayoutRow";
+	spec: GridLayoutRowSpec;
+}
+
+export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
+	kind: "GridLayoutRow",
+	spec: defaultGridLayoutRowSpec(),
+});
+
+export interface GridLayoutRowSpec {
+	y: number;
+	collapsed: boolean;
+	title: string;
+	elements: GridLayoutItemKind[];
+	repeat?: RowRepeatOptions;
+}
+
+export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
+	y: 0,
+	collapsed: false,
+	title: "",
+	elements: [],
+});
+
 export interface GridLayoutSpec {
-	items: GridLayoutItemKind[];
+	items: (GridLayoutItemKind | GridLayoutRowKind)[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({

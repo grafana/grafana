@@ -1,7 +1,6 @@
 import { DashboardV2Spec } from './types.gen';
 
 export const handyTestingSchema: DashboardV2Spec = {
-  id: 1,
   title: 'Default Dashboard',
   description: 'This is a default dashboard',
   cursorSync: 'Off',
@@ -181,11 +180,69 @@ export const handyTestingSchema: DashboardV2Spec = {
         },
       },
     },
-    'library-panel-1': {
+    'panel-2': {
       kind: 'LibraryPanel',
       spec: {
-        uid: 'library-panel-1',
-        name: 'Library Panel',
+        id: 2,
+        title: 'Test Library Panel',
+        libraryPanel: {
+          uid: 'uid-for-library-panel',
+          name: 'Library Panel',
+        },
+      },
+    },
+    'panel-3': {
+      kind: 'Panel',
+      spec: {
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [
+              {
+                kind: 'PanelQuery',
+                spec: {
+                  refId: 'A',
+                  datasource: {
+                    type: 'prometheus',
+                    uid: 'datasource1',
+                  },
+                  query: {
+                    kind: 'prometheus',
+                    spec: {
+                      expr: 'test-query',
+                    },
+                  },
+                  hidden: false,
+                },
+              },
+            ],
+            queryOptions: {
+              timeFrom: '1h',
+              maxDataPoints: 100,
+              timeShift: '1h',
+              queryCachingTTL: 60,
+              interval: '1m',
+              cacheTimeout: '1m',
+              hideTimeOverride: false,
+            },
+            transformations: [],
+          },
+        },
+        description: 'Test Description',
+        links: [],
+        title: 'Test Panel 3',
+        id: 3,
+        vizConfig: {
+          kind: 'timeseries',
+          spec: {
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+            options: {},
+            pluginVersion: '7.0.0',
+          },
+        },
       },
     },
   },
@@ -200,8 +257,8 @@ export const handyTestingSchema: DashboardV2Spec = {
               kind: 'ElementReference',
               name: 'panel-1',
             },
-            height: 100,
-            width: 200,
+            height: 10,
+            width: 10,
             x: 0,
             y: 0,
             repeat: {
@@ -216,12 +273,36 @@ export const handyTestingSchema: DashboardV2Spec = {
           spec: {
             element: {
               kind: 'ElementReference',
-              name: 'library-panel-1',
+              name: 'panel-2',
             },
-            height: 100,
+            height: 10,
             width: 200,
             x: 0,
             y: 2,
+          },
+        },
+        {
+          kind: 'GridLayoutRow',
+          spec: {
+            y: 20,
+            collapsed: false,
+            title: 'Row 1',
+            repeat: { value: 'customVar', mode: 'variable' },
+            elements: [
+              {
+                kind: 'GridLayoutItem',
+                spec: {
+                  element: {
+                    kind: 'ElementReference',
+                    name: 'panel-3',
+                  },
+                  height: 10,
+                  width: 10,
+                  x: 0,
+                  y: 0,
+                },
+              },
+            ],
           },
         },
       ],
@@ -229,7 +310,7 @@ export const handyTestingSchema: DashboardV2Spec = {
   },
   links: [
     {
-      asDropdown: false,
+      asDropdown: true,
       icon: '',
       includeVars: false,
       keepTime: false,

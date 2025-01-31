@@ -37,7 +37,7 @@
   "actions-editor": {
     "inline": {
       "add-button": "Åđđ äčŧįőŉ",
-      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+      "one-click-action": "Øŉę-čľįčĸ äčŧįőŉ"
     }
   },
   "admin": {
@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Åľęřŧ řūľęş"
-      }
+      },
+      "rulerrule-loading-error": "Fäįľęđ ŧő ľőäđ ŧĥę řūľę"
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
@@ -892,6 +893,9 @@
       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
     },
+    "errors": {
+      "failed-to-load": "Fäįľęđ ŧő ľőäđ đäşĥþőäřđ"
+    },
     "inspect": {
       "data-tab": "Đäŧä",
       "error-tab": "Ēřřőř",
@@ -943,6 +947,12 @@
       "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Đäşĥþőäřđ mūşŧ þę şävęđ þęƒőřę äľęřŧş čäŉ þę äđđęđ.",
+        "no-rules": "Ŧĥęřę äřę ŉő äľęřŧ řūľęş ľįŉĸęđ ŧő ŧĥįş päŉęľ."
+      }
     },
     "toolbar": {
       "add": "Åđđ",
@@ -1067,6 +1077,12 @@
       "angular-deprecation-description": "Åŉģūľäř päŉęľş őpŧįőŉş čäŉ őŉľy þę ęđįŧęđ ūşįŉģ ŧĥę ĴŜØŃ ęđįŧőř.",
       "angular-deprecation-heading": "Päŉęľ őpŧįőŉş"
     },
+    "panel-queries": {
+      "add-query-from-library": "Åđđ qūęřy ƒřőm ľįþřäřy"
+    },
+    "query-library": {
+      "add-query-button": "Åđđ qūęřy"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1178,6 +1194,7 @@
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",
       "datasource-z-a": "Đäŧä şőūřčę Ż-Å",
+      "library-history-dropdown": "Øpęŉ qūęřy ľįþřäřy őř qūęřy ĥįşŧőřy",
       "newest-first": "Ńęŵęşŧ ƒįřşŧ",
       "oldest-first": "Øľđęşŧ ƒįřşŧ",
       "query-history": "Qūęřy ĥįşŧőřy",
@@ -1391,10 +1408,16 @@
     },
     "data-link-editor-modal": {
       "cancel": "Cäŉčęľ",
+      "one-click-description": "Øŉľy őŉę ľįŉĸ čäŉ ĥävę őŉę čľįčĸ ęŉäþľęđ äŧ ä ŧįmę",
       "save": "Ŝävę"
+    },
+    "data-link-inline-editor": {
+      "one-click": "Øŉę čľįčĸ"
     },
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
+      "one-click": "Øŉę čľįčĸ",
+      "one-click-enabled": "Øŉę čľįčĸ ęŉäþľęđ",
       "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
     },
     "data-source-http-settings": {
@@ -1476,7 +1499,8 @@
       "right-axis-indicator": "(řįģĥŧ y-äχįş)"
     },
     "viz-tooltip": {
-      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ"
+      "footer-add-annotation": "Åđđ äŉŉőŧäŧįőŉ",
+      "footer-click-to-navigate": "Cľįčĸ ŧő őpęŉ {{linkTitle}}"
     }
   },
   "graph": {
@@ -1798,7 +1822,8 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "mőřę"
+      "more": "mőřę",
+      "see-details": "Ŝęę ľőģ đęŧäįľş"
     },
     "log-rows": {
       "disable-popover": {
@@ -1959,6 +1984,7 @@
     "public-preview": {
       "button-text": "Ğįvę ƒęęđþäčĸ",
       "message": "Ńő ŜĿÅş äřę äväįľäþľę yęŧ. <2>Vįşįŧ őūř đőčş</2> ŧő ľęäřŉ mőřę äþőūŧ ŧĥįş ƒęäŧūřę!",
+      "message-cloud": "Ÿőūř şęľƒ-mäŉäģęđ įŉşŧäŉčę őƒ Ğřäƒäŉä řęqūįřęş vęřşįőŉ 11.5+, őř 11.2+ ŵįŧĥ ŧĥę őŉPřęmŦőCľőūđMįģřäŧįőŉş ƒęäŧūřę ƒľäģ ęŉäþľęđ.",
       "message-plugins": "Øŉľy Cőmmūŉįŧy äŉđ Cőmmęřčįäľ şįģŉęđ pľūģįŉş äřę ęľįģįþľę ƒőř mįģřäŧįőŉ. Ŧĥęįř ľäŧęşŧ vęřşįőŉ ŵįľľ þę įŉşŧäľľęđ įŉ ŧĥę čľőūđ įŉşŧäŉčę, pľęäşę ūpģřäđę yőūř pľūģįŉş þęƒőřę şŧäřŧįŉģ ŧĥę mįģřäŧįőŉ přőčęşş.",
       "title": "Mįģřäŧę ŧő Ğřäƒäŉä Cľőūđ įş įŉ pūþľįč přęvįęŵ",
       "title-plugins": "Mįģřäŧįőŉ őƒ pľūģįŉş"
@@ -2053,6 +2079,9 @@
     "all": {
       "title": "Åľľ",
       "title-filtered": "Åľľ (ƒįľŧęřęđ)"
+    },
+    "clear": {
+      "title": "Cľęäř äľľ"
     }
   },
   "nav": {
@@ -2408,7 +2437,8 @@
       "list-label": "Ńävįģäŧįőŉ",
       "open": "Øpęŉ męŉū",
       "undock": "Ůŉđőčĸ męŉū"
-    }
+    },
+    "rss-button": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
   "news": {
     "drawer": {
@@ -2773,7 +2803,7 @@
   "query-library": {
     "datasource-names": "Đäŧäşőūřčę ŉämę(ş):",
     "delete-query-button": "Đęľęŧę qūęřy",
-    "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ qūęřy ŧęmpľäŧę ƒřőm ŧĥę ľįþřäřy: {{error}}",
+    "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ľőäđ qūęřy ŧęmpľäŧę męŧäđäŧä: {{error}}",
     "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ",
     "user-info-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ ūşęř įŉƒő ƒřőm ŧĥę ľįþřäřy: {{error}}",
     "user-names": "Ůşęř ŉämę(ş):"
@@ -2788,6 +2818,7 @@
       "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
       "save-to-query-library": "Ŝävę ŧő qūęřy ľįþřäřy",
+      "save-to-query-library-new": "Ńęŵ: Ŝävę ŧő qūęřy ľįþřäřy",
       "show-response": "Ŝĥőŵ řęşpőŉşę",
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },

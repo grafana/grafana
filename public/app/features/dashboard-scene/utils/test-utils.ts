@@ -1,4 +1,5 @@
 import { VariableRefresh } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 import {
   DeepPartial,
   EmbeddedScene,
@@ -30,6 +31,25 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jes
     loadSnapshot: loadSnapshotMock,
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
+}
+export function setupLoadDashboardMockReject(rsp: DeepPartial<FetchError>, spy?: jest.Mock) {
+  const loadDashboardMock = (spy || jest.fn()).mockRejectedValue(rsp);
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: loadDashboardMock,
+  } as unknown as DashboardLoaderSrv);
+  return loadDashboardMock;
+}
+
+export function setupLoadDashboardRuntimeErrorMock() {
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: () => {
+      throw new Error('Runtime error');
+    },
+  } as unknown as DashboardLoaderSrv);
 }
 
 export function mockResizeObserver() {
