@@ -1,7 +1,15 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, DataFrame, GrafanaTheme2, LoadingState, PanelProps } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  CoreApp,
+  DataFrame,
+  GrafanaTheme2,
+  LoadingState,
+  LogsSortOrder,
+  PanelProps,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
@@ -73,9 +81,22 @@ export const LogsPanel = ({
     [data.request, dataSourcesMap, onNewLogsReceived, panelData, timeZone]
   );
 
+  const initialScrollPosition = useMemo(() => {
+    /**
+     * In dashboards, users with newest logs at the bottom have the expectation of keeping the scroll at the bottom
+     * when new data is received. See https://github.com/grafana/grafana/pull/37634
+     */
+    if (data.request?.app === CoreApp.Dashboard || data.request?.app === CoreApp.PanelEditor) {
+      return sortOrder === LogsSortOrder.Ascending ? 'bottom' : 'top';
+    }
+    return 'top';
+  }, [data.request?.app, sortOrder]);
+
   if (!logs.length) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
+
+  console.log(initialScrollPosition);
 
   return (
     <div className={style.container} ref={(element: HTMLDivElement) => setLogsContainer(element)}>
@@ -84,6 +105,7 @@ export const LogsPanel = ({
           app={CoreApp.Dashboard}
           containerElement={logsContainer}
           eventBus={eventBus}
+          initialScrollPosition={initialScrollPosition}
           logs={logs}
           loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
           showTime={showTime}

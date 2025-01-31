@@ -25,6 +25,7 @@ interface Props {
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: ProcessedLogModel[];
   scrollElement: HTMLDivElement | null;
+  setInitialScrollPosition: () => void;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
@@ -40,6 +41,7 @@ export const InfiniteScroll = ({
   loadMore,
   logs,
   scrollElement,
+  setInitialScrollPosition,
   showTime,
   sortOrder,
   timeRange,
@@ -47,6 +49,7 @@ export const InfiniteScroll = ({
   wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
+  const [autoScroll, setAutoScroll] = useState(false);
   const prevLogs = usePrevious(logs);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
   const lastEvent = useRef<Event | WheelEvent | null>(null);
@@ -61,8 +64,17 @@ export const InfiniteScroll = ({
     if (infiniteLoaderState === 'loading') {
       // out-of-bounds if no new logs returned
       setInfiniteLoaderState(logs.length === prevLogs.length ? 'out-of-bounds' : 'idle');
+    } else if (infiniteLoaderState === 'idle') {
+      setAutoScroll(true);
     }
   }, [infiniteLoaderState, logs, prevLogs]);
+
+  useEffect(() => {
+    if (autoScroll) {
+      setInitialScrollPosition();
+      setAutoScroll(false);
+    }
+  }, [autoScroll, setInitialScrollPosition]);
 
   useEffect(() => {
     if (!scrollElement || !loadMore || !config.featureToggles.logsInfiniteScrolling) {

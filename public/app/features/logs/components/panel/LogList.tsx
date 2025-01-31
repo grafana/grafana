@@ -21,6 +21,7 @@ interface Props {
   containerElement: HTMLDivElement;
   eventBus: EventBus;
   forceEscape?: boolean;
+  initialScrollPosition?: 'top' | 'bottom';
   loadMore?: (range: AbsoluteTimeRange) => void;
   showTime: boolean;
   sortOrder: LogsSortOrder;
@@ -32,10 +33,11 @@ interface Props {
 export const LogList = ({
   app,
   containerElement,
-  loadMore,
-  logs,
   eventBus,
   forceEscape = false,
+  initialScrollPosition = 'top',
+  loadMore,
+  logs,
   showTime,
   sortOrder,
   timeRange,
@@ -97,6 +99,10 @@ export const LogList = ({
     [containerElement]
   );
 
+  const handleScrollPosition = useCallback(() => {
+    listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : logs.length - 1);
+  }, [initialScrollPosition, logs.length]);
+
   if (!containerElement || listHeight == null) {
     // Wait for container to be rendered
     return null;
@@ -105,13 +111,14 @@ export const LogList = ({
   return (
     <InfiniteScroll
       handleOverflow={handleOverflow}
-      scrollElement={scrollRef.current}
       logs={processedLogs}
       loadMore={loadMore}
+      scrollElement={scrollRef.current}
       showTime={showTime}
       sortOrder={sortOrder}
       timeRange={timeRange}
       timeZone={timeZone}
+      setInitialScrollPosition={handleScrollPosition}
       wrapLogMessage={wrapLogMessage}
     >
       {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
