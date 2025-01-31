@@ -94,7 +94,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	rsp := mathexp.Results{}
 
 	db := sql.DB{}
-	var frame = &data.Frame{}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 	frame, err := db.QueryFrames(gr.refID, gr.query, allFrames)
@@ -109,6 +108,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		rsp.Values = mathexp.Values{
 			mathexp.NoData{Frame: frame},
 		}
+		return rsp, nil
 	}
 
 	rsp.Values = mathexp.Values{
