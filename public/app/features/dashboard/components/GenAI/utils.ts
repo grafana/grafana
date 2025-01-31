@@ -1,6 +1,6 @@
 import { pick } from 'lodash';
 
-import { llms } from '@grafana/experimental';
+import { openai } from '@grafana/llm';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
@@ -18,7 +18,7 @@ export enum Role {
   'user' = 'user',
 }
 
-export type Message = llms.openai.Message;
+export type Message = openai.Message;
 
 export enum QuickFeedbackType {
   Shorter = 'Even shorter',
@@ -80,7 +80,7 @@ export async function isLLMPluginEnabled(): Promise<boolean> {
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
   llmHealthCheck = new Promise((resolve) => {
-    llms.openai.health().then((response) => {
+    openai.health().then((response) => {
       if (!response.ok) {
         // Health check fail clear cached promise so we can try again later
         llmHealthCheck = undefined;
