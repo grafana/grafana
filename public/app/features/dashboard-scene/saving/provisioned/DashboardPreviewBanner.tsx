@@ -9,12 +9,12 @@ interface DashboardPreviewBannerProps {
 }
 
 export function DashboardPreviewBanner({ queryParams, route, path }: DashboardPreviewBannerProps) {
-  if ('kiosk' in queryParams || !queryParams.isPreview) {
-    return null;
-  }
-
   const hasPrLink = Boolean(queryParams.prLink);
   const isProvisioned = route === DashboardRoutes.Provisioning && path;
+
+  if ('kiosk' in queryParams || (!queryParams.isPreview && !isProvisioned)) {
+    return null;
+  }
 
   return (
     <Alert
