@@ -46,15 +46,17 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
     if (isObjectLike(data) && !data?.['source']) {
       console.log('sent!');
-      const urlParams = locationService.getSearchObject();
-      console.log({ ...urlParams, ...data });
+      const params = locationService.getSearchObject();
+      const urlParams = { ...params, ...data };
       const currentPath = locationService.getLocation();
       console.log({ currentPath });
-      // locationService.partial({ ...urlParams, ...data });
+      locationService.partial(urlParams);
 
-      dispatch(updateLocation({
-        query: data,
-      }));
+      dispatch(locationService.partial(urlParams));
+
+      // dispatch(updateLocation({
+      //   query: data,
+      // }));
     }
   }, []);
 
