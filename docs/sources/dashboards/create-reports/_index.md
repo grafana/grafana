@@ -34,6 +34,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
+  max-size-configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#max_attachment_size_mb
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#max_attachment_size_mb
   log-filters:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
@@ -49,11 +54,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
-  reporting-configuration:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#reporting
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#reporting
   send-report:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
@@ -97,12 +97,11 @@ For Grafana Enterprise, the Reporting feature has the following requirements:
 ### Rendering configuration
 
 By default, attachments (PDFs, CSV files, and embedded images) larger than 10 MB are not sent, which keeps email servers from rejecting the email.
-You can increase or decrease this limit in the [reporting configuration](ref:reporting-configuration).
-
+You can increase or decrease this limit by configuring the [`max_attachment_size_mb`](ref:max-size-configuration) setting in your `ini` file.
 
 When a report file is generated, it's temporarily written to the corresponding folder (`csv`, `pdf`, `png`) in the Grafana `data` folder.
 A background job runs every 10 minutes and removes temporary files.
-You can configure how long a file should be stored before being removed by configuring the [`temp_data_lifetime`](ref:temp-data-lifetime) setting.
+You can set how long a file should be stored before being removed by configuring the [`temp_data_lifetime`](ref:temp-data-lifetime) setting in your `ini` file.
 
 ## Access control
 
