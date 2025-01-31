@@ -29,10 +29,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import {
-  DefaultGridLayoutManager,
-  DefaultGridLayoutManagerState,
-} from '../scene/layout-default/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
@@ -246,7 +243,7 @@ describe('transformSceneToSaveModel', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      const vizPanel = (scene.state.body.state as DefaultGridLayoutManagerState).grid.state.children[0].state.body;
+      const vizPanel = (scene.state.body.state as any).grid.state.children[0].state.body;
       expect(vizPanel.state.seriesLimit).toBe(10);
 
       render(<vizPanel.Component model={vizPanel} />);
@@ -261,7 +258,7 @@ describe('transformSceneToSaveModel', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      const vizPanel = (scene.state.body.state as DefaultGridLayoutManagerState).grid.state.children[0].state.body;
+      const vizPanel = (scene.state.body.state as any).grid.state.children[0].state.body;
       expect(vizPanel.state.seriesLimit).toBe(undefined);
 
       render(<vizPanel.Component model={vizPanel} />);
