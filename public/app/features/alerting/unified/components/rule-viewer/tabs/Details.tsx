@@ -1,19 +1,15 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { ClipboardButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { Box, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
 import { getAnnotations, isGrafanaRecordingRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
-import { MetaText } from '../../MetaText';
 import { Tokenize } from '../../Tokenize';
-
-interface DetailsProps {
-  rule: CombinedRule;
-}
+import { DetailText } from '../../common/DetailText';
 
 enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',
@@ -22,7 +18,17 @@ enum RuleType {
   CloudRecordingRule = 'Cloud recording rule',
 }
 
-const Details = ({ rule }: DetailsProps) => {
+const DetailHeading = ({ label }: { label: string }) => (
+  <Box paddingBottom={1}>
+    <Text variant="h4">{label}</Text>
+  </Box>
+);
+
+interface DetailsProps {
+  rule: CombinedRule;
+}
+
+export const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
 
   let ruleType: RuleType;
@@ -43,102 +49,103 @@ const Details = ({ rule }: DetailsProps) => {
   const evaluationDuration = rule.promRule?.evaluationTime;
   const evaluationTimestamp = rule.promRule?.lastEvaluation;
 
-  const copyRuleUID = useCallback(() => {
-    if (isGrafanaRulerRule(rule.rulerRule)) {
-      return rule.rulerRule.grafana_alert.uid;
-    } else {
-      return '';
-    }
-  }, [rule.rulerRule]);
-
   const annotations = getAnnotations(rule);
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 
+  const lastUpdatedBy = (() => {
+    if (!isGrafanaRulerRule(rule.rulerRule)) {
+      return null;
+    }
+
+    return rule.rulerRule.grafana_alert.updated_by?.name || `User ID: ${rule.rulerRule.grafana_alert.updated_by?.uid}`;
+  })();
+
+  const updated = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
+
   return (
-    <Stack direction="column" gap={3}>
-      <div className={styles.metadataWrapper}>
-        {/* type and identifier (optional) */}
-        <MetaText direction="column">
-          Rule type
-          <Text color="primary">{ruleType}</Text>
-        </MetaText>
-        <MetaText direction="column">
-          {isGrafanaRulerRule(rule.rulerRule) && (
-            <>
-              Rule Identifier
-              <Stack direction="row" alignItems="center" gap={0.5}>
-                <Text color="primary">
-                  {rule.rulerRule.grafana_alert.uid}
-                  <ClipboardButton fill="text" variant="secondary" icon="copy" size="sm" getText={copyRuleUID} />
-                </Text>
-              </Stack>
-            </>
-          )}
-        </MetaText>
+    <div className={styles.metadata}>
+      <Box>
+        <DetailHeading label={t('alerting.alert.rule', 'Rule')} />
+        <DetailText label={t('alerting.alert.rule-type', 'Rule type')} value={ruleType} />
+        {isGrafanaRulerRule(rule.rulerRule) && (
+          <>
+            <DetailText
+              label={t('alerting.alert.rule-identifier', 'Rule identifier')}
+              value={rule.rulerRule.grafana_alert.uid}
+              monospace
+              showCopyButton
+              copyValue={rule.rulerRule.grafana_alert.uid}
+            />
+            <DetailText label={t('alerting.alert.last-updated-by', 'Last updated by')} value={lastUpdatedBy} />
+            {updated && (
+              <DetailText
+                label={t('alerting.alert.last-updated-date', 'Date of last update')}
+                value={dateTimeFormat(updated) + ` (${dateTimeFormatTimeAgo(updated)})`}
+              />
+            )}
+          </>
+        )}
+      </Box>
 
-        {/* evaluation duration and pending period */}
-        <MetaText direction="column">
-          {hasEvaluationDuration && (
-            <>
-              Last evaluation
-              {evaluationTimestamp && evaluationDuration ? (
-                <span>
-                  <Text color="primary">{formatDistanceToNowStrict(new Date(evaluationTimestamp))} ago</Text>, took{' '}
-                  <Text color="primary">{evaluationDuration}ms</Text>
-                </span>
-              ) : null}
-            </>
-          )}
-        </MetaText>
-        <MetaText direction="column">
-          {pendingPeriod && (
-            <>
-              Pending period
-              <Text color="primary">{pendingPeriod}</Text>
-            </>
-          )}
-        </MetaText>
+      <Box>
+        <DetailHeading label={t('alerting.alert.evaluation', 'Evaluation')} />
+        {evaluationTimestamp && (
+          <DetailText
+            label={t('alerting.alert.last-evaluated', 'Last evaluated')}
+            value={formatDistanceToNowStrict(new Date(evaluationTimestamp), { addSuffix: true })}
+            tooltipValue={dateTimeFormat(evaluationTimestamp)}
+          />
+        )}
+        {hasEvaluationDuration && (
+          <DetailText
+            label={t('alerting.alert.last-evaluation-duration', 'Last evaluation duration')}
+            value={`${evaluationDuration} ms`}
+          />
+        )}
+        {pendingPeriod && (
+          <DetailText label={t('alerting.alert.pending-period', 'Pending period')} value={pendingPeriod} />
+        )}
+      </Box>
 
-        {/* nodata and execution error state mapping */}
-        {isGrafanaRulerRule(rule.rulerRule) &&
-          // grafana recording rules don't have these fields
-          rule.rulerRule.grafana_alert.no_data_state &&
-          rule.rulerRule.grafana_alert.exec_err_state && (
-            <>
-              <MetaText direction="column">
-                Alert state if no data or all values are null
-                <Text color="primary">{rule.rulerRule.grafana_alert.no_data_state}</Text>
-              </MetaText>
-              <MetaText direction="column">
-                Alert state if execution error or timeout
-                <Text color="primary">{rule.rulerRule.grafana_alert.exec_err_state}</Text>
-              </MetaText>
-            </>
-          )}
-      </div>
+      {isGrafanaRulerRule(rule.rulerRule) &&
+        // grafana recording rules don't have these fields
+        rule.rulerRule.grafana_alert.no_data_state &&
+        rule.rulerRule.grafana_alert.exec_err_state && (
+          <Box>
+            <DetailHeading label={t('alerting.alert.alert-state', 'Alert state')} />
+            {hasEvaluationDuration && (
+              <DetailText
+                label={t('alerting.alert.state-no-data', 'Alert state if no data or all values are null')}
+                value={rule.rulerRule.grafana_alert.no_data_state}
+              />
+            )}
+            {pendingPeriod && (
+              <DetailText
+                label={t('alerting.alert.state-error-timeout', 'Alert state if execution error or timeout')}
+                value={rule.rulerRule.grafana_alert.exec_err_state}
+              />
+            )}
+          </Box>
+        )}
 
-      {/* annotations go here */}
       {annotations && (
-        <>
-          <Text variant="h4">Annotations</Text>
+        <Box>
+          <DetailHeading label={t('alerting.alert.annotations', 'Annotations')} />
           {Object.keys(annotations).length === 0 ? (
-            <Text variant="bodySmall" color="secondary" italic>
-              No annotations
-            </Text>
-          ) : (
-            <div className={styles.metadataWrapper}>
-              {Object.entries(annotations).map(([name, value]) => (
-                <MetaText direction="column" key={name}>
-                  {name}
-                  <AnnotationValue value={value} />
-                </MetaText>
-              ))}
+            <div>
+              <Text color="secondary" italic>
+                <Trans i18nKey="alerting.alert.no-annotations">No annotations</Trans>
+              </Text>
             </div>
+          ) : (
+            Object.entries(annotations).map(([name, value]) => (
+              <DetailText key={name} label={name} value={<AnnotationValue value={value} />} />
+            ))
           )}
-        </>
+        </Box>
       )}
-    </Stack>
+    </div>
   );
 };
 
@@ -152,7 +159,7 @@ export function AnnotationValue({ value }: AnnotationValueProps) {
 
   if (needsExternalLink) {
     return (
-      <TextLink variant="bodySmall" href={value} external>
+      <TextLink href={value} external>
         {value}
       </TextLink>
     );
@@ -162,12 +169,16 @@ export function AnnotationValue({ value }: AnnotationValueProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  metadataWrapper: css({
+  metadata: css({
     display: 'grid',
-    gridTemplateColumns: 'auto auto',
-    rowGap: theme.spacing(3),
-    columnGap: theme.spacing(12),
+    gap: theme.spacing(2),
+    gridTemplateColumns: '1fr 1fr 1fr',
+
+    [theme.breakpoints.down('lg')]: {
+      gridTemplateColumns: '1fr 1fr',
+    },
+    [theme.breakpoints.down('sm')]: {
+      gridTemplateColumns: '1fr',
+    },
   }),
 });
-
-export { Details };
