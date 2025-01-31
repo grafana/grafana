@@ -1264,7 +1264,7 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				}
 				foldersMap[hit.Folder] = f
 			}
-			finalResults[i] = dashboards.DashboardSearchProjection{
+			result := dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
 				UID:         hit.Name,
 				OrgID:       query.OrgId,
@@ -1275,6 +1275,12 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				FolderTitle: f.Title,
 				Tags:        hit.Tags,
 			}
+
+			if hit.Resource == "folders" {
+				result.IsFolder = true
+			}
+
+			finalResults[i] = result
 		}
 
 		return finalResults, nil
@@ -1738,7 +1744,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		// When no type specified, search for dashboards
 		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "dashboards")
 		// Currently a search query is across folders and dashboards
-		if query.Title != "" {
+		if query.Title == "" {
 			federate, err = resource.AsResourceKey(user.GetNamespace(), "folders")
 		}
 	case "dash-db", "dash-annotation":

@@ -155,17 +155,31 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		}
 
 		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
-			Key: &resource.ResourceKey{
-				Namespace: "default",
-				Group:     "dashboard.grafana.app",
-				Resource:  "dashboards",
-				Name:      dashboard.UID,
-			},
+			Key:   getResourceKey(dashboard),
 			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags},
 		})
 	}
 
 	return list, nil
+}
+
+func getResourceKey(item *dashboards.DashboardSearchProjection) *resource.ResourceKey {
+	// TODO check how we would handle dash-annotation and dash-folder-alerting
+	if item.IsFolder {
+		return &resource.ResourceKey{
+			Namespace: "default",
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+			Name:      item.UID,
+		}
+	} else {
+		return &resource.ResourceKey{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Name:      item.UID,
+		}
+	}
 }
 
 func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards.DashboardSearchProjection {
@@ -181,6 +195,7 @@ func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards
 				Title:     item.Title,
 				FolderUID: item.FolderUID,
 				Tags:      []string{},
+				IsFolder:  item.IsFolder,
 			}
 			hitList = append(hitList, hit)
 			hits[key] = hit
