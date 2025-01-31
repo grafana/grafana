@@ -148,6 +148,8 @@ type AlertNG struct {
 	Api                 *api.API
 	httpClientProvider  httpclient.Provider
 	InstanceStore       state.InstanceStore
+	// StartupInstanceReader is used to fetch the state of alerts on startup.
+	StartupInstanceReader state.InstanceReader
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -404,7 +406,7 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	ng.InstanceStore = initInstanceStore(ng.store.SQLStore, ng.Log.New("ngalert.state.instancestore"), ng.FeatureToggles)
+	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
 
 	stateManagerCfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
@@ -519,17 +521,30 @@ func (ng *AlertNG) init() error {
 	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
-func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) state.InstanceStore {
+// initInstanceStore initializes the instance store based on the feature toggles.
+// It returns two vales: the instance store that should be used for writing alert instances,
+// and an alert instance reader that can be used to read alert instances on startup.
+func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) (state.InstanceStore, state.InstanceReader) {
 	var instanceStore state.InstanceStore
+
+	// We init both stores here, but only one will be used based on the feature toggles.
+	// Two stores are needed for the multi-instance reader to work correctly.
+	// It's used to read the state of alerts on startup, and allows switching the feature
+	// flags seamlessly without losing the state of alerts.
+	protoInstanceStore := store.ProtoInstanceDBStore{
+		SQLStore:       sqlStore,
+		Logger:         logger,
+		FeatureToggles: featureToggles,
+	}
+	simpleInstanceStore := store.InstanceDBStore{
+		SQLStore:       sqlStore,
+		Logger:         logger,
+		FeatureToggles: featureToggles,
+	}
 
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
 		logger.Info("Using protobuf-based alert instance store")
-		instanceStore = store.ProtoInstanceDBStore{
-			SQLStore:       sqlStore,
-			Logger:         logger,
-			FeatureToggles: featureToggles,
-		}
-
+		instanceStore = protoInstanceStore
 		// If FlagAlertingSaveStateCompressed is enabled, ProtoInstanceDBStore is used,
 		// which functions differently from InstanceDBStore. FlagAlertingSaveStatePeriodic is
 		// not applicable to ProtoInstanceDBStore, so a warning is logged if it is set.
@@ -538,14 +553,10 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 		}
 	} else {
 		logger.Info("Using simple database alert instance store")
-		instanceStore = store.InstanceDBStore{
-			SQLStore:       sqlStore,
-			Logger:         logger,
-			FeatureToggles: featureToggles,
-		}
+		instanceStore = simpleInstanceStore
 	}
 
-	return instanceStore
+	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
 }
 
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
@@ -605,7 +616,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		// Also note that this runs synchronously to ensure state is loaded
 		// before rule evaluation begins, hence we use ctx and not subCtx.
 		//
-		ng.stateManager.Warm(ctx, ng.store, ng.InstanceStore)
+		ng.stateManager.Warm(ctx, ng.store, ng.StartupInstanceReader)
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
