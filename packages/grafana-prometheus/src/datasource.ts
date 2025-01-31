@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
+import { tz } from 'moment-timezone';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -373,13 +374,30 @@ export class PrometheusDatasource
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    // The utcOffsetSec parameter is required by the backend to ensure proper alignment of time ranges.
+    // For relative queries (e.g., Last N hours/days/weeks/years),
+    // the range must be adjusted according to the selected timezone.
+    // Without this adjustment, queries would default to using UTC-0 for "now," which may lead to incorrect results.
+    //
+    // However, this does not apply to absolute time ranges where the user explicitly sets the start and end times.
+    // In such cases, utcOffsetSec must match the user's selected timezone.
+    //
+    // - If the user relies on the browser's timezone, we derive the utcOffset from the request range object.
+    // - If the user overrides the timezone, the utcOffset must be determined based on the selected timezone.
+    //
+    // More details:
+    // - Issue that led to the introduction of utcOffsetSec: https://github.com/grafana/grafana/issues/17278
+    // - Implementation PR: https://github.com/grafana/grafana/pull/17477
+    let utcOffset = request.range.to.utcOffset();
+    if (request.timezone === 'browser') {
+      utcOffset = tz(request.timezone).utcOffset();
+    }
     const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
-      // We need to pass utcOffsetSec to backend to calculate aligned range
-      utcOffsetSec: request.range.to.utcOffset() * 60,
+      utcOffsetSec: utcOffset * 60,
     };
 
     if (config.featureToggles.promQLScope) {
