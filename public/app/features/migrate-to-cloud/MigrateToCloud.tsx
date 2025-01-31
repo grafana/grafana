@@ -26,7 +26,7 @@ export default function MigrateToCloud() {
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
           No SLAs are available yet.{' '}
           <TextLink
-            href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/#grafana-cloud-migration-assistant"
+            href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/cloud-migration-assistant/"
             external
           >
             Visit our docs
