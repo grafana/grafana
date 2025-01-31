@@ -2454,10 +2454,67 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/settings": {
+      "get": {
+        "tags": [
+          "Provisioning"
+        ],
+        "description": "Get the frontend settings for this namespace",
+        "operationId": "getFrontendSettings",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
+                  "type": "object",
+                  "required": [
+                    "repository"
+                  ],
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "instance": {
+                      "description": "When a repository is configured to save everything in instance",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "repository": {
+                      "description": "The basic repository settings",
+                      "type": "object",
+                      "additionalProperties": {
+                        "default": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/stats": {
       "get": {
         "tags": [
-          "Repository"
+          "Provisioning"
         ],
         "description": "Get resource stats for this namespace",
         "operationId": "getResourceStats",
