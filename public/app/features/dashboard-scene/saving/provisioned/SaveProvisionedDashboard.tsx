@@ -113,7 +113,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       <Stack direction="column" gap={2}>
         {repositoryConfig?.readOnly && (
           <Alert title="This repository is read only">
-            If you direct access to the target, copy the JSON and paste there
+            If you have direct access to the target, copy the JSON and paste it there.
           </Alert>
         )}
 
