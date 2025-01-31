@@ -45,7 +45,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
     isError: isPromResponseError,
   } = useGetGroupsQuery(
     {
-      ruleSource: groupIdentifier.rulesSource,
+      ruleSource: { uid: groupIdentifier.rulesSource.uid },
       namespace: namespaceName,
       groupName: groupName,
     },
