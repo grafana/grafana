@@ -2647,7 +2647,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 									"updated": "2021-02-21T01:10:30Z",
                                     "updated_by" : {
 										"uid": "uid",
-										"name": "editor"			
+										"name": "editor"
 									},
 									"intervalSeconds": 60,
 									"is_paused": false,
@@ -3129,7 +3129,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "updated_by": {
-							"uid": "uid",	
+							"uid": "uid",
 							"name": "grafana"
 						  },
 						  "intervalSeconds":60,
@@ -3175,7 +3175,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "updated_by": {
-							"uid": "uid",	
+							"uid": "uid",
 							"name": "grafana"
 						  },
 						  "intervalSeconds":60,
@@ -3198,79 +3198,6 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			  }
 		   ]
 		}`
-		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
-	}
-
-	// try to update by pass an invalid UID
-	{
-		interval, err := model.ParseDuration("30s")
-		require.NoError(t, err)
-
-		rules := apimodels.PostableRuleGroupConfig{
-			Name: "arulegroup",
-			Rules: []apimodels.PostableExtendedRuleNode{
-				{
-					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: &interval,
-						Labels: map[string]string{
-							"label1": "val42",
-							"foo":    "bar",
-						},
-						Annotations: map[string]string{
-							"annotation1": "val42",
-							"foo":         "bar",
-						},
-					},
-					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						UID:       "unknown",
-						Title:     "AlwaysNormal",
-						Condition: "A",
-						Data: []apimodels.AlertQuery{
-							{
-								RefID: "A",
-								RelativeTimeRange: apimodels.RelativeTimeRange{
-									From: apimodels.Duration(time.Duration(5) * time.Hour),
-									To:   apimodels.Duration(time.Duration(3) * time.Hour),
-								},
-								DatasourceUID: expr.DatasourceUID,
-								Model: json.RawMessage(`{
-											"type": "math",
-											"expression": "2 + 3 < 1"
-											}`),
-							},
-						},
-						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
-					},
-				},
-			},
-			Interval: interval,
-		}
-
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
-		assert.Equal(t, http.StatusNotFound, status)
-		var res map[string]any
-		assert.NoError(t, json.Unmarshal([]byte(body), &res))
-		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
-
-		// let's make sure that rule definitions are not affected by the failed POST request.
-		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
-		// nolint:gosec
-		resp, err := http.Get(u)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-
-		assert.Equal(t, resp.StatusCode, 202)
-
-		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["default,arulegroup"]
-		assert.True(t, ok)
-		assert.Equal(t, 2, len(returnedUIDs))
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 	}
 
@@ -3493,7 +3420,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  ],
 		                  "updated":"2021-02-21T01:10:30Z",
                           "updated_by": {
-							"uid": "uid",	
+							"uid": "uid",
 							"name": "grafana"
 						  },
 		                  "intervalSeconds":60,
@@ -3612,7 +3539,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
 					  "updated_by": {
-						"uid": "uid",	
+						"uid": "uid",
 						"name": "grafana"
 					  },
 					  "intervalSeconds":60,
@@ -3710,7 +3637,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
                       "updated_by": {
-						"uid": "uid",	
+						"uid": "uid",
 						"name": "grafana"
                       },
 					  "intervalSeconds":60,

@@ -113,10 +113,9 @@ func calculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 					}
 					loadedRulesByUID[rule.UID] = rule
 				}
-				if existing == nil {
-					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, models.ErrAlertRuleNotFound)
+				if existing != nil {
+					affectedGroups[existing.GetGroupKey()] = ruleList
 				}
-				affectedGroups[existing.GetGroupKey()] = ruleList
 			}
 		}
 
