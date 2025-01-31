@@ -90,9 +90,11 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 	d.logger.Debug("Attempting to sync admin configs", "count", len(cfgs))
 
 	disableExternal := d.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingDisableSendAlertsExternal)
-
 	orgsFound := make(map[int64]struct{}, len(cfgs))
+
+	// We're holding this lock either until we return an error or right before we stop the senders.
 	d.adminConfigMtx.Lock()
+
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := d.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
@@ -167,6 +169,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 		senderLogger := log.New("ngalert.sender.external-alertmanager")
 		s, err := NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry())
 		if err != nil {
+			d.adminConfigMtx.Unlock()
 			return err
 		}
 		d.externalAlertmanagers[cfg.OrgID] = s
@@ -190,9 +193,9 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 			delete(d.externalAlertmanagersCfgHash, orgID)
 		}
 	}
-	d.adminConfigMtx.Unlock()
 
-	// We can now stop these external Alertmanagers w/o having to hold a lock.
+	// We can now stop these senders w/o having to hold a lock.
+	d.adminConfigMtx.Unlock()
 	for orgID, s := range sendersToStop {
 		d.logger.Info("Stopping sender", "org", orgID)
 		s.Stop()
@@ -318,8 +321,10 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 	}
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
+	d.adminConfigMtx.RLock()
+	defer d.adminConfigMtx.RUnlock()
 	var localNotifierExist, externalNotifierExist bool
-	if d.sendAlertsTo[key.OrgID] == models.ExternalAlertmanagers && len(d.AlertmanagersFor(key.OrgID)) > 0 {
+	if d.sendAlertsTo[key.OrgID] == models.ExternalAlertmanagers && len(d.alertmanagersFor(key.OrgID)) > 0 {
 		logger.Debug("All alerts for the given org should be routed to external notifiers only. skipping the internal notifier.")
 	} else {
 		logger.Info("Sending alerts to local notifier", "count", len(alerts.PostableAlerts))
@@ -340,8 +345,6 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 
 	// Send alerts to external Alertmanager(s) if we have a sender for this organization
 	// and alerts are not being handled just internally.
-	d.adminConfigMtx.RLock()
-	defer d.adminConfigMtx.RUnlock()
 	s, ok := d.externalAlertmanagers[key.OrgID]
 	if ok && d.sendAlertsTo[key.OrgID] != models.InternalAlertmanager {
 		logger.Info("Sending alerts to external notifier", "count", len(alerts.PostableAlerts))
@@ -358,6 +361,10 @@ func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts
 func (d *AlertsRouter) AlertmanagersFor(orgID int64) []*url.URL {
 	d.adminConfigMtx.RLock()
 	defer d.adminConfigMtx.RUnlock()
+	return d.alertmanagersFor(orgID)
+}
+
+func (d *AlertsRouter) alertmanagersFor(orgID int64) []*url.URL {
 	s, ok := d.externalAlertmanagers[orgID]
 	if !ok {
 		return []*url.URL{}
