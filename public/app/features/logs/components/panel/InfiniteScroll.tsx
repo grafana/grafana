@@ -1,8 +1,8 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
-import { ListChildComponentProps } from 'react-window';
+import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
-import { AbsoluteTimeRange, CoreApp, EventBus, LogsSortOrder, TimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Spinner } from '@grafana/ui';
 
@@ -15,6 +15,7 @@ import { ProcessedLogModel } from './processing';
 interface ChildrenProps {
   itemCount: number;
   getItemKey: (index: number) => string;
+  onItemsRendered: (props: ListOnItemsRenderedProps) => void;
   Renderer: (props: ListChildComponentProps) => ReactNode;
 }
 
@@ -31,7 +32,7 @@ interface Props {
   wrapLogMessage: boolean;
 }
 
-type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'loading';
+type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll' | 'loading';
 
 export const InfiniteScroll = ({
   children,
@@ -106,7 +107,7 @@ export const InfiniteScroll = ({
 
   const Renderer = useCallback(
     ({ index, style }: ListChildComponentProps) => {
-      if (!logs[index]) {
+      if (!logs[index] && infiniteLoaderState !== 'idle') {
         return (
           <LogLineMessage style={style}>
             {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
@@ -127,11 +128,27 @@ export const InfiniteScroll = ({
     [handleOverflow, infiniteLoaderState, logs, showTime, sortOrder, wrapLogMessage]
   );
 
+  const onItemsRendered = useCallback(
+    (props: ListOnItemsRenderedProps) => {
+      if (infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+        return;
+      }
+      const lastLogIndex = logs.length - 1;
+      const preScrollIndex = logs.length - 2;
+      if (props.visibleStopIndex >= lastLogIndex) {
+        setInfiniteLoaderState('pre-scroll');
+      } else if (props.visibleStartIndex < preScrollIndex) {
+        setInfiniteLoaderState('idle');
+      }
+    },
+    [infiniteLoaderState, logs.length]
+  );
+
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uid : index.toString()), [logs]);
 
-  const itemCount = logs.length && loadMore ? logs.length + 1 : logs.length;
+  const itemCount = logs.length && loadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
 
-  return <>{children({ getItemKey, itemCount, Renderer })}</>;
+  return <>{children({ getItemKey, itemCount, onItemsRendered, Renderer })}</>;
 };
 
 function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
@@ -144,7 +161,7 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
           Loading {order === LogsSortOrder.Ascending ? 'newer' : 'older'} logs... <Spinner inline />
         </>
       );
-    case 'idle':
+    case 'pre-scroll':
       return 'Scroll to load more';
     default:
       return null;

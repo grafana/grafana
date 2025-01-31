@@ -114,13 +114,14 @@ export const LogList = ({
       timeZone={timeZone}
       wrapLogMessage={wrapLogMessage}
     >
-      {({ getItemKey, itemCount, Renderer }) => (
+      {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
         <VariableSizeList
           height={listHeight}
           itemCount={itemCount}
           itemSize={getLogLineSize.bind(null, processedLogs, containerElement, { wrap: wrapLogMessage, showTime })}
           itemKey={getItemKey}
           layout="vertical"
+          onItemsRendered={onItemsRendered}
           outerRef={scrollRef}
           ref={listRef}
           style={{ overflowY: 'scroll' }}
