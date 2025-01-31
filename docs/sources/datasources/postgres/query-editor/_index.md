@@ -294,7 +294,7 @@ SELECT hostname AS __text, id AS __value FROM host
 You can also create nested variables. For example, if you have a variable named `region`, you can configure the `hosts` variable to display only the hosts within the currently selected region as shown in the following example. If `region` is a multi-value variable, use the `IN` operator instead of `=` to match multiple values.
 
 ```sql
-SELECT hostname FROM host  WHERE region IN($region)
+SELECT hostname FROM host WHERE region IN($region)
 ```
 
 #### Using `__searchFilter` to filter results in Query Variable
@@ -306,7 +306,7 @@ Note that you must enclose the `__searchFilter` expression in quotes as Grafana 
 The following example demonstrates how to use `__searchFilter` in the query field to enable real-time searching for `hostname` as the user type in the drop-down selection box.
 
 ```sql
-SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
+SELECT hostname FROM my_host WHERE hostname LIKE '$__searchFilter'
 ```
 
 ### Using Variables in Queries

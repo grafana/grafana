@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/postgres/
   - ../features/datasources/postgres/
-description: This document provides instructions for configuring the PostgreSSQL data source.
+description: This document provides instructions for configuring the PostgreSQL data source.
 keywords:
   - grafana
   - postgresql
@@ -50,7 +50,7 @@ refs:
 
 # Configure the PostgreSQL data source
 
-This document provides instructions for configuring the PostgreSSQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
+This document provides instructions for configuring the PostgreSQL data source and explains available configuration options. For general information on managing data sources refer to [Data source management](ref:data-source-management).
 
 ## Before you begin
 
