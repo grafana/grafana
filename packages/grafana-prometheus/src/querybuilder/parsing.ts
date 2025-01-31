@@ -112,6 +112,7 @@ function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
   expr = expr.replace(/\$__interval/g, '1s');
   expr = expr.replace(/\$__interval_ms/g, '1000');
   expr = expr.replace(/\$__rate_interval/g, '1s');
+  expr = expr.replace(/\$__dd_interval/g, '1s');
   expr = expr.replace(/\$__range_ms/g, '1000');
   expr = expr.replace(/\$__range_s/g, '1');
   expr = expr.replace(/\$__range/g, '1s');

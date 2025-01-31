@@ -73,6 +73,7 @@ const DURATION_COMPLETIONS: Completion[] = [
   '$__interval',
   '$__range',
   '$__rate_interval',
+  '$__dd_interval',
   '1m',
   '5m',
   '10m',
