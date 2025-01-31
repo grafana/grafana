@@ -20,9 +20,6 @@ export function itemToString<T extends string | number>(item?: ComboboxOption<T>
   if (item == null) {
     return '';
   }
-  if (item.label?.startsWith('Custom value: ')) {
-    return item.value.toString();
-  }
   return item.label ?? item.value.toString();
 }
 
