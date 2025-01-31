@@ -177,6 +177,7 @@ func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards
 		hit, exists := hits[key]
 		if !exists {
 			hit = &dashboards.DashboardSearchProjection{
+				UID:       item.UID,
 				Title:     item.Title,
 				FolderUID: item.FolderUID,
 				Tags:      []string{},
