@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 	"github.com/stretchr/testify/assert"
@@ -42,9 +43,6 @@ func TestTransformMetricsResponse_SingleSeriesSingleLabel(t *testing.T) {
 }
 
 func TestTransformMetricsResponse_SingleSeriesMultipleLabels(t *testing.T) {
-	// Skipping for now because this test is broken.
-	t.Skip()
-
 	resp := tempopb.QueryRangeResponse{
 		Series: []*tempopb.TimeSeries{
 			{
