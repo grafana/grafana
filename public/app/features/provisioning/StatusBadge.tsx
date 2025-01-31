@@ -6,10 +6,11 @@ import { PROVISIONING_URL } from './constants';
 interface StatusBadgeProps {
   state?: string;
   name: string;
+  enabled: boolean;
 }
 
-export function StatusBadge({ state, name }: StatusBadgeProps) {
-  if (state == null) {
+export function StatusBadge({ enabled, state, name }: StatusBadgeProps) {
+  if (state === null || state === undefined) {
     return null;
   }
 
@@ -44,6 +45,12 @@ export function StatusBadge({ state, name }: StatusBadgeProps) {
       break;
     default:
       break;
+  }
+
+  if (!enabled) {
+    color = 'red';
+    text = 'Sync disabled';
+    icon = 'info-circle';
   }
   return (
     <Badge

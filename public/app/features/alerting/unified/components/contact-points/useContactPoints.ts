@@ -26,7 +26,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '../../reducers/alertmanager/receivers';
-import { SupportedPlugin } from '../../types/pluginBridges';
+import { getIrmIfPresentOrOnCallPluginId } from '../../utils/config';
 
 import { enhanceContactPointsWithMetadata } from './utils';
 
@@ -67,7 +67,7 @@ const defaultOptions = {
  * Otherwise, returns no data
  */
 const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
-  const { installed, loading } = usePluginBridge(SupportedPlugin.OnCall);
+  const { installed, loading } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
   const oncallIntegrationsResponse = useGrafanaOnCallIntegrationsQuery(undefined, { skip: skip || !installed });
 
   return useMemo(() => {
