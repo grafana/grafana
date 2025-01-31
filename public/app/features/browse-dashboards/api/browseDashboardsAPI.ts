@@ -4,6 +4,7 @@ import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -21,7 +22,6 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
-import { createBaseQuery, handleRequestError } from '../../../api/createBaseQuery';
 import { t } from '../../../core/internationalization';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
@@ -90,7 +90,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ title, parentUid }) => ({
         method: 'POST',
         url: '/folders',
-        data: {
+        body: {
           title,
           parentUid,
         },
@@ -117,7 +117,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ uid, title, version }) => ({
         method: 'PUT',
         url: `/folders/${uid}`,
-        data: {
+        body: {
           title,
           version,
         },
@@ -140,7 +140,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ folder, destinationUID }) => ({
         url: `/folders/${folder.uid}/move`,
         method: 'POST',
-        data: { parentUID: destinationUID },
+        body: { parentUID: destinationUID },
       }),
       onQueryStarted: ({ folder, destinationUID }, { queryFulfilled, dispatch }) => {
         const { parentUid } = folder;
@@ -229,7 +229,7 @@ export const browseDashboardsAPI = createApi({
           await baseQuery({
             url: `/folders/${folderUID}/move`,
             method: 'POST',
-            data: { parentUID: destinationUID },
+            body: { parentUID: destinationUID },
           });
         }
 
@@ -358,7 +358,7 @@ export const browseDashboardsAPI = createApi({
       query: ({ dashboard, overwrite, inputs, folderUid }) => ({
         method: 'POST',
         url: '/dashboards/import',
-        data: {
+        body: {
           dashboard,
           overwrite,
           inputs,
@@ -383,7 +383,7 @@ export const browseDashboardsAPI = createApi({
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
       query: ({ dashboardUID, targetFolderUID }) => ({
         url: `/dashboards/uid/${dashboardUID}/trash`,
-        data: {
+        body: {
           folderUid: targetFolderUID,
         },
         method: 'PATCH',

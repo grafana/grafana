@@ -59,7 +59,7 @@ export const publicDashboardApi = createApi({
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards`,
           method: 'POST',
-          data: params.payload,
+          body: params.payload,
         };
       },
       async onQueryStarted({ dashboard, payload: { share } }, { dispatch, queryFulfilled }) {
@@ -99,7 +99,7 @@ export const publicDashboardApi = createApi({
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
           method: 'PATCH',
-          data: payload,
+          body: payload,
         };
       },
       async onQueryStarted({ dashboard }, { dispatch, queryFulfilled }) {
@@ -131,7 +131,7 @@ export const publicDashboardApi = createApi({
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
           method: 'PATCH',
-          data: payload,
+          body: payload,
         };
       },
       async onQueryStarted({ dashboard, payload: { isEnabled } }, { dispatch, queryFulfilled }) {
@@ -171,7 +171,7 @@ export const publicDashboardApi = createApi({
         return {
           url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
           method: 'PATCH',
-          data: payload,
+          body: payload,
         };
       },
       async onQueryStarted({ dashboard, payload: { share } }, { dispatch, queryFulfilled }) {
