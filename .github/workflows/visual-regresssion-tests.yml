@@ -24,10 +24,17 @@ jobs:
         run: |
           echo "Starting backend server..."
           make run &
-      - name: Start frontend server
+      - name: Wait for backend server to be ready
         run: |
-          echo "Starting frontend server..."
-          yarn start &
+          echo "Waiting for backend server to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000 > /dev/null; then
+              echo "Backend server is ready!"
+              break
+            fi
+            echo "Backend server not yet ready, retrying in 5 seconds..."
+            sleep 5
+          done
       - name: Run Playwright tests
         run: |
           yarn e2e:playwright:vizregression | tee output.log
