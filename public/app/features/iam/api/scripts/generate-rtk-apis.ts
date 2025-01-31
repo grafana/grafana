@@ -1,5 +1,5 @@
 /**
- * To generate query library k8s APIs, run:
+ * To generate iam k8s APIs, run:
  * `yarn process-specs && npx rtk-query-codegen-openapi ./public/app/features/iam/api/scripts/generate-rtk-apis.ts` from the root of the repo
  */
 
