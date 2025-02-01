@@ -2,18 +2,18 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -97,11 +97,15 @@ func (r *LegacyDisplayREST) handleDisplay(w http.ResponseWriter, req *http.Reque
 	ctx := req.Context()
 	user, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		errhttp.Write(ctx, fmt.Errorf("unauthorized"), w)
+		errhttp.Write(ctx, apierrors.NewUnauthorized("missing auth info"), w)
 		return
 	}
 
 	ns, err := authlib.ParseNamespace(user.GetNamespace())
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
 	keys := parseKeys(req.URL.Query()["key"])
 	users, err := r.store.ListDisplay(ctx, ns, legacy.ListDisplayQuery{
 		OrgID: ns.OrgID,
@@ -113,14 +117,14 @@ func (r *LegacyDisplayREST) handleDisplay(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	rsp := &iamv0.DisplayList{
+	rsp := &iam.DisplayList{
 		Keys:        keys.keys,
 		InvalidKeys: keys.invalid,
-		Items:       make([]iamv0.Display, 0, len(users.Users)+len(keys.disp)+1),
+		Items:       make([]iam.Display, 0, len(users.Users)+len(keys.disp)+1),
 	}
 	for _, user := range users.Users {
-		disp := iamv0.Display{
-			Identity: iamv0.IdentityRef{
+		disp := iam.Display{
+			Identity: iam.IdentityRef{
 				Type: authlib.TypeUser,
 				Name: user.UID,
 			},
@@ -150,7 +154,7 @@ type dispKeys struct {
 	invalid []string
 
 	// For terminal keys, this is a constant
-	disp []iamv0.Display
+	disp []iam.Display
 }
 
 func parseKeys(req []string) dispKeys {
@@ -171,8 +175,8 @@ func parseKeys(req []string) dispKeys {
 
 			switch t {
 			case authlib.TypeAnonymous:
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
 						Type: t,
 					},
 					DisplayName: "Anonymous",
@@ -180,8 +184,8 @@ func parseKeys(req []string) dispKeys {
 				})
 				continue
 			case authlib.TypeAPIKey:
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
 						Type: t,
 						Name: key,
 					},
@@ -190,8 +194,8 @@ func parseKeys(req []string) dispKeys {
 				})
 				continue
 			case authlib.TypeProvisioning:
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
 						Type: t,
 					},
 					DisplayName: "Provisioning",
@@ -207,8 +211,8 @@ func parseKeys(req []string) dispKeys {
 		id, err := strconv.ParseInt(key, 10, 64)
 		if err == nil {
 			if id == 0 {
-				keys.disp = append(keys.disp, iamv0.Display{
-					Identity: iamv0.IdentityRef{
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
 						Type: authlib.TypeUser,
 						Name: key,
 					},
