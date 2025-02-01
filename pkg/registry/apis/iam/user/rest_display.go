@@ -37,6 +37,7 @@ func (r *LegacyDisplayREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
+							OperationId: "getDisplayMapping", // This is used by RTK client generator
 							Tags:        []string{"Display"},
 							Description: "Show user display information",
 							Parameters: []*spec3.Parameter{
