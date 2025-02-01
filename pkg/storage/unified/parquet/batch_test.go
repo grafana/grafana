@@ -18,7 +18,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 		require.NoError(t, err)
 		//defer os.Remove(file.Name())
 
-		writer, err := NewResourceWriter(file)
+		writer, err := NewParquetWriter(file)
 		require.NoError(t, err)
 		ctx := context.Background()
 
@@ -91,7 +91,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 		require.NoError(t, err)
 		//defer os.Remove(file.Name())
 
-		writer, err := NewResourceWriter(file)
+		writer, err := NewParquetWriter(file)
 		require.NoError(t, err)
 		err = writer.Close()
 		require.NoError(t, err)

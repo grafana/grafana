@@ -1,19 +1,3 @@
-// Licensed to the Apache Software Foundation (ASF) under one
-// or more contributor license agreements.  See the NOTICE file
-// distributed with this work for additional information
-// regarding copyright ownership.  The ASF licenses this file
-// to you under the Apache License, Version 2.0 (the
-// "License"); you may not use this file except in compliance
-// with the License.  You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package parquet
 
 import (
@@ -26,67 +10,14 @@ import (
 )
 
 var (
-	_ resource.BatchRequestIterator = (*resourceReader)(nil)
+	_ resource.BatchRequestIterator = (*parquetReader)(nil)
 )
 
-type columBuffer interface {
-	open(rgr *file.RowGroupReader) error
-	batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error)
+func NewParquetReader(inputPath string, batchSize int64) (resource.BatchRequestIterator, error) {
+	return newResourceReader(inputPath, batchSize)
 }
 
-type stringColumn struct {
-	index  int // within the schemna
-	reader *file.ByteArrayColumnChunkReader
-	buffer []parquet.ByteArray
-	count  int // the active count
-}
-
-func (c *stringColumn) open(rgr *file.RowGroupReader) error {
-	tmp, err := rgr.Column(c.index)
-	if err != nil {
-		return err
-	}
-	ok := true
-	c.reader, ok = tmp.(*file.ByteArrayColumnChunkReader)
-	if !ok {
-		return fmt.Errorf("expected resource strings")
-	}
-	return nil
-}
-
-func (c *stringColumn) batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error) {
-	_, count, err := c.reader.ReadBatch(batchSize, c.buffer, defLevels, repLevels)
-	c.count = count
-	return count, err
-}
-
-type int32Column struct {
-	index  int // within the schemna
-	reader *file.Int32ColumnChunkReader
-	buffer []int32
-	count  int // the active count
-}
-
-func (c *int32Column) open(rgr *file.RowGroupReader) error {
-	tmp, err := rgr.Column(c.index)
-	if err != nil {
-		return err
-	}
-	ok := true
-	c.reader, ok = tmp.(*file.Int32ColumnChunkReader)
-	if !ok {
-		return fmt.Errorf("expected resource strings")
-	}
-	return nil
-}
-
-func (c *int32Column) batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error) {
-	_, count, err := c.reader.ReadBatch(batchSize, c.buffer, defLevels, repLevels)
-	c.count = count
-	return count, err
-}
-
-type resourceReader struct {
+type parquetReader struct {
 	reader *file.Reader
 
 	namespace *stringColumn
@@ -113,7 +44,7 @@ type resourceReader struct {
 }
 
 // Next implements resource.BatchRequestIterator.
-func (r *resourceReader) Next() bool {
+func (r *parquetReader) Next() bool {
 	r.req = nil
 	for r.err == nil && r.reader != nil {
 		if r.bufferIndex >= r.bufferSize && r.value.reader.HasNext() {
@@ -157,20 +88,16 @@ func (r *resourceReader) Next() bool {
 }
 
 // Request implements resource.BatchRequestIterator.
-func (r *resourceReader) Request() *resource.BatchRequest {
+func (r *parquetReader) Request() *resource.BatchRequest {
 	return r.req
 }
 
 // RollbackRequested implements resource.BatchRequestIterator.
-func (r *resourceReader) RollbackRequested() bool {
+func (r *parquetReader) RollbackRequested() bool {
 	return r.err != nil
 }
 
-func NewBatchRequestIterator(inputPath string, batchSize int64) (resource.BatchRequestIterator, error) {
-	return newResourceReader(inputPath, batchSize)
-}
-
-func newResourceReader(inputPath string, batchSize int64) (*resourceReader, error) {
+func newResourceReader(inputPath string, batchSize int64) (*parquetReader, error) {
 	rdr, err := file.OpenParquetFile(inputPath, true)
 	if err != nil {
 		return nil, err
@@ -188,7 +115,7 @@ func newResourceReader(inputPath string, batchSize int64) (*resourceReader, erro
 		}
 	}
 
-	reader := &resourceReader{
+	reader := &parquetReader{
 		reader: rdr,
 
 		namespace: makeColumn("namespace"),
@@ -245,7 +172,7 @@ func newResourceReader(inputPath string, batchSize int64) (*resourceReader, erro
 	return reader, nil
 }
 
-func (r *resourceReader) open(rgr *file.RowGroupReader) error {
+func (r *parquetReader) open(rgr *file.RowGroupReader) error {
 	for _, c := range r.columns {
 		err := c.open(rgr)
 		if err != nil {
@@ -255,7 +182,7 @@ func (r *resourceReader) open(rgr *file.RowGroupReader) error {
 	return nil
 }
 
-func (r *resourceReader) readBatch() error {
+func (r *parquetReader) readBatch() error {
 	r.bufferIndex = 0
 	r.bufferSize = 0
 	for i, c := range r.columns {
@@ -270,3 +197,68 @@ func (r *resourceReader) readBatch() error {
 	}
 	return nil
 }
+
+//-------------------------------
+// Column support
+//-------------------------------
+
+type columBuffer interface {
+	open(rgr *file.RowGroupReader) error
+	batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error)
+}
+
+type stringColumn struct {
+	index  int // within the schemna
+	reader *file.ByteArrayColumnChunkReader
+	buffer []parquet.ByteArray
+	count  int // the active count
+}
+
+func (c *stringColumn) open(rgr *file.RowGroupReader) error {
+	tmp, err := rgr.Column(c.index)
+	if err != nil {
+		return err
+	}
+	var ok bool
+	c.reader, ok = tmp.(*file.ByteArrayColumnChunkReader)
+	if !ok {
+		return fmt.Errorf("expected resource strings")
+	}
+	return nil
+}
+
+func (c *stringColumn) batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error) {
+	_, count, err := c.reader.ReadBatch(batchSize, c.buffer, defLevels, repLevels)
+	c.count = count
+	return count, err
+}
+
+type int32Column struct {
+	index  int // within the schemna
+	reader *file.Int32ColumnChunkReader
+	buffer []int32
+	count  int // the active count
+}
+
+func (c *int32Column) open(rgr *file.RowGroupReader) error {
+	tmp, err := rgr.Column(c.index)
+	if err != nil {
+		return err
+	}
+	var ok bool
+	c.reader, ok = tmp.(*file.Int32ColumnChunkReader)
+	if !ok {
+		return fmt.Errorf("expected resource strings")
+	}
+	return nil
+}
+
+func (c *int32Column) batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error) {
+	_, count, err := c.reader.ReadBatch(batchSize, c.buffer, defLevels, repLevels)
+	c.count = count
+	return count, err
+}
+
+//-------------------------------
+// Column support
+//-------------------------------

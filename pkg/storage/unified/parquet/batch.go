@@ -25,7 +25,7 @@ type batchHandler struct {
 func (s *batchHandler) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
 	rsp := &resource.BatchResponse{}
 
-	writer, err := NewResourceWriter(s.file)
+	writer, err := NewParquetWriter(s.file)
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
 		return rsp

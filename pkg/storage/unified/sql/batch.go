@@ -94,7 +94,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 		fmt.Printf("PARQUET: %s\n", file)
 
 		// Replace the iterator with one from parquet
-		iter, err = parquet.NewBatchRequestIterator(file, 50)
+		iter, err = parquet.NewParquetReader(file, 50)
 		if err != nil {
 			return &resource.BatchResponse{
 				Error: resource.AsErrorResult(err),

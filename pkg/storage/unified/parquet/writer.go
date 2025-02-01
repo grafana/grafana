@@ -18,7 +18,32 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type resourceWriter struct {
+type ResourceWriter interface {
+	io.Closer
+	Add(ctx context.Context, key *resource.ResourceKey, value []byte) error
+}
+
+// Write resources into a parquet file
+func NewParquetWriter(f io.Writer) (ResourceWriter, error) {
+	w := &parquetWriter{
+		pool:   memory.DefaultAllocator,
+		schema: newSchema(nil),
+		buffer: 1024 * 10 * 100 * 10, // 10MB
+		logger: logging.DefaultLogger.With("logger", "parquet.writer"),
+	}
+
+	props := parquet.NewWriterProperties(
+		parquet.WithCompression(compress.Codecs.Brotli),
+	)
+	writer, err := pqarrow.NewFileWriter(w.schema, f, props, pqarrow.DefaultWriterProps())
+	if err != nil {
+		return nil, err
+	}
+	w.writer = writer
+	return w, w.init()
+}
+
+type parquetWriter struct {
 	pool   memory.Allocator
 	buffer int
 	wrote  int
@@ -37,26 +62,7 @@ type resourceWriter struct {
 	value     *array.StringBuilder
 }
 
-func NewResourceWriter(f io.Writer) (*resourceWriter, error) {
-	w := &resourceWriter{
-		pool:   memory.DefaultAllocator,
-		schema: newSchema(nil),
-		buffer: 1024 * 10 * 100 * 10, // 10MB
-		logger: logging.DefaultLogger.With("logger", "parquet.writer"),
-	}
-
-	props := parquet.NewWriterProperties(
-		parquet.WithCompression(compress.Codecs.Brotli),
-	)
-	writer, err := pqarrow.NewFileWriter(w.schema, f, props, pqarrow.DefaultWriterProps())
-	if err != nil {
-		return nil, err
-	}
-	w.writer = writer
-	return w, w.init()
-}
-
-func (w *resourceWriter) Close() error {
+func (w *parquetWriter) Close() error {
 	if w.rv.Len() > 0 {
 		_ = w.flush()
 	}
@@ -65,7 +71,7 @@ func (w *resourceWriter) Close() error {
 }
 
 // writes the current buffer to parquet and re-inits the arrow buffer
-func (w *resourceWriter) flush() error {
+func (w *parquetWriter) flush() error {
 	w.logger.Info("flush", "count", w.rv.Len())
 	rec := array.NewRecord(w.schema, []arrow.Array{
 		w.rv.NewArray(),
@@ -85,7 +91,7 @@ func (w *resourceWriter) flush() error {
 	return w.init()
 }
 
-func (w *resourceWriter) init() error {
+func (w *parquetWriter) init() error {
 	w.rv = array.NewInt64Builder(w.pool)
 	w.namespace = array.NewStringBuilder(w.pool)
 	w.group = array.NewStringBuilder(w.pool)
@@ -98,7 +104,7 @@ func (w *resourceWriter) init() error {
 	return nil
 }
 
-func (w *resourceWriter) Add(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+func (w *parquetWriter) Add(ctx context.Context, key *resource.ResourceKey, value []byte) error {
 	obj := &unstructured.Unstructured{}
 	err := obj.UnmarshalJSON(value)
 	if err != nil {
@@ -118,7 +124,7 @@ func (w *resourceWriter) Add(ctx context.Context, key *resource.ResourceKey, val
 	w.folder.Append(meta.GetFolder())
 	w.value.Append(string(value))
 
-	action := resource.WatchEvent_UNKNOWN
+	var action resource.WatchEvent_Type
 	switch meta.GetGeneration() {
 	case 0, 1:
 		action = resource.WatchEvent_ADDED
