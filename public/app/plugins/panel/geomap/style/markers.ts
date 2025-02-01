@@ -252,7 +252,7 @@ const makers: SymbolMaker[] = [
   },
 ];
 
-export async function prepareSVG(url: string, size?: number): Promise<string> {
+async function prepareSVG(url: string, size?: number): Promise<string> {
   return fetch(url, { method: 'GET' })
     .then((res) => {
       return res.text();
@@ -275,6 +275,21 @@ export async function prepareSVG(url: string, size?: number): Promise<string> {
       svg.setAttribute('fill', '#fff');
       svg.setAttribute('width', `${width}px`);
       svg.setAttribute('height', `${height}px`);
+
+      // add a mostly transparent circle behind the icon for webGL hit detection
+      // TODO open layers discards fully transparent elements for hit detection
+      const viewBox = svg.getAttribute('viewBox')?.split(' ') ?? [0, 0, width, height];
+      const viewCenterX = Number(viewBox[2]) / 2;
+      const viewCenterY = Number(viewBox[3]) / 2;
+      const circleElement = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circleElement.setAttribute('cx', viewCenterX.toString());
+      circleElement.setAttribute('cy', viewCenterY.toString());
+      circleElement.setAttribute('fill', 'none');
+      circleElement.setAttribute('r', (viewCenterX / 2).toString());
+      circleElement.setAttribute('stroke', `rgba(255,255,255,0.1)`);
+      circleElement.setAttribute('stroke-width', viewCenterX.toString());
+      svg.prepend(circleElement);
+
       const svgString = new XMLSerializer().serializeToString(svg);
       const svgURI = encodeURIComponent(svgString);
       return `data:image/svg+xml,${svgURI}`;
