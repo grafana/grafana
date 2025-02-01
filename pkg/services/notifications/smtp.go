@@ -142,6 +142,10 @@ func (sc *SmtpClient) setFiles(
 		m.Embed(file)
 	}
 
+	for name, contents := range msg.EmbeddedReaders {
+		m.EmbedReader(name, contents)
+	}
+
 	for _, file := range msg.AttachedFiles {
 		file := file
 		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {

@@ -1,6 +1,8 @@
 package notifications
 
 import (
+	"io"
+
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -13,15 +15,16 @@ type AttachedFile struct {
 
 // Message is representation of the email message.
 type Message struct {
-	To            []string
-	SingleEmail   bool
-	From          string
-	Subject       string
-	Body          map[string]string
-	Info          string
-	ReplyTo       []string
-	EmbeddedFiles []string
-	AttachedFiles []*AttachedFile
+	To              []string
+	SingleEmail     bool
+	From            string
+	Subject         string
+	Body            map[string]string
+	Info            string
+	ReplyTo         []string
+	EmbeddedFiles   []string
+	EmbeddedReaders map[string]io.Reader
+	AttachedFiles   []*AttachedFile
 }
 
 func setDefaultTemplateData(cfg *setting.Cfg, data map[string]any, u *user.User) {
