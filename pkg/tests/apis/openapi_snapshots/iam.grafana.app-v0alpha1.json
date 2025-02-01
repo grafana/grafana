@@ -41,6 +41,7 @@
           "Display"
         ],
         "description": "Show user display information",
+        "operationId": "getDisplayMapping",
         "parameters": [
           {
             "name": "namespace",
@@ -86,7 +87,46 @@
                       "description": "Matching items (the caller may need to remap from keys to results)",
                       "type": "array",
                       "items": {
-                        "default": {}
+                        "type": "object",
+                        "required": [
+                          "identity",
+                          "displayName"
+                        ],
+                        "properties": {
+                          "avatarURL": {
+                            "description": "AvatarURL is the url where we can get the avatar for identity",
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "description": "Display name for identity.",
+                            "type": "string",
+                            "default": ""
+                          },
+                          "identity": {
+                            "type": "object",
+                            "required": [
+                              "type",
+                              "name"
+                            ],
+                            "properties": {
+                              "name": {
+                                "description": "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
+                                "type": "string",
+                                "default": ""
+                              },
+                              "type": {
+                                "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
+                                "type": "string",
+                                "default": ""
+                              }
+                            }
+                          },
+                          "internalId": {
+                            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
+                            "type": "integer",
+                            "format": "int64"
+                          }
+                        }
                       },
                       "x-kubernetes-list-type": "atomic"
                     },
@@ -2479,12 +2519,12 @@
         ],
         "properties": {
           "name": {
-            "description": "Name is the unique identifier for identity, guaranteed jo be a unique value for the type within a namespace.",
+            "description": "Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace.",
             "type": "string",
             "default": ""
           },
           "type": {
-            "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24",
+            "description": "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15",
             "type": "string",
             "default": ""
           }
@@ -2917,7 +2957,7 @@
             ]
           },
           "internalId": {
-            "description": "InternalID is the legacy numreric id for identity, this is deprecated and should be phased out",
+            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
           },

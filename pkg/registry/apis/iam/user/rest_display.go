@@ -29,7 +29,11 @@ func NewLegacyDisplayREST(store legacy.LegacyIdentityStore) *LegacyDisplayREST {
 }
 
 func (r *LegacyDisplayREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	resultSchema := defs["github.com/grafana/grafana/pkg/apis/iam/v0alpha1.DisplayList"].Schema
+	listSchema := defs["github.com/grafana/grafana/pkg/apis/iam/v0alpha1.DisplayList"].Schema
+	displaySchema := defs["github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display"].Schema
+	identitySchema := defs["github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"].Schema
+	listSchema.Properties["display"].Items.Schema = &displaySchema // not sure why this is lost
+	displaySchema.Properties["identity"] = identitySchema          // not sure why this is lost
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -72,7 +76,7 @@ func (r *LegacyDisplayREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &resultSchema,
+															Schema: &listSchema,
 														},
 													},
 												},
@@ -129,7 +133,7 @@ func (r *LegacyDisplayREST) handleDisplay(w http.ResponseWriter, req *http.Reque
 				Name: user.UID,
 			},
 			DisplayName: user.NameOrFallback(),
-			InternalID:  user.ID,
+			InternalID:  user.ID, // nolint:staticcheck
 		}
 		if user.IsServiceAccount {
 			disp.Identity.Type = authlib.TypeServiceAccount
