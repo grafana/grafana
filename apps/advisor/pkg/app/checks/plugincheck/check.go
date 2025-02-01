@@ -59,7 +59,7 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 			errs = append(errs, advisor.CheckV0alpha1StatusReportErrors{
 				Severity: advisor.CheckStatusSeverityHigh,
 				Reason:   fmt.Sprintf("Plugin deprecated: %s", p.ID),
-				Action:   "Look for alternatives",
+				Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 			})
 		}
 
@@ -75,8 +75,10 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 		if hasUpdate(p, info) {
 			errs = append(errs, advisor.CheckV0alpha1StatusReportErrors{
 				Severity: advisor.CheckStatusSeverityLow,
-				Reason:   fmt.Sprintf("New version available: %s", p.ID),
-				Action:   "Update plugin",
+				Reason:   fmt.Sprintf("New version available for %s", p.ID),
+				Action: fmt.Sprintf(
+					"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+
+						" and upgrade to the latest version.", p.ID),
 			})
 		}
 	}

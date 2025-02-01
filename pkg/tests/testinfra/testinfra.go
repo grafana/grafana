@@ -295,6 +295,13 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
 
+	if opts.LicensePath != "" {
+		section, err := cfg.NewSection("enterprise")
+		require.NoError(t, err)
+		_, err = section.NewKey("license_path", opts.LicensePath)
+		require.NoError(t, err)
+	}
+
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
@@ -529,6 +536,7 @@ type GrafanaOpts struct {
 	GrafanaComAPIURL                      string
 	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
 	GrafanaComSSOAPIToken                 string
+	LicensePath                           string
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
