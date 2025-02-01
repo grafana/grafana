@@ -118,7 +118,7 @@ func (r *resourceReader) Next() bool {
 	for r.err == nil && r.reader != nil {
 		if r.bufferIndex >= r.bufferSize && r.value.reader.HasNext() {
 			r.bufferIndex = 0
-			r.err = r.ReadBatch()
+			r.err = r.readBatch()
 			if r.err != nil {
 				return false
 			}
@@ -222,6 +222,13 @@ func newResourceReader(inputPath string, batchSize int64) (*resourceReader, erro
 		reader.value,
 	}
 
+	// Empty file, close and return
+	if rdr.NumRowGroups() < 1 {
+		err = rdr.Close()
+		reader.reader = nil
+		return reader, err
+	}
+
 	err = reader.open(rdr.RowGroup(0))
 	if err != nil {
 		_ = rdr.Close()
@@ -229,7 +236,7 @@ func newResourceReader(inputPath string, batchSize int64) (*resourceReader, erro
 	}
 
 	// get the first batch
-	err = reader.ReadBatch()
+	err = reader.readBatch()
 	if err != nil {
 		_ = rdr.Close()
 		return nil, err
@@ -248,7 +255,7 @@ func (r *resourceReader) open(rgr *file.RowGroupReader) error {
 	return nil
 }
 
-func (r *resourceReader) ReadBatch() error {
+func (r *resourceReader) readBatch() error {
 	r.bufferIndex = 0
 	r.bufferSize = 0
 	for i, c := range r.columns {
