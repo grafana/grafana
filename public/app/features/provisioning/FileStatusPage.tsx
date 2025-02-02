@@ -26,7 +26,7 @@ export default function FileStatusPage() {
   const params = useParams();
   const [queryParams] = useQueryParams();
   const ref = (queryParams['ref'] as string) ?? undefined;
-  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.Lint;
+  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.File;
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
   const query = useGetRepositoryStatusQuery({ name });
@@ -90,7 +90,6 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
   }
 
   const tabInfo = [
-    { value: TabSelection.Lint, label: 'Lint', counter: wrap.lint?.length },
     { value: TabSelection.File, label: 'File (from repository)' },
     { value: TabSelection.Existing, label: 'Existing (from grafana)' },
     { value: TabSelection.DryRun, label: 'Dry Run (result after apply)' },
@@ -132,7 +131,6 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
             key={t.value}
             label={t.label}
             active={tab === t.value}
-            counter={t.counter}
           />
         ))}
       </TabsBar>

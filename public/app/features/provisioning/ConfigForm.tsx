@@ -204,7 +204,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
           control={control}
           rules={{ required: 'This field is required.' }}
           render={({ field: { ref, onChange, ...field } }) => {
-            return <RadioButtonGroup options={targetOptions} onChange={onChange} disabled={!!data?.spec} {...field} />;
+            return (
+              <RadioButtonGroup
+                options={targetOptions}
+                onChange={onChange}
+                disabled={Boolean(data?.status?.sync.state)}
+                {...field}
+              />
+            );
           }}
         />
       </Field>

@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { compact, uniq } from 'lodash';
 import { useAsync } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
@@ -6,20 +7,20 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 import { createQueryText } from '../../../../core/utils/richHistory';
+import { useGetDisplayListQuery } from '../../../iam';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
-import { UserDataQueryResponse } from '../../../query-library/api/types';
-import { getUserInfo } from '../../../query-library/api/user';
 import { QueryTemplate } from '../../../query-library/types';
 
 export function useLoadUsers(userUIDs: string[] | undefined) {
-  return useAsync(async () => {
-    if (!userUIDs) {
-      return undefined;
-    }
-    const userQtList = uniq(compact(userUIDs));
-    const usersParam = userQtList.map((userUid) => `key=${encodeURIComponent(userUid)}`).join('&');
-    return await getUserInfo(`?${usersParam}`);
-  }, [userUIDs]);
+  const userQtList = uniq(compact(userUIDs));
+  const usersParam = userQtList.map((userUid) => `key=${encodeURIComponent(userUid)}`).join('&');
+  return useGetDisplayListQuery(
+    userUIDs
+      ? {
+          name: `name?${usersParam}`,
+        }
+      : skipToken
+  );
 }
 
 // Explicitly type the result so TS knows to discriminate between the error result and good result by the error prop
@@ -54,7 +55,7 @@ type MetadataValue =
  */
 export function useLoadQueryMetadata(
   queryTemplates: QueryTemplate[] | undefined,
-  userDataList: UserDataQueryResponse | undefined
+  userDataList: ReturnType<typeof useLoadUsers>['data']
 ): AsyncState<MetadataValue[]> {
   return useAsync(async () => {
     if (!(queryTemplates && userDataList)) {
@@ -87,7 +88,7 @@ export function useLoadQueryMetadata(
             user: {
               uid: queryTemplate.user?.uid || '',
               displayName: extendedUserData?.displayName || '',
-              avatarUrl: extendedUserData?.avatarUrl || '',
+              avatarUrl: extendedUserData?.avatarURL || '',
             },
             error: undefined,
           };
