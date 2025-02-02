@@ -202,7 +202,7 @@ func (s *server) BatchProcess(stream ResourceStore_BatchProcessServer) error {
 		rsp.Error = AsErrorResult(runner.err)
 	}
 
-	if rsp.Error == nil {
+	if rsp.Error == nil && s.search != nil {
 		// Rebuild any changed indexes
 		for _, summary := range rsp.Summary {
 			_, _, err := s.search.build(ctx, NamespacedResource{

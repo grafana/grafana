@@ -3,13 +3,11 @@ package datamigrations
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestUnifiedStorageCommand(t *testing.T) {
@@ -31,16 +29,4 @@ func unistoreMigrationTest(t *testing.T, session *db.Session, sqlstore db.DB) {
 
 		fmt.Printf("TODO... add folders and check that they migrate\n%+v\n", stats)
 	})
-
-	t.Run("xxx", func(t *testing.T) {
-		file, err := os.CreateTemp("", "grafana-batch-export-*.parquet")
-		require.NoError(t, err)
-
-		unified, err := newParquetBackend(file)
-		require.NoError(t, err)
-
-		_, err = unified.GetStats(context.Background(), &resource.ResourceStatsRequest{})
-		require.Error(t, err)
-	})
-
 }

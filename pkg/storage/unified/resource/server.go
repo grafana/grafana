@@ -921,6 +921,12 @@ func (s *server) initWatcher() error {
 			for {
 				// pipe all events
 				v := <-events
+
+				// Skip events during batch updates
+				if v.PreviousRV < 0 {
+					continue
+				}
+
 				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
 				s.mostRecentRV.Store(v.ResourceVersion)
 				out <- v

@@ -7,13 +7,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -22,7 +27,7 @@ import (
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
 	ctx := context.Background()
 	return sqlStore.WithDbSession(ctx, func(session *db.Session) error {
-		// TODO, get orgId/namespace from command line
+		// TODO, get orgId/namespace from command line?
 		namespace := "default"
 		ns, err := authlib.ParseNamespace(namespace)
 		if err != nil {
@@ -49,11 +54,19 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		start := time.Now()
 		last := time.Now()
 
-		file, err := os.CreateTemp("", "grafana-batch-export-*.parquet")
-		if err != nil {
-			return err
+		export := ""
+		var unified resource.ResourceClient
+
+		if true {
+			unified, err = newUnifiedClient(cfg, sqlStore)
+		} else {
+			file, err := os.CreateTemp(cfg.DataPath, "grafana-export-*.parquet")
+			if err != nil {
+				return err
+			}
+			export = file.Name()
+			unified, err = newParquetClient(file)
 		}
-		unified, err := newParquetBackend(file)
 		if err != nil {
 			return err
 		}
@@ -61,12 +74,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{})
 		rsp, err := access.Migrate(ctx, legacy.MigrateOptions{
 			Namespace:    "default", // get from namespace
-			WithHistory:  true,      // query.Get("history") == "true",
+			WithHistory:  false,     // query.Get("history") == "true",
 			Resources:    []string{"dashboards"},
 			LargeObjects: nil, // ???
 			Store:        unified,
 			Progress: func(count int, msg string) {
-				if count < 1 || time.Since(last) > time.Second*2 {
+				if count < 1 || time.Since(last) > time.Second {
 					fmt.Printf("[%4d] %s\n", count, msg)
 					last = time.Now()
 				}
@@ -82,13 +95,24 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
 			fmt.Printf("%s\n", string(jj))
 		}
-		fmt.Printf("Parquet: %s\n", file.Name())
+		fmt.Printf("Parquet: %s\n", export)
 		fmt.Printf("------------------\n\n")
 		return nil
 	})
 }
 
-func newParquetBackend(file *os.File) (resource.ResourceClient, error) {
+func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
+	return unified.ProvideUnifiedStorageClient(cfg,
+		featuremgmt.WithFeatures(), // none??
+		sqlStore,
+		tracing.NewNoopTracerService(),
+		prometheus.NewPedanticRegistry(),
+		authlib.FixedAccessClient(true), // always true!
+		nil,                             // document supplier
+	)
+}
+
+func newParquetClient(file *os.File) (resource.ResourceClient, error) {
 	backend, err := parquet.NewParquetBatchProcessingBackend(file)
 	if err != nil {
 		return nil, err

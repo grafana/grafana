@@ -105,6 +105,9 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	if opts.Backend == nil {
 		return nil, nil
 	}
+	if tracer == nil {
+		return nil, fmt.Errorf("missing tracer")
+	}
 
 	if opts.WorkerThreads < 1 {
 		opts.WorkerThreads = 1
