@@ -36,6 +36,11 @@ type configV0 struct {
 	AllowUIUpdates        bool           `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
+// Access to dashboard provisioning config
+type DashboardProvisioning struct {
+	config
+}
+
 type configVersion struct {
 	APIVersion int64 `json:"apiVersion" yaml:"apiVersion"`
 }
