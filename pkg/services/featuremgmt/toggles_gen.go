@@ -954,4 +954,12 @@ const (
 	// FlagFetchRulesUsingPost
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
+
+	// FlagAlertingAlertmanagerExtraDedupStage
+	// enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching
+	FlagAlertingAlertmanagerExtraDedupStage = "alertingAlertmanagerExtraDedupStage"
+
+	// FlagAlertingAlertmanagerExtraDedupStageStopPipeline
+	// works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning
+	FlagAlertingAlertmanagerExtraDedupStageStopPipeline = "alertingAlertmanagerExtraDedupStageStopPipeline"
 )
