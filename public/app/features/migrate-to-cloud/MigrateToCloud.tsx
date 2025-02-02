@@ -24,7 +24,6 @@ export default function MigrateToCloud() {
         }
       >
         <Trans i18nKey="migrate-to-cloud.public-preview.message">
-          No SLAs are available yet.{' '}
           <TextLink
             href="https://grafana.com/docs/grafana-cloud/account-management/migration-guide/cloud-migration-assistant/"
             external
@@ -42,19 +41,12 @@ export default function MigrateToCloud() {
             </Trans>
           </>
         )}
-      </Alert>
-
-      <Alert
-        title={t('migrate-to-cloud.public-preview.title-plugins', 'Migration of plugins')}
-        buttonContent={''}
-        severity={'info'}
-      >
+        <br />
+        <br />
         <Trans i18nKey="migrate-to-cloud.public-preview.message-plugins">
-          Only Community and Commercial signed plugins are eligible for migration. Their latest version will be
-          installed in the cloud instance, please upgrade your plugins before starting the migration process.
+          Only Community and Commercial signed plugins are eligible for migration.
         </Trans>
       </Alert>
-
       {config.cloudMigrationIsTarget ? <CloudPage /> : <OnPremPage />}
     </Page>
   );
