@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"

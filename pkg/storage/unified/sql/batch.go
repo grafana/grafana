@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -78,7 +79,14 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 
 	// We may want to first write parquet, then read parquet
 	if b.dialect.DialectName() == "sqlite" {
-		handler, file, err := parquet.NewBatchHandler(".")
+		file, err := os.CreateTemp("", "grafana-batch-export-*.parquet")
+		if err != nil {
+			return &resource.BatchResponse{
+				Error: resource.AsErrorResult(err),
+			}
+		}
+
+		handler, err := parquet.NewParquetBatchProcessingBackend(file)
 		if err != nil {
 			return &resource.BatchResponse{
 				Error: resource.AsErrorResult(err),
@@ -94,7 +102,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 		fmt.Printf("PARQUET: %s\n", file)
 
 		// Replace the iterator with one from parquet
-		iter, err = parquet.NewParquetReader(file, 50)
+		iter, err = parquet.NewParquetReader(file.Name(), 50)
 		if err != nil {
 			return &resource.BatchResponse{
 				Error: resource.AsErrorResult(err),
