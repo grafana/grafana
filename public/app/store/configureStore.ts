@@ -12,6 +12,7 @@ import { StoreState } from 'app/types/store';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+import { iamApi } from '../features/iam/api/api';
 import { queryLibraryApi } from '../features/query-library/api/factory';
 
 import { setStore } from './store';
@@ -43,6 +44,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         queryLibraryApi.middleware,
         userPreferencesAPI.middleware,
         provisioningAPI.middleware,
+        iamApi.middleware,
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
