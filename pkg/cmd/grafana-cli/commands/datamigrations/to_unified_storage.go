@@ -61,7 +61,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{})
 		rsp, err := access.Migrate(ctx, legacy.MigrateOptions{
 			Namespace:    "default", // get from namespace
-			WithHistory:  false,     // query.Get("history") == "true",
+			WithHistory:  true,      // query.Get("history") == "true",
 			Resources:    []string{"dashboards"},
 			LargeObjects: nil, // ???
 			Store:        unified,
