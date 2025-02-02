@@ -1,6 +1,6 @@
 import { useNavigationType, useParams } from 'react-router-dom-v5-compat';
 
-import { locationService } from "@grafana/runtime";
+import { locationService } from '@grafana/runtime';
 
 import { playlistSrv } from './PlaylistSrv';
 

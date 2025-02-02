@@ -28,7 +28,7 @@ jest.mock('./PlaylistSrv', () => ({
 
 describe('PlaylistStartPage', () => {
   afterEach(() => {
-    jest.clearAllMocks();  // Clear mocks after each test
+    jest.clearAllMocks(); // Clear mocks after each test
   });
 
   it('should call locationService.getHistory().goBack() when navigationType is "POP"', () => {
@@ -41,19 +41,19 @@ describe('PlaylistStartPage', () => {
 
     // Assert: Check if goBack was called
     expect(locationService.getHistory().goBack).toHaveBeenCalledTimes(1);
-    expect(playlistSrv.start).not.toHaveBeenCalled();  // Should not call start
+    expect(playlistSrv.start).not.toHaveBeenCalled(); // Should not call start
   });
 
   it('should call playlistSrv.start() when navigationType is not "POP"', () => {
     // Arrange: Set up the mock return value for useParams and useNavigationType
     (useParams as jest.Mock).mockReturnValue({ uid: '123' });
-    (useNavigationType as jest.Mock).mockReturnValue('PUSH');  // or any other type
+    (useNavigationType as jest.Mock).mockReturnValue('PUSH'); // or any other type
 
     // Act: Render the component
     render(<PlaylistStartPage />);
 
     // Assert: Check if playlistSrv.start was called with correct uid
     expect(playlistSrv.start).toHaveBeenCalledWith('123');
-    expect(locationService.getHistory().goBack).not.toHaveBeenCalled();  // Should not call goBack
+    expect(locationService.getHistory().goBack).not.toHaveBeenCalled(); // Should not call goBack
   });
 });
