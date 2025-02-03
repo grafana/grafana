@@ -17,82 +17,9 @@ type mockInstanceReader struct {
 	mock.Mock
 }
 
-func (m *mockInstanceReader) FetchOrgIds(ctx context.Context) ([]int64, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]int64), args.Error(1)
-}
-
 func (m *mockInstanceReader) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error) {
 	args := m.Called(ctx, cmd)
 	return args.Get(0).([]*models.AlertInstance), args.Error(1)
-}
-
-func TestMultiInstanceReader_FetchOrgIds(t *testing.T) {
-	tests := []struct {
-		name           string
-		mockAOrgIDs    []int64
-		mockBOrgIDs    []int64
-		mockAError     error
-		mockBError     error
-		expectedOrgIDs []int64
-		expectError    bool
-	}{
-		{
-			name:           "both readers empty, no errors",
-			mockAOrgIDs:    []int64{},
-			mockBOrgIDs:    []int64{},
-			expectedOrgIDs: []int64{},
-		},
-		{
-			name:           "simple union, no errors",
-			mockAOrgIDs:    []int64{1, 2},
-			mockBOrgIDs:    []int64{2, 3},
-			expectedOrgIDs: []int64{1, 2, 3},
-		},
-		{
-			name:        "error in readerA",
-			mockAError:  errors.New("some error"),
-			expectError: true,
-		},
-		{
-			name:        "error in readerB",
-			mockBError:  errors.New("another error"),
-			expectError: true,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-
-			readerA := &mockInstanceReader{}
-			if tc.mockAError != nil {
-				readerA.On("FetchOrgIds", mock.Anything).Return([]int64(nil), tc.mockAError).Once()
-			} else {
-				readerA.On("FetchOrgIds", mock.Anything).Return(tc.mockAOrgIDs, nil).Once()
-			}
-
-			readerB := &mockInstanceReader{}
-			if tc.mockBError != nil {
-				readerB.On("FetchOrgIds", mock.Anything).Return([]int64(nil), tc.mockBError).Once()
-			} else {
-				readerB.On("FetchOrgIds", mock.Anything).Return(tc.mockBOrgIDs, nil).Once()
-			}
-
-			multi := NewMultiInstanceReader(&logtest.Fake{}, readerA, readerB)
-			orgIDs, err := multi.FetchOrgIds(ctx)
-
-			if tc.expectError {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			require.ElementsMatch(t, tc.expectedOrgIDs, orgIDs)
-
-			readerA.AssertExpectations(t)
-			readerB.AssertExpectations(t)
-		})
-	}
 }
 
 func TestMultiInstanceReader_ListAlertInstances(t *testing.T) {

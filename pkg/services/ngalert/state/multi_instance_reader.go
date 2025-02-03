@@ -3,8 +3,6 @@ package state
 import (
 	"context"
 	"fmt"
-	"maps"
-	"slices"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,30 +24,6 @@ func NewMultiInstanceReader(logger log.Logger, r1, r2 InstanceReader) *MultiInst
 		DBReader:      r2,
 		logger:        logger,
 	}
-}
-
-// FetchOrgIds merges org IDs from both readers.
-func (m *MultiInstanceReader) FetchOrgIds(ctx context.Context) ([]int64, error) {
-	orgsOne, err := m.ProtoDBReader.FetchOrgIds(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch org IDs from ProtoDBReader: %w", err)
-	}
-
-	orgsTwo, err := m.DBReader.FetchOrgIds(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch org IDs from DBReader: %w", err)
-	}
-
-	orgsSet := make(map[int64]struct{})
-
-	for _, orgID := range orgsOne {
-		orgsSet[orgID] = struct{}{}
-	}
-	for _, orgID := range orgsTwo {
-		orgsSet[orgID] = struct{}{}
-	}
-
-	return slices.Collect(maps.Keys(orgsSet)), nil
 }
 
 // ListAlertInstances fetches alert instances for a query from both readers,
