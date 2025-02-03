@@ -82,3 +82,31 @@ func TestFrameDBNumericSelect(t *testing.T) {
 func p[T any](v T) *T {
 	return &v
 }
+
+// func TestFrameDBTimeSelect(t *testing.T) {
+// 	expectedFrame := &data.Frame{
+// 		RefID: "a",
+// 		Name:  "a",
+// 		Fields: []*data.Field{
+// 			data.NewField("ts", nil, []time.Time{}),
+// 		},
+// 	}
+
+// 	db := DB{}
+
+// 	// It doesn't like the T in the time string
+// 	//qry := `SELECT str_to_date('2025-02-03T03:00:00','%Y-%m-%dT%H:%i:%s') as ts`
+
+// 	// This comes back as a string, which needs to be dealt with?
+// 	qry := `SELECT str_to_date('2025-02-03-03:00:00','%Y-%m-%d-%H:%i:%s') as ts`
+
+// 	// This is a datetime(6), need to deal with that as well
+// 	//qry := `SELECT current_timestamp() as ts`
+
+// 	f, err := db.QueryFrames("a", qry, []*data.Frame{})
+// 	require.NoError(t, err)
+
+// 	if diff := cmp.Diff(expectedFrame, f, data.FrameTestCompareOptions()...); diff != "" {
+// 		require.FailNowf(t, "Result mismatch (-want +got):%s\n", diff)
+// 	}
+// }

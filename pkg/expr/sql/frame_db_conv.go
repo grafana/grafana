@@ -78,6 +78,8 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 		fT = data.FieldTypeString
 	case types.Timestamp:
 		fT = data.FieldTypeTime
+	case types.Datetime:
+		fT = data.FieldTypeTime
 	case types.Boolean:
 		fT = data.FieldTypeBool
 	default:
@@ -146,7 +148,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeInt8:
 		v, ok := val.(int8)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected int8", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int8", val, val)
 		}
 		return v, nil
 
@@ -159,7 +161,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected int8 or *int8", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int8 or *int8", val, val)
 
 	// ----------------------------
 	// Uint8 / Nullable Uint8
@@ -167,7 +169,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeUint8:
 		v, ok := val.(uint8)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected uint8", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint8", val, val)
 		}
 		return v, nil
 
@@ -180,7 +182,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected uint8 or *uint8", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint8 or *uint8", val, val)
 
 	// ----------------------------
 	// Int16 / Nullable Int16
@@ -188,7 +190,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeInt16:
 		v, ok := val.(int16)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected int16", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int16", val, val)
 		}
 		return v, nil
 
@@ -201,7 +203,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected int16 or *int16", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int16 or *int16", val, val)
 
 	// ----------------------------
 	// Uint16 / Nullable Uint16
@@ -209,7 +211,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeUint16:
 		v, ok := val.(uint16)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected uint16", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint16", val, val)
 		}
 		return v, nil
 
@@ -222,7 +224,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected uint16 or *uint16", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint16 or *uint16", val, val)
 
 	// ----------------------------
 	// Int32 / Nullable Int32
@@ -230,7 +232,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeInt32:
 		v, ok := val.(int32)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected int32", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int32", val, val)
 		}
 		return v, nil
 
@@ -243,7 +245,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected int32 or *int32", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int32 or *int32", val, val)
 
 	// ----------------------------
 	// Uint32 / Nullable Uint32
@@ -251,7 +253,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeUint32:
 		v, ok := val.(uint32)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected uint32", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint32", val, val)
 		}
 		return v, nil
 
@@ -264,7 +266,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected uint32 or *uint32", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint32 or *uint32", val, val)
 
 	// ----------------------------
 	// Int64 / Nullable Int64
@@ -272,7 +274,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeInt64:
 		v, ok := val.(int64)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected int64", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int64", val, val)
 		}
 		return v, nil
 
@@ -285,7 +287,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected int64 or *int64", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected int64 or *int64", val, val)
 
 	// ----------------------------
 	// Uint64 / Nullable Uint64
@@ -293,7 +295,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeUint64:
 		v, ok := val.(uint64)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected uint64", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint64", val, val)
 		}
 		return v, nil
 
@@ -306,7 +308,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected uint64 or *uint64", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected uint64 or *uint64", val, val)
 
 	// ----------------------------
 	// Float64 / Nullable Float64
@@ -319,7 +321,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if d, ok := val.(decimal.Decimal); ok {
 			return d.InexactFloat64(), nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected float64 or decimal.Decimal", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected float64 or decimal.Decimal", val, val)
 
 	case data.FieldTypeNullableFloat64:
 		// Possibly already *float64
@@ -335,7 +337,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 			f := d.InexactFloat64()
 			return &f, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected float64, *float64, or decimal.Decimal", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected float64, *float64, or decimal.Decimal", val, val)
 
 	// ----------------------------
 	// Time / Nullable Time
@@ -343,7 +345,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeTime:
 		v, ok := val.(time.Time)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected time.Time", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected time.Time", val, val)
 		}
 		return v, nil
 
@@ -356,7 +358,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected time.Time or *time.Time", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected time.Time or *time.Time", val, val)
 
 	// ----------------------------
 	// String / Nullable String
@@ -364,7 +366,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeString:
 		v, ok := val.(string)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected string", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected string", val, val)
 		}
 		return v, nil
 
@@ -377,7 +379,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected string or *string", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected string or *string", val, val)
 
 	// ----------------------------
 	// Bool / Nullable Bool
@@ -385,7 +387,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 	case data.FieldTypeBool:
 		v, ok := val.(bool)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value type for interface %v, expected bool", val)
+			return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected bool", val, val)
 		}
 		return v, nil
 
@@ -398,7 +400,7 @@ func fieldValFromRowVal(fieldType data.FieldType, val interface{}) (interface{},
 		if ok {
 			return &v, nil
 		}
-		return nil, fmt.Errorf("unexpected value type for interface %v, expected bool or *bool", val)
+		return nil, fmt.Errorf("unexpected value type for interface %v of type %T, expected bool or *bool", val, val)
 
 	// ----------------------------
 	// Fallback / Unsupported
