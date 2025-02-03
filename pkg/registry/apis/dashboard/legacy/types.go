@@ -4,18 +4,8 @@ import (
 	"context"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
-	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
-
-type MigrateOptions struct {
-	Namespace    string
-	Store        resource.ResourceClient
-	LargeObjects apistore.LargeObjectSupport
-	Resources    []string
-	WithHistory  bool // only applies to dashboards
-	Progress     func(count int, msg string)
-}
 
 // This does not check if you have permissions!
 
@@ -59,13 +49,11 @@ type LibraryPanelQuery struct {
 type DashboardAccess interface {
 	resource.StorageBackend
 	resource.ResourceIndexServer
+	LegacyMigrator
 
 	GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboard.Dashboard, int64, error)
 	SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error)
 	DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboard.Dashboard, bool, error)
-
-	// Read from legacy and write into unified storage
-	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error)
 
 	// Get a typed list
 	GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboard.LibraryPanelList, error)

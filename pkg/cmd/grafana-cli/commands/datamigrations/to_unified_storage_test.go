@@ -24,9 +24,6 @@ func unistoreMigrationTest(t *testing.T, session *db.Session, sqlstore db.DB) {
 	// empty stats
 
 	t.Run("get stats", func(t *testing.T) {
-		stats, err := getStats(1, session)
-		require.NoError(t, err)
-
-		fmt.Printf("TODO... add folders and check that they migrate\n%+v\n", stats)
+		fmt.Printf("TODO... add folders and check that they migrate\n")
 	})
 }

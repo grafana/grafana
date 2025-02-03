@@ -13,8 +13,25 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+type MigrateOptions struct {
+	Namespace    string
+	Store        resource.ResourceClient
+	LargeObjects apistore.LargeObjectSupport
+	Resources    []string
+	WithHistory  bool // only applies to dashboards
+	OnlyCount    bool // just count the values
+	Progress     func(count int, msg string)
+}
+
+// Read from legacy and write into unified storage
+type LegacyMigrator interface {
+	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error)
+}
 
 type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error
 
@@ -72,6 +89,10 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 		}
 	}
 
+	if opts.OnlyCount {
+		return a.countValues(ctx, opts)
+	}
+
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	stream, err := opts.Store.BatchProcess(ctx)
 	if err != nil {
@@ -87,6 +108,63 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	}
 
 	return stream.CloseAndRecv()
+}
+
+func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error) {
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ns, err := authlib.ParseNamespace(opts.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	orgId := ns.OrgID
+	rsp := &resource.BatchResponse{}
+	err = sql.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		for _, collection := range opts.Resources {
+			switch collection {
+			case "folders":
+				summary := &resource.BatchResponse_Summary{}
+				summary.Group = folders.GROUP
+				summary.Group = folders.RESOURCE
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
+					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
+				rsp.Summary = append(rsp.Summary, summary)
+
+			case "panels":
+				summary := &resource.BatchResponse_Summary{}
+				summary.Group = dashboard.GROUP
+				summary.Resource = dashboard.LIBRARY_PANEL_RESOURCE
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("library_element")+
+					" WHERE org_id=?", orgId).Get(&summary.Count)
+				rsp.Summary = append(rsp.Summary, summary)
+
+			case "":
+				fallthrough
+			case "dashboards":
+				summary := &resource.BatchResponse_Summary{}
+				summary.Group = dashboard.GROUP
+				summary.Resource = dashboard.DASHBOARD_RESOURCE
+				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
+					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
+				rsp.Summary = append(rsp.Summary, summary)
+				if opts.WithHistory {
+					_, err = sess.SQL(`SELECT COUNT(*) 
+						FROM `+sql.Table("dashboard_version")+` as dv
+						JOIN `+sql.Table("dashboard")+`         as dd
+						ON dd.id = dv.dashboard_id
+						WHERE org_id=?`, orgId).Get(&summary.History)
+					rsp.Summary = append(rsp.Summary, summary)
+				}
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return rsp, nil
 }
 
 func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error {

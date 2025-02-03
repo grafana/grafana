@@ -27,11 +27,22 @@ import (
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
 	ctx := context.Background()
 	return sqlStore.WithDbSession(ctx, func(session *db.Session) error {
-		// TODO, get orgId/namespace from command line?
-		namespace := "default"
-		ns, err := authlib.ParseNamespace(namespace)
-		if err != nil {
-			return err
+		start := time.Now()
+		last := time.Now()
+
+		parquetFile := ""
+		opts := legacy.MigrateOptions{
+			Namespace:    "default", // get from namespace
+			WithHistory:  true,      // query.Get("history") == "true",
+			OnlyCount:    true,
+			Resources:    []string{"*"}, // everything
+			LargeObjects: nil,           // ???
+			Progress: func(count int, msg string) {
+				if count < 1 || time.Since(last) > time.Second {
+					fmt.Printf("[%4d] %s\n", count, msg)
+					last = time.Now()
+				}
+			},
 		}
 
 		provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
@@ -39,52 +50,29 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			return err
 		}
 
-		access := legacy.NewDashboardAccess(
+		var migrator legacy.LegacyMigrator
+		migrator = legacy.NewDashboardAccess(
 			legacysql.NewDatabaseProvider(sqlStore),
 			authlib.OrgNamespaceFormatter,
 			nil, provisioning, false,
 		)
 
-		stats, err := getStats(ns.OrgID, session)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Legacy database: %+v\n", stats)
-
-		start := time.Now()
-		last := time.Now()
-
-		export := ""
-		var unified resource.ResourceClient
-
 		if true {
-			unified, err = newUnifiedClient(cfg, sqlStore)
+			opts.Store, err = newUnifiedClient(cfg, sqlStore)
 		} else {
 			file, err := os.CreateTemp(cfg.DataPath, "grafana-export-*.parquet")
 			if err != nil {
 				return err
 			}
-			export = file.Name()
-			unified, err = newParquetClient(file)
+			parquetFile = file.Name()
+			opts.Store, err = newParquetClient(file)
 		}
 		if err != nil {
 			return err
 		}
 
 		ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{})
-		rsp, err := access.Migrate(ctx, legacy.MigrateOptions{
-			Namespace:    "default", // get from namespace
-			WithHistory:  false,     // query.Get("history") == "true",
-			Resources:    []string{"dashboards"},
-			LargeObjects: nil, // ???
-			Store:        unified,
-			Progress: func(count int, msg string) {
-				if count < 1 || time.Since(last) > time.Second {
-					fmt.Printf("[%4d] %s\n", count, msg)
-					last = time.Now()
-				}
-			},
-		})
+		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
 		}
@@ -95,8 +83,10 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
 			fmt.Printf("%s\n", string(jj))
 		}
-		fmt.Printf("Parquet: %s\n", export)
-		fmt.Printf("------------------\n\n")
+		if parquetFile != "" {
+			fmt.Printf("Parquet: %s\n", parquetFile)
+		}
+		fmt.Printf("------------------\n")
 		return nil
 	})
 }
@@ -126,40 +116,4 @@ func newParquetClient(file *os.File) (resource.ResourceClient, error) {
 	}
 
 	return resource.NewLocalResourceClient(server), nil
-}
-
-type tableStats struct {
-	folders          int
-	dashboards       int
-	dashboardHistory int
-	libaryPanels     int
-	playlists        int
-}
-
-func getStats(orgId int64, session *db.Session) (stats tableStats, err error) {
-	stats = tableStats{}
-
-	_, err = session.SQL("SELECT COUNT(*) FROM dashboard WHERE is_folder=FALSE AND org_id=?", orgId).Get(&stats.dashboards)
-	if err != nil {
-		return
-	}
-
-	_, err = session.SQL("SELECT COUNT(*) FROM dashboard WHERE is_folder=TRUE AND org_id=?", orgId).Get(&stats.folders)
-	if err != nil {
-		return
-	}
-
-	_, err = session.SQL("SELECT COUNT(*) FROM playlist WHERE org_id=?", orgId).Get(&stats.playlists)
-	if err != nil {
-		return
-	}
-
-	_, err = session.SQL(`SELECT COUNT(*) 
-		FROM dashboard_version JOIN dashboard ON dashboard.id = dashboard_version.dashboard_id
-		WHERE org_id=?`, orgId).Get(&stats.dashboardHistory)
-	if err != nil {
-		return
-	}
-
-	return
 }

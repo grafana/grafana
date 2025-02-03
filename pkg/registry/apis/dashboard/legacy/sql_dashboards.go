@@ -32,6 +32,7 @@ import (
 
 var (
 	_ DashboardAccess = (*dashboardSqlAccess)(nil)
+	_ LegacyMigrator  = (*dashboardSqlAccess)(nil)
 )
 
 type dashboardRow struct {

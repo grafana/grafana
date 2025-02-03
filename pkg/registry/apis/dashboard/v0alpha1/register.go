@@ -2,10 +2,7 @@ package v0alpha1
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,7 +15,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -228,56 +224,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	routes := b.search.GetAPIRoutes(defs)
-
-	// HACK -- just to make this easier to test locally
-	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
-		Path: "migrate",
-		Spec: &spec3.PathProps{
-			Get: &spec3.Operation{}, // Get is easiest to test from brower
-		},
-		Handler: func(rx http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-			query := r.URL.Query()
-			last := time.Now()
-			auth, ok := authlib.AuthInfoFrom(r.Context())
-			if !ok {
-				rx.WriteHeader(http.StatusBadRequest)
-				_, _ = rx.Write([]byte("no auth founx"))
-				return
-			}
-			go func() {
-				ctx := authlib.WithAuthInfo(context.Background(), auth)
-				rsp, err := b.legacy.Access.Migrate(ctx, legacy.MigrateOptions{
-					Namespace:    "default", // get from namespace
-					WithHistory:  query.Get("history") == "true",
-					Resources:    query["resource"],
-					LargeObjects: nil, // ???
-					Store:        b.unified,
-					Progress: func(count int, msg string) {
-						if count < 1 || time.Since(last) > time.Second*2 {
-							fmt.Printf("[%4d] %s\n", count, msg)
-							last = time.Now()
-						}
-					},
-				})
-
-				fmt.Printf("\n\n------------------\n")
-				fmt.Printf("MIGRATE DONE: %s\n", time.Since(start))
-				if err != nil {
-					fmt.Printf("ERROR: %v\n", err)
-				}
-				if rsp != nil {
-					jj, _ := json.MarshalIndent(rsp, "", "  ")
-					fmt.Printf("%s\n", string(jj))
-				}
-				fmt.Printf("------------------\n\n")
-			}()
-
-			_, _ = rx.Write([]byte("starting migration"))
-		},
-	})
-	return routes
+	return b.search.GetAPIRoutes(defs)
 }
 
 // Mutate removes any internal ID set in the spec & adds it as a label
