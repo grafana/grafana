@@ -84,7 +84,7 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
  * Filter out namespace parameters from an array of parameters
  */
 function filterNamespaceParameters(parameters: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject>) {
-  return parameters.filter((param) => !('name' in param) || param.name !== 'namespace');
+  return parameters.filter((param) => 'name' in param && param.name !== 'namespace');
 }
 
 /**
