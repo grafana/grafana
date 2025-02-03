@@ -1,4 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderOptions.tsx
+import { map } from 'lodash';
 import { SyntheticEvent } from 'react';
 import * as React from 'react';
 
@@ -12,7 +13,6 @@ import { PromQueryFormat } from '../../dataquery';
 import { PromQuery } from '../../types';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
-import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from './PromQueryEditorSelector';
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
 export interface UIOptions {
@@ -30,6 +30,17 @@ export interface PromQueryBuilderOptionsProps {
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
 }
+
+const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
+  { label: 'Time series', value: 'time_series' },
+  { label: 'Table', value: 'table' },
+  { label: 'Heatmap', value: 'heatmap' },
+];
+
+const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
+  value,
+  label: '1/' + value,
+}));
 
 export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
   ({ query, app, onChange, onRunQuery }) => {

@@ -2,7 +2,7 @@
 import { Registry } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { prometheusRegularEscape } from '../../datasource';
+import { prometheusRegularEscape } from '../../language_utils';
 import { isValidLegacyName, utf8Support } from '../../utf8_support';
 import { PromVisualQueryOperationCategory } from '../types';
 

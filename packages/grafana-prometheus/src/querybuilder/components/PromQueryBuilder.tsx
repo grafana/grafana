@@ -9,7 +9,7 @@ import { EditorRow } from '@grafana/plugin-ui';
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
 import { getInitHints } from '../../query_hints';
-import { promQueryModeller } from '../PromQueryModeller';
+import { promQueryModeller } from '../context';
 import { buildVisualQueryFromString } from '../parsing';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationList } from '../shared/OperationList';
@@ -23,6 +23,7 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
+import { setQueryBuilderComponent } from './shared/registry';
 
 export interface PromQueryBuilderProps {
   query: PromVisualQuery;
@@ -121,3 +122,5 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
 });
 
 PromQueryBuilder.displayName = 'PromQueryBuilder';
+
+setQueryBuilderComponent(PromQueryBuilder);

@@ -7,7 +7,7 @@ import * as React from 'react';
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { getOperationParamId } from '../operationUtils';
+import { getOperationParamId } from '../shared/param-utils';
 
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';

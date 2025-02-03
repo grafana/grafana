@@ -9,8 +9,8 @@ import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
 import { PromQuery } from '../types';
 
-import { promQueryModeller } from './PromQueryModeller';
 import { QueryPattern } from './QueryPattern';
+import { promQueryModeller } from './context';
 import { buildVisualQueryFromString } from './parsing';
 import { PromQueryPattern, PromQueryPatternType } from './types';
 

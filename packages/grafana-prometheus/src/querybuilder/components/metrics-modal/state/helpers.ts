@@ -8,7 +8,7 @@ import { getMetadataHelp, getMetadataType } from '../../../../language_provider'
 import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
-import { setFilteredMetricCount } from '../MetricsModal';
+import { setFilteredMetricCount } from '../shared/actions';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
 import { MetricsModalMetadata, MetricsModalState } from './state';

@@ -18,13 +18,8 @@ export { PromVariableQueryEditor } from './components/VariableQueryEditor';
 
 // CONFIGURATION/
 // Main export
-export {
-  ConfigEditor,
-  docsTip,
-  overhaulStyles,
-  validateInput,
-  PROM_CONFIG_LABEL_WIDTH,
-} from './configuration/ConfigEditor';
+export { ConfigEditor, docsTip, overhaulStyles, validateInput } from './configuration/ConfigEditor';
+export { PROM_CONFIG_LABEL_WIDTH } from './constants';
 // The parts
 export { AlertingSettingsOverhaul } from './configuration/AlertingSettingsOverhaul';
 export { DataSourceHttpSettingsOverhaul } from './configuration/DataSourceHttpSettingsOverhaul';

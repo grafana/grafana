@@ -6,7 +6,7 @@ import { Button, Card, useStyles2 } from '@grafana/ui';
 
 import promqlGrammar from '../promql';
 
-import { promQueryModeller } from './PromQueryModeller';
+import { promQueryModeller } from './context';
 import { RawQuery } from './shared/RawQuery';
 import { PromQueryPattern } from './types';
 

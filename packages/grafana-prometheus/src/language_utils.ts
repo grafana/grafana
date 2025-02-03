@@ -12,12 +12,11 @@ import {
   incrRoundDn,
   TimeRange,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { addLabelToQuery } from './add_label_to_query';
-import { SUGGESTIONS_LIMIT } from './language_provider';
+import { SUGGESTIONS_LIMIT, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './constants';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
-
-export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -546,4 +545,48 @@ export function truncateResult<T>(array: T[], limit?: number): T[] {
   }
   array.length = Math.min(array.length, limit);
   return array;
+}
+
+// NOTE: these two functions are similar to the escapeLabelValueIn* functions
+// in language_utils.ts, but they are not exactly the same algorithm, and we found
+// no way to reuse one in the another or vice versa.
+export function prometheusRegularEscape<T>(value: T) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
+    // don't escape the encapsulating quotes
+    if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
+      return value;
+    }
+
+    return value
+      .replace(/\\/g, '\\\\') // escape backslashes
+      .replace(/"/g, '\\"'); // escape double quotes
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\') // escape backslashes
+    .replace(/'/g, "\\\\'"); // escape single quotes
+}
+
+export function prometheusSpecialRegexEscape<T>(value: T) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
+    return value
+      .replace(/\\/g, '\\\\\\\\') // escape backslashes
+      .replace(/"/g, '\\\\\\"') // escape double quotes
+      .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
+  }
+
+  // classic behavior
+  return value
+    .replace(/\\/g, '\\\\\\\\') // escape backslashes
+    .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'); // escape regex metacharacters
 }

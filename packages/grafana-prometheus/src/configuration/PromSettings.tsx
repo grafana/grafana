@@ -12,14 +12,20 @@ import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
-import { SUGGESTIONS_LIMIT } from '../language_provider';
+import {
+  DURATION_REGEX,
+  MULTIPLE_DURATION_REGEX,
+  NON_NEGATIVE_INTEGER_REGEX,
+  PROM_CONFIG_LABEL_WIDTH,
+  SUGGESTIONS_LIMIT,
+} from '../constants';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';
 import { PromApplication, PrometheusCacheLevel, PromOptions } from '../types';
 
-import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH, validateInput } from './ConfigEditor';
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
+import { docsTip, overhaulStyles, validateInput } from './shared/utils';
 
 const httpOptions = [
   { value: 'POST', label: 'POST' },
@@ -48,14 +54,6 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
-
-// single duration input
-export const DURATION_REGEX = /^$|^\d+(ms|[Mwdhmsy])$/;
-
-// multiple duration input
-export const MULTIPLE_DURATION_REGEX = /(\d+)(.+)/;
-
-export const NON_NEGATIVE_INTEGER_REGEX = /^(0|[1-9]\d*)(\.\d+)?(e\+?\d+)?$/; // non-negative integers, including scientific notation
 
 const durationError = 'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s';
 export const countError = 'Value is not valid, you can use non-negative integers, including scientific notation';
@@ -448,7 +446,7 @@ export const PromSettings = (props: Props) => {
                 tooltip={
                   <>
                     Add custom parameters to the Prometheus query URL. For example timeout, partial_response, dedup, or
-                    max_source_resolution. Multiple parameters should be concatenated together with an ‘&’. {docsTip()}
+                    max_source_resolution. Multiple parameters should be concatenated together with an '&'. {docsTip()}
                   </>
                 }
                 interactive={true}

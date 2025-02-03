@@ -5,7 +5,7 @@ import { ComponentType } from 'react';
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
-import { getOperationParamId } from '../operationUtils';
+import { getOperationParamId } from '../shared/param-utils';
 
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from './types';
 

@@ -4,12 +4,16 @@ import { useState } from 'react';
 import { DataSourceApi, SelectableValue, TimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { promQueryModeller } from '../PromQueryModeller';
-import { getOperationParamId } from '../operationUtils';
+import { getQueryModeller } from '../shared/modeller-types';
+import { getOperationParamId } from '../shared/param-utils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
-import { PromVisualQuery } from '../types';
+import { PromVisualQuery, PromQueryModellerInterface } from '../types';
 
-export function LabelParamEditor({
+interface Props extends QueryBuilderOperationParamEditorProps {
+  queryModeller: PromQueryModellerInterface;
+}
+
+function LabelParamEditorInternal({
   onChange,
   index,
   operationId,
@@ -17,7 +21,8 @@ export function LabelParamEditor({
   query,
   datasource,
   timeRange,
-}: QueryBuilderOperationParamEditorProps) {
+  queryModeller,
+}: Props) {
   const [state, setState] = useState<{
     options?: SelectableValue[];
     isLoading?: boolean;
@@ -30,7 +35,7 @@ export function LabelParamEditor({
       openMenuOnFocus
       onOpenMenu={async () => {
         setState({ isLoading: true });
-        const options = await loadGroupByLabels(timeRange, query, datasource);
+        const options = await loadGroupByLabels(timeRange, query, datasource, queryModeller);
         setState({ options, isLoading: undefined });
       }}
       isLoading={state.isLoading}
@@ -44,10 +49,16 @@ export function LabelParamEditor({
   );
 }
 
+// Public component that injects queryModeller
+export const LabelParamEditor = (props: QueryBuilderOperationParamEditorProps) => {
+  return <LabelParamEditorInternal {...props} queryModeller={getQueryModeller()} />;
+};
+
 async function loadGroupByLabels(
   timeRange: TimeRange,
   query: PromVisualQuery,
-  datasource: DataSourceApi
+  datasource: DataSourceApi,
+  modeller: PromQueryModellerInterface
 ): Promise<SelectableValue[]> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
@@ -56,7 +67,7 @@ async function loadGroupByLabels(
     labels = [{ label: '__name__', op: '=', value: query.metric }, ...query.labels];
   }
 
-  const expr = promQueryModeller.renderLabels(labels);
+  const expr = modeller.renderLabels(labels);
   const result = await datasource.languageProvider.fetchLabelsWithMatch(timeRange, expr);
 
   return Object.keys(result).map((x) => ({

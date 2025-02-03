@@ -19,12 +19,10 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../../../datasource';
-import { PromVisualQuery } from '../../types';
-
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { ResultsTable } from './ResultsTable';
+import { MetricsModalProps } from './shared/types';
 import {
   calculatePageList,
   calculateResultsPerPage,
@@ -45,15 +43,6 @@ import {
 import { getStyles } from './styles';
 import { MetricsData, PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
-
-export type MetricsModalProps = {
-  datasource: PrometheusDatasource;
-  isOpen: boolean;
-  query: PromVisualQuery;
-  onClose: () => void;
-  onChange: (query: PromVisualQuery) => void;
-  initialMetrics: string[] | (() => Promise<string[]>);
-};
 
 export const MetricsModal = (props: MetricsModalProps) => {
   const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
