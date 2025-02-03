@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -66,4 +68,10 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
 
 	return dashboardService, dashboardStore
+}
+
+func SetupOrgService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (org.Service, error) {
+	tb.Helper()
+	quotaService := quotatest.New(false, nil)
+	return orgimpl.ProvideService(sqlStore, cfg, quotaService)
 }

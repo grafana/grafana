@@ -96,29 +96,6 @@ func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance m
 	})
 }
 
-func (st InstanceDBStore) FetchOrgIds(ctx context.Context) ([]int64, error) {
-	orgIds := []int64{}
-
-	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		s := strings.Builder{}
-		params := make([]any, 0)
-
-		addToQuery := func(stmt string, p ...any) {
-			s.WriteString(stmt)
-			params = append(params, p...)
-		}
-
-		addToQuery("SELECT DISTINCT rule_org_id FROM alert_instance")
-
-		if err := sess.SQL(s.String(), params...).Find(&orgIds); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	return orgIds, err
-}
-
 // DeleteAlertInstances deletes instances with the provided keys in a single transaction.
 func (st InstanceDBStore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
 	if len(keys) == 0 {

@@ -93,29 +93,6 @@ func (st ProtoInstanceDBStore) SaveAlertInstance(ctx context.Context, alertInsta
 	return errors.New("save alert instance is not implemented for proto instance database store")
 }
 
-func (st ProtoInstanceDBStore) FetchOrgIds(ctx context.Context) ([]int64, error) {
-	orgIds := []int64{}
-
-	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		s := strings.Builder{}
-		params := make([]any, 0)
-
-		addToQuery := func(stmt string, p ...any) {
-			s.WriteString(stmt)
-			params = append(params, p...)
-		}
-
-		addToQuery("SELECT DISTINCT org_id FROM alert_rule_state")
-
-		if err := sess.SQL(s.String(), params...).Find(&orgIds); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	return orgIds, err
-}
-
 func (st ProtoInstanceDBStore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
 	logger := st.Logger.FromContext(ctx)
 	logger.Error("DeleteAlertInstances called and not implemented")
