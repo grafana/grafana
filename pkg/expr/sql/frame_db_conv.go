@@ -29,7 +29,6 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 
 	// Iterate through the rows and append data to fields
 	for {
-		// TODO: Use a more appropriate context
 		row, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
 			break

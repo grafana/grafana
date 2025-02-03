@@ -17,7 +17,6 @@ type FrameTable struct {
 // Name implements the sql.Nameable interface
 func (ft *FrameTable) Name() string {
 	return ft.Frame.RefID
-	// TODO: return an actual table name or derive from Frame
 }
 
 // String implements the fmt.Stringer interface
@@ -27,6 +26,7 @@ func (ft *FrameTable) String() string {
 
 func schemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
+
 	for i, field := range frame.Fields {
 		schema[i] = &mysql.Column{
 			Name:     field.Name,
@@ -35,7 +35,7 @@ func schemaFromFrame(frame *data.Frame) mysql.Schema {
 			Source:   strings.ToLower(frame.RefID),
 		}
 	}
-	// TODO: build a schema based on ft.Frame
+
 	return schema
 }
 
@@ -49,7 +49,6 @@ func (ft *FrameTable) Schema() mysql.Schema {
 
 // Collation implements the mysql.Table interface
 func (ft *FrameTable) Collation() mysql.CollationID {
-	// TODO: return the collation that fits your needs
 	return mysql.Collation_Unspecified
 }
 
@@ -100,8 +99,6 @@ func (ri *rowIter) Close(*mysql.Context) error {
 	return nil
 }
 
-// #  NO-OP Partition iterator
-// Will I need real partitions to work with funcs?
 type noopPartitionIter struct {
 	done bool
 }
