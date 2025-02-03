@@ -27,7 +27,7 @@ type parquetReader struct {
 	value     *stringColumn
 	folder    *stringColumn
 	action    *int32Column
-	columns   []columBuffer
+	columns   []columnBuffer
 
 	batchSize int64
 
@@ -140,7 +140,7 @@ func newResourceReader(inputPath string, batchSize int64) (*parquetReader, error
 		return nil, err
 	}
 
-	reader.columns = []columBuffer{
+	reader.columns = []columnBuffer{
 		reader.namespace,
 		reader.group,
 		reader.resource,
@@ -202,13 +202,13 @@ func (r *parquetReader) readBatch() error {
 // Column support
 //-------------------------------
 
-type columBuffer interface {
+type columnBuffer interface {
 	open(rgr *file.RowGroupReader) error
 	batch(batchSize int64, defLevels []int16, repLevels []int16) (int, error)
 }
 
 type stringColumn struct {
-	index  int // within the schemna
+	index  int // within the schema
 	reader *file.ByteArrayColumnChunkReader
 	buffer []parquet.ByteArray
 	count  int // the active count

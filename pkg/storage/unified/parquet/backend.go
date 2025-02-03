@@ -31,12 +31,13 @@ func NewParquetBatchProcessingBackend(f *os.File) (*parquetBackend, error) {
 
 // ProcessBatch implements resource.BatchProcessingBackend.
 func (p *parquetBackend) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
-	rsp := &resource.BatchResponse{}
 	writer, err := NewParquetWriter(p.f)
 	if err != nil {
-		rsp.Error = resource.AsErrorResult(err)
-		return rsp
+		return &resource.BatchResponse{
+			Error: resource.AsErrorResult(err),
+		}
 	}
+	defer func() { _ = writer.Close() }()
 
 	for iter.Next() {
 		if iter.RollbackRequested() {
@@ -48,12 +49,14 @@ func (p *parquetBackend) ProcessBatch(ctx context.Context, setting resource.Batc
 
 		err = writer.Add(ctx, req.Key, req.Value)
 		if err != nil {
-			rsp.Error = resource.AsErrorResult(err)
-			return rsp
+			break
 		}
 	}
 
-	err = writer.Close()
+	rsp := writer.Results()
+	if rsp == nil {
+		rsp = &resource.BatchResponse{}
+	}
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
 	}

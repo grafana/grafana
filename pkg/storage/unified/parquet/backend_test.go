@@ -68,6 +68,7 @@ func TestParquetWriteThenRead(t *testing.T) {
 
 		err = writer.Close()
 		require.NoError(t, err)
+		require.Equal(t, int64(3), writer.Results().Processed)
 
 		var keys []string
 		reader, err := newResourceReader(file.Name(), 20)

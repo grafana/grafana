@@ -9,6 +9,10 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -26,15 +30,22 @@ import (
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
-	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{})
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		Type: authlib.TypeAccessPolicy, // unified storage wants this
+		Name: "export",
+	})
 	start := time.Now()
 	last := time.Now()
 
 	opts := legacy.MigrateOptions{
-		Namespace:    "default",     // from command line????
-		WithHistory:  false,         // configured below
-		Resources:    []string{"*"}, // everything
-		LargeObjects: nil,           // TODO... from config
+		Namespace:   "default", // from command line????
+		WithHistory: false,     // configured below
+		Resources: []schema.GroupResource{
+			{Group: folders.GROUP, Resource: folders.RESOURCE},
+			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
+			{Group: dashboard.GROUP, Resource: dashboard.LIBRARY_PANEL_RESOURCE},
+		},
+		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
 			if count < 1 || time.Since(last) > time.Second {
 				fmt.Printf("[%4d] %s\n", count, msg)
@@ -90,6 +101,9 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		start = time.Now()
 		last = time.Now()
 		opts.Store, err = newParquetClient(file)
+		if err != nil {
+			return err
+		}
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
@@ -107,17 +121,45 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 	if yes {
-		start = time.Now()
-		last = time.Now()
 		opts.Store, err = newUnifiedClient(cfg, sqlStore)
-		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Unified storage export: %s\n", time.Since(start))
-		if rsp != nil {
-			jj, _ := json.MarshalIndent(rsp, "", "  ")
+
+		// Check the stats (eventually compare)
+		req := &resource.ResourceStatsRequest{
+			Namespace: opts.Namespace,
+		}
+		for _, r := range opts.Resources {
+			req.Kinds = append(req.Kinds, fmt.Sprintf("%s/%s", r.Group, r.Resource))
+		}
+		stats, err := opts.Store.GetStats(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		if stats != nil {
+			fmt.Printf("Existing resources in unified storage:\n")
+			jj, _ := json.MarshalIndent(stats, "", "  ")
 			fmt.Printf("%s\n", string(jj))
+		}
+
+		yes, err = promptYesNo("Would you like to continue? (existing resources will be replaced)")
+		if err != nil {
+			return err
+		}
+		if yes {
+			start = time.Now()
+			last = time.Now()
+			rsp, err := migrator.Migrate(ctx, opts)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Unified storage export: %s\n", time.Since(start))
+			if rsp != nil {
+				jj, _ := json.MarshalIndent(rsp, "", "  ")
+				fmt.Printf("%s\n", string(jj))
+			}
 		}
 	}
 	return nil

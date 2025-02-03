@@ -21,15 +21,19 @@ import (
 type ResourceWriter interface {
 	io.Closer
 	Add(ctx context.Context, key *resource.ResourceKey, value []byte) error
+
+	Results() *resource.BatchResponse
 }
 
 // Write resources into a parquet file
 func NewParquetWriter(f io.Writer) (ResourceWriter, error) {
 	w := &parquetWriter{
-		pool:   memory.DefaultAllocator,
-		schema: newSchema(nil),
-		buffer: 1024 * 10 * 100 * 10, // 10MB
-		logger: logging.DefaultLogger.With("logger", "parquet.writer"),
+		pool:    memory.DefaultAllocator,
+		schema:  newSchema(nil),
+		buffer:  1024 * 10 * 100 * 10, // 10MB
+		logger:  logging.DefaultLogger.With("logger", "parquet.writer"),
+		rsp:     &resource.BatchResponse{},
+		summary: make(map[string]*resource.BatchResponse_Summary),
 	}
 
 	props := parquet.NewWriterProperties(
@@ -60,6 +64,13 @@ type parquetWriter struct {
 	folder    *array.StringBuilder
 	action    *array.Int8Builder
 	value     *array.StringBuilder
+
+	rsp     *resource.BatchResponse
+	summary map[string]*resource.BatchResponse_Summary
+}
+
+func (w *parquetWriter) Results() *resource.BatchResponse {
+	return w.rsp
 }
 
 func (w *parquetWriter) Close() error {
@@ -105,6 +116,7 @@ func (w *parquetWriter) init() error {
 }
 
 func (w *parquetWriter) Add(ctx context.Context, key *resource.ResourceKey, value []byte) error {
+	w.rsp.Processed++
 	obj := &unstructured.Unstructured{}
 	err := obj.UnmarshalJSON(value)
 	if err != nil {
@@ -140,6 +152,18 @@ func (w *parquetWriter) Add(ctx context.Context, key *resource.ResourceKey, valu
 		w.logger.Info("buffer full", "buffer", w.wrote, "max", w.buffer)
 		return w.flush()
 	}
+
+	summary := w.summary[key.BatchID()]
+	if summary == nil {
+		summary = &resource.BatchResponse_Summary{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}
+		w.summary[key.BatchID()] = summary
+		w.rsp.Summary = append(w.rsp.Summary, summary)
+	}
+	summary.Count++
 	return nil
 }
 

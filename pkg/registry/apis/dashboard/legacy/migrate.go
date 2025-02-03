@@ -8,6 +8,7 @@ import (
 	"io"
 
 	"google.golang.org/grpc/metadata"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -22,7 +23,7 @@ type MigrateOptions struct {
 	Namespace    string
 	Store        resource.ResourceClient
 	LargeObjects apistore.LargeObjectSupport
-	Resources    []string
+	Resources    []schema.GroupResource
 	WithHistory  bool // only applies to dashboards
 	OnlyCount    bool // just count the values
 	Progress     func(count int, msg string)
@@ -48,13 +49,8 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	}
 
 	// Migrate everything
-	if len(opts.Resources) == 1 && opts.Resources[0] == "*" {
-		// opts.WithHistory = true
-		opts.Resources = []string{
-			"folders",
-			"dashboards",
-			"panels",
-		}
+	if len(opts.Resources) < 1 {
+		return nil, fmt.Errorf("missing resource selector")
 	}
 
 	migrators := []migrator{}
@@ -64,8 +60,8 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	}
 
 	for _, res := range opts.Resources {
-		switch res {
-		case "folders":
+		switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
+		case "folder.grafana.app/folders":
 			migrators = append(migrators, a.migrateFolders)
 			settings.Collection = append(settings.Collection, &resource.ResourceKey{
 				Namespace: opts.Namespace,
@@ -73,7 +69,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 				Resource:  folders.RESOURCE,
 			})
 
-		case "panels":
+		case "dashboard.grafana.app/librarypanels":
 			migrators = append(migrators, a.migratePanels)
 			settings.Collection = append(settings.Collection, &resource.ResourceKey{
 				Namespace: opts.Namespace,
@@ -81,9 +77,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 				Resource:  dashboard.LIBRARY_PANEL_RESOURCE,
 			})
 
-		case "":
-			fallthrough
-		case "dashboards":
+		case "dashboard.grafana.app/dashboards":
 			migrators = append(migrators, a.migrateDashboards)
 			settings.Collection = append(settings.Collection, &resource.ResourceKey{
 				Namespace: opts.Namespace,
@@ -133,9 +127,9 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 	orgId := ns.OrgID
 	rsp := &resource.BatchResponse{}
 	err = sql.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, collection := range opts.Resources {
-			switch collection {
-			case "folders":
+		for _, res := range opts.Resources {
+			switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
+			case "folder.grafana.app/folders":
 				summary := &resource.BatchResponse_Summary{}
 				summary.Group = folders.GROUP
 				summary.Group = folders.RESOURCE
@@ -143,7 +137,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)
 
-			case "panels":
+			case "dashboard.grafana.app/librarypanels":
 				summary := &resource.BatchResponse_Summary{}
 				summary.Group = dashboard.GROUP
 				summary.Resource = dashboard.LIBRARY_PANEL_RESOURCE
@@ -151,9 +145,7 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 					" WHERE org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)
 
-			case "":
-				fallthrough
-			case "dashboards":
+			case "dashboard.grafana.app/dashboards":
 				summary := &resource.BatchResponse_Summary{}
 				summary.Group = dashboard.GROUP
 				summary.Resource = dashboard.DASHBOARD_RESOURCE
@@ -194,7 +186,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		return blobs, err
 	}
 
-	opts.Progress(-1, fmt.Sprintf("migrating dashboards... %+v", query))
+	opts.Progress(-1, "migrating dashboards...")
 	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {
