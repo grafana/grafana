@@ -111,7 +111,6 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(gv,
 		&Repository{},
 		&RepositoryList{},
-		&HelloWorld{},
 		&WebhookResponse{},
 		&ResourceWrapper{},
 		&FileList{},

@@ -153,6 +153,7 @@ type RepositoryStatus struct {
 	Sync SyncStatus `json:"sync"`
 
 	// The object count when sync last ran
+	// +listType=atomic
 	Stats []ResourceCount `json:"stats,omitempty"`
 
 	// Webhook Information (if applicable)
@@ -167,6 +168,7 @@ type HealthStatus struct {
 	Checked int64 `json:"checked,omitempty"`
 
 	// Summary messages (will be shown to users)
+	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 }
 
@@ -187,6 +189,7 @@ type SyncStatus struct {
 	Scheduled int64 `json:"scheduled,omitempty"`
 
 	// Summary messages (will be shown to users)
+	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 
 	// The repository hash when the last sync ran
@@ -205,14 +208,8 @@ type RepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// +listType=atomic
 	Items []Repository `json:"items,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type HelloWorld struct {
-	metav1.TypeMeta `json:",inline"`
-
-	Whom string `json:"whom,omitempty"`
 }
 
 // The kubernetes action required when loading a given resource
@@ -247,9 +244,11 @@ type ResourceWrapper struct {
 	Resource ResourceObjects `json:"resource"`
 
 	// Lint results
+	// +listType=atomic
 	Lint []LintIssue `json:"lint,omitempty"`
 
 	// If errors exist, show them here
+	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
 }
 
@@ -306,6 +305,7 @@ type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// +listType=atomic
 	Items []FileItem `json:"items,omitempty"`
 }
 
@@ -323,6 +323,7 @@ type ResourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// +listType=atomic
 	Items []ResourceListItem `json:"items,omitempty"`
 }
 
@@ -344,6 +345,7 @@ type ResourceStats struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// +listType=atomic
 	Items []ResourceCount `json:"items,omitempty"`
 }
 
@@ -378,8 +380,7 @@ type HistoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
-	// kubernetes/kubernetes#126809
+	// +listType=atomic
 	Items []HistoryItem `json:"items,omitempty"`
 }
 
@@ -390,8 +391,9 @@ type Author struct {
 }
 
 type HistoryItem struct {
-	Ref       string   `json:"ref"`
-	Message   string   `json:"message"`
+	Ref     string `json:"ref"`
+	Message string `json:"message"`
+	// +listType=atomic
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
 }
