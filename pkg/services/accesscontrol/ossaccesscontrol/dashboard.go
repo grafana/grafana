@@ -131,7 +131,6 @@ func ProvideDashboardPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-
 			ctx, _ = identity.WithServiceIdentitiy(ctx, orgID)
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
@@ -141,7 +140,6 @@ func ProvideDashboardPermissions(
 			scopes := []string(accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix))
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
 			if dashboard.FolderUID != "" {
-
 				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderService)
 				if err != nil {
 					return nil, err
