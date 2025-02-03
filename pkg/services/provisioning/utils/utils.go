@@ -14,10 +14,10 @@ type DashboardStore interface {
 }
 
 // Throw an error if the org does not exist
-type CheckOrgExists = func(ctx context.Context, orgID int64) error
+type OrgExists = func(ctx context.Context, orgID int64) error
 
 // Use the org service to check if an org exists
-func NewOrgExistsChecker(orgService org.Service) CheckOrgExists {
+func NewOrgExistsChecker(orgService org.Service) OrgExists {
 	return func(ctx context.Context, orgID int64) error {
 		query := org.GetOrgByIDQuery{ID: orgID}
 		_, err := orgService.GetByID(ctx, &query)

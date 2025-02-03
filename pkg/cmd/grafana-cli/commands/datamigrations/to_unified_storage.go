@@ -54,11 +54,11 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		nil, provisioning, false,
 	)
 
-	line := ""
-	fmt.Printf("Count legacy resources for namespace: %s?\n", opts.Namespace)
-	fmt.Printf("Y/N? > ")
-	fmt.Scanln(&line)
-	if strings.ToLower(line) == "y" {
+	yes, err := promptYesNo(fmt.Sprintf("Count legacy resources for namespace: %s?", opts.Namespace))
+	if err != nil {
+		return err
+	}
+	if yes {
 		opts.OnlyCount = true
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
@@ -73,13 +73,16 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	}
 
 	opts.OnlyCount = false
-	fmt.Printf("Include history in exports? (Y/N) >")
-	fmt.Scanln(&line)
-	opts.WithHistory = strings.ToLower(line) == "y"
+	opts.WithHistory, err = promptYesNo("Include history in exports?")
+	if err != nil {
+		return err
+	}
 
-	fmt.Printf("Export legacy resources to parquet file? (Y/N) >")
-	fmt.Scanln(&line)
-	if strings.ToLower(line) == "y" {
+	yes, err = promptYesNo("Export legacy resources to parquet file?")
+	if err != nil {
+		return err
+	}
+	if yes {
 		file, err := os.CreateTemp(cfg.DataPath, "grafana-export-*.parquet")
 		if err != nil {
 			return err
@@ -99,9 +102,11 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		fmt.Printf("File: %s\n", file.Name())
 	}
 
-	fmt.Printf("Export legacy resources to unified storage? (Y/N) >")
-	fmt.Scanln(&line)
-	if strings.ToLower(line) == "y" {
+	yes, err = promptYesNo("Export legacy resources to unified storage?")
+	if err != nil {
+		return err
+	}
+	if yes {
 		start = time.Now()
 		last = time.Now()
 		opts.Store, err = newUnifiedClient(cfg, sqlStore)
@@ -116,6 +121,23 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		}
 	}
 	return nil
+}
+
+func promptYesNo(prompt string) (bool, error) {
+	line := ""
+	for {
+		fmt.Printf("%s (Y/N) >", prompt)
+		_, err := fmt.Scanln(&line)
+		if err != nil && err.Error() != "unexpected newline" {
+			return false, err
+		}
+		switch strings.ToLower(line) {
+		case "y", "yes":
+			return true, nil
+		case "n", "no":
+			return false, nil
+		}
+	}
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
