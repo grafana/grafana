@@ -71,6 +71,8 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"dashboards:write",
 	"dashboards:create",
 	"datasources:read",
+	"alert.provisioning:write",
+	"alert.provisioning.secrets:read",
 )
 
 func IsServiceIdentity(ctx context.Context) bool {

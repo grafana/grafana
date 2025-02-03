@@ -2,6 +2,7 @@ import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { sceneGraph } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -9,11 +10,18 @@ import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+import {
+  DashboardDataDTO,
+  DashboardDTO,
+  DashboardRoutes,
+  HomeDashboardRedirectDTO,
+  isRedirectResponse,
+} from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -66,6 +74,10 @@ export interface LoadDashboardOptions {
     variables: UrlQueryMap;
   };
 }
+
+export type HomeDashboardDTO = DashboardDTO & {
+  dashboard: DashboardDataDTO | DashboardV2Spec;
+};
 
 interface DashboardScenePageStateManagerLike<T> {
   fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
@@ -135,7 +147,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       this.setState({ dashboard: dashboard, isLoading: false, options });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
+      const queryController = sceneGraph.getQueryController(dashboard);
+
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+      queryController?.startProfile(dashboard);
 
       if (options.route !== DashboardRoutes.New) {
         emitDashboardViewEvent({
@@ -163,6 +178,11 @@ abstract class DashboardScenePageStateManagerBase<T>
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
     const rsp = await this.fetchDashboard(options);
+
+    if (!rsp) {
+      return null;
+    }
+
     return this.transformResponseToScene(rsp, options);
   }
 
@@ -231,12 +251,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       return scene;
     }
 
-    if (rsp?.redirectUri) {
-      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-      locationService.replace(newUrl);
-      return null;
-    }
-
     throw new Error('Dashboard not found');
   }
 
@@ -267,7 +281,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       }
     }
 
-    let rsp: DashboardDTO;
+    let rsp: DashboardDTO | HomeDashboardRedirectDTO;
 
     try {
       switch (route) {
@@ -276,10 +290,16 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
           break;
         case DashboardRoutes.Home:
-          rsp = await getBackendSrv().get('/api/dashboards/home');
+          rsp = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
 
-          if (rsp.redirectUri) {
-            return rsp;
+          if (isRedirectResponse(rsp)) {
+            const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+            locationService.replace(newUrl);
+            return null;
+          }
+
+          if (isDashboardV2Spec(rsp.dashboard)) {
+            throw new Error('v2 dashboard spec is not supported. Enable useV2DashboardsAPI feature toggle');
           }
 
           if (rsp?.meta) {
@@ -449,13 +469,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       return scene;
     }
 
-    // TOD)[schema v2]: Figure out redirect utl
-    // if (rsp?.redirectUri) {
-    //   const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-    //   locationService.replace(newUrl);
-    //   return null;
-    // }
-
     throw new Error('Dashboard not found');
   }
 
@@ -483,16 +496,24 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
         case DashboardRoutes.Home:
-          // throw new Error('Method not implemented.');
-          const dto = await getBackendSrv().get<DashboardDTO>('/api/dashboards/home');
+          const dto = await getBackendSrv().get<HomeDashboardDTO | HomeDashboardRedirectDTO>('/api/dashboards/home');
+
+          if (isRedirectResponse(dto)) {
+            const newUrl = locationUtil.stripBaseFromUrl(dto.redirectUri);
+            locationService.replace(newUrl);
+            return null;
+          }
+
           rsp = ResponseTransformers.ensureV2Response(dto);
+
+          // if custom home dashboard is v2 spec already, ignore the spec transformation
+          if (isDashboardV2Spec(dto.dashboard)) {
+            rsp.spec = dto.dashboard;
+          }
+
           rsp.access.canSave = false;
           rsp.access.canShare = false;
           rsp.access.canStar = false;
-
-          // if (rsp.redirectUri) {
-          //   return rsp;
-          // }
 
           break;
         case DashboardRoutes.Public: {

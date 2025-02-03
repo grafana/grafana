@@ -3,23 +3,18 @@ import { Resizable } from 're-resizable';
 import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneObject,
-  SceneObjectRef,
-  sceneGraph,
-  useSceneObjectState,
-} from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
+import { ElementSelection } from './ElementSelection';
 import { useEditableElement } from './useEditableElement';
 
 export interface DashboardEditPaneState extends SceneObjectState {
-  selectedObject?: SceneObjectRef<SceneObject>;
+  selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
 }
 
@@ -42,11 +37,21 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public disableSelection() {
     this.setState({
       selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
-      selectedObject: undefined,
+      selection: undefined,
     });
   }
 
   private selectElement(element: ElementSelectionContextItem, multi?: boolean) {
+    // We should not select clones
+    if (isInCloneChain(element.id)) {
+      if (multi) {
+        return;
+      }
+
+      this.clearSelection();
+      return;
+    }
+
     const obj = sceneGraph.findByKey(this, element.id);
     if (obj) {
       this.selectObject(obj, element.id, multi);
@@ -54,17 +59,49 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    const currentSelection = this.state.selectedObject?.resolve();
-    if (currentSelection === obj) {
+    if (!this.state.selection) {
+      return;
+    }
+
+    const prevItem = this.state.selection.getFirstObject();
+    if (prevItem === obj && !multi) {
+      this.clearSelection();
+      return;
+    }
+
+    if (multi && this.state.selection.hasValue(id)) {
+      this.removeMultiSelectedObject(id);
+      return;
+    }
+
+    const { selection, contextItems: selected } = this.state.selection.getStateWithValue(id, obj, !!multi);
+
+    this.setState({
+      selection: new ElementSelection(selection),
+      selectionContext: {
+        ...this.state.selectionContext,
+        selected,
+      },
+    });
+  }
+
+  private removeMultiSelectedObject(id: string) {
+    if (!this.state.selection) {
+      return;
+    }
+
+    const { entries, contextItems: selected } = this.state.selection.getStateWithoutValueAt(id);
+
+    if (entries.length === 0) {
       this.clearSelection();
       return;
     }
 
     this.setState({
-      selectedObject: obj.getRef(),
+      selection: new ElementSelection([...entries]),
       selectionContext: {
         ...this.state.selectionContext,
-        selected: [{ id }],
+        selected,
       },
     });
   }
@@ -72,7 +109,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public clearSelection() {
     const dashboard = getDashboardSceneFor(this);
     this.setState({
-      selectedObject: dashboard.getRef(),
+      selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
       selectionContext: {
         ...this.state.selectionContext,
         selected: [],
@@ -94,9 +131,11 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
   // Activate the edit pane
   useEffect(() => {
-    if (!editPane.state.selectedObject) {
+    if (!editPane.state.selection) {
       const dashboard = getDashboardSceneFor(editPane);
-      editPane.setState({ selectedObject: dashboard.getRef() });
+      editPane.setState({
+        selection: new ElementSelection([[dashboard.state.uid!, dashboard.getRef()]]),
+      });
     }
 
     editPane.enableSelection();
@@ -107,15 +146,15 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
   }, [editPane]);
 
   useEffect(() => {
-    if (isCollapsed && editPane.state.selectedObject?.resolve()) {
+    if (isCollapsed && editPane.state.selection?.getSelectionEntries().length) {
       editPane.clearSelection();
     }
   }, [editPane, isCollapsed]);
 
-  const { selectedObject } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
-  const editableElement = useEditableElement(selectedObject?.resolve());
+  const editableElement = useEditableElement(selection);
 
   if (!editableElement) {
     return null;

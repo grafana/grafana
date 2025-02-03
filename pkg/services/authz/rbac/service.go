@@ -619,27 +619,28 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		}
 	}
 
-	folderSet := make(map[string]struct{}, len(scopeMap))
-
-	prefix := t.prefix()
-	itemSet := make(map[string]struct{}, len(scopeMap))
-	for scope := range scopeMap {
-		if strings.HasPrefix(scope, "folders:uid:") {
-			identifier := strings.TrimPrefix(scope, "folders:uid:")
-			if _, ok := folderSet[identifier]; ok {
-				continue
-			}
-			folderSet[identifier] = struct{}{}
-			getChildren(folderMap, identifier, folderSet)
-		} else {
-			identifier := strings.TrimPrefix(scope, prefix)
-			itemSet[identifier] = struct{}{}
-		}
+	var res *authzv1.ListResponse
+	if strings.HasPrefix(req.Action, "folders:") {
+		res = buildFolderList(scopeMap, folderMap)
+	} else {
+		res = buildItemList(scopeMap, folderMap, t.prefix())
 	}
 
-	folderList := make([]string, 0, len(folderSet))
-	for folder := range folderSet {
-		folderList = append(folderList, folder)
+	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
+	return res, nil
+}
+
+func buildFolderList(scopes map[string]bool, tree map[string]FolderNode) *authzv1.ListResponse {
+	itemSet := make(map[string]struct{}, len(scopes))
+
+	for scope := range scopes {
+		identifier := strings.TrimPrefix(scope, "folders:uid:")
+		if _, ok := itemSet[identifier]; ok {
+			continue
+		}
+
+		itemSet[identifier] = struct{}{}
+		getChildren(tree, identifier, itemSet)
 	}
 
 	itemList := make([]string, 0, len(itemSet))
@@ -647,8 +648,35 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		itemList = append(itemList, item)
 	}
 
-	span.SetAttributes(attribute.Int("num_folders", len(folderList)), attribute.Int("num_items", len(itemList)))
-	return &authzv1.ListResponse{Folders: folderList, Items: itemList}, nil
+	return &authzv1.ListResponse{Items: itemList}
+}
+
+func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix string) *authzv1.ListResponse {
+	folderSet := make(map[string]struct{}, len(scopes))
+	itemSet := make(map[string]struct{}, len(scopes))
+
+	for scope := range scopes {
+		if identifier, ok := strings.CutPrefix(scope, "folders:uid:"); ok {
+			if _, ok := folderSet[identifier]; ok {
+				continue
+			}
+			folderSet[identifier] = struct{}{}
+			getChildren(tree, identifier, folderSet)
+		} else {
+			identifier := strings.TrimPrefix(scope, prefix)
+			itemSet[identifier] = struct{}{}
+		}
+	}
+	folderList := make([]string, 0, len(folderSet))
+	for folder := range folderSet {
+		folderList = append(folderList, folder)
+	}
+	itemList := make([]string, 0, len(itemSet))
+	for item := range itemSet {
+		itemList = append(itemList, item)
+	}
+
+	return &authzv1.ListResponse{Folders: folderList, Items: itemList}
 }
 
 func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {

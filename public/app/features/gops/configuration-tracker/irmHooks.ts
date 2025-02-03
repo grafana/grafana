@@ -3,6 +3,10 @@ import { useMemo } from 'react';
 import { locationService } from '@grafana/runtime';
 import { useGrafanaContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useNotificationPolicyRoute } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
+import {
+  getIrmIfPresentOrIncidentPluginId,
+  getIrmIfPresentOrOnCallPluginId,
+} from 'app/features/alerting/unified/utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -222,11 +226,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: '/a/grafana-incident-app/walkthrough/generate-key',
+                url: `/a/${getIrmIfPresentOrIncidentPluginId()}/walkthrough/generate-key`,
               },
               label: 'Initialize',
               urlLinkOnDone: {
-                url: '/a/grafana-incident-app',
+                url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
               },
               labelOnDone: 'View',
             },
@@ -238,12 +242,12 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: '/a/grafana-oncall-app/settings',
+                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
                 queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
               },
               label: 'Connect',
               urlLinkOnDone: {
-                url: '/a/grafana-oncall-app/settings',
+                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/settings`,
                 queryParams: { tab: 'ChatOps' },
               },
               labelOnDone: 'View',
@@ -257,11 +261,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: '/a/grafana-incident-app/integrations/grate.slack',
+                url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations/grate.slack`,
               },
               label: 'Connect',
               urlLinkOnDone: {
-                url: '/a/grafana-incident-app/integrations',
+                url: `/a/${getIrmIfPresentOrIncidentPluginId()}/integrations`,
               },
             },
             done: isChatOpsInstalled,
@@ -272,11 +276,11 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: '/a/grafana-oncall-app/integrations/',
+                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
               },
               label: 'Add',
               urlLinkOnDone: {
-                url: '/a/grafana-oncall-app/integrations/',
+                url: `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`,
               },
               labelOnDone: 'View',
             },
@@ -295,7 +299,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               type: 'dropDown',
               label: 'Select integration',
               options: onCallOptions,
-              onClickOption: (value) => onIntegrationClick(value, '/a/grafana-oncall-app/integrations/'),
+              onClickOption: (value) =>
+                onIntegrationClick(value, `/a/${getIrmIfPresentOrOnCallPluginId()}/integrations/`),
               stepNotAvailableText: 'No integrations available',
             },
           },
@@ -305,7 +310,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: '/a/grafana-incident-app',
+                url: `/a/${getIrmIfPresentOrIncidentPluginId()}`,
                 queryParams: { declare: 'new', drill: '1' },
               },
               label: 'Start drill',
