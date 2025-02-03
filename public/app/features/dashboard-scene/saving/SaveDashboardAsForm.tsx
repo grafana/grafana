@@ -8,7 +8,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { AnnoKeyRepoName } from '../../apiserver/types';
-import { Repository, RepositoryView } from '../../provisioning/api';
+import { RepositoryView } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';

@@ -6,7 +6,6 @@ export interface Props {
 }
 
 export function FolderRepo({ repo }: Props) {
-  console.log('rp', repo);
   if (!repo) {
     return null;
   }

@@ -11,7 +11,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { provisioningAPI, Settings } from 'app/features/provisioning/api';
+import { provisioningAPI, RepositoryViewList } from 'app/features/provisioning/api';
 import { dispatch } from 'app/store/store';
 import {
   DashboardDTO,
@@ -456,19 +456,21 @@ export async function addRepositoryData(
     return data;
   }
 
-  const settings: Settings = await dispatch(provisioningAPI.endpoints.getFrontendSettings.initiate()).unwrap();
+  const settings: RepositoryViewList = await dispatch(
+    provisioningAPI.endpoints.getFrontendSettings.initiate()
+  ).unwrap();
 
-  if (!Object.keys(settings.repository).length) {
+  if (!settings.items.length) {
     return data;
   }
 
   if (Array.isArray(data)) {
     return data.map((item) => {
-      const repository = settings.repository[item.uid];
-      return repository ? { ...item, repository: { ...repository, name: item.repository } } : item;
+      const repository = settings.items.find((repo) => repo.name === item.uid);
+      return repository ? { ...item, repository } : item;
     });
   }
 
-  const repository = settings.repository[data.uid];
-  return repository ? { ...data, repository: { ...repository, name: data.repository } } : data;
+  const repository = settings.items.find((repo) => repo.name === data.uid);
+  return repository ? { ...data, repository } : data;
 }
