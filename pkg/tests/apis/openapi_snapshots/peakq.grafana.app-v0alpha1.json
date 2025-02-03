@@ -41,7 +41,7 @@
           "QueryTemplate"
         ],
         "description": "list or watch objects of kind QueryTemplate",
-        "operationId": "notListQueryTemplate",
+        "operationId": "listQueryTemplate",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
