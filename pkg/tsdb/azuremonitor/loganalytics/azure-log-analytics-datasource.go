@@ -28,15 +28,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
+// Returns tables with the `HasData` field set to true
 func filterTablesWithData(tables []types.MetadataTable) []types.MetadataTable {
-	// filtered := []types.MetadataTable{}
-	// for _, table := range tables {
-	// 	if table.HasData {
-	// 		filtered = append(filtered, table)
-	// 	}
-	// }
-	return tables
-	// return filtered
+	filtered := []types.MetadataTable{}
+	for _, table := range tables {
+		if table.HasData {
+			filtered = append(filtered, table)
+		}
+	}
+
+	return filtered
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
@@ -47,9 +48,13 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			Path:   "/v1/query",
 		}
 		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
-	} else if strings.Contains(req.URL.Path, "/metadata?select=categories,solutions,tables,workspaces") {
+	} else if strings.Contains(req.URL.Path, "/metadata") {
 		// Add necessary headers
 		req.Header.Set("Prefer", "metadata-format-v4,exclude-resourcetypes,exclude-customfunctions")
+		queryParams := req.URL.Query()
+		// Add necessary query params
+		queryParams.Add("select", "categories,solutions,tables,workspaces")
+		req.URL.RawQuery = queryParams.Encode()
 		resp, err := cli.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch metadata: %w", err)
@@ -61,7 +66,8 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			}
 		}()
 
-		body, err := io.ReadAll(resp.Body)
+		encoding := resp.Header.Get("Content-Encoding")
+		body, err := decode(encoding, resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read metadata response: %w", err)
 		}
@@ -71,7 +77,10 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		}
 
 		var metadata types.AzureLogAnalyticsMetadata
-		// Filter tables where hasData is false [currently not being used => need to confirm functionality with Azure]
+		err = json.Unmarshal(body, &metadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal metadata response: %w", err)
+		}
 		metadata.Tables = filterTablesWithData(metadata.Tables)
 
 		responseBody, err := json.Marshal(metadata)
