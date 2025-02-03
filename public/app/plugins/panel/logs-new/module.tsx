@@ -1,8 +1,8 @@
 import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
 
 import { LogsPanel } from './LogsPanel';
+import { Options } from './panelcfg.gen';
 import { LogsPanelSuggestionsSupplier } from './suggestions';
-import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder) => {
