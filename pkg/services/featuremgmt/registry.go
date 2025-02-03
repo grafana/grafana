@@ -1298,13 +1298,6 @@ var (
 			HideFromDocs:      true,
 		},
 		{
-			Name:        "openSearchBackendFlowEnabled",
-			Description: "Enables the backend query flow for Open Search datasource plugin",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       awsDatasourcesSquad,
-			Expression:  "true",
-		},
-		{
 			Name:            "ssoSettingsLDAP",
 			Description:     "Use the new SSO Settings API to configure LDAP",
 			Stage:           FeatureStagePublicPreview,
