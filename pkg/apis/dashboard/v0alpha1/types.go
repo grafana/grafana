@@ -7,40 +7,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Dashboard struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	// The dashboard body (unstructured for now)
-	Spec common.Unstructured `json:"spec"`
-
-	// Optional dashboard status
-	Status *DashboardStatus `json:"status,omitempty"`
-}
-
-type DashboardStatus struct {
-	ConversionStatus *ConversionStatus `json:"conversion,omitempty"`
-}
-
-type ConversionStatus struct {
-	Failed        bool   `json:"failed,omitempty"`
-	StoredVersion string `json:"storedVersion,omitempty"`
-	Error         string `json:"error,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []Dashboard `json:"items,omitempty"`
-}
-
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardVersionList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -50,6 +17,7 @@ type DashboardVersionList struct {
 	Items []DashboardVersionInfo `json:"items,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 type DashboardVersionInfo struct {
 	// The internal ID for this version (will be replaced with resourceVersion)
 	Version int `json:"version"`
@@ -67,6 +35,7 @@ type DashboardVersionInfo struct {
 	Message string `json:"message,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 // +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type VersionsQueryOptions struct {
@@ -80,6 +49,7 @@ type VersionsQueryOptions struct {
 	Version int64 `json:"version,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type LibraryPanel struct {
 	metav1.TypeMeta `json:",inline"`
@@ -95,6 +65,7 @@ type LibraryPanel struct {
 	Status *LibraryPanelStatus `json:"status,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type LibraryPanelList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -104,6 +75,7 @@ type LibraryPanelList struct {
 	Items []LibraryPanel `json:"items,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 type LibraryPanelSpec struct {
 	// The panel type
 	Type string `json:"type"`
@@ -131,6 +103,7 @@ type LibraryPanelSpec struct {
 	Targets []data.DataQuery `json:"targets,omitempty"`
 }
 
+// +k8s:deepcopy-gen=true
 type LibraryPanelStatus struct {
 	// Translation warnings (mostly things that were in SQL columns but not found in the saved body)
 	Warnings []string `json:"warnings,omitempty"`
@@ -140,6 +113,7 @@ type LibraryPanelStatus struct {
 }
 
 // This is like the legacy DTO where access and metadata are all returned in a single call
+// +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardWithAccessInfo struct {
 	Dashboard `json:",inline"`
@@ -147,7 +121,7 @@ type DashboardWithAccessInfo struct {
 	Access DashboardAccess `json:"access"`
 }
 
-// Information about how the requesting user can use a given dashboard
+// +k8s:deepcopy-gen=true
 type DashboardAccess struct {
 	// Metadata fields
 	Slug string `json:"slug,omitempty"`
@@ -162,11 +136,13 @@ type DashboardAccess struct {
 	AnnotationsPermissions *AnnotationPermission `json:"annotationsPermissions"`
 }
 
+// +k8s:deepcopy-gen=true
 type AnnotationPermission struct {
 	Dashboard    AnnotationActions `json:"dashboard"`
 	Organization AnnotationActions `json:"organization"`
 }
 
+// +k8s:deepcopy-gen=true
 type AnnotationActions struct {
 	CanAdd    bool `json:"canAdd"`
 	CanEdit   bool `json:"canEdit"`
