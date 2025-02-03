@@ -294,7 +294,8 @@
       "metadata": {
         "name": "alertingNoNormalState",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-01-13T23:29:29Z"
+        "creationTimestamp": "2023-01-13T23:29:29Z",
+        "deletionTimestamp": "2025-01-31T15:46:31Z"
       },
       "spec": {
         "description": "Stop maintaining state of alerts that are not firing",
