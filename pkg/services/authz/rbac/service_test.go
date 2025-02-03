@@ -452,13 +452,13 @@ func TestService_buildFolderTree(t *testing.T) {
 
 func TestService_listPermission(t *testing.T) {
 	type testCase struct {
-		name               string
-		permissions        []accesscontrol.Permission
-		folderTree         map[string]FolderNode
-		list               ListRequest
-		expectedDashboards []string
-		expectedFolders    []string
-		expectedAll        bool
+		name            string
+		permissions     []accesscontrol.Permission
+		folderTree      map[string]FolderNode
+		list            ListRequest
+		expectedItems   []string
+		expectedFolders []string
+		expectedAll     bool
 	}
 
 	testCases := []testCase{
@@ -512,8 +512,8 @@ func TestService_listPermission(t *testing.T) {
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 			},
-			expectedDashboards: []string{"some_dashboard"},
-			expectedFolders:    []string{"some_folder_1", "some_folder_2"},
+			expectedItems:   []string{"some_dashboard"},
+			expectedFolders: []string{"some_folder_1", "some_folder_2"},
 		},
 		{
 			name: "should return folders that user has inherited access to",
@@ -568,8 +568,8 @@ func TestService_listPermission(t *testing.T) {
 				Group:    "dashboard.grafana.app",
 				Resource: "dashboards",
 			},
-			expectedDashboards: []string{"some_dashboard"},
-			expectedFolders:    []string{"some_folder_parent", "some_folder_child"},
+			expectedItems:   []string{"some_dashboard"},
+			expectedFolders: []string{"some_folder_parent", "some_folder_child"},
 		},
 		{
 			name: "should deduplicate folders that user has inherited as well as direct access to",
@@ -613,6 +613,28 @@ func TestService_listPermission(t *testing.T) {
 				Resource: "dashboards",
 			},
 		},
+		{
+			name: "should collect folder permissions into items",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders:read",
+					Scope:      "folders:uid:some_folder_parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "some_folder_parent",
+				},
+			},
+			folderTree: map[string]FolderNode{
+				"some_folder_parent": {UID: "some_folder_parent", ChildrenUIDs: []string{"some_folder_child"}},
+				"some_folder_child":  {UID: "some_folder_child", ParentUID: strPtr("some_folder_parent")},
+			},
+			list: ListRequest{
+				Action:   "folders:read",
+				Group:    "folder.grafana.app",
+				Resource: "folders",
+			},
+			expectedItems: []string{"some_folder_parent", "some_folder_child"},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -626,7 +648,7 @@ func TestService_listPermission(t *testing.T) {
 			got, err := s.listPermission(context.Background(), getScopeMap(tc.permissions), &tc.list)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedAll, got.All)
-			assert.ElementsMatch(t, tc.expectedDashboards, got.Items)
+			assert.ElementsMatch(t, tc.expectedItems, got.Items)
 			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
 		})
 	}
