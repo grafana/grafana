@@ -27,6 +27,31 @@ interface MockQuery extends DataQuery {
   expr: string;
 }
 
+jest.mock('../QueryLibrary/utils/dataFetching', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('../QueryLibrary/utils/dataFetching'),
+    useLoadUsers: () => {
+      return {
+        data: {
+          display: [
+            {
+              avatarUrl: '',
+              displayName: 'john doe',
+              identity: {
+                name: 'JohnDoe',
+                type: 'viewer',
+              },
+            },
+          ],
+        },
+        isLoading: false,
+        error: null,
+      };
+    },
+  };
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: (...args: object[]) => {

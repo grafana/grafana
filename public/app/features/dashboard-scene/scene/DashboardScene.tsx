@@ -53,17 +53,12 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { isInCloneChain } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getViewPanelUrl } from '../utils/urlBuilders';
-import {
-  getClosestVizPanel,
-  getDashboardSceneFor,
-  getDefaultVizPanel,
-  getPanelIdForVizPanel,
-  isPanelClone,
-} from '../utils/utils';
+import { getClosestVizPanel, getDashboardSceneFor, getDefaultVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -480,6 +475,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public getNextPanelId(): number {
+    return this.state.body.getMaxPanelId() + 1;
+  }
+
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
@@ -606,10 +605,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ body: layout });
+    layout.activateRepeaters?.();
   }
 
   /**
-   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   * Called by the SceneQueryRunner to provide contextual parameters (tracking) props for the request
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
     const dashboard = getDashboardSceneFor(sceneObject);
@@ -623,9 +623,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (isPanelClone(panel.state.key)) {
+      if (isInCloneChain(panel.state.key)) {
+        // We check if any of the panel ancestors are clones because we can't use the original panel ID in this case
         panelId = djb2Hash(panel?.state.key);
       } else {
+        // Otherwise, it's the absolute original panel, and we can use the key directly
+        // getPanelIdForVizPanel extracts the panel ID from the key so we don't need to do it manually
         panelId = getPanelIdForVizPanel(panel);
       }
     }

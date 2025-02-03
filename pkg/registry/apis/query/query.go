@@ -242,7 +242,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return qdr, err
 	}
 
-	code, rsp, err := client.QueryData(ctx, *req.Request)
+	rsp, err := client.QueryData(ctx, *req.Request)
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
@@ -259,16 +259,6 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		}
 	}
 
-	// Create a response object with the error when missing (happens for client errors like 404)
-	if rsp == nil && err != nil {
-		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
-		for _, q := range req.Request.Queries {
-			rsp.Responses[q.RefID] = backend.DataResponse{
-				Status: backend.Status(code),
-				Error:  err,
-			}
-		}
-	}
 	return rsp, err
 }
 
