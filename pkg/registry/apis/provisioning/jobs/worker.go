@@ -160,16 +160,16 @@ func (g *JobWorker) doSync(ctx context.Context,
 	repo repository.Repository,
 	job provisioning.Job,
 	parser *resources.Parser,
-	_ func(provisioning.JobStatus) error,
+	progress func(provisioning.JobStatus) error,
 ) (*provisioning.JobStatus, error) {
 	var err error
 	cfg := repo.Config()
 
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	status := job.Status.ToSyncStatus(job.Name)
+	syncStatus := job.Status.ToSyncStatus(job.Name)
 	patch, err := json.Marshal(map[string]any{
 		"status": map[string]any{
-			"sync": status,
+			"sync": syncStatus,
 		},
 	})
 	if err != nil {
@@ -187,24 +187,20 @@ func (g *JobWorker) doSync(ctx context.Context,
 		return nil, fmt.Errorf("error creating replicator")
 	}
 
-	var complete bool
-	if job.Spec.Sync != nil && job.Spec.Sync.Complete {
-		complete = job.Spec.Sync.Complete
-	}
-
 	// Sync the repository
-	ref, syncError := syncer.Sync(ctx, complete)
-	status = job.Status.ToSyncStatus(job.Name)
-	status.Hash = ref
-	status.Finished = time.Now().UnixMilli()
+	status, syncError := syncer.Sync(ctx, repo, *job.Spec.Sync, progress)
+	if status == nil {
+		status = &provisioning.SyncStatus{}
+	}
+	status.JobID = job.Name
+	status.Started = job.Status.Started
+	status.Finished = time.Now().Unix()
 	if syncError != nil {
 		status.State = provisioning.JobStateError
 		status.Message = []string{
 			"error running sync",
 			syncError.Error(),
 		}
-	} else {
-		status.State = provisioning.JobStateSuccess
 	}
 
 	// Update the resource stats

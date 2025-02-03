@@ -154,6 +154,9 @@ func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository,
 	if err != nil {
 		return 0, nil, err
 	}
+	if strings.HasPrefix(info.Path, "/") {
+		return 0, nil, fmt.Errorf("repository path must be relative to the root")
+	}
 
 	parser, err := s.parsers.GetParser(ctx, repo)
 	if err != nil {

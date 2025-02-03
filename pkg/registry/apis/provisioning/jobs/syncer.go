@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"sort"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,8 +15,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboards "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboardsv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -26,8 +22,16 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-type Syncer struct {
-	client     *resources.DynamicClient
+type Syncer interface {
+	Sync(ctx context.Context,
+		repo repository.Repository,
+		options provisioning.SyncJobOptions,
+		progress func(provisioning.JobStatus) error,
+	) (*provisioning.SyncStatus, error)
+}
+
+type syncer struct {
+	//	client     *resources.DynamicClient
 	parser     *resources.Parser
 	lister     resources.ResourceLister
 	folders    dynamic.ResourceInterface
@@ -38,7 +42,7 @@ func NewSyncer(
 	repo repository.Repository,
 	lister resources.ResourceLister,
 	parser *resources.Parser,
-) (*Syncer, error) {
+) (Syncer, error) {
 	dynamicClient := parser.Client()
 	folders := dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    folders.GROUP,
@@ -46,9 +50,8 @@ func NewSyncer(
 		Resource: folders.RESOURCE,
 	})
 
-	return &Syncer{
+	return &syncer{
 		parser:     parser,
-		client:     dynamicClient,
 		lister:     lister,
 		folders:    folders,
 		repository: repo,
@@ -56,228 +59,76 @@ func NewSyncer(
 }
 
 // Sync replicates all files in the repository.
-func (r *Syncer) Sync(ctx context.Context, complete bool) (string, error) {
-	// FIXME: how to handle the scenario in which folder changes?
+func (r *syncer) Sync(ctx context.Context,
+	repo repository.Repository,
+	options provisioning.SyncJobOptions,
+	progress func(provisioning.JobStatus) error,
+) (*provisioning.SyncStatus, error) {
 	cfg := r.repository.Config()
 	if !cfg.Spec.Sync.Enabled {
-		return "", fmt.Errorf("sync is not enabled")
+		return nil, fmt.Errorf("sync is not enabled")
 	}
-
-	lastCommit := cfg.Status.Sync.Hash
-	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
 
 	// Ensure the configured folder exists and it's managed by the repository
 	rootFolder := resources.RootFolder(cfg)
 	if rootFolder != "" {
-		folder := resources.Folder{
-			Path:  "",
-			ID:    rootFolder,
+		if err := r.ensureFolderExists(ctx, resources.Folder{
+			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
-		}
-
-		// If the folder already exists, the parent won't be changed
-		if err := r.ensureFolderExists(ctx, folder, ""); err != nil {
-			return "", fmt.Errorf("ensure repository folder exists: %w", err)
+		}, ""); err != nil {
+			return nil, fmt.Errorf("unable to create root folder: %w", err)
 		}
 	}
 
+	syncStatus := &provisioning.SyncStatus{}
 	logger := logging.FromContext(ctx)
+	var changes []repository.FileChange
+	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
+	lastCommit := cfg.Status.Sync.Hash
 
-	if !isVersioned {
-		logger.Info("replicate tree unversioned repository")
-		if err := r.replicateTree(ctx, ""); err != nil {
-			return "", fmt.Errorf("replicate tree: %w", err)
+	if isVersioned && versionedRepo != nil && lastCommit != "" && !options.Complete {
+		latest, err := versionedRepo.LatestRef(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("latest ref: %w", err)
 		}
-		return "", nil
-	}
-
-	latest, err := versionedRepo.LatestRef(ctx)
-	if err != nil {
-		return "", fmt.Errorf("latest ref: %w", err)
-	}
-
-	if lastCommit == "" || complete {
-		if err := r.replicateTree(ctx, latest); err != nil {
-			return latest, fmt.Errorf("replicate tree: %w", err)
+		logger.Info("get list of changes", "last_commit", lastCommit, "latest", latest)
+		changes, err = versionedRepo.CompareFiles(ctx, cfg.Status.Sync.Hash, latest)
+		if err != nil {
+			return nil, fmt.Errorf("compare files: %w", err)
 		}
-		logger.Info("initial replication for versioned repository", "latest", latest)
+		syncStatus.Hash = latest
+	} else {
+		target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error listing current: %w", err)
+		}
+		source, err := repo.ReadTree(ctx, "")
+		if err != nil {
+			return nil, fmt.Errorf("error reading tree: %w", err)
+		}
 
-		return latest, nil
-	}
-
-	logger.Info("replicate incremental changes for versioned repository", "last_commit", lastCommit, "latest", latest)
-	changes, err := versionedRepo.CompareFiles(ctx, lastCommit, latest)
-	if err != nil {
-		return latest, fmt.Errorf("compare files: %w", err)
+		changes, err = repository.Changes(source, target)
+		if err != nil {
+			return nil, fmt.Errorf("error calculating changes: %w", err)
+		}
+		for i := range changes {
+			changes[i].Ref = "" // clear the refs so we do not try to write them
+		}
 	}
 
 	if err := r.replicateChanges(ctx, changes); err != nil {
-		return latest, fmt.Errorf("replicate changes: %w", err)
+		return nil, fmt.Errorf("replicate changes: %w", err)
 	}
 
-	return latest, nil
-}
-
-func (r *Syncer) cleanUnnecessaryResources(ctx context.Context, tree []repository.FileTreeEntry, list *provisioning.ResourceList) error {
-	paths := make(map[string]bool)
-	// Add root path
-	paths[""] = true
-	for _, entry := range tree {
-		paths[entry.Path] = true
-	}
-
-	sortResourceListForDeletion(list)
-
-	logger := logging.FromContext(ctx)
-
-	var count int
-	for _, i := range list.Items {
-		if _, ok := paths[i.Path]; ok {
-			continue
-		}
-
-		if err := r.deleteListResource(ctx, i); err != nil {
-			return fmt.Errorf("delete list resource: %w", err)
-		}
-
-		count++
-		logger.Info("deleted resource not present in repository", "resource", i)
-	}
-
-	if count == 0 {
-		logger.Info("resources are in sync with repository")
-	} else {
-		logger.Info("deleted resources not present in repository", "count", count)
-	}
-
-	return nil
-}
-
-func sortResourceListForDeletion(list *provisioning.ResourceList) {
-	// FIXME: this code should be simplified once unified storage folders support recursive deletion
-	// Sort by the following logic:
-	// - Put folders at the end so that we empty them first.
-	// - Sort folders by depth so that we remove the deepest first
-	sort.Slice(list.Items, func(i, j int) bool {
-		switch {
-		case list.Items[i].Group != folders.RESOURCE:
-			return true
-		case list.Items[j].Group != folders.RESOURCE:
-			return false
-		default:
-			return len(strings.Split(list.Items[i].Path, "/")) > len(strings.Split(list.Items[j].Path, "/"))
-		}
-	})
-}
-
-func (r *Syncer) deleteListResource(ctx context.Context, item provisioning.ResourceListItem) error {
-	// HACK: we need to find a better way to know the API version
-	var version string
-	switch item.Resource {
-	case folders.RESOURCE:
-		version = folders.VERSION
-	case dashboards.DASHBOARD_RESOURCE:
-		version = dashboardsv2alpha1.VERSION
-	default:
-		return fmt.Errorf("unknown resource api version: %s", item.Resource)
-	}
-
-	client := r.client.Resource(schema.GroupVersionResource{
-		Group:    item.Group,
-		Version:  version,
-		Resource: item.Resource,
-	})
-
-	if err := client.Delete(ctx, item.Name, metav1.DeleteOptions{}); err != nil {
-		return fmt.Errorf("delete resource: %w", err)
-	}
-
-	return nil
-}
-
-// replicateTree replicates all files in the repository.
-func (r *Syncer) replicateTree(ctx context.Context, ref string) error {
-	// Load the tree of the repository
-	fileTree, err := r.repository.ReadTree(ctx, ref)
-	if err != nil {
-		return fmt.Errorf("read tree: %w", err)
-	}
-
-	// Load the list of resources in the cluster
-	list, err := r.lister.List(ctx, r.client.GetNamespace(), r.repository.Config().Name)
-	if err != nil {
-		return fmt.Errorf("list resources: %w", err)
-	}
-
-	// Remove resources not longer present in the repository
-	if err := r.cleanUnnecessaryResources(ctx, fileTree, list); err != nil {
-		return fmt.Errorf("clean up before replicating tree: %w", err)
-	}
-
-	// Create folders
-	folderTree := resources.NewFolderTreeFromResourceList(list)
-	for _, entry := range fileTree {
-		parent := resources.ParentFolder(path.Dir(entry.Path), r.repository.Config())
-		if err := r.ensureFolderPathExists(ctx, path.Dir(entry.Path), parent, folderTree); err != nil {
-			return fmt.Errorf("ensure folder path exists: %w", err)
-		}
-	}
-
-	// Create a list of hashes to identify changed files
-	hashes := make(map[string]string)
-	for _, item := range list.Items {
-		hashes[item.Path] = item.Hash
-	}
-
-	// Create Dashboards
-	for _, entry := range fileTree {
-		logger := logging.FromContext(ctx).With("file", entry.Path)
-		if hashes[entry.Path] == entry.Hash {
-			logger.Debug("file is up to date")
-			continue
-		}
-
-		if !entry.Blob {
-			logger.Debug("ignoring non-blob entry")
-			continue
-		}
-
-		if resources.ShouldIgnorePath(entry.Path) {
-			logger.Debug("ignoring file")
-			continue
-		}
-
-		info, err := r.repository.Read(ctx, entry.Path, ref)
-		if err != nil {
-			return fmt.Errorf("read file: %w", err)
-		}
-
-		// The parse function will fill in the repository metadata, so copy it over here
-		info.Hash = entry.Hash
-		info.Modified = nil // modified?
-
-		parsed, err := r.parseResource(ctx, info)
-		if err != nil {
-			return fmt.Errorf("parse resource: %w", err)
-		}
-
-		if err := r.replicateFile(ctx, parsed, folderTree); err != nil {
-			if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-				logger.Info("file does not contain a resource")
-				continue
-			}
-			return fmt.Errorf("replicate file: %w", err)
-		}
-	}
-
-	return nil
+	syncStatus.State = provisioning.JobStateSuccess
+	return syncStatus, nil
 }
 
 // replicateFile creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-func (r *Syncer) replicateFile(ctx context.Context, file *resources.ParsedResource, folderTree *resources.FolderTree) error {
+func (r *syncer) replicateFile(ctx context.Context, file *resources.ParsedResource, folderTree *resources.FolderTree) error {
 	logger := logging.FromContext(ctx).With("file", file.Info.Path, "ref", file.Info.Ref)
-	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace(), "namespace", r.client.GetNamespace())
+	logger = logger.With("action", file.Action, "name", file.Obj.GetName(), "file_namespace", file.Obj.GetNamespace())
 
 	parent := resources.ParentFolder(file.Info.Path, r.repository.Config())
 	logger = logger.With("folder", parent)
@@ -313,10 +164,6 @@ func (r *Syncer) replicateFile(ctx context.Context, file *resources.ParsedResour
 			logger.Debug("updating file's UID with existing resource version", "version", rev)
 			file.Meta.SetResourceVersion(rev)
 		}
-		if gen := existingMeta.GetGeneration(); gen != 0 {
-			logger.Debug("updating file's UID with existing generation + 1", "generation", gen, "new_generation", gen+1)
-			file.Meta.SetGeneration(gen + 1)
-		}
 
 		_, err = file.Client.Update(ctx, file.Obj, metav1.UpdateOptions{})
 		if err != nil {
@@ -332,7 +179,7 @@ func (r *Syncer) replicateFile(ctx context.Context, file *resources.ParsedResour
 	return nil
 }
 
-func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
+func (r *syncer) replicateChanges(ctx context.Context, changes []repository.FileChange) error {
 	// Create an empty tree to avoid loading all folders unnecessarily
 	folderTree := resources.NewEmptyFolderTree()
 
@@ -397,7 +244,7 @@ func (r *Syncer) replicateChanges(ctx context.Context, changes []repository.File
 	return nil
 }
 
-func (r *Syncer) deleteFile(ctx context.Context, file *resources.ParsedResource) error {
+func (r *syncer) deleteFile(ctx context.Context, file *resources.ParsedResource) error {
 	_, err := file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
 	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 	if false && err != nil && !apierrors.IsNotFound(err) {
@@ -415,7 +262,7 @@ func (r *Syncer) deleteFile(ctx context.Context, file *resources.ParsedResource)
 	return nil
 }
 
-func (r *Syncer) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*resources.ParsedResource, error) {
+func (r *syncer) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*resources.ParsedResource, error) {
 	file, err := r.parser.Parse(ctx, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
@@ -433,7 +280,7 @@ func (r *Syncer) parseResource(ctx context.Context, fileInfo *repository.FileInf
 }
 
 // ensureFolderPathExists creates the folder structure in the cluster.
-func (r *Syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent string, folderTree *resources.FolderTree) error {
+func (r *syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent string, folderTree *resources.FolderTree) error {
 	return safepath.Walk(ctx, dirPath, func(ctx context.Context, path string) error {
 		fid := resources.ParseFolder(path, r.repository.Config().GetName())
 		if folderTree.In(fid.ID) {
@@ -456,14 +303,8 @@ func (r *Syncer) ensureFolderPathExists(ctx context.Context, dirPath, parent str
 // ensureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
-func (r *Syncer) ensureFolderExists(ctx context.Context, folder resources.Folder, parent string) error {
+func (r *syncer) ensureFolderExists(ctx context.Context, folder resources.Folder, parent string) error {
 	cfg := r.repository.Config()
-	repoInfo := &utils.ResourceRepositoryInfo{
-		Name:      cfg.GetName(),
-		Path:      folder.Path,
-		Hash:      "",  // FIXME: which hash?
-		Timestamp: nil, // ???&info.Modified.Time,
-	}
 	obj, err := r.folders.Get(ctx, folder.ID, metav1.GetOptions{})
 	if err == nil {
 		current, ok := obj.GetAnnotations()[utils.AnnoKeyRepoName]
@@ -496,7 +337,12 @@ func (r *Syncer) ensureFolderExists(ctx context.Context, folder resources.Folder
 	if parent != "" {
 		meta.SetFolder(parent)
 	}
-	meta.SetRepositoryInfo(repoInfo)
+	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+		Name:      cfg.GetName(),
+		Path:      folder.Path,
+		Hash:      "",  // FIXME: which hash?
+		Timestamp: nil, // ???&info.Modified.Time,
+	})
 
 	if _, err := r.folders.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("failed to create folder: %w", err)
