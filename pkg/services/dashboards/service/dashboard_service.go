@@ -1732,6 +1732,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 
 	if query.Page > 0 {
 		request.Page = query.Page
+		request.Offset = query.Page
 	}
 
 	user, err := identity.GetRequester(ctx)

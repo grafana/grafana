@@ -268,6 +268,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:     queryParams.Get("query"),
 		Limit:     int64(limit),
 		Offset:    int64(offset),
+		Page:      int64(offset), // on modes 0-2 (legacy) we use "Page" instead of "Offset"
 		Explain:   queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		IsDeleted: queryParams.Has("deleted") && queryParams.Get("deleted") == "true",
 	}
@@ -403,7 +404,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	// TODO the following params only work in modes 0-2 (legacy):
 	// - "deleted": soft delete not implemented yet
-	// - "page": paging not implemented yet in bleve.go
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
