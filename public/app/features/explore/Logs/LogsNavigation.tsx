@@ -7,6 +7,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
+import { t, Trans } from 'app/core/internationalization';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
 
@@ -128,7 +129,7 @@ function LogsNavigation({
     >
       <div className={styles.navButtonContent}>
         {loading ? <Spinner /> : <Icon name={oldestLogsFirst ? 'angle-up' : 'angle-down'} size="lg" />}
-        Older logs
+        <Trans i18nKey={'logs.logs-navigation.older-logs'}>Older logs</Trans>
       </div>
     </Button>
   );
@@ -158,7 +159,9 @@ function LogsNavigation({
       <div className={styles.navButtonContent}>
         {loading && <Spinner />}
         {onFirstPage || loading ? null : <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />}
-        {onFirstPage ? 'Start of range' : 'Newer logs'}
+        {onFirstPage
+          ? t('logs.logs-navigation.start-of-range', 'Start of range')
+          : t('logs.logs-navigation.newer-logs', 'Newer logs')}
       </div>
     </Button>
   );
@@ -207,7 +210,7 @@ function LogsNavigation({
           className={styles.scrollToBottomButton}
           variant="secondary"
           onClick={onScrollToBottomClick}
-          title="Scroll to bottom"
+          title={t('logs.logs-navigation.scroll-bottom', 'Scroll to bottom')}
         >
           <Icon name="arrow-down" size="lg" />
         </Button>
@@ -217,7 +220,7 @@ function LogsNavigation({
         className={styles.scrollToTopButton}
         variant="secondary"
         onClick={onScrollToTopClick}
-        title="Scroll to top"
+        title={t('logs.logs-navigation.scroll-top', 'Scroll to top')}
       >
         <Icon name="arrow-up" size="lg" />
       </Button>
