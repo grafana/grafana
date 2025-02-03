@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
@@ -126,6 +128,58 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return iamv0.GetOpenAPIDefinitions
+}
+
+func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	oas.Info.Description = "Identity and Access Management"
+
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	defsBase := "github.com/grafana/grafana/pkg/apis/iam/v0alpha1."
+
+	// Add missing schemas
+	for k, v := range defs {
+		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.", 1)
+		if oas.Components.Schemas[clean] == nil {
+			oas.Components.Schemas[clean] = &v.Schema
+		}
+	}
+	compBase := "com.github.grafana.grafana.pkg.apis.iam.v0alpha1."
+	schema := oas.Components.Schemas[compBase+"DisplayList"].Properties["display"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "Display"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"DisplayList"].Properties["display"] = schema
+	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			AllOf: []spec.Schema{
+				{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+					},
+				},
+			}},
+	}
+	oas.Components.Schemas[compBase+"Display"].Properties["identity"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			AllOf: []spec.Schema{
+				{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "IdentityRef"),
+					},
+				},
+			}},
+	}
+	return oas, nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {

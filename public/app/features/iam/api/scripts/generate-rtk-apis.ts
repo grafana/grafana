@@ -28,7 +28,7 @@ const config: ConfigFile = {
     '../endpoints.gen.ts': {
       apiFile: '../api.ts',
       apiImport: 'iamApi',
-      filterEndpoints: ['getDisplayList'],
+      filterEndpoints: ['getDisplayMapping'],
       exportName: 'generatedIamApi',
       flattenArg: false,
     },

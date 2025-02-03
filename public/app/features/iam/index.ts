@@ -1,3 +1,3 @@
 import { generatedIamApi } from './api/endpoints.gen';
 
-export const { useGetDisplayListQuery } = generatedIamApi;
+export const { useGetDisplayMappingQuery } = generatedIamApi;
