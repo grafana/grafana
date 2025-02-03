@@ -37,8 +37,19 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { placeholder, onChange, value, width, enableAllOption, invalid, disabled, minWidth, maxWidth, isClearable } =
-    props;
+  const {
+    placeholder,
+    onChange,
+    value,
+    width,
+    enableAllOption,
+    invalid,
+    disabled,
+    minWidth,
+    maxWidth,
+    isClearable,
+    createCustomValue = false,
+  } = props;
 
   const styles = useStyles2(getComboboxStyles);
   const [inputValue, setInputValue] = useState('');
@@ -55,7 +66,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   }, [inputValue]);
 
   // Handle async options and the 'All' option
-  const { options: baseOptions, updateOptions, asyncLoading } = useOptions(props.options);
+  const { options: baseOptions, updateOptions, asyncLoading } = useOptions(props.options, createCustomValue);
   const options = useMemo(() => {
     // Only add the 'All' option if there's more than 1 option
     const addAllOption = enableAllOption && baseOptions.length > 1;
@@ -202,14 +213,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               const filteredSet = new Set(realOptions.map((item) => item.value));
               newSelectedItems = selectedItems.filter((item) => !filteredSet.has(item.value));
             }
-
             setSelectedItems(newSelectedItems);
           } else if (newSelectedItem && isOptionSelected(newSelectedItem)) {
             removeSelectedItem(newSelectedItem);
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
           }
-
           break;
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');

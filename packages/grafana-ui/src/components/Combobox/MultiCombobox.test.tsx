@@ -128,6 +128,40 @@ describe('MultiCombobox', () => {
     expect(await screen.findByText('d')).toBeInTheDocument();
   });
 
+  it('should be able to set custom value', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    const onChange = jest.fn();
+    render(<MultiCombobox options={options} value={[]} onChange={onChange} createCustomValue />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.type(input, 'D');
+    await user.keyboard('{arrowdown}{enter}');
+    expect(onChange).toHaveBeenCalledWith([{ label: 'D', value: 'D', description: 'Use custom value' }]);
+  });
+
+  it('should be able to add custom value to the selected options', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    const onChange = jest.fn();
+    render(<MultiCombobox options={options} value={['a', 'c']} onChange={onChange} createCustomValue />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.type(input, 'D');
+    await user.keyboard('{arrowdown}{enter}');
+    expect(onChange).toHaveBeenCalledWith([
+      { value: 'a' },
+      { value: 'c' },
+      { label: 'D', value: 'D', description: 'Use custom value' },
+    ]);
+  });
+
   it('should remove value when clicking on the close icon of the pill', async () => {
     const options = [
       { label: 'A', value: 'a' },

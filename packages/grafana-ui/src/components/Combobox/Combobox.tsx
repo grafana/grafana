@@ -135,12 +135,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
         if (!optionMatchingInput) {
           const customValueOption = {
-            label: t('combobox.custom-value.label', 'Custom value: ') + inputValue,
+            label: inputValue,
             // Type casting needed to make this work when T is a number
-            value: inputValue as unknown as T,
-            /* TODO: Add this back when we do support descriptions and have need for it
-            description: t('combobox.custom-value.create', 'Create custom value'),
-            */
+            value: inputValue as T,
+            description: t('combobox.custom-value.description', 'Use custom value'),
           };
 
           itemsToSet = items.slice(0);
