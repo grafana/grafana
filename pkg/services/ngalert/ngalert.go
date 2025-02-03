@@ -536,8 +536,8 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 		FeatureToggles: featureToggles,
 	}
 	simpleInstanceStore := store.InstanceDBStore{
-		SQLStore:       sqlStore,
-		Logger:         logger,
+		SQLStore: sqlStore,
+		Logger:   logger,
 	}
 
 	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
