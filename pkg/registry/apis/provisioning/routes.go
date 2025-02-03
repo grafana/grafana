@@ -155,7 +155,6 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			Type:     val.Spec.Type,
 			ReadOnly: val.Spec.ReadOnly,
 			Target:   val.Spec.Sync.Target,
-			Name:     val.ObjectMeta.Name,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

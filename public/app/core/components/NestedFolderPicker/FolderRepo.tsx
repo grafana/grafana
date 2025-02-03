@@ -1,4 +1,4 @@
-import { Badge, Icon, IconName, Text } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
 import { RepositoryView } from 'app/features/provisioning/api';
 
 export interface Props {
@@ -11,7 +11,7 @@ export function FolderRepo({ repo }: Props) {
     return null;
   }
 
-  return <Badge text={'Provisioned'} color={'purple'} style={{ marginLeft: 8 }} />;
+  return <Badge text={'Provisioned'} color={'darkgrey'} style={{ marginLeft: 8 }} />;
   // const [repoName, icon] = getRepoDetails(repo);
   //
   // return (
