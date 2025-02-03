@@ -154,6 +154,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			Type:     val.Spec.Type,
 			ReadOnly: val.Spec.ReadOnly,
 			Target:   val.Spec.Sync.Target,
+			Name:     val.ObjectMeta.Name,
 		}
 		if val.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
 			settings.Instance = val.Name

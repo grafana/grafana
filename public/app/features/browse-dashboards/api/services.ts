@@ -37,6 +37,7 @@ export async function listFolders(
     folders = await addRepositoryData(folders);
   }
 
+  console.log('f', folders);
   return folders.map((item) => ({
     kind: 'folder',
     uid: item.uid,

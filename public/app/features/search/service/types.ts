@@ -1,6 +1,6 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { Repository } from 'app/features/provisioning/api';
+import { RepositoryView } from 'app/features/provisioning/api';
 import { PermissionLevelString } from 'app/types';
 
 export interface FacetField {
@@ -92,5 +92,5 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
-  repository?: Repository;
+  repository?: RepositoryView;
 }

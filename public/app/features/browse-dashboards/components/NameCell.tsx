@@ -9,6 +9,7 @@ import { t } from 'app/core/internationalization';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
+import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
 import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeCellProps } from '../types';
 
@@ -27,7 +28,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
   const childrenByParentUID = useChildrenByParentUIDState();
   const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
-
+  console.log('item', item);
   if (item.kind === 'ui') {
     return (
       <>
@@ -102,6 +103,8 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
             item.title
           )}
         </Text>
+
+        {item.repository && <FolderRepo repo={item.repository} />}
       </div>
     </>
   );

@@ -234,11 +234,11 @@ const injectedRtkApi = api
         invalidatesTags: ['Repository'],
       }),
       getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
-        query: (queryArg) => ({ url: `/settings` }),
+        query: () => ({ url: `/settings` }),
         providesTags: ['Provisioning'],
       }),
       getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
-        query: (queryArg) => ({ url: `/stats` }),
+        query: () => ({ url: `/stats` }),
         providesTags: ['Provisioning'],
       }),
     }),
@@ -551,15 +551,9 @@ export type CreateRepositoryWebhookArg = {
   name: string;
 };
 export type GetFrontendSettingsResponse = /** status 200 undefined */ Settings;
-export type GetFrontendSettingsArg = {
-  /** workspace */
-  namespace: string;
-};
+export type GetFrontendSettingsArg = void;
 export type GetResourceStatsResponse = /** status 200 undefined */ ResourceStats;
-export type GetResourceStatsArg = {
-  /** workspace */
-  namespace: string;
-};
+export type GetResourceStatsArg = void;
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {

@@ -29,4 +29,7 @@ type RepositoryView struct {
 
 	// When syncing, where values are saved
 	Target SyncTargetType `json:"target"`
+
+	// Repository name
+	Name string `json:"name"`
 }
