@@ -51,7 +51,7 @@ func TestMigrate(t *testing.T) {
 			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", f.Name())
 		})
 
-		for targetVersion := range schemaversion.Migrations {
+		for targetVersion := inputVersion + 1; targetVersion <= schemaversion.LATEST_VERSION; targetVersion++ {
 			testName := fmt.Sprintf("%s v%d to v%d", name, inputVersion, targetVersion)
 			t.Run(testName, func(t *testing.T) {
 				testMigration(t, f, targetVersion)
