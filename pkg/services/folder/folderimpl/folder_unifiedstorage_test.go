@@ -716,6 +716,11 @@ func (m *mockFoldersK8sCli) getClient(ctx context.Context, orgID int64) (dynamic
 	return args.Get(0).(dynamic.ResourceInterface), args.Bool(1)
 }
 
+func (m *mockFoldersK8sCli) getDashboardClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
+	args := m.Called(ctx, orgID)
+	return args.Get(0).(dynamic.ResourceInterface), args.Bool(1)
+}
+
 func (m *mockFoldersK8sCli) getNamespace(orgID int64) string {
 	if orgID == 1 {
 		return "default"

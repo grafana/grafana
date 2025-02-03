@@ -36,11 +36,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // interface to allow for testing
 type folderK8sHandler interface {
 	getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
+	getDashboardClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool)
 	getNamespace(orgID int64) string
 	getSearcher(ctx context.Context) resource.ResourceClient
 }
@@ -668,6 +670,7 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		folders = append(folders, f.UID)
 	}
 
+	var dashboardUIDs []string
 	if cmd.ForceDeleteRules {
 		if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
 			return err
@@ -689,7 +692,6 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 			// We need a list of dashboard uids inside the folder to delete related public dashboards
-			var dashboardUIDs []string
 			// we cannot use the dashboard service directly due to circular dependencies,
 			// so either use the search client if the feature is enabled or use the dashboard store
 			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
@@ -722,10 +724,14 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 				if err != nil {
 					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 				}
-
 				dashboardUIDs = make([]string, len(hits.Hits))
+				k8sDeleteClient, _ := s.k8sclient.getDashboardClient(ctx, cmd.OrgID)
 				for i, dashboard := range hits.Hits {
 					dashboardUIDs[i] = dashboard.Name
+					err = k8sDeleteClient.Delete(ctx, dashboard.Name, metav1.DeleteOptions{})
+					if err != nil {
+						return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
+					}
 				}
 			} else {
 				dashes, err := s.dashboardStore.FindDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{SignedInUser: cmd.SignedInUser, FolderUIDs: folders, OrgId: cmd.OrgID})
@@ -735,6 +741,13 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 				dashboardUIDs = make([]string, len(dashes))
 				for i, dashboard := range dashes {
 					dashboardUIDs[i] = dashboard.UID
+					err = s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
+						UID:   dashboard.UID,
+						OrgID: cmd.OrgID,
+					})
+					if err != nil {
+						return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
+					}
 				}
 			}
 			// Delete all public dashboards in the folders
@@ -984,6 +997,20 @@ func (fk8s *foldk8sHandler) getClient(ctx context.Context, orgID int64) (dynamic
 	}
 
 	return dyn.Resource(fk8s.gvr).Namespace(fk8s.getNamespace(orgID)), true
+}
+
+func (fk8s *foldk8sHandler) getDashboardClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {
+	cfg := fk8s.restConfigProvider(ctx)
+	if cfg == nil {
+		return nil, false
+	}
+
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, false
+	}
+
+	return dyn.Resource(dashboardv0.DashboardResourceInfo.GroupVersionResource()).Namespace(fk8s.getNamespace(orgID)), true
 }
 
 func (fk8s *foldk8sHandler) getNamespace(orgID int64) string {
