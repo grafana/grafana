@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 
@@ -72,6 +73,10 @@ func ParseResults(result *resource.ResourceSearchResponse, offset int64) (*v0alp
 		QueryCost: result.QueryCost,
 		MaxScore:  result.MaxScore,
 		Hits:      make([]v0alpha1.DashboardHit, len(result.Results.Rows)),
+	}
+
+	if result.ResourceVersion > 0 {
+		sr.ResourceVersion = strconv.FormatInt(result.ResourceVersion, 10)
 	}
 
 	for i, row := range result.Results.Rows {

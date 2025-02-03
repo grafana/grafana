@@ -1,7 +1,9 @@
 package search
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -18,9 +20,10 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -29,6 +32,8 @@ import (
 )
 
 const tracingPrexfixBleve = "unified_search.bleve."
+
+var internalRVKey = []byte("rv")
 
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
@@ -142,7 +147,18 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 						dir = filepath.Join(resourceDir, fname)
 						index = nil
 					} else {
-						build = false // no need to build the index
+						rv, err := getRV(index)
+						if err == nil && rv > 1 {
+							build = false // no need to build the index
+						} else {
+							b.log.Info("unable to read RV from the resource version")
+							_ = index.Close()
+
+							// Pick a new file name
+							fname = b.start.Format("tmp-20060102-150405-rv-issue")
+							dir = filepath.Join(resourceDir, fname)
+							index = nil
+						}
 					}
 				}
 			}
@@ -186,13 +202,19 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	}
 
 	if build {
-		_, err = builder(idx)
+		rv, err := builder(idx)
 		if err != nil {
 			return nil, err
 		}
 
 		// Flush the batch
 		err = idx.Flush()
+		if err != nil {
+			return nil, err
+		}
+
+		// Write the rv into the index header
+		err = setRV(idx.index, rv)
 		if err != nil {
 			return nil, err
 		}
@@ -269,7 +291,11 @@ func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
 		}
 		return err // nil
 	}
-	return b.index.Index(v.Key.SearchID(), v)
+	err := b.index.Index(v.Key.SearchID(), v)
+	if err == nil {
+		err = setRV(b.index, v.RV)
+	}
+	return err
 }
 
 // Delete implements resource.DocumentIndex.
@@ -423,10 +449,11 @@ func (b *bleveIndex) Search(
 	}
 
 	// Verifies the index federation
-	index, err := b.getIndex(ctx, req, federate)
+	index, rv, err := b.getIndex(ctx, req, federate)
 	if err != nil {
 		return nil, err
 	}
+	response.ResourceVersion = rv
 
 	// convert protobuf request to bleve request
 	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
@@ -511,12 +538,17 @@ func (b *bleveIndex) getIndex(
 	ctx context.Context,
 	req *resource.ResourceSearchRequest,
 	federate []resource.ResourceIndex,
-) (bleve.Index, error) {
+) (bleve.Index, int64, error) {
 	_, span := b.tracing.Start(ctx, tracingPrexfixBleve+"getIndex")
 	defer span.End()
 
 	if len(req.Federated) != len(federate) {
-		return nil, fmt.Errorf("federation is misconfigured")
+		return nil, 0, fmt.Errorf("federation is misconfigured")
+	}
+
+	rv, err := getRV(b.index)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	// Search across resources using
@@ -526,16 +558,46 @@ func (b *bleveIndex) getIndex(
 		for i, extra := range federate {
 			typedindex, ok := extra.(*bleveIndex)
 			if !ok {
-				return nil, fmt.Errorf("federated indexes must be the same type")
+				return nil, 0, fmt.Errorf("federated indexes must be the same type")
 			}
 			if typedindex.verifyKey(req.Federated[i]) != nil {
-				return nil, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
+				return nil, 0, fmt.Errorf("federated index keys do not match (%v != %v)", typedindex, req.Federated[i])
 			}
 			all = append(all, typedindex.index)
+
+			fid, err := getRV(typedindex.index)
+			if err != nil {
+				return nil, 0, err
+			}
+			if fid < rv {
+				rv = fid // use the *smaller* value!
+			}
 		}
-		return bleve.NewIndexAlias(all...), nil
+		return bleve.NewIndexAlias(all...), rv, nil
 	}
-	return b.index, nil
+	return b.index, rv, nil
+}
+
+func setRV(index bleve.Index, rv int64) error {
+	var buf bytes.Buffer
+	err := binary.Write(&buf, binary.BigEndian, rv)
+	if err != nil {
+		return err
+	}
+	return index.SetInternal(internalRVKey, buf.Bytes())
+}
+
+func getRV(index bleve.Index) (int64, error) {
+	raw, err := index.GetInternal(internalRVKey)
+	if err != nil {
+		return 0, err
+	}
+	var rv int64
+	count, err := binary.Decode(raw, binary.BigEndian, &rv)
+	if count == 8 && err == nil {
+		return rv, nil
+	}
+	return 0, err
 }
 
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resource.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {

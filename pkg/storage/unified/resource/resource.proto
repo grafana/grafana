@@ -434,6 +434,9 @@ message ResourceSearchResponse {
 
   // Facet results
   map<string,Facet> facet = 7;
+
+  // Last ResourceVersion written to the index
+  int64 resource_version = 8;
 }
 
 // List items within a resource type & repository name
