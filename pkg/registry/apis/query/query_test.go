@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
@@ -95,7 +96,7 @@ type mockClient struct {
 	lastCalledWithHeaders *map[string]string
 }
 
-func (m mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string) (data.QueryDataClient, error) {
+func (m mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string) (clientapi.QueryDataClient, error) {
 	*m.lastCalledWithHeaders = headers
 
 	return nil, fmt.Errorf("mock error")
