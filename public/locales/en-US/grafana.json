@@ -198,7 +198,6 @@
       "compareVersions": "Compare versions",
       "comparing-versions": "Comparing versions",
       "condition": "Alert condition",
-      "contactPoint": "Contact point",
       "contactPointRouting": "Contact point routing",
       "description": "Each time you edit the alert rule a new version is created. You can restore an older version. Select two versions below and compare their differences.",
       "errorloading": "Failed to load alert rule history",
@@ -799,7 +798,8 @@
     "versionHistory": {
       "comparison": {
         "header": {
-          "diff": "JSON diff",
+          "hide-json-diff": "Hide JSON diff ",
+          "show-json-diff": "Show JSON diff ",
           "text": "Version {{version}} updated by {{updatedBy}} ({{ageString}}) {{message}}"
         }
       }

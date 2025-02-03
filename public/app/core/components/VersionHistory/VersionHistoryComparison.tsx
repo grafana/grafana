@@ -1,7 +1,8 @@
 import { identity } from 'lodash';
+import { useState } from 'react';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
-import { Box, Divider, Icon, Stack, Text } from '@grafana/ui';
+import { Box, Button, Divider, Icon, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
@@ -44,6 +45,7 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
   preprocessVersion = identity,
 }: DiffViewProps<T>) => {
   const diff = jsonDiff(preprocessVersion(oldVersion), preprocessVersion(newVersion));
+  const [showJsonDiff, setShowJsonDiff] = useState(false);
 
   const oldVersionAgeString = dateTimeFormatTimeAgo(oldInfo.created);
   const newVersionAgeString = dateTimeFormatTimeAgo(newInfo.created);
@@ -71,10 +73,21 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
         ))}
         <Divider />
       </Box>
-      <Text variant="h2">
-        <Trans i18nKey="core.versionHistory.comparison.header.diff">JSON diff</Trans>
-      </Text>
-      <DiffViewer oldValue={JSON.stringify(oldVersion, null, 2)} newValue={JSON.stringify(newVersion, null, 2)} />
+      <Box>
+        {showJsonDiff && (
+          <Button variant="secondary" size="sm" onClick={() => setShowJsonDiff(false)}>
+            <Trans i18nKey="core.versionHistory.comparison.header.hide-json-diff">Hide JSON diff </Trans>
+          </Button>
+        )}
+        {!showJsonDiff && (
+          <Button variant="secondary" size="sm" onClick={() => setShowJsonDiff(true)}>
+            <Trans i18nKey="core.versionHistory.comparison.header.show-json-diff">Show JSON diff </Trans>
+          </Button>
+        )}
+      </Box>
+      {showJsonDiff && (
+        <DiffViewer oldValue={JSON.stringify(oldVersion, null, 2)} newValue={JSON.stringify(newVersion, null, 2)} />
+      )}
     </Stack>
   );
 };

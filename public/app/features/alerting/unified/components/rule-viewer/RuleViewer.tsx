@@ -383,7 +383,7 @@ function usePageNav(rule: CombinedRule) {
         },
       },
       {
-        text: 'Version history',
+        text: 'Versions',
         active: activeTab === ActiveTab.VersionHistory,
         onClick: () => {
           setActiveTab(ActiveTab.VersionHistory);
