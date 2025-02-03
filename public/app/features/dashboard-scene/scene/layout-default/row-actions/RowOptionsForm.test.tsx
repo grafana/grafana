@@ -3,7 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { DashboardScene } from '../DashboardScene';
+import { DashboardScene } from '../../DashboardScene';
 
 import { RowOptionsForm } from './RowOptionsForm';
 
