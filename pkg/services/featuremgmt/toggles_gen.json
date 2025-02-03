@@ -145,6 +145,36 @@
     },
     {
       "metadata": {
+        "name": "alertingAlertmanagerExtraDedupStage",
+        "resourceVersion": "1738251165994",
+        "creationTimestamp": "2025-01-30T15:32:45Z"
+      },
+      "spec": {
+        "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
+        "resourceVersion": "1738251165994",
+        "creationTimestamp": "2025-01-30T15:32:45Z"
+      },
+      "spec": {
+        "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingApiServer",
         "resourceVersion": "1734627512749",
         "creationTimestamp": "2024-06-20T20:52:03Z",
@@ -264,7 +294,8 @@
       "metadata": {
         "name": "alertingNoNormalState",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-01-13T23:29:29Z"
+        "creationTimestamp": "2023-01-13T23:29:29Z",
+        "deletionTimestamp": "2025-01-31T15:46:31Z"
       },
       "spec": {
         "description": "Stop maintaining state of alerts that are not firing",
@@ -2764,6 +2795,7 @@
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1724141158995",
         "creationTimestamp": "2024-06-17T09:41:50Z",
+        "deletionTimestamp": "2025-01-16T11:09:59Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-20 08:05:58.995762 +0000 UTC"
         }
@@ -3691,17 +3723,18 @@
     {
       "metadata": {
         "name": "teamHttpHeaders",
-        "resourceVersion": "1726836253132",
+        "resourceVersion": "1738590709387",
         "creationTimestamp": "2023-10-17T10:23:54Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-20 12:44:13.132845 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-02-03 13:51:49.3871 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
@@ -3714,6 +3747,19 @@
         "description": "Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "templateVariablesUsesCombobox",
+        "resourceVersion": "1738141787383",
+        "creationTimestamp": "2025-01-29T09:09:47Z"
+      },
+      "spec": {
+        "description": "Use new combobox component for template variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
       }
     },
     {
