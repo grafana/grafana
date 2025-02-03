@@ -15,7 +15,6 @@ type InstanceStore interface {
 
 // InstanceReader provides methods to fetch alert instances.
 type InstanceReader interface {
-	FetchOrgIds(ctx context.Context) ([]int64, error)
 	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
 }
 
@@ -27,6 +26,10 @@ type InstanceWriter interface {
 	SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error
 	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int) error
+}
+
+type OrgReader interface {
+	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
 
 // RuleReader represents the ability to fetch alert rules.
