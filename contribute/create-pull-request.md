@@ -138,4 +138,4 @@ If your pull request includes configuration changes, all the following files mus
 
 - `conf/defaults.ini`
 - `conf/sample.ini`
-- `docs/sources/administration/configuration.md`
+- `docs/sources/setup-grafana/configure-grafana/_index.md`

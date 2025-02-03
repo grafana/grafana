@@ -845,6 +845,10 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
+### series_limit
+
+Restricts the initial display of dashboard panels to this number of series, in order to reduce browser tab crashes due to memory usage. If series-limited, panels can be individually toggled to show all series beyond this limit. A limit of 1000-3000 is typically sufficient to prevent most browser tab crashes while maintaining dashboard usability. A value of 0 (the default) indicates no limit.
+
 <hr />
 
 ### `[datasources]`

@@ -186,6 +186,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DefaultDatasource:                   defaultDS,
 		Datasources:                         dataSources,
 		MinRefreshInterval:                  hs.Cfg.MinRefreshInterval,
+		SeriesLimit:                         hs.Cfg.SeriesLimit,
 		Panels:                              panels,
 		Apps:                                apps,
 		AppUrl:                              hs.Cfg.AppURL,
