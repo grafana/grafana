@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func BenchmarkGetOrCreateTest(b *testing.B) {
+func BenchmarkCreateAndPatch(b *testing.B) {
 	cache := newCache()
 	rule := models.RuleGen.With(func(rule *models.AlertRule) {
 		for i := 0; i < 2; i++ {
@@ -43,7 +43,11 @@ func BenchmarkGetOrCreateTest(b *testing.B) {
 	// values := make([]int64, count)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_ = cache.create(ctx, log, rule, result, nil, u)
+			s := newState(ctx, log, rule, result, nil, u)
+			current := cache.get(rule.OrgID, rule.UID, s.CacheID)
+			if current == nil {
+				patch(s, current, result)
+			}
 		}
 	})
 }
