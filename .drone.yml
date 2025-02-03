@@ -341,10 +341,10 @@ steps:
   name: verify-i18n
 - commands:
   - yarn generate-apis
-  - "\n            file_diff=$(git diff)\n            if [ -n \"$file_diff\" ]; then\n
-    \               echo $file_diff\n                echo \"\nAPI client generation
-    has not been committed. Please run 'yarn generate-apis', commit the changes and
-    push again.\"\n                exit 1\n            fi\n            "
+  - "\n            file_diff=$(git diff ':!conf')\n            if [ -n \"$file_diff\"
+    ]; then\n                echo $file_diff\n                echo \"\nAPI client
+    generation has not been committed. Please run 'yarn generate-apis', commit the
+    changes and push again.\"\n                exit 1\n            fi\n            "
   depends_on:
   - yarn-install
   image: node:22-bookworm
@@ -1794,10 +1794,10 @@ steps:
   name: verify-i18n
 - commands:
   - yarn generate-apis
-  - "\n            file_diff=$(git diff)\n            if [ -n \"$file_diff\" ]; then\n
-    \               echo $file_diff\n                echo \"\nAPI client generation
-    has not been committed. Please run 'yarn generate-apis', commit the changes and
-    push again.\"\n                exit 1\n            fi\n            "
+  - "\n            file_diff=$(git diff ':!conf')\n            if [ -n \"$file_diff\"
+    ]; then\n                echo $file_diff\n                echo \"\nAPI client
+    generation has not been committed. Please run 'yarn generate-apis', commit the
+    changes and push again.\"\n                exit 1\n            fi\n            "
   depends_on:
   - yarn-install
   image: node:22-bookworm
@@ -2938,10 +2938,10 @@ steps:
   name: verify-i18n
 - commands:
   - yarn generate-apis
-  - "\n            file_diff=$(git diff)\n            if [ -n \"$file_diff\" ]; then\n
-    \               echo $file_diff\n                echo \"\nAPI client generation
-    has not been committed. Please run 'yarn generate-apis', commit the changes and
-    push again.\"\n                exit 1\n            fi\n            "
+  - "\n            file_diff=$(git diff ':!conf')\n            if [ -n \"$file_diff\"
+    ]; then\n                echo $file_diff\n                echo \"\nAPI client
+    generation has not been committed. Please run 'yarn generate-apis', commit the
+    changes and push again.\"\n                exit 1\n            fi\n            "
   depends_on:
   - yarn-install
   image: node:22-bookworm
@@ -5599,6 +5599,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2c0c21247b813e92a966fb373205e01d6a0efaa6bc3a0b97ecc90ccacc150a68
+hmac: 325001a16e1d3f58d64a959379bc7b2f520ddc15a3d1c7132b16eb55097005cf
 
 ...
