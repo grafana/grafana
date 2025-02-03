@@ -688,7 +688,7 @@ def verify_api_clients_step():
             "yarn generate-apis",
             # Verify that client generation has been run and committed
             '''
-            file_diff=$(git diff)
+            file_diff=$(git diff ':!conf')
             if [ -n "$file_diff" ]; then
                 echo $file_diff
                 echo "{}"

@@ -12,8 +12,8 @@ load(
     "enterprise_setup_step",
     "identify_runner_step",
     "lint_frontend_step",
-    "verify_i18n_step",
     "verify_api_clients_step",
+    "verify_i18n_step",
     "yarn_install_step",
 )
 load(
