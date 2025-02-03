@@ -49,7 +49,12 @@ import (
 const repoControllerWorkers = 1
 
 var (
-	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
+	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
+	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
 
 type APIBuilder struct {
