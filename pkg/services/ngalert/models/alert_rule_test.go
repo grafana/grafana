@@ -911,10 +911,12 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 	t.Run("should return correct key", func(t *testing.T) {
 		rule := RuleGen.With(
 			RuleMuts.WithUniqueGroupIndex(),
+			RuleMuts.WithNamespaceUID("some-namespace-uid"),
 		).GenerateRef()
 		expected := AlertRuleKeyWithGroup{
 			AlertRuleKey: rule.GetKey(),
 			RuleGroup:    rule.RuleGroup,
+			NamespaceUID: rule.NamespaceUID,
 		}
 		require.Equal(t, expected, rule.GetKeyWithGroup())
 	})
