@@ -282,6 +282,9 @@ export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   labels: Labels;
 }
 
+export type TopLevelGrafanaRuleDTOField = keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>;
+export type GrafanaAlertRuleDTOField = keyof GrafanaRuleDefinition;
+
 export type PostableRuleGrafanaRuleDTO = RulerGrafanaRuleDTO<PostableGrafanaRuleDefinition>;
 
 export type RulerCloudRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO;

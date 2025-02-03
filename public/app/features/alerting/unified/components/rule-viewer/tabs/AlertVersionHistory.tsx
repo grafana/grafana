@@ -22,7 +22,12 @@ import { RevisionModel, VersionHistoryComparison } from 'app/core/components/Ver
 import { Trans, t } from 'app/core/internationalization';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { Diffs, jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaAlertRuleDTOField,
+  GrafanaRuleDefinition,
+  RulerGrafanaRuleDTO,
+  TopLevelGrafanaRuleDTOField,
+} from 'app/types/unified-alerting-dto';
 
 import { trackRuleVersionsComparisonClick } from '../../../Analytics';
 import { alertRuleApi } from '../../../api/alertRuleApi';
@@ -48,14 +53,14 @@ function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRule
   const { grafana_alert, ...rest } = rulerRule;
 
   // translations for properties not in `grafana_alert`
-  const translationMap: Partial<Record<keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>, string>> = {
+  const translationMap: Partial<Record<TopLevelGrafanaRuleDTOField, string>> = {
     for: t('alerting.alertVersionHistory.pendingPeriod', 'Pending period'),
     annotations: t('alerting.alertVersionHistory.annotations', 'Annotations'),
     labels: t('alerting.alertVersionHistory.labels', 'Labels'),
   };
 
   // translations for properties in `grafana_alert`
-  const grafanaAlertTranslationMap: Partial<Record<keyof GrafanaRuleDefinition, string>> = {
+  const grafanaAlertTranslationMap: Partial<Record<GrafanaAlertRuleDTOField, string>> = {
     title: t('alerting.alertVersionHistory.name', 'Name'),
     namespace_uid: t('alerting.alertVersionHistory.namespace_uid', 'Folder UID'),
     data: t('alerting.alertVersionHistory.queryAndAlertCondition', 'Query and alert condition'),
