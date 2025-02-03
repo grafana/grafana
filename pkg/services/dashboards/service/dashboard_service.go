@@ -1735,24 +1735,21 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		request.Offset = query.Page
 	}
 
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+	namespace := dr.k8sclient.GetNamespace(query.OrgId)
+	var err error
 	var federate *resource.ResourceKey
 	switch query.Type {
 	case "":
 		// When no type specified, search for dashboards
-		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "dashboards")
+		request.Options.Key, err = resource.AsResourceKey(namespace, "dashboards")
 		// Currently a search query is across folders and dashboards
 		if query.Title == "" {
-			federate, err = resource.AsResourceKey(user.GetNamespace(), "folders")
+			federate, err = resource.AsResourceKey(namespace, "folders")
 		}
 	case searchstore.TypeDashboard, searchstore.TypeAnnotation:
-		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "dashboards")
+		request.Options.Key, err = resource.AsResourceKey(namespace, "dashboards")
 	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
-		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "folders")
+		request.Options.Key, err = resource.AsResourceKey(namespace, "folders")
 	default:
 		err = fmt.Errorf("bad type request")
 	}

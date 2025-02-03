@@ -656,8 +656,7 @@ func (s *builderCache) get(ctx context.Context, key NamespacedResource) (Documen
 // Given a namespace and type convert it to a search key
 func AsResourceKey(ns string, k string) (*ResourceKey, error) {
 	if ns == "" {
-		ns = "default" // TODO don't merge this!
-		// return nil, fmt.Errorf("missing namespace")
+		return nil, fmt.Errorf("missing namespace")
 	}
 	switch k {
 	case "folders", "folder":
