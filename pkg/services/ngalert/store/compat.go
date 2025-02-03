@@ -204,3 +204,34 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Metadata:             rule.Metadata,
 	}
 }
+
+func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
+	return alertRule{
+		ID:              version.ID,
+		OrgID:           version.RuleOrgID,
+		Title:           version.Title,
+		Condition:       version.Condition,
+		Data:            version.Data,
+		Updated:         version.Created,
+		UpdatedBy:       version.CreatedBy,
+		IntervalSeconds: version.IntervalSeconds,
+		Version:         version.Version,
+		UID:             version.RuleUID,
+		NamespaceUID:    version.RuleNamespaceUID,
+		// Versions do not store Dashboard\Panel as separate column.
+		// However, these fields are part of annotations and information in these fields is redundant
+		DashboardUID:         nil,
+		PanelID:              nil,
+		RuleGroup:            version.RuleGroup,
+		RuleGroupIndex:       version.RuleGroupIndex,
+		Record:               version.Record,
+		NoDataState:          version.NoDataState,
+		ExecErrState:         version.ExecErrState,
+		For:                  version.For,
+		Annotations:          version.Annotations,
+		Labels:               version.Labels,
+		IsPaused:             version.IsPaused,
+		NotificationSettings: version.NotificationSettings,
+		Metadata:             version.Metadata,
+	}
+}

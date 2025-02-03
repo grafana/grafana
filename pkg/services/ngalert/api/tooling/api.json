@@ -459,6 +459,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -498,10 +501,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type",
@@ -1166,6 +1174,14 @@
     "CounterResetHint": {
      "$ref": "#/definitions/CounterResetHint"
     },
+    "CustomValues": {
+     "description": "Holds the custom (usually upper) bounds for bucket definitions, otherwise nil.\nThis slice is interned, to be treated as immutable and copied by reference.\nThese numbers should be strictly increasing. This field is only used when the\nschema is for custom buckets, and the ZeroThreshold, ZeroCount, NegativeSpans\nand NegativeBuckets fields are not used in that case.",
+     "items": {
+      "format": "double",
+      "type": "number"
+     },
+     "type": "array"
+    },
     "PositiveBuckets": {
      "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
      "items": {
@@ -1182,7 +1198,7 @@
      "type": "array"
     },
     "Schema": {
-     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8 for exponential buckets.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in\neach case, and then each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times\n2^(2^-n). Another valid schema number is -53 for custom buckets, defined by\nthe CustomValues field.",
      "format": "int32",
      "type": "integer"
     },
@@ -1628,6 +1644,9 @@
      "format": "date-time",
      "type": "string"
     },
+    "updated_by": {
+     "$ref": "#/definitions/UserInfo"
+    },
     "version": {
      "format": "int64",
      "type": "integer"
@@ -1711,6 +1730,12 @@
     }
    },
    "type": "object"
+  },
+  "GettableRuleVersions": {
+   "items": {
+    "$ref": "#/definitions/GettableExtendedRuleNode"
+   },
+   "type": "array"
   },
   "GettableStatus": {
    "properties": {
@@ -3572,6 +3597,9 @@
      "format": "double",
      "type": "number"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "health": {
      "type": "string"
     },
@@ -3593,10 +3621,15 @@
     },
     "type": {
      "type": "string"
+    },
+    "uid": {
+     "type": "string"
     }
    },
    "required": [
+    "uid",
     "name",
+    "folderUid",
     "query",
     "health",
     "type"
@@ -3636,6 +3669,9 @@
     "file": {
      "type": "string"
     },
+    "folderUid": {
+     "type": "string"
+    },
     "interval": {
      "format": "double",
      "type": "number"
@@ -3665,6 +3701,7 @@
    "required": [
     "name",
     "file",
+    "folderUid",
     "rules",
     "interval"
    ],
@@ -3767,6 +3804,10 @@
   "Sample": {
    "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "DropName": {
+     "description": "DropName is used to indicate whether the __name__ label should be dropped\nas part of the query evaluation.",
+     "type": "boolean"
+    },
     "F": {
      "format": "double",
      "type": "number"
@@ -4382,7 +4423,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4418,7 +4458,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4445,6 +4485,18 @@
      "type": "array"
     }
    },
+   "type": "object"
+  },
+  "UserInfo": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "UserInfo represents user-related information, including a unique identifier and a name.",
    "type": "object"
   },
   "Userinfo": {
@@ -4648,6 +4700,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
@@ -4934,6 +4987,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"
