@@ -56,6 +56,7 @@ export const InfiniteScroll = ({
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
+  const lastLogOfPage = useRef<string[]>([]);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -67,6 +68,7 @@ export const InfiniteScroll = ({
       // out-of-bounds if no new logs returned
       setInfiniteLoaderState(logs.length === prevLogs.length ? 'out-of-bounds' : 'idle');
     } else {
+      lastLogOfPage.current = [];
       setAutoScroll(true);
     }
   }, [infiniteLoaderState, logs, prevLogs]);
@@ -107,6 +109,7 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('out-of-bounds');
         return;
       }
+      lastLogOfPage.current.push(logs[logs.length - 1].uid);
       setInfiniteLoaderState('loading');
       loadMore?.(newRange);
 
@@ -140,6 +143,7 @@ export const InfiniteScroll = ({
           log={logs[index]}
           showTime={showTime}
           style={style}
+          variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
           wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
@@ -192,4 +196,18 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
     default:
       return null;
   }
+}
+
+function getLogLineVariant(logs: ProcessedLogModel[], index: number, lastLogOfPage: string[]) {
+  if (!lastLogOfPage.length || !logs[index - 1]) {
+    return undefined;
+  }
+  const prevLog = logs[index - 1];
+  for (const uid of lastLogOfPage) {
+    if (prevLog.uid === uid) {
+      // First log of an infinite scrolling page
+      return 'infinite-scroll';
+    }
+  }
+  return undefined;
 }

@@ -13,10 +13,11 @@ interface Props {
   showTime: boolean;
   style: CSSProperties;
   onOverflow?: (index: number, id: string, height: number) => void;
+  variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
 }
 
-export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessage }: Props) => {
+export const LogLine = ({ index, log, style, onOverflow, showTime, variant, wrapLogMessage }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const logLineRef = useRef<HTMLDivElement | null>(null);
@@ -28,12 +29,13 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, wrapLogMessag
     const calculatedHeight = typeof style.height === 'number' ? style.height : undefined;
     const actualHeight = hasUnderOrOverflow(logLineRef.current, calculatedHeight);
     if (actualHeight) {
+      console.log('overflow');
       onOverflow(index, log.uid, actualHeight);
     }
   }, [index, log.uid, onOverflow, style.height]);
 
   return (
-    <div style={style} className={styles.logLine} ref={onOverflow ? logLineRef : undefined}>
+    <div style={style} className={`${styles.logLine} ${variant}`} ref={onOverflow ? logLineRef : undefined}>
       <div className={wrapLogMessage ? styles.wrappedLogLine : styles.unwrappedLogLine}>
         {showTime && <span className={`${styles.timestamp} level-${log.logLevel}`}>{log.timestamp}</span>}
         {log.logLevel && <span className={`${styles.level} level-${log.logLevel}`}>{log.logLevel}</span>}
@@ -62,6 +64,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         opacity: 0.9,
       },
+      '&.infinite-scroll': {
+        borderTop: `solid 1px ${theme.colors.border.strong}`,
+      },
     }),
     logLineMessage: css({
       textAlign: 'center',
@@ -75,6 +80,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
       '&.level-error': {
         color: colors.error,
+      },
+      '&.level-info': {
+        color: colors.info,
       },
       '&.level-warning': {
         color: colors.warning,
@@ -109,11 +117,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     unwrappedLogLine: css({
       whiteSpace: 'pre',
-      paddingBottom: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.75),
     }),
     wrappedLogLine: css({
       whiteSpace: 'pre-wrap',
-      paddingBottom: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.75),
     }),
   };
 };

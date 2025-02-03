@@ -4,7 +4,7 @@ import { ProcessedLogModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
 let gridSize = 8;
-let paddingBottom = gridSize * 0.5;
+let paddingBottom = gridSize * 0.75;
 let lineHeight = 22;
 let measurementMode: 'canvas' | 'dom' = 'canvas';
 
@@ -16,7 +16,7 @@ export function init(theme: GrafanaTheme2) {
   initCanvasMeasurement(font, letterSpacing);
 
   gridSize = theme.spacing.gridSize;
-  paddingBottom = gridSize * 0.5;
+  paddingBottom = gridSize * 0.75;
   lineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
 
   widthMap = new Map<number, number>();
