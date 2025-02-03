@@ -16,7 +16,7 @@ func Test_Tree(t *testing.T) {
 		{UID: "111", ParentUID: strPtr("11")},
 		{UID: "1111", ParentUID: strPtr("111")},
 		{UID: "121", ParentUID: strPtr("12")},
-		// not ordered insert to make sure pathcing works correctly
+		// not ordered insert to make sure patching works correctly
 		{UID: "22", ParentUID: strPtr("2")},
 		{UID: "222", ParentUID: strPtr("22")},
 		{UID: "21", ParentUID: strPtr("2")},
