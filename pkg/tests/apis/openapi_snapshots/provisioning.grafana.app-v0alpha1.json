@@ -3463,7 +3463,11 @@
             "description": "The basic repository settings",
             "type": "array",
             "items": {
-              "default": {}
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryView"
+                }
+              ]
             },
             "x-kubernetes-map-type": "atomic"
           },
