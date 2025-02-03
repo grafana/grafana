@@ -11,6 +11,7 @@ import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } fro
 import { LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { ProcessedLogModel } from './processing';
+import { t } from 'app/core/internationalization';
 
 interface ChildrenProps {
   itemCount: number;
@@ -176,15 +177,18 @@ export const InfiniteScroll = ({
 function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
   switch (state) {
     case 'out-of-bounds':
-      return 'End of the selected time range.';
+      return t('logs.infinite-scroll.end-of-range', 'End of the selected time range.');
     case 'loading':
       return (
         <>
-          Loading {order === LogsSortOrder.Ascending ? 'newer' : 'older'} logs... <Spinner inline />
+          {order === LogsSortOrder.Ascending
+            ? t('logs.infinite-scroll.load-newer', 'Loading newer logs...')
+            : t('logs.infinite-scroll.load-older', 'Loading older logs...')}{' '}
+          <Spinner inline />
         </>
       );
     case 'pre-scroll':
-      return 'Scroll to load more';
+      return t('logs.infinite-scroll.load-more', 'Scroll to load more');
     default:
       return null;
   }

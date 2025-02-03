@@ -2012,6 +2012,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "End of the selected time range.",
+      "load-more": "Scroll to load more",
+      "load-newer": "Loading newer logs...",
+      "load-older": "Loading older logs...",
       "older-logs": "Older logs"
     },
     "log-details": {

@@ -2012,6 +2012,10 @@
   },
   "logs": {
     "infinite-scroll": {
+      "end-of-range": "Ēŉđ őƒ ŧĥę şęľęčŧęđ ŧįmę řäŉģę.",
+      "load-more": "Ŝčřőľľ ŧő ľőäđ mőřę",
+      "load-newer": "Ŀőäđįŉģ ŉęŵęř ľőģş...",
+      "load-older": "Ŀőäđįŉģ őľđęř ľőģş...",
       "older-logs": "Øľđęř ľőģş"
     },
     "log-details": {
