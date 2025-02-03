@@ -20,7 +20,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList":               schema_pkg_apis_provisioning_v0alpha1_FileList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HealthStatus":           schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HelloWorld":             schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HistoryItem":            schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HistoryList":            schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Job":                    schema_pkg_apis_provisioning_v0alpha1_Job(ref),
@@ -208,6 +207,11 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -304,6 +308,11 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 						},
 					},
 					"message": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Summary messages (will be shown to users)",
 							Type:        []string{"array"},
@@ -320,38 +329,6 @@ func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCall
 					},
 				},
 				Required: []string{"healthy"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"whom": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
 			},
 		},
 	}
@@ -378,6 +355,11 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref common.ReferenceCallb
 						},
 					},
 					"authors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -434,9 +416,13 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
-							Type:        []string{"array"},
+							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -919,6 +905,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCa
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1041,6 +1032,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 						},
 					},
 					"stats": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "The object count when sync last ran",
 							Type:        []string{"array"},
@@ -1184,6 +1180,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref common.ReferenceCall
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1347,6 +1348,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1467,6 +1473,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 						},
 					},
 					"lint": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Lint results",
 							Type:        []string{"array"},
@@ -1481,6 +1492,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 						},
 					},
 					"errors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "If errors exist, show them here",
 							Type:        []string{"array"},
@@ -1557,6 +1573,11 @@ func schema_pkg_apis_provisioning_v0alpha1_Settings(ref common.ReferenceCallback
 						},
 					},
 					"repository": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "The basic repository settings",
 							Type:        []string{"object"},
@@ -1680,6 +1701,11 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 						},
 					},
 					"message": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Summary messages (will be shown to users)",
 							Type:        []string{"array"},
