@@ -48,7 +48,7 @@ function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRule
   const { grafana_alert, ...rest } = rulerRule;
 
   // translations for properties not in `grafana_alert`
-  const translationMap: Record<string, string> = {
+  const translationMap: Partial<Record<keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>, string>> = {
     for: t('alerting.alertVersionHistory.pendingPeriod', 'Pending period'),
     annotations: t('alerting.alertVersionHistory.annotations', 'Annotations'),
     labels: t('alerting.alertVersionHistory.labels', 'Labels'),
@@ -68,10 +68,12 @@ function preprocessRuleForDiffDisplay(rulerRule: RulerGrafanaRuleDTO<GrafanaRule
   };
 
   const processedTopLevel = Object.entries(rest).reduce((acc, [key, value]) => {
-    const translation = translationMap[key] || key;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const topLevelRuleKey = key as keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>;
+    const potentiallyTranslatedKey = translationMap[topLevelRuleKey] || key;
     return {
       ...acc,
-      [translation]: value,
+      [potentiallyTranslatedKey]: value,
     };
   }, {});
 
