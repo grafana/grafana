@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
@@ -40,6 +41,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   private selectElement(element: ElementSelectionContextItem, multi?: boolean) {
+    // We should not select clones
+    if (isInCloneChain(element.id)) {
+      if (multi) {
+        return;
+      }
+
+      this.clearSelection();
+      return;
+    }
+
     const obj = sceneGraph.findByKey(this, element.id);
     if (obj) {
       this.selectObject(obj, element.id, multi);

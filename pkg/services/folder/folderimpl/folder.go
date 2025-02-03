@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -53,7 +54,6 @@ type Service struct {
 	log                    *slog.Logger
 	dashboardStore         dashboards.Store
 	dashboardFolderStore   folder.FolderStore
-	userService            user.Service
 	features               featuremgmt.FeatureToggles
 	accessControl          accesscontrol.AccessControl
 	k8sclient              folderK8sHandler
@@ -88,7 +88,6 @@ func ProvideService(
 		dashboardStore:         dashboardStore,
 		dashboardFolderStore:   folderStore,
 		store:                  store,
-		userService:            userService,
 		features:               features,
 		accessControl:          ac,
 		bus:                    bus,
@@ -114,7 +113,7 @@ func ProvideService(
 			recourceClientProvider: unified.GetResourceClient,
 		}
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler)
+		unifiedStore := ProvideUnifiedStore(k8sHandler, userService)
 
 		srv.unifiedStore = unifiedStore
 		srv.k8sclient = k8sHandler
@@ -167,6 +166,17 @@ func (s *Service) DBMigration(db db.DB) {
 	}
 
 	s.log.Debug("syncing dashboard and folder tables finished")
+}
+
+func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) {
+		// TODO:
+		// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
+		// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
+		return s.searchFoldersFromApiServer(ctx, q)
+	}
+
+	return nil, fmt.Errorf("cannot be called on the legacy folder service")
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {

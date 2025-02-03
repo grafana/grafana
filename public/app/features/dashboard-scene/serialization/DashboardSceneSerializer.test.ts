@@ -627,7 +627,6 @@ describe('DashboardSceneSerializer', () => {
         expect(saveAsModel).toMatchObject({
           title: baseOptions.title,
           description: baseOptions.description,
-          id: undefined,
           editable: true,
           annotations: [],
           cursorSync: 'Off',
@@ -801,7 +800,6 @@ describe('DashboardSceneSerializer', () => {
 
       expect(serializer.initialSaveModel).toEqual({
         ...saveModel,
-        id: response.id,
       });
     });
 

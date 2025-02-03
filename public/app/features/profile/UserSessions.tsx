@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { t } from 'i18next';
 import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 import { UserSession } from 'app/types';
 
