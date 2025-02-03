@@ -170,7 +170,6 @@ sqlQuerybuilderFunctionParameters,experimental,@grafana/oss-big-tent,false,false
 azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false,false
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
-openSearchBackendFlowEnabled,GA,@grafana/aws-datasources,false,false,false
 ssoSettingsLDAP,preview,@grafana/identity-access-team,false,true,false
 failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
