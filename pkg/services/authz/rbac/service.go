@@ -678,8 +678,8 @@ func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix st
 	}
 
 	return &authzv1.ListResponse{Folders: folderList, Items: itemList}
-
 }
+
 func getChildren(folderMap map[string]FolderNode, folderUID string, folderSet map[string]struct{}) {
 	folder, has := folderMap[folderUID]
 	if !has {
