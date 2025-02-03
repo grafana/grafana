@@ -25,6 +25,7 @@ import {
 
 import { t } from '../../../core/internationalization';
 import { provisioningAPI, RepositoryList } from '../../provisioning/api';
+import { NestedFolderDTO } from '../../search/service/types';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -442,9 +443,15 @@ export const {
 export { skipToken } from '@reduxjs/toolkit/query/react';
 
 // Overloaded function signatures to handle different input types
-async function addRepositoryData(data: FolderListItemDTO[]): Promise<FolderListItemDTO[]>;
-async function addRepositoryData(data: FolderDTO): Promise<FolderDTO>;
-async function addRepositoryData(data: FolderListItemDTO[] | FolderDTO): Promise<FolderListItemDTO[] | FolderDTO> {
+type FolderDataType = FolderListItemDTO | NestedFolderDTO | FolderDTO;
+
+export async function addRepositoryData(data: FolderListItemDTO[]): Promise<FolderListItemDTO[]>;
+export async function addRepositoryData(data: NestedFolderDTO[]): Promise<NestedFolderDTO[]>;
+export async function addRepositoryData(data: NestedFolderDTO): Promise<NestedFolderDTO>;
+export async function addRepositoryData(data: FolderDTO): Promise<FolderDTO>;
+export async function addRepositoryData(
+  data: FolderDataType | FolderDataType[]
+): Promise<FolderDataType | FolderDataType[]> {
   if (!config.featureToggles.provisioning) {
     return data;
   }
@@ -455,13 +462,13 @@ async function addRepositoryData(data: FolderListItemDTO[] | FolderDTO): Promise
     return data;
   }
 
-  const enrichItem = <T extends FolderListItemDTO | FolderDTO>(item: T) => {
-    const repository = repositories.items?.find((repo) => repo.metadata?.name === item.uid); // folder UID matches
-    return repository ? { ...item, repository } : item;
-  };
-
   if (Array.isArray(data)) {
-    return data.map(enrichItem);
+    return data.map((item) => {
+      const repository = repositories.items?.find((repo) => repo.metadata?.name === item.uid);
+      return repository ? { ...item, repository } : item;
+    });
   }
-  return enrichItem(data);
+
+  const repository = repositories.items?.find((repo) => repo.metadata?.name === data.uid);
+  return repository ? { ...data, repository } : data;
 }
