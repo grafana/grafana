@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1747,9 +1748,9 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		if query.Title == "" {
 			federate, err = resource.AsResourceKey(user.GetNamespace(), "folders")
 		}
-	case "dash-db", "dash-annotation":
+	case searchstore.TypeDashboard, searchstore.TypeAnnotation:
 		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "dashboards")
-	case "dash-folder", "dash-folder-alerting":
+	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
 		request.Options.Key, err = resource.AsResourceKey(user.GetNamespace(), "folders")
 	default:
 		err = fmt.Errorf("bad type request")

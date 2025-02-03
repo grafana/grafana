@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"google.golang.org/grpc"
 )
@@ -49,9 +50,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 	var queryType string
 	if req.Options.Key.Resource == "dashboards" {
-		queryType = "dash-db"
+		queryType = searchstore.TypeDashboard
 	} else if req.Options.Key.Resource == "folders" {
-		queryType = "dash-folder"
+		queryType = searchstore.TypeFolder
 	} else {
 		return nil, fmt.Errorf("bad type request")
 	}
@@ -61,7 +62,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	for _, fed := range req.Federated {
-		if (fed.Resource == "dashboards" && queryType == "dash-folder") || (fed.Resource == "folders" && queryType == "dash-db") {
+		if (fed.Resource == "dashboards" && queryType == searchstore.TypeFolder) || (fed.Resource == "folders" && queryType == searchstore.TypeDashboard) {
 			queryType = "" // makes the legacy store search across both
 		}
 	}
