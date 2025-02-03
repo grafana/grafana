@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -36,11 +36,11 @@ type pluginRegistry struct {
 	dataSourcesService datasources.DataSourceService
 }
 
-var _ data.QueryDataClient = (*pluginClient)(nil)
+var _ clientapi.QueryDataClient = (*pluginClient)(nil)
 var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
-func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider) data.QueryDataClient {
+func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider) clientapi.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
 		pCtxProvider: ctx,
@@ -57,19 +57,19 @@ func NewDataSourceRegistryFromStore(pluginStore pluginstore.Store,
 }
 
 // ExecuteQueryData implements QueryHelper.
-func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
+func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {
-		return http.StatusBadRequest, nil, err
+		return nil, err
 	}
 	if dsRef == nil {
-		return http.StatusBadRequest, nil, fmt.Errorf("expected single datasource request")
+		return nil, fmt.Errorf("expected single datasource request")
 	}
 
 	// NOTE: this depends on uid unique across datasources
 	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, dsRef.UID)
 	if err != nil {
-		return http.StatusBadRequest, nil, err
+		return nil, err
 	}
 
 	qdr := &backend.QueryDataRequest{
@@ -77,14 +77,14 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	}
 	qdr.PluginContext, err = d.pCtxProvider.PluginContextForDataSource(ctx, settings)
 	if err != nil {
-		return http.StatusBadRequest, nil, err
+		return nil, err
 	}
 
 	rsp, err := d.pluginClient.QueryData(ctx, qdr)
 	if err != nil {
-		return http.StatusInternalServerError, rsp, err
+		return rsp, err
 	}
-	return query.GetResponseCode(rsp), rsp, err
+	return rsp, err
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.
