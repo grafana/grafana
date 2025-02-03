@@ -90,6 +90,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     const { entries, contextItems: selected } = this.state.selection.getStateWithoutValueAt(id);
+
+    if (entries.length === 0) {
+      this.clearSelection();
+      return;
+    }
+
     this.setState({
       selection: new ElementSelection([...entries]),
       selectionContext: {
