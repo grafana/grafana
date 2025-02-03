@@ -125,7 +125,7 @@ func ProvideRegistration(
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		authnSvc.RegisterClient(clients.ProvideProvisioning(userService))
+		authnSvc.RegisterClient(clients.ProvideProvisioning())
 	}
 
 	// FIXME (jguer): move to User package
