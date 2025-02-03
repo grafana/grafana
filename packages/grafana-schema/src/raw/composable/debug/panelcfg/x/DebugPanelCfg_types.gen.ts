@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "11.5.0-pre";
+export const pluginVersion = "11.6.0-pre";
 
 export type UpdateConfig = {
   render: boolean,
