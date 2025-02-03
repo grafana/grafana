@@ -5,13 +5,13 @@ import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window'
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Spinner } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 
 import { LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { ProcessedLogModel } from './processing';
-import { t } from 'app/core/internationalization';
 
 interface ChildrenProps {
   itemCount: number;
