@@ -12,18 +12,21 @@ import {
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
+import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
+  getGridItemKeyForPanelId,
+  getDashboardSceneFor,
 } from '../../utils/utils';
-import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
-import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { DashboardGridItem } from './DashboardGridItem';
+import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { RowActions } from './row-actions/RowActions';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
@@ -66,7 +69,7 @@ export class DefaultGridLayoutManager
       x: 0,
       y: 0,
       body: vizPanel,
-      key: `grid-item-${panelId}`,
+      key: getGridItemKeyForPanelId(panelId),
     });
 
     this.state.grid.setState({
@@ -75,7 +78,7 @@ export class DefaultGridLayoutManager
   }
 
   /**
-   * Adds a new emtpy row
+   * Adds a new empty row
    */
   public addNewRow(): SceneGridRow {
     const id = this.getNextPanelId();
@@ -127,7 +130,7 @@ export class DefaultGridLayoutManager
   /**
    * Removes a panel
    */
-  public removePanel(panel: VizPanel) {
+  public removePanel(panel: VizPanel): void {
     const gridItem = panel.parent!;
 
     if (!(gridItem instanceof DashboardGridItem)) {
@@ -231,7 +234,7 @@ export class DefaultGridLayoutManager
     return panels;
   }
 
-  public getNextPanelId(): number {
+  public getMaxPanelId(): number {
     let max = 0;
 
     for (const child of this.state.grid.state.children) {
@@ -271,10 +274,14 @@ export class DefaultGridLayoutManager
       }
     }
 
-    return max + 1;
+    return max;
   }
 
-  public collapseAllRows() {
+  public getNextPanelId(): number {
+    return getDashboardSceneFor(this).getNextPanelId();
+  }
+
+  public collapseAllRows(): void {
     this.state.grid.state.children.forEach((child) => {
       if (!(child instanceof SceneGridRow)) {
         return;
@@ -285,7 +292,7 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public expandAllRows() {
+  public expandAllRows(): void {
     this.state.grid.state.children.forEach((child) => {
       if (!(child instanceof SceneGridRow)) {
         return;
@@ -296,7 +303,7 @@ export class DefaultGridLayoutManager
     });
   }
 
-  activateRepeaters(): void {
+  public activateRepeaters(): void {
     this.state.grid.forEachChild((child) => {
       if (child instanceof DashboardGridItem && !child.isActive) {
         child.activate();
@@ -323,6 +330,76 @@ export class DefaultGridLayoutManager
 
   public getDescriptor(): LayoutRegistryItem {
     return DefaultGridLayoutManager.getDescriptor();
+  }
+
+  public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
+    return this.clone({
+      grid: this.state.grid.clone({
+        isResizable: isSource && this.state.grid.state.isResizable,
+        isDraggable: isSource && this.state.grid.state.isDraggable,
+        children: this.state.grid.state.children.reduce<{ panelId: number; children: SceneGridItemLike[] }>(
+          (childrenAcc, child) => {
+            if (child instanceof DashboardGridItem) {
+              const gridItemKey = joinCloneKeys(ancestorKey, getGridItemKeyForPanelId(childrenAcc.panelId));
+
+              const gridItem = child.clone({
+                key: gridItemKey,
+                body: child.state.body.clone({
+                  key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(childrenAcc.panelId++)),
+                }),
+                isDraggable: isSource && child.state.isDraggable,
+                isResizable: isSource && child.state.isResizable,
+              });
+
+              childrenAcc.children.push(gridItem);
+              return childrenAcc;
+            }
+
+            if (child instanceof SceneGridRow) {
+              const rowKey = joinCloneKeys(ancestorKey, getVizPanelKeyForPanelId(childrenAcc.panelId++));
+
+              const row = child.clone({
+                key: rowKey,
+                children: child.state.children.reduce<SceneGridItemLike[]>((rowAcc, rowChild) => {
+                  if (isClonedKey(rowChild.state.key!)) {
+                    return rowAcc;
+                  }
+
+                  if (!(rowChild instanceof DashboardGridItem)) {
+                    rowAcc.push(rowChild.clone());
+                    return rowAcc;
+                  }
+
+                  const gridItemKey = joinCloneKeys(rowKey, getGridItemKeyForPanelId(childrenAcc.panelId));
+
+                  const gridItem = rowChild.clone({
+                    key: gridItemKey,
+                    isDraggable: isSource && rowChild.state.isDraggable,
+                    isResizable: isSource && rowChild.state.isResizable,
+                    body: rowChild.state.body.clone({
+                      key: joinCloneKeys(gridItemKey, getVizPanelKeyForPanelId(childrenAcc.panelId++)),
+                    }),
+                  });
+
+                  rowAcc.push(gridItem);
+                  return rowAcc;
+                }, []),
+                isDraggable: isSource && child.state.isDraggable,
+                isResizable: isSource && child.state.isResizable,
+              });
+
+              childrenAcc.children.push(row);
+
+              return childrenAcc;
+            }
+
+            childrenAcc.children.push(child.clone());
+            return childrenAcc;
+          },
+          { panelId: 0, children: [] }
+        ).children,
+      }),
+    });
   }
 
   public static getDescriptor(): LayoutRegistryItem {
@@ -389,9 +466,15 @@ export class DefaultGridLayoutManager
   /**
    * Useful for preserving items positioning when switching layouts
    * @param gridItems
+   * @param isDraggable
+   * @param isResizable
    * @returns
    */
-  public static fromGridItems(gridItems: SceneGridItemLike[]): DefaultGridLayoutManager {
+  public static fromGridItems(
+    gridItems: SceneGridItemLike[],
+    isDraggable?: boolean,
+    isResizable?: boolean
+  ): DefaultGridLayoutManager {
     const children = gridItems.reduce<SceneGridItemLike[]>((acc, gridItem) => {
       gridItem.clearParent();
       acc.push(gridItem);
@@ -402,8 +485,8 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children,
-        isDraggable: true,
-        isResizable: true,
+        isDraggable,
+        isResizable,
       }),
     });
   }
