@@ -550,7 +550,7 @@ export type CreateRepositoryWebhookArg = {
   /** name of the WebhookResponse */
   name: string;
 };
-export type GetFrontendSettingsResponse = /** status 200 undefined */ Settings;
+export type GetFrontendSettingsResponse = /** status 200 undefined */ RepositoryViewList;
 export type GetFrontendSettingsArg = void;
 export type GetResourceStatsResponse = /** status 200 undefined */ ResourceStats;
 export type GetResourceStatsArg = void;
@@ -1039,6 +1039,8 @@ export type WebhookResponse = {
   kind?: string;
 };
 export type RepositoryView = {
+  /** The k8s name for this repository */
+  name: string;
   /** Edit options within the repository */
   readOnly: boolean;
   /** When syncing, where values are saved
@@ -1057,17 +1059,13 @@ export type RepositoryView = {
      - `"s3"` */
   type: 'github' | 'local' | 's3';
 };
-export type Settings = {
+export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
-  /** When a repository is configured to save everything in instance */
-  instance?: string;
+  items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
-  /** The basic repository settings */
-  repository: {
-    [key: string]: RepositoryView;
-  };
+  metadata?: any;
 };
 export type ResourceStats = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
