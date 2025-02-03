@@ -72,7 +72,7 @@ describe('Variables - Query - Add variable', () => {
       cy.get('input[type="checkbox"]').should('not.be.checked');
     });
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.have.text');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
   });
 
