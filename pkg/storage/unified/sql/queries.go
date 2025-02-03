@@ -93,7 +93,7 @@ func (r sqlResourceInsertFromHistoryRequest) Validate() error {
 	if r.Key == nil {
 		return fmt.Errorf("missing key")
 	}
-	return nil // TODO
+	return nil
 }
 
 type sqlStatsRequest struct {
