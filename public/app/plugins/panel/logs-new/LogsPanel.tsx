@@ -9,7 +9,7 @@ import { PanelDataErrorView } from 'app/features/panel/components/PanelDataError
 
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
-import { Options } from './types';
+import { Options } from './panelcfg.gen';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
