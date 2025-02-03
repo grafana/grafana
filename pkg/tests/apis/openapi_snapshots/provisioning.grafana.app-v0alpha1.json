@@ -1377,7 +1377,8 @@
                       "type": "array",
                       "items": {
                         "default": {}
-                      }
+                      },
+                      "x-kubernetes-list-type": "atomic"
                     },
                     "kind": {
                       "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -2761,7 +2762,8 @@
             "type": "array",
             "items": {
               "default": {}
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -2823,7 +2825,8 @@
             "items": {
               "type": "string",
               "default": ""
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           }
         }
       },
@@ -2840,7 +2843,8 @@
             "type": "array",
             "items": {
               "default": {}
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "createdAt": {
             "type": "integer",
@@ -2866,11 +2870,11 @@
             "type": "string"
           },
           "items": {
-            "description": "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
             "type": "array",
             "items": {
               "default": {}
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -3244,7 +3248,8 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
                 }
               ]
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -3375,7 +3380,8 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount"
                 }
               ]
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "sync": {
             "description": "Sync information with the last sync information",
@@ -3479,7 +3485,8 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceListItem"
                 }
               ]
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -3611,8 +3618,13 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {}
-            }
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -3667,7 +3679,8 @@
             "items": {
               "type": "string",
               "default": ""
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "hash": {
             "description": "The repo hash value",
@@ -3687,7 +3700,8 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.LintIssue"
                 }
               ]
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "path": {
             "description": "Path to the remote file",
@@ -3830,7 +3844,8 @@
             "items": {
               "type": "string",
               "default": ""
-            }
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "scheduled": {
             "description": "When the next sync check is scheduled",
