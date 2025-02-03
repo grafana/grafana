@@ -10,7 +10,6 @@ type RepositoryViewList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// The basic repository settings
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
 }

@@ -3460,7 +3460,6 @@
             "type": "string"
           },
           "items": {
-            "description": "The basic repository settings",
             "type": "array",
             "items": {
               "allOf": [
