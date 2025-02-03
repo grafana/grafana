@@ -78,9 +78,9 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Title:     "aaa (dash)",
-				TitleSort: "aaa (dash)",
-				Folder:    "xxx",
+				Title:       "aaa (dash)",
+				TitlePhrase: "aaa (dash)",
+				Folder:      "xxx",
 				Fields: map[string]any{
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
 					DASHBOARD_ERRORS_TODAY:      25,
@@ -106,9 +106,9 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Title:     "bbb (dash)",
-				TitleSort: "bbb (dash)",
-				Folder:    "xxx",
+				Title:       "bbb (dash)",
+				TitlePhrase: "bbb (dash)",
+				Folder:      "xxx",
 				Fields: map[string]any{
 					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
 					DASHBOARD_ERRORS_TODAY:      40,
@@ -134,10 +134,10 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "dashboard.grafana.app",
 					Resource:  "dashboards",
 				},
-				Name:      "ccc",
-				Title:     "ccc (dash)",
-				TitleSort: "ccc (dash)",
-				Folder:    "zzz",
+				Name:        "ccc",
+				Title:       "ccc (dash)",
+				TitlePhrase: "ccc (dash)",
+				Folder:      "zzz",
 				RepoInfo: &utils.ResourceRepositoryInfo{
 					Name: "repo2",
 					Path: "path/in/repo2.yaml",
@@ -332,8 +332,8 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "folder.grafana.app",
 					Resource:  "folders",
 				},
-				Title:     "zzz (folder)",
-				TitleSort: "zzz (folder)",
+				Title:       "zzz (folder)",
+				TitlePhrase: "zzz (folder)",
 				RepoInfo: &utils.ResourceRepositoryInfo{
 					Name:      "repo-1",
 					Path:      "path/to/folder.json",
@@ -349,8 +349,8 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "folder.grafana.app",
 					Resource:  "folders",
 				},
-				Title:     "yyy (folder)",
-				TitleSort: "yyy (folder)",
+				Title:       "yyy (folder)",
+				TitlePhrase: "yyy (folder)",
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -526,6 +526,36 @@ func TestBleveBackend(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, 0, len(rsp.Results.Rows))
+	})
+}
+
+func TestGetSortFields(t *testing.T) {
+	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
+		searchReq := &resource.ResourceSearchRequest{
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "views_total", Desc: false},
+			},
+		}
+		sortFields := getSortFields(searchReq)
+		assert.Equal(t, []string{"fields.views_total"}, sortFields)
+	})
+	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
+		searchReq := &resource.ResourceSearchRequest{
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "views_total", Desc: true},
+			},
+		}
+		sortFields := getSortFields(searchReq)
+		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
+	})
+	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
+		searchReq := &resource.ResourceSearchRequest{
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "description", Desc: false},
+			},
+		}
+		sortFields := getSortFields(searchReq)
+		assert.Equal(t, []string{"description"}, sortFields)
 	})
 }
 

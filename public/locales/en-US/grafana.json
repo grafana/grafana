@@ -506,7 +506,8 @@
       },
       "return-button": {
         "title": "Alert rules"
-      }
+      },
+      "rulerrule-loading-error": "Failed to load the rule"
     },
     "rule-state": {
       "creating": "Creating",
@@ -720,7 +721,7 @@
       "title": "Clear value"
     },
     "custom-value": {
-      "label": "Custom value: "
+      "description": "Use custom value"
     },
     "options": {
       "no-found": "No options found."
@@ -893,6 +894,36 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "default-layout": {
+      "row-actions": {
+        "delete": "Delete row",
+        "modal": {
+          "alt-action": "Delete row only",
+          "text": "Are you sure you want to remove this row and all its panels?",
+          "title": "Delete row"
+        },
+        "repeat": {
+          "warning": {
+            "learn-more": "Learn more",
+            "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+          }
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": "Row options"
+        },
+        "form": {
+          "cancel": "Cancel",
+          "repeat-for": "Repeat for",
+          "title": "Title",
+          "update": "Update"
+        },
+        "modal": {
+          "title": "Row options"
+        }
+      }
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -903,6 +934,9 @@
       "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
+    },
+    "errors": {
+      "failed-to-load": "Failed to load dashboard"
     },
     "inspect": {
       "data-tab": "Data",
@@ -955,6 +989,20 @@
       "request-time": "Total request time",
       "rows": "Total number rows",
       "table-title": "Stats"
+    },
+    "panel-edit": {
+      "alerting-tab": {
+        "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
+        "no-rules": "There are no alert rules linked to this panel."
+      }
+    },
+    "rows-layout": {
+      "row": {
+        "repeat": {
+          "learn-more": "Learn more",
+          "warning": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+        }
+      }
     },
     "toolbar": {
       "add": "Add",
@@ -1079,6 +1127,12 @@
       "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
       "angular-deprecation-heading": "Panel options"
     },
+    "panel-queries": {
+      "add-query-from-library": "Add query from library"
+    },
+    "query-library": {
+      "add-query-button": "Add query"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1190,6 +1244,7 @@
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
       "datasource-z-a": "Data source Z-A",
+      "library-history-dropdown": "Open query library or query history",
       "newest-first": "Newest first",
       "oldest-first": "Oldest first",
       "query-history": "Query history",
@@ -1817,7 +1872,8 @@
     },
     "log-row-message": {
       "ellipsis": "… ",
-      "more": "more"
+      "more": "more",
+      "see-details": "See log details"
     },
     "log-rows": {
       "disable-popover": {
@@ -1978,6 +2034,7 @@
     "public-preview": {
       "button-text": "Give feedback",
       "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
+      "message-cloud": "Your self-managed instance of Grafana requires version 11.5+, or 11.2+ with the onPremToCloudMigrations feature flag enabled.",
       "message-plugins": "Only Community and Commercial signed plugins are eligible for migration. Their latest version will be installed in the cloud instance, please upgrade your plugins before starting the migration process.",
       "title": "Migrate to Grafana Cloud is in public preview",
       "title-plugins": "Migration of plugins"
@@ -2072,6 +2129,9 @@
     "all": {
       "title": "All",
       "title-filtered": "All (filtered)"
+    },
+    "clear": {
+      "title": "Clear all"
     }
   },
   "nav": {
@@ -2427,7 +2487,8 @@
       "list-label": "Navigation",
       "open": "Open menu",
       "undock": "Undock menu"
-    }
+    },
+    "rss-button": "Latest from the blog"
   },
   "news": {
     "drawer": {
@@ -2792,7 +2853,7 @@
   "query-library": {
     "datasource-names": "Datasource name(s):",
     "delete-query-button": "Delete query",
-    "query-template-get-error": "Error attempting to get query template from the library: {{error}}",
+    "query-template-get-error": "Error attempting to load query template metadata: {{error}}",
     "search": "Search by data source, query content or description",
     "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
     "user-names": "User name(s):"
@@ -2807,6 +2868,7 @@
       "hide-response": "Hide response",
       "remove-query": "Remove query",
       "save-to-query-library": "Save to query library",
+      "save-to-query-library-new": "New: Save to query library",
       "show-response": "Show response",
       "toggle-edit-mode": "Toggle text edit mode"
     },

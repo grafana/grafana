@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -54,8 +55,9 @@ type dashboardSqlAccess struct {
 	provisioning provisioning.ProvisioningService
 
 	// Use for writing (not reading)
-	dashStore  dashboards.Store
-	softDelete bool
+	dashStore             dashboards.Store
+	softDelete            bool
+	dashboardSearchClient legacysearcher.DashboardSearchClient
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -68,12 +70,14 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	provisioning provisioning.ProvisioningService,
 	softDelete bool,
 ) DashboardAccess {
+	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore)
 	return &dashboardSqlAccess{
-		sql:          sql,
-		namespacer:   namespacer,
-		dashStore:    dashStore,
-		provisioning: provisioning,
-		softDelete:   softDelete,
+		sql:                   sql,
+		namespacer:            namespacer,
+		dashStore:             dashStore,
+		provisioning:          provisioning,
+		softDelete:            softDelete,
+		dashboardSearchClient: *dashboardSearchClient,
 	}
 }
 
@@ -98,9 +102,9 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		return nil, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
 	}
 	q := rawQuery
-	// if true {
-	// 	pretty := sqltemplate.RemoveEmptyLines(rawQuery)
-	// 	fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
+	// if false {
+	// 	 pretty := sqltemplate.RemoveEmptyLines(rawQuery)
+	//	 fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
 	// }
 
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
@@ -111,8 +115,9 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		rows = nil
 	}
 	return &rowsWrapper{
-		rows: rows,
-		a:    a,
+		rows:    rows,
+		a:       a,
+		history: query.GetHistory,
 		// This looks up rules from the permissions on a user
 		canReadDashboard: func(scopes ...string) bool {
 			return true // ???
@@ -124,14 +129,19 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 var _ resource.ListIterator = (*rowsWrapper)(nil)
 
 type rowsWrapper struct {
-	a    *dashboardSqlAccess
-	rows *sql.Rows
+	a       *dashboardSqlAccess
+	rows    *sql.Rows
+	history bool
+	count   int
 
 	canReadDashboard func(scopes ...string) bool
 
 	// Current
 	row *dashboardRow
 	err error
+
+	// max 100 rejected?
+	rejected []dashboardRow
 }
 
 func (a *dashboardSqlAccess) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
@@ -153,10 +163,16 @@ func (r *rowsWrapper) Next() bool {
 
 	// breaks after first readable value
 	for r.rows.Next() {
-		r.row, err = r.a.scanRow(r.rows)
+		r.count++
+
+		r.row, err = r.a.scanRow(r.rows, r.history)
 		if err != nil {
-			r.err = err
-			return false
+			if len(r.rejected) > 1000 || r.row == nil {
+				r.err = fmt.Errorf("too many rejected rows (%d) %w", len(r.rejected), err)
+				return false
+			}
+			r.rejected = append(r.rejected, *r.row)
+			continue
 		}
 
 		if r.row != nil {
@@ -171,7 +187,7 @@ func (r *rowsWrapper) Next() bool {
 				continue
 			}
 
-			// returns the first folder it can
+			// returns the first visible dashboard
 			return true
 		}
 	}
@@ -180,6 +196,11 @@ func (r *rowsWrapper) Next() bool {
 
 // ContinueToken implements resource.ListIterator.
 func (r *rowsWrapper) ContinueToken() string {
+	return r.row.token.String()
+}
+
+// ContinueTokenWithCurrentRV implements resource.ListIterator.
+func (r *rowsWrapper) ContinueTokenWithCurrentRV() string {
 	return r.row.token.String()
 }
 
@@ -214,7 +235,7 @@ func (r *rowsWrapper) Value() []byte {
 	return b
 }
 
-func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
+func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRow, error) {
 	dash := &dashboard.Dashboard{
 		TypeMeta:   dashboard.DashboardResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
@@ -234,7 +255,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var createdByID sql.NullInt64
 	var message sql.NullString
 
-	var plugin_id string
+	var plugin_id sql.NullString
 	var origin_name sql.NullString
 	var origin_path sql.NullString
 	var origin_ts sql.NullInt64
@@ -251,8 +272,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	)
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
+	// when listing from the history table, we want to use the version as the ID to continue from
+	if history {
+		row.token.id = version
+	}
 	if err == nil {
-		row.RV = getResourceVersion(dashboard_id, version)
+		row.RV = version
 		dash.ResourceVersion = fmt.Sprintf("%d", row.RV)
 		dash.Namespace = a.namespacer(orgId)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
@@ -304,17 +329,17 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				repo.Path = originPath
 			}
 			meta.SetRepositoryInfo(repo)
-		} else if plugin_id != "" {
+		} else if plugin_id.String != "" {
 			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name: "plugin",
-				Path: plugin_id,
+				Path: plugin_id.String,
 			})
 		}
 
 		if len(data) > 0 {
 			err = dash.Spec.UnmarshalJSON(data)
 			if err != nil {
-				return row, err
+				return row, fmt.Errorf("JSON unmarshal error for: %s // %w", dash.Name, err)
 			}
 		}
 		dash.Spec.Remove("id")
@@ -401,6 +426,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
+		Message:   meta.GetMessage(),
 		PluginID:  service.GetPluginIDFromMeta(meta),
 		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
@@ -437,12 +463,12 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := a.sql(ctx)
+	sqlx, err := a.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newLibraryQueryReq(sql, &query)
+	req := newLibraryQueryReq(sqlx, &query)
 	rawQuery, err := sqltemplate.Execute(sqlQueryPanels, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
@@ -450,7 +476,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	q := rawQuery
 
 	res := &dashboard.LibraryPanelList{}
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sqlx.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
@@ -463,7 +489,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	type panel struct {
 		ID        int64
 		UID       string
-		FolderUID string
+		FolderUID sql.NullString
 
 		Created   time.Time
 		CreatedBy string
@@ -535,7 +561,9 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		if err != nil {
 			return nil, err
 		}
-		meta.SetFolder(p.FolderUID)
+		if p.FolderUID.Valid {
+			meta.SetFolder(p.FolderUID.String)
+		}
 		meta.SetCreatedBy(p.CreatedBy)
 		meta.SetGeneration(1)
 		meta.SetDeprecatedInternalID(p.ID) //nolint:staticcheck
@@ -554,7 +582,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 	}
 	if query.UID == "" {
-		rv, err := sql.GetResourceVersion(ctx, "library_element", "updated")
+		rv, err := sqlx.GetResourceVersion(ctx, "library_element", "updated")
 		if err == nil {
 			res.ResourceVersion = strconv.FormatInt(rv, 10)
 		}

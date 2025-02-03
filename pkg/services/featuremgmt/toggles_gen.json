@@ -145,6 +145,36 @@
     },
     {
       "metadata": {
+        "name": "alertingAlertmanagerExtraDedupStage",
+        "resourceVersion": "1738251165994",
+        "creationTimestamp": "2025-01-30T15:32:45Z"
+      },
+      "spec": {
+        "description": "enables extra deduplication stage in alertmanager that checks that timestamps of the pipeline and the current state are matching",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAlertmanagerExtraDedupStageStopPipeline",
+        "resourceVersion": "1738251165994",
+        "creationTimestamp": "2025-01-30T15:32:45Z"
+      },
+      "spec": {
+        "description": "works together with alertingAlertmanagerExtraDedupStage, if enabled, it will stop the pipeline if the timestamps are not matching. Otherwise, it will emit a warning",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingApiServer",
         "resourceVersion": "1734627512749",
         "creationTimestamp": "2024-06-20T20:52:03Z",
@@ -337,6 +367,21 @@
         "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingSaveStateCompressed",
+        "resourceVersion": "1737472824047",
+        "creationTimestamp": "2025-01-17T18:17:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-01-21 15:20:24.047499 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the compressed protobuf-based alert state storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad"
       }
     },
     {
@@ -1646,6 +1691,20 @@
     },
     {
       "metadata": {
+        "name": "fetchRulesUsingPost",
+        "resourceVersion": "1738148593383",
+        "creationTimestamp": "2025-01-29T11:03:13Z"
+      },
+      "spec": {
+        "description": "Use a POST request to list rules by passing down the namespaces user has access to",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "flameGraphItemCollapsing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-09T14:31:07Z",
@@ -2721,7 +2780,8 @@
       "metadata": {
         "name": "onPremToCloudMigrationsAuthApiMig",
         "resourceVersion": "1732033809064",
-        "creationTimestamp": "2024-11-21T18:46:06Z"
+        "creationTimestamp": "2024-11-21T18:46:06Z",
+        "deletionTimestamp": "2025-01-22T11:00:18Z"
       },
       "spec": {
         "description": "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
@@ -3688,6 +3748,19 @@
     },
     {
       "metadata": {
+        "name": "templateVariablesUsesCombobox",
+        "resourceVersion": "1738141787383",
+        "creationTimestamp": "2025-01-29T09:09:47Z"
+      },
+      "spec": {
+        "description": "Use new combobox component for template variables",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1728565214224",
         "creationTimestamp": "2024-10-22T10:52:33Z"
@@ -4046,6 +4119,7 @@
         "name": "zipkinBackendMigration",
         "resourceVersion": "1733846643829",
         "creationTimestamp": "2024-11-07T09:35:53Z",
+        "deletionTimestamp": "2025-01-27T11:47:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-12-10 16:04:03.82919 +0000 UTC"
         }

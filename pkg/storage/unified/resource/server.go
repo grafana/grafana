@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -41,6 +40,9 @@ type ListIterator interface {
 
 	// The token that can be used to start iterating *after* this item
 	ContinueToken() string
+
+	// The token that can be used to start iterating *before* this item
+	ContinueTokenWithCurrentRV() string
 
 	// ResourceVersion of the current item
 	ResourceVersion() int64
@@ -233,13 +235,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	// Make this cancelable
-	ctx, cancel := context.WithCancel(claims.WithAuthInfo(context.Background(),
-		&identity.StaticRequester{
-			Type:           claims.TypeServiceAccount,
-			Login:          "watcher", // admin user for watch
-			UserID:         1,
-			IsGrafanaAdmin: true,
-		}))
+	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
 		tracer:      opts.Tracer,
 		log:         logger,
@@ -763,9 +759,16 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			rsp.Items = append(rsp.Items, item)
 			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
+				if req.Source == ListRequest_HISTORY {
+					// history lists in desc order, so the continue token takes the
+					// final RV in the list, and then will start from there in the next page,
+					// rather than the lists first RV
+					t = iter.ContinueTokenWithCurrentRV()
+				}
 				if iter.Next() {
 					rsp.NextPageToken = t
 				}
+
 				break
 			}
 		}

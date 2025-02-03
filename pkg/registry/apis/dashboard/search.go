@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -32,9 +34,10 @@ type SearchHandler struct {
 	tracer trace.Tracer
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer, cfg *setting.Cfg, legacyDashboardSearcher resource.ResourceIndexClient) *SearchHandler {
+	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, client, legacyDashboardSearcher)
 	return &SearchHandler{
-		client: client,
+		client: searchClient,
 		log:    log.New("grafana-apiserver.dashboards.search"),
 		tracer: tracer,
 	}
@@ -196,6 +199,7 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 
 const rootFolder = "general"
 
+//nolint:gocyclo
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
 	defer span.End()
@@ -332,7 +336,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
 
-	// Run the query
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
@@ -343,6 +346,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
+	}
+
+	if parsedResults != nil && len(searchRequest.SortBy) == 0 {
+		// default sort by resource descending ( folders then dashboards ) then title
+		sort.Slice(parsedResults.Hits, func(i, j int) bool {
+			return parsedResults.Hits[i].Resource > parsedResults.Hits[j].Resource ||
+				(parsedResults.Hits[i].Resource == parsedResults.Hits[j].Resource && strings.ToLower(parsedResults.Hits[i].Title) < strings.ToLower(parsedResults.Hits[j].Title))
+		})
 	}
 
 	s.write(w, parsedResults)

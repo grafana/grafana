@@ -38,7 +38,7 @@ export class ResponsiveGridLayoutManager
     getDashboardSceneFor(this).switchLayout(rowsLayout);
   }
 
-  public getNextPanelId(): number {
+  public getMaxPanelId(): number {
     let max = 0;
 
     for (const child of this.state.layout.state.children) {
@@ -52,6 +52,10 @@ export class ResponsiveGridLayoutManager
     }
 
     return max;
+  }
+
+  public getNextPanelId(): number {
+    return getDashboardSceneFor(this).getNextPanelId();
   }
 
   public removePanel(panel: VizPanel) {
@@ -126,6 +130,7 @@ export class ResponsiveGridLayoutManager
   activateRepeaters?(): void {
     throw new Error('Method not implemented.');
   }
+
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return <model.state.layout.Component model={model.state.layout} />;
   };

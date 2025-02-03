@@ -5,10 +5,6 @@ import (
 )
 
 DashboardV2Spec: {
-  // Unique numeric identifier for the dashboard.
-  // `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-  id?: int64
-
   // Title of dashboard.
   title: string
 
@@ -43,7 +39,7 @@ DashboardV2Spec: {
   // Configured template variables.
   variables: [...VariableKind]
 
-  elements: [ElementReference.name]: Element 
+  elements: [ElementReference.name]: Element
 
   annotations: [...AnnotationQueryKind]
 
@@ -68,7 +64,7 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-  
+
   libraryPanel: LibraryPanelRef
 }
 
@@ -487,6 +483,11 @@ RepeatOptions: {
   maxPerRow?: int
 }
 
+RowRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
 GridLayoutItemSpec: {
   x: int
   y: int
@@ -501,8 +502,21 @@ GridLayoutItemKind: {
   spec: GridLayoutItemSpec
 }
 
+GridLayoutRowKind: {
+  kind: "GridLayoutRow"
+  spec: GridLayoutRowSpec 
+}
+
+GridLayoutRowSpec: {
+  y: int
+  collapsed: bool
+  title: string
+  elements: [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
+  repeat?: RowRepeatOptions
+}
+
 GridLayoutSpec: {
-  items: [...GridLayoutItemKind]
+  items: [...GridLayoutItemKind | GridLayoutRowKind]
 }
 
 GridLayoutKind: {

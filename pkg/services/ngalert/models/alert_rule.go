@@ -243,6 +243,21 @@ func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	})
 }
 
+type UserUID string
+
+func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
+	// use anonymous interface to abstract from identity package, which is part of apimachinery
+	if requester == nil {
+		return nil
+	}
+	identifier := requester.GetIdentifier()
+	if identifier == "" {
+		return nil
+	}
+	userUID := UserUID(identifier)
+	return &userUID
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64
@@ -251,6 +266,7 @@ type AlertRule struct {
 	Condition       string
 	Data            []AlertQuery
 	Updated         time.Time
+	UpdatedBy       *UserUID
 	IntervalSeconds int64
 	Version         int64
 	UID             string
@@ -535,7 +551,7 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 }
 
 // PreSave sets default values and loads the updated model for each alert query.
-func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
+func (alertRule *AlertRule) PreSave(timeNow func() time.Time, userUID *UserUID) error {
 	for i, q := range alertRule.Data {
 		err := q.PreSave()
 		if err != nil {
@@ -544,6 +560,7 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 		alertRule.Data[i] = q
 	}
 	alertRule.Updated = timeNow()
+	alertRule.UpdatedBy = userUID
 	return nil
 }
 

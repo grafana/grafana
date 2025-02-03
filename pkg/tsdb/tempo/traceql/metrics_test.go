@@ -122,3 +122,47 @@ func TestTransformMetricsResponse_MultipleSeries(t *testing.T) {
 	assert.Equal(t, time.UnixMilli(1638316800000), frames[1].Fields[0].At(0))
 	assert.Equal(t, 4.56, frames[1].Fields[1].At(0))
 }
+
+func TestTransformInstantMetricsResponse(t *testing.T) {
+	query := &dataquery.TempoQuery{}
+	resp := tempopb.QueryInstantResponse{
+		Series: []*tempopb.InstantSeries{
+			{
+				Labels: []v1.KeyValue{
+					{
+						Key:   "label",
+						Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "value"}},
+					},
+				},
+				Value:      123.45,
+				PromLabels: "label=\"value\"",
+			},
+		},
+	}
+
+	frames := TransformInstantMetricsResponse(query, resp)
+
+	assert.Len(t, frames, 1)
+	frame := frames[0]
+
+	assert.Equal(t, "value", frame.RefID)
+	assert.Equal(t, "value", frame.Name)
+	assert.Len(t, frame.Fields, 3)
+
+	timeField := frame.Fields[0]
+	assert.Equal(t, "time", timeField.Name)
+	assert.Equal(t, 1, timeField.Len())
+	assert.IsType(t, time.Time{}, timeField.At(0))
+
+	labelField := frame.Fields[1]
+	assert.Equal(t, "label", labelField.Name)
+	assert.Equal(t, 1, labelField.Len())
+	assert.IsType(t, "", labelField.At(0))
+	assert.Equal(t, "value", labelField.At(0))
+
+	valueField := frame.Fields[2]
+	assert.Equal(t, "value", valueField.Name)
+	assert.Equal(t, 1, valueField.Len())
+	assert.IsType(t, 0.0, valueField.At(0))
+	assert.Equal(t, 123.45, valueField.At(0).(float64))
+}

@@ -120,6 +120,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onThemeChanged = (value: ComboboxOption<string>) => {
     this.setState({ theme: value.value });
+    reportInteraction('grafana_preferences_theme_changed', {
+      toTheme: value.value,
+      preferenceType: this.props.preferenceType,
+    });
 
     if (value.value) {
       changeTheme(value.value, true);

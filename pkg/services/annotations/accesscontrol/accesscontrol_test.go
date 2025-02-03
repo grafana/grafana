@@ -47,9 +47,9 @@ func TestIntegrationAuthorize(t *testing.T) {
 	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	folderSvc := folderimpl.ProvideService(fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, folderStore, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
+	folderSvc := folderimpl.ProvideService(
+		fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sql, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest())
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(),
 		ac, folderSvc, fStore, nil, nil, nil, nil, quotatest.New(false, nil), nil, nil)
 	require.NoError(t, err)

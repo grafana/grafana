@@ -2,7 +2,10 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,8 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	k8sUser "k8s.io/apiserver/pkg/authentication/user"
 	k8sRequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -21,7 +28,7 @@ import (
 
 type K8sHandler interface {
 	GetNamespace(orgID int64) string
-	Get(ctx context.Context, name string, orgID int64, subresource ...string) (*unstructured.Unstructured, error)
+	Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error)
 	Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error)
 	Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error)
 	Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error
@@ -29,6 +36,7 @@ type K8sHandler interface {
 	List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error)
 	Search(ctx context.Context, orgID int64, in *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error)
 	GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error)
+	GetUserFromMeta(ctx context.Context, userMeta string) (*user.User, error)
 }
 
 var _ K8sHandler = (*k8sHandler)(nil)
@@ -38,14 +46,18 @@ type k8sHandler struct {
 	gvr                schema.GroupVersionResource
 	restConfigProvider apiserver.RestConfigProvider
 	searcher           resource.ResourceIndexClient
+	userService        user.Service
 }
 
-func NewK8sHandler(namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient) K8sHandler {
+func NewK8sHandler(cfg *setting.Cfg, namespacer request.NamespaceMapper, gvr schema.GroupVersionResource, restConfigProvider apiserver.RestConfigProvider, searcher resource.ResourceIndexClient, dashStore dashboards.Store, userSvc user.Service) K8sHandler {
+	legacySearcher := legacysearcher.NewDashboardSearchClient(dashStore)
+	searchClient := resource.NewSearchClient(cfg, setting.UnifiedStorageConfigKeyDashboard, searcher, legacySearcher)
 	return &k8sHandler{
 		namespacer:         namespacer,
 		gvr:                gvr,
 		restConfigProvider: restConfigProvider,
-		searcher:           searcher,
+		searcher:           searchClient,
+		userService:        userSvc,
 	}
 }
 
@@ -53,7 +65,7 @@ func (h *k8sHandler) GetNamespace(orgID int64) string {
 	return h.namespacer(orgID)
 }
 
-func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, subresource ...string) (*unstructured.Unstructured, error) {
+func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
 	// create a new context - prevents issues when the request stems from the k8s api itself
 	// otherwise the context goes through the handlers twice and causes issues
 	newCtx, cancel, err := h.getK8sContext(ctx)
@@ -68,7 +80,7 @@ func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, subresou
 		return nil, nil
 	}
 
-	return client.Get(newCtx, name, v1.GetOptions{}, subresource...)
+	return client.Get(newCtx, name, options, subresource...)
 }
 
 func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
@@ -184,6 +196,28 @@ func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.Resou
 			h.gvr.Group + "/" + h.gvr.Resource,
 		},
 	})
+}
+
+// GetUserFromMeta takes what meta accessor gives you from `GetCreatedBy` or `GetUpdatedBy` and returns the user
+func (h *k8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
+	parts := strings.Split(userMeta, ":")
+	if len(parts) < 2 {
+		return &user.User{}, nil
+	}
+	meta := parts[1]
+
+	userId, err := strconv.ParseInt(meta, 10, 64)
+	var u *user.User
+	if err == nil {
+		u, err = h.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userId})
+	} else {
+		u, err = h.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: meta})
+	}
+
+	if err != nil && errors.Is(err, user.ErrUserNotFound) {
+		return &user.User{}, nil
+	}
+	return u, err
 }
 
 func (h *k8sHandler) getClient(ctx context.Context, orgID int64) (dynamic.ResourceInterface, bool) {

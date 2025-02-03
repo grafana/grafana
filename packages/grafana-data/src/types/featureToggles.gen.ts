@@ -153,8 +153,8 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
-  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  alertingSaveStateCompressed?: boolean;
   scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
@@ -229,7 +229,6 @@ export interface FeatureToggles {
   exploreMetricsRelatedLogs?: boolean;
   prometheusSpecialCharsInLabelValues?: boolean;
   enableExtensionsAdminPage?: boolean;
-  zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;
@@ -249,9 +248,13 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   teamHttpHeadersMimir?: boolean;
   ABTestFeatureToggleA?: boolean;
+  templateVariablesUsesCombobox?: boolean;
   ABTestFeatureToggleB?: boolean;
   queryLibraryDashboards?: boolean;
   grafanaAdvisor?: boolean;
   elasticsearchImprovedParsing?: boolean;
   datasourceConnectionsTab?: boolean;
+  fetchRulesUsingPost?: boolean;
+  alertingAlertmanagerExtraDedupStage?: boolean;
+  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
 }

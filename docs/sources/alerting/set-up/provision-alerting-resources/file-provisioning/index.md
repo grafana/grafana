@@ -511,6 +511,8 @@ settings:
   # <string>
   endpointUrl: https://custom_url/api/chat.postMessage
   # <string>
+  color: {{ if eq .Status "firing" }}#D63232{{ else }}#36a64f{{ end }}
+  # <string>
   title: |
     {{ template "slack.default.title" . }}
   text: |

@@ -1284,12 +1284,12 @@ type ListOptions struct {
 	// Group+Namespace+Resource (not name)
 	Key *ResourceKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// (best effort) Match label
-	// Allowed to send more results than actually match because the filter will be appled
-	// to the resutls agin in the client.  That time with the full field selector
+	// Allowed to send more results than actually match because the filter will be applied
+	// to the results again in the client.  That time with the full field selector
 	Labels []*Requirement `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty"`
 	// (best effort) fields matcher
-	// Allowed to send more results than actually match because the filter will be appled
-	// to the resutls agin in the client.  That time with the full field selector
+	// Allowed to send more results than actually match because the filter will be applied
+	// to the results again in the client.  That time with the full field selector
 	Fields        []*Requirement `protobuf:"bytes,3,rep,name=fields,proto3" json:"fields,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

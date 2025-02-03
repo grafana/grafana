@@ -455,6 +455,7 @@
 playwright.config.ts @grafana/plugins-platform-frontend
 
 # public folder
+/public/app/api/ @grafana/grafana-frontend-platform
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
@@ -491,6 +492,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/explore/ @grafana/observability-traces-and-profiling
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/grafana-frontend-platform
+/public/app/features/iam/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/library-panels/ @grafana/dashboards-squad
@@ -593,9 +595,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
-
-
-
 /scripts/benchmark-access-control.sh @grafana/access-squad
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
 /scripts/ci-* @grafana/grafana-developer-enablement-squad
@@ -620,6 +619,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-developer-enablement-squad
 /scripts/generate-rtk-apis.ts @grafana/grafana-frontend-platform
+/scripts/process-specs.ts @grafana/grafana-frontend-platform
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
@@ -746,6 +746,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
+/.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
 /.github/workflows/auto-triager/ @grafana/plugins-platform-frontend
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
 /.github/workflows/auto-milestone.yml @grafana/grafana-developer-enablement-squad

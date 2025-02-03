@@ -3,7 +3,7 @@ import { cx } from '@emotion/css';
 
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 

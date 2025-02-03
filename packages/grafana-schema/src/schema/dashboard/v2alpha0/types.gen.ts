@@ -4,9 +4,6 @@ import * as common from '@grafana/schema';
 
 
 export interface DashboardV2Spec {
-	// Unique numeric identifier for the dashboard.
-	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	id?: number;
 	// Title of dashboard.
 	title: string;
 	// Description of dashboard.
@@ -703,6 +700,16 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 	value: "",
 });
 
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
 export interface GridLayoutItemSpec {
 	x: number;
 	y: number;
@@ -731,8 +738,33 @@ export const defaultGridLayoutItemKind = (): GridLayoutItemKind => ({
 	spec: defaultGridLayoutItemSpec(),
 });
 
+export interface GridLayoutRowKind {
+	kind: "GridLayoutRow";
+	spec: GridLayoutRowSpec;
+}
+
+export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
+	kind: "GridLayoutRow",
+	spec: defaultGridLayoutRowSpec(),
+});
+
+export interface GridLayoutRowSpec {
+	y: number;
+	collapsed: boolean;
+	title: string;
+	elements: GridLayoutItemKind[];
+	repeat?: RowRepeatOptions;
+}
+
+export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
+	y: 0,
+	collapsed: false,
+	title: "",
+	elements: [],
+});
+
 export interface GridLayoutSpec {
-	items: GridLayoutItemKind[];
+	items: (GridLayoutItemKind | GridLayoutRowKind)[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({

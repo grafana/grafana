@@ -134,8 +134,8 @@ alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
 newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,preview,@grafana/grafana-operator-experience-squad,false,false,false
-onPremToCloudMigrationsAuthApiMig,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
+alertingSaveStateCompressed,experimental,@grafana/alerting-squad,false,false,false
 scopeApi,experimental,@grafana/grafana-app-platform-squad,false,false,false
 promQLScope,GA,@grafana/oss-big-tent,false,false,false
 logQLScope,privatePreview,@grafana/observability-logs,false,false,false
@@ -210,7 +210,6 @@ passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,f
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
 prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
-zipkinBackendMigration,GA,@grafana/oss-big-tent,false,false,false
 enableSCIM,experimental,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
@@ -230,8 +229,12 @@ k8SFolderMove,experimental,@grafana/search-and-storage,false,false,false
 improvedExternalSessionHandlingSAML,preview,@grafana/identity-access-team,false,false,false
 teamHttpHeadersMimir,experimental,@grafana/identity-access-team,false,false,false
 ABTestFeatureToggleA,experimental,@grafana/sharing-squad,false,false,false
+templateVariablesUsesCombobox,experimental,@grafana/grafana-frontend-platform,false,false,true
 ABTestFeatureToggleB,experimental,@grafana/sharing-squad,false,false,false
 queryLibraryDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 grafanaAdvisor,experimental,@grafana/plugins-platform-backend,false,false,false
 elasticsearchImprovedParsing,experimental,@grafana/aws-datasources,false,false,false
 datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,false,true
+fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
+alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
+alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-squad,false,true,false

@@ -32,6 +32,7 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       accessControlOnCall: true,
     },
+    apps: {},
     theme2: {
       breakpoints: {
         values: {

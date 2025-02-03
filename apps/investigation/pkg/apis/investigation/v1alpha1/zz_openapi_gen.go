@@ -20,7 +20,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef":       schema_pkg_apis_investigation_v1alpha1_InvestigationDatasourceRef(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationInvestigationItem":   schema_pkg_apis_investigation_v1alpha1_InvestigationInvestigationItem(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationList":                schema_pkg_apis_investigation_v1alpha1_InvestigationList(ref),
-		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationOperatorState":       schema_pkg_apis_investigation_v1alpha1_InvestigationOperatorState(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationSpec":                schema_pkg_apis_investigation_v1alpha1_InvestigationSpec(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationStatus":              schema_pkg_apis_investigation_v1alpha1_InvestigationStatus(ref),
 		"github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationstatusOperatorState": schema_pkg_apis_investigation_v1alpha1_InvestigationstatusOperatorState(ref),
@@ -85,14 +84,14 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationAbsoluteTimeRange(ref c
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
 							Type:    []string{"number"},
-							Format:  "float",
+							Format:  "double",
 						},
 					},
 					"to": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
 							Type:    []string{"number"},
-							Format:  "float",
+							Format:  "double",
 						},
 					},
 				},
@@ -137,9 +136,17 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryLogs(ref commo
 				Description: "DataQueryLogs is a data query for logs.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "refId is the reference ID of the query.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "DatasourceRef is a reference to a datasource.",
+							Description: "datasource is the datasource of the query.",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef"),
 						},
@@ -159,16 +166,8 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryLogs(ref commo
 							Format:      "int64",
 						},
 					},
-					"refId": {
-						SchemaProps: spec.SchemaProps{
-							Description: "refId is the reference ID of the query.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"datasource", "expr", "refId"},
+				Required: []string{"refId", "datasource", "expr"},
 			},
 		},
 		Dependencies: []string{
@@ -183,11 +182,17 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryMetrics(ref co
 				Description: "DataQueryMetrics is a data query for metrics.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "DatasourceRef is a reference to a datasource.",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationDatasourceRef"),
 						},
 					},
 					"expr": {
@@ -197,15 +202,8 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationDataQueryMetrics(ref co
 							Format:  "",
 						},
 					},
-					"refId": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 				},
-				Required: []string{"datasource", "expr", "refId"},
+				Required: []string{"refId", "datasource", "expr"},
 			},
 		},
 		Dependencies: []string{
@@ -220,6 +218,20 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationDatasourceRef(ref commo
 				Description: "DatasourceRef is a reference to a datasource.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -234,22 +246,8 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationDatasourceRef(ref commo
 							Format:  "",
 						},
 					},
-					"type": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"uid": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 				},
-				Required: []string{"apiVersion", "name", "type", "uid"},
+				Required: []string{"uid", "type", "apiVersion", "name"},
 			},
 		},
 	}
@@ -262,62 +260,11 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationInvestigationItem(ref c
 				Description: "InvestigationItem is an item in an investigation.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"dataQuery": {
-						SchemaProps: spec.SchemaProps{
-							Description: "dataQuery contains the query used to generate this item.",
-							Type:        []string{"object"},
-							Format:      "",
-						},
-					},
-					"iconPath": {
-						SchemaProps: spec.SchemaProps{
-							Description: "iconPath (optional) is the path to the icon for the item.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"id": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
-						},
-					},
-					"note": {
-						SchemaProps: spec.SchemaProps{
-							Description: "note (optional) is a comment on the item.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationComment"),
-									},
-								},
-							},
-						},
-					},
-					"origin": {
-						SchemaProps: spec.SchemaProps{
-							Description: "origin is where the item was created from.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"queryType": {
-						SchemaProps: spec.SchemaProps{
-							Description: "queryType is the type of the query used to generate this item.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"timeRange": {
-						SchemaProps: spec.SchemaProps{
-							Description: "AbsoluteTimeRange is a time range specified by absolute timestamps.",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationAbsoluteTimeRange"),
 						},
 					},
 					"title": {
@@ -343,8 +290,59 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationInvestigationItem(ref c
 							Format:      "",
 						},
 					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "origin is where the item was created from. \"explore-metrics\", \"explore-logs\", \"explore-traces\" (not an enum to allow for future extensions)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"iconPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "iconPath (optional) is the path to the icon for the item.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "timeRange (optional) is the time range of the item.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationAbsoluteTimeRange"),
+						},
+					},
+					"note": {
+						SchemaProps: spec.SchemaProps{
+							Description: "note (optional) is a comment on the item.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationComment"),
+									},
+								},
+							},
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "queryType is the type of the query used to generate this item.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"dataQuery": {
+						SchemaProps: spec.SchemaProps{
+							Description: "dataQuery contains the query used to generate this item.",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"dataQuery", "id", "origin", "queryType", "timeRange", "title", "type", "url"},
+				Required: []string{"id", "title", "type", "url", "origin", "timeRange", "queryType", "dataQuery"},
 			},
 		},
 		Dependencies: []string{
@@ -400,65 +398,27 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationList(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_investigation_v1alpha1_InvestigationOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "InvestigationOperatorState defines model for InvestigationOperatorState.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_investigation_v1alpha1_InvestigationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InvestigationSpec defines model for InvestigationSpec.",
+				Description: "spec is the schema of our resource. The spec should include all the user-ediable information for the kind.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -472,22 +432,8 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationSpec(ref common.Referen
 							},
 						},
 					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 				},
-				Required: []string{"items", "status", "title"},
+				Required: []string{"title", "status", "items"},
 			},
 		},
 		Dependencies: []string{
@@ -499,24 +445,8 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationStatus(ref common.Refer
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InvestigationStatus defines model for InvestigationStatus.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"additionalFields": {
-						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"object"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -527,6 +457,21 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationStatus(ref common.Refer
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
 										Ref:     ref("github.com/grafana/grafana/apps/investigation/pkg/apis/investigation/v1alpha1.InvestigationstatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
 									},
 								},
 							},
@@ -544,9 +489,24 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationstatusOperatorState(ref
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InvestigationstatusOperatorState defines model for Investigationstatus.#OperatorState.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"descriptiveState": {
 						SchemaProps: spec.SchemaProps{
 							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
@@ -567,22 +527,6 @@ func schema_pkg_apis_investigation_v1alpha1_InvestigationstatusOperatorState(ref
 									},
 								},
 							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 				},
