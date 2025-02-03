@@ -33,7 +33,13 @@ type LegacyMigrator interface {
 	Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error)
 }
 
-type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error
+type BlobStoreInfo struct {
+	Count int64
+	Size  int64
+}
+
+// migrate function -- works for a single kind
+type migrator = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error)
 
 func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (*resource.BatchResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
@@ -100,13 +106,18 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 	}
 
 	// Now run each migration
+	blobStore := BlobStoreInfo{}
 	for _, m := range migrators {
-		err = m(ctx, info.OrgID, opts, stream)
+		blobs, err := m(ctx, info.OrgID, opts, stream)
 		if err != nil {
 			return nil, err
 		}
+		if blobs != nil {
+			blobStore.Count += blobs.Count
+			blobStore.Size += blobs.Size
+		}
 	}
-
+	fmt.Printf("BLOBS: %+v\n", blobStore)
 	return stream.CloseAndRecv()
 }
 
@@ -149,14 +160,14 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
 					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)
-				if opts.WithHistory {
-					_, err = sess.SQL(`SELECT COUNT(*) 
+
+				// Also count history
+				_, err = sess.SQL(`SELECT COUNT(*) 
 						FROM `+sql.Table("dashboard_version")+` as dv
 						JOIN `+sql.Table("dashboard")+`         as dd
 						ON dd.id = dv.dashboard_id
 						WHERE org_id=?`, orgId).Get(&summary.History)
-					rsp.Summary = append(rsp.Summary, summary)
-				}
+				rsp.Summary = append(rsp.Summary, summary)
 			}
 			if err != nil {
 				return err
@@ -167,16 +178,17 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 	return rsp, nil
 }
 
-func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error {
+func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
 		GetHistory: opts.WithHistory, // include history
 	}
 
+	blobs := &BlobStoreInfo{}
 	sql, err := a.sql(ctx)
 	if err != nil {
-		return err
+		return blobs, err
 	}
 
 	opts.Progress(-1, fmt.Sprintf("migrating dashboards... %+v", query))
@@ -187,7 +199,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		}()
 	}
 	if err != nil {
-		return err
+		return blobs, err
 	}
 
 	large := opts.LargeObjects
@@ -201,7 +213,8 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 
 		body, err := json.Marshal(dash)
 		if err != nil {
-			return fmt.Errorf("error reading json from: %s // %w", rows.row.Dash.Name, err)
+			err = fmt.Errorf("error reading json from: %s // %w", rows.row.Dash.Name, err)
+			return blobs, err
 		}
 
 		req := &resource.BatchRequest{
@@ -225,20 +238,22 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		if large != nil && len(body) > large.Threshold() {
 			obj, err := utils.MetaAccessor(dash)
 			if err != nil {
-				return err
+				return blobs, err
 			}
 
 			opts.Progress(i, fmt.Sprintf("[v:%d] %s Large object (%d)", dash.Generation, dash.Name, len(body)))
 			err = large.Deconstruct(ctx, req.Key, opts.Store, obj, req.Value)
 			if err != nil {
-				return err
+				return blobs, err
 			}
 
 			// The smaller version (most of spec removed)
 			req.Value, err = json.Marshal(dash)
 			if err != nil {
-				return err
+				return blobs, err
 			}
+			blobs.Count++
+			blobs.Size += int64(len(body))
 		}
 
 		opts.Progress(i, fmt.Sprintf("[v:%2d] %s (size:%d / %d|%d)", dash.Generation, dash.Name, len(req.Value), i, rows.count))
@@ -249,7 +264,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 				opts.Progress(i, fmt.Sprintf("stream EOF/cancelled. index=%d", i))
 				err = nil
 			}
-			return err
+			return blobs, err
 		}
 	}
 
@@ -262,14 +277,14 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 	}
 
 	if rows.Error() != nil {
-		return rows.Error()
+		return blobs, rows.Error()
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished dashboards... (%d)", rows.count))
-	return nil
+	return blobs, err
 }
 
-func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error {
+func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
 		OrgID:      orgId,
 		Limit:      100000000,
@@ -278,7 +293,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 
 	sql, err := a.sql(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	opts.Progress(-1, "migrating folders...")
@@ -289,7 +304,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 		}()
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Now send each dashboard
@@ -311,7 +326,7 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 
 		body, err := json.Marshal(dash)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		req := &resource.BatchRequest{
@@ -338,35 +353,35 @@ func (a *dashboardSqlAccess) migrateFolders(ctx context.Context, orgId int64, op
 			if errors.Is(err, io.EOF) {
 				err = nil
 			}
-			return err
+			return nil, err
 		}
 	}
 
 	if rows.Error() != nil {
-		return rows.Error()
+		return nil, rows.Error()
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished folders... (%d)", rows.count))
-	return nil
+	return nil, err
 }
 
-func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) error {
+func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opts MigrateOptions, stream resource.ResourceStore_BatchProcessClient) (*BlobStoreInfo, error) {
 	opts.Progress(-1, "migrating library panels...")
 	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
 		OrgID: orgId,
 		Limit: 1000000,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for i, panel := range panels.Items {
 		meta, err := utils.MetaAccessor(&panel)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		body, err := json.Marshal(panel)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		req := &resource.BatchRequest{
@@ -391,9 +406,9 @@ func (a *dashboardSqlAccess) migratePanels(ctx context.Context, orgId int64, opt
 			if errors.Is(err, io.EOF) {
 				err = nil
 			}
-			return err
+			return nil, err
 		}
 	}
 	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
-	return nil
+	return nil, nil
 }

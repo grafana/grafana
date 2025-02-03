@@ -99,7 +99,7 @@ func (b *backend) ProcessBatch(ctx context.Context, setting resource.BatchSettin
 			return rsp
 		}
 
-		fmt.Printf("PARQUET: %s\n", file)
+		b.log.Info("using parquet buffer", "parquet", file)
 
 		// Replace the iterator with one from parquet
 		iter, err = parquet.NewParquetReader(file.Name(), 50)

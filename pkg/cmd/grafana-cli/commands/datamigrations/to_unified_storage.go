@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,70 +26,95 @@ import (
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
 func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
-	ctx := context.Background()
-	return sqlStore.WithDbSession(ctx, func(session *db.Session) error {
-		start := time.Now()
-		last := time.Now()
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{})
+	start := time.Now()
+	last := time.Now()
 
-		parquetFile := ""
-		opts := legacy.MigrateOptions{
-			Namespace:    "default", // get from namespace
-			WithHistory:  true,      // query.Get("history") == "true",
-			OnlyCount:    true,
-			Resources:    []string{"*"}, // everything
-			LargeObjects: nil,           // ???
-			Progress: func(count int, msg string) {
-				if count < 1 || time.Since(last) > time.Second {
-					fmt.Printf("[%4d] %s\n", count, msg)
-					last = time.Now()
-				}
-			},
-		}
-
-		provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
-		if err != nil {
-			return err
-		}
-
-		var migrator legacy.LegacyMigrator
-		migrator = legacy.NewDashboardAccess(
-			legacysql.NewDatabaseProvider(sqlStore),
-			authlib.OrgNamespaceFormatter,
-			nil, provisioning, false,
-		)
-
-		if true {
-			opts.Store, err = newUnifiedClient(cfg, sqlStore)
-		} else {
-			file, err := os.CreateTemp(cfg.DataPath, "grafana-export-*.parquet")
-			if err != nil {
-				return err
+	opts := legacy.MigrateOptions{
+		Namespace:    "default",     // from command line????
+		WithHistory:  false,         // configured below
+		Resources:    []string{"*"}, // everything
+		LargeObjects: nil,           // TODO... from config
+		Progress: func(count int, msg string) {
+			if count < 1 || time.Since(last) > time.Second {
+				fmt.Printf("[%4d] %s\n", count, msg)
+				last = time.Now()
 			}
-			parquetFile = file.Name()
-			opts.Store, err = newParquetClient(file)
-		}
-		if err != nil {
-			return err
-		}
+		},
+	}
 
-		ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{})
+	provisioning, err := newStubProvisioning(cfg.ProvisioningPath)
+	if err != nil {
+		return err
+	}
+
+	migrator := legacy.NewDashboardAccess(
+		legacysql.NewDatabaseProvider(sqlStore),
+		authlib.OrgNamespaceFormatter,
+		nil, provisioning, false,
+	)
+
+	line := ""
+	fmt.Printf("Count legacy resources for namespace: %s?\n", opts.Namespace)
+	fmt.Printf("Y/N? > ")
+	fmt.Scanln(&line)
+	if strings.ToLower(line) == "y" {
+		opts.OnlyCount = true
 		rsp, err := migrator.Migrate(ctx, opts)
 		if err != nil {
 			return err
 		}
 
-		fmt.Printf("\n\n------------------\n")
-		fmt.Printf("MIGRATE DONE: %s\n", time.Since(start))
+		fmt.Printf("Counting DONE: %s\n", time.Since(start))
 		if rsp != nil {
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
 			fmt.Printf("%s\n", string(jj))
 		}
-		if parquetFile != "" {
-			fmt.Printf("Parquet: %s\n", parquetFile)
+	}
+
+	fmt.Printf("Include history in exports? (Y/N) >")
+	fmt.Scanln(&line)
+	opts.WithHistory = strings.ToLower(line) == "y"
+
+	fmt.Printf("Export legacy resources to parquet file? (Y/N) >")
+	fmt.Scanln(&line)
+	if strings.ToLower(line) == "y" {
+		file, err := os.CreateTemp(cfg.DataPath, "grafana-export-*.parquet")
+		if err != nil {
+			return err
 		}
-		fmt.Printf("------------------\n")
-		return nil
-	})
+		start = time.Now()
+		last = time.Now()
+		opts.Store, err = newParquetClient(file)
+		rsp, err := migrator.Migrate(ctx, opts)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Parquet export DONE: %s\n", time.Since(start))
+		if rsp != nil {
+			jj, _ := json.MarshalIndent(rsp, "", "  ")
+			fmt.Printf("%s\n", string(jj))
+		}
+		fmt.Printf("File: %s\n", file.Name())
+	}
+
+	fmt.Printf("Export legacy resources to unified storage? (Y/N) >")
+	fmt.Scanln(&line)
+	if strings.ToLower(line) == "y" {
+		start = time.Now()
+		last = time.Now()
+		opts.Store, err = newUnifiedClient(cfg, sqlStore)
+		rsp, err := migrator.Migrate(ctx, opts)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Unified storage export: %s\n", time.Since(start))
+		if rsp != nil {
+			jj, _ := json.MarshalIndent(rsp, "", "  ")
+			fmt.Printf("%s\n", string(jj))
+		}
+	}
+	return nil
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
