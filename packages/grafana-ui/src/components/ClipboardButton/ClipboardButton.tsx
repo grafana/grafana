@@ -28,7 +28,6 @@ export function ClipboardButton({
   getText,
   icon,
   variant,
-  'aria-label': ariaLabel,
   ...buttonProps
 }: Props) {
   const styles = useStyles2(getStyles);
@@ -74,7 +73,7 @@ export function ClipboardButton({
         onClick={copyTextCallback}
         icon={icon}
         variant={showCopySuccess ? 'success' : variant}
-        aria-label={showCopySuccess ? copiedText : ariaLabel}
+        aria-label={showCopySuccess ? copiedText : undefined}
         {...buttonProps}
         className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
         ref={buttonRef}
