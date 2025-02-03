@@ -6,7 +6,7 @@ import { AbsoluteTimeRange, CoreApp, EventBus, LogRowModel, LogsSortOrder, TimeR
 import { useTheme2 } from '@grafana/ui';
 
 import { InfiniteScroll } from './InfiniteScroll';
-import { preProcessLogs, ProcessedLogModel } from './processing';
+import { preProcessLogs, LogListModel } from './processing';
 import {
   getLogLineSize,
   init as initVirtualization,
@@ -44,7 +44,7 @@ export const LogList = ({
   timeZone,
   wrapLogMessage,
 }: Props) => {
-  const [processedLogs, setProcessedLogs] = useState<ProcessedLogModel[]>([]);
+  const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
     app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
   );

@@ -11,7 +11,7 @@ import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } fro
 
 import { LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
-import { ProcessedLogModel } from './processing';
+import { LogListModel } from './processing';
 
 interface ChildrenProps {
   itemCount: number;
@@ -24,7 +24,7 @@ interface Props {
   children: (props: ChildrenProps) => ReactNode;
   handleOverflow: (index: number, id: string, height: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
-  logs: ProcessedLogModel[];
+  logs: LogListModel[];
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
   showTime: boolean;
@@ -198,7 +198,7 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
   }
 }
 
-function getLogLineVariant(logs: ProcessedLogModel[], index: number, lastLogOfPage: string[]) {
+function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[]) {
   if (!lastLogOfPage.length || !logs[index - 1]) {
     return undefined;
   }

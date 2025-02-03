@@ -4,12 +4,12 @@ import { CSSProperties, useEffect, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
-import { ProcessedLogModel } from './processing';
+import { LogListModel } from './processing';
 import { hasUnderOrOverflow } from './virtualization';
 
 interface Props {
   index: number;
-  log: ProcessedLogModel;
+  log: LogListModel;
   showTime: boolean;
   style: CSSProperties;
   onOverflow?: (index: number, id: string, height: number) => void;

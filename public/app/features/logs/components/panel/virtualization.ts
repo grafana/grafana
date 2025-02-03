@@ -1,6 +1,6 @@
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
-import { ProcessedLogModel } from './processing';
+import { LogListModel } from './processing';
 
 let ctx: CanvasRenderingContext2D | null = null;
 let gridSize = 8;
@@ -144,7 +144,7 @@ interface DisplayOptions {
 }
 
 export function getLogLineSize(
-  logs: ProcessedLogModel[],
+  logs: LogListModel[],
   container: HTMLDivElement | null,
   { wrap, showTime }: DisplayOptions,
   index: number
