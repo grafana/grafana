@@ -113,21 +113,6 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		dashboardQuery.Sort = sortOpt
 	}
 
-	// if folders are stored in unified storage, we need to use the folder service to query for folders
-	// TODO delete this
-	// if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFoldersServiceV2) && (query.Type == searchstore.TypeFolder || query.Type == searchstore.TypeAlertFolder) {
-	// 	hits, err := s.folderService.SearchFolders(ctx, folder.SearchFoldersQuery{
-	// 		OrgID:        query.OrgId,
-	// 		UIDs:         query.FolderUIDs,
-	// 		IDs:          query.FolderIds,
-	// 		Title:        query.Title,
-	// 		Limit:        query.Limit,
-	// 		SignedInUser: query.SignedInUser,
-	// 	})
-
-	// 	return sortedHits(hits), err
-	// }
-
 	hits, err := s.dashboardService.SearchDashboards(ctx, &dashboardQuery)
 	if err != nil {
 		return nil, err
