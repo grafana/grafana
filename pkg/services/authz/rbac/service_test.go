@@ -400,14 +400,13 @@ func TestService_getUserPermissions(t *testing.T) {
 
 func TestService_listPermission(t *testing.T) {
 	type testCase struct {
-		name               string
-		permissions        []accesscontrol.Permission
-		folders            []store.Folder
-		list               ListRequest
-		expectedItems      []string
-		expectedDashboards []string
-		expectedFolders    []string
-		expectedAll        bool
+		name            string
+		permissions     []accesscontrol.Permission
+		folders         []store.Folder
+		list            ListRequest
+		expectedItems   []string
+		expectedFolders []string
+		expectedAll     bool
 	}
 
 	testCases := []testCase{
