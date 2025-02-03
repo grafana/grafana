@@ -2794,6 +2794,7 @@
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1724141158995",
         "creationTimestamp": "2024-06-17T09:41:50Z",
+        "deletionTimestamp": "2025-01-16T11:09:59Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-20 08:05:58.995762 +0000 UTC"
         }
