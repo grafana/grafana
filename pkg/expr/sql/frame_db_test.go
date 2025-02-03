@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -31,7 +32,7 @@ func TestFrameDBInOut(t *testing.T) {
 	db := DB{}
 	qry := `SELECT * from A`
 
-	f, err := db.QueryFrames("a", qry, []*data.Frame{frameA})
+	f, err := db.QueryFrames(context.Background(), "a", qry, []*data.Frame{frameA})
 	require.NoError(t, err)
 
 	if diff := cmp.Diff(frameA, f, data.FrameTestCompareOptions()...); diff != "" {
@@ -71,7 +72,7 @@ func TestFrameDBNumericSelect(t *testing.T) {
 	4294967295 AS 'intUnsigned',
 	18446744073709551615 AS 'bigUnsigned'`
 
-	f, err := db.QueryFrames("a", qry, []*data.Frame{})
+	f, err := db.QueryFrames(context.Background(), "a", qry, []*data.Frame{})
 	require.NoError(t, err)
 
 	if diff := cmp.Diff(expectedFrame, f, data.FrameTestCompareOptions()...); diff != "" {
@@ -95,10 +96,10 @@ func p[T any](v T) *T {
 // 	db := DB{}
 
 // 	// It doesn't like the T in the time string
-// 	//qry := `SELECT str_to_date('2025-02-03T03:00:00','%Y-%m-%dT%H:%i:%s') as ts`
+// 	qry := `SELECT str_to_date('2025-02-03T03:00:00','%Y-%m-%dT%H:%i:%s') as ts`
 
 // 	// This comes back as a string, which needs to be dealt with?
-// 	qry := `SELECT str_to_date('2025-02-03-03:00:00','%Y-%m-%d-%H:%i:%s') as ts`
+// 	//qry := `SELECT str_to_date('2025-02-03-03:00:00','%Y-%m-%d-%H:%i:%s') as ts`
 
 // 	// This is a datetime(6), need to deal with that as well
 // 	//qry := `SELECT current_timestamp() as ts`

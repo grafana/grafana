@@ -17,13 +17,13 @@ type DB struct{}
 // The RefID of each frame becomes a table in the database.
 // It is expected that there is only one frame per RefID.
 // The name becomes the name and RefID of the returned frame.
-func (db *DB) QueryFrames(name string, query string, frames []*data.Frame) (*data.Frame, error) {
+func (db *DB) QueryFrames(ctx context.Context, name string, query string, frames []*data.Frame) (*data.Frame, error) {
 	pro := NewFramesDBProvider(frames)
 	session := mysql.NewBaseSession()
-	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
+	mCtx := mysql.NewContext(ctx, mysql.WithSession(session))
 
 	// Select the database in the context
-	ctx.SetCurrentDatabase(dbName)
+	mCtx.SetCurrentDatabase(dbName)
 
 	// Empty dir does not disable secure_file_priv
 	//ctx.SetSessionVariable(ctx, "secure_file_priv", "")
@@ -35,12 +35,12 @@ func (db *DB) QueryFrames(name string, query string, frames []*data.Frame) (*dat
 		IsReadOnly: true,
 	})
 
-	schema, iter, _, err := engine.Query(ctx, query)
+	schema, iter, _, err := engine.Query(mCtx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := convertToDataFrame(ctx, iter, schema)
+	f, err := convertToDataFrame(mCtx, iter, schema)
 	if err != nil {
 		return nil, err
 	}

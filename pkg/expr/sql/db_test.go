@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -55,7 +56,7 @@ func TestQueryFramesInto(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			frame, err := db.QueryFrames("sqlExpressionRefId", tt.query, tt.input_frames)
+			frame, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", tt.query, tt.input_frames)
 			require.NoError(t, err)
 			require.NotNil(t, frame.Fields)
 

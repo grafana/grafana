@@ -96,7 +96,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	db := sql.DB{}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
-	frame, err := db.QueryFrames(gr.refID, gr.query, allFrames)
+	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
