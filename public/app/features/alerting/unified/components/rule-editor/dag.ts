@@ -45,7 +45,7 @@ export function createDagFromQueries(queries: AlertQuery[]): Graph {
   return graph;
 }
 
-// determine if inpout error is a DAGError
+// determine if input error is a DAGError
 export function isDagError(error: unknown): error is DAGError {
   return isArray((error as DAGError).cause) && (error as DAGError).cause.every((e) => 'source' in e && 'target' in e);
 }

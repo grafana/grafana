@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { DataSourceRef } from '@grafana/schema';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { GrafanaRuleQueryViewer } from './GrafanaRuleQueryViewer';
 import { mockCombinedRule } from './mocks';
@@ -10,9 +10,9 @@ describe('GrafanaRuleQueryViewer', () => {
   it('renders without crashing', async () => {
     const rule = mockCombinedRule();
 
-    const getDataSourceQuery = (refId: string) => {
-      const query: AlertQuery = {
-        refId: refId,
+    const getDataSourceQuery = (sourceRefId: string, targetRefId = '') => {
+      const query: AlertQuery<AlertDataQuery> = {
+        refId: sourceRefId,
         datasourceUid: 'abc123',
         queryType: '',
         relativeTimeRange: {
@@ -20,20 +20,21 @@ describe('GrafanaRuleQueryViewer', () => {
           to: 0,
         },
         model: {
-          refId: 'A',
+          refId: sourceRefId,
+          expression: targetRefId,
         },
       };
       return query;
     };
     const queries = [
       getDataSourceQuery('A'),
-      getDataSourceQuery('B'),
-      getDataSourceQuery('C'),
-      getDataSourceQuery('D'),
-      getDataSourceQuery('E'),
+      getDataSourceQuery('B', 'A'),
+      getDataSourceQuery('C', 'A'),
+      getDataSourceQuery('D', 'A'),
+      getDataSourceQuery('E', 'A'),
     ];
 
-    const getExpression = (refId: string, dsRef: DataSourceRef) => {
+    const getExpression = (refId: string, dsRef: DataSourceRef, targetRefId: string) => {
       const expr = {
         refId: refId,
         datasourceUid: '__expr__',
@@ -53,7 +54,7 @@ describe('GrafanaRuleQueryViewer', () => {
                 type: 'and',
               },
               query: {
-                params: ['A'],
+                params: [targetRefId],
               },
               reducer: {
                 params: [],
@@ -67,10 +68,10 @@ describe('GrafanaRuleQueryViewer', () => {
     };
 
     const expressions = [
-      getExpression('A', { type: '' }),
-      getExpression('B', { type: '' }),
-      getExpression('C', { type: '' }),
-      getExpression('D', { type: '' }),
+      getExpression('F', { type: '' }, 'A'),
+      getExpression('G', { type: '' }, 'A'),
+      getExpression('H', { type: '' }, 'A'),
+      getExpression('I', { type: '' }, 'A'),
     ];
     render(<GrafanaRuleQueryViewer queries={[...queries, ...expressions]} condition="A" rule={rule} />);
 
