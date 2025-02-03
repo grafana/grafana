@@ -362,7 +362,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio external evaluation
 func (sch *schedule) RunRuleEvaluation(ctx context.Context, evalReq ngmodels.ExternalAlertEvaluationRequest) error {
-	logger := sch.log.New(ctx, "eval_time", evalReq.EvalTime, "rule_title", evalReq.AlertRule.Title, "rule_uid", evalReq.AlertRule.UID, "org_id", evalReq.AlertRule.OrgID).FromContext(ctx)
+	logger := sch.log.New("eval_time", evalReq.EvalTime, "rule_title", evalReq.AlertRule.Title, "rule_uid", evalReq.AlertRule.UID, "org_id", evalReq.AlertRule.OrgID).FromContext(ctx)
 	alertKey := ngmodels.AlertRuleKey{
 		OrgID: evalReq.AlertRule.OrgID,
 		UID:   evalReq.AlertRule.UID,
