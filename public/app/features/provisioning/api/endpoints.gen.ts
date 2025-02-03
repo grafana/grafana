@@ -234,11 +234,11 @@ const injectedRtkApi = api
         invalidatesTags: ['Repository'],
       }),
       getFrontendSettings: build.query<GetFrontendSettingsResponse, GetFrontendSettingsArg>({
-        query: (queryArg) => ({ url: `/settings` }),
+        query: () => ({ url: `/settings` }),
         providesTags: ['Provisioning'],
       }),
       getResourceStats: build.query<GetResourceStatsResponse, GetResourceStatsArg>({
-        query: (queryArg) => ({ url: `/stats` }),
+        query: () => ({ url: `/stats` }),
         providesTags: ['Provisioning'],
       }),
     }),
@@ -562,10 +562,7 @@ export type GetFrontendSettingsResponse = /** status 200 undefined */ {
     [key: string]: any;
   };
 };
-export type GetFrontendSettingsArg = {
-  /** workspace */
-  namespace: string;
-};
+export type GetFrontendSettingsArg = void;
 export type GetResourceStatsResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -574,10 +571,7 @@ export type GetResourceStatsResponse = /** status 200 undefined */ {
   kind?: string;
   metadata?: any;
 };
-export type GetResourceStatsArg = {
-  /** workspace */
-  namespace: string;
-};
+export type GetResourceStatsArg = void;
 export type Time = string;
 export type FieldsV1 = object;
 export type ManagedFieldsEntry = {
