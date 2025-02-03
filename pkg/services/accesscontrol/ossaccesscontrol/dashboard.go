@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -117,6 +118,7 @@ func ProvideDashboardPermissions(
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
 			defer span.End()
 
+			ctx, _ = identity.WithServiceIdentitiy(ctx, orgID)
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return err
@@ -129,32 +131,25 @@ func ProvideDashboardPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			wildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
-			scopes := []string(wildcards)
-
+			ctx, _ = identity.WithServiceIdentitiy(ctx, orgID)
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
 			}
+
+			scopes := []string(accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix))
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
-			// nolint:staticcheck
 			if dashboard.FolderUID != "" {
-				query := &dashboards.GetDashboardQuery{UID: dashboard.FolderUID, OrgID: orgID}
-				queryResult, err := dashboardService.GetDashboard(ctx, query)
-				if err != nil {
-					return nil, err
-				}
-				parentScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)
-
-				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, queryResult.UID, folderService)
+				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderService)
 				if err != nil {
 					return nil, err
 				}
 
-				scopes = append(scopes, parentScope)
+				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
 				scopes = append(scopes, nestedScopes...)
 				return scopes, nil
 			}
+
 			return append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)), nil
 		},
 		Assignments: resourcepermissions.Assignments{
