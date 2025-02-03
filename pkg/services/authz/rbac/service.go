@@ -656,8 +656,7 @@ func buildItemList(scopes map[string]bool, tree map[string]FolderNode, prefix st
 	itemSet := make(map[string]struct{}, len(scopes))
 
 	for scope := range scopes {
-		if strings.HasPrefix(scope, "folders:uid:") {
-			identifier := strings.TrimPrefix(scope, "folders:uid:")
+		if identifier, ok := strings.CutPrefix(scope, "folders:uid:"); ok {
 			if _, ok := folderSet[identifier]; ok {
 				continue
 			}
