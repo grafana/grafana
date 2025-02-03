@@ -444,9 +444,12 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 	}
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
-		currentState := st.cache.create(ctx, logger, alertRule, result, extraLabels, st.externalURL)
-		s := st.setNextState(alertRule, currentState, result, nil, logger, takeImageFn)
-		st.cache.set(currentState) // replace the existing state with the new one
+		newState := newState(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		if curState := st.cache.get(alertRule.OrgID, alertRule.UID, newState.CacheID); curState != nil {
+			patch(newState, curState, result)
+		}
+		s := st.setNextState(alertRule, newState, result, nil, logger, takeImageFn)
+		st.cache.set(newState) // replace the existing state with the new one
 		transitions = append(transitions, s)
 	}
 	return transitions
