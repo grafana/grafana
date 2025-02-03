@@ -27,11 +27,10 @@ type Syncer interface {
 		repo repository.Repository,
 		options provisioning.SyncJobOptions,
 		progress func(provisioning.JobStatus) error,
-	) (*provisioning.SyncStatus, error)
+	) (*provisioning.JobStatus, *provisioning.SyncStatus, error)
 }
 
 type syncer struct {
-	//	client     *resources.DynamicClient
 	parser     *resources.Parser
 	lister     resources.ResourceLister
 	folders    dynamic.ResourceInterface
@@ -63,65 +62,95 @@ func (r *syncer) Sync(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.SyncJobOptions,
 	progress func(provisioning.JobStatus) error,
-) (*provisioning.SyncStatus, error) {
+) (*provisioning.JobStatus, *provisioning.SyncStatus, error) {
 	cfg := r.repository.Config()
 	if !cfg.Spec.Sync.Enabled {
-		return nil, fmt.Errorf("sync is not enabled")
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateError,
+			Message: "sync is not enabled",
+		}, nil, nil
 	}
 
-	// Ensure the configured folder exists and it's managed by the repository
+	// Ensure the configured folder exists and is managed by the repository
 	rootFolder := resources.RootFolder(cfg)
 	if rootFolder != "" {
 		if err := r.ensureFolderExists(ctx, resources.Folder{
 			ID:    rootFolder, // will not change if exists
 			Title: cfg.Spec.Title,
 		}, ""); err != nil {
-			return nil, fmt.Errorf("unable to create root folder: %w", err)
+			return nil, nil, fmt.Errorf("unable to create root folder: %w", err)
 		}
 	}
 
 	syncStatus := &provisioning.SyncStatus{}
 	logger := logging.FromContext(ctx)
+	var err error
 	var changes []repository.FileChange
 	versionedRepo, isVersioned := r.repository.(repository.VersionedRepository)
-	lastCommit := cfg.Status.Sync.Hash
+	currentRef := ""
 
-	if isVersioned && versionedRepo != nil && lastCommit != "" && !options.Complete {
-		latest, err := versionedRepo.LatestRef(ctx)
+	if isVersioned && versionedRepo != nil {
+		currentRef, err = versionedRepo.LatestRef(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("latest ref: %w", err)
+			return nil, nil, fmt.Errorf("getting latest ref: %w", err)
 		}
-		logger.Info("get list of changes", "last_commit", lastCommit, "latest", latest)
-		changes, err = versionedRepo.CompareFiles(ctx, cfg.Status.Sync.Hash, latest)
+	}
+
+	if isVersioned && cfg.Status.Sync.Hash != "" && !options.Complete {
+		if currentRef == cfg.Status.Sync.Hash {
+			message := "same commit as last sync"
+			syncStatus.State = provisioning.JobStateSuccess
+			syncStatus.Message = append(syncStatus.Message, message)
+			return &provisioning.JobStatus{
+				State:   provisioning.JobStateSuccess,
+				Message: message,
+			}, syncStatus, nil
+		}
+
+		logger.Info("get list of changes", "last_commit", cfg.Status.Sync.Hash, "latest", currentRef)
+		changes, err = versionedRepo.CompareFiles(ctx, cfg.Status.Sync.Hash, currentRef)
 		if err != nil {
-			return nil, fmt.Errorf("compare files: %w", err)
+			return nil, nil, fmt.Errorf("compare files: %w", err)
 		}
-		syncStatus.Hash = latest
 	} else {
 		target, err := r.lister.List(ctx, cfg.Namespace, cfg.Name)
 		if err != nil {
-			return nil, fmt.Errorf("error listing current: %w", err)
+			return nil, nil, fmt.Errorf("error listing current: %w", err)
 		}
 		source, err := repo.ReadTree(ctx, "")
 		if err != nil {
-			return nil, fmt.Errorf("error reading tree: %w", err)
+			return nil, nil, fmt.Errorf("error reading tree: %w", err)
 		}
 
 		changes, err = repository.Changes(source, target)
 		if err != nil {
-			return nil, fmt.Errorf("error calculating changes: %w", err)
+			return nil, nil, fmt.Errorf("error calculating changes: %w", err)
 		}
 		for i := range changes {
 			changes[i].Ref = "" // clear the refs so we do not try to write them
 		}
 	}
 
-	if err := r.replicateChanges(ctx, changes); err != nil {
-		return nil, fmt.Errorf("replicate changes: %w", err)
+	if len(changes) == 0 {
+		message := "no changes to sync"
+		syncStatus.State = provisioning.JobStateSuccess
+		syncStatus.Message = append(syncStatus.Message, message)
+		return &provisioning.JobStatus{
+			State:   provisioning.JobStateSuccess,
+			Message: message,
+		}, syncStatus, nil
 	}
 
+	if err := r.replicateChanges(ctx, changes); err != nil {
+		return nil, nil, fmt.Errorf("replicate changes: %w", err)
+	}
+
+	message := fmt.Sprintf("processed %d changes", len(changes))
 	syncStatus.State = provisioning.JobStateSuccess
-	return syncStatus, nil
+	return &provisioning.JobStatus{
+		State:   provisioning.JobStateSuccess,
+		Message: message,
+	}, syncStatus, nil
 }
 
 // replicateFile creates a new resource in the cluster.
@@ -230,7 +259,6 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 			if err := r.deleteFile(ctx, oldParsed); err != nil {
 				return fmt.Errorf("delete file: %w", err)
 			}
-
 			if err := r.replicateFile(ctx, parsed, folderTree); err != nil {
 				return fmt.Errorf("replicate file in new path: %w", err)
 			}

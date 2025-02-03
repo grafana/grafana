@@ -166,10 +166,9 @@ func (g *JobWorker) doSync(ctx context.Context,
 	cfg := repo.Config()
 
 	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
-	syncStatus := job.Status.ToSyncStatus(job.Name)
 	patch, err := json.Marshal(map[string]any{
 		"status": map[string]any{
-			"sync": syncStatus,
+			"sync": job.Status.ToSyncStatus(job.Name),
 		},
 	})
 	if err != nil {
@@ -188,22 +187,23 @@ func (g *JobWorker) doSync(ctx context.Context,
 	}
 
 	// Sync the repository
-	status, syncError := syncer.Sync(ctx, repo, *job.Spec.Sync, progress)
-	if status == nil {
-		status = &provisioning.SyncStatus{}
+	jobStatus, syncStatus, syncError := syncer.Sync(ctx, repo, *job.Spec.Sync, progress)
+	if syncStatus == nil {
+		syncStatus = &provisioning.SyncStatus{}
 	}
-	status.JobID = job.Name
-	status.Started = job.Status.Started
-	status.Finished = time.Now().Unix()
+	syncStatus.JobID = job.Name
+	syncStatus.Started = job.Status.Started
+	syncStatus.Finished = time.Now().Unix()
 	if syncError != nil {
-		status.State = provisioning.JobStateError
-		status.Message = []string{
+		syncStatus.State = provisioning.JobStateError
+		syncStatus.Message = []string{
 			"error running sync",
 			syncError.Error(),
 		}
 	}
 
-	// Update the resource stats
+	// Update the resource stats -- give the index some time to catch up
+	time.Sleep(1 * time.Second)
 	stats, err := g.lister.Stats(ctx, cfg.Namespace, cfg.Name)
 	if err != nil {
 		logger.Warn("unable to read stats", "error", err)
@@ -214,7 +214,7 @@ func (g *JobWorker) doSync(ctx context.Context,
 
 	patch, err = json.Marshal(map[string]any{
 		"status": map[string]any{
-			"sync":  status,
+			"sync":  syncStatus,
 			"stats": stats.Items,
 		},
 	})
@@ -231,8 +231,5 @@ func (g *JobWorker) doSync(ctx context.Context,
 	if syncError != nil {
 		return nil, syncError
 	}
-
-	return &provisioning.JobStatus{
-		State: provisioning.JobStateSuccess,
-	}, nil
+	return jobStatus, nil
 }
