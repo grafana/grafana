@@ -98,12 +98,8 @@ func ProvideFolderPermissions(
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
 			defer span.End()
 
-			ident, err := identity.GetRequester(ctx)
-			if err != nil {
-				return err
-			}
-
-			_, err = folderService.Get(ctx, &folder.GetFolderQuery{
+			ctx, ident := identity.WithServiceIdentitiy(ctx, orgID)
+			_, err := folderService.Get(ctx, &folder.GetFolderQuery{
 				UID:          &resourceID,
 				OrgID:        orgID,
 				SignedInUser: ident,
@@ -116,6 +112,7 @@ func ProvideFolderPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			ctx, _ = identity.WithServiceIdentitiy(ctx, orgID)
 			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{
