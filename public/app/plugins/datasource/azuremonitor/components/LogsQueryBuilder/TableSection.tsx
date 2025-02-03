@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types';

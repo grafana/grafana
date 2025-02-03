@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
+import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';

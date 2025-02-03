@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorHeader, FlexItem, InlineSelect } from '@grafana/experimental';
+import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, RadioButtonGroup } from '@grafana/ui';
 
