@@ -635,15 +635,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -909,6 +909,25 @@
         },
         "modal": {
           "title": "Row options"
+        }
+      }
+    },
+    "edit-pane": {
+      "objects": {
+        "multi-select": {
+          "selection-number": "No. of objects selected: "
+        }
+      },
+      "panels": {
+        "multi-select": {
+          "selection-number": "No. of panels selected: "
+        }
+      },
+      "row": {
+        "hide": "Hide row header",
+        "multi-select": {
+          "options-header": "Multi-selected Row options",
+          "selection-number": "No. of rows selected: "
         }
       }
     },
@@ -2826,7 +2845,7 @@
       "shared-dashboard-modal-title": "Shared dashboards"
     },
     "table-body": {
-      "dashboard-count_one": "{{count}} dashboard",
+      "dashboard-count_one": "{{count}} dashboards",
       "dashboard-count_other": "{{count}} dashboards"
     },
     "table-header": {
