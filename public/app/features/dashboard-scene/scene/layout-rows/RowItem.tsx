@@ -47,7 +47,10 @@ export interface RowItemState extends SceneObjectState {
   height?: 'expand' | 'min';
 }
 
-export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, BulkActionElement, EditableDashboardElement {
+export class RowItem
+  extends SceneObjectBase<RowItemState>
+  implements LayoutParent, BulkActionElement, EditableDashboardElement
+{
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['title'],
   });
