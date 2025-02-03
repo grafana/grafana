@@ -2,14 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneObject,
-  SceneObjectRef,
-  sceneGraph,
-  useSceneObjectState,
-} from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContextItem, ElementSelectionContextState, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../utils/utils';
@@ -54,28 +47,25 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public selectObject(obj: SceneObject, id: string, multi?: boolean) {
-    const prevItem = this.state.selection?.getFirstObject();
+    if (!this.state.selection) {
+      return;
+    }
+
+    const prevItem = this.state.selection.getFirstObject();
     if (prevItem === obj && !multi) {
       this.clearSelection();
       return;
     }
 
-    if (multi && this.state.selection?.hasValue(id)) {
+    if (multi && this.state.selection.hasValue(id)) {
       this.removeMultiSelectedObject(id);
       return;
     }
 
-    const ref = obj.getRef();
-    let selected = [{ id }];
-    let selectionArray: Array<[string, SceneObjectRef<SceneObject>]> = [[id, ref]];
-
-    if (multi) {
-      selectionArray = [[id, ref], ...(this.state.selection?.getSelectionEntries() ?? [])];
-      selected = [{ id }, ...this.state.selectionContext.selected];
-    }
+    const { selection, contextItems: selected } = this.state.selection.getStateWithValue(id, obj, !!multi);
 
     this.setState({
-      selection: new ElementSelection(selectionArray),
+      selection: new ElementSelection(selection),
       selectionContext: {
         ...this.state.selectionContext,
         selected,
@@ -84,13 +74,16 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   private removeMultiSelectedObject(id: string) {
-    this.state.selection?.removeValue(id);
-    const entries = this.state.selection?.getSelectionEntries();
+    if (!this.state.selection) {
+      return;
+    }
+
+    const { entries, contextItems: selected } = this.state.selection.getStateWithoutValueAt(id);
     this.setState({
-      selection: new ElementSelection([...(entries ?? [])]),
+      selection: new ElementSelection([...entries]),
       selectionContext: {
         ...this.state.selectionContext,
-        selected: [...(entries?.map((tuple) => ({ id: tuple[0] })) ?? [])],
+        selected,
       },
     });
   }

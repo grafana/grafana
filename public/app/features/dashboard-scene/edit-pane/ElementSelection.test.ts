@@ -106,6 +106,49 @@ describe('ElementSelection', () => {
     expect(selection.getFirstObject()).toBeUndefined();
     expect(selection.createSelectionElement()).toBeUndefined();
   });
+
+  it('returns the entries with the specified value removed', () => {
+    const selection = new ElementSelection([
+      ['id1', panel1.getRef()],
+      ['id2', panel2.getRef()],
+      ['id3', scene.getRef()],
+    ]);
+
+    const { entries, contextItems } = selection.getStateWithoutValueAt('id2');
+    expect(entries).toEqual([
+      ['id1', panel1.getRef()],
+      ['id3', scene.getRef()],
+    ]);
+    expect(contextItems).toEqual([{ id: 'id1' }, { id: 'id3' }]);
+  });
+
+  it('returns the entries with the specified value added in a multi-select scenario', () => {
+    const selection = new ElementSelection([
+      ['id1', panel1.getRef()],
+      ['id2', panel2.getRef()],
+    ]);
+
+    const { selection: entries, contextItems } = selection.getStateWithValue('id3', scene, true);
+
+    expect(entries).toEqual([
+      ['id3', panel1.getRef()],
+      ['id1', panel2.getRef()],
+      ['id2', scene.getRef()],
+    ]);
+    expect(contextItems).toEqual([{ id: 'id3' }, { id: 'id1' }, { id: 'id2' }]);
+  });
+
+  it('returns the entries with just the specified value added in a non multi-select scenario', () => {
+    const selection = new ElementSelection([
+      ['id1', panel1.getRef()],
+      ['id2', panel2.getRef()],
+    ]);
+
+    const { selection: entries, contextItems } = selection.getStateWithValue('id3', scene, false);
+
+    expect(entries).toEqual([['id3', scene.getRef()]]);
+    expect(contextItems).toEqual([{ id: 'id3' }]);
+  });
 });
 
 function buildScene() {

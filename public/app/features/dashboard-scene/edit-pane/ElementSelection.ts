@@ -1,4 +1,5 @@
 import { SceneObject, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { ElementSelectionContextItem } from '@grafana/ui';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import {
@@ -56,6 +57,37 @@ export class ElementSelection {
       this.sameType = undefined;
       this._isMultiSelection = false;
     }
+  }
+
+  public getStateWithValue(
+    id: string,
+    obj: SceneObject,
+    isMulti: boolean
+  ): { selection: Array<[string, SceneObjectRef<SceneObject>]>; contextItems: ElementSelectionContextItem[] } {
+    const ref = obj.getRef();
+    let contextItems = [{ id }];
+    let selection: Array<[string, SceneObjectRef<SceneObject>]> = [[id, ref]];
+
+    const entries = this.getSelectionEntries() ?? [];
+    const items = entries.map(([key]) => ({ id: key }));
+
+    if (isMulti) {
+      selection = [[id, ref], ...entries];
+      contextItems = [{ id }, ...items];
+    }
+
+    return { selection, contextItems };
+  }
+
+  public getStateWithoutValueAt(id: string): {
+    entries: Array<[string, SceneObjectRef<SceneObject>]>;
+    contextItems: ElementSelectionContextItem[];
+  } {
+    this.removeValue(id);
+    const entries = this.getSelectionEntries() ?? [];
+    const contextItems = entries.map(([key]) => ({ id: key }));
+
+    return { entries, contextItems };
   }
 
   public getSelection(): SceneObject | SceneObject[] | undefined {
