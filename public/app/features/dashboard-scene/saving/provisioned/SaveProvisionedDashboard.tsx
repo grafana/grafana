@@ -25,7 +25,7 @@ type FormData = {
   path: string;
   comment?: string;
   repo: string;
-  workflow?: WorkflowOption;
+  workflow?: string;
   title: string;
   description: string;
   folder: {
@@ -69,7 +69,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
     const appEvents = getAppEvents();
     if (request.isSuccess) {
       dashboard.setState({ isDirty: false });
-      const prLink = workflow === WorkflowOption.Direct ? undefined : href;
+      const prLink = workflow === WorkflowOption.PullRequest ? href : undefined;
       dashboard.closeModal();
       locationService.partial({
         viewPanel: null,
@@ -101,7 +101,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
       description: description,
     });
 
-    if (workflow === WorkflowOption.Direct) {
+    if (workflow === WorkflowOption.Push) {
       ref = undefined;
     }
 
@@ -181,11 +181,11 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard }: Prop
                 control={control}
                 name={'workflow'}
                 render={({ field: { ref, ...field } }) => {
-                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig?.github?.branch)} />;
+                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig)} />;
                 }}
               />
             </Field>
-            {workflow === WorkflowOption.PullRequest && (
+            {(workflow === WorkflowOption.PullRequest || workflow === WorkflowOption.Branch) && (
               <Field
                 label="Branch"
                 description="Branch name in GitHub"

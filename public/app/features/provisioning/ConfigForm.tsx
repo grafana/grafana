@@ -6,6 +6,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import {
   Field,
+  FieldSet,
   Combobox,
   SecretInput,
   Input,
@@ -15,18 +16,25 @@ import {
   ControlledCollapse,
   RadioButtonGroup,
   Stack,
+  MultiSelect,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { Repository, RepositorySpec } from './api';
 import { useCreateOrUpdateRepository } from './hooks';
-import { RepositoryFormData } from './types';
+import { RepositoryFormData, WorkflowOption } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 const targetOptions = [
   { value: 'instance', label: 'Entire instance' },
   { value: 'folder', label: 'Managed folder' },
+];
+
+const workflowOptions = [
+  { label: 'Pull Request', value: WorkflowOption.PullRequest },
+  { label: 'Push', value: WorkflowOption.Push },
+  { label: 'Branch', value: WorkflowOption.Branch },
 ];
 
 const appEvents = getAppEvents();
@@ -39,8 +47,9 @@ function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
       token: '',
       owner: '',
       repository: '',
-      branch: '',
-      branchWorkflow: true,
+      branch: 'main',
+      generateDashboardPreviews: true,
+      workflows: [WorkflowOption.PullRequest, WorkflowOption.Push, WorkflowOption.Branch],
       sync: {
         enabled: false,
         target: 'instance',
@@ -121,28 +130,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
         <Input {...register('title', { required: 'This field is required.' })} placeholder={'My config'} />
       </Field>
       {type === 'github' && (
-        <>
-          <ControlledCollapse collapsible label="Access Token Permissions" isOpen>
-            <p>
-              To create a new Access Token, navigate to{' '}
-              <TextLink external href="https://github.com/settings/tokens">
-                Personal Access Tokens
-              </TextLink>{' '}
-              and create a click &quot;Generate new token.&quot;
-            </p>
-
-            <p>Ensure that your token has the following permissions:</p>
-
-            <b>For all repositories:</b>
-            <pre>public_repo, repo:status, repo_deployment, read:packages, read:user, user:email</pre>
-
-            <b>For GitHub projects:</b>
-            <pre>read:org, read:project</pre>
-
-            <b>An extra setting is required for private repositories:</b>
-            <pre>repo (Full control of private repositories)</pre>
-          </ControlledCollapse>
-          <Field label={'GitHub token'} required error={errors?.token?.message} invalid={!!errors.token}>
+        <FieldSet label="GitHub">
+          <Field label={'Token'} required error={errors?.token?.message} invalid={!!errors.token}>
             <Controller
               name={'token'}
               control={control}
@@ -163,6 +152,26 @@ export function ConfigForm({ data }: ConfigFormProps) {
               }}
             />
           </Field>
+          <ControlledCollapse collapsible label="Access Token Permissions">
+            <p>
+              To create a new Access Token, navigate to{' '}
+              <TextLink external href="https://github.com/settings/tokens">
+                Personal Access Tokens
+              </TextLink>{' '}
+              and create a click &quot;Generate new token.&quot;
+            </p>
+
+            <p>Ensure that your token has the following permissions:</p>
+
+            <b>For all repositories:</b>
+            <pre>public_repo, repo:status, repo_deployment, read:packages, read:user, user:email</pre>
+
+            <b>For GitHub projects:</b>
+            <pre>read:org, read:project</pre>
+
+            <b>An extra setting is required for private repositories:</b>
+            <pre>repo (Full control of private repositories)</pre>
+          </ControlledCollapse>
           <Field label={'Repository owner'} error={errors?.owner?.message} invalid={!!errors?.owner}>
             <Input {...register('owner', { required: 'This field is required.' })} placeholder={'test'} />
           </Field>
@@ -172,14 +181,27 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Field label={'Branch'} error={errors?.branch?.message} invalid={!!errors?.branch}>
             <Input {...register('branch')} placeholder={'main'} />
           </Field>
-          <Field label={'Enable branch workflow'}>
-            <Switch {...register('branchWorkflow')} id={'branchWorkflow'} />
+          <Field label={'Workflows'}>
+            <Controller
+              name={'workflows'}
+              control={control}
+              render={({ field: { ref, onChange, ...field } }) => {
+                return (
+                  <MultiSelect
+                    options={workflowOptions}
+                    onChange={(value) => onChange(value.map((v) => v.value))}
+                    placeholder={'Select workflows'}
+                    {...field}
+                  />
+                );
+              }}
+            />
           </Field>
           <Field label={'Show dashboard previews'}>
             <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
           </Field>
           {/* The lint option is intentionally not presented here, as it's an experimental feature. */}
-        </>
+        </FieldSet>
       )}
 
       {type === 'local' && (
@@ -189,38 +211,42 @@ export function ConfigForm({ data }: ConfigFormProps) {
       )}
 
       {type === 's3' && (
-        <>
+        <FieldSet label="local">
           <Field label={'S3 bucket'} error={errors?.bucket?.message} invalid={!!errors?.bucket}>
             <Input {...register('bucket', { required: 'This field is required.' })} placeholder={'bucket-name'} />
           </Field>
           <Field label={'S3 region'} error={errors?.region?.message} invalid={!!errors?.region}>
             <Input {...register('region', { required: 'This field is required.' })} placeholder={'us-west-2'} />
           </Field>
-        </>
+        </FieldSet>
       )}
-      <Field label={'Sync target'} required error={errors?.sync?.target?.message} invalid={!!errors?.sync?.target}>
-        <Controller
-          name={'sync.target'}
-          control={control}
-          rules={{ required: 'This field is required.' }}
-          render={({ field: { ref, onChange, ...field } }) => {
-            return (
-              <RadioButtonGroup
-                options={targetOptions}
-                onChange={onChange}
-                disabled={Boolean(data?.status?.sync.state)}
-                {...field}
-              />
-            );
-          }}
-        />
-      </Field>
-      <Field label={'Sync enabled'}>
-        <Switch {...register('sync.enabled')} id={'sync.enabled'} />
-      </Field>
-      <Field label={'Read Only'} description={'Disable writing to this repository'}>
-        <Switch {...register('readOnly')} id={'readOnly'} />
-      </Field>
+      <FieldSet label="Sync Settings">
+        <Field label={'Enabled'}>
+          <Switch {...register('sync.enabled')} id={'sync.enabled'} />
+        </Field>
+        <Field label={'Target'} required error={errors?.sync?.target?.message} invalid={!!errors?.sync?.target}>
+          <Controller
+            name={'sync.target'}
+            control={control}
+            rules={{ required: 'This field is required.' }}
+            render={({ field: { ref, onChange, ...field } }) => {
+              return (
+                <RadioButtonGroup
+                  options={targetOptions}
+                  onChange={onChange}
+                  disabled={Boolean(data?.status?.sync.state)}
+                  {...field}
+                />
+              );
+            }}
+          />
+        </Field>
+      </FieldSet>
+      <FieldSet label="Advanced Settings">
+        <Field label={'Read Only'} description={'Disable writing to this repository'}>
+          <Switch {...register('readOnly')} id={'readOnly'} />
+        </Field>
+      </FieldSet>
       <Stack gap={2}>
         <Button type={'submit'} disabled={request.isLoading}>
           {request.isLoading ? 'Saving...' : 'Save'}
