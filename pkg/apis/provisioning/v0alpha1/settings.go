@@ -13,6 +13,7 @@ type Settings struct {
 	Instance string `json:"instance,omitempty"`
 
 	// The basic repository settings
+	// +mapType=atomic
 	Repository map[string]RepositoryView `json:"repository"`
 }
 
