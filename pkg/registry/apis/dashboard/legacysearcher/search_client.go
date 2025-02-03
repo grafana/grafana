@@ -32,8 +32,8 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		return nil, err
 	}
 
-	if req.Query == "*" {
-		req.Query = ""
+	if strings.Contains(req.Query, "*") {
+		req.Query = strings.ReplaceAll(req.Query, "*", "")
 	}
 
 	// TODO add missing support for the following query params:
