@@ -670,7 +670,6 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		folders = append(folders, f.UID)
 	}
 
-	var dashboardUIDs []string
 	if cmd.ForceDeleteRules {
 		if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
 			return err
@@ -691,7 +690,8 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 
 		// if dashboard restore is on we don't delete public dashboards, the hard delete will take care of it later
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-			// We need a list of dashboard uids inside the folder to delete related public dashboards
+			// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards
+			var dashboardUIDs []string
 			// we cannot use the dashboard service directly due to circular dependencies,
 			// so either use the search client if the feature is enabled or use the dashboard store
 			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesCliDashboards) {
