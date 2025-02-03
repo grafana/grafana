@@ -1,9 +1,9 @@
 import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
 
 export function useGetOnCallIntegrations() {
-  const { installed: onCallPluginInstalled } = usePluginBridge(SupportedPlugin.OnCall);
+  const { installed: onCallPluginInstalled } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
 
   const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
     skip: !onCallPluginInstalled,
