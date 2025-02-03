@@ -329,14 +329,15 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 
-			// If the input is SQL, mark for no conversion
+			// If the input is SQL, conversion is handled differently
 			if _, ok := cmdNode.Command.(*SQLCommand); ok {
 				if dsNode, ok := neededNode.(*DSNode); ok {
 					dsNode.isSQLInput = true
+				} else {
+					// Only allow data source nodes as SQL expression inputs for now
+					return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
 				}
 			}
-
-			// TODO: Check if any SQL inputs are the input to any other type of node, and error if so
 
 			if neededNode.ID() == cmdNode.ID() {
 				return fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar)
@@ -351,6 +352,13 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 			if neededNode.NodeType() == TypeCMDNode {
 				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
 					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+				}
+			}
+
+			if neededNode.NodeType() == TypeCMDNode {
+				if neededNode.(*CMDNode).CMDType == TypeSQL {
+					// Do not allow SQL expressions to be inputs for other expressions for now
+					return fmt.Errorf("sql expressions can not be the input for other expressions, but %v in the input for %v", neededVar, cmdNode.RefID())
 				}
 			}
 
