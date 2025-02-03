@@ -447,15 +447,18 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 		return nil, err
 	}
 
-	// create org user link
-	orgCmd := &org.AddOrgUserCommand{
-		OrgID:                     cmd.OrgID,
-		UserID:                    usr.ID,
-		Role:                      org.RoleType(cmd.DefaultOrgRole),
-		AllowAddingServiceAccount: true,
-	}
-	if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
-		return nil, err
+	// the OrgID starts at 1. We might not have one for App Platform SAs.
+	if cmd.OrgID != 0 {
+		// create org user link
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     cmd.OrgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleType(cmd.DefaultOrgRole),
+			AllowAddingServiceAccount: true,
+		}
+		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+			return nil, err
+		}
 	}
 
 	return usr, nil
