@@ -96,10 +96,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	err = json.Unmarshal(body, &jsonData)
 	if err != nil {
-		logger.Error("Error during json unmarshal of the body", "error", err)
+		truncatedBody := string(body)
+		if len(truncatedBody) > 100 {
+			truncatedBody = truncatedBody[:100] + "..."
+		}
+		logger.Error("Error unmarshalling body", "error", err, "body", truncatedBody)
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
-			Message: "Health check failed: Failed to unmarshal response",
+			Message: "Health check failed: Failed to parse response from Elasticsearch. Check the logs for more information",
 		}, nil
 	}
 
