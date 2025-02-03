@@ -246,9 +246,9 @@ Your license is controlled by the following rules:
 
 As the license expiration date approaches, you will see a banner in Grafana that encourages you to renew. To learn about how to renew your license and what happens in Grafana when a license expires, refer to [License expiration]({{< relref "#license-expiration" >}}).
 
-**License token expiration:** Your license must contain a valid token, which renews periodically.
+**License token expiration:** Grafana Enterprise requires a valid token, which is automatically renewed.
 
-A license token is a digital key that activates your license. By default, license tokens renew every 7 days by calling the Grafana.com API. Short-lived license tokens enable more frequent validation that licenses are compliant, and allow for more frequent license updates - for example, adding users or invalidating a compromised license.
+A license token is a digital key that activates your license. By default, the license token is renewed every 24 hours by calling the Grafana API. Short-lived license tokens enable more frequent validation that licenses are compliant, and allow for more frequent license updates - for example, adding users or invalidating a compromised license.
 
 To view the details of your license token, sign in to Grafana Enterprise as a Server Administrator and visit **Administration** > **General** > **Statistics and licensing**. Token details are in the Token section under License Details.
 
