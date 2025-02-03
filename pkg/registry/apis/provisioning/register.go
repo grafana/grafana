@@ -46,9 +46,7 @@ import (
 
 const repoControllerWorkers = 1
 
-var (
-	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
-)
+var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
@@ -337,6 +335,14 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 		if r.Spec.GitHub.Branch == "" {
 			r.Spec.GitHub.Branch = "main"
+		}
+
+		if len(r.Spec.GitHub.Workflows) == 0 {
+			r.Spec.GitHub.Workflows = []provisioning.Workflow{
+				provisioning.PullRequestWorkflow,
+				provisioning.BranchWorkflow,
+				provisioning.PushWorkflow,
+			}
 		}
 	}
 

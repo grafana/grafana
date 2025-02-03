@@ -32,6 +32,14 @@ type S3RepositoryConfig struct {
 	// TODO: How do we define access? Secrets?
 }
 
+type Workflow string
+
+const (
+	PullRequestWorkflow Workflow = "pull-request"
+	BranchWorkflow      Workflow = "branch"
+	PushWorkflow        Workflow = "push"
+)
+
 type GitHubRepositoryConfig struct {
 	// The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).
 	Owner string `json:"owner,omitempty"`
@@ -46,9 +54,10 @@ type GitHubRepositoryConfig struct {
 	// TODO: Do we want an SSH url instead maybe?
 	// TODO: On-prem GitHub Enterprise support?
 
-	// Whether we should commit to change branches and use a Pull Request flow to achieve this.
-	// By default, this is false (i.e. we will commit straight to the main branch).
-	BranchWorkflow bool `json:"branchWorkflow,omitempty"`
+	// Workflow allowed for changes to the repository.
+	// The order is relevant for defining the precedence of the workflows.
+	// Possible values: pull-request, branch, push.
+	Workflows []Workflow `json:"workflows,omitempty"`
 
 	// Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option.
 	// By default, this is false (i.e. we will not create previews).

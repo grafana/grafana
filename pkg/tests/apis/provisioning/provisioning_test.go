@@ -161,18 +161,13 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.JSONEq(t, `{
 			"github-example": {
 				"description": "load resources from github",
-				"editing": {
-					"create": true,
-					"delete": true,
-					"update": true
-				},
 				"github": {
 					"branch": "dummy-branch",
-					"branchWorkflow": true,
 					"generateDashboardPreviews": true,
 					"owner": "grafana",
 					"repository": "git-ui-sync-demo",
-					"token": "github_pat_dummy"
+					"token": "github_pat_dummy",
+					"workflows": ["pull-request", "branch", "push"]
 				},
 				"sync": {
 					"enabled": true,
@@ -183,11 +178,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 			},
 			"local-conf-provisioning-sample": {
 				"description": "load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample",
-				"editing": {
-					"create": true,
-					"delete": true,
-					"update": true
-				},
 				"local": {
 					"path": "provisioning/sample"
 				},
