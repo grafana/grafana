@@ -1,6 +1,7 @@
 import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { findVizPanelByKey } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
@@ -276,6 +277,8 @@ function setup(options?: TestOptions) {
 
   const grid = new SceneGridLayout({ children: gridItems });
   const manager = new DefaultGridLayoutManager({ grid: grid });
+
+  new DashboardScene({ body: manager });
 
   return { manager, grid };
 }

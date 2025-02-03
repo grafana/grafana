@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { SceneObject } from '@grafana/scenes';
 import { Modal, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 
@@ -19,7 +20,12 @@ export const RowOptionsModal = ({ repeat, title, parent, onDismiss, onUpdate, wa
   const styles = useStyles2(getStyles);
 
   return (
-    <Modal isOpen={true} title="Row options" onDismiss={onDismiss} className={styles.modal}>
+    <Modal
+      isOpen={true}
+      title={t('dashboard.default-layout.row-options.modal.title', 'Row options')}
+      onDismiss={onDismiss}
+      className={styles.modal}
+    >
       <RowOptionsForm
         sceneContext={parent}
         repeat={repeat}

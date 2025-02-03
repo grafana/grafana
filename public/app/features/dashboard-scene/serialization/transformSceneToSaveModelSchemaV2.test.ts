@@ -30,9 +30,9 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 

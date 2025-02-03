@@ -882,6 +882,36 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
+    "default-layout": {
+      "row-actions": {
+        "delete": "Delete row",
+        "modal": {
+          "alt-action": "Delete row only",
+          "text": "Are you sure you want to remove this row and all its panels?",
+          "title": "Delete row"
+        },
+        "repeat": {
+          "warning": {
+            "learn-more": "Learn more",
+            "text": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+          }
+        }
+      },
+      "row-options": {
+        "button": {
+          "label": "Row options"
+        },
+        "form": {
+          "cancel": "Cancel",
+          "repeat-for": "Repeat for",
+          "title": "Title",
+          "update": "Update"
+        },
+        "modal": {
+          "title": "Row options"
+        }
+      }
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -952,6 +982,14 @@
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
         "no-rules": "There are no alert rules linked to this panel."
+      }
+    },
+    "rows-layout": {
+      "row": {
+        "repeat": {
+          "learn-more": "Learn more",
+          "warning": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
+        }
       }
     },
     "toolbar": {
