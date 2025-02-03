@@ -456,7 +456,9 @@ export async function addRepositoryData(
     return data;
   }
 
-  const repositories: RepositoryList = await dispatch(provisioningAPI.endpoints.listRepository.initiate({})).unwrap();
+  const repositories: RepositoryList = await dispatch(
+    provisioningAPI.endpoints.getFrontendSettings.initiate()
+  ).unwrap();
 
   if (!repositories.items?.length) {
     return data;
