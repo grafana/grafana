@@ -254,7 +254,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 
 		require.Len(t, alerts, 4)
 	})
-	
+
 	t.Run("update instance with same org_id, uid and different state", func(t *testing.T) {
 		labels := models.InstanceLabels{"test": "testValue"}
 		_, hash, _ := labels.StringAndHash()
