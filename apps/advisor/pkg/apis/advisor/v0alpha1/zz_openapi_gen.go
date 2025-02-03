@@ -12,18 +12,18 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check":                           schema_pkg_apis_advisor_v0alpha1_Check(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckList":                       schema_pkg_apis_advisor_v0alpha1_CheckList(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec":                       schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus":                     schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckType":                       schema_pkg_apis_advisor_v0alpha1_CheckType(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeList":                   schema_pkg_apis_advisor_v0alpha1_CheckTypeList(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeSpec":                   schema_pkg_apis_advisor_v0alpha1_CheckTypeSpec(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStatus":                 schema_pkg_apis_advisor_v0alpha1_CheckTypeStatus(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypestatusOperatorState":    schema_pkg_apis_advisor_v0alpha1_CheckTypestatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport":       schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReportErrors": schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReportErrors(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState":        schema_pkg_apis_advisor_v0alpha1_CheckstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check":                        schema_pkg_apis_advisor_v0alpha1_Check(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckList":                    schema_pkg_apis_advisor_v0alpha1_CheckList(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportError":             schema_pkg_apis_advisor_v0alpha1_CheckReportError(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec":                    schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus":                  schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckType":                    schema_pkg_apis_advisor_v0alpha1_CheckType(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeList":                schema_pkg_apis_advisor_v0alpha1_CheckTypeList(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeSpec":                schema_pkg_apis_advisor_v0alpha1_CheckTypeSpec(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStatus":              schema_pkg_apis_advisor_v0alpha1_CheckTypeStatus(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypestatusOperatorState": schema_pkg_apis_advisor_v0alpha1_CheckTypestatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport":    schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState":     schema_pkg_apis_advisor_v0alpha1_CheckstatusOperatorState(ref),
 	}
 }
 
@@ -119,6 +119,43 @@ func schema_pkg_apis_advisor_v0alpha1_CheckList(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_advisor_v0alpha1_CheckReportError(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"severity": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Severity of the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Human readable reason for the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Action to take to resolve the error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"severity", "reason", "action"},
+			},
+		},
 	}
 }
 
@@ -433,7 +470,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref common.Refer
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReportErrors"),
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportError"),
 									},
 								},
 							},
@@ -444,44 +481,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReportErrors"},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReportErrors(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"severity": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Severity of the error",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"reason": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Human readable reason for the error",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"action": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Action to take to resolve the error",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"severity", "reason", "action"},
-			},
-		},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportError"},
 	}
 }
 
