@@ -10,15 +10,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type InstanceDBStore struct {
-	SQLStore       db.DB
-	Logger         log.Logger
-	FeatureToggles featuremgmt.FeatureToggles
+	SQLStore db.DB
+	Logger   log.Logger
 }
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
@@ -44,9 +42,6 @@ func (st InstanceDBStore) ListAlertInstances(ctx context.Context, cmd *models.Li
 			return errors.New("filtering by RuleGroup is not supported")
 		}
 
-		if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
-			s.WriteString(fmt.Sprintf(" AND NOT (current_state = '%s' AND current_reason = '')", models.InstanceStateNormal))
-		}
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {
 			return err
 		}
