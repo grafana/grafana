@@ -18,7 +18,7 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
   // Process 'paths' property
   const newPaths: Record<string, unknown> = {};
   for (const [path, pathItem] of Object.entries<OpenAPIV3.PathItemObject>(newSpec.paths)) {
-    // Remove 'watch' paths as they're deprecated / remove empty path items
+    // Remove empty path items
     if (!pathItem) {
       continue;
     }
@@ -27,7 +27,7 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
 
     // Process each method in the path (e.g., get, post)
     const newPathItem: Record<string, unknown> = {};
-    
+
     // Filter out namespace parameter at path level
     if (Array.isArray(pathItem.parameters)) {
       pathItem.parameters = filterNamespaceParameters(pathItem.parameters);
@@ -47,7 +47,12 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
       }
 
       // Filter out namespace parameter at operation level
-      if (operation && typeof operation === 'object' && 'parameters' in operation && Array.isArray(operation.parameters)) {
+      if (
+        operation &&
+        typeof operation === 'object' &&
+        'parameters' in operation &&
+        Array.isArray(operation.parameters)
+      ) {
         operation.parameters = filterNamespaceParameters(operation.parameters);
       }
 
@@ -78,7 +83,7 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
 /**
  * Filter out namespace parameters from an array of parameters
  */
-function filterNamespaceParameters(parameters: (OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject)[]) {
+function filterNamespaceParameters(parameters: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject>) {
   return parameters.filter((param) => !('name' in param) || param.name !== 'namespace');
 }
 
