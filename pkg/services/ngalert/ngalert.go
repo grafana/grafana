@@ -616,7 +616,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		// Also note that this runs synchronously to ensure state is loaded
 		// before rule evaluation begins, hence we use ctx and not subCtx.
 		//
-		ng.stateManager.Warm(ctx, ng.store, ng.StartupInstanceReader)
+		ng.stateManager.Warm(ctx, ng.store, ng.store, ng.StartupInstanceReader)
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)

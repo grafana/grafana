@@ -128,20 +128,21 @@ func (st *Manager) Run(ctx context.Context) error {
 	return nil
 }
 
-func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceReader InstanceReader) {
+func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader RuleReader, instanceReader InstanceReader) {
 	logger := st.log.FromContext(ctx)
 
-	if st.instanceStore == nil {
-		logger.Info("Skip warming the state because instance store is not configured")
+	if orgReader == nil || rulesReader == nil || instanceReader == nil {
+		logger.Error("Unable to warm state cache, missing required store readers")
 		return
 	}
 
 	startTime := time.Now()
 	logger.Info("Warming state cache for startup")
 
-	orgIds, err := instanceReader.FetchOrgIds(ctx)
+	orgIds, err := orgReader.FetchOrgIds(ctx)
 	if err != nil {
-		logger.Error("Unable to fetch orgIds", "error", err)
+		logger.Error("Unable to warm state cache, failed to fetch org IDs", "error", err)
+		return
 	}
 
 	statesCount := 0
@@ -203,7 +204,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 			if entry.ResultFingerprint != "" {
 				fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
 				if err != nil {
-					logger.Error("Failed to parse result fingerprint of alert instance", "error", err, "ruleUID", entry.RuleUID)
+					logger.Error("Failed to parse result fingerprint of alert instance", "error", err, "rule_uid", entry.RuleUID)
 				}
 				resultFp = data.Fingerprint(fp)
 			}
