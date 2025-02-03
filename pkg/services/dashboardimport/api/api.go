@@ -23,15 +23,17 @@ type ImportDashboardAPI struct {
 	quotaService           QuotaService
 	pluginStore            pluginstore.Store
 	ac                     accesscontrol.AccessControl
+	acService              accesscontrol.Service
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	pluginStore pluginstore.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
+	pluginStore pluginstore.Store, ac accesscontrol.AccessControl, acService accesscontrol.Service) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
 		pluginStore:            pluginStore,
 		ac:                     ac,
+		acService:              acService,
 	}
 }
 
@@ -84,6 +86,8 @@ func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) respo
 		}
 		return apierrors.ToDashboardErrorResponse(c.Req.Context(), api.pluginStore, err)
 	}
+
+	api.acService.ClearUserPermissionCache(c.SignedInUser)
 
 	return response.JSON(http.StatusOK, resp)
 }
