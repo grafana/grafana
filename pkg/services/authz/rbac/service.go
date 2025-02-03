@@ -588,18 +588,53 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		}
 	}
 
-	folderSet := make(map[string]struct{}, len(scopeMap))
+	var res *authzv1.ListResponse
+	if strings.HasPrefix(req.Action, "folders:") {
+		res = buildFolderList(scopeMap, tree)
+	} else {
+		res = buildItemList(scopeMap, tree, t.prefix())
+	}
 
-	prefix := t.prefix()
-	itemSet := make(map[string]struct{}, len(scopeMap))
+	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
+	return res, nil
+}
 
-	for scope := range scopeMap {
-		if strings.HasPrefix(scope, "folders:uid:") {
-			identifier := strings.TrimPrefix(scope, "folders:uid:")
+func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListResponse {
+	itemSet := make(map[string]struct{}, len(scopes))
+
+	for scope := range scopes {
+		identifier := strings.TrimPrefix(scope, "folders:uid:")
+		if _, ok := itemSet[identifier]; ok {
+			continue
+		}
+
+		itemSet[identifier] = struct{}{}
+		for n := range tree.Children(identifier) {
+			if _, ok := itemSet[n.UID]; ok {
+				// we have already walked this part of the tree
+				break
+			}
+			itemSet[n.UID] = struct{}{}
+		}
+	}
+
+	itemList := make([]string, 0, len(itemSet))
+	for item := range itemSet {
+		itemList = append(itemList, item)
+	}
+
+	return &authzv1.ListResponse{Items: itemList}
+}
+
+func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *authzv1.ListResponse {
+	folderSet := make(map[string]struct{}, len(scopes))
+	itemSet := make(map[string]struct{}, len(scopes))
+
+	for scope := range scopes {
+		if identifier, ok := strings.CutPrefix(scope, "folders:uid:"); ok {
 			if _, ok := folderSet[identifier]; ok {
 				continue
 			}
-
 			folderSet[identifier] = struct{}{}
 			for n := range tree.Children(identifier) {
 				if _, ok := folderSet[n.UID]; ok {
@@ -613,17 +648,14 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 			itemSet[identifier] = struct{}{}
 		}
 	}
-
 	folderList := make([]string, 0, len(folderSet))
 	for folder := range folderSet {
 		folderList = append(folderList, folder)
 	}
-
 	itemList := make([]string, 0, len(itemSet))
 	for item := range itemSet {
 		itemList = append(itemList, item)
 	}
 
-	span.SetAttributes(attribute.Int("num_folders", len(folderList)), attribute.Int("num_items", len(itemList)))
-	return &authzv1.ListResponse{Folders: folderList, Items: itemList}, nil
+	return &authzv1.ListResponse{Folders: folderList, Items: itemList}
 }
