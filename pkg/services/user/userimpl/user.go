@@ -419,6 +419,7 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 
 	// create user
 	usr := &user.User{
+		UID:              cmd.UID, // we'll generate a string if it is empty
 		Email:            cmd.Email,
 		Name:             cmd.Name,
 		Login:            cmd.Login,
