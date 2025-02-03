@@ -36,7 +36,7 @@ export const DetailText = ({
 }: DetailTextProps) => {
   const copyToClipboardLabel = t('alerting.copy-to-clipboard', 'Copy "{{label}}" to clipboard', { label });
   return (
-    <Box paddingBottom={2}>
+    <Box>
       <Stack direction="column" gap={0}>
         <Text color="secondary" id={id}>
           {label}
