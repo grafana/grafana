@@ -474,6 +474,12 @@ go-race-is-enabled:
 enable-go-race:
 	@touch .go-race-enabled-locally
 
+# TODO: this is a temporary target to generate the dashboard kinds.
+# We should remove this once we have a proper way to generate the kinds.
+.PHONY: gen-dashboard-kinds
+gen-dashboard-kinds:
+	@grafana-app-sdk generate --source=sdkkinds/dashboard --gogenpath=pkg/apis --tsgenpath=packages/grafana-schema/src/schema --grouping=group --defencoding=none --noschemasinmanifest
+
 check-tparse:
 	@command -v tparse >/dev/null 2>&1 || { \
 		echo >&2 "Error: tparse is not installed. Refer to https://github.com/mfridman/tparse"; \
