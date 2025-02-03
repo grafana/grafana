@@ -2447,7 +2447,11 @@
             "default": ""
           },
           "identity": {
-            "default": {}
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.IdentityRef"
+              }
+            ]
           },
           "internalId": {
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",

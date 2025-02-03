@@ -24,12 +24,18 @@ export type GetDisplayMappingApiArg = {
   /** Display keys */
   key: string[];
 };
+export type IdentityRef = {
+  /** Name is the unique identifier for identity, guaranteed to be a unique value for the type within a namespace. */
+  name: string;
+  /** Type of identity e.g. "user". For a full list see https://github.com/grafana/authlib/blob/d6737a7dc8f55e9d42834adb83b5da607ceed293/types/type.go#L15 */
+  type: string;
+};
 export type Display = {
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
   /** Display name for identity. */
   displayName: string;
-  identity: any;
+  identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
 };

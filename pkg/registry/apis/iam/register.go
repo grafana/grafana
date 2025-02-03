@@ -169,6 +169,16 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 				},
 			}},
 	}
+	oas.Components.Schemas[compBase+"Display"].Properties["identity"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			AllOf: []spec.Schema{
+				{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "IdentityRef"),
+					},
+				},
+			}},
+	}
 	return oas, nil
 }
 
