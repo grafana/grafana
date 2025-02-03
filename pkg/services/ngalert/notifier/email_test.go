@@ -222,15 +222,23 @@ func (e emailSender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhook
 }
 
 func (e emailSender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
+	embeddedContents := make([]notifications.EmbeddedContent, len(cmd.EmbeddedContents))
+	for i, ec := range cmd.EmbeddedContents {
+		embeddedContents[i] = notifications.EmbeddedContent{
+			Name:    ec.Name,
+			Content: ec.Content,
+		}
+	}
 	return e.ns.SendEmailCommandHandlerSync(ctx, &notifications.SendEmailCommandSync{
 		SendEmailCommand: notifications.SendEmailCommand{
-			To:            cmd.To,
-			SingleEmail:   cmd.SingleEmail,
-			Template:      cmd.Template,
-			Subject:       cmd.Subject,
-			Data:          cmd.Data,
-			ReplyTo:       cmd.ReplyTo,
-			EmbeddedFiles: cmd.EmbeddedFiles,
+			To:               cmd.To,
+			SingleEmail:      cmd.SingleEmail,
+			Template:         cmd.Template,
+			Subject:          cmd.Subject,
+			Data:             cmd.Data,
+			ReplyTo:          cmd.ReplyTo,
+			EmbeddedFiles:    cmd.EmbeddedFiles,
+			EmbeddedContents: embeddedContents,
 		},
 	})
 }
