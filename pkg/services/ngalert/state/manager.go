@@ -55,7 +55,6 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	doNotSaveNormalState           bool
 	applyNoDataAndErrorToAllStates bool
 	rulesPerRuleGroupLimit         int64
 
@@ -69,8 +68,6 @@ type ManagerCfg struct {
 	Images        ImageCapturer
 	Clock         clock.Clock
 	Historian     Historian
-	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
-	DoNotSaveNormalState bool
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
 	// StatePeriodicSaveBatchSize controls the size of the alert instance batch that is saved periodically when the
@@ -109,7 +106,6 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		historian:                      cfg.Historian,
 		clock:                          cfg.Clock,
 		externalURL:                    cfg.ExternalURL,
-		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
 		persister:                      statePersister,
@@ -457,7 +453,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 }
 
 func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger, extraAnnotations data.Labels, takeImageFn takeImageFn) []StateTransition {
-	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
+	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID)
 	transitions := make([]StateTransition, 0, len(currentStates))
 	updated := ruleStates{
 		states: make(map[data.Fingerprint]*State, len(currentStates)),
@@ -582,11 +578,11 @@ func resultStateReason(result eval.Result, rule *ngModels.AlertRule) string {
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
-	allStates := st.cache.getAll(orgID, st.doNotSaveNormalState)
+	allStates := st.cache.getAll(orgID)
 	return allStates
 }
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotSaveNormalState)
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
 }
 
 func (st *Manager) GetStatusForRuleUID(orgID int64, alertRuleUID string) ngModels.RuleStatus {

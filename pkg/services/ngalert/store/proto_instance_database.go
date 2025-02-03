@@ -68,15 +68,10 @@ func (st ProtoInstanceDBStore) ListAlertInstances(ctx context.Context, cmd *mode
 			// Convert proto instances to model instances
 			for _, protoInstance := range instances {
 				modelInstance := alertInstanceProtoToModel(row.RuleUID, row.OrgID, protoInstance)
-				if modelInstance != nil {
-					// If FlagAlertingNoNormalState is enabled, we should not return instances with normal state and no reason.
-					if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
-						if modelInstance.CurrentState == models.InstanceStateNormal && modelInstance.CurrentReason == "" {
-							continue
-						}
-					}
-					alertInstances = append(alertInstances, modelInstance)
+				if modelInstance == nil {
+					continue
 				}
+				alertInstances = append(alertInstances, modelInstance)
 			}
 		}
 
