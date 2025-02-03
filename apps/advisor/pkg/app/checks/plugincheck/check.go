@@ -43,7 +43,7 @@ func (c *check) Type() string {
 func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0alpha1StatusReport, error) {
 	ps := c.PluginStore.Plugins(ctx)
 
-	errs := []advisor.CheckV0alpha1StatusReportErrors{}
+	errs := []advisor.CheckReportError{}
 	for _, p := range ps {
 		// Skip if it's a core plugin
 		if p.IsCorePlugin() {
@@ -56,8 +56,8 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 			continue
 		}
 		if i.Status == "deprecated" {
-			errs = append(errs, advisor.CheckV0alpha1StatusReportErrors{
-				Severity: advisor.CheckStatusSeverityHigh,
+			errs = append(errs, advisor.CheckReportError{
+				Severity: advisor.CheckReportErrorSeverityHigh,
 				Reason:   fmt.Sprintf("Plugin deprecated: %s", p.ID),
 				Action:   "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do' target=_blank>documentation</a> for recommended steps.",
 			})
@@ -73,8 +73,8 @@ func (c *check) Run(ctx context.Context, _ *advisor.CheckSpec) (*advisor.CheckV0
 			continue
 		}
 		if hasUpdate(p, info) {
-			errs = append(errs, advisor.CheckV0alpha1StatusReportErrors{
-				Severity: advisor.CheckStatusSeverityLow,
+			errs = append(errs, advisor.CheckReportError{
+				Severity: advisor.CheckReportErrorSeverityLow,
 				Reason:   fmt.Sprintf("New version available for %s", p.ID),
 				Action: fmt.Sprintf(
 					"Go to the <a href='/plugins/%s?page=version-history'>plugin admin page</a>"+

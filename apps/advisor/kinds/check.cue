@@ -7,7 +7,7 @@ check: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				frontend: false
+				frontend: true
 				backend:  true
 			}
 			validation: {
@@ -17,24 +17,27 @@ check: {
 				]
 			}
 			schema: {
-				spec: {
+				#Data: {
 					// Generic data input that a check can receive
 					data?: [string]: string
 				}
-				status: {
-					report: {
+				#ReportError: {
+					// Severity of the error
+					severity: "high" | "low"
+					// Human readable reason for the error
+					reason: string
+					// Action to take to resolve the error
+					action: string
+				}	
+				#Report: {
 						// Number of elements analyzed
 						count: int
 						// List of errors
-						errors: [...{
-							// Severity of the error
-							severity: "high" | "low"
-							// Human readable reason for the error
-							reason: string
-							// Action to take to resolve the error
-							action: string
-						}]
-					}
+						errors: [...#ReportError]
+				}
+				spec: #Data
+				status: {
+					report: #Report
 				}
 			}
 		}
