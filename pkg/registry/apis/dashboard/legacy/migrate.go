@@ -157,9 +157,13 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 				summary := &resource.BatchResponse_Summary{}
 				summary.Group = dashboard.GROUP
 				summary.Resource = dashboard.DASHBOARD_RESOURCE
+				rsp.Summary = append(rsp.Summary, summary)
+
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
 					" WHERE is_folder=FALSE AND org_id=?", orgId).Get(&summary.Count)
-				rsp.Summary = append(rsp.Summary, summary)
+				if err != nil {
+					return err
+				}
 
 				// Also count history
 				_, err = sess.SQL(`SELECT COUNT(*) 
@@ -167,7 +171,6 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 						JOIN `+sql.Table("dashboard")+`         as dd
 						ON dd.id = dv.dashboard_id
 						WHERE org_id=?`, orgId).Get(&summary.History)
-				rsp.Summary = append(rsp.Summary, summary)
 			}
 			if err != nil {
 				return err

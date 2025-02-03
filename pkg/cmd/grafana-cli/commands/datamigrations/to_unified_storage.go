@@ -72,6 +72,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		}
 	}
 
+	opts.OnlyCount = false
 	fmt.Printf("Include history in exports? (Y/N) >")
 	fmt.Scanln(&line)
 	opts.WithHistory = strings.ToLower(line) == "y"
