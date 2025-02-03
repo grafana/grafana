@@ -1,4 +1,5 @@
 import { BackendSrv } from '@grafana/runtime';
+
 import { GrafanaSearcher, SearchQuery } from './types';
 import { toDashboardResults, SearchHit, SearchAPIResponse, UnifiedSearcher } from './unified';
 
