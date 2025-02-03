@@ -179,6 +179,7 @@
       "annotations": "Annotations",
       "evaluation": "Evaluation",
       "evaluation-paused": "Alert evaluation currently paused",
+      "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
       "last-evaluated": "Last evaluated",
       "last-evaluation-duration": "Last evaluation duration",
       "last-updated-at": "Last updated at",
