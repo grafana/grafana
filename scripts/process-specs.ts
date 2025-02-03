@@ -129,8 +129,8 @@ function simplifySchemaName(schemaName: string) {
   }
 }
 
-const sourceDir = path.resolve(__dirname, '../pkg/tests/apis/openapi_snapshots');
-const outputDir = path.resolve(__dirname, '../data/openapi');
+const sourceDir = path.resolve(import.meta.dirname, '../pkg/tests/apis/openapi_snapshots');
+const outputDir = path.resolve(import.meta.dirname, '../data/openapi');
 
 // Create the output directory if it doesn't exist
 if (!fs.existsSync(outputDir)) {

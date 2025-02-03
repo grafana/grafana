@@ -339,6 +339,16 @@ steps:
   - yarn-install
   image: node:22-bookworm
   name: verify-i18n
+- commands:
+  - yarn generate-apis
+  - "\n            file_diff=$(git diff)\n            if [ -n \"$file_diff\" ]; then\n
+    \               echo $file_diff\n                echo \"\nAPI client generation
+    has not been committed. Please run 'yarn generate-apis', commit the changes and
+    push again.\"\n                exit 1\n            fi\n            "
+  depends_on:
+  - yarn-install
+  image: node:22-bookworm
+  name: verify-api-clients
 trigger:
   event:
   - pull_request
@@ -1782,6 +1792,16 @@ steps:
   - yarn-install
   image: node:22-bookworm
   name: verify-i18n
+- commands:
+  - yarn generate-apis
+  - "\n            file_diff=$(git diff)\n            if [ -n \"$file_diff\" ]; then\n
+    \               echo $file_diff\n                echo \"\nAPI client generation
+    has not been committed. Please run 'yarn generate-apis', commit the changes and
+    push again.\"\n                exit 1\n            fi\n            "
+  depends_on:
+  - yarn-install
+  image: node:22-bookworm
+  name: verify-api-clients
 trigger:
   branch: main
   event:
@@ -2916,6 +2936,16 @@ steps:
   - yarn-install
   image: node:22-bookworm
   name: verify-i18n
+- commands:
+  - yarn generate-apis
+  - "\n            file_diff=$(git diff)\n            if [ -n \"$file_diff\" ]; then\n
+    \               echo $file_diff\n                echo \"\nAPI client generation
+    has not been committed. Please run 'yarn generate-apis', commit the changes and
+    push again.\"\n                exit 1\n            fi\n            "
+  depends_on:
+  - yarn-install
+  image: node:22-bookworm
+  name: verify-api-clients
 trigger:
   branch:
   - instant
@@ -5569,6 +5599,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 154c1f072294cef09ba4f579eed30b1e29bc5c263897c862f4574432d321502c
+hmac: 2c0c21247b813e92a966fb373205e01d6a0efaa6bc3a0b97ecc90ccacc150a68
 
 ...
