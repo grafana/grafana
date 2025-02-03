@@ -550,6 +550,19 @@ func (a *AlertRuleMutators) WithUpdatedBy(uid *UserUID) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithUID(uid string) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.UID = uid
+	}
+}
+
+func (a *AlertRuleMutators) WithKey(key AlertRuleKey) AlertRuleMutator {
+	return func(r *AlertRule) {
+		r.UID = key.UID
+		r.OrgID = key.OrgID
+	}
+}
+
 func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.Labels {
 	count := max
 	if min > max {

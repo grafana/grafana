@@ -23,6 +23,7 @@ import {
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
 
@@ -109,7 +110,7 @@ export class DashboardGridItem
     if (isEqual(this._prevRepeatValues, values)) {
       // In some cases, like for variables that depend on time range, the panel query runners are waiting for the top level variable to complete
       // So even when there was no change in the variable value (like in this case) we need to notify the query runners that the variable has completed it's update
-      this.notifyRepeatedPanelsWaitingForVariables(variable);
+      //    this.notifyRepeatedPanelsWaitingForVariables(variable);
       return;
     }
 
@@ -138,7 +139,7 @@ export class DashboardGridItem
             }),
           ],
         }),
-        key: `${panelToRepeat.state.key}-clone-${index}`,
+        key: getCloneKey(panelToRepeat.state.key!, index),
       };
       const clone = panelToRepeat.clone(cloneState);
       repeatedPanels.push(clone);
