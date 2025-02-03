@@ -76,7 +76,13 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
       <div
         {...primaryProps}
         className={cx(primaryProps.className, styles.canvasWithSplitter)}
-        onPointerDown={() => editPane.clearSelection()}
+        onPointerDown={(evt) => {
+          if (evt.shiftKey) {
+            return;
+          }
+
+          editPane.clearSelection();
+        }}
       >
         <NavToolbarActions dashboard={dashboard} />
         <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>

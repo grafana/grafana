@@ -153,7 +153,7 @@ export interface EditableDashboardElement {
    */
   isEditableDashboardElement: true;
   /**
-   * Hook that returns edit pane optionsß
+   * Hook that returns edit pane options
    */
   useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
   /**
@@ -164,8 +164,44 @@ export interface EditableDashboardElement {
    * Panel Actions
    **/
   renderActions?(): React.ReactNode;
+  /**
+   * creates a new multi-selection element from a list of selected items
+   */
+  createMultiSelectedElement?(items: SceneObject[]): MultiSelectedEditableDashboardElement;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
   return 'isEditableDashboardElement' in obj;
+}
+
+export interface MultiSelectedEditableDashboardElement {
+  /**
+   * Marks this object as an element that can be selected and edited directly on the canvas
+   */
+  isMultiSelectedEditableDashboardElement: true;
+  /**
+   * Get the type name of the element
+   */
+  getTypeName(): string;
+  /**
+   * Hook that returns edit pane options
+   */
+  useEditPaneOptions?(): OptionsPaneCategoryDescriptor[];
+  /**
+   * Panel Actions
+   **/
+  renderActions?(): React.ReactNode;
+}
+
+export function isMultiSelectedEditableDashboardElement(obj: object): obj is MultiSelectedEditableDashboardElement {
+  return 'isMultiSelectedEditableDashboardElement' in obj;
+}
+
+export interface BulkActionElement {
+  onDelete(): void;
+  onCopy?(): void;
+}
+
+export function isBulkActionElement(obj: object): obj is BulkActionElement {
+  return 'onDelete' in obj;
 }
