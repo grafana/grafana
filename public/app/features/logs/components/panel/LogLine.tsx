@@ -29,7 +29,6 @@ export const LogLine = ({ index, log, style, onOverflow, showTime, variant, wrap
     const calculatedHeight = typeof style.height === 'number' ? style.height : undefined;
     const actualHeight = hasUnderOrOverflow(logLineRef.current, calculatedHeight);
     if (actualHeight) {
-      console.log('overflow');
       onOverflow(index, log.uid, actualHeight);
     }
   }, [index, log.uid, onOverflow, style.height]);
