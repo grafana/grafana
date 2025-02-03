@@ -103,7 +103,7 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
             options={EDITOR_MODES}
             value={query.azureLogAnalytics?.mode || LogsEditorMode.Builder}
             onChange={(newMode: LogsEditorMode) => onLogsModeChange(newMode)}
-            data-testid="#azure-query-header-logs-radio-button"
+            data-testid="azure-query-header-logs-radio-button"
           />
         )}
       </EditorHeader>

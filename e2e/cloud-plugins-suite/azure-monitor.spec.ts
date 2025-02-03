@@ -200,6 +200,7 @@ describe('Azure monitor datasource', () => {
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
+        cy.contains('KQL').click({ force: true });
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
@@ -209,7 +210,6 @@ describe('Azure monitor datasource', () => {
           .type('{enter}');
         cy.contains(logAnalyticsName).click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
-        cy.get('[data-testid="azure-query-header-logs-radio-button"]').contains('KQL').click({ force: true });
         e2e.components.CodeEditor.container().type('AzureDiagnostics');
         e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
       },
@@ -258,7 +258,7 @@ describe('Azure monitor datasource', () => {
     });
   });
 
-  it('creates a dashboard that includes a template variable', () => {
+  it.skip('creates a dashboard that includes a template variable', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',

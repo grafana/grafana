@@ -89,7 +89,7 @@ example-apiserver/
 /devenv/docker/blocks/auth/openldap/certs/
 
 conf/custom.ini
-/provisioning/
+provisioning
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
