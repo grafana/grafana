@@ -812,7 +812,6 @@ func TestNewState(t *testing.T) {
 		Path:   "/test",
 	}
 	l := log.New("test")
-	c := newCache()
 
 	gen := ngmodels.RuleGen
 	generateRule := gen.With(gen.WithNotEmptyLabels(5, "rule-")).GenerateRef
@@ -1012,33 +1011,30 @@ func TestNewState(t *testing.T) {
 		assert.Equal(t, result.EvaluatedAt, state.LastEvaluationTime)
 		assert.Equal(t, result.EvaluationDuration, state.EvaluationDuration)
 	})
+}
 
+func TestPatch(t *testing.T) {
+	key := ngmodels.GenerateRuleKey(1)
 	t.Run("it populates some fields from the current state if it exists", func(t *testing.T) {
-		rule := generateRule()
-
-		extraLabels := ngmodels.GenerateAlertLabels(2, "extra-")
-
 		result := eval.Result{
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
 		}
 
-		expectedLbl, expectedAnn := expandAnnotationsAndLabels(context.Background(), l, rule, result, extraLabels, url)
+		state := randomSate(key)
+		orig := state.Copy()
+		current := randomSate(key)
 
-		current := randomSate(rule.GetKey())
-		current.CacheID = expectedLbl.Fingerprint()
+		patch(&state, &current, result)
 
-		c.set(&current)
-
-		state := newState(context.Background(), l, rule, result, extraLabels, url)
-
-		assert.Equal(t, rule.OrgID, state.OrgID)
-		assert.Equal(t, rule.UID, state.AlertRuleUID)
-		assert.Equal(t, state.Labels.Fingerprint(), state.CacheID)
-		assert.Equal(t, result.Instance.Fingerprint(), state.ResultFingerprint)
-		assert.EqualValues(t, expectedAnn, state.Annotations)
-		assert.EqualValues(t, expectedLbl, state.Labels)
-		assert.Equal(t, result.EvaluatedAt, state.LastEvaluationTime)
-		assert.Equal(t, result.EvaluationDuration, state.EvaluationDuration)
+		// Fields that should not change
+		assert.Equal(t, orig.OrgID, state.OrgID)
+		assert.Equal(t, orig.AlertRuleUID, state.AlertRuleUID)
+		assert.Equal(t, orig.CacheID, state.CacheID)
+		assert.Equal(t, orig.ResultFingerprint, state.ResultFingerprint)
+		assert.EqualValues(t, orig.Annotations, state.Annotations)
+		assert.EqualValues(t, orig.Labels, state.Labels)
+		assert.Equal(t, orig.LastEvaluationTime, state.LastEvaluationTime)
+		assert.Equal(t, orig.EvaluationDuration, state.EvaluationDuration)
 
 		assert.Equal(t, current.State, state.State)
 		assert.Equal(t, current.StateReason, state.StateReason)
@@ -1051,63 +1047,88 @@ func TestNewState(t *testing.T) {
 		assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
 		assert.Equal(t, current.LastSentAt, state.LastSentAt)
 		assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
+	})
 
-		t.Run("if result Error and current state is Error it should copy datasource_uid and ref_id labels", func(t *testing.T) {
-			current = randomSate(rule.GetKey())
-			current.CacheID = expectedLbl.Fingerprint()
-			current.State = eval.Error
-			current.Labels["datasource_uid"] = util.GenerateShortUID()
-			current.Labels["ref_id"] = util.GenerateShortUID()
+	t.Run("copies system-owned annotations from current state", func(t *testing.T) {
+		state := randomSate(key)
+		orig := state.Copy()
+		expectedAnnotations := data.Labels(state.Annotations).Copy()
+		current := randomSate(key)
 
-			c.set(&current)
+		for key := range ngmodels.InternalAnnotationNameSet {
+			val := util.GenerateShortUID()
+			current.Annotations[key] = val
+			expectedAnnotations[key] = val
+		}
 
-			result.State = eval.Error
-			state = newState(context.Background(), l, rule, result, extraLabels, url)
+		result := eval.Result{
+			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+		}
 
-			l := expectedLbl.Copy()
-			l["datasource_uid"] = current.Labels["datasource_uid"]
-			l["ref_id"] = current.Labels["ref_id"]
+		patch(&state, &current, result)
 
-			assert.Equal(t, current.CacheID, state.CacheID)
-			assert.EqualValues(t, l, state.Labels)
+		assert.EqualValues(t, expectedAnnotations, state.Annotations)
+		assert.Equal(t, current.State, state.State)
+		assert.Equal(t, current.StateReason, state.StateReason)
+		assert.Equal(t, current.Image, state.Image)
+		assert.Equal(t, current.LatestResult, state.LatestResult)
+		assert.Equal(t, current.Error, state.Error)
+		assert.Equal(t, current.Values, state.Values)
+		assert.Equal(t, current.StartsAt, state.StartsAt)
+		assert.Equal(t, current.EndsAt, state.EndsAt)
+		assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
+		assert.Equal(t, current.LastSentAt, state.LastSentAt)
+		assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
 
-			assert.Equal(t, rule.OrgID, state.OrgID)
-			assert.Equal(t, rule.UID, state.AlertRuleUID)
+		// Fields that should not change
+		assert.Equal(t, orig.OrgID, state.OrgID)
+		assert.Equal(t, orig.AlertRuleUID, state.AlertRuleUID)
+		assert.Equal(t, orig.CacheID, state.CacheID)
+		assert.Equal(t, orig.ResultFingerprint, state.ResultFingerprint)
+		assert.EqualValues(t, orig.Labels, state.Labels)
+		assert.Equal(t, orig.LastEvaluationTime, state.LastEvaluationTime)
+		assert.Equal(t, orig.EvaluationDuration, state.EvaluationDuration)
+	})
 
-			assert.Equal(t, result.Instance.Fingerprint(), state.ResultFingerprint)
-			assert.EqualValues(t, expectedAnn, state.Annotations)
-			assert.Equal(t, result.EvaluatedAt, state.LastEvaluationTime)
-			assert.Equal(t, result.EvaluationDuration, state.EvaluationDuration)
+	t.Run("if result Error and current state is Error it should copy datasource_uid and ref_id labels", func(t *testing.T) {
+		state := randomSate(key)
+		orig := state.Copy()
+		current := randomSate(key)
+		current.State = eval.Error
+		current.Labels["datasource_uid"] = util.GenerateShortUID()
+		current.Labels["ref_id"] = util.GenerateShortUID()
 
-			assert.Equal(t, current.State, state.State)
-			assert.Equal(t, current.StateReason, state.StateReason)
-			assert.Equal(t, current.Image, state.Image)
-			assert.Equal(t, current.LatestResult, state.LatestResult)
-			assert.Equal(t, current.Error, state.Error)
-			assert.Equal(t, current.Values, state.Values)
-			assert.Equal(t, current.StartsAt, state.StartsAt)
-			assert.Equal(t, current.EndsAt, state.EndsAt)
-			assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
-			assert.Equal(t, current.LastSentAt, state.LastSentAt)
-			assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
-		})
-		t.Run("copies system-owned annotations from current state", func(t *testing.T) {
-			current = randomSate(rule.GetKey())
-			current.CacheID = expectedLbl.Fingerprint()
-			current.State = eval.Error
-			for key := range ngmodels.InternalAnnotationNameSet {
-				current.Annotations[key] = util.GenerateShortUID()
-			}
-			c.set(&current)
+		result := eval.Result{
+			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			State:    eval.Error,
+		}
 
-			result.State = eval.Error
-			state = newState(context.Background(), l, rule, result, extraLabels, url)
-			ann := expectedAnn.Copy()
-			for key := range ngmodels.InternalAnnotationNameSet {
-				ann[key] = current.Annotations[key]
-			}
-			assert.EqualValues(t, expectedLbl, state.Labels)
-			assert.EqualValues(t, ann, state.Annotations)
-		})
+		expectedLabels := orig.Labels.Copy()
+		expectedLabels["datasource_uid"] = current.Labels["datasource_uid"]
+		expectedLabels["ref_id"] = current.Labels["ref_id"]
+
+		patch(&state, &current, result)
+
+		assert.Equal(t, expectedLabels, state.Labels)
+		assert.Equal(t, current.State, state.State)
+		assert.Equal(t, current.StateReason, state.StateReason)
+		assert.Equal(t, current.Image, state.Image)
+		assert.Equal(t, current.LatestResult, state.LatestResult)
+		assert.Equal(t, current.Error, state.Error)
+		assert.Equal(t, current.Values, state.Values)
+		assert.Equal(t, current.StartsAt, state.StartsAt)
+		assert.Equal(t, current.EndsAt, state.EndsAt)
+		assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
+		assert.Equal(t, current.LastSentAt, state.LastSentAt)
+		assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
+
+		// Fields that should not change
+		assert.Equal(t, orig.OrgID, state.OrgID)
+		assert.Equal(t, orig.AlertRuleUID, state.AlertRuleUID)
+		assert.Equal(t, orig.CacheID, state.CacheID)
+		assert.Equal(t, orig.ResultFingerprint, state.ResultFingerprint)
+		assert.Equal(t, orig.LastEvaluationTime, state.LastEvaluationTime)
+		assert.Equal(t, orig.EvaluationDuration, state.EvaluationDuration)
+		assert.EqualValues(t, orig.Annotations, state.Annotations)
 	})
 }
