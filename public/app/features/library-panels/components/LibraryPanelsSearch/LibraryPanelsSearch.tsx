@@ -50,7 +50,6 @@ export const LibraryPanelsSearch = ({
   const [sortDirection, setSortDirection] = useState<SelectableValue<string>>({});
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
 
-  // Existing code expects an array, so just match that for now
   const [folderFilter, setFolderFilter] = useState<string | undefined>(currentFolderUID);
 
   const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
@@ -188,6 +187,7 @@ const SearchControls = memo(
                 prefix={<Icon className={styles.icon} name="filter" />}
                 value={folderFilterValue}
                 onChange={folderFilterChanged}
+                clearable
               />
             )}
             {showPanelFilter && <PanelTypeFilter onChange={panelFilterChanged} />}
