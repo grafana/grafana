@@ -19,6 +19,8 @@ import { appEvents } from 'app/core/core';
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
 import { createAbsoluteUrl, RelativeUrl } from '../alerting/unified/utils/url';
 
+const DEFAULT_CONFIRMATION_MESSAGE = 'Are you sure you want continue?';
+
 /** @internal */
 export const getActions = (
   frame: DataFrame,
@@ -57,6 +59,7 @@ export const getActions = (
       onClick: (evt: MouseEvent, origin: Field) => {
         buildActionOnClick(action, boundReplaceVariables);
       },
+      confirmation: action.confirmation ?? DEFAULT_CONFIRMATION_MESSAGE,
     };
 
     return actionModel;
