@@ -10,50 +10,72 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 export interface DashboardLayoutManager extends SceneObject {
   /** Marks it as a DashboardLayoutManager */
   isDashboardLayoutManager: true;
+
   /**
    * Notify the layout manager that the edit mode has changed
    * @param isEditing
    */
   editModeChanged(isEditing: boolean): void;
+
   /**
    * Remove an element / panel
    * @param element
    */
   removePanel(panel: VizPanel): void;
+
   /**
    * Creates a copy of an existing element and adds it to the layout
    * @param element
    */
   duplicatePanel(panel: VizPanel): void;
+
   /**
    * Adds a new panel to the layout
    */
   addPanel(panel: VizPanel): void;
+
   /**
    * Add row
    */
   addNewRow(): void;
+
   /**
    * getVizPanels
    */
   getVizPanels(): VizPanel[];
+
   /**
    * Turn into a save model
    * @param saveModel
    */
   toSaveModel?(): any;
+
   /**
    * For dynamic panels that need to be viewed in isolation (SoloRoute)
    */
   activateRepeaters?(): void;
+
   /**
-   * Get's the layout descriptor (which has the name and id)
+   * Gets the layout descriptor (which has the name and id)
    */
   getDescriptor(): LayoutRegistryItem;
+
   /**
    * Renders options and layout actions
    */
   getOptions?(): OptionsPaneItemDescriptor[];
+
+  /**
+   * Create a clone of the layout manager given an ancestor key
+   * @param ancestorKey
+   * @param isSource
+   */
+  cloneLayout?(ancestorKey: string, isSource: boolean): DashboardLayoutManager;
+
+  /**
+   * Returns the highest panel id in the layout
+   */
+  getMaxPanelId(): number;
 }
 
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
@@ -131,7 +153,7 @@ export interface EditableDashboardElement {
    */
   isEditableDashboardElement: true;
   /**
-   * Hook that returns edit pane optionsß
+   * Hook that returns edit pane options
    */
   useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
   /**
@@ -142,8 +164,44 @@ export interface EditableDashboardElement {
    * Panel Actions
    **/
   renderActions?(): React.ReactNode;
+  /**
+   * creates a new multi-selection element from a list of selected items
+   */
+  createMultiSelectedElement?(items: SceneObject[]): MultiSelectedEditableDashboardElement;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
   return 'isEditableDashboardElement' in obj;
+}
+
+export interface MultiSelectedEditableDashboardElement {
+  /**
+   * Marks this object as an element that can be selected and edited directly on the canvas
+   */
+  isMultiSelectedEditableDashboardElement: true;
+  /**
+   * Get the type name of the element
+   */
+  getTypeName(): string;
+  /**
+   * Hook that returns edit pane options
+   */
+  useEditPaneOptions?(): OptionsPaneCategoryDescriptor[];
+  /**
+   * Panel Actions
+   **/
+  renderActions?(): React.ReactNode;
+}
+
+export function isMultiSelectedEditableDashboardElement(obj: object): obj is MultiSelectedEditableDashboardElement {
+  return 'isMultiSelectedEditableDashboardElement' in obj;
+}
+
+export interface BulkActionElement {
+  onDelete(): void;
+  onCopy?(): void;
+}
+
+export function isBulkActionElement(obj: object): obj is BulkActionElement {
+  return 'onDelete' in obj;
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorHeader, FlexItem, InlineSelect } from '@grafana/experimental';
+import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, RadioButtonGroup } from '@grafana/ui';
 
@@ -103,6 +103,10 @@ export const QueryHeader = ({ query, onQueryChange, setAzureLogsCheatSheetModalO
             options={EDITOR_MODES}
             value={query.azureLogAnalytics?.mode || LogsEditorMode.Builder}
             onChange={(newMode: LogsEditorMode) => onLogsModeChange(newMode)}
+<<<<<<< HEAD
+=======
+            data-testid="azure-query-header-logs-radio-button"
+>>>>>>> origin/alyssa/azure-logs-simple-mode
           />
         )}
       </EditorHeader>
