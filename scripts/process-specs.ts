@@ -18,8 +18,8 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
   // Process 'paths' property
   const newPaths: Record<string, unknown> = {};
   for (const [path, pathItem] of Object.entries<OpenAPIV3.PathItemObject>(newSpec.paths)) {
-    // Remove 'watch' paths as they're deprecated / remove empty path items
-    if (path.includes('/watch/') || !pathItem) {
+    // Remove empty path items
+    if (!pathItem) {
       continue;
     }
     // Remove the specified part from the path key
@@ -27,12 +27,13 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
 
     // Process each method in the path (e.g., get, post)
     const newPathItem: Record<string, unknown> = {};
-    for (const method of Object.keys(pathItem)) {
-      // Filter out the 'namespace' param
-      if (method === 'parameters' && Array.isArray(pathItem.parameters)) {
-        pathItem.parameters = pathItem.parameters?.filter((param) => 'name' in param && param.name !== 'namespace');
-      }
 
+    // Filter out namespace parameter at path level
+    if (Array.isArray(pathItem.parameters)) {
+      pathItem.parameters = filterNamespaceParameters(pathItem.parameters);
+    }
+
+    for (const method of Object.keys(pathItem)) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const operation = pathItem[method as keyof OpenAPIV3.PathItemObject];
 
@@ -43,6 +44,16 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
         operation.operationId?.includes('ForAllNamespaces')
       ) {
         continue;
+      }
+
+      // Filter out namespace parameter at operation level
+      if (
+        operation &&
+        typeof operation === 'object' &&
+        'parameters' in operation &&
+        Array.isArray(operation.parameters)
+      ) {
+        operation.parameters = filterNamespaceParameters(operation.parameters);
       }
 
       updateRefs(operation);
@@ -67,6 +78,13 @@ function processOpenAPISpec(spec: OpenAPIV3.Document) {
   newSpec.components.schemas = newSchemas;
 
   return newSpec;
+}
+
+/**
+ * Filter out namespace parameters from an array of parameters
+ */
+function filterNamespaceParameters(parameters: Array<OpenAPIV3.ReferenceObject | OpenAPIV3.ParameterObject>) {
+  return parameters.filter((param) => 'name' in param && param.name !== 'namespace');
 }
 
 /**
