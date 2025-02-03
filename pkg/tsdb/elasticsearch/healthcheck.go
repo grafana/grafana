@@ -205,5 +205,4 @@ func validateIndex(ctx context.Context, ds *es.DatasourceInfo) (message string, 
 		return "Failed to parse fields from response", "error"
 	}
 	return "", ""
-
 }

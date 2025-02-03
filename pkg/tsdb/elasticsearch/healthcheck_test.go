@@ -89,7 +89,6 @@ func Test_validateIndex_Success_SuccessValidatingIndex(t *testing.T) {
 type FakeRoundTripper struct {
 	statusCode            int
 	status                string
-	body                  string
 	index                 int
 	elasticSearchResponse string
 	fieldCapsResponse     string
