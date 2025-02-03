@@ -702,15 +702,7 @@ spec:
 		}
 	}
 	compBase := "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1."
-	schema := oas.Components.Schemas[compBase+"Settings"].Properties["repository"]
-	schema.AdditionalProperties.Schema = &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
-		},
-	}
-	oas.Components.Schemas[compBase+"Settings"].Properties["repository"] = schema
-
-	schema = oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
+	schema := oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -725,6 +717,14 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"ResourceStats"].Properties["items"] = schema
+
+	// schema := oas.Components.Schemas[compBase+"Settings"].Properties["repository"]
+	// schema.AdditionalProperties.Schema = &spec.Schema{
+	// 	SchemaProps: spec.SchemaProps{
+	// 		Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
+	// 	},
+	// }
+	// oas.Components.Schemas[compBase+"Settings"].Properties["repository"] = schema
 
 	jj, _ := json.MarshalIndent(oas.Components.Schemas[compBase+"ResourceStats"], "", "  ")
 	fmt.Printf(">> %s\n", string(jj))
