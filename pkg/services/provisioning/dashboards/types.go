@@ -37,6 +37,8 @@ type configV0 struct {
 }
 
 // Access to dashboard provisioning config
+// Exposes the internal config outside this package with as few changes as possible
+// NOTE: these provisioning configs will eventually be replaced with: /apis/provisioning.grafana.app/
 type DashboardProvisioning struct {
 	config
 }

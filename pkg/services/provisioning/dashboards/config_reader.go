@@ -15,9 +15,9 @@ import (
 )
 
 type configReader struct {
-	path       string
-	log        log.Logger
-	orgChecker utils.CheckOrgExists
+	path      string
+	log       log.Logger
+	orgExists utils.OrgExists
 }
 
 func ReadDashboardConfig(dir string) ([]*DashboardProvisioning, error) {
@@ -127,7 +127,7 @@ func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 			dashboard.OrgID = 1
 		}
 
-		if err := cr.orgChecker(ctx, dashboard.OrgID); err != nil {
+		if err := cr.orgExists(ctx, dashboard.OrgID); err != nil {
 			return nil, fmt.Errorf("failed to provision dashboards with %q reader: %w", dashboard.Name, err)
 		}
 
