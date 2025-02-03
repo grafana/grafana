@@ -2,15 +2,19 @@ import { BackendSrv } from '@grafana/runtime';
 import { GrafanaSearcher, SearchQuery } from './types';
 import { toDashboardResults, SearchHit, SearchAPIResponse, UnifiedSearcher } from './unified';
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 const mockResults: SearchAPIResponse = {
   hits: [],
   totalHits: 0,
-}
+};
 
 const mockFolders: SearchAPIResponse = {
   hits: [],
   totalHits: 0,
-}
+};
 
 const mockFallbackSearcher = {
   search: jest.fn(),
@@ -21,7 +25,7 @@ const getResponse = (uri: string) => {
     return Promise.resolve(mockFolders);
   }
   return Promise.resolve(mockResults);
-}
+};
 
 const mockSearcher = {
   search: (uri: string) => getResponse(uri),
@@ -31,9 +35,10 @@ jest.mock('@grafana/runtime', () => {
   const originalRuntime = jest.requireActual('@grafana/runtime');
   return {
     ...originalRuntime,
-    getBackendSrv: () => ({
-      get: (uri: string) => mockSearcher.search(uri),
-    }) as unknown as BackendSrv,
+    getBackendSrv: () =>
+      ({
+        get: (uri: string) => mockSearcher.search(uri),
+      }) as unknown as BackendSrv,
   };
 });
 
@@ -46,12 +51,13 @@ describe('Unified Storage Searcher', () => {
         resource: 'folders',
       } as SearchHit,
     ];
-    mockResults.hits = [{
-      name: 'dashboard1',
-      title: 'Dashboard 1',
-      resource: 'dashboards',
-      folder: 'folder1',
-    } as SearchHit,
+    mockResults.hits = [
+      {
+        name: 'dashboard1',
+        title: 'Dashboard 1',
+        resource: 'dashboards',
+        folder: 'folder1',
+      } as SearchHit,
     ];
 
     const query: SearchQuery = {
@@ -102,10 +108,11 @@ describe('Unified Storage Searcher', () => {
       totalHits: 2,
     };
 
-    jest.spyOn(mockSearcher, 'search')
-    .mockResolvedValueOnce(mockFolders)
-    .mockResolvedValueOnce(mockResults)
-    .mockResolvedValueOnce(mockFolders);
+    jest
+      .spyOn(mockSearcher, 'search')
+      .mockResolvedValueOnce(mockFolders)
+      .mockResolvedValueOnce(mockResults)
+      .mockResolvedValueOnce(mockFolders);
 
     const consoleWarn = jest.fn();
     jest.spyOn(console, 'warn').mockImplementationOnce(consoleWarn);
