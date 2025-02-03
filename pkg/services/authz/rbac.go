@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -65,7 +66,10 @@ func ProvideAuthZClient(
 		// Register the server
 		server := rbac.NewService(
 			sql,
-			store.NewSQLFolderStore(sql, tracer),
+			// When running in-proc we get a injection cycle between
+			// authz client, resource client and apiserver so we need to use
+			// package level function to get rest config
+			store.NewAPIFolderStore(apiserver.GetRestConfig),
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),

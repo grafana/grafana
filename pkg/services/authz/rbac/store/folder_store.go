@@ -2,9 +2,15 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/authlib/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	folderv0 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -90,4 +96,85 @@ func (s *SQLFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 	}
 
 	return folders, nil
+}
+
+var _ FolderStore = (*APIFolderStore)(nil)
+
+func NewAPIFolderStore(configProvider func(ctx context.Context) *rest.Config) *APIFolderStore {
+	return &APIFolderStore{configProvider}
+}
+
+type APIFolderStore struct {
+	configProvider func(ctx context.Context) *rest.Config
+}
+
+func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
+	client, err := s.client(ctx, ns.Value)
+	if err != nil {
+		return nil, fmt.Errorf("create resource client: %w", err)
+	}
+	list := func(c string) ([]Folder, string, error) {
+		list, err := client.List(ctx, metav1.ListOptions{
+			// We should figure out a good limit
+			Limit:    1000,
+			Continue: c,
+		})
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		folders := make([]Folder, 0, len(list.Items))
+		for _, i := range list.Items {
+			object, err := utils.MetaAccessor(&i)
+			if err != nil {
+				return nil, "", err
+			}
+
+			folder := Folder{
+				UID: object.GetName(),
+			}
+
+			parent := object.GetFolder()
+			if parent != "" {
+				folder.ParentUID = &parent
+			}
+
+			folders = append(folders, folder)
+		}
+
+		return folders, list.GetContinue(), nil
+	}
+
+	// initial request list
+	folders, c, err := list("")
+	if err != nil {
+		return nil, err
+	}
+
+	// as long as we have a continue token we keep calling the api
+	for c != "" {
+		var (
+			c     string
+			err   error
+			items []Folder
+		)
+
+		items, c, err = list(c)
+		if err != nil {
+			return nil, err
+		}
+
+		folders = append(folders, items...)
+	}
+
+	return folders, nil
+}
+
+func (s *APIFolderStore) client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
+	client, err := dynamic.NewForConfig(s.configProvider(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return client.Resource(folderv0.FolderResourceInfo.GroupVersionResource()).Namespace(namespace), nil
 }
