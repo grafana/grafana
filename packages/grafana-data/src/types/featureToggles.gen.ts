@@ -47,7 +47,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
-  alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
@@ -189,7 +188,6 @@ export interface FeatureToggles {
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
-  openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;

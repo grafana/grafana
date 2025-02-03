@@ -7,17 +7,16 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 import { createQueryText } from '../../../../core/utils/richHistory';
-import { useGetDisplayListQuery } from '../../../iam';
+import { useGetDisplayMappingQuery } from '../../../iam';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { QueryTemplate } from '../../../query-library/types';
 
 export function useLoadUsers(userUIDs: string[] | undefined) {
   const userQtList = uniq(compact(userUIDs));
-  const usersParam = userQtList.map((userUid) => `key=${encodeURIComponent(userUid)}`).join('&');
-  return useGetDisplayListQuery(
+  return useGetDisplayMappingQuery(
     userUIDs
       ? {
-          name: `name?${usersParam}`,
+          key: userQtList,
         }
       : skipToken
   );
