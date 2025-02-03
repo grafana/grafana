@@ -9,6 +9,7 @@ import {
   SceneComponentProps,
   sceneGraph,
   VariableDependencyConfig,
+  SceneObject,
 } from '@grafana/scenes';
 import {
   Alert,
@@ -32,8 +33,9 @@ import { isClonedKey } from '../../utils/clone';
 import { getDashboardSceneFor, getDefaultVizPanel, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
+import { BulkActionElement, DashboardLayoutManager, EditableDashboardElement, LayoutParent } from '../types';
 
+import { MultiSelectedRowItemsElement } from './MultiSelectedRowItemsElement';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
@@ -45,7 +47,10 @@ export interface RowItemState extends SceneObjectState {
   height?: 'expand' | 'min';
 }
 
-export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
+export class RowItem
+  extends SceneObjectBase<RowItemState>
+  implements LayoutParent, BulkActionElement, EditableDashboardElement
+{
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['title'],
   });
@@ -104,6 +109,10 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
 
   public getTypeName(): string {
     return 'Row';
+  }
+
+  public createMultiSelectedElement(items: SceneObject[]) {
+    return new MultiSelectedRowItemsElement(items);
   }
 
   public onDelete = () => {
