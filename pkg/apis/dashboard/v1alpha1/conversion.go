@@ -12,25 +12,23 @@ import (
 )
 
 func Convert_v0alpha1_Unstructured_To_v1alpha1_DashboardSpec(in *common.Unstructured, out *DashboardSpec, s conversion.Scope) error {
-	err := migration.Migrate(in.Object, schemaversion.LATEST_VERSION)
+	out.Unstructured = *in
+	err := migration.Migrate(out.Unstructured.Object, schemaversion.LATEST_VERSION)
 	if err != nil {
 		minErr := &schemaversion.MinimumVersionError{}
 		if errors.As(err, &minErr) {
-			in.Object["__migrationError"] = err.Error()
+			out.Unstructured.Object["__migrationError"] = err.Error()
 		} else {
 			return err
 		}
 	}
 
-	out.Unstructured = *in
-
-	t, ok := in.Object["title"].(string)
+	t, ok := out.Unstructured.Object["title"].(string)
 	if !ok {
 		klog.V(5).Infof("unstructured dashboard title field is not a string %v", t)
 		return nil // skip setting the title if it's not a string in the unstructured object
 	}
 	out.Title = t
-
 	return nil
 }
 
