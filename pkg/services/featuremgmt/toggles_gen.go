@@ -948,7 +948,7 @@ const (
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
 	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Explore Metrics app plugin
+	// Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin
 	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
 
 	// FlagDatasourceConnectionsTab
