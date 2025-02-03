@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"io"
 	"io/fs"
 	"mime"
@@ -25,7 +26,7 @@ var netTransport = &http.Transport{
 }
 
 var netClient = &http.Client{
-	Transport: netTransport,
+	Transport: otelhttp.NewTransport(netTransport),
 }
 
 const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
