@@ -188,7 +188,6 @@ export interface FeatureToggles {
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
-  openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
@@ -254,4 +253,6 @@ export interface FeatureToggles {
   elasticsearchImprovedParsing?: boolean;
   datasourceConnectionsTab?: boolean;
   fetchRulesUsingPost?: boolean;
+  alertingAlertmanagerExtraDedupStage?: boolean;
+  alertingAlertmanagerExtraDedupStageStopPipeline?: boolean;
 }
