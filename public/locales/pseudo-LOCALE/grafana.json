@@ -180,8 +180,8 @@
       "evaluation": "Ēväľūäŧįőŉ",
       "last-evaluated": "Ŀäşŧ ęväľūäŧęđ",
       "last-evaluation-duration": "Ŀäşŧ ęväľūäŧįőŉ đūřäŧįőŉ",
+      "last-updated-at": "Ŀäşŧ ūpđäŧęđ äŧ",
       "last-updated-by": "Ŀäşŧ ūpđäŧęđ þy",
-      "last-updated-date": "Đäŧę őƒ ľäşŧ ūpđäŧę",
       "no-annotations": "Ńő äŉŉőŧäŧįőŉş",
       "pending-period": "Pęŉđįŉģ pęřįőđ",
       "rule": "Ŗūľę",
@@ -299,7 +299,7 @@
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
     },
-    "copy-to-clipboard": "Cőpy {{label}} ŧő čľįpþőäřđ",
+    "copy-to-clipboard": "Cőpy \"{{label}}\" ŧő čľįpþőäřđ",
     "export": {
       "subtitle": {
         "formats": "Ŝęľęčŧ ŧĥę ƒőřmäŧ äŉđ đőŵŉľőäđ ŧĥę ƒįľę őř čőpy ŧĥę čőŉŧęŉŧş ŧő čľįpþőäřđ",

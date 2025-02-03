@@ -180,8 +180,8 @@
       "evaluation": "Evaluation",
       "last-evaluated": "Last evaluated",
       "last-evaluation-duration": "Last evaluation duration",
+      "last-updated-at": "Last updated at",
       "last-updated-by": "Last updated by",
-      "last-updated-date": "Date of last update",
       "no-annotations": "No annotations",
       "pending-period": "Pending period",
       "rule": "Rule",
@@ -299,7 +299,7 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
-    "copy-to-clipboard": "Copy {{label}} to clipboard",
+    "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "export": {
       "subtitle": {
         "formats": "Select the format and download the file or copy the contents to clipboard",
