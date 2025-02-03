@@ -635,15 +635,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
-      "alertRule_other": "{{count}} äľęřŧ řūľęş",
+      "alertRule_other": "{{count}} äľęřŧ řūľę",
       "dashboard_one": "{{count}} đäşĥþőäřđ",
-      "dashboard_other": "{{count}} đäşĥþőäřđş",
+      "dashboard_other": "{{count}} đäşĥþőäřđ",
       "folder_one": "{{count}} ƒőľđęř",
-      "folder_other": "{{count}} ƒőľđęřş",
+      "folder_other": "{{count}} ƒőľđęř",
       "libraryPanel_one": "{{count}} ľįþřäřy päŉęľ",
-      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľş",
+      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľ",
       "total_one": "{{count}} įŧęm",
-      "total_other": "{{count}} įŧęmş"
+      "total_other": "{{count}} įŧęm"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
@@ -909,6 +909,25 @@
         },
         "modal": {
           "title": "Ŗőŵ őpŧįőŉş"
+        }
+      }
+    },
+    "edit-pane": {
+      "objects": {
+        "multi-select": {
+          "selection-number": "Ńő. őƒ őþĵęčŧş şęľęčŧęđ: "
+        }
+      },
+      "panels": {
+        "multi-select": {
+          "selection-number": "Ńő. őƒ päŉęľş şęľęčŧęđ: "
+        }
+      },
+      "row": {
+        "hide": "Ħįđę řőŵ ĥęäđęř",
+        "multi-select": {
+          "options-header": "Mūľŧį-şęľęčŧęđ Ŗőŵ őpŧįőŉş",
+          "selection-number": "Ńő. őƒ řőŵş şęľęčŧęđ: "
         }
       }
     },
@@ -2826,7 +2845,7 @@
       "shared-dashboard-modal-title": "Ŝĥäřęđ đäşĥþőäřđş"
     },
     "table-body": {
-      "dashboard-count_one": "{{count}} đäşĥþőäřđ",
+      "dashboard-count_one": "{{count}} đäşĥþőäřđş",
       "dashboard-count_other": "{{count}} đäşĥþőäřđş"
     },
     "table-header": {
