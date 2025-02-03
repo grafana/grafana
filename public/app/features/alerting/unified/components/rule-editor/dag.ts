@@ -39,9 +39,7 @@ export function _createDagFromQueries(queries: AlertQuery[]): Graph {
       : [query.model.expression];
 
     targets.forEach((target) => {
-      const isSelf = source === target;
-
-      if (source && target && !isSelf) {
+      if (source && target) {
         try {
           graph.link(target, source);
         } catch (error) {

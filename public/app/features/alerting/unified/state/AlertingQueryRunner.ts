@@ -23,6 +23,7 @@ import { setStructureRevision } from 'app/features/query/state/processing/revisi
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDagFromQueries, getDescendants, isDagError } from '../components/rule-editor/dag';
+import { stringifyErrorLike } from '../utils/misc';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {
@@ -73,6 +74,20 @@ export class AlertingQueryRunner {
           const preProcessed = preProcessPanelData(data, previous);
           return setStructureRevision(preProcessed, previous);
         });
+
+        // now append DAG errors to each individual node
+        try {
+          createDagFromQueries(queries);
+        } catch (error) {
+          if (isDagError(error)) {
+            const linkErrors = error.cause;
+
+            // add link errors to the panelData and mark them as errors
+            linkErrors.forEach((linkError) => {
+              nextResult[linkError.source] = createErrorPanelData(linkError.error);
+            });
+          }
+        }
 
         this.lastResult = nextResult;
         this.subject.next(this.lastResult);
@@ -271,3 +286,14 @@ const applyChange = (
 
   return nextResult;
 };
+
+const createErrorPanelData = (error: unknown): PanelData => ({
+  series: [],
+  state: LoadingState.Error,
+  errors: [
+    {
+      message: stringifyErrorLike(error),
+    },
+  ],
+  timeRange: getDefaultTimeRange(),
+});
