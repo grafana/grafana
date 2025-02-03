@@ -435,6 +435,9 @@ type Cfg struct {
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
+	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
+	// from clients. Defaults to 64KB.
+	LiveMessageSizeLimit int
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -511,6 +514,7 @@ type Cfg struct {
 	// Explore UI
 	ExploreEnabled           bool
 	ExploreDefaultTimeOffset string
+	ExploreHideLogsDownload  bool
 
 	// Help UI
 	HelpEnabled bool
@@ -1214,6 +1218,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	} else {
 		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
 	}
+	cfg.ExploreHideLogsDownload = explore.Key("hide_logs_download").MustBool(false)
 
 	help := iniFile.Section("help")
 	cfg.HelpEnabled = help.Key("enabled").MustBool(true)
@@ -1971,6 +1976,10 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
 	if cfg.LiveMaxConnections < -1 {
 		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
+	}
+	cfg.LiveMessageSizeLimit = section.Key("message_size_limit").MustInt(65536)
+	if cfg.LiveMessageSizeLimit < -1 {
+		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
 	}
 	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
 	switch cfg.LiveHAEngine {
