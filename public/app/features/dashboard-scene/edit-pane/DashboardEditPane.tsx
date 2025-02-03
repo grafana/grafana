@@ -106,6 +106,12 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     };
   }, [editPane]);
 
+  useEffect(() => {
+    if (isCollapsed && editPane.state.selectedObject?.resolve()) {
+      editPane.clearSelection();
+    }
+  }, [editPane, isCollapsed]);
+
   const { selectedObject } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
   const paneRef = useRef<HTMLDivElement>(null);
