@@ -772,6 +772,7 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: true,
 			Owner:          identityAccessTeam,
+			Expression:     "true",
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
