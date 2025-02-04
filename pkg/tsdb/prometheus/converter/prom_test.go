@@ -28,6 +28,7 @@ var files = []string{
 	"prom-scalar",
 	"prom-series",
 	"prom-warnings",
+	"prom-warnings-no-data", // LOGZ.IO GRAFANA CHANGE :: DEV-48075 - Fix missing warning from NoData in prometheus converter
 	"prom-error",
 	"prom-exemplars-a",
 	"prom-exemplars-b",
@@ -57,6 +58,21 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 			require.Error(t, rsp.Error)
 			return
 		}
+
+		// LOGZ.IO GRAFANA CHANGE :: DEV-48075 - Fix missing warning from NoData in prometheus converter
+		if strings.Contains(name, "warnings") {
+			hasWarning := false
+			for _, frame := range rsp.Frames {
+				if len(frame.Meta.Notices) > 0 {
+					hasWarning = true
+					break
+				}
+			}
+
+			require.True(t, hasWarning)
+		}
+		// LOGZ.IO GRAFANA CHANGE :: End
+
 		require.NoError(t, rsp.Error)
 
 		fname := name + "-frame"
