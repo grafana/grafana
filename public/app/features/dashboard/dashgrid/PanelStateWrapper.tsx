@@ -561,8 +561,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { transparent } = panel;
     const panelChromeProps = getPanelChromeProps({ ...this.props, data });
 
-    console.log('PanelStateWrapper');
-
     // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
     const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
 
