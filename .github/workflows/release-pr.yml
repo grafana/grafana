@@ -4,7 +4,7 @@
 # Please refrain from including any processes that do not result in code changes in this workflow. Instead, they should
 # either be triggered in the release promotion process or in the release comms process (that is triggered by merging
 # this PR).
-name: Complete a Grafana release
+name: Grafana Release PR
 on:
   workflow_dispatch:
     inputs:
