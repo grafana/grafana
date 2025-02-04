@@ -255,9 +255,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Safe to edit the repository from here
 	obj = obj.DeepCopy()
 	hooks, _ := repo.(repository.RepositoryHooks)
-	status := &obj.Status
 
-	var sync *provisioning.SyncJobOptions
+	var (
+		sync          *provisioning.SyncJobOptions
+		webhookStatus *provisioning.WebhookStatus
+	)
 
 	switch {
 	// Delete (note this switch does not fallthrough to the health check)
@@ -285,13 +287,13 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("handle repository create")
 		if hooks != nil {
-			status, err = hooks.OnCreate(ctx)
+			webhookStatus, err = hooks.OnCreate(ctx)
 		}
 		sync = &provisioning.SyncJobOptions{Complete: true}
 	case hasSpecChanged:
 		logger.Info("handle repository update")
 		if hooks != nil {
-			status, err = hooks.OnUpdate(ctx)
+			webhookStatus, err = hooks.OnUpdate(ctx)
 		}
 		sync = &provisioning.SyncJobOptions{Complete: hasSpecChanged}
 	case shouldResync:
@@ -301,10 +303,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("handle unknown repository situation")
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("error running hooks: %w", err)
 	}
 
-	status.ObservedGeneration = obj.Generation
+	health := obj.Status.Health
+
 	if obj.DeletionTimestamp == nil && healthAge > 200*time.Millisecond {
 		logger.Info("running health check")
 		res, err := rc.tester.TestRepository(ctx, repo)
@@ -318,7 +321,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			}
 		}
 
-		status.Health = provisioning.HealthStatus{
+		health = provisioning.HealthStatus{
 			Healthy: res.Success,
 			Checked: time.Now().UnixMilli(),
 			Message: res.Errors,
@@ -331,7 +334,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 		patch, err := json.Marshal(map[string]any{
 			"status": map[string]any{
-				"health": status.Health,
+				"health": health,
 			},
 		})
 		if err != nil {
@@ -344,26 +347,11 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		}
 	}
 
-	// Queue a sync job
-	hash := status.Sync.Hash
-	if isSyncJobPendingOrRunning {
-		res := rc.jobs.Status(ctx, obj.Namespace, status.Sync.JobID)
-		if res == nil {
-			logger.Warn("error getting job status", "job", status.Sync.JobID)
-			res = &provisioning.JobStatus{
-				State:  provisioning.JobStateError,
-				Errors: []string{"unable to find status for job: " + status.Sync.JobID},
-			}
-		}
-		status.Sync = res.ToSyncStatus(status.Sync.JobID)
-	}
-
 	// Maybe add a new sync job
-	if status.Health.Healthy &&
+	if health.Healthy &&
 		obj.Spec.Sync.Enabled && sync != nil &&
-		status.ObservedGeneration > 0 &&
-		status.Sync.State != provisioning.JobStateWorking &&
-		status.Sync.State != provisioning.JobStatePending {
+		obj.Generation > 0 &&
+		!isSyncJobPendingOrRunning {
 		job, err := rc.jobs.Add(ctx, &provisioning.Job{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: obj.Namespace,
@@ -375,27 +363,27 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			},
 		})
 		if err != nil {
-			logger.Error("error adding sync job", "error", err)
-			status.Sync = provisioning.SyncStatus{
-				State:   provisioning.JobStateError,
-				Started: time.Now().UnixMilli(),
-				Message: []string{
-					"Error starting sync job",
-					err.Error(),
-				},
-			}
+			return fmt.Errorf("error adding sync job: %w", err)
 		} else {
-			status.Sync = job.Status.ToSyncStatus(job.Name)
 			logger.Info("sync job triggered", "job", job.Name)
 		}
 	}
-	status.Sync.Hash = hash
-	obj.Status = *status
 
-	// Write the updated status (careful not to trigger inf loop)
-	if _, err := rc.client.Repositories(obj.GetNamespace()).
-		UpdateStatus(ctx, obj, v1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("update status: %w", err)
+	if hasSpecChanged {
+		patch, err := json.Marshal(map[string]any{
+			"status": map[string]any{
+				"observedGeneration": obj.Generation,
+				"webhook":            webhookStatus,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("error encoding health patch: %w", err)
+		}
+
+		if _, err := rc.client.Repositories(obj.GetNamespace()).
+			Patch(ctx, obj.GetName(), types.MergePatchType, patch, v1.PatchOptions{}, "status"); err != nil {
+			return fmt.Errorf("update health status: %w", err)
+		}
 	}
 
 	return nil
