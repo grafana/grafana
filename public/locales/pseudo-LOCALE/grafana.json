@@ -1911,6 +1911,13 @@
         "shortcut": "äľŧ+şęľęčŧ ŧő ęŉäþľę äģäįŉ"
       }
     },
+    "logs-navigation": {
+      "newer-logs": "Ńęŵęř ľőģş",
+      "older-logs": "Øľđęř ľőģş",
+      "scroll-bottom": "Ŝčřőľľ ŧő þőŧŧőm",
+      "scroll-top": "Ŝčřőľľ ŧő ŧőp",
+      "start-of-range": "Ŝŧäřŧ őƒ řäŉģę"
+    },
     "popover-menu": {
       "copy": "Cőpy şęľęčŧįőŉ",
       "disable-menu": "Đįşäþľę męŉū",

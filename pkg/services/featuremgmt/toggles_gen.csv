@@ -236,3 +236,4 @@ datasourceConnectionsTab,experimental,@grafana/plugins-platform-backend,false,fa
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 alertingAlertmanagerExtraDedupStage,experimental,@grafana/alerting-squad,false,true,false
 alertingAlertmanagerExtraDedupStageStopPipeline,experimental,@grafana/alerting-squad,false,true,false
+newLogsPanel,experimental,@grafana/observability-logs,false,false,true
