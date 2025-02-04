@@ -4,9 +4,6 @@ const zenTheme: NewThemeOptions = {
   name: 'Zen',
   colors: {
     mode: 'light',
-    primary: {
-      main: '#88B88B',
-    },
     text: {
       primary: '#333333',
       secondary: '#666666',
@@ -19,20 +16,13 @@ const zenTheme: NewThemeOptions = {
       medium: '#A2A8A2',
       strong: '#7C7F7A',
     },
+    primary: {
+      main: '#6D8E6D',
+    },
     secondary: {
       main: '#E0E0E0',
-    },
-    info: {
-      main: '#4F9F6E',
-    },
-    error: {
-      main: '#D85C5C',
-    },
-    success: {
-      main: '#5C9A5C',
-    },
-    warning: {
-      main: '#F5A623',
+      text: '#666666',
+      border: '#A2A8A2',
     },
     background: {
       canvas: '#F4F4F4',
@@ -59,15 +49,6 @@ const zenTheme: NewThemeOptions = {
   },
   shape: {
     borderRadius: 8,
-  },
-  typography: {
-    fontFamily: '"Noto Sans", "Arial", sans-serif',
-    fontFamilyMonospace: "'Courier New', monospace",
-    fontSize: 14,
-    fontWeightLight: 300,
-    fontWeightRegular: 400,
-    fontWeightMedium: 500,
-    fontWeightBold: 600,
   },
 };
 

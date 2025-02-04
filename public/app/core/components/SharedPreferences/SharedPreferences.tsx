@@ -88,19 +88,19 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }
 
     if (config.featureToggles.grafanaconThemes) {
+      allowedExtraThemes.push('aubergine');
       allowedExtraThemes.push('matrix');
       allowedExtraThemes.push('mars');
       allowedExtraThemes.push('synthwave');
       allowedExtraThemes.push('tron');
       allowedExtraThemes.push('victorian');
+      allowedExtraThemes.push('zen');
 
       // TODO check these for contrast problems first
-      allowedExtraThemes.push('aubergine');
       allowedExtraThemes.push('grafana12dark');
       allowedExtraThemes.push('grafana12light');
       allowedExtraThemes.push('grafanacon');
       allowedExtraThemes.push('greengold');
-      allowedExtraThemes.push('zen');
     }
 
     this.themeOptions = getBuiltInThemes(allowedExtraThemes).map((theme) => ({

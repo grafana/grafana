@@ -5,9 +5,9 @@ const aubergineTheme: NewThemeOptions = {
   colors: {
     mode: 'dark',
     border: {
-      weak: '#8C5A69',
+      weak: '#4F2A3D',
       medium: '#6A3C4B',
-      strong: '#4F2A3D',
+      strong: '#8C5A69',
     },
     text: {
       primary: '#E5D0D6',
@@ -17,22 +17,12 @@ const aubergineTheme: NewThemeOptions = {
       maxContrast: '#FFFFFF',
     },
     primary: {
-      main: '#6A3C4B',
-    },
-    secondary: {
       main: '#8C5A69',
     },
-    info: {
-      main: '#6D76D1',
-    },
-    error: {
-      main: '#E53935',
-    },
-    success: {
-      main: '#388E3C',
-    },
-    warning: {
-      main: '#FFB300',
+    secondary: {
+      main: '#6A3C4B',
+      text: '#D1A8C4',
+      border: '#8C5A69',
     },
     background: {
       canvas: '#2E1F2D',
@@ -50,8 +40,8 @@ const aubergineTheme: NewThemeOptions = {
       disabledOpacity: 0.38,
     },
     gradients: {
-      brandHorizontal: 'linear-gradient(270deg, #6A3C4B 0%, #8C5A69 100%)',
-      brandVertical: 'linear-gradient(0.01deg, #6A3C4B 0.01%, #8C5A69 99.99%)',
+      brandHorizontal: 'linear-gradient(270deg, #6A3C4B 0%, #A56BB6 100%)',
+      brandVertical: 'linear-gradient(0deg, #6A3C4B 0%, #A56BB6 100%)',
     },
     contrastThreshold: 4,
     hoverFactor: 0.07,
@@ -59,15 +49,6 @@ const aubergineTheme: NewThemeOptions = {
   },
   shape: {
     borderRadius: 6,
-  },
-  typography: {
-    fontFamily: '"Roboto", "Arial", sans-serif',
-    fontFamilyMonospace: "'Courier New', monospace",
-    fontSize: 14,
-    fontWeightLight: 300,
-    fontWeightRegular: 400,
-    fontWeightMedium: 500,
-    fontWeightBold: 700,
   },
 };
 
