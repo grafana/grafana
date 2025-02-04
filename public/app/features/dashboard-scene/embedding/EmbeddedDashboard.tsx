@@ -45,8 +45,6 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles);
 
-  console.log('EmbeddedDashboardRenderer');
-
   useEffect(() => {
     setIsActive(true);
 
