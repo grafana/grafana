@@ -725,7 +725,10 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 					return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
 				}
 				dashboardUIDs = make([]string, len(hits.Hits))
-				k8sDeleteClient, _ := s.k8sclient.getDashboardClient(ctx, cmd.OrgID)
+				k8sDeleteClient, created := s.k8sclient.getDashboardClient(ctx, cmd.OrgID)
+				if !created {
+					return folder.ErrInternal.Errorf("failed to create client to get dashboards")
+				}
 				for i, dashboard := range hits.Hits {
 					dashboardUIDs[i] = dashboard.Name
 					err = k8sDeleteClient.Delete(ctx, dashboard.Name, metav1.DeleteOptions{})
