@@ -7,6 +7,9 @@ import (
 	"net/textproto"
 	"strings"
 
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -58,6 +61,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 
 		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
+		}
+
+		if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled {
 			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
 		}
 
