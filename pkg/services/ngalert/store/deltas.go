@@ -125,18 +125,14 @@ func calculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		}
 
 		models.PatchPartialAlertRule(existing, r)
-
 		diff := existing.Diff(&r.AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
-		if len(diff) == 0 {
-			continue
+		if len(diff) > 0 {
+			toUpdate = append(toUpdate, RuleDelta{
+				Existing: existing,
+				New:      &r.AlertRule,
+				Diff:     diff,
+			})
 		}
-
-		toUpdate = append(toUpdate, RuleDelta{
-			Existing: existing,
-			New:      &r.AlertRule,
-			Diff:     diff,
-		})
-		continue
 	}
 
 	toDelete := make([]*models.AlertRule, 0, len(existingGroupRulesUIDs))
