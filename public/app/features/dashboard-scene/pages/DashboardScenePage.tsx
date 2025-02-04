@@ -31,6 +31,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
 
+  // using useLayoutEffect because data links without a slug (referencing same dashboard)
+  //  if data link triggers a query it is lost due to immediate refresh due to url correction
   useLayoutEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
       stateManager.loadSnapshot(slug!);
