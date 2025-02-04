@@ -67,7 +67,7 @@ refs:
 
 An alert rule is a set of evaluation criteria for when an alert rule should fire. An alert rule consists of:
 
-- [Queries](ref:queries-and-conditions) that select the data set to evaluate.
+- [Queries](ref:queries-and-conditions) that select the dataset to evaluate.
 - An [alert condition](ref:alert-condition) (the threshold) that the query must meet or exceed to trigger the alert instance.
 - An interval that specifies the frequency of [alert rule evaluation](ref:alert-rule-evaluation) and a duration indicating how long the condition must be met to trigger the alert instance.
 - Other customizable options, for example, setting what should happen in the absence of data, notification messages, and more.

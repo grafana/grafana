@@ -153,26 +153,26 @@ Classic condition checks if any time series data matches the alert condition. It
 
 | Condition operators | How it works                                                                                                                                                                                                                                                |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| and                 | Two conditions before and after must be true for the overall condition to be true.                                                                                                                                                                          |
-| or                  | If one of conditions before and after are true, the overall condition is true.                                                                                                                                                                              |
-| logic-or            | If the condition before `logic-or` is true, the overall condition is immediately true, without evaluating subsequent conditions. For instance, `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`. |
+| `and`               | Two conditions before and after must be true for the overall condition to be true.                                                                                                                                                                          |
+| `or`                | If one of conditions before and after are true, the overall condition is true.                                                                                                                                                                              |
+| `logic-or`          | If the condition before `logic-or` is true, the overall condition is immediately true, without evaluating subsequent conditions. For instance, `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`. |
 
 The following aggregation functions are also available to further refine your query.
 
-| Function         | What it does                                                                    |
-| ---------------- | ------------------------------------------------------------------------------- |
-| avg              | Displays the average of the values                                              |
-| min              | Displays the lowest value                                                       |
-| max              | Displays the highest value                                                      |
-| sum              | Displays the sum of all values                                                  |
-| count            | Counts the number of values in the result                                       |
-| last             | Displays the last value                                                         |
-| median           | Displays the median value                                                       |
-| diff             | Displays the difference between the newest and oldest value                     |
-| diff_abs         | Displays the absolute value of diff                                             |
-| percent_diff     | Displays the percentage value of the difference between newest and oldest value |
-| percent_diff_abs | Displays the absolute value of percent_diff                                     |
-| count_non_null   | Displays a count of values in the result set that aren't `null`                 |
+| Function           | What it does                                                                    |
+| ------------------ | ------------------------------------------------------------------------------- |
+| `avg`              | Displays the average of the values                                              |
+| `min`              | Displays the lowest value                                                       |
+| `max`              | Displays the highest value                                                      |
+| `sum`              | Displays the sum of all values                                                  |
+| `count`            | Counts the number of values in the result                                       |
+| `last`             | Displays the last value                                                         |
+| `median`           | Displays the median value                                                       |
+| `diff`             | Displays the difference between the newest and oldest value                     |
+| `diff_abs`         | Displays the absolute value of diff                                             |
+| `percent_diff`     | Displays the percentage value of the difference between newest and oldest value |
+| `percent_diff_abs` | Displays the absolute value of percent_diff                                     |
+| `count_non_null`   | Displays a count of values in the result set that aren't `null`                 |
 
 {{< /collapse >}}
 
