@@ -48,9 +48,7 @@ import (
 
 const repoControllerWorkers = 1
 
-var (
-	_ builder.APIGroupBuilder = (*APIBuilder)(nil)
-)
+var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
 
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
@@ -418,7 +416,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			sharedInformerFactory := informers.NewSharedInformerFactory(
 				c,
-				15*time.Minute, // Health check interval
+				30*time.Second, // Health and reconciliation interval check interval
 			)
 
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
