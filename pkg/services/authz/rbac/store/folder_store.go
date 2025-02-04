@@ -6,11 +6,13 @@ import (
 
 	"github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/pager"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folderv0 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -117,56 +119,33 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 	if err != nil {
 		return nil, fmt.Errorf("create resource client: %w", err)
 	}
-	list := func(c string) ([]Folder, string, error) {
-		list, err := client.List(ctx, metav1.ListOptions{
-			// We should figure out a good limit
-			Limit:    1000,
-			Continue: c,
-		})
 
+	p := pager.New(func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return client.List(ctx, opts)
+	})
+
+	const defaultPageSize = 500
+
+	folders := make([]Folder, 0, defaultPageSize)
+	err = p.EachListItem(ctx, metav1.ListOptions{Limit: defaultPageSize}, func(obj runtime.Object) error {
+		object, err := utils.MetaAccessor(obj)
 		if err != nil {
-			return nil, "", err
+			return err
 		}
 
-		folders := make([]Folder, 0, len(list.Items))
-		for _, i := range list.Items {
-			object, err := utils.MetaAccessor(&i)
-			if err != nil {
-				return nil, "", err
-			}
-
-			folder := Folder{UID: object.GetName()}
-			parent := object.GetFolder()
-			if parent != "" {
-				folder.ParentUID = &parent
-			}
-
-			folders = append(folders, folder)
+		folder := Folder{UID: object.GetName()}
+		parent := object.GetFolder()
+		if parent != "" {
+			folder.ParentUID = &parent
 		}
 
-		return folders, list.GetContinue(), nil
-	}
+		folders = append(folders, folder)
 
-	// initial request list
-	folders, c, err := list("")
+		return nil
+	})
+
 	if err != nil {
-		return nil, err
-	}
-
-	// as long as we have a continue token we keep calling the api
-	for c != "" {
-		var (
-			c     string
-			err   error
-			items []Folder
-		)
-
-		items, c, err = list(c)
-		if err != nil {
-			return nil, err
-		}
-
-		folders = append(folders, items...)
+		return nil, fmt.Errorf("fetching folders: %w", err)
 	}
 
 	return folders, nil
@@ -177,5 +156,5 @@ func (s *APIFolderStore) client(ctx context.Context, namespace string) (dynamic.
 	if err != nil {
 		return nil, err
 	}
-	return client.Resource(folderv0.FolderResourceInfo.GroupVersionResource()).Namespace(namespace), nil
+	return client.Resource(schema.GroupVersionResource{}).Namespace(namespace), nil
 }

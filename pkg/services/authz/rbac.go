@@ -209,7 +209,6 @@ func RegisterRBACAuthZService(
 	exchangeClient authn.TokenExchanger,
 	folderAPIURL string,
 ) {
-
 	var folderStore store.FolderStore
 	// FIXME: for now we default to using database read proxy for folders if the api url is not configured.
 	// we should remove this and the sql implementation once we have verified that is works correctly

@@ -18,7 +18,6 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
-	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -285,16 +284,16 @@ func (s *Service) getIdentityPermissions(ctx context.Context, ns types.Namespace
 	switch idType {
 	case types.TypeAnonymous:
 		return s.getAnonymousPermissions(ctx, ns, action, actionSets)
-	case claims.TypeRenderService:
+	case types.TypeRenderService:
 		return s.getRendererPermissions(ctx, action)
-	case claims.TypeUser, claims.TypeServiceAccount:
+	case types.TypeUser, types.TypeServiceAccount:
 		return s.getUserPermissions(ctx, ns, userID, action, actionSets)
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, ns claims.NamespaceInfo, userID, action string, actionSets []string) (map[string]bool, error) {
+func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo, userID, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserPermissions")
 	defer span.End()
 
