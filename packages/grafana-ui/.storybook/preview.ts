@@ -69,7 +69,7 @@ const preview: Preview = {
       defaultValue: 'dark',
       toolbar: {
         icon: 'paintbrush',
-        items: getBuiltInThemes(['debug']).map((theme) => ({
+        items: getBuiltInThemes(true).map((theme) => ({
           value: theme.id,
           title: theme.name,
         })),
