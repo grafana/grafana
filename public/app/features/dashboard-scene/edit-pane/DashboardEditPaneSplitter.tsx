@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
-import NativeScrollbar from 'app/core/components/NativeScrollbar';
+import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -68,7 +68,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   }
 
   const onBodyRef = (ref: HTMLDivElement) => {
-    dashboard.onSetScrollRef(ref);
+    dashboard.onSetScrollRef(new DivScrollElement(ref));
   };
 
   return (

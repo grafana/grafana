@@ -23,7 +23,7 @@ export default function NativeScrollbar({ children, onSetScrollRef, divId }: Pro
   return children;
 }
 
-class DivScrollElement {
+export class DivScrollElement implements ScrollRefElement {
   public constructor(private element: HTMLElement) {}
   public get scrollTop() {
     return this.element.scrollTop;
