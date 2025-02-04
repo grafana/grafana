@@ -319,8 +319,9 @@ export function getMarkerAsPath(shape?: string): string | undefined {
   return undefined;
 }
 
+// Returns literal style for WebGL markers
 export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<LiteralStyle> {
-  const imageString = 'image';
+  // style expressions
   const symbolStyle: LiteralStyle = {
     symbol: {
       symbolType: 'circle',
@@ -331,7 +332,9 @@ export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<
       opacity: ['get', 'opacity', 'number'],
     },
   };
+  // set symbolType and src if a symbol is provided
   if (symbol && symbolStyle.symbol) {
+    const imageString = 'image';
     const symbolType = Object.keys(WebGLRegularShapes).find((key) => WebGLRegularShapes[key] === symbol) ?? imageString;
     symbolStyle.symbol = { ...symbolStyle.symbol, symbolType };
     if (symbolType === imageString) {

@@ -138,6 +138,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             const radius = values.size ?? DEFAULT_SIZE;
             const displacement = getDisplacement(values.symbolAlign ?? defaultStyleConfig.symbolAlign, radius);
 
+            // WebGLPointsLayer uses style expressions instead of style functions
             feature.setProperties({ red: colorValues?.r ?? 255 });
             feature.setProperties({ green: colorValues?.g ?? 0 });
             feature.setProperties({ blue: colorValues?.b ?? 0 });

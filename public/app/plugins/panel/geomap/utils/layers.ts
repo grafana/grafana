@@ -158,6 +158,7 @@ export async function initLayer(
       .getArray()
       .forEach((layer) => {
         if (layer instanceof WebGLPointsLayer) {
+          // eslint-disable-next-line
           (layer as any).__state = state;
         }
       });
