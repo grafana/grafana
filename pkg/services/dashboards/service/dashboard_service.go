@@ -1745,7 +1745,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 		// When no type specified, search for dashboards
 		request.Options.Key, err = resource.AsResourceKey(namespace, dashboard.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
-		if err != nil {
+		if err == nil {
 			federate, err = resource.AsResourceKey(namespace, folderv0alpha1.RESOURCE)
 		}
 	case searchstore.TypeDashboard, searchstore.TypeAnnotation:

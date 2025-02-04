@@ -305,7 +305,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		// When no type specified, search for dashboards
 		searchRequest.Options.Key, err = asResourceKey(user.GetNamespace(), dashboard.DASHBOARD_RESOURCE)
 		// Currently a search query is across folders and dashboards
-		if err != nil {
+		if err == nil {
 			federate, err = asResourceKey(user.GetNamespace(), folderv0alpha1.RESOURCE)
 		}
 	case 1:
