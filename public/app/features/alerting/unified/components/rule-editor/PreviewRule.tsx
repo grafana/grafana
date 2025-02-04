@@ -10,7 +10,6 @@ import { previewAlertRule } from '../../api/preview';
 import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 
-
 const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
 
 export function usePreview(): [PreviewRuleResponse | undefined, () => void] {

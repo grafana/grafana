@@ -6,18 +6,18 @@ import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } fr
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
-    Button,
-    Field,
-    Icon,
-    Input,
-    Label,
-    Modal,
-    Select,
-    Stack,
-    Switch,
-    Text,
-    Tooltip,
-    useStyles2,
+  Button,
+  Field,
+  Icon,
+  Input,
+  Label,
+  Modal,
+  Select,
+  Stack,
+  Switch,
+  Text,
+  Tooltip,
+  useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -27,10 +27,10 @@ import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
-    isGrafanaAlertingRuleByType,
-    isGrafanaManagedRuleByType,
-    isGrafanaRecordingRuleByType,
-    isGrafanaRulerRule,
+  isGrafanaAlertingRuleByType,
+  isGrafanaManagedRuleByType,
+  isGrafanaRecordingRuleByType,
+  isGrafanaRulerRule,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { ProvisioningBadge } from '../Provisioning';
