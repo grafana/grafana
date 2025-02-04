@@ -32,7 +32,7 @@ const MarkerShapePath = {
   x: 'img/icons/marker/x-mark.svg',
 };
 
-const WebGLRegularShapes = {
+const WebGLRegularShapes: Record<string, string> = {
   circle: 'img/icons/marker/circle.svg',
   square: 'img/icons/marker/square.svg',
   triangle: 'img/icons/marker/triangle.svg',
@@ -332,10 +332,7 @@ export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<
     },
   };
   if (symbol && symbolStyle.symbol) {
-    const symbolType =
-      Object.keys(WebGLRegularShapes).find(
-        (key) => WebGLRegularShapes[key as keyof typeof WebGLRegularShapes] === symbol
-      ) ?? imageString;
+    const symbolType = Object.keys(WebGLRegularShapes).find((key) => WebGLRegularShapes[key] === symbol) ?? imageString;
     symbolStyle.symbol = { ...symbolStyle.symbol, symbolType };
     if (symbolType === imageString) {
       const backgroundOpacity = opacity === 0 ? 0 : 0.1 / (opacity ?? 1);
