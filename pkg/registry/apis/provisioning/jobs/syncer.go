@@ -189,6 +189,7 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 
 		if change.Action == repository.FileActionDeleted {
 			if change.DB == nil {
+				// ?? could we get this from the index?
 				info, err := r.repository.Read(ctx, change.Path, change.Ref)
 				if err != nil {
 					status.Errors = append(status.Errors,
@@ -197,17 +198,18 @@ func (r *syncer) replicateChanges(ctx context.Context, changes []repository.File
 				}
 
 				obj, gvk, _ := resources.DecodeYAMLObject(bytes.NewBuffer(info.Data))
-				if obj == nil || obj.GetName() == "" {
+				if obj == nil {
 					status.Errors = append(status.Errors,
 						fmt.Sprintf("no object found in: %s", change.Path))
 					continue
 				}
 
-				// Get the referenced
+				// Find the referenced file
+				objName, _ := resources.NamesFromHashedRepoPath(r.repository.Config().Name, change.Path)
 				change.DB = &provisioning.ResourceListItem{
 					Group:    gvk.Group,
 					Resource: getResourceFromGVK(gvk),
-					Name:     obj.GetName(),
+					Name:     objName,
 				}
 			}
 
