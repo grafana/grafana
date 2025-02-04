@@ -29,24 +29,27 @@ const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
   access: {},
 };
 
+// Create a mock put function that we can spy on
+const mockPut = jest.fn().mockImplementation((url, data) => {
+  return {
+    apiVersion: 'dashboard.grafana.app/v2alpha1',
+    kind: 'Dashboard',
+    metadata: {
+      name: data.metadata?.name,
+      resourceVersion: '2',
+      creationTimestamp: new Date().toISOString(),
+      labels: data.metadata?.labels,
+      annotations: data.metadata?.annotations,
+    },
+    spec: data.spec,
+  };
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: () => mockDashboardDto,
-    put: jest.fn().mockImplementation((url, data) => {
-      return {
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
-        kind: 'Dashboard',
-        metadata: {
-          name: data.metadata.name,
-          resourceVersion: '2',
-          creationTimestamp: new Date().toISOString(),
-          labels: data.metadata.labels,
-          annotations: data.metadata.annotations,
-        },
-        spec: data.spec,
-      };
-    }),
+    put: mockPut,
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -58,6 +61,10 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 }));
 
 describe('v2 dashboard API', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should provide folder annotations', async () => {
     jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
       id: 1,
@@ -95,6 +102,10 @@ describe('v2 dashboard API', () => {
 });
 
 describe('v2 dashboard API - Save', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const defaultSaveCommand = {
     dashboard: defaultDashboardV2Spec(),
     message: 'test save',
@@ -146,5 +157,41 @@ describe('v2 dashboard API - Save', () => {
       },
     });
     expect(result.version).toBe(2);
+  });
+
+  it('should update existing dashboard that is store in a folder', async () => {
+    const api = new K8sDashboardV2API(false);
+    await api.saveDashboard({
+      dashboard: {
+        ...defaultSaveCommand.dashboard,
+        title: 'chaing-title-dashboard',
+      },
+      folderUid: 'folderUidXyz',
+      k8s: {
+        name: 'existing-dash',
+        annotations: {
+          [AnnoKeyFolder]: 'folderUidXyz',
+          [AnnoKeyFolderUrl]: 'url folder used in the client',
+          [AnnoKeyFolderId]: 42,
+          [AnnoKeyFolderTitle]: 'title folder used in the client',
+        },
+      },
+    });
+    expect(mockPut).toHaveBeenCalledTimes(1);
+    expect(mockPut).toHaveBeenCalledWith(
+      '/apis/dashboard.grafana.app/v2alpha1/namespaces/default/dashboards/existing-dash',
+      {
+        metadata: {
+          name: 'existing-dash',
+          annotations: {
+            [AnnoKeyFolder]: 'folderUidXyz',
+          },
+        },
+        spec: {
+          ...defaultSaveCommand.dashboard,
+          title: 'chaing-title-dashboard',
+        },
+      }
+    );
   });
 });
