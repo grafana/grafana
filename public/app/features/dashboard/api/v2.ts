@@ -56,6 +56,11 @@ export class K8sDashboardV2API
         } catch (e) {
           throw new Error('Failed to load folder');
         }
+      } else if (result.metadata.annotations && !result.metadata.annotations[AnnoKeyFolder]) {
+        // Set AnnoKeyFolder to empty string for top-level dashboards
+        // This ensures NestedFolderPicker correctly identifies it as being in the "Dashboard" root folder
+        // AnnoKeyFolder undefined -> top-level dashboard -> empty string
+        result.metadata.annotations[AnnoKeyFolder] = '';
       }
 
       // Depending on the ui components readiness, we might need to convert the response to v1
@@ -110,6 +115,11 @@ export class K8sDashboardV2API
 
     // add folder annotation
     if (options.folderUid) {
+      // remove frontend folder annotations
+      delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
+      delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
+      delete obj.metadata.annotations?.[AnnoKeyFolderId];
+
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
         [AnnoKeyFolder]: options.folderUid,
@@ -117,6 +127,8 @@ export class K8sDashboardV2API
     }
 
     if (obj.metadata.name) {
+      // remove resource version when updating
+      delete obj.metadata.resourceVersion;
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
