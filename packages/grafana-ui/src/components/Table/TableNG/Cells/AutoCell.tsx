@@ -1,59 +1,62 @@
 import { css } from '@emotion/css';
-import { useState, useRef } from 'react';
+import { Property } from 'csstype';
+import { useRef } from 'react';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
 import { CellNGProps } from '../types';
 
-export default function AutoCell({ value, field, justifyContent, shouldTextOverflow }: CellNGProps) {
+interface AutoCellProps extends CellNGProps {
+  shouldTextOverflow: () => boolean;
+  setIsHovered: (isHovered: boolean) => void;
+}
+
+export default function AutoCell({ value, field, justifyContent, shouldTextOverflow }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
 
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, justifyContent);
   const divRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
-    if (shouldTextOverflow && !shouldTextOverflow()) {
+    if (!shouldTextOverflow()) {
       return;
     }
-    setIsHovered(true);
 
+    // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
     const div = divRef.current;
-    div?.parentElement?.style.setProperty('overflow', 'visible');
+    const tableCellDiv = div?.parentElement?.parentElement;
+    tableCellDiv?.style.setProperty('position', 'absolute');
+    tableCellDiv?.style.setProperty('top', '0');
+    tableCellDiv?.style.setProperty('z-index', '1');
+    tableCellDiv?.style.setProperty('white-space', 'normal');
   };
 
   const handleMouseLeave = () => {
-    if (shouldTextOverflow && !shouldTextOverflow()) {
+    if (!shouldTextOverflow()) {
       return;
     }
 
-    setIsHovered(false);
-
+    // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
     const div = divRef.current;
-    div?.parentElement?.style.setProperty('overflow', 'hidden');
+    const tableCellDiv = div?.parentElement?.parentElement;
+    tableCellDiv?.style.setProperty('position', 'relative');
+    tableCellDiv?.style.removeProperty('top');
+    tableCellDiv?.style.removeProperty('z-index');
+    tableCellDiv?.style.setProperty('white-space', 'nowrap');
   };
 
   return (
-    <div
-      ref={divRef}
-      style={{ display: 'flex', justifyContent }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={isHovered ? styles.cell : ''}
-    >
+    <div ref={divRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
       {formattedValue}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
   cell: css({
-    whiteSpace: 'break-spaces',
-    background: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.medium}`,
-    zIndex: `${theme.zIndex.activePanel}`,
-    position: 'relative',
+    display: 'flex',
+    justifyContent: justifyContent,
   }),
 });

@@ -49,6 +49,7 @@ export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions, onColumnResize } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
+  const cellInspect = fieldConfig?.defaults?.custom?.inspect ?? false;
   const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
   const theme = useTheme2();
@@ -79,10 +80,10 @@ export function TableNG(props: TableNGProps) {
   }, [props.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [contextMenuProps, setContextMenuProps] = useState<{
-    rowIdx: number;
+    rowIdx?: number;
     value: string;
-    top: number;
-    left: number;
+    top?: number;
+    left?: number;
   } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
@@ -320,9 +321,13 @@ export function TableNG(props: TableNGProps) {
                       defaultLineHeight,
                       defaultRowHeight,
                       DEFAULT_CELL_PADDING,
-                      textWrap
+                      textWrap,
+                      cellInspect
                     )
                   }
+                  setIsInspecting={setIsInspecting}
+                  setContextMenuProps={setContextMenuProps}
+                  cellInspect={cellInspect}
                 />
               );
             },
@@ -541,7 +546,7 @@ export function TableNG(props: TableNGProps) {
           // Do not show the default context menu
           event.preventDefault();
           setContextMenuProps({
-            rowIdx: rows.indexOf(row),
+            // rowIdx: rows.indexOf(row),
             value: row[column.key],
             top: event.clientY,
             left: event.clientX,
@@ -632,7 +637,8 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     textOverflow: 'ellipsis',
 
     '&:hover': {
-      border: `1px solid ${theme.colors.text.link}`,
+      // TODO: border was replaced with boxShadow, because it was causing cell shift on hover
+      boxShadow: 'rgb(61, 113, 217) 0px 0px 2px',
       backgroundColor: theme.colors.background.primary,
     },
   }),
