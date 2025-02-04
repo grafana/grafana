@@ -511,7 +511,6 @@ func (in *RepositoryView) DeepCopy() *RepositoryView {
 func (in *RepositoryViewList) DeepCopyInto(out *RepositoryViewList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]RepositoryView, len(*in))

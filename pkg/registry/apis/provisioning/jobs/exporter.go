@@ -65,6 +65,7 @@ func NewExporter(
 	}, nil
 }
 
+//nolint:gocyclo
 func (r *exporter) Export(ctx context.Context,
 	repo repository.Repository,
 	options provisioning.ExportJobOptions,
