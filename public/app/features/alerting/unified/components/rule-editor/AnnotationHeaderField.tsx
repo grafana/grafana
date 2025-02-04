@@ -20,6 +20,20 @@ const AnnotationHeaderField = ({
 }) => {
   const { control } = useFormContext<RuleFormValues>();
 
+  let label;
+  const description = annotationDescriptions[annotation];
+
+  switch (annotationField.key) {
+    case Annotation.dashboardUID:
+      label = 'Dashboard and panel';
+      break;
+    case Annotation.panelID:
+      label = '';
+      break;
+    default:
+      label = annotationLabels[annotation] && annotationLabels[annotation] + ' (optional)';
+  }
+
   return (
     <Stack direction="column" gap={0}>
       <label>
@@ -30,19 +44,6 @@ const AnnotationHeaderField = ({
             render={({ field: { ref, ...field } }) => {
               if (!annotationLabels[annotation]) {
                 return <CustomAnnotationHeaderField field={field} />;
-              }
-
-              let label;
-
-              switch (annotationField.key) {
-                case Annotation.dashboardUID:
-                  label = 'Dashboard and panel';
-                  break;
-                case Annotation.panelID:
-                  label = '';
-                  break;
-                default:
-                  label = annotationLabels[annotation] && annotationLabels[annotation] + ' (optional)';
               }
 
               return (
@@ -58,9 +59,11 @@ const AnnotationHeaderField = ({
           />
         }
       </label>
-      <Text variant="bodySmall" color="secondary">
-        {annotationDescriptions[annotation]}
-      </Text>
+      {description && (
+        <Text variant="bodySmall" color="secondary">
+          {description}
+        </Text>
+      )}
     </Stack>
   );
 };

@@ -1,55 +1,17 @@
-import { css } from '@emotion/css';
-import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
-import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
+import { LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
-import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
 import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
-import { PreviewRuleResult } from './PreviewRuleResult';
 
 const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
-
-export function PreviewRule(): React.ReactElement | null {
-  const styles = useStyles2(getStyles);
-  const [preview, onPreview] = usePreview();
-  const { watch } = useFormContext<RuleFormValues>();
-  const [type, condition, queries] = watch(['type', 'condition', 'queries']);
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
-
-  if (!type || isDataSourceManagedRuleByType(type)) {
-    return null;
-  }
-
-  const isPreviewAvailable = Boolean(condition) && allDataSourcesAvailable;
-
-  return (
-    <div className={styles.container}>
-      <Stack>
-        {allDataSourcesAvailable && (
-          <Button disabled={!isPreviewAvailable} type="button" variant="primary" onClick={onPreview}>
-            Preview alerts
-          </Button>
-        )}
-        {!allDataSourcesAvailable && (
-          <Alert title="Preview is not available" severity="warning">
-            Cannot display the query preview. Some of the data sources used in the queries are not available.
-          </Alert>
-        )}
-      </Stack>
-      <PreviewRuleResult preview={preview} />
-    </div>
-  );
-}
 
 export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   const [preview, setPreview] = useState<PreviewRuleResponse | undefined>();
@@ -110,13 +72,4 @@ function isCompleted(response: PreviewRuleResponse): boolean {
     default:
       return false;
   }
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    container: css({
-      marginTop: theme.spacing(2),
-      maxWidth: `${theme.breakpoints.values.xxl}px`,
-    }),
-  };
 }

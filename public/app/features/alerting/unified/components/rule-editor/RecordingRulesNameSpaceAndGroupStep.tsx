@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
 
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
-import { RuleEditorSection } from './RuleEditorSection';
+import { RuleEditorSection, RuleEditorSubSection } from './RuleEditorSection';
 
 export function RecordingRulesNameSpaceAndGroupStep() {
   const { watch } = useFormContext<RuleFormValues>();
@@ -20,7 +20,9 @@ export function RecordingRulesNameSpaceAndGroupStep() {
       title={'Add namespace and group'}
       description="Select the Namespace and Group for your recording rule."
     >
-      <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
+      <RuleEditorSubSection>
+        <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
+      </RuleEditorSubSection>
     </RuleEditorSection>
   );
 }

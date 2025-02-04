@@ -30,7 +30,7 @@ export const ui = {
     simplifiedRouting: {
       contactPointRouting: byRole('radio', { name: /select contact point/i }),
       contactPoint: byTestId('contact-point-picker'),
-      routingOptions: byText(/muting, grouping and timings \(optional\)/i),
+      routingOptions: byText(/muting, grouping and timings/i),
     },
     switchModeBasic: (stepNo: GrafanaRuleFormStep) =>
       byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),

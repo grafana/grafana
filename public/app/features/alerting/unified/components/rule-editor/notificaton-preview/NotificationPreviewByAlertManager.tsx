@@ -39,6 +39,7 @@ function NotificationPreviewByAlertManager({
     );
   }
 
+  // @TODO better loading with skeleton loaders
   if (loading) {
     return <LoadingPlaceholder text="Loading routing preview..." />;
   }
@@ -58,7 +59,7 @@ function NotificationPreviewByAlertManager({
           <div className={styles.secondAlertManagerLine} />
         </Stack>
       )}
-      <Stack gap={1} direction="column">
+      <Stack gap={0} direction="column">
         {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
           const route = routesByIdMap.get(routeId);
           const receiver = route?.receiver && receiversByName.get(route.receiver);

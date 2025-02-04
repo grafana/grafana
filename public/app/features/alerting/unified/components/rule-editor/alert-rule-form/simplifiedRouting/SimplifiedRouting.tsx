@@ -5,7 +5,7 @@ import { AlertmanagerProvider } from 'app/features/alerting/unified/state/Alertm
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getAlertManagerDataSourcesByPermission } from 'app/features/alerting/unified/utils/datasource';
 
-import { AlertManagerManualRouting } from './AlertManagerRouting';
+import { AlertManagerContactPointRouting } from './AlertManagerRouting';
 
 export function SimplifiedRouting() {
   const { getValues } = useFormContext<RuleFormValues>();
@@ -19,7 +19,6 @@ export function SimplifiedRouting() {
   // );
 
   const alertManagersDataSources = allAlertManagersByPermission.availableInternalDataSources;
-
   const alertManagersDataSourcesWithConfigAPI = alertManagersDataSources.filter((am) => am.hasConfigurationAPI);
 
   // we merge the selected contact points data for each alert manager, with the alert manager meta data
@@ -51,7 +50,7 @@ export function SimplifiedRouting() {
         alertmanagerSourceName={alertManagerContactPoint.alertManager.name}
         key={alertManagerContactPoint.alertManager.name + index}
       >
-        <AlertManagerManualRouting alertManager={alertManagerContactPoint.alertManager} />
+        <AlertManagerContactPointRouting alertManager={alertManagerContactPoint.alertManager} />
       </AlertmanagerProvider>
     );
   });

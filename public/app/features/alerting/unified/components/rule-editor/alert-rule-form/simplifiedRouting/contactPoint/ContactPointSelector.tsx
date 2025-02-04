@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { ActionMeta, Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
+import { ActionMeta, Field, FieldValidationMessage, Stack, Text, TextLink } from '@grafana/ui';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
@@ -32,52 +32,55 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
   }, [validateContactPoint]);
 
   return (
-    <Stack direction="column">
-      <Stack direction="row" alignItems="center">
-        <Field label="Contact point" data-testid="contact-point-picker">
-          <Controller
-            render={({ field: { onChange }, fieldState: { error } }) => (
-              <>
-                <Stack>
-                  <ContactPointSelectorDropdown
-                    selectProps={{
-                      onChange: (value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
-                        onChange(value?.value?.name);
-                        onSelectContactPoint(value?.value);
-                      },
-                      width: 50,
-                    }}
-                    showRefreshButton
-                    selectedContactPointName={contactPointInForm}
-                  />
-                  <LinkToContactPoints />
-                </Stack>
+    <Field
+      label={
+        <Stack alignItems="center">
+          <Text variant="bodySmall">Contact point</Text>
+          {' · '}
+          <TextLink
+            variant="bodySmall"
+            external
+            inline={false}
+            href={createRelativeUrl('/alerting/notifications')}
+            aria-label="View or create contact points"
+          >
+            View or create contact points
+          </TextLink>
+        </Stack>
+      }
+      data-testid="contact-point-picker"
+      style={{ marginBottom: 0 }}
+    >
+      <Controller
+        render={({ field: { onChange }, fieldState: { error } }) => (
+          <>
+            <ContactPointSelectorDropdown
+              selectProps={{
+                onChange: (value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
+                  onChange(value?.value?.name);
+                  onSelectContactPoint(value?.value);
+                },
+                width: 50,
+              }}
+              showRefreshButton
+              selectedContactPointName={contactPointInForm}
+            />
 
-                {/* Error can come from the required validation we have in here, or from the manual setError we do in the parent component.
-                The only way I found to check the custom error is to check if the field has a value and if it's not in the options. */}
+            {/* Error can come from the required validation we have in here, or from the manual setError we do in the parent component.
+            The only way I found to check the custom error is to check if the field has a value and if it's not in the options. */}
 
-                {error && <FieldValidationMessage>{error?.message}</FieldValidationMessage>}
-              </>
-            )}
-            rules={{
-              required: {
-                value: true,
-                message: 'Contact point is required.',
-              },
-            }}
-            control={control}
-            name={`contactPoints.${alertManager}.selectedContactPoint`}
-          />
-        </Field>
-      </Stack>
-    </Stack>
-  );
-}
-function LinkToContactPoints() {
-  const hrefToContactPoints = '/alerting/notifications';
-  return (
-    <TextLink external href={createRelativeUrl(hrefToContactPoints)} aria-label="View or create contact points">
-      View or create contact points
-    </TextLink>
+            {error && <FieldValidationMessage>{error?.message}</FieldValidationMessage>}
+          </>
+        )}
+        rules={{
+          required: {
+            value: true,
+            message: 'Contact point is required.',
+          },
+        }}
+        control={control}
+        name={`contactPoints.${alertManager}.selectedContactPoint`}
+      />
+    </Field>
   );
 }
