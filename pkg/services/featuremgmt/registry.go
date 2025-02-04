@@ -227,14 +227,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:              "alertingNoNormalState",
-			Description:       "Stop maintaining state of alerts that are not firing",
-			Stage:             FeatureStagePublicPreview,
-			RequiresRestart:   false,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-		},
-		{
 			Name:           "logsContextDatasourceUi",
 			Description:    "Allow datasource to provide custom UI for context view",
 			Stage:          FeatureStageGeneralAvailability,
@@ -920,7 +912,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
@@ -1749,6 +1741,15 @@ var (
 			Description: "Enables less memory intensive Elasticsearch result parsing",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "exploreMetricsUseExternalAppPlugin",
+			Description:     "Use the externalized Metrics Drilldown (formerly known as Explore Metrics) app plugin",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaObservabilityMetricsSquad,
+			FrontendOnly:    true,
+			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 		{
 			Name:            "datasourceConnectionsTab",
