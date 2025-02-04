@@ -40,10 +40,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	// - folderIds (won't support, must use folderUIDs)
 	// - permission
 	query := &dashboards.FindPersistedDashboardsQuery{
-		Title: req.Query,
-		Limit: req.Limit,
-		Page:  req.Page,
-		// FolderUIDs:   req.FolderUIDs,
+		Title:        req.Query,
+		Limit:        req.Limit,
+		Page:         req.Page,
 		SignedInUser: user,
 		IsDeleted:    req.IsDeleted,
 	}
