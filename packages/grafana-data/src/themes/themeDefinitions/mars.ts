@@ -20,19 +20,9 @@ const marsTheme: NewThemeOptions = {
       main: '#FF6F61',
     },
     secondary: {
-      main: 'rgba(210, 90, 60, 0.1)',
-    },
-    info: {
-      main: '#FFA07A',
-    },
-    error: {
-      main: '#B22222',
-    },
-    success: {
-      main: '#228B22',
-    },
-    warning: {
-      main: '#FF8C00',
+      main: '#6a2f2f',
+      text: '#BBBBBB',
+      border: 'rgba(210, 90, 60, 0.2)',
     },
     background: {
       canvas: '#3C1E1E',
