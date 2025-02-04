@@ -100,6 +100,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
               editPane={editPane}
               isCollapsed={splitterState.collapsed}
               onToggleCollapse={onToggleCollapse}
+              openOverlay={selectionContext.selected.length > 0}
             />
           </div>
         </>
