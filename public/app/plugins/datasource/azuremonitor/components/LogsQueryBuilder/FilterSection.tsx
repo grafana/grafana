@@ -1,120 +1,151 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Label, Select, useStyles2 } from '@grafana/ui';
 
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureMonitorQuery } from '../../types';
 
-import { toOperatorOptions, valueToDefinition } from './utils';
+import { formatKQLQuery, toOperatorOptions, valueToDefinition } from './utils';
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  
+  return debouncedValue;
+}
 
 interface FilterSectionProps {
-  columns: AzureLogAnalyticsMetadataColumn[];
   selectedColumns: SelectableValue<string>;
   query: AzureMonitorQuery;
   onChange: (query: AzureMonitorQuery) => void;
-} 
+}
 
 export const FilterSection: React.FC<FilterSectionProps> = ({
   query,
   onChange,
-  columns,
   selectedColumns
- }) => {
-  const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
+}) => {
   const styles = useStyles2(getStyles);
-  console.log("selectedColumns", selectedColumns)
 
+  const [filters, setFilters] = useState<Array<{ column: string; operator: string; value: string }>>([]);
 
-  const updateQueryWithFilters = () => {
-    const validFilters = filters.filter((f) => f.column && f.operator && f.value);
+  const debouncedFilters = useDebounce(filters, 300);
 
-    if (validFilters.length === 0) {
-      return; 
+  const updateQueryWithFilters = useCallback((updatedFilters: Array<{ column: string; operator: string; value: string }>) => {
+    const hasValue = updatedFilters.some((f) => f.value.trim() !== "");
+    if (!hasValue && updatedFilters.length !== 0) {
+      return;
+    };
+    
+    let baseQuery = query.azureLogAnalytics?.query || '';
+
+    if (updatedFilters.length === 0) {
+      baseQuery = baseQuery.replace(/\| where .*/, '').trim();
+    } else {
+      const filterClause = updatedFilters.map((f) => `${f.column} ${f.operator} '${f.value}'`).join(' and ');
+
+      baseQuery = baseQuery.includes('| where')
+        ? baseQuery.replace(/\| where .*/, `| where ${filterClause}`)
+        : `${baseQuery} | where ${filterClause}`;
     }
 
-    let baseQuery = query.azureLogAnalytics?.query || '';
-    let filterClause = validFilters.map((f) => `${f.column} ${f.operator} '${f.value}'`).join(' and ');
+    const formattedQuery = formatKQLQuery(baseQuery);
 
-    baseQuery = baseQuery.includes('| where')
-      ? baseQuery.replace(/(\| where .*)/, `| where ${filterClause}`)
-      : `${baseQuery} | where ${filterClause}`;
+    if (query.azureLogAnalytics?.query !== formattedQuery) {
+      onChange({
+        ...query,
+        azureLogAnalytics: {
+          ...query.azureLogAnalytics,
+          query: formattedQuery,
+        },
+      });
+    };
+  }, [query, onChange]);
 
-    onChange({
-      ...query,
-      azureLogAnalytics: {
-        ...query.azureLogAnalytics,
-        query: baseQuery,
-      },
-    });
-  };
+  useEffect(() => {
+    if (debouncedFilters.length === filters.length) {
+      updateQueryWithFilters(filters);
+    }
+  }, [filters, debouncedFilters, updateQueryWithFilters]); 
 
   const onChangeFilter = (index: number, key: keyof typeof filters[0], value: string) => {
-    const updatedFilters = [...filters];
-    updatedFilters[index] = { ...updatedFilters[index], [key]: value };
-    setFilters(updatedFilters);
+    setFilters((prevFilters) =>
+      prevFilters.map((f, i) => (i === index ? { ...f, [key]: value || '' } : f))
+    );
   };
 
   const onDeleteFilter = (index: number) => {
-    const updatedFilters = filters.filter((_, i) => i !== index);
-    setFilters(updatedFilters);
+    setFilters((prevFilters) => {
+      const updatedFilters = prevFilters.filter((_, i) => i !== index);
+      console.log("Deleted filter at index:", index, "New filters:", updatedFilters);
+
+      if (updatedFilters.length === 0) {
+        updateQueryWithFilters([]); 
+      }
+
+      return updatedFilters;
+    });
   };
 
   return (
-    <>
-      <EditorRow>
-        <EditorFieldGroup>
-          <EditorField label="Filters" optional={true}>
-            <>
-              {filters.length > 0 && (
-                <div className={styles.filters}>
-                  {filters.map((filter, index) => (
-                    <InputGroup key={index}>
-                      <Select
-                        aria-label="column"
-                        width={30}
-                        value={filter.column ? valueToDefinition(filter.column) : null}
-                        options={Array.isArray(selectedColumns) ? selectedColumns : [selectedColumns]}  
-                        onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
-                      />
-                      <Select
-                        aria-label="operator"
-                        width={12}
-                        value={{ label: filter.operator, value: filter.operator }}
-                        options={toOperatorOptions('string')}
-                        onChange={(e) => e.value && onChangeFilter(index, 'operator', e.value)}
-                      />
-                      <Input
-                        aria-label="column value"
-                        value={filter.value}
-                        onChange={(e) => {
-                          onChangeFilter(index, 'value', e.currentTarget.value)
-                          updateQueryWithFilters();
-                        }}
-                        width={30}
-                      />
-                      <Button variant="secondary" icon="times" onClick={() => onDeleteFilter(index)} />
-                      {index < filters.length - 1 ? <Label>AND</Label> : undefined}
-                    </InputGroup>
-                  ))}
-                </div>
-              )}
-              <Button
-                variant="secondary"
-                onClick={() => setFilters([...filters, { column: '', operator: '==', value: '' }])}
-              >
-                Add Filter
-              </Button>
-            </>
-          </EditorField>
-        </EditorFieldGroup>
-      </EditorRow>
-    </>
+    <EditorRow>
+      <EditorFieldGroup>
+        <EditorField label="Filters" optional={true}>
+          <>
+            {filters.length > 0 && (
+              <div className={styles.filters}>
+                {filters.map((filter, index) => (
+                  <InputGroup key={index}>
+                    <Select
+                      aria-label="column"
+                      width={30}
+                      value={filter.column ? valueToDefinition(filter.column) : null}
+                      options={Array.isArray(selectedColumns) ? selectedColumns : [selectedColumns]}  
+                      onChange={(e) => e.value && onChangeFilter(index, 'column', e.value)}
+                    />
+                    <Select
+                      aria-label="operator"
+                      width={12}
+                      value={{ label: filter.operator, value: filter.operator }}
+                      options={toOperatorOptions('string')}
+                      onChange={(e) => e.value && onChangeFilter(index, 'operator', e.value)}
+                    />
+                    <Input
+                      aria-label="column value"
+                      value={filter.value}
+                      onChange={(e) => onChangeFilter(index, 'value', e.currentTarget.value)}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pastedText = e.clipboardData.getData('Text').trim();
+                        onChangeFilter(index, 'value', pastedText);
+                      }}
+                      width={30}
+                    />
+                    <Button variant="secondary" icon="times" onClick={() => onDeleteFilter(index)} />
+                    {index < filters.length - 1 ? <Label>AND</Label> : <></>}
+                  </InputGroup>
+                ))}
+              </div>
+            )}
+            <Button
+              variant="secondary"
+              onClick={() => setFilters([...filters, { column: '', operator: '==', value: '' }])}
+              icon='plus'
+            >
+            </Button>
+          </>
+        </EditorField>
+      </EditorFieldGroup>
+    </EditorRow>
   );
 };
 
 const getStyles = () => ({
   filters: css({ marginBottom: '8px' }),
 });
-

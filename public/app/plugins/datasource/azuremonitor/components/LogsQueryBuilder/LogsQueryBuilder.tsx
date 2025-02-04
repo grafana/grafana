@@ -12,9 +12,11 @@ import {
   EngineSchema,
 } from '../../types';
 
+import { AggregateSection } from './AggregationSection';
 import { FilterSection } from './FilterSection';
 import KQLPreview from './KQLPreview';
 import { TableSection } from './TableSection';
+import { formatKQLQuery } from './utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
@@ -51,11 +53,13 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     const baseQuery = selectedTable!.split(' | project')[0];
     const newQueryString = `${baseQuery} | project ${uniqueLabels.join(', ')}`;
 
+    const formattedQuery = formatKQLQuery(newQueryString);
+
     onQueryChange({
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        query: columns.length > 0 ? newQueryString : baseQuery,
+        query: columns.length > 0 ? formattedQuery : baseQuery,
       },
     });
   };
@@ -69,7 +73,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
         ...query,
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
-          query: newTable.name || '',
+          query: newTable.name,
         },
       });
     }
@@ -94,11 +98,10 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           {...props}
           query={query}
           onChange={onQueryChange}
-          columns={columns} 
           selectedColumns={selectedColumns}
         />
-        {/* <AggregateSection {...props} columns={columns} />
-        <GroupBySection {...props} columns={columns} /> */}
+        <AggregateSection {...props} selectedColumns={selectedColumns} onChange={onQueryChange} />
+        {/* <GroupBySection {...props} columns={columns} /> */}
         <KQLPreview query={query.azureLogAnalytics?.query || ''} />
       </EditorRows>
     </span>
