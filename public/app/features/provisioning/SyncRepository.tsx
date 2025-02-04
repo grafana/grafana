@@ -40,7 +40,10 @@ export function SyncRepository({ repository }: Props) {
     if (!name) {
       return;
     }
-    syncResource({ name, body: { complete: true } });
+    const elapsed = Date.now() - (repository.status?.sync.started ?? 0);
+    const complete = elapsed < 10000; // If clicked recently
+    console.log('Time since last sync: ', { elapsed, complete });
+    syncResource({ name, body: { complete } });
     setIsModalOpen(false);
   };
 

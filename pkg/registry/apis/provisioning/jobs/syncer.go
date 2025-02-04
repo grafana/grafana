@@ -109,6 +109,7 @@ func (r *syncer) Sync(ctx context.Context,
 	if isVersioned && cfg.Status.Sync.Hash != "" && !options.Complete {
 		if currentRef == cfg.Status.Sync.Hash {
 			message := "same commit as last sync"
+			syncStatus.Hash = currentRef
 			syncStatus.State = provisioning.JobStateSuccess
 			syncStatus.Message = append(syncStatus.Message, message)
 			return &provisioning.JobStatus{
@@ -141,6 +142,7 @@ func (r *syncer) Sync(ctx context.Context,
 		}
 	}
 
+	syncStatus.Hash = currentRef
 	if len(changes) == 0 {
 		message := "no changes to sync"
 		syncStatus.State = provisioning.JobStateSuccess
