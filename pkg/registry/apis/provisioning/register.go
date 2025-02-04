@@ -416,7 +416,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			sharedInformerFactory := informers.NewSharedInformerFactory(
 				c,
-				30*time.Second, // Health and reconciliation interval check interval
+				10*time.Second, // Health and reconciliation interval check interval
 			)
 
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
