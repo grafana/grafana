@@ -50,6 +50,14 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
       locationService.partial(urlParams, true);
 
+      const dash = stateManager.fetchDashboard({
+        uid: uid ?? '',
+        route: route.routeName as DashboardRoutes,
+        urlFolderUid: queryParams.folderUid,
+      });
+
+      console.log({ dash, uid, route, queryParams });
+
       console.log({ urlParams });
 
       console.log({ dashboard });
