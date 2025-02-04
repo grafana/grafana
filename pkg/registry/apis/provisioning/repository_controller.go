@@ -345,7 +345,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			Spec: provisioning.JobSpec{
 				Repository: obj.GetName(),
 				Action:     provisioning.JobActionSync,
-				Sync:       &provisioning.SyncJobOptions{Complete: true},
+				Sync:       sync,
 			},
 		})
 		if err != nil {
