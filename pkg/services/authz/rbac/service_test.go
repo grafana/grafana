@@ -419,6 +419,7 @@ func TestService_buildFolderTree(t *testing.T) {
 
 			store := &fakeStore{folders: tc.folders}
 			s.store = store
+			s.folderStore = store
 			s.permissionStore = store
 
 			tree, err := s.buildFolderTree(ctx, ns)
@@ -670,6 +671,7 @@ func setupService() *Service {
 		folderCache:     newCacheWrap[map[string]FolderNode](cache, logger, shortCacheTTL),
 		store:           fStore,
 		permissionStore: fStore,
+		folderStore:     fStore,
 		identityStore:   &fakeIdentityStore{},
 		sf:              new(singleflight.Group),
 	}
