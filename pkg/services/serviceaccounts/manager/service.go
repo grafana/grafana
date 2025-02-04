@@ -317,7 +317,7 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 }
 
 func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) error {
-	sa.log.Info("Starting to migrate API keys to service accounts")
+	sa.log.Debug("Starting to migrate API keys to service accounts")
 
 	total := 0
 	migrated := 0
@@ -337,7 +337,7 @@ func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) 
 	}
 
 	for _, o := range orgs {
-		sa.log.Info("Migrating API keys for an org", "orgId", o.ID)
+		sa.log.Debug("Migrating API keys for an org", "orgId", o.ID)
 
 		result, err := sa.store.MigrateApiKeysToServiceAccounts(ctx, o.ID)
 		if err != nil {
@@ -347,8 +347,10 @@ func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) 
 		}
 		if result.Failed > 0 {
 			sa.log.Warn("Some API keys failed to be migrated", "total_keys", result.Total, "failed_keys", result.Failed, "orgId", o.ID)
-		} else {
+		} else if result.Total > 0 {
 			sa.log.Info("API key migration was successful", "orgId", o.ID, "total_keys", result.Total)
+		} else {
+			sa.log.Debug("No API keys found to migrate", "orgId", o.ID)
 		}
 
 		total += result.Total
