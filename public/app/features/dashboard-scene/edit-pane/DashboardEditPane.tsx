@@ -185,7 +185,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
 
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      <ElementEditPane element={editableElement} key={editableElement.getTypeName()} />
+      <ElementEditPane element={editableElement} key={editableElement.typeName} />
     </div>
   );
 }
