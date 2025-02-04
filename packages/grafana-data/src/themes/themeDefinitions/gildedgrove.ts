@@ -1,7 +1,7 @@
 import { NewThemeOptions } from '../createTheme';
 
-const greenGoldTheme: NewThemeOptions = {
-  name: 'Green & Gold',
+const gildedGroveTheme: NewThemeOptions = {
+  name: 'Gilded grove',
   colors: {
     mode: 'dark',
     border: {
@@ -36,46 +36,6 @@ const greenGoldTheme: NewThemeOptions = {
       name: 'secondary',
       borderTransparent: 'rgba(200, 200, 180, 0.25)',
     },
-    info: {
-      main: '#FEAC34',
-      text: '#FFD783',
-      border: '#FFD783',
-      name: 'info',
-      shade: 'rgb(255, 173, 80)',
-      transparent: '#FEAC3426',
-      contrastText: '#111614',
-      borderTransparent: '#FFD78340',
-    },
-    error: {
-      main: '#D10E5C',
-      text: '#FF5286',
-      name: 'error',
-      border: '#FF5286',
-      shade: 'rgb(215, 50, 116)',
-      transparent: '#D10E5C26',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#FF528640',
-    },
-    success: {
-      main: '#1A7F4B',
-      text: '#6CCF8E',
-      name: 'success',
-      border: '#6CCF8E',
-      shade: 'rgb(60, 146, 102)',
-      transparent: '#1A7F4B26',
-      contrastText: '#FFFFFF',
-      borderTransparent: '#6CCF8E40',
-    },
-    warning: {
-      main: '#FEAC34',
-      text: '#FFD783',
-      name: 'warning',
-      border: '#FFD783',
-      shade: 'rgb(255, 173, 80)',
-      transparent: '#FEAC3426',
-      contrastText: '#111614',
-      borderTransparent: '#FFD78340',
-    },
     background: {
       canvas: '#111614',
       primary: '#1d2220',
@@ -104,4 +64,4 @@ const greenGoldTheme: NewThemeOptions = {
   },
 };
 
-export default greenGoldTheme;
+export default gildedGroveTheme;
