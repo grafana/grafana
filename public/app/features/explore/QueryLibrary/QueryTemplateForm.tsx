@@ -13,7 +13,6 @@ import { useCreateQueryTemplateMutation, useUpdateQueryTemplateMutation } from '
 import { AddQueryTemplateCommand, EditQueryTemplateCommand } from 'app/features/query-library/types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec } from '../../query-library/api/mappers';
-import { getK8sNamespace } from '../../query-library/api/query';
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
@@ -28,11 +27,6 @@ type Props = {
 export type QueryDetails = {
   description: string;
 };
-
-const VisibilityOptions = [
-  { value: 'Public', label: t('explore.query-library.public', 'Public') },
-  { value: 'Private', label: t('explore.query-library.private', 'Private') },
-];
 
 const getInstuctions = (isAdd: boolean) => {
   return isAdd
@@ -64,9 +58,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
 
   const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
     return addQueryTemplate({
-      namespace: getK8sNamespace(),
-      comGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate:
-        convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
+      queryTemplate: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
     })
       .unwrap()
       .then(() => {
@@ -89,9 +81,8 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
 
   const handleEditQueryTemplate = async (editQueryTemplateCommand: EditQueryTemplateCommand) => {
     return editQueryTemplate({
-      namespace: getK8sNamespace(),
       name: editQueryTemplateCommand.uid,
-      ioK8SApimachineryPkgApisMetaV1Patch: {
+      patch: {
         spec: editQueryTemplateCommand.partialSpec,
       },
     })
@@ -159,7 +150,14 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
         <Input id="query-template-description" autoFocus={true} {...register('description')}></Input>
       </Field>
       <Field label={t('explore.query-template-modal.visibility', 'Visibility')}>
-        <RadioButtonGroup options={VisibilityOptions} value={'Public'} disabled={true} />
+        <RadioButtonGroup
+          options={[
+            { value: 'Public', label: t('explore.query-library.public', 'Public') },
+            { value: 'Private', label: t('explore.query-library.private', 'Private') },
+          ]}
+          value={'Public'}
+          disabled={true}
+        />
       </Field>
       <InlineSwitch
         showLabel={true}
