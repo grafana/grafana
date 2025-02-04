@@ -1074,3 +1074,29 @@ export type ResourceStats = {
   kind?: string;
   metadata?: any;
 };
+export const {
+  useListJobQuery,
+  useGetJobQuery,
+  useListRepositoryQuery,
+  useCreateRepositoryMutation,
+  useGetRepositoryQuery,
+  useReplaceRepositoryMutation,
+  useDeleteRepositoryMutation,
+  useCreateRepositoryExportMutation,
+  useGetRepositoryFilesQuery,
+  useGetRepositoryFilesWithPathQuery,
+  useReplaceRepositoryFilesWithPathMutation,
+  useCreateRepositoryFilesWithPathMutation,
+  useDeleteRepositoryFilesWithPathMutation,
+  useGetRepositoryHistoryQuery,
+  useGetRepositoryHistoryWithPathQuery,
+  useGetRepositoryResourcesQuery,
+  useGetRepositoryStatusQuery,
+  useReplaceRepositoryStatusMutation,
+  useCreateRepositorySyncMutation,
+  useCreateRepositoryTestMutation,
+  useGetRepositoryWebhookQuery,
+  useCreateRepositoryWebhookMutation,
+  useGetFrontendSettingsQuery,
+  useGetResourceStatsQuery,
+} = injectedRtkApi;

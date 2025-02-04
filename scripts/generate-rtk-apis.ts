@@ -65,6 +65,7 @@ const config: ConfigFile = {
       argSuffix: 'Arg',
       responseSuffix: 'Response',
       tag: true,
+      hooks: true,
     },
   },
 };
