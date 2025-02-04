@@ -1,55 +1,43 @@
-package kind
+// Spec defines user, team or org Grafana preferences
+// swagger:model Preferences
+spec: {
+	// UID for the home dashboard
+	homeDashboardUID?: string
 
-name:        "Preferences"
-pluralName:  "Preferences"
-maturity:    "merged"
-description: "The user or team frontend preferences"
+	// The timezone selection
+	// TODO: this should use the timezone defined in common
+	timezone?: string
 
-lineage: schemas: [{
-	version: [0, 0]
-	schema: {
-		// Spec defines user, team or org Grafana preferences
-		// swagger:model Preferences
-		spec: {
-			// UID for the home dashboard
-			homeDashboardUID?: string
+	// day of the week (sunday, monday, etc)
+	weekStart?: string
 
-			// The timezone selection
-			// TODO: this should use the timezone defined in common
-			timezone?: string
+	// light, dark, empty is default
+	theme?: string
 
-			// day of the week (sunday, monday, etc)
-			weekStart?: string
+	// Selected language (beta)
+	language?: string
 
-			// light, dark, empty is default
-			theme?: string
+	// Explore query history preferences
+	queryHistory?: #QueryHistoryPreference
 
-			// Selected language (beta)
-			language?: string
+	// Cookie preferences
+	cookiePreferences?: #CookiePreferences
 
-			// Explore query history preferences
-			queryHistory?: #QueryHistoryPreference
+	// Navigation preferences
+	navbar?: #NavbarPreference
+} @cuetsy(kind="interface")
 
-			// Cookie preferences
-			cookiePreferences?: #CookiePreferences
+#QueryHistoryPreference: {
+	// one of: '' | 'query' | 'starred';
+	homeTab?: string
+} @cuetsy(kind="interface")
 
-			// Navigation preferences
-			navbar?: #NavbarPreference
-		} @cuetsy(kind="interface")
+#CookiePreferences: {
+	analytics?: {}
+	performance?: {}
+	functional?: {}
+} @cuetsy(kind="interface")
 
-		#QueryHistoryPreference: {
-			// one of: '' | 'query' | 'starred';
-			homeTab?: string
-		} @cuetsy(kind="interface")
-
-		#CookiePreferences: {
-			analytics?: {}
-			performance?: {}
-			functional?: {}
-		} @cuetsy(kind="interface")
-
-		#NavbarPreference: {
-			bookmarkUrls: [...string]
-		} @cuetsy(kind="interface")
-	}
-}]
+#NavbarPreference: {
+	bookmarkUrls: [...string]
+} @cuetsy(kind="interface")

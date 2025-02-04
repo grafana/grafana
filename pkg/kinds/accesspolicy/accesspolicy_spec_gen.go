@@ -11,46 +11,6 @@
 
 package accesspolicy
 
-type ResourceRef struct {
-	// explicit resource or folder will cascade
-	Kind string `json:"kind"`
-	Name string `json:"name"`
-}
-
-// NewResourceRef creates a new ResourceRef object.
-func NewResourceRef() *ResourceRef {
-	return &ResourceRef{}
-}
-
-type RoleRef struct {
-	// Policies can apply to roles, teams, or users
-	// Applying policies to individual users is supported, but discouraged
-	Kind RoleRefKind `json:"kind"`
-	Name string      `json:"name"`
-	// temporary
-	Xname string `json:"xname"`
-}
-
-// NewRoleRef creates a new RoleRef object.
-func NewRoleRef() *RoleRef {
-	return &RoleRef{}
-}
-
-type AccessRule struct {
-	// The kind this rule applies to (dashboards, alert, etc)
-	Kind string `json:"kind"`
-	// READ, WRITE, CREATE, DELETE, ...
-	// should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete"
-	Verb string `json:"verb"`
-	// Specific sub-elements like "alert.rules" or "dashboard.permissions"????
-	Target *string `json:"target,omitempty"`
-}
-
-// NewAccessRule creates a new AccessRule object.
-func NewAccessRule() *AccessRule {
-	return &AccessRule{}
-}
-
 type Spec struct {
 	// The scope where these policies should apply
 	Scope ResourceRef `json:"scope"`
@@ -67,6 +27,46 @@ func NewSpec() *Spec {
 		Scope: *NewResourceRef(),
 		Role:  *NewRoleRef(),
 	}
+}
+
+type RoleRef struct {
+	// Policies can apply to roles, teams, or users
+	// Applying policies to individual users is supported, but discouraged
+	Kind RoleRefKind `json:"kind"`
+	Name string      `json:"name"`
+	// temporary
+	Xname string `json:"xname"`
+}
+
+// NewRoleRef creates a new RoleRef object.
+func NewRoleRef() *RoleRef {
+	return &RoleRef{}
+}
+
+type ResourceRef struct {
+	// explicit resource or folder will cascade
+	Kind string `json:"kind"`
+	Name string `json:"name"`
+}
+
+// NewResourceRef creates a new ResourceRef object.
+func NewResourceRef() *ResourceRef {
+	return &ResourceRef{}
+}
+
+type AccessRule struct {
+	// The kind this rule applies to (dashboards, alert, etc)
+	Kind string `json:"kind"`
+	// READ, WRITE, CREATE, DELETE, ...
+	// should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete"
+	Verb string `json:"verb"`
+	// Specific sub-elements like "alert.rules" or "dashboard.permissions"????
+	Target *string `json:"target,omitempty"`
+}
+
+// NewAccessRule creates a new AccessRule object.
+func NewAccessRule() *AccessRule {
+	return &AccessRule{}
 }
 
 type RoleRefKind string

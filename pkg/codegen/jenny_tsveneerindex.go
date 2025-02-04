@@ -69,9 +69,6 @@ func (gen *genTSVeneerIndex) Generate(sfg ...SchemaForGen) (*codejen.File, error
 }
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *ast.File) ([]ast.Decl, error) {
-	// Check the root, then walk the tree
-	rootv := def.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
-
 	var raw, custom, rawD, customD ast.Idents
 
 	var terr errors.Error
@@ -137,7 +134,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *
 
 		return true
 	}
-	walk(rootv, visit, nil)
+	walk(def.CueFile, visit, nil)
 
 	if len(errors.Errors(terr)) != 0 {
 		return nil, terr
@@ -164,10 +161,6 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *
 		})
 	}
 	vtfile := fmt.Sprintf("./veneer/%s.types", machineName)
-	version, err := getVersion(def.CueFile)
-	if err != nil {
-		return nil, err
-	}
 
 	customstr := fmt.Sprintf(`// The following exported declarations correspond to types in the %s@%s kind's
 // schema with attribute @grafana(TSVeneer="type").
@@ -178,7 +171,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *
 // and exports all the symbols in the list.
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls`,
-		machineName, strings.ReplaceAll(version, "-", "."), filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
+		machineName, "0.0", filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
 
 	customComments := []ast.Comment{{Text: customstr}}
 	if len(custom) > 0 {

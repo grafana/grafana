@@ -31,7 +31,11 @@ func GenerateTypesTS(v cue.Value, cfg *TSConfig) (*ast.File, error) {
 	// Thema #schema was a unification between the schema and cue.TopKind(_). For any reason, without this unification,
 	// cuetsy fails finding some enums ¯\_(ツ)_/¯.
 	oldSchema := cuecontext.New().CompileBytes([]byte("_"))
-	schdef := v.LookupPath(cue.ParsePath("lineage.schemas[0].schema")).Unify(oldSchema)
+	schdef := v.Unify(oldSchema)
+	lineageSchema := v.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
+	if lineageSchema.Exists() {
+		schdef = lineageSchema.Unify(oldSchema)
+	}
 	tf, err := cuetsy.GenerateAST(schdef, *cfg.CuetsyConfig)
 	if err != nil {
 		return nil, fmt.Errorf("generating TS for child elements of schema failed: %w", err)

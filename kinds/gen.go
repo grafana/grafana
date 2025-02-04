@@ -32,6 +32,10 @@ var CoreDefParentPath = "kinds"
 // contains one directory per kind, full of generated TS kind output: types and default consts.
 var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
 
+var kindRenaming = map[string]string{
+	"Librarypanel": "LibraryPanel",
+}
+
 func main() {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "code generator does not currently accept any arguments\n, got %q", os.Args)
@@ -104,7 +108,7 @@ func genCommon(ctx *cue.Context, groot string) (*codejen.FS, error) {
 	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
 
 	commonFiles := make([]string, 0)
-	filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(d.Name()) != ".cue" {
 			return nil
 		}
@@ -174,14 +178,14 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 
 		// It's assuming that we only have one file in each folder
 		entry := filepath.Join(dir.Name(), entries[0].Name())
-		cueFile, err := os.ReadFile(entry)
+		cueFile, err := os.ReadFile(filepath.Clean(entry))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s", dir, entries[0].Name(), err)
 			os.Exit(1)
 		}
 
 		v := ctx.CompileBytes(cueFile)
-		name, err := getSchemaName(v)
+		name, err := getSchemaName(entry)
 		if err != nil {
 			return nil, err
 		}
@@ -200,13 +204,42 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 	return values, nil
 }
 
-func getSchemaName(v cue.Value) (string, error) {
-	namePath := v.LookupPath(cue.ParsePath("name"))
-	name, err := namePath.String()
-	if err != nil {
-		return "", fmt.Errorf("file doesn't have name field set: %s", err)
+func getSchemaName(entry string) (string, error) {
+	filename := filepath.Base(entry)
+	lenFile, lenExt := len(filename), len(filepath.Ext(entry))
+	name := strings.TrimSuffix(filename[0:lenFile-lenExt], "_kind")
+	return derivePascalName(name), nil
+}
+
+func derivePascalName(name string) string {
+	sani := func(s string) string {
+		ret := strings.Title(strings.Map(func(r rune) rune {
+			switch {
+			case r >= 'a' && r <= 'z':
+				return r
+			case r >= 'A' && r <= 'Z':
+				return r
+			default:
+				return -1
+			}
+		}, strings.Title(strings.Map(func(r rune) rune {
+			switch r {
+			case '-', '_':
+				return ' '
+			default:
+				return r
+			}
+		}, s))))
+		if len(ret) > 63 {
+			return ret[:63]
+		}
+		return ret
 	}
 
-	name = strings.Replace(name, "-", "_", -1)
-	return name, nil
+	formattedName := sani(name)
+	if renamed, ok := kindRenaming[formattedName]; ok {
+		return renamed
+	}
+
+	return formattedName
 }

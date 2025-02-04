@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"cuelang.org/go/cue"
 	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cog"
@@ -24,10 +23,8 @@ func (jenny *GoSpecJenny) Generate(sfg ...SchemaForGen) (codejen.Files, error) {
 
 	for i, v := range sfg {
 		packageName := strings.ToLower(v.Name)
-		cueValue := v.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema.spec"))
-
 		b, err := cog.TypesFromSchema().
-			CUEValue(packageName, cueValue, cog.ForceEnvelope("Spec")).
+			CUEValue(packageName, v.CueFile).
 			Golang(cog.GoConfig{}).
 			Run(context.Background())
 		if err != nil {
