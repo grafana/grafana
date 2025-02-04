@@ -1,13 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { AnnoKeyCreatedBy } from '../../apiserver/types';
 import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
-import {
-  ComGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate,
-  ListQueryTemplateApiResponse,
-} from './endpoints.gen';
-import { API_VERSION, QueryTemplateKinds } from './query';
-import { CREATED_BY_KEY } from './types';
+import { ListQueryTemplateApiResponse, QueryTemplate as QT } from './endpoints.gen';
 
 export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTemplateApiResponse): QueryTemplate[] => {
   if (!result.items) {
@@ -24,19 +20,15 @@ export const convertDataQueryResponseToQueryTemplates = (result: ListQueryTempla
         })) ?? [],
       createdAtTimestamp: new Date(spec.metadata?.creationTimestamp ?? '').getTime(),
       user: {
-        uid: spec.metadata?.annotations?.[CREATED_BY_KEY] ?? '',
+        uid: spec.metadata?.annotations?.[AnnoKeyCreatedBy] ?? '',
       },
     };
   });
 };
 
-export const convertAddQueryTemplateCommandToDataQuerySpec = (
-  addQueryTemplateCommand: AddQueryTemplateCommand
-): ComGithubGrafanaGrafanaPkgApisPeakqV0Alpha1QueryTemplate => {
+export const convertAddQueryTemplateCommandToDataQuerySpec = (addQueryTemplateCommand: AddQueryTemplateCommand): QT => {
   const { title, targets } = addQueryTemplateCommand;
   return {
-    apiVersion: API_VERSION,
-    kind: QueryTemplateKinds.QueryTemplate,
     metadata: {
       /**
        * Server will append to whatever is passed here, but just to be safe we generate a uuid

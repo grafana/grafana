@@ -4,6 +4,8 @@ import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataF
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { getAPINamespace } from '../../../api/utils';
+
 import {
   DashboardQueryResult,
   GrafanaSearcher,
@@ -18,7 +20,7 @@ import { replaceCurrentFolderQuery } from './utils';
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${config.namespace}/search`;
+const searchURI = `apis/dashboard.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/search`;
 
 export type SearchHit = {
   resource: string; // dashboards | folders
@@ -110,7 +112,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     const uri = await this.newRequest(query);
-    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    const rsp = await this.fetchResponse(uri);
 
     const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
@@ -118,12 +120,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     const meta = first.meta?.custom || ({} as SearchResultMeta);
-    const locationInfo = await this.locationInfo;
-    const hasMissing = rsp.hits.some((hit) => !locationInfo[hit.folder]);
-    if (hasMissing) {
-      // sync the location info ( folders )
-      this.locationInfo = loadLocationInfo();
-    }
     meta.locationInfo = await this.locationInfo;
 
     // Set the field name to a better display name
@@ -139,14 +135,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let loadMax = 0;
     let pending: Promise<void> | undefined = undefined;
     const getNextPage = async () => {
-      // TODO: implement this correctly
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
         if (offset >= meta.count) {
           return;
         }
         const nextPageUrl = `${uri}&offset=${offset}`;
-        const resp = await getBackendSrv().get<SearchAPIResponse>(nextPageUrl);
+        const resp = await this.fetchResponse(nextPageUrl);
         const frame = toDashboardResults(resp, query.sort ?? '');
         if (!frame) {
           console.log('no results', frame);
@@ -194,6 +189,40 @@ export class UnifiedSearcher implements GrafanaSearcher {
         return index < view.dataFrame.length;
       },
     };
+  }
+
+  async fetchResponse(uri: string) {
+    const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
+    if (!isFolderCacheStale) {
+      return rsp;
+    }
+    // sync the location info ( folders )
+    this.locationInfo = loadLocationInfo();
+    // recheck for missing folders
+    const hasMissing = await this.isFolderCacheStale(rsp.hits);
+    if (!hasMissing) {
+      return rsp;
+    }
+    // we still have results here with folders we can't find
+    // filter the results since we probably don't have access to that folder
+    const locationInfo = await this.locationInfo;
+    const hits = rsp.hits.filter((hit) => {
+      if (hit.folder === undefined || locationInfo[hit.folder] !== undefined) {
+        return true;
+      }
+      console.warn('Dropping search hit with missing folder', hit);
+      return false;
+    });
+    const totalHits = rsp.totalHits - (rsp.hits.length - hits.length);
+    return { ...rsp, hits, totalHits };
+  }
+
+  async isFolderCacheStale(hits: SearchHit[]): Promise<boolean> {
+    const locationInfo = await this.locationInfo;
+    return hits.some((hit) => {
+      return hit.folder !== undefined && locationInfo[hit.folder] === undefined;
+    });
   }
 
   private async newRequest(query: SearchQuery): Promise<string> {

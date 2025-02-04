@@ -8,10 +8,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	"k8s.io/apimachinery/pkg/types"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -661,86 +662,49 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	return team
 }
 
-// TypedClient is the struct that implements a typed interface for resource operations
-type TypedClient[T any, L any] struct {
-	Client dynamic.ResourceInterface
-}
+// Compare the OpenAPI schema from one api against a cached snapshot
+func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
+	if gv.Group == "" {
+		return // skip invalid groups
+	}
+	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
+	t.Run(path, func(t *testing.T) {
+		rsp := DoRequest(h, RequestParams{
+			Method: http.MethodGet,
+			Path:   path,
+			User:   h.Org1.Admin,
+		}, &AnyResource{})
 
-func (c *TypedClient[T, L]) Create(ctx context.Context, resource *T, opts metav1.CreateOptions) (*T, error) {
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
-	if err != nil {
-		return nil, err
-	}
-	u := &unstructured.Unstructured{Object: unstructuredObj}
-	result, err := c.Client.Create(ctx, u, opts)
-	if err != nil {
-		return nil, err
-	}
-	createdObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, createdObj)
-	if err != nil {
-		return nil, err
-	}
-	return createdObj, nil
-}
+		require.NotNil(t, rsp.Response)
+		require.Equal(t, 200, rsp.Response.StatusCode, path)
 
-func (c *TypedClient[T, L]) Update(ctx context.Context, resource *T, opts metav1.UpdateOptions) (*T, error) {
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
-	if err != nil {
-		return nil, err
-	}
-	u := &unstructured.Unstructured{Object: unstructuredObj}
-	result, err := c.Client.Update(ctx, u, opts)
-	if err != nil {
-		return nil, err
-	}
-	updatedObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, updatedObj)
-	if err != nil {
-		return nil, err
-	}
-	return updatedObj, nil
-}
+		var prettyJSON bytes.Buffer
+		err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
+		require.NoError(t, err)
+		pretty := prettyJSON.String()
 
-func (c *TypedClient[T, L]) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
-	return c.Client.Delete(ctx, name, opts)
-}
+		write := false
+		fpath := filepath.Join(dir, fmt.Sprintf("%s-%s.json", gv.Group, gv.Version))
 
-func (c *TypedClient[T, L]) Get(ctx context.Context, name string, opts metav1.GetOptions) (*T, error) {
-	result, err := c.Client.Get(ctx, name, opts)
-	if err != nil {
-		return nil, err
-	}
-	retrievedObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, retrievedObj)
-	if err != nil {
-		return nil, err
-	}
-	return retrievedObj, nil
-}
+		// nolint:gosec
+		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
+		body, err := os.ReadFile(fpath)
+		if err == nil {
+			if !assert.JSONEq(t, string(body), pretty) {
+				t.Logf("openapi spec has changed: %s", path)
+				t.Fail()
+				write = true
+			}
+		} else {
+			t.Errorf("missing openapi spec for: %s", path)
+			write = true
+		}
 
-func (c *TypedClient[T, L]) List(ctx context.Context, opts metav1.ListOptions) (*L, error) {
-	result, err := c.Client.List(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-	listObj := new(L)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.UnstructuredContent(), listObj)
-	if err != nil {
-		return nil, err
-	}
-	return listObj, nil
-}
-
-func (c *TypedClient[T, L]) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*T, error) {
-	result, err := c.Client.Patch(ctx, name, pt, data, opts, subresources...)
-	if err != nil {
-		return nil, err
-	}
-	patchedObj := new(T)
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, patchedObj)
-	if err != nil {
-		return nil, err
-	}
-	return patchedObj, nil
+		if write {
+			e2 := os.WriteFile(fpath, []byte(pretty), 0644)
+			if e2 != nil {
+				t.Errorf("error writing file: %s", e2.Error())
+			}
+		}
+	})
 }

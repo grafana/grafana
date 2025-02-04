@@ -230,6 +230,9 @@ func (s *searchSupport) CountRepositoryObjects(ctx context.Context, req *CountRe
 
 // Search implements ResourceIndexServer.
 func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Search")
+	defer span.End()
+
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
 		Namespace: req.Options.Key.Namespace,
@@ -458,7 +461,7 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
 	span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
 	if latencySeconds > 5 {
-		s.log.Debug("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Object.GetName(), "namespace", evt.Object.GetNamespace(), "uid", evt.Object.GetUID())
+		s.log.Debug("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace)
 		s.log.Warn("high index latency", "latency", latencySeconds)
 	}
 	if IndexMetrics != nil {
@@ -470,6 +473,9 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
+
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
+	defer span.End()
 
 	// TODO???
 	// We want to block while building the index and return the same index for the key
