@@ -140,8 +140,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
 
             // WebGLPointsLayer uses style expressions instead of style functions
             feature.setProperties({ red: colorValues?.r ?? 255 });
-            feature.setProperties({ green: colorValues?.g ?? 0 });
-            feature.setProperties({ blue: colorValues?.b ?? 0 });
+            feature.setProperties({ green: colorValues?.g ?? 255 });
+            feature.setProperties({ blue: colorValues?.b ?? 255 });
             feature.setProperties({ size: (values.size ?? 1) * 2 });
             feature.setProperties({ rotation: ((values.rotation ?? 0) * Math.PI) / 180 });
             feature.setProperties({ opacity: values.opacity });
